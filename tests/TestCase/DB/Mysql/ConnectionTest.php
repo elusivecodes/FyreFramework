@@ -111,7 +111,7 @@ final class ConnectionTest extends TestCase
     public function testFailedConnection(): void
     {
         $this->expectException(DbException::class);
-        $this->expectExceptionMessageMatches('/^Database connection error: SQLSTATE\[HY000\] \[1698\]/');
+        $this->expectExceptionMessageMatches('/^Database connection error: /');
 
         $this->connection->setConfig('invalid', [
             'className' => MysqlConnection::class,

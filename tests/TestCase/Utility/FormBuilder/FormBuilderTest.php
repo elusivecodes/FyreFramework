@@ -18,7 +18,7 @@ final class FormBuilderTest extends TestCase
     use ButtonTestTrait;
     use CloseTestTrait;
     use FieldsetCloseTestTrait;
-    use FieldSetOpenTestTrait;
+    use FieldsetOpenTestTrait;
     use InputTestTrait;
     use InputTypeTestTrait;
     use LabelTestTrait;

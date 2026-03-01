@@ -27,6 +27,10 @@ final class QueueManagerTest extends TestCase
             RedisQueue::class,
             $this->queueManager->build([
                 'className' => RedisQueue::class,
+                'host' => getenv('REDIS_HOST'),
+                'password' => getenv('REDIS_PASSWORD'),
+                'database' => getenv('REDIS_DATABASE'),
+                'port' => getenv('REDIS_PORT'),
             ])
         );
     }

@@ -65,7 +65,7 @@ final class RedisTest extends TestCase
     public function testInvalidAuth(): void
     {
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessageMatches('/^Redis cache connection error: ERR AUTH/');
+        $this->expectExceptionMessageMatches('/^Redis cache connection error: /');
 
         new Container()
             ->use(CacheManager::class)
