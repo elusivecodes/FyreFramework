@@ -190,9 +190,7 @@ final class RouteLocatorTest extends TestCase
                     'as' => 'posts.update',
                 ],
             ],
-            $this->container->use(CacheManager::class)
-                ->use('_routes')
-                ->get('Tests.Mock.Controllers.Locate')
+            $cachedRoutes
         );
     }
 
