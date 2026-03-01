@@ -10,6 +10,7 @@ use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Http\Cookie;
 use Fyre\Security\Exceptions\CsrfTokenException;
+use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -245,6 +246,8 @@ class CsrfProtection
      *
      * @param string $token The unsalted token.
      * @return string|null The salted token, or null if the token is invalid.
+     *
+     * @throws InvalidArgumentException If salting fails.
      */
     protected function saltToken(string $token): string|null
     {
@@ -262,7 +265,13 @@ class CsrfProtection
         $salted = '';
         for ($i = 0; $i < $length; $i++) {
             // XOR the token and salt together so that we can reverse it later.
-            $salted .= (ord($decoded[$i]) ^ ord($salt[$i])) |> chr(...);
+            $codepoint = ord($decoded[$i]) ^ ord($salt[$i]);
+
+            if ($codepoint < 0 || $codepoint > 255) {
+                throw new InvalidArgumentException('Salting failed.');
+            }
+
+            $salted .= chr($codepoint);
         }
 
         return base64_encode($salted.$salt);
@@ -273,6 +282,8 @@ class CsrfProtection
      *
      * @param string $token The salted token.
      * @return string|null The unsalted token, or null if the token is invalid.
+     *
+     * @throws InvalidArgumentException If unsalting fails.
      */
     protected function unsaltToken(string $token): string|null
     {
@@ -289,7 +300,13 @@ class CsrfProtection
         $unsalted = '';
         for ($i = 0; $i < $length; $i++) {
             // Reverse the XOR to desalt.
-            $unsalted .= (ord($salted[$i]) ^ ord($salt[$i])) |> chr(...);
+            $codepoint = ord($salted[$i]) ^ ord($salt[$i]);
+
+            if ($codepoint < 0 || $codepoint > 255) {
+                throw new InvalidArgumentException('Unsalting failed.');
+            }
+
+            $unsalted .= chr($codepoint);
         }
 
         return base64_encode($unsalted);

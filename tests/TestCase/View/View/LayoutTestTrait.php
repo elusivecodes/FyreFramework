@@ -6,6 +6,8 @@ namespace Tests\TestCase\View\View;
 use Fyre\Event\Event;
 use Fyre\Utility\Path;
 
+use const PHP_EOL;
+
 trait LayoutTestTrait
 {
     public function testDefaultLayout(): void
@@ -28,7 +30,7 @@ trait LayoutTestTrait
             );
 
             $this->assertSame(
-                'Layout: 1'."\r\n".
+                'Layout: 1'.PHP_EOL.
                 'Content: Template: 1',
                 $content
             );
@@ -77,7 +79,7 @@ trait LayoutTestTrait
         $this->view->setLayout('test');
 
         $this->assertSame(
-            'Layout: 1'."\r\n".
+            'Layout: 1'.PHP_EOL.
             'Content: Template: 1',
             $this->view->render('test/template')
         );

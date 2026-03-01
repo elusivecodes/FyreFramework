@@ -33,6 +33,8 @@ jobs:
   tests-core:
     name: Tests (core)
     runs-on: ubuntu-latest
+    env:
+      TERM: xterm
     steps:
       - uses: actions/checkout@v4
 

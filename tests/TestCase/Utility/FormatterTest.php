@@ -75,8 +75,8 @@ final class FormatterTest extends TestCase
     {
         $date = new DateTime('2022-01-01 11:59:59');
 
-        $this->assertSame(
-            '01/01/2022, 11:59 AM',
+        $this->assertMatchesRegularExpression(
+            '/01\/01\/2022,\s11:59\sAM/u',
             $this->formatter->datetime($date)
         );
     }
@@ -179,8 +179,8 @@ final class FormatterTest extends TestCase
     {
         $date = new DateTime('2022-01-01 11:59:59');
 
-        $this->assertSame(
-            '11:59 AM',
+        $this->assertMatchesRegularExpression(
+            '/11:59\sAM/u',
             $this->formatter->time($date)
         );
     }

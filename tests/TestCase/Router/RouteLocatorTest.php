@@ -22,7 +22,9 @@ use Tests\Mock\Controllers\Locate\PostsController;
 
 use function mkdir;
 use function rmdir;
+use function strcmp;
 use function unlink;
+use function usort;
 
 final class RouteLocatorTest extends TestCase
 {
@@ -35,6 +37,12 @@ final class RouteLocatorTest extends TestCase
         $this->routeLocator->discover([
             'Tests\Mock\Controllers\Locate',
         ]);
+
+        $cachedRoutes = $this->container->use(CacheManager::class)
+            ->use('_routes')
+            ->get('Tests.Mock.Controllers.Locate');
+
+        usort($cachedRoutes, fn(array $a, array $b): int => strcmp($a['as'], $b['as']));
 
         $this->assertSame(
             [
@@ -106,10 +114,7 @@ final class RouteLocatorTest extends TestCase
                 ],
                 [
                     'path' => 'parent-category/child-items/do-something',
-                    'destination' => [
-                        ChildItemsController::class,
-                        'doSomething',
-                    ],
+                    'destination' => [ChildItemsController::class, 'doSomething'],
                     'scheme' => null,
                     'host' => null,
                     'port' => null,
@@ -201,10 +206,7 @@ final class RouteLocatorTest extends TestCase
             [
                 [
                     'path' => 'parent-category/child-items/do-something',
-                    'destination' => [
-                        ChildItemsController::class,
-                        'doSomething',
-                    ],
+                    'destination' => [ChildItemsController::class, 'doSomething'],
                     'scheme' => null,
                     'host' => null,
                     'port' => null,
