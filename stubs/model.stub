@@ -1,0 +1,27 @@
+<?php
+declare(strict_types=1);
+
+namespace {namespace};
+
+use Fyre\Event\Event;
+use Fyre\Form\Rule;
+use Fyre\Form\Validator;
+use Fyre\ORM\Entity;
+use Fyre\ORM\Model;
+use Fyre\ORM\RuleSet;
+use Override;
+
+class {class} extends Model
+{
+    #[Override]
+    public function buildRules(RuleSet $rules): RuleSet
+    {
+        return $rules;
+    }
+
+    #[Override]
+    public function buildValidation(Validator $validator): Validator
+    {
+        return $validator;
+    }
+}

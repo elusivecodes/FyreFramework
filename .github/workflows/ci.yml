@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  static:
+    name: Static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          extensions: intl, mbstring
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: PHP-CS-Fixer (dry-run)
+        run: composer cs
+
+      - name: PHPStan
+        run: composer phpstan
+
+      - name: PHPStan (tests)
+        run: composer phpstan-tests
+
+  tests-core:
+    name: Tests (core)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          extensions: intl, mbstring
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Configure PHPUnit
+        run: cp phpunit.example.xml phpunit.xml
+
+      - name: Run tests
+        run: composer test:core
+
+  tests-integration:
+    name: Tests (${{ matrix.suite }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [mariadb, mysql, postgres, redis, memcached, smtp]
+        include:
+          - suite: mariadb
+            service: mariadb
+          - suite: mysql
+            service: mysql
+          - suite: postgres
+            service: postgres
+          - suite: redis
+            service: redis
+          - suite: memcached
+            service: memcached
+          - suite: smtp
+            service: mailpit
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          extensions: intl, mbstring, pdo_mysql, pdo_pgsql, pdo_sqlite, redis, memcached
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Configure PHPUnit
+        run: cp phpunit.example.xml phpunit.xml
+
+      - name: Start service
+        run: docker compose up -d ${{ matrix.service }}
+
+      - name: Wait for service
+        shell: bash
+        run: |
+          set -euo pipefail
+          service="${{ matrix.service }}"
+
+          if [[ "$service" == "memcached" ]]; then
+            sleep 2
+            exit 0
+          fi
+
+          container_id="$(docker compose ps -q "$service")"
+          for _ in {1..60}; do
+            status="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}running{{end}}' "$container_id")"
+            if [[ "$status" == "healthy" || "$status" == "running" ]]; then
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker compose logs "$service"
+          echo "Service $service did not become ready in time." >&2
+          exit 1
+
+      - name: Run tests
+        run: composer test:${{ matrix.suite }}
+
+      - name: Dump service logs (on failure)
+        if: failure()
+        run: docker compose logs ${{ matrix.service }}

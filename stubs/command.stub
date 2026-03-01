@@ -1,0 +1,25 @@
+<?php
+declare(strict_types=1);
+
+namespace {namespace};
+
+use Fyre\Console\Command;
+use Fyre\Console\Console;
+use Override;
+
+class {class} extends Command
+{
+    #[Override]
+    protected string|null $alias = '{alias}';
+
+    #[Override]
+    protected string $description = '{description}';
+
+    #[Override]
+    protected array $options = [];
+
+    public function run(array $arguments = []): int|null
+    {
+        return static::CODE_SUCCESS;
+    }
+}

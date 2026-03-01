@@ -1,0 +1,15 @@
+# Dependencies
+vendor/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tools
+.php-cs-fixer.cache
+.phpunit.result.cache
+phpunit.xml

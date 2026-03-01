@@ -1,0 +1,127 @@
+<?php
+declare(strict_types=1);
+
+namespace Tests\TestCase\View\Helpers\Form;
+
+trait LabelTestTrait
+{
+    public function testLabel(): void
+    {
+        $this->assertSame(
+            '<label for="input-value">Input Value</label>',
+            $this->view->Form->label('input_value')
+        );
+    }
+
+    public function testLabelAttributeArray(): void
+    {
+        $this->assertSame(
+            '<label data-test="[1,2]" for="input">Input</label>',
+            $this->view->Form->label('input', [
+                'data-test' => [1, 2],
+            ])
+        );
+    }
+
+    public function testLabelAttributeEscape(): void
+    {
+        $this->assertSame(
+            '<label data-test="&lt;test&gt;" for="input">Input</label>',
+            $this->view->Form->label('input', [
+                'data-test' => '<test>',
+            ])
+        );
+    }
+
+    public function testLabelAttributeInvalid(): void
+    {
+        $this->assertSame(
+            '<label class="test" for="input">Input</label>',
+            $this->view->Form->label('input', [
+                '*class*' => 'test',
+            ])
+        );
+    }
+
+    public function testLabelAttributes(): void
+    {
+        $this->assertSame(
+            '<label class="test" id="label" for="input">Input</label>',
+            $this->view->Form->label('input', [
+                'class' => 'test',
+                'id' => 'label',
+            ])
+        );
+    }
+
+    public function testLabelAttributesOrder(): void
+    {
+        $this->assertSame(
+            '<label class="test" id="label" for="input">Input</label>',
+            $this->view->Form->label('input', [
+                'id' => 'label',
+                'class' => 'test',
+            ])
+        );
+    }
+
+    public function testLabelDot(): void
+    {
+        $this->assertSame(
+            '<label for="key-input-value">Input Value</label>',
+            $this->view->Form->label('key.input_value')
+        );
+    }
+
+    public function testLabelFor(): void
+    {
+        $this->assertSame(
+            '<label for="other">Input</label>',
+            $this->view->Form->label('input', [
+                'for' => 'other',
+            ])
+        );
+    }
+
+    public function testLabelForFalse(): void
+    {
+        $this->assertSame(
+            '<label>Input</label>',
+            $this->view->Form->label('input', [
+                'for' => false,
+            ])
+        );
+    }
+
+    public function testLabelText(): void
+    {
+        $this->assertSame(
+            '<label for="input">Test</label>',
+            $this->view->Form->label('input', text: 'Test')
+        );
+    }
+
+    public function testLabelTextEmpty(): void
+    {
+        $this->assertSame(
+            '<label for="input"></label>',
+            $this->view->Form->label('input', text: '')
+        );
+    }
+
+    public function testLabelTextEscape(): void
+    {
+        $this->assertSame(
+            '<label for="input">&lt;i&gt;Test&lt;/i&gt;</label>',
+            $this->view->Form->label('input', text: '<i>Test</i>')
+        );
+    }
+
+    public function testLabelTextNoEscape(): void
+    {
+        $this->assertSame(
+            '<label for="input"><i>Test</i></label>',
+            $this->view->Form->label('input', text: '<i>Test</i>', escape: false)
+        );
+    }
+}

@@ -1,0 +1,29 @@
+<?php
+declare(strict_types=1);
+
+namespace {namespace};
+
+use Fyre\ORM\Entity;
+
+class {class}
+{
+    public function create(Entity|null $user): bool
+    {
+        return true;
+    }
+
+    public function read(Entity|null $user, Entity $item): bool
+    {
+        return true;
+    }
+
+    public function update(Entity|null $user, Entity $item): bool
+    {
+        return true;
+    }
+
+    public function delete(Entity|null $user, Entity $item): bool
+    {
+        return true;
+    }
+}

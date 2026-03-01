@@ -1,0 +1,13 @@
+<?php
+declare(strict_types=1);
+
+namespace {namespace};
+
+use Fyre\View\Helper;
+use Override;
+
+class {class} extends Helper
+{
+    #[Override]
+    protected static array $defaults = [];
+}

@@ -1,0 +1,107 @@
+{
+    "name": "fyre/framework",
+    "description": "FyrePHP framework for MVC web apps with PSR-compliant HTTP, routing, ORM, cache, queue, and CLI tooling.",
+    "keywords": [
+        "framework",
+        "fyre",
+        "fyrephp",
+        "php",
+        "mvc",
+        "psr",
+        "psr-7",
+        "psr-11",
+        "psr-15",
+        "http",
+        "router",
+        "orm",
+        "cache",
+        "queue",
+        "console",
+        "email"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "elusivecodes",
+            "email": "elusivecodes@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.5",
+        "ext-intl": "*",
+        "ext-mbstring": "*",
+        "psr/container": "^2.0",
+        "psr/event-dispatcher": "^1.0",
+        "psr/http-client": "^1.0",
+        "psr/http-message": "^2.0",
+        "psr/http-server-handler": "^1.0",
+        "psr/http-server-middleware": "^1.0",
+        "psr/log": "^3.0",
+        "psr/simple-cache": "^3.0"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.91",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^12"
+    },
+    "provide": {
+        "psr/container-implementation": "^2.0",
+        "psr/event-dispatcher-implementation": "^1.0",
+        "psr/http-client-implementation": "^1.0",
+        "psr/http-message-implementation": "^2.0",
+        "psr/http-server-handler-implementation": "^1.0",
+        "psr/http-server-middleware-implementation": "^1.0",
+        "psr/log-implementation": "^3.0",
+        "psr/simple-cache-implementation": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Fyre\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "suggest": {
+        "ext-curl": "Required to use client requests.",
+        "ext-memcached": "Required to use Memcached cache handler.",
+        "ext-openssl": "Required to use OpenSSL encryption handler.",
+        "ext-pcntl": "Required to use queue workers and async promises",
+        "ext-pdo": "Required to use database connections.",
+        "ext-redis": "Required to use Redis cache and queue handlers."
+    },
+    "config": {
+        "lock": false,
+        "sort-packages": true
+    },
+    "scripts": {
+        "cs": "php-cs-fixer fix --ansi --verbose --dry-run --diff",
+        "cs-fix": "php-cs-fixer fix --ansi --verbose --diff",
+        "phpstan": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpstan analyse"
+        ],
+        "phpstan-tests": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpstan analyse -c tests/phpstan.neon"
+        ],
+        "test:core": "phpunit --testsuite core",
+        "test:mysql": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpunit --testsuite mysql"
+        ],
+        "test:mariadb": "phpunit --testsuite mariadb",
+        "test:postgres": "phpunit --testsuite postgres",
+        "test:sqlite": "phpunit --testsuite sqlite",
+        "test:redis": "phpunit --testsuite redis",
+        "test:memcached": "phpunit --testsuite memcached",
+        "test:smtp": "phpunit --testsuite smtp",
+        "test": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpunit"
+        ]
+    }
+}

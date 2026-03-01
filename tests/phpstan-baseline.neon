@@ -1,0 +1,25 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Access to an undefined property Tests\\TestCase\\Core\\Macro\\MacroTest\:\:\$value\.$#'
+			identifier: property.notFound
+			count: 1
+			path: TestCase/Core/Macro/MacroTest.php
+
+		-
+			message: '#^Call to an undefined static method Tests\\Mock\\Core\\Macro\\MyClass\:\:testMacro\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 3
+			path: TestCase/Core/Macro/StaticMacroTest.php
+
+		-
+			message: '#^Anonymous function has an unused use \$i\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: TestCase/Event/EventManagerTest.php
+
+		-
+			message: '#^Variable \$router might not be defined\.$#'
+			identifier: variable.undefined
+			count: 12
+			path: config/routes.php

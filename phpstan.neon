@@ -1,0 +1,18 @@
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: 8
+    treatPhpDocTypesAsCertain: false
+    bootstrapFiles:
+        - tests/bootstrap.php
+    paths:
+        - config
+        - lang
+        - src
+    ignoreErrors:
+        -
+            identifier: trait.unused
+            paths:
+                - src/ORM/Traits/*.php
+                - src/TestSuite/Traits/*.php
