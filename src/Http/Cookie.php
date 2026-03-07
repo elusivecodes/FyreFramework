@@ -52,6 +52,9 @@ class Cookie
 
     protected string $path;
 
+    /**
+     * @var 'lax'|'none'|'strict'
+     */
     protected string $sameSite;
 
     protected bool $secure;
@@ -129,18 +132,17 @@ class Cookie
         $this->domain = $options['domain'];
         $this->secure = $options['secure'];
         $this->httpOnly = $options['httpOnly'];
-        $this->sameSite = $options['sameSite'];
 
-        if ($this->sameSite) {
-            $this->sameSite = strtolower($this->sameSite);
+        $sameSite = strtolower((string) $options['sameSite']);
 
-            if (!in_array($this->sameSite, ['lax', 'strict', 'none'], true)) {
-                throw new InvalidArgumentException(sprintf(
-                    'Same site `%s` is not valid.',
-                    $this->sameSite
-                ));
-            }
+        if (!in_array($sameSite, ['lax', 'strict', 'none'], true)) {
+            throw new InvalidArgumentException(sprintf(
+                'Same site `%s` is not valid.',
+                $sameSite
+            ));
         }
+
+        $this->sameSite = $sameSite;
     }
 
     /**
@@ -208,7 +210,7 @@ class Cookie
     /**
      * Returns the cookie SameSite attribute.
      *
-     * @return string The cookie SameSite attribute.
+     * @return 'lax'|'none'|'strict' The cookie SameSite attribute.
      */
     public function getSameSite(): string
     {
