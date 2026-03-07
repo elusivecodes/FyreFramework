@@ -40,7 +40,7 @@ function handle(ServerRequestInterface $request): string
 }
 ```
 
-This page documents convenience methods on Fyre’s `ServerRequest` implementation, such as `getData()`, `getQuery()`, `isSecure()`, and `negotiate()`. If you type-hint `ServerRequestInterface`, only standard PSR-7 methods are available.
+This page documents convenience methods on Fyre’s `ServerRequest` implementation, such as `getData()`, `getQuery()`, `getClientIp()`, `isSecure()`, and `negotiate()`. If you type-hint `ServerRequestInterface`, only standard PSR-7 methods are available.
 
 If helpers are loaded, the `request()` helper resolves the current request from the container (see [Helpers](../core/helpers.md)):
 
@@ -81,12 +81,22 @@ Uploaded files are exposed as `UploadedFile` objects (from `$_FILES`) and can be
 
 For common environment-derived checks:
 
+- `getClientIp()` returns `REMOTE_ADDR` by default and can use `X-Forwarded-For` when proxy trust is enabled
 - `isSecure()` checks HTTPS indicators (including proxy headers)
 - `isAjax()` checks `X-Requested-With: XMLHttpRequest`
 - `isCli()` checks whether the runtime is `cli`
 
 ```php
+$clientIp = $request->getClientIp();
 $secure = $request->isSecure();
+```
+
+If the application runs behind a trusted reverse proxy, you can enable proxy trust on the request and restrict which proxies may supply `X-Forwarded-For`:
+
+```php
+$request = $request
+    ->trustProxy()
+    ->setTrustedProxies(['127.0.0.1']);
 ```
 
 ## Locale and negotiation
@@ -320,6 +330,46 @@ $request = $request->withoutAttribute('request_id');
 
 ### Request context
 
+#### **Get the client IP** (`getClientIp()`)
+
+Returns the client IP address for the request.
+
+By default, this uses `REMOTE_ADDR`. When proxy trust is enabled with `trustProxy()`, it uses the first value from `X-Forwarded-For` only when the immediate remote address is trusted.
+
+```php
+$ip = $request->getClientIp();
+```
+
+#### **Enable or disable proxy trust** (`trustProxy()`)
+
+Returns a new request instance that either trusts or ignores proxy-forwarded headers when resolving the client IP.
+
+Arguments:
+- `$trustProxy` (`bool`): whether to trust proxy-forwarded headers. Defaults to `true`.
+
+```php
+$request = $request->trustProxy();
+```
+
+#### **Set trusted proxies** (`setTrustedProxies()`)
+
+Returns a new request instance with the list of immediate proxy IPs that are allowed to supply `X-Forwarded-For`.
+
+Arguments:
+- `$trustedProxies` (`string[]`): the trusted proxy IPs.
+
+```php
+$request = $request->setTrustedProxies(['127.0.0.1']);
+```
+
+#### **Get trusted proxies** (`getTrustedProxies()`)
+
+Returns the configured trusted proxy IPs.
+
+```php
+$trustedProxies = $request->getTrustedProxies();
+```
+
 #### **Check HTTPS** (`isSecure()`)
 
 Checks the `HTTPS` server parameter and common proxy headers (`X-Forwarded-Proto`, `Front-End-Https`).
@@ -380,6 +430,7 @@ A few behaviors are worth keeping in mind:
 - `getParsedBody()` always returns an array, but it can throw `RuntimeException` when JSON parsing fails for `application/json` requests.
 - `getParsedBody()` treats `application/x-www-form-urlencoded` bodies specially only for `PUT`, `PATCH`, and `DELETE` requests; other cases fall back to `$_POST`.
 - `withUploadedFiles()` expects `UploadedFile` instances (and nested arrays of them) and throws when other values are provided.
+- `getClientIp()` uses `REMOTE_ADDR` by default. It only consults `X-Forwarded-For` after `trustProxy()` is enabled, and if `setTrustedProxies()` is used, the immediate remote address must be in that list.
 - `isSecure()` reflects what the server environment provides and checks proxy headers in addition to the `HTTPS` server parameter.
 - `negotiate('content', $supported, strictMatch: true)` returns an empty string when no acceptable match is found.
 

@@ -15,6 +15,7 @@ use RuntimeException;
 use function array_key_exists;
 use function array_map;
 use function array_merge;
+use function explode;
 use function getenv;
 use function in_array;
 use function is_array;
@@ -85,6 +86,13 @@ class ServerRequest extends Request implements ServerRequestInterface
      * @var string[]
      */
     protected array $supportedLocales = [];
+
+    /**
+     * @var string[]
+     */
+    protected array $trustedProxies = [];
+
+    protected bool $trustProxy = false;
 
     protected UserAgent $userAgent;
 
@@ -192,6 +200,38 @@ class ServerRequest extends Request implements ServerRequestInterface
     public function getAttributes(): array
     {
         return $this->attributes;
+    }
+
+    /**
+     * Returns the client IP address.
+     *
+     * Note: Uses `REMOTE_ADDR` by default. When proxy trust is enabled, the first value from
+     * `X-Forwarded-For` is used only when the immediate remote address is trusted.
+     *
+     * @return string The client IP address.
+     */
+    public function getClientIp(): string
+    {
+        $remoteAddr = $this->getServer('REMOTE_ADDR') ?? '';
+
+        if (!$this->trustProxy) {
+            return $remoteAddr;
+        }
+
+        if (
+            $this->trustedProxies !== [] &&
+            !in_array($remoteAddr, $this->trustedProxies, true)
+        ) {
+            return $remoteAddr;
+        }
+
+        $forwardedFor = $this->getHeaderLine('X-Forwarded-For');
+
+        if (!$forwardedFor) {
+            return $remoteAddr;
+        }
+
+        return explode(',', $forwardedFor)[0] |> trim(...) ?: $remoteAddr;
     }
 
     /**
@@ -397,6 +437,16 @@ class ServerRequest extends Request implements ServerRequestInterface
     }
 
     /**
+     * Returns the trusted proxy IPs.
+     *
+     * @return string[] The trusted proxy IPs.
+     */
+    public function getTrustedProxies(): array
+    {
+        return $this->trustedProxies;
+    }
+
+    /**
      * Returns an UploadedFile or array of files from the `$_FILES` array using "dot" notation.
      *
      * @param string|null $key The key.
@@ -514,6 +564,36 @@ class ServerRequest extends Request implements ServerRequestInterface
                     $type
                 ));
         }
+    }
+
+    /**
+     * Returns the new ServerRequest instance with updated trusted proxies.
+     *
+     * @param string[] $trustedProxies The trusted proxy IPs.
+     * @return static The new ServerRequest instance.
+     */
+    public function setTrustedProxies(array $trustedProxies): static
+    {
+        $temp = clone $this;
+
+        $temp->trustedProxies = $trustedProxies;
+
+        return $temp;
+    }
+
+    /**
+     * Returns the new ServerRequest instance with proxy trust enabled or disabled.
+     *
+     * @param bool $trustProxy Whether proxy headers should be trusted.
+     * @return static The new ServerRequest instance.
+     */
+    public function trustProxy(bool $trustProxy = true): static
+    {
+        $temp = clone $this;
+
+        $temp->trustProxy = $trustProxy;
+
+        return $temp;
     }
 
     /**
