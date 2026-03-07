@@ -35,7 +35,7 @@ final class ErrorException extends \ErrorException
             return null;
         }
 
-        if (($error['type'] & error_reporting()) === 0) {
+        if ($file === null && $line === null && ($error['type'] & error_reporting()) === 0) {
             return null;
         }
 
