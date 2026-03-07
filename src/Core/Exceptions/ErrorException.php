@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Fyre\Core\Exceptions;
 
 use function error_get_last;
+use function error_reporting;
 use function is_array;
 
 /**
@@ -31,6 +32,10 @@ final class ErrorException extends \ErrorException
         }
 
         if ($line !== null && $error['line'] !== $line) {
+            return null;
+        }
+
+        if (($error['type'] & error_reporting()) === 0) {
             return null;
         }
 

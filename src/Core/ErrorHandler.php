@@ -184,6 +184,10 @@ class ErrorHandler
         $this->originalLevel = error_reporting($this->level);
 
         set_error_handler(function(int $type, string $message, string $file, int $line): bool {
+            if (($type & error_reporting()) === 0) {
+                return false;
+            }
+
             $exception = new ErrorException($message, 0, $type, $file, $line);
 
             $this->render($exception) |> $this->responseEmitter->emit(...);
