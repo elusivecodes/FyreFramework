@@ -237,7 +237,7 @@ This section documents the session APIs you’ll use most often in application c
 
 Most examples assume you already have a `$session` instance (via dependency injection or request attributes).
 
-If `config/functions.php` has been loaded, you can also use the `session()` helper (see [Helpers](../core/helpers.md)):
+You can also use the `session()` helper (see [Helpers](../core/helpers.md)):
 
 - `session()` returns the `Session` instance.
 - `session($key)` reads a value from the session.

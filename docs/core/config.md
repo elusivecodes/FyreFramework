@@ -27,7 +27,7 @@ Config centralizes application and subsystem settings so constructors can stay e
 
 It stores configuration in memory and can merge PHP config files from registered paths when you call `load()`.
 
-If you are using the global helpers, `config()` can be used in two ways:
+`config()` can be used in two ways:
 
 - `config()` returns the shared `Config` instance.
 - `config('A.B.C', $default)` is shorthand for reading a config value directly (see [Helpers](helpers.md)).

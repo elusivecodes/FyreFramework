@@ -154,7 +154,7 @@ $default = $caches->use();
 $redis = $caches->use('redis');
 ```
 
-If helpers are loaded, you can resolve a cache handler by key directly (see [Helpers](../core/helpers.md)):
+You can resolve a cache handler by key directly (see [Helpers](../core/helpers.md)):
 
 ```php
 $default = cache();
@@ -171,7 +171,7 @@ Examples below assume caching is enabled and the requested cache key exists.
 
 ```php
 $cache = $caches->use();
-// If helpers are loaded, you can also do: $cache = cache();
+// You can also do: $cache = cache();
 
 $value = $cache->get('report.123');
 $cache->set('report.123', $value, 300);

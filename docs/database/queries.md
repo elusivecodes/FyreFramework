@@ -50,7 +50,7 @@ After a successful `execute()`, the query’s internal “dirty” state is rese
 
 Most examples on this page assume you already have a `$db` (`Connection`) instance.
 
-- If helpers are available, `db()` returns the default connection (see [Database connections](connections.md)).
+- `db()` returns the default connection (see [Database connections](connections.md)).
 - Otherwise, resolve a `Connection` from your container and pass it into the code that needs it.
 
 ### Query types and SQL mapping

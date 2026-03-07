@@ -45,7 +45,6 @@ class Application extends Engine
         $this->singleton(LoggerInterface::class, FileLogger::class);
 
         $config
-            ->load('functions')
             ->load('bootstrap');
     }
 
@@ -91,7 +90,7 @@ $app->call([$app, 'boot']);
 
 ## Using the `app()` helper
 
-If helper functions have been loaded, the `app()` helper provides a shorthand for accessing the shared `Engine` instance or resolving a service from it.
+The `app()` helper provides a shorthand for accessing the shared `Engine` instance or resolving a service from it.
 
 Under the hood, `app()` calls `Engine::getInstance()` and then either returns that instance (when called with no arguments) or resolves an alias via `$app->use($alias, $arguments)`.
 

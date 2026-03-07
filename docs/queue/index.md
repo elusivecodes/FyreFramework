@@ -65,7 +65,7 @@ $email = 'user@example.com';
 $queues->push(SendWelcomeEmailJob::class, ['email' => $email]);
 ```
 
-If helpers are loaded, `queue($className, $arguments, $options)` pushes a job through the shared `QueueManager`; see [Helpers](../core/helpers.md).
+`queue($className, $arguments, $options)` pushes a job through the shared `QueueManager`; see [Helpers](../core/helpers.md).
 
 ```php
 queue(SendWelcomeEmailJob::class, ['email' => $email]);

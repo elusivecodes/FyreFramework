@@ -57,7 +57,7 @@ $connection = app(ConnectionManager::class)->use();
 $schema = app(SchemaRegistry::class)->use($connection);
 ```
 
-If helpers are available, you can resolve the connection part more tersely:
+You can resolve the connection part more tersely:
 
 ```php
 use Fyre\DB\Schema\SchemaRegistry;

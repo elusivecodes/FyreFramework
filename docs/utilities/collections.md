@@ -34,7 +34,7 @@
 Use `Collection` when you want readable, chainable transformations over a sequence of values (especially when the underlying data may be produced lazily). Most transformation methods return a new `Collection`, and values are typically only computed when you iterate or materialize the result.
 
 If you already have a plain array and you want a single operation (or a couple of explicit steps), see [Array Helpers](arrays.md).
-If helpers are loaded, `collect($source)` is the shorthand for creating a `Collection`; see [Helpers](../core/helpers.md).
+`collect($source)` is the shorthand for creating a `Collection`; see [Helpers](../core/helpers.md).
 
 ## Quick start
 
@@ -62,7 +62,7 @@ $values = Collection::range(1, 10)
     ->toList();
 ```
 
-If helpers are loaded, the same kind of pipeline can start from `collect()`:
+The same kind of pipeline can start from `collect()`:
 
 ```php
 $emails = collect($users)

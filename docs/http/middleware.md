@@ -155,7 +155,7 @@ Note: The string prefix (for example `throttle`) must be a mapped alias (or a re
 
 This section focuses on the methods you’ll use most when defining and resolving middleware.
 
-If helpers are loaded, you can also resolve it from the container (see [Helpers](../core/helpers.md)):
+You can also resolve it from the container (see [Helpers](../core/helpers.md)):
 
 ```php
 use Fyre\Http\MiddlewareRegistry;

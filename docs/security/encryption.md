@@ -108,7 +108,7 @@ $default = $encrypters->use();
 $openssl = $encrypters->use('openssl');
 ```
 
-If helpers are loaded, `encryption($key)` resolves the configured encrypter directly; see [Helpers](../core/helpers.md).
+`encryption($key)` resolves the configured encrypter directly; see [Helpers](../core/helpers.md).
 
 ```php
 $encrypter = encryption();

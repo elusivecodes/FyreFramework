@@ -24,7 +24,6 @@ class Application extends Engine
         parent::__construct($loader);
 
         $this->use(Config::class)
-            ->load('functions')
             ->load('app');
 
         $this->use(ErrorHandler::class)

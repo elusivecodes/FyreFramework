@@ -53,7 +53,7 @@ Routes are registered with `Router::connect()`. Convenience methods exist for co
 
 In an application, routes are typically defined in `CONFIG/routes.php` (commonly `config/routes.php`) and loaded when the router is constructed.
 
-Most examples assume you already have a `$router` instance (for example via dependency injection). If helpers are loaded, you can also resolve it from the container:
+Most examples assume you already have a `$router` instance (for example via dependency injection). You can also resolve it from the container:
 
 ```php
 use Fyre\Router\Router;

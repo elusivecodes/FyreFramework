@@ -120,6 +120,11 @@
             <file>tests/TestCase/Mail/SmtpTest.php</file>
         </testsuite>
     </testsuites>
+    <source>
+        <include>
+            <directory>src</directory>
+        </include>
+    </source>
     <php>
         <ini name="memory_limit" value="-1"/>
         <ini name="error_reporting" value="E_ALL" />

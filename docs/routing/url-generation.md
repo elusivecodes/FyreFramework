@@ -39,7 +39,7 @@ use Fyre\Router\Router;
 $router = app(Router::class);
 ```
 
-If helpers are loaded, `route($name, $arguments, ...)` is the shorthand for `Router::url()`; see [Helpers](../core/helpers.md).
+`route($name, $arguments, ...)` is the shorthand for `Router::url()`; see [Helpers](../core/helpers.md).
 
 ```php
 $url = route('posts.show', ['id' => 42]);

@@ -42,7 +42,7 @@ function handle(ServerRequestInterface $request): string
 
 This page documents convenience methods on Fyre’s `ServerRequest` implementation, such as `getData()`, `getQuery()`, `getClientIp()`, `isSecure()`, `prefersJson()`, and `negotiate()`. If you type-hint `ServerRequestInterface`, only standard PSR-7 methods are available.
 
-If helpers are loaded, the `request()` helper resolves the current request from the container (see [Helpers](../core/helpers.md)):
+The `request()` helper resolves the current request from the container (see [Helpers](../core/helpers.md)):
 
 ```php
 $request = request();
@@ -143,7 +143,7 @@ Attributes are typically written by middleware and read by downstream middleware
 
 This section focuses on the methods you’ll use most when working with `ServerRequest`.
 
-Most examples assume you already have a `$request` instance (via dependency injection). If helpers are loaded, you can also set `$request = request();` (see [Helpers](../core/helpers.md)).
+Most examples assume you already have a `$request` instance (via dependency injection). You can also set `$request = request();` (see [Helpers](../core/helpers.md)).
 
 ### Input data
 

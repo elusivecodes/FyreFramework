@@ -171,7 +171,7 @@ $default = $mailers->use();
 $debug = $mailers->use('debug');
 ```
 
-If helpers are loaded, `email($key)` creates a new `Email` from the selected mailer; see [Helpers](../core/helpers.md).
+`email($key)` creates a new `Email` from the selected mailer; see [Helpers](../core/helpers.md).
 
 ```php
 email('debug')

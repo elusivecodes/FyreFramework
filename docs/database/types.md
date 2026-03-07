@@ -66,7 +66,7 @@ Types show up in a few places across the database layer:
 
 Most examples on this page assume you already have a `$typeParser` (`TypeParser`) instance.
 
-- If helpers are available, `type()` returns the shared `TypeParser`.
+- `type()` returns the shared `TypeParser`.
 - Otherwise, resolve `TypeParser` from your container and pass it into the code that needs it.
 
 ### Type identifiers and aliases
@@ -123,7 +123,7 @@ $map = $typeParser->getTypeMap();
 
 ### Using the global `type()` helper
 
-If you have the framework’s global helpers available, `type()` provides a shorthand for resolving the shared `TypeParser` and using a mapped type identifier.
+`type()` provides a shorthand for resolving the shared `TypeParser` and using a mapped type identifier.
 For helper loading and the rest of the helper surface, see [Helpers](../core/helpers.md).
 
 Note: this is different from schema’s `Column::type()` method (which resolves a type handler from column metadata).

@@ -98,7 +98,7 @@ $response = (new ClientResponse())
     ->withExpiredCookie('legacy_session');
 ```
 
-If helpers are loaded, `response()` resolves a `ClientResponse` from the container, and `json($data)` is shorthand for `response()->withJson($data)` (see [Helpers](../core/helpers.md)).
+`response()` resolves a `ClientResponse` from the container, and `json($data)` is shorthand for `response()->withJson($data)` (see [Helpers](../core/helpers.md)).
 
 ## Redirect responses
 
@@ -112,7 +112,7 @@ use Fyre\Http\RedirectResponse;
 $response = new RedirectResponse('/login');
 ```
 
-If helpers are loaded, `redirect($uri, $code, $options)` resolves a `RedirectResponse` via the container (see [Helpers](../core/helpers.md)).
+`redirect($uri, $code, $options)` resolves a `RedirectResponse` via the container (see [Helpers](../core/helpers.md)).
 
 ### Status code behavior
 
@@ -193,7 +193,7 @@ If the response includes a valid `Content-Range` header in the form `bytes start
 
 This section focuses on the most-used response methods, grouped by class.
 
-Most examples assume you already have a `$response` instance (via dependency injection). If helpers are loaded, you can also set `$response = response();` (see [Helpers](../core/helpers.md)). Examples commonly reassign `$response` to emphasize immutability.
+Most examples assume you already have a `$response` instance (via dependency injection). You can also set `$response = response();` (see [Helpers](../core/helpers.md)). Examples commonly reassign `$response` to emphasize immutability.
 
 Examples below assume relevant classes are already imported when needed.
 

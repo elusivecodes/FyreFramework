@@ -37,7 +37,7 @@ use function config;
 use function view;
 ```
 
-The helper functions live in `config/functions.php` and are typically loaded during application bootstrap (see [How helpers work](#how-helpers-work)).
+The helper functions are defined in [`src/functions.php`](../../src/functions.php) and autoloaded via Composer.
 
 ## When to use helpers
 
@@ -99,18 +99,7 @@ Most helpers follow the same pattern: resolve a service from the engine (via `ap
 
 A smaller group are direct runtime conveniences rather than service wrappers, such as `env()`, `dump()`, `dd()`, `abort()`, `collect()`, and `now()`.
 
-The helper functions are defined in `config/functions.php`. In a typical application, that file is loaded during bootstrap via the config system (see [Config](config.md)).
-
-For example, during application bootstrapping:
-
-```php
-use Fyre\Core\Config;
-
-function boot(Config $config): void
-{
-    $config->load('functions');
-}
-```
+They are available anywhere the framework package autoloader is active.
 
 ### Helper-to-service mapping
 

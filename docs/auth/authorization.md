@@ -61,7 +61,7 @@ The first non-`null` result becomes the decision. If nothing applies, access is 
 
 Access should be obtained from `Auth`, because `Auth` provides the current-user context used during authorization.
 
-If helpers are loaded, you’ll usually get an `Access` instance like this:
+You’ll usually get an `Access` instance like this:
 
 ```php
 $access = auth()->access();

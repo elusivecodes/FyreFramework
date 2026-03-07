@@ -7,7 +7,6 @@ parameters:
     bootstrapFiles:
         - tests/bootstrap.php
     paths:
-        - config
         - lang
         - src
     ignoreErrors:

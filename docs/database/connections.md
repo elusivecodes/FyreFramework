@@ -169,7 +169,7 @@ $default = $connections->use();
 $analytics = $connections->use('analytics');
 ```
 
-If the `db()` helper is available, you can resolve connections by key directly:
+You can resolve connections by key directly:
 
 ```php
 $default = db();
@@ -338,7 +338,7 @@ This section documents the `Fyre\DB\Connection` APIs you’ll use most often aft
 
 ```php
 $db = $connections->use();
-// If helpers are loaded, you can also do: $db = db();
+// You can also do: $db = db();
 ```
 
 #### **Create a SELECT query** (`select()`)

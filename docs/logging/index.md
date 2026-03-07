@@ -190,7 +190,7 @@ Use `LogManager::handle()` to log a message to all configured handlers that matc
 $logs->handle('error', 'Payment failed for user {id}', ['id' => 123], 'payments');
 ```
 
-If helpers are loaded, `log_message($type, $message, $data)` forwards to `LogManager::handle()`; see [Helpers](../core/helpers.md).
+`log_message($type, $message, $data)` forwards to `LogManager::handle()`; see [Helpers](../core/helpers.md).
 
 ```php
 log_message('error', 'Payment failed for user {id}', ['id' => 123]);

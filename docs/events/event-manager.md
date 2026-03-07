@@ -45,7 +45,7 @@ Terminology used in this guide:
 
 Most examples on this page assume you already have an `$eventManager` instance (for example via dependency injection).
 
-If helpers are loaded, you can also resolve it from the container (see [Helpers](../core/helpers.md)) via `$eventManager = app(Fyre\Event\EventManager::class);`.
+You can also resolve it from the container (see [Helpers](../core/helpers.md)) via `$eventManager = app(Fyre\Event\EventManager::class);`.
 
 ### Register a callback
 

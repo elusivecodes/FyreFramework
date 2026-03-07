@@ -56,6 +56,9 @@
         "psr/simple-cache-implementation": "^3.0"
     },
     "autoload": {
+        "files": [
+            "src/functions.php"
+        ],
         "psr-4": {
             "Fyre\\": "src/"
         }

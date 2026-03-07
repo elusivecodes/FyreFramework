@@ -44,7 +44,7 @@ An entity is a record-centric object:
 - serializes to arrays/JSON
 
 Entities are documented in [Entities](entities.md). When you don’t explicitly wire classes, `ModelRegistry` and `EntityLocator` provide conventions and caching so models and entities can be resolved from simple aliases.
-If helpers are loaded, `model('Users')` is the shorthand for resolving a model from `ModelRegistry`; see [Helpers](../core/helpers.md).
+`model('Users')` is the shorthand for resolving a model from `ModelRegistry`; see [Helpers](../core/helpers.md).
 
 ## Models: persistence and metadata
 

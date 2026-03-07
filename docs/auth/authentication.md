@@ -240,7 +240,7 @@ The current user is stored on `Auth`:
 - `user(): Entity|null`
 - `isLoggedIn(): bool`
 
-If helpers are loaded, you can also use:
+You can also use:
 
 - `user(): Entity|null`
 - `logged_in(): bool`

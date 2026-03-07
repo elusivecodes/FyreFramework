@@ -16,7 +16,7 @@ If you’re new to the framework, start here:
 
 - **Understanding the application runtime**: [Engine](engine.md) → [Container](container.md)
 - **Working with configuration and messages**: [Config](config.md) and [Language (Lang)](lang.md)
-- **Using global helpers (optional)**: [Helpers](helpers.md)
+- **Using helpers**: [Helpers](helpers.md)
 - **Autoloading and discovery**: [Loader](loader.md)
 
 ## Core overview
