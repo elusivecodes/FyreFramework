@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Fyre\Commands;
 
 use Fyre\Console\Command;
+use Fyre\Console\Console;
 use Fyre\DB\ConnectionManager;
 use Fyre\DB\Migration\MigrationRunner;
 use Override;
@@ -29,20 +30,33 @@ class DbMigrateCommand extends Command
     ];
 
     /**
+     * {@inheritDoc}
+     *
+     * @param Console $io The Console.
+     * @param ConnectionManager $connectionManager The ConnectionManager.
+     * @param MigrationRunner $migrationRunner The MigrationRunner.
+     */
+    public function __construct(
+        Console $io,
+        protected ConnectionManager $connectionManager,
+        protected MigrationRunner $migrationRunner,
+    ) {
+        parent::__construct($io);
+    }
+
+    /**
      * Runs the command.
      *
      * Note: The connection is resolved using the supplied `$db` key before running migrations.
      *
-     * @param ConnectionManager $connectionManager The ConnectionManager.
-     * @param MigrationRunner $migrationRunner The MigrationRunner.
      * @param string $db The connection key.
      * @return int|null The exit code.
      */
-    public function run(ConnectionManager $connectionManager, MigrationRunner $migrationRunner, string $db): int|null
+    public function run(string $db): int|null
     {
-        $connection = $connectionManager->use($db);
+        $connection = $this->connectionManager->use($db);
 
-        $migrationRunner
+        $this->migrationRunner
             ->setConnection($connection)
             ->migrate();
 

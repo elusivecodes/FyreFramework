@@ -35,28 +35,40 @@ class MakeHelperCommand extends Command
     ];
 
     /**
+     * {@inheritDoc}
+     *
+     * @param Console $io The Console.
+     * @param Make $make The Make.
+     * @param HelperRegistry $helperRegistry The HelperRegistry.
+     */
+    public function __construct(
+        Console $io,
+        protected Make $make,
+        protected HelperRegistry $helperRegistry,
+    ) {
+        parent::__construct($io);
+    }
+
+    /**
      * Runs the command.
      *
      * Note: The namespace defaults to the first registered {@see HelperRegistry} namespace, or `App\Helpers`.
      * The generated class name is suffixed with `Helper`.
      *
-     * @param Make $make The Make.
-     * @param HelperRegistry $helperRegistry The HelperRegistry.
-     * @param Console $io The Console.
      * @param string $name The helper name.
      * @param string|null $namespace The helper namespace.
      * @return int|null The exit code.
      */
-    public function run(Make $make, HelperRegistry $helperRegistry, Console $io, string $name, string|null $namespace = null): int|null
+    public function run(string $name, string|null $namespace = null): int|null
     {
-        $namespace ??= $helperRegistry->getNamespaces()[0] ?? 'App\Helpers';
+        $namespace ??= $this->helperRegistry->getNamespaces()[0] ?? 'App\Helpers';
 
         [$namespace, $className] = Make::parseNamespaceClass($namespace, $name.'Helper');
 
-        $path = $make->findPath($namespace);
+        $path = $this->make->findPath($namespace);
 
         if (!$path) {
-            $io->error('Namespace path not found.');
+            $this->io->error('Namespace path not found.');
 
             return static::CODE_ERROR;
         }
@@ -64,7 +76,7 @@ class MakeHelperCommand extends Command
         $fullPath = Path::join($path, $className.'.php');
 
         if (file_exists($fullPath)) {
-            $io->error('Helper file already exists.');
+            $this->io->error('Helper file already exists.');
 
             return static::CODE_ERROR;
         }
@@ -75,7 +87,7 @@ class MakeHelperCommand extends Command
         ]);
 
         if (!Make::saveFile($fullPath, $contents)) {
-            $io->error('Helper file could not be written.');
+            $this->io->error('Helper file could not be written.');
 
             return static::CODE_ERROR;
         }

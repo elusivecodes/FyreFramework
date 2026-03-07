@@ -31,28 +31,39 @@ class QueueStatsCommand extends Command
     ];
 
     /**
+     * {@inheritDoc}
+     *
+     * @param Console $io The Console.
+     * @param QueueManager $queueManager The QueueManager.
+     */
+    public function __construct(
+        Console $io,
+        protected QueueManager $queueManager,
+    ) {
+        parent::__construct($io);
+    }
+
+    /**
      * Runs the command.
      *
      * Note: When no filters are provided, stats are displayed for all configured queue handlers and their queues.
      *
-     * @param QueueManager $queueManager The QueueManager.
-     * @param Console $io The Console.
      * @param string|null $config The queue config key.
      * @param string|null $queue The queue name.
      * @return int|null The exit code.
      */
-    public function run(QueueManager $queueManager, Console $io, string|null $config = null, string|null $queue = null): int|null
+    public function run(string|null $config = null, string|null $queue = null): int|null
     {
-        $handlers = $queueManager->getConfig() ?? [];
+        $handlers = $this->queueManager->getConfig() ?? [];
 
         foreach ($handlers as $key => $data) {
             if ($config && $key !== $config) {
                 continue;
             }
 
-            $instance = $queueManager->use($key);
+            $instance = $this->queueManager->use($key);
 
-            $io->write($key, Console::GREEN, style: Console::BOLD);
+            $this->io->write($key, Console::GREEN, style: Console::BOLD);
 
             $activeQueues = $instance->queues();
 
@@ -68,8 +79,8 @@ class QueueStatsCommand extends Command
                     $stats
                 );
 
-                $io->write($activeQueue, Console::BLUE);
-                $io->table($data);
+                $this->io->write($activeQueue, Console::BLUE);
+                $this->io->table($data);
             }
         }
 

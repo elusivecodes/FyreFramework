@@ -38,29 +38,41 @@ class MakeCellCommand extends Command
     ];
 
     /**
+     * {@inheritDoc}
+     *
+     * @param Console $io The Console.
+     * @param Make $make The Make.
+     * @param CellRegistry $cellRegistry The CellRegistry.
+     */
+    public function __construct(
+        Console $io,
+        protected Make $make,
+        protected CellRegistry $cellRegistry,
+    ) {
+        parent::__construct($io);
+    }
+
+    /**
      * Runs the command.
      *
      * Note: The namespace defaults to the first registered {@see CellRegistry} namespace, or `App\Cells`.
      * The generated class name is suffixed with `Cell`.
      *
-     * @param Make $make The Make.
-     * @param CellRegistry $cellRegistry The CellRegistry.
-     * @param Console $io The Console.
      * @param string $name The cell name.
      * @param string $method The cell method.
      * @param string|null $namespace The cell namespace.
      * @return int|null The exit code.
      */
-    public function run(Make $make, CellRegistry $cellRegistry, Console $io, string $name, string $method, string|null $namespace = null): int|null
+    public function run(string $name, string $method, string|null $namespace = null): int|null
     {
-        $namespace ??= $cellRegistry->getNamespaces()[0] ?? 'App\Cells';
+        $namespace ??= $this->cellRegistry->getNamespaces()[0] ?? 'App\Cells';
 
         [$namespace, $className] = Make::parseNamespaceClass($namespace, $name.'Cell');
 
-        $path = $make->findPath($namespace);
+        $path = $this->make->findPath($namespace);
 
         if (!$path) {
-            $io->error('Namespace path not found.');
+            $this->io->error('Namespace path not found.');
 
             return static::CODE_ERROR;
         }
@@ -68,7 +80,7 @@ class MakeCellCommand extends Command
         $fullPath = Path::join($path, $className.'.php');
 
         if (file_exists($fullPath)) {
-            $io->error('Cell file already exists.');
+            $this->io->error('Cell file already exists.');
 
             return static::CODE_ERROR;
         }
@@ -80,7 +92,7 @@ class MakeCellCommand extends Command
         ]);
 
         if (!Make::saveFile($fullPath, $contents)) {
-            $io->error('Cell file could not be written.');
+            $this->io->error('Cell file could not be written.');
 
             return static::CODE_ERROR;
         }

@@ -83,7 +83,7 @@ trait HavingTestTrait
             $this->db->select()
                 ->from('test')
                 ->having([
-                    'value IN' => function(Connection $db): SelectQuery {
+                    'value IN' => static function(Connection $db): SelectQuery {
                         return $db->select(['id'])
                             ->from('test');
                     },
@@ -274,7 +274,7 @@ trait HavingTestTrait
             $this->db->select()
                 ->from('test')
                 ->having([
-                    'value' => function(Connection $db): QueryLiteral {
+                    'value' => static function(Connection $db): QueryLiteral {
                         return $db->literal('UPPER(test)');
                     },
                 ])

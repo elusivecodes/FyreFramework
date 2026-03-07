@@ -82,7 +82,7 @@ trait UpdateBatchTestTrait
                     [
                         'id' => 1,
                         'name' => 'Test 1',
-                        'value' => function(Connection $db): SelectQuery {
+                        'value' => static function(Connection $db): SelectQuery {
                             return $db->select(['id'])
                                 ->from('test')
                                 ->limit(1);
@@ -91,7 +91,7 @@ trait UpdateBatchTestTrait
                     [
                         'id' => 2,
                         'name' => 'Test 2',
-                        'value' => function(Connection $db): SelectQuery {
+                        'value' => static function(Connection $db): SelectQuery {
                             return $db->select(['id'])
                                 ->from('test')
                                 ->limit(1);
@@ -132,14 +132,14 @@ trait UpdateBatchTestTrait
                     [
                         'id' => 1,
                         'name' => 'Test 1',
-                        'value' => function(Connection $db): QueryLiteral {
+                        'value' => static function(Connection $db): QueryLiteral {
                             return $db->literal('2 * 10');
                         },
                     ],
                     [
                         'id' => 2,
                         'name' => 'Test 2',
-                        'value' => function(Connection $db): QueryLiteral {
+                        'value' => static function(Connection $db): QueryLiteral {
                             return $db->literal('2 * 20');
                         },
                     ],

@@ -35,27 +35,39 @@ class MakeEntityCommand extends Command
     ];
 
     /**
+     * {@inheritDoc}
+     *
+     * @param Console $io The Console.
+     * @param Make $make The Make.
+     * @param EntityLocator $entityLocator The EntityLocator.
+     */
+    public function __construct(
+        Console $io,
+        protected Make $make,
+        protected EntityLocator $entityLocator,
+    ) {
+        parent::__construct($io);
+    }
+
+    /**
      * Runs the command.
      *
      * Note: The namespace defaults to the first registered {@see EntityLocator} namespace, or `App\Entities`.
      *
-     * @param Make $make The Make.
-     * @param EntityLocator $entityLocator The EntityLocator.
-     * @param Console $io The Console.
      * @param string $name The entity name.
      * @param string|null $namespace The entity namespace.
      * @return int|null The exit code.
      */
-    public function run(Make $make, EntityLocator $entityLocator, Console $io, string $name, string|null $namespace = null): int|null
+    public function run(string $name, string|null $namespace = null): int|null
     {
-        $namespace ??= $entityLocator->getNamespaces()[0] ?? 'App\Entities';
+        $namespace ??= $this->entityLocator->getNamespaces()[0] ?? 'App\Entities';
 
         [$namespace, $className] = Make::parseNamespaceClass($namespace, $name);
 
-        $path = $make->findPath($namespace);
+        $path = $this->make->findPath($namespace);
 
         if (!$path) {
-            $io->error('Namespace path not found.');
+            $this->io->error('Namespace path not found.');
 
             return static::CODE_ERROR;
         }
@@ -63,7 +75,7 @@ class MakeEntityCommand extends Command
         $fullPath = Path::join($path, $className.'.php');
 
         if (file_exists($fullPath)) {
-            $io->error('Entity file already exists.');
+            $this->io->error('Entity file already exists.');
 
             return static::CODE_ERROR;
         }
@@ -74,7 +86,7 @@ class MakeEntityCommand extends Command
         ]);
 
         if (!Make::saveFile($fullPath, $contents)) {
-            $io->error('Entity file could not be written.');
+            $this->io->error('Entity file could not be written.');
 
             return static::CODE_ERROR;
         }

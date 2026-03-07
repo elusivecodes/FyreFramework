@@ -40,7 +40,7 @@ trait UpsertTestTrait
                 ->values([
                     [
                         'name' => 'Test 1',
-                        'value' => function(Connection $db): SelectQuery {
+                        'value' => static function(Connection $db): SelectQuery {
                             return $db->select(['id'])
                                 ->from('test')
                                 ->limit(1);
@@ -48,7 +48,7 @@ trait UpsertTestTrait
                     ],
                     [
                         'name' => 'Test 2',
-                        'value' => function(Connection $db): SelectQuery {
+                        'value' => static function(Connection $db): SelectQuery {
                             return $db->select(['id'])
                                 ->from('test')
                                 ->limit(1);
@@ -92,13 +92,13 @@ trait UpsertTestTrait
                 ->values([
                     [
                         'name' => 'Test 1',
-                        'value' => function(Connection $db): QueryLiteral {
+                        'value' => static function(Connection $db): QueryLiteral {
                             return $db->literal('2 * 10');
                         },
                     ],
                     [
                         'name' => 'Test 2',
-                        'value' => function(Connection $db): QueryLiteral {
+                        'value' => static function(Connection $db): QueryLiteral {
                             return $db->literal('2 * 20');
                         },
                     ],

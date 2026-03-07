@@ -36,22 +36,33 @@ class MakeLayoutCommand extends Command
     ];
 
     /**
+     * {@inheritDoc}
+     *
+     * @param Console $io The Console.
+     * @param TemplateLocator $templateLocator The TemplateLocator.
+     */
+    public function __construct(
+        Console $io,
+        protected TemplateLocator $templateLocator,
+    ) {
+        parent::__construct($io);
+    }
+
+    /**
      * Runs the command.
      *
      * Note: The target file is written beneath the resolved template path in the {@see TemplateLocator::LAYOUTS_FOLDER} folder.
      *
-     * @param TemplateLocator $templateLocator The TemplateLocator.
-     * @param Console $io The Console.
      * @param string $template The template name.
      * @param string|null $path The template path.
      * @return int|null The exit code.
      */
-    public function run(TemplateLocator $templateLocator, Console $io, string $template, string|null $path = null): int|null
+    public function run(string $template, string|null $path = null): int|null
     {
-        $path ??= $templateLocator->getPaths()[0] ?? '';
+        $path ??= $this->templateLocator->getPaths()[0] ?? '';
 
         if (file_exists($path) && !is_dir($path)) {
-            $io->error('Invalid layout path.');
+            $this->io->error('Invalid layout path.');
 
             return static::CODE_ERROR;
         }
@@ -61,7 +72,7 @@ class MakeLayoutCommand extends Command
         $fullPath = Path::join($path, TemplateLocator::LAYOUTS_FOLDER, $template.'.php');
 
         if (file_exists($fullPath)) {
-            $io->error('Layout file already exists.');
+            $this->io->error('Layout file already exists.');
 
             return static::CODE_ERROR;
         }
@@ -69,7 +80,7 @@ class MakeLayoutCommand extends Command
         $contents = Make::loadStub('layout');
 
         if (!Make::saveFile($fullPath, $contents)) {
-            $io->error('Layout file could not be written.');
+            $this->io->error('Layout file could not be written.');
 
             return static::CODE_ERROR;
         }

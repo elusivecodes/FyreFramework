@@ -42,7 +42,7 @@ final class RouteLocatorTest extends TestCase
             ->use('_routes')
             ->get('Tests.Mock.Controllers.Locate');
 
-        usort($cachedRoutes, fn(array $a, array $b): int => strcmp($a['as'], $b['as']));
+        usort($cachedRoutes, static fn(array $a, array $b): int => strcmp($a['as'], $b['as']));
 
         $this->assertSame(
             [

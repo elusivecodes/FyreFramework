@@ -107,7 +107,7 @@ final class SchemaTest extends TestCase
                 ],
             ],
             array_map(
-                fn(Field $field): array => $field->toArray(),
+                static fn(Field $field): array => $field->toArray(),
                 $fields
             )
         );

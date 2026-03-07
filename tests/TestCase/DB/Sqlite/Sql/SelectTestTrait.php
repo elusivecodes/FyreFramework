@@ -37,7 +37,7 @@ trait SelectTestTrait
             'SELECT * FROM (SELECT * FROM test) AS alt',
             $this->db->select()
                 ->from([
-                    'alt' => function(Connection $db): SelectQuery {
+                    'alt' => static function(Connection $db): SelectQuery {
                         return $db->select()
                             ->from('test');
 
@@ -109,7 +109,7 @@ trait SelectTestTrait
         $this->assertSame(
             'SELECT (SELECT name FROM test LIMIT 1) AS alt FROM test',
             $this->db->select([
-                'alt' => function(Connection $db): SelectQuery {
+                'alt' => static function(Connection $db): SelectQuery {
                     return $db->select(['name'])
                         ->from('test')
                         ->limit(1);
@@ -125,7 +125,7 @@ trait SelectTestTrait
         $this->assertSame(
             'SELECT UPPER(test) AS alt FROM test',
             $this->db->select([
-                'alt' => function(Connection $db): QueryLiteral {
+                'alt' => static function(Connection $db): QueryLiteral {
                     return $db->literal('UPPER(test)');
                 },
             ])
@@ -260,7 +260,7 @@ trait SelectTestTrait
             'SELECT * FROM (SELECT * FROM test) AS alt',
             $this->db->select()
                 ->from([
-                    'alt' => function(Connection $db): QueryLiteral {
+                    'alt' => static function(Connection $db): QueryLiteral {
                         return $db->literal('(SELECT * FROM test)');
                     },
                 ])

@@ -55,7 +55,7 @@ class UsersModel extends Model
 {
     public function initialize(): void
     {
-        $this->getEventManager()->on('ORM.beforeSave', function(Event $event, Entity $entity, array $options): void {
+        $this->getEventManager()->on('ORM.beforeSave', static function(Event $event, Entity $entity, array $options): void {
             $entity->set('updated', time());
         });
     }

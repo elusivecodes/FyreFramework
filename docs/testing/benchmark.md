@@ -30,8 +30,8 @@ use Fyre\TestSuite\Benchmark;
 
 $bench = new Benchmark();
 
-$bench->add('json_encode', fn(): string => json_encode(['a' => 1, 'b' => 2]));
-$bench->add('serialize', fn(): string => serialize(['a' => 1, 'b' => 2]));
+$bench->add('json_encode', static fn(): string => json_encode(['a' => 1, 'b' => 2]));
+$bench->add('serialize', static fn(): string => serialize(['a' => 1, 'b' => 2]));
 ```
 
 ## Running benchmarks
@@ -40,8 +40,8 @@ $bench->add('serialize', fn(): string => serialize(['a' => 1, 'b' => 2]));
 
 ```php
 $bench = (new Benchmark())
-    ->add('a', fn(): int => 1 + 1)
-    ->add('b', fn(): int => 2 + 2);
+    ->add('a', static fn(): int => 1 + 1)
+    ->add('b', static fn(): int => 2 + 2);
 
 $results = $bench->run(5000);
 
@@ -76,8 +76,8 @@ Arguments:
 - `$callback` (`callable`): the test callback.
 
 ```php
-$bench->add('json_encode', fn(): string => json_encode(['a' => 1]));
-$bench->add('serialize', fn(): string => serialize(['a' => 1]));
+$bench->add('json_encode', static fn(): string => json_encode(['a' => 1]));
+$bench->add('serialize', static fn(): string => serialize(['a' => 1]));
 ```
 
 #### **Run benchmarks** (`run()`)
@@ -88,8 +88,8 @@ Arguments:
 - `$iterations` (`int`): the number of iterations per test.
 
 ```php
-$bench->add('a', fn(): int => 1 + 1);
-$bench->add('b', fn(): int => 2 + 2);
+$bench->add('a', static fn(): int => 1 + 1);
+$bench->add('b', static fn(): int => 2 + 2);
 
 $results = $bench->run(5000);
 $a = $results['a'];
@@ -105,7 +105,7 @@ Arguments:
 - `$name` (`string`): the test name.
 
 ```php
-$bench->add('a', fn(): int => 1 + 1);
+$bench->add('a', static fn(): int => 1 + 1);
 
 if ($bench->has('a')) {
     $bench->remove('a');
@@ -120,7 +120,7 @@ Arguments:
 - `$name` (`string`): the test name.
 
 ```php
-$bench->add('a', fn(): int => 1 + 1);
+$bench->add('a', static fn(): int => 1 + 1);
 
 $callback = $bench->get('a');
 
@@ -137,7 +137,7 @@ Arguments:
 - `$name` (`string`): the test name.
 
 ```php
-$bench->add('a', fn(): int => 1 + 1);
+$bench->add('a', static fn(): int => 1 + 1);
 
 if ($bench->has('a')) {
     $bench->run();
@@ -149,8 +149,8 @@ if ($bench->has('a')) {
 Get all registered tests indexed by name.
 
 ```php
-$bench->add('a', fn(): int => 1 + 1);
-$bench->add('b', fn(): int => 2 + 2);
+$bench->add('a', static fn(): int => 1 + 1);
+$bench->add('b', static fn(): int => 2 + 2);
 
 foreach ($bench->all() as $name => $test) {
     $test();
@@ -162,7 +162,7 @@ foreach ($bench->all() as $name => $test) {
 Remove every registered test.
 
 ```php
-$bench->add('a', fn(): int => 1 + 1);
+$bench->add('a', static fn(): int => 1 + 1);
 
 $bench->clear();
 ```
@@ -172,8 +172,8 @@ $bench->clear();
 Return the number of registered tests (this class implements `Countable`, so `count($bench)` works).
 
 ```php
-$bench->add('a', fn(): int => 1 + 1);
-$bench->add('b', fn(): int => 2 + 2);
+$bench->add('a', static fn(): int => 1 + 1);
+$bench->add('b', static fn(): int => 2 + 2);
 
 $total = count($bench);
 ```

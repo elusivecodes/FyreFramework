@@ -46,7 +46,7 @@ class AuthorizedMiddleware implements MiddlewareInterface
     {
         $routeArguments = $request->getAttribute('routeArguments') ?? [];
         $args = array_map(
-            fn(string $arg): mixed => array_key_exists($arg, $routeArguments) ?
+            static fn(string $arg): mixed => array_key_exists($arg, $routeArguments) ?
                 $routeArguments[$arg] :
                 $arg,
             $args

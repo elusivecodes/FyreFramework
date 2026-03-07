@@ -580,7 +580,7 @@ class Container implements ContainerInterface
                     }
 
                     $dependents = array_map(
-                        fn(string $dependent): string => '`'.$dependent.'`',
+                        static fn(string $dependent): string => '`'.$dependent.'`',
                         array_slice($this->buildStack, (int) $index)
                     );
 

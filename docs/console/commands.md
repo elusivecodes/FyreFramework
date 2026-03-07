@@ -49,7 +49,7 @@ In a typical application, you resolve `CommandRunner` from the container, usuall
 
 `CommandRunner` discovers commands by scanning its registered namespaces for `*Command.php` files, then reflecting each command’s default `alias`, `description`, and `options` values. The command list is cached after it is first built.
 
-At runtime, each command’s `run()` method is invoked through the container, which means `run()` parameters can include both services (injected) and option values (parsed from `argv`).
+At runtime, each command is resolved through the container. `Console` is injected into the command constructor and stored on the command as `$this->io`. The `run()` method is then invoked through the container, which means `run()` parameters can still include both services (injected) and option values (parsed from `argv`).
 
 ## Running Commands
 
@@ -409,6 +409,13 @@ use Fyre\Console\Console;
 
 class ClearCacheCommand extends Command
 {
+    public function __construct(
+        Console $io,
+        protected CacheManager $cacheManager,
+    ) {
+        parent::__construct($io);
+    }
+
     protected string|null $alias = 'app:clear-cache';
 
     protected string $description = 'Delete a cache key (with an optional confirmation prompt).';
@@ -429,14 +436,14 @@ class ClearCacheCommand extends Command
         ],
     ];
 
-    public function run(CacheManager $cacheManager, Console $io, string $cache, string $key, bool $force): int
+    public function run(string $cache, string $key, bool $force): int
     {
-        if (!$force && !$io->confirm('Delete cache key "'.$key.'"?', false)) {
+        if (!$force && !$this->io->confirm('Delete cache key "'.$key.'"?', false)) {
             return self::CODE_SUCCESS;
         }
 
-        $cacheManager->use($cache)->delete($key);
-        $io->success('Deleted: '.$key);
+        $this->cacheManager->use($cache)->delete($key);
+        $this->io->success('Deleted: '.$key);
 
         return self::CODE_SUCCESS;
     }
@@ -475,6 +482,11 @@ Supported metadata keys:
 - other parameters are resolved as services by the container
 
 That means option names and `run()` parameter names need to stay aligned for values to be passed correctly.
+
+For command classes, prefer this split:
+
+- constructor injection for `Console` and shared dependencies you want available as command state
+- `run()` parameters for CLI option values and any optional per-invocation services
 
 If you change registered namespaces or add new command classes after the command list is built, call `clear()` and then re-register any namespaces you want to scan, or create a fresh `CommandRunner` instance.
 

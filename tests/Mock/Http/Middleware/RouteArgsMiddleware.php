@@ -18,7 +18,7 @@ class RouteArgsMiddleware implements MiddlewareInterface
     {
         $routeArguments = $request->getAttribute('routeArguments') ?? [];
         $args = array_map(
-            fn(string $arg): mixed => $routeArguments[$arg] ?? null,
+            static fn(string $arg): mixed => $routeArguments[$arg] ?? null,
             $args
         );
 

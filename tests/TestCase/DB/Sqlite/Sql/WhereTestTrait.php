@@ -83,7 +83,7 @@ trait WhereTestTrait
             $this->db->select()
                 ->from('test')
                 ->where([
-                    'value IN' => function(Connection $db): SelectQuery {
+                    'value IN' => static function(Connection $db): SelectQuery {
                         return $db->select(['id'])
                             ->from('test');
                     },
@@ -274,7 +274,7 @@ trait WhereTestTrait
             $this->db->select()
                 ->from('test')
                 ->where([
-                    'value' => function(Connection $db): QueryLiteral {
+                    'value' => static function(Connection $db): QueryLiteral {
                         return $db->literal('UPPER(test)');
                     },
                 ])

@@ -35,28 +35,40 @@ class MakePolicyCommand extends Command
     ];
 
     /**
+     * {@inheritDoc}
+     *
+     * @param Console $io The Console.
+     * @param Make $make The Make.
+     * @param PolicyRegistry $policyRegistry The PolicyRegistry.
+     */
+    public function __construct(
+        Console $io,
+        protected Make $make,
+        protected PolicyRegistry $policyRegistry,
+    ) {
+        parent::__construct($io);
+    }
+
+    /**
      * Runs the command.
      *
      * Note: The namespace defaults to the first registered {@see PolicyRegistry} namespace, or `App\Policies`.
      * The generated class name is suffixed with `Policy`.
      *
-     * @param Make $make The Make.
-     * @param PolicyRegistry $policyRegistry The PolicyRegistry.
-     * @param Console $io The Console.
      * @param string $name The policy name.
      * @param string|null $namespace The policy namespace.
      * @return int|null The exit code.
      */
-    public function run(Make $make, PolicyRegistry $policyRegistry, Console $io, string $name, string|null $namespace = null): int|null
+    public function run(string $name, string|null $namespace = null): int|null
     {
-        $namespace ??= $policyRegistry->getNamespaces()[0] ?? 'App\Policies';
+        $namespace ??= $this->policyRegistry->getNamespaces()[0] ?? 'App\Policies';
 
         [$namespace, $className] = Make::parseNamespaceClass($namespace, $name.'Policy');
 
-        $path = $make->findPath($namespace);
+        $path = $this->make->findPath($namespace);
 
         if (!$path) {
-            $io->error('Namespace path not found.');
+            $this->io->error('Namespace path not found.');
 
             return static::CODE_ERROR;
         }
@@ -64,7 +76,7 @@ class MakePolicyCommand extends Command
         $fullPath = Path::join($path, $className.'.php');
 
         if (file_exists($fullPath)) {
-            $io->error('Policy file already exists.');
+            $this->io->error('Policy file already exists.');
 
             return static::CODE_ERROR;
         }
@@ -75,7 +87,7 @@ class MakePolicyCommand extends Command
         ]);
 
         if (!Make::saveFile($fullPath, $contents)) {
-            $io->error('Policy file could not be written.');
+            $this->io->error('Policy file could not be written.');
 
             return static::CODE_ERROR;
         }

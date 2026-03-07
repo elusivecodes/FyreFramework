@@ -18,6 +18,11 @@ class {class} extends Command
     #[Override]
     protected array $options = [];
 
+    public function __construct(Console $io)
+    {
+        parent::__construct($io);
+    }
+
     public function run(array $arguments = []): int|null
     {
         return static::CODE_SUCCESS;

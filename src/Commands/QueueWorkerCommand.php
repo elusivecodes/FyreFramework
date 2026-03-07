@@ -47,13 +47,24 @@ class QueueWorkerCommand extends Command
     ];
 
     /**
+     * {@inheritDoc}
+     *
+     * @param Console $io The Console.
+     * @param Container $container The Container.
+     */
+    public function __construct(
+        Console $io,
+        protected Container $container,
+    ) {
+        parent::__construct($io);
+    }
+
+    /**
      * Runs the command.
      *
      * Note: The worker is started in a child process and the parent returns immediately after printing the PID.
      * Options are forwarded to {@see Worker} as-is.
      *
-     * @param Container $container The Container.
-     * @param Console $io The Console.
      * @param string $config The queue config key.
      * @param string $queue The queue name.
      * @param int $maxJobs The maximum number of jobs to run.
@@ -62,7 +73,7 @@ class QueueWorkerCommand extends Command
      *
      * @throws RuntimeException If the process cannot be forked.
      */
-    public function run(Container $container, Console $io, string $config, string $queue, int $maxJobs, int $maxRuntime): int|null
+    public function run(string $config, string $queue, int $maxJobs, int $maxRuntime): int|null
     {
         $pid = pcntl_fork();
 
@@ -71,9 +82,9 @@ class QueueWorkerCommand extends Command
         }
 
         if ($pid) {
-            $io->write(sprintf('Worker started on PID: %d', $pid), Console::CYAN);
+            $this->io->write(sprintf('Worker started on PID: %d', $pid), Console::CYAN);
         } else {
-            $worker = $container->build(Worker::class, [
+            $worker = $this->container->build(Worker::class, [
                 'options' => [
                     'config' => $config,
                     'queue' => $queue,

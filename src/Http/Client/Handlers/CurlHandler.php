@@ -136,7 +136,7 @@ class CurlHandler extends ClientHandler
             },
             CURLOPT_HEADER => true,
             CURLOPT_HTTPHEADER => array_map(
-                fn(string $name): string => $name.': '.$request->getHeaderLine($name),
+                static fn(string $name): string => $name.': '.$request->getHeaderLine($name),
                 $request->getHeaders() |> array_keys(...)
             ),
             CURLOPT_RETURNTRANSFER => true,

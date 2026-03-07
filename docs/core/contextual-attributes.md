@@ -239,7 +239,7 @@ Use it anywhere the container resolves parameters:
 $container = new Container();
 
 $file = $container->call(
-    fn(#[StorageFile('storage/example.txt')] File $f): File => $f
+    static fn(#[StorageFile('storage/example.txt')] File $f): File => $f
 );
 ```
 
@@ -253,7 +253,7 @@ use Fyre\Core\Container;
 
 $container = new Container();
 
-$container->bindAttribute(ConfigAttribute::class, function(ConfigAttribute $attribute, Container $container): mixed {
+$container->bindAttribute(ConfigAttribute::class, static function(ConfigAttribute $attribute, Container $container): mixed {
     return $attribute->resolve($container);
 });
 ```

@@ -15,7 +15,7 @@ trait WithTestTrait
             'WITH alt AS (SELECT * FROM test) SELECT * FROM alt',
             $this->db->select()
                 ->with([
-                    'alt' => function(Connection $db): SelectQuery {
+                    'alt' => static function(Connection $db): SelectQuery {
                         return $db->select()
                             ->from('test');
                     },
@@ -31,7 +31,7 @@ trait WithTestTrait
             'WITH alt AS (SELECT * FROM test) SELECT * FROM alt',
             $this->db->select()
                 ->with([
-                    'alt' => function(Connection $db): QueryLiteral {
+                    'alt' => static function(Connection $db): QueryLiteral {
                         return $db->literal('(SELECT * FROM test)');
                     },
                 ])
@@ -90,7 +90,7 @@ trait WithTestTrait
             'WITH RECURSIVE alt AS (SELECT * FROM test) SELECT * FROM alt',
             $this->db->select()
                 ->withRecursive([
-                    'alt' => function(Connection $db): SelectQuery {
+                    'alt' => static function(Connection $db): SelectQuery {
                         return $db->select()
                             ->from('test');
                     },
@@ -106,7 +106,7 @@ trait WithTestTrait
             'WITH RECURSIVE alt AS (SELECT * FROM test) SELECT * FROM alt',
             $this->db->select()
                 ->withRecursive([
-                    'alt' => function(Connection $db): QueryLiteral {
+                    'alt' => static function(Connection $db): QueryLiteral {
                         return $db->literal('(SELECT * FROM test)');
                     },
                 ])

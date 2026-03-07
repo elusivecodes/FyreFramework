@@ -45,7 +45,7 @@ trait UpdateTestTrait
             $this->db->update('test')
                 ->set([
                     'name' => 'Test',
-                    'value' => function(Connection $db): SelectQuery {
+                    'value' => static function(Connection $db): SelectQuery {
                         return $db->select(['id'])
                             ->from('test')
                             ->limit(1);
@@ -135,7 +135,7 @@ trait UpdateTestTrait
             $this->db->update('test')
                 ->set([
                     'name' => 'Test',
-                    'value' => function(Connection $db): QueryLiteral {
+                    'value' => static function(Connection $db): QueryLiteral {
                         return $db->literal('2 * 10');
                     },
                 ])

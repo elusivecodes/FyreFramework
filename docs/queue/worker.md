@@ -100,16 +100,16 @@ use Fyre\Event\EventManager;
 use Fyre\Queue\Message;
 use Throwable;
 
-$eventManager->on('Queue.start', function(Event $event, Message $message): void {
-    error_log('Queue start: '.$message->getHash());
+$eventManager->on('Queue.start', static function(Event $event, Message $message): void {
+    log_message('debug', 'Queue start: '.$message->getHash());
 });
 
-$eventManager->on('Queue.failure', function(Event $event, Message $message, bool $shouldRetry): void {
-    error_log('Queue failure (retry='.(int) $shouldRetry.'): '.$message->getHash());
+$eventManager->on('Queue.failure', static function(Event $event, Message $message, bool $shouldRetry): void {
+    log_message('debug', 'Queue failure (retry='.(int) $shouldRetry.'): '.$message->getHash());
 });
 
-$eventManager->on('Queue.exception', function(Event $event, Message $message, Throwable $exception, bool $shouldRetry): void {
-    error_log('Queue exception (retry='.(int) $shouldRetry.'): '.$exception->getMessage());
+$eventManager->on('Queue.exception', static function(Event $event, Message $message, Throwable $exception, bool $shouldRetry): void {
+    log_message('debug', 'Queue exception (retry='.(int) $shouldRetry.'): '.$exception->getMessage());
 });
 ```
 

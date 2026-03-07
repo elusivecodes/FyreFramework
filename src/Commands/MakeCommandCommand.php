@@ -39,30 +39,42 @@ class MakeCommandCommand extends Command
     ];
 
     /**
+     * {@inheritDoc}
+     *
+     * @param Console $io The Console.
+     * @param Make $make The Make.
+     * @param CommandRunner $commandRunner The CommandRunner.
+     */
+    public function __construct(
+        Console $io,
+        protected Make $make,
+        protected CommandRunner $commandRunner,
+    ) {
+        parent::__construct($io);
+    }
+
+    /**
      * Runs the command.
      *
      * Note: The namespace defaults to the first registered {@see CommandRunner} namespace, or `App\Commands`.
      * When no alias is supplied, an alias is generated from the class name.
      *
-     * @param Make $make The Make.
-     * @param CommandRunner $commandRunner The CommandRunner.
-     * @param Console $io The Console.
      * @param string $name The command name.
      * @param string|null $alias The command alias.
      * @param string|null $description The command description.
      * @param string|null $namespace The command namespace.
      * @return int|null The exit code.
      */
-    public function run(Make $make, CommandRunner $commandRunner, Console $io, string $name, string|null $alias = null, string|null $description = null, string|null $namespace = null): int|null
+    public function run(string $name, string|null $alias = null, string|null $description = null, string|null $namespace = null): int|null
     {
-        $namespace ??= $commandRunner->getNamespaces()[0] ?? 'App\Commands';
+        $namespace ??= $this->commandRunner->getNamespaces()[0] ?? 'App\Commands';
 
         [$namespace, $className] = Make::parseNamespaceClass($namespace, $name.'Command');
 
-        $path = $make->findPath($namespace);
+        $path = $this->make->findPath($namespace);
 
         if (!$path) {
-            $io->error('Namespace path not found.');
+            $this->io->error('Namespace path not found.');
 
             return static::CODE_ERROR;
         }
@@ -70,7 +82,7 @@ class MakeCommandCommand extends Command
         $fullPath = Path::join($path, $className.'.php');
 
         if (file_exists($fullPath)) {
-            $io->error('Command file already exists.');
+            $this->io->error('Command file already exists.');
 
             return static::CODE_ERROR;
         }
@@ -86,7 +98,7 @@ class MakeCommandCommand extends Command
         ]);
 
         if (!Make::saveFile($fullPath, $contents)) {
-            $io->error('Command file could not be written.');
+            $this->io->error('Command file could not be written.');
 
             return static::CODE_ERROR;
         }

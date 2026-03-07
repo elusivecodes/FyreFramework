@@ -94,7 +94,7 @@ class ErrorHandler
         $options = array_replace(static::$defaults, $config->get('Error', []));
 
         $this->level = $options['level'];
-        $this->renderer = $options['renderer'] ?? fn(Throwable $exception): string => '<pre>'.$exception.'</pre>';
+        $this->renderer = $options['renderer'] ?? static fn(Throwable $exception): string => '<pre>'.$exception.'</pre>';
         $this->log = $options['log'];
 
         register_shutdown_function(function(): void {

@@ -124,7 +124,7 @@ Arguments:
 ```php
 use Fyre\Utility\Str;
 
-Str::staticMacro('surround', function (string $value, string $prefix, string $suffix): string {
+Str::staticMacro('surround', static function (string $value, string $prefix, string $suffix): string {
     return $prefix.$value.$suffix;
 });
 

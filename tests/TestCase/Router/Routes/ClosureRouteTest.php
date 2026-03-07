@@ -34,7 +34,7 @@ final class ClosureRouteTest extends TestCase
     public function testSetArgumentsFromPath(): void
     {
         $route = $this->container->build(ClosureRoute::class, [
-            'destination' => function(): void {},
+            'destination' => static function(): void {},
             'path' => 'test/{a}/{b}',
         ]);
 

@@ -86,7 +86,7 @@ Named rules are ad-hoc checks registered on an `Access` instance. The callback r
 ```php
 use Fyre\ORM\Entity;
 
-$access->define('admin', fn(Entity $user): bool => (bool) $user->is_admin);
+$access->define('admin', static fn(Entity $user): bool => (bool) $user->is_admin);
 
 if ($access->allows('admin')) {
     // ...
@@ -279,7 +279,7 @@ Arguments:
 ```php
 use Fyre\ORM\Entity;
 
-$access->define('admin', fn(Entity $user): bool => (bool) $user->is_admin);
+$access->define('admin', static fn(Entity $user): bool => (bool) $user->is_admin);
 ```
 
 #### **Add a global before callback** (`before()`)

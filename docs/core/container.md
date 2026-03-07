@@ -103,7 +103,7 @@ $container->singleton(Config::class);
 $container->use(Config::class)->set('App.name', 'MyApp');
 
 $name = $container->call(
-    fn(#[ConfigAttribute('App.name')] string $appName): string => $appName
+    static fn(#[ConfigAttribute('App.name')] string $appName): string => $appName
 );
 ```
 
@@ -259,7 +259,7 @@ $container->singleton(Config::class);
 $container->use(Config::class)->set('App.name', 'MyApp');
 
 $result = $container->call(
-    fn(#[ConfigAttribute('App.name')] string $appName): string => $appName
+    static fn(#[ConfigAttribute('App.name')] string $appName): string => $appName
 );
 ```
 
@@ -410,7 +410,7 @@ Arguments:
 use Fyre\Core\Attributes\CurrentUser;
 
 // In a test, force #[CurrentUser] to always resolve to null.
-$container->bindAttribute(CurrentUser::class, fn(CurrentUser $attribute) => null);
+$container->bindAttribute(CurrentUser::class, static fn(CurrentUser $attribute) => null);
 ```
 
 ## Behavior notes

@@ -22,8 +22,20 @@ abstract class Command
 
     protected string $description = '';
 
+    protected Console $io;
+
     /**
      * @var array<string, array<string, mixed>|string>
      */
     protected array $options = [];
+
+    /**
+     * Constructs a Command.
+     *
+     * @param Console $io The Console.
+     */
+    public function __construct(Console $io)
+    {
+        $this->io = $io;
+    }
 }

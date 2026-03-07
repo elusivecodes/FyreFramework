@@ -55,7 +55,7 @@ trait JoinTestTrait
                 ->from('test')
                 ->join([
                     't2' => [
-                        'table' => function(Connection $db): SelectQuery {
+                        'table' => static function(Connection $db): SelectQuery {
                             return $db->select()
                                 ->from('test');
                         },
@@ -153,7 +153,7 @@ trait JoinTestTrait
                     [
                         'table' => 'test2',
                         'conditions' => [
-                            'test2.value IN' => function(Connection $db): SelectQuery {
+                            'test2.value IN' => static function(Connection $db): SelectQuery {
                                 return $db->select(['id'])
                                     ->from('test');
                             },
@@ -414,7 +414,7 @@ trait JoinTestTrait
                     [
                         'table' => 'test2',
                         'conditions' => [
-                            'test2.value' => function(Connection $db): QueryLiteral {
+                            'test2.value' => static function(Connection $db): QueryLiteral {
                                 return $db->literal('UPPER(test.test)');
                             },
                         ],
@@ -614,7 +614,7 @@ trait JoinTestTrait
                 ->from('test')
                 ->join([
                     't2' => [
-                        'table' => function(Connection $db): QueryLiteral {
+                        'table' => static function(Connection $db): QueryLiteral {
                             return $db->literal('(SELECT * FROM test)');
                         },
                         'conditions' => [

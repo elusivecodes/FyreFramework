@@ -16,7 +16,7 @@ The console subsystem discovers command classes, parses `argv`, and runs command
 It is built around three types:
 
 - `Fyre\Console\CommandRunner` discovers commands, resolves a command alias, parses arguments, and executes the command through the container.
-- `Fyre\Console\Command` is the base class for commands, exposing default `alias`, `description`, and `options` values used during discovery.
+- `Fyre\Console\Command` is the base class for commands. It exposes default `alias`, `description`, and `options` values used during discovery, and stores the constructor-injected `Console` instance as `$this->io`.
 - `Fyre\Console\Console` provides terminal I/O (tables, prompts, and styled output) used by both the runtime and command classes (see [Console I/O](console.md)).
 
 ## How `CommandRunner` Runs Commands
@@ -26,7 +26,7 @@ At a high level, the console runtime works like this:
 1. **Discover commands.** `CommandRunner` scans registered namespaces for `*Command.php` classes, then reflects default `alias`, `description`, and `options` values. The resulting command list is cached until cleared.
 2. **Parse argv.** `handle()` reads the command alias and parses options from `--option value` / `-o value`. It normalizes option names to lower camelCase and keeps remaining args as positional values.
 3. **Resolve option values.** `CommandRunner` applies named arguments, fills remaining positional values in option order, then uses defaults, type parsing, and prompts when needed.
-4. **Execute through the container.** `run()` invokes the command’s `run()` method through the container so option values can be matched by parameter name and other parameters can be injected as services.
+4. **Execute through the container.** The command instance is constructed through the container first, so `Console` and other constructor dependencies are injected. Then `run()` is invoked through the container so option values can be matched by parameter name and other parameters can still be injected as services.
 5. **Dispatch lifecycle events.** Command discovery and execution dispatch `Command.buildCommands`, `Command.beforeExecute`, and `Command.afterExecute` (see [Events](../events/index.md)).
 
 ## Pages in this section

@@ -35,28 +35,40 @@ class MakeModelCommand extends Command
     ];
 
     /**
+     * {@inheritDoc}
+     *
+     * @param Console $io The Console.
+     * @param Make $make The Make.
+     * @param ModelRegistry $modelRegistry The ModelRegistry.
+     */
+    public function __construct(
+        Console $io,
+        protected Make $make,
+        protected ModelRegistry $modelRegistry,
+    ) {
+        parent::__construct($io);
+    }
+
+    /**
      * Runs the command.
      *
      * Note: The namespace defaults to the first registered {@see ModelRegistry} namespace, or `App\Models`.
      * The generated class name is suffixed with `Model`.
      *
-     * @param Make $make The Make.
-     * @param ModelRegistry $modelRegistry The ModelRegistry.
-     * @param Console $io The Console.
      * @param string $name The model name.
      * @param string|null $namespace The model namespace.
      * @return int|null The exit code.
      */
-    public function run(Make $make, ModelRegistry $modelRegistry, Console $io, string $name, string|null $namespace = null): int|null
+    public function run(string $name, string|null $namespace = null): int|null
     {
-        $namespace ??= $modelRegistry->getNamespaces()[0] ?? 'App\Models';
+        $namespace ??= $this->modelRegistry->getNamespaces()[0] ?? 'App\Models';
 
         [$namespace, $className] = Make::parseNamespaceClass($namespace, $name.'Model');
 
-        $path = $make->findPath($namespace);
+        $path = $this->make->findPath($namespace);
 
         if (!$path) {
-            $io->error('Namespace path not found.');
+            $this->io->error('Namespace path not found.');
 
             return static::CODE_ERROR;
         }
@@ -64,7 +76,7 @@ class MakeModelCommand extends Command
         $fullPath = Path::join($path, $className.'.php');
 
         if (file_exists($fullPath)) {
-            $io->error('Model file already exists.');
+            $this->io->error('Model file already exists.');
 
             return static::CODE_ERROR;
         }
@@ -75,7 +87,7 @@ class MakeModelCommand extends Command
         ]);
 
         if (!Make::saveFile($fullPath, $contents)) {
-            $io->error('Model file could not be written.');
+            $this->io->error('Model file could not be written.');
 
             return static::CODE_ERROR;
         }

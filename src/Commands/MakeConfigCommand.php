@@ -36,22 +36,33 @@ class MakeConfigCommand extends Command
     ];
 
     /**
+     * {@inheritDoc}
+     *
+     * @param Console $io The Console.
+     * @param Config $config The Config.
+     */
+    public function __construct(
+        Console $io,
+        protected Config $config,
+    ) {
+        parent::__construct($io);
+    }
+
+    /**
      * Runs the command.
      *
      * Note: The path defaults to the first configured {@see Config} path.
      *
-     * @param Config $config The Config.
-     * @param Console $io The Console.
      * @param string $file The file name.
      * @param string|null $path The file path.
      * @return int|null The exit code.
      */
-    public function run(Config $config, Console $io, string $file, string|null $path = null): int|null
+    public function run(string $file, string|null $path = null): int|null
     {
-        $path ??= $config->getPaths()[0] ?? '';
+        $path ??= $this->config->getPaths()[0] ?? '';
 
         if (file_exists($path) && !is_dir($path)) {
-            $io->error('Invalid config path.');
+            $this->io->error('Invalid config path.');
 
             return static::CODE_ERROR;
         }
@@ -61,7 +72,7 @@ class MakeConfigCommand extends Command
         $fullPath = Path::join($path, $file.'.php');
 
         if (file_exists($fullPath)) {
-            $io->error('Config file already exists.');
+            $this->io->error('Config file already exists.');
 
             return static::CODE_ERROR;
         }
@@ -69,7 +80,7 @@ class MakeConfigCommand extends Command
         $contents = Make::loadStub('config');
 
         if (!Make::saveFile($fullPath, $contents)) {
-            $io->error('Config file could not be written.');
+            $this->io->error('Config file could not be written.');
 
             return static::CODE_ERROR;
         }

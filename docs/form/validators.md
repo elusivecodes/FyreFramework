@@ -75,7 +75,7 @@ The validator calls callbacks through the container, so your callback can declar
 Example: return a custom error message string.
 
 ```php
-$validator->add('username', function(mixed $value): bool|string {
+$validator->add('username', static function(mixed $value): bool|string {
     $value = (string) $value;
 
     if ($value === '') {
@@ -95,7 +95,7 @@ Example: use the `$message` argument when your callback returns `false`.
 ```php
 $validator->add(
     'password',
-    fn(mixed $value): bool => strlen((string) $value) >= 12,
+    static fn(mixed $value): bool => strlen((string) $value) >= 12,
     message: 'Password must be at least 12 characters.'
 );
 ```
@@ -103,7 +103,7 @@ $validator->add(
 Example: use other input fields with the `data` argument.
 
 ```php
-$validator->add('password_confirm', function(mixed $value, array $data): bool {
+$validator->add('password_confirm', static function(mixed $value, array $data): bool {
     return $value === ($data['password'] ?? null);
 }, name: 'matches');
 ```
