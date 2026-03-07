@@ -567,6 +567,20 @@ class ServerRequest extends Request implements ServerRequestInterface
     }
 
     /**
+     * Checks whether the request prefers JSON responses.
+     *
+     * @return bool Whether JSON is the preferred content type.
+     */
+    public function prefersJson(): bool
+    {
+        return $this->negotiate(
+            'content',
+            ['application/json', 'text/html'],
+            true
+        ) === 'application/json';
+    }
+
+    /**
      * Returns the new ServerRequest instance with updated trusted proxies.
      *
      * @param string[] $trustedProxies The trusted proxy IPs.

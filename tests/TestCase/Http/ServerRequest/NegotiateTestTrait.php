@@ -59,4 +59,30 @@ trait NegotiateTestTrait
             $request->negotiate('content', ['application/xml', 'text/html'])
         );
     }
+
+    public function testPrefersJson(): void
+    {
+        $request = new ServerRequest($this->config, $this->type, [
+            'server' => [
+                'HTTP_ACCEPT' => 'application/json,text/html;q=0.9',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $request->prefersJson()
+        );
+    }
+
+    public function testPrefersJsonFalse(): void
+    {
+        $request = new ServerRequest($this->config, $this->type, [
+            'server' => [
+                'HTTP_ACCEPT' => 'text/html,application/json;q=0.9',
+            ],
+        ]);
+
+        $this->assertFalse(
+            $request->prefersJson()
+        );
+    }
 }

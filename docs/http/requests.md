@@ -40,7 +40,7 @@ function handle(ServerRequestInterface $request): string
 }
 ```
 
-This page documents convenience methods on Fyre’s `ServerRequest` implementation, such as `getData()`, `getQuery()`, `getClientIp()`, `isSecure()`, and `negotiate()`. If you type-hint `ServerRequestInterface`, only standard PSR-7 methods are available.
+This page documents convenience methods on Fyre’s `ServerRequest` implementation, such as `getData()`, `getQuery()`, `getClientIp()`, `isSecure()`, `prefersJson()`, and `negotiate()`. If you type-hint `ServerRequestInterface`, only standard PSR-7 methods are available.
 
 If helpers are loaded, the `request()` helper resolves the current request from the container (see [Helpers](../core/helpers.md)):
 
@@ -112,6 +112,12 @@ $contentType = $request->negotiate('content', [
 ]);
 
 $prefersJson = $contentType === 'application/json';
+```
+
+If you just need a boolean check for the common HTML-vs-JSON case, use `prefersJson()`:
+
+```php
+$prefersJson = $request->prefersJson();
 ```
 
 Negotiation falls back to the first value in your supported list when there is no match (or no header). For `content` negotiation, pass `strictMatch: true` to return an empty string instead of falling back:
@@ -281,6 +287,16 @@ Arguments:
 
 ```php
 $language = $request->negotiate('language', ['en', 'en-US', 'fr']);
+```
+
+#### **Check whether the request prefers JSON** (`prefersJson()`)
+
+Returns `true` when content negotiation prefers `application/json` over `text/html`.
+
+```php
+if ($request->prefersJson()) {
+    // Return a JSON response.
+}
 ```
 
 #### **Read the parsed user agent** (`getUserAgent()`)
