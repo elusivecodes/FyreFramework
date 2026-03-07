@@ -340,6 +340,8 @@ $container->clearScoped(); // next resolve gets a fresh Timer
 
 Pins an alias to a specific instance/value.
 
+Calling `instance()` clears any cached instance for the alias, removes the alias's factory/class binding, and stores the supplied instance directly. If the alias was already marked as scoped, that scoped status is preserved.
+
 Arguments:
 - `$alias` (`string`): the alias to bind.
 - `$instance` (`mixed`): the instance/value to return from `use($alias)`.
@@ -363,11 +365,11 @@ $container->clearScoped();
 
 #### **Unset a cached instance** (`unset()`)
 
-Removes the cached instance for an alias. If `$unsetDependents` is `true`, it also unsets any dependents that were tracked when the instance was first cached.
+Removes the cached instance for an alias. By default, it also unsets any dependents that were tracked when the instance was first cached.
 
 Arguments:
 - `$alias` (`string`): the alias to unset.
-- `$unsetDependents` (`bool`): whether to unset tracked dependents.
+- `$unsetDependents` (`bool`): whether to unset tracked dependents (default: `true`).
 
 ```php
 $container->singleton(Config::class);
@@ -420,9 +422,10 @@ A few behaviors are worth keeping in mind:
 - If an alias resolves (directly or indirectly) back to itself, `use()` throws a `ContainerException`.
 - If class construction would recurse back into a class already in the build stack, resolution fails with a `ContainerException` rather than infinite recursion.
 - When you call `[ClassName::class, 'method']` and the method is not static, `call()` instantiates `ClassName` before invoking the method.
-- Calling `bind()`, `singleton()`, `scoped()`, or `instance()` first removes any cached instance for the alias and removes its scoped status (and `scoped()` then re-marks it as scoped).
+- Calling `bind()`, `singleton()`, or `scoped()` first removes any cached instance for the alias and removes its scoped status (and `scoped()` then re-marks it as scoped).
+- Calling `instance()` removes any cached instance for the alias, preserves any existing scoped status for that alias, and replaces the alias binding with the supplied concrete instance.
 - `clearScoped()` unsets all scoped instances and also unsets tracked dependents.
-- `unset($alias, true)` also unsets tracked dependents for that alias.
+- `unset($alias)` also unsets tracked dependents for that alias by default.
 - Dependents are tracked only for dependencies that are already container-managed shared instances at resolution time, and tracking is identity-based.
 
 When running long-lived processes (for example a queue worker), `clearScoped()` is the primary tool for dropping per-job/per-request state while keeping bindings intact; see [Worker](../queue/worker.md).

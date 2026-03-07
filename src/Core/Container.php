@@ -281,7 +281,7 @@ class Container implements ContainerInterface
     public function clearScoped(): static
     {
         foreach ($this->scoped as $alias => $v) {
-            $this->unset($alias, true);
+            $this->unset($alias);
         }
 
         return $this;
@@ -339,7 +339,6 @@ class Container implements ContainerInterface
     public function instance(string $alias, mixed $instance): mixed
     {
         $this->unset($alias);
-        $this->unscoped($alias);
 
         unset($this->bindings[$alias]);
 
@@ -395,7 +394,7 @@ class Container implements ContainerInterface
      * @param bool $unsetDependents Whether to unset dependents.
      * @return static The Container instance.
      */
-    public function unset(string $alias, bool $unsetDependents = false): static
+    public function unset(string $alias, bool $unsetDependents = true): static
     {
         $dependents = $unsetDependents ?
             array_keys($this->dependencyMap[$alias] ?? []) :
@@ -405,7 +404,7 @@ class Container implements ContainerInterface
         unset($this->instances[$alias]);
 
         foreach ($dependents as $dependent) {
-            $this->unset((string) $dependent, true);
+            $this->unset((string) $dependent);
         }
 
         return $this;
