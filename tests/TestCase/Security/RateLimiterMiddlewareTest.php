@@ -355,6 +355,222 @@ final class RateLimiterMiddlewareTest extends TestCase
         );
     }
 
+    public function testIpIdentifierIgnoresForwardedHeaderByDefault(): void
+    {
+        $middleware = $this->container->build(RateLimiterMiddleware::class, [
+            'options' => [
+                'limit' => 1,
+                'window' => 60,
+                'identifier' => 'ip',
+            ],
+        ]);
+
+        $request1 = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REMOTE_ADDR' => '127.0.0.1',
+                    'HTTP_X_FORWARDED_FOR' => '203.0.113.10',
+                ],
+            ],
+        ]);
+
+        $request2 = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REMOTE_ADDR' => '127.0.0.1',
+                    'HTTP_X_FORWARDED_FOR' => '203.0.113.20',
+                ],
+            ],
+        ]);
+
+        $queue1 = new MiddlewareQueue();
+        $queue1->add($middleware);
+        $handler1 = $this->container->build(RequestHandler::class, ['queue' => $queue1]);
+
+        $this->assertSame(204, $handler1->handle($request1)->getStatusCode());
+
+        $this->expectException(TooManyRequestsException::class);
+
+        $queue2 = new MiddlewareQueue();
+        $queue2->add($middleware);
+        $handler2 = $this->container->build(RequestHandler::class, ['queue' => $queue2]);
+        $handler2->handle($request2);
+    }
+
+    public function testIpIdentifierIgnoresForwardedHeaderForUntrustedProxy(): void
+    {
+        $middleware = $this->container->build(RateLimiterMiddleware::class, [
+            'options' => [
+                'limit' => 1,
+                'window' => 60,
+                'identifier' => 'ip',
+                'trustProxy' => true,
+                'trustedProxies' => ['10.0.0.1'],
+            ],
+        ]);
+
+        $request1 = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REMOTE_ADDR' => '127.0.0.1',
+                    'HTTP_X_FORWARDED_FOR' => '203.0.113.10',
+                ],
+            ],
+        ]);
+
+        $request2 = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REMOTE_ADDR' => '127.0.0.1',
+                    'HTTP_X_FORWARDED_FOR' => '203.0.113.20',
+                ],
+            ],
+        ]);
+
+        $queue1 = new MiddlewareQueue();
+        $queue1->add($middleware);
+        $handler1 = $this->container->build(RequestHandler::class, ['queue' => $queue1]);
+
+        $this->assertSame(204, $handler1->handle($request1)->getStatusCode());
+
+        $this->expectException(TooManyRequestsException::class);
+
+        $queue2 = new MiddlewareQueue();
+        $queue2->add($middleware);
+        $handler2 = $this->container->build(RequestHandler::class, ['queue' => $queue2]);
+        $handler2->handle($request2);
+    }
+
+    public function testIpIdentifierUsesConfiguredHeader(): void
+    {
+        $middleware = $this->container->build(RateLimiterMiddleware::class, [
+            'options' => [
+                'limit' => 1,
+                'window' => 60,
+                'identifier' => 'ip',
+                'trustProxy' => true,
+                'trustedProxies' => ['127.0.0.1'],
+                'ipHeader' => 'CF-Connecting-IP',
+            ],
+        ]);
+
+        $request1 = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REMOTE_ADDR' => '127.0.0.1',
+                    'HTTP_CF_CONNECTING_IP' => '203.0.113.10',
+                    'HTTP_X_FORWARDED_FOR' => '198.51.100.10',
+                ],
+            ],
+        ]);
+
+        $request2 = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REMOTE_ADDR' => '127.0.0.1',
+                    'HTTP_CF_CONNECTING_IP' => '203.0.113.20',
+                    'HTTP_X_FORWARDED_FOR' => '198.51.100.10',
+                ],
+            ],
+        ]);
+
+        $queue1 = new MiddlewareQueue();
+        $queue1->add($middleware);
+        $handler1 = $this->container->build(RequestHandler::class, ['queue' => $queue1]);
+
+        $queue2 = new MiddlewareQueue();
+        $queue2->add($middleware);
+        $handler2 = $this->container->build(RequestHandler::class, ['queue' => $queue2]);
+
+        $this->assertSame(204, $handler1->handle($request1)->getStatusCode());
+        $this->assertSame(204, $handler2->handle($request2)->getStatusCode());
+    }
+
+    public function testIpIdentifierUsesFirstMatchingConfiguredHeader(): void
+    {
+        $middleware = $this->container->build(RateLimiterMiddleware::class, [
+            'options' => [
+                'limit' => 1,
+                'window' => 60,
+                'identifier' => 'ip',
+                'trustProxy' => true,
+                'trustedProxies' => ['127.0.0.1'],
+                'ipHeader' => ['CF-Connecting-IP', 'X-Forwarded-For'],
+            ],
+        ]);
+
+        $request1 = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REMOTE_ADDR' => '127.0.0.1',
+                    'HTTP_X_FORWARDED_FOR' => '203.0.113.10, 127.0.0.1',
+                ],
+            ],
+        ]);
+
+        $request2 = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REMOTE_ADDR' => '127.0.0.1',
+                    'HTTP_X_FORWARDED_FOR' => '203.0.113.20, 127.0.0.1',
+                ],
+            ],
+        ]);
+
+        $queue1 = new MiddlewareQueue();
+        $queue1->add($middleware);
+        $handler1 = $this->container->build(RequestHandler::class, ['queue' => $queue1]);
+
+        $queue2 = new MiddlewareQueue();
+        $queue2->add($middleware);
+        $handler2 = $this->container->build(RequestHandler::class, ['queue' => $queue2]);
+
+        $this->assertSame(204, $handler1->handle($request1)->getStatusCode());
+        $this->assertSame(204, $handler2->handle($request2)->getStatusCode());
+    }
+
+    public function testIpIdentifierUsesForwardedHeaderForTrustedProxy(): void
+    {
+        $middleware = $this->container->build(RateLimiterMiddleware::class, [
+            'options' => [
+                'limit' => 1,
+                'window' => 60,
+                'identifier' => 'ip',
+                'trustProxy' => true,
+                'trustedProxies' => ['127.0.0.1'],
+            ],
+        ]);
+
+        $request1 = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REMOTE_ADDR' => '127.0.0.1',
+                    'HTTP_X_FORWARDED_FOR' => '203.0.113.10, 127.0.0.1',
+                ],
+            ],
+        ]);
+
+        $request2 = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REMOTE_ADDR' => '127.0.0.1',
+                    'HTTP_X_FORWARDED_FOR' => '203.0.113.20, 127.0.0.1',
+                ],
+            ],
+        ]);
+
+        $queue1 = new MiddlewareQueue();
+        $queue1->add($middleware);
+        $handler1 = $this->container->build(RequestHandler::class, ['queue' => $queue1]);
+
+        $queue2 = new MiddlewareQueue();
+        $queue2->add($middleware);
+        $handler2 = $this->container->build(RequestHandler::class, ['queue' => $queue2]);
+
+        $this->assertSame(204, $handler1->handle($request1)->getStatusCode());
+        $this->assertSame(204, $handler2->handle($request2)->getStatusCode());
+    }
+
     public function testRouteIdentifier(): void
     {
         for ($i = 0; $i <= 10; $i++) {

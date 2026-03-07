@@ -12,9 +12,16 @@ use Fyre\Router\Routes\ControllerRoute;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+use function array_map;
 use function array_replace_recursive;
+use function explode;
 use function hash;
 use function implode;
+use function in_array;
+use function str_replace;
+use function str_starts_with;
+use function strtoupper;
+use function trim;
 
 /**
  * Provides shared rate limiting helpers and configuration.
@@ -38,6 +45,9 @@ abstract class RateLimiter
         'cost' => 1,
         'message' => 'Rate limit exceeded',
         'identifier' => ['ip'],
+        'ipHeader' => 'X-Forwarded-For',
+        'trustProxy' => false,
+        'trustedProxies' => [],
         'skipCheck' => null,
     ];
 
@@ -50,11 +60,23 @@ abstract class RateLimiter
      */
     protected array|Closure $identifier;
 
+    /**
+     * @var string[]
+     */
+    protected array $ipHeader;
+
     protected int $limit;
 
     protected string $message;
 
     protected Closure|null $skipCheck;
+
+    /**
+     * @var string[]
+     */
+    protected array $trustedProxies;
+
+    protected bool $trustProxy;
 
     protected int $window;
 
@@ -80,6 +102,18 @@ abstract class RateLimiter
         $this->identifier = $options['identifier'] instanceof Closure ?
             $options['identifier'] :
             (array) $options['identifier'];
+        $this->ipHeader = array_map(
+            static function(string $header): string {
+                $header = strtoupper(str_replace('-', '_', $header));
+
+                return str_starts_with($header, 'HTTP_') ?
+                    $header :
+                    'HTTP_'.$header;
+            },
+            (array) $options['ipHeader']
+        );
+        $this->trustProxy = (bool) $options['trustProxy'];
+        $this->trustedProxies = (array) $options['trustedProxies'];
         $this->skipCheck = $options['skipCheck'];
 
         if (!$this->cacheManager->hasConfig($this->cacheConfig)) {
@@ -210,7 +244,9 @@ abstract class RateLimiter
     /**
      * Returns the IP identifier.
      *
-     * Note: Prefers `HTTP_X_FORWARDED_FOR` when present, falling back to `REMOTE_ADDR`.
+     * Note: Uses `REMOTE_ADDR` by default. When `trustProxy` is enabled, the first value from
+     * the configured forwarded IP header is used only when the immediate remote address is
+     * trusted.
      *
      * @param ServerRequestInterface $request The ServerRequest.
      * @return string The IP identifier.
@@ -218,8 +254,28 @@ abstract class RateLimiter
     protected function getIpIdentifier(ServerRequestInterface $request): string
     {
         $params = $request->getServerParams();
+        $remoteAddr = $params['REMOTE_ADDR'] ?? 'unknown';
 
-        return $params['HTTP_X_FORWARDED_FOR'] ?? $params['REMOTE_ADDR'] ?? '';
+        if (!$this->trustProxy) {
+            return $remoteAddr;
+        }
+
+        if (
+            $this->trustedProxies !== [] &&
+            !in_array($remoteAddr, $this->trustedProxies, true)
+        ) {
+            return $remoteAddr;
+        }
+
+        foreach ($this->ipHeader as $header) {
+            if (!isset($params[$header])) {
+                continue;
+            }
+
+            return explode(',', $params[$header])[0] |> trim(...);
+        }
+
+        return $remoteAddr;
     }
 
     /**
