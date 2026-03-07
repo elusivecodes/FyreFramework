@@ -66,6 +66,7 @@ trait AddColumnTestTrait
                 'collation' => 'utf8mb3_unicode_ci',
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -102,6 +103,7 @@ trait AddColumnTestTrait
                 'collation' => 'utf8mb4_unicode_ci',
                 'comment' => 'This is the value',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -138,6 +140,7 @@ trait AddColumnTestTrait
                 'collation' => null,
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -196,6 +199,7 @@ trait AddColumnTestTrait
                 'collation' => 'utf8mb4_unicode_ci',
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -232,6 +236,7 @@ trait AddColumnTestTrait
                 'collation' => null,
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -268,6 +273,7 @@ trait AddColumnTestTrait
                 'collation' => null,
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -304,6 +310,7 @@ trait AddColumnTestTrait
                 'collation' => null,
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -340,6 +347,7 @@ trait AddColumnTestTrait
                 'collation' => null,
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -375,6 +383,7 @@ trait AddColumnTestTrait
                 'collation' => null,
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -411,6 +420,7 @@ trait AddColumnTestTrait
                 'collation' => 'utf8mb4_unicode_ci',
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -446,6 +456,7 @@ trait AddColumnTestTrait
                 'collation' => null,
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -483,6 +494,7 @@ trait AddColumnTestTrait
                 'collation' => null,
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -522,6 +534,7 @@ trait AddColumnTestTrait
                 'collation' => 'utf8mb4_unicode_ci',
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -557,6 +570,7 @@ trait AddColumnTestTrait
                 'collation' => null,
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -592,6 +606,7 @@ trait AddColumnTestTrait
                 'collation' => null,
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -628,6 +643,7 @@ trait AddColumnTestTrait
                 'collation' => 'utf8mb4_unicode_ci',
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -664,6 +680,7 @@ trait AddColumnTestTrait
                 'collation' => null,
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -700,6 +717,7 @@ trait AddColumnTestTrait
                 'collation' => 'utf8mb4_unicode_ci',
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -736,6 +754,7 @@ trait AddColumnTestTrait
                 'collation' => null,
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -771,6 +790,7 @@ trait AddColumnTestTrait
                 'collation' => 'utf8mb4_unicode_ci',
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -807,6 +827,7 @@ trait AddColumnTestTrait
                 'collation' => null,
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -843,6 +864,7 @@ trait AddColumnTestTrait
                 'collation' => 'utf8mb4_unicode_ci',
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -879,6 +901,7 @@ trait AddColumnTestTrait
                 'collation' => null,
                 'comment' => '',
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')

@@ -19,7 +19,7 @@ trait DefaultValueTestTrait
     public function testDefaultValueDecimal(): void
     {
         $this->assertSame(
-            2.5,
+            '2.5',
             $this->schema
                 ->table('test')
                 ->column('price')

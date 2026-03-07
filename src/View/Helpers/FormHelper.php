@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Fyre\View\Helpers;
 
+use BackedEnum;
 use BadMethodCallException;
 use Fyre\Core\Container;
 use Fyre\Core\Lang;
@@ -12,6 +13,8 @@ use Fyre\Form\Form;
 use Fyre\ORM\Entity;
 use Fyre\Security\CsrfProtection;
 use Fyre\Utility\Arr;
+use Fyre\Utility\EnumHelper;
+use Fyre\Utility\EnumLabelInterface;
 use Fyre\Utility\FormBuilder;
 use Fyre\Utility\Inflector;
 use Fyre\View\Form\Context;
@@ -625,8 +628,12 @@ class FormHelper extends Helper
         $attributes['multiple'] ??= false;
 
         $attributes['value'] ??= [];
-        $attributes['value'] = (array) $attributes['value'];
+        $attributes['value'] = array_map(
+            EnumHelper::normalizeValue(...),
+            (array) $attributes['value']
+        );
 
+        $options ??= $this->buildEnumOptions($key);
         $options ??= $context->getOptionValues($key);
 
         if ($attributes['value'] !== []) {
@@ -832,6 +839,34 @@ class FormHelper extends Helper
     }
 
     /**
+     * Builds enum options from the form context.
+     *
+     * @param string $key The field key.
+     * @return array<string, string>|null The options.
+     */
+    protected function buildEnumOptions(string $key): array|null
+    {
+        $enumClass = $this->getContext()->getEnumClass($key);
+
+        if (!$enumClass) {
+            return null;
+        }
+
+        $options = [];
+
+        foreach ($enumClass::cases() as $case) {
+            $value = $case instanceof BackedEnum ?
+                $case->value :
+                $case->name;
+            $options[(string) $value] = $case instanceof EnumLabelInterface ?
+                $case->label() :
+                $this->inflector->humanize($case->name);
+        }
+
+        return $options;
+    }
+
+    /**
      * Returns the form Context.
      *
      * @return Context The form Context.
@@ -920,7 +955,9 @@ class FormHelper extends Helper
         $value ??= $options['default'] ?? null;
         $value ??= $context->getDefaultValue($key);
 
-        return $value;
+        return is_array($value) ?
+            array_map(EnumHelper::normalizeValue(...), $value) :
+            EnumHelper::normalizeValue($value);
     }
 
     /**

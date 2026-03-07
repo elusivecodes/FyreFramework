@@ -28,6 +28,7 @@ use Fyre\ORM\Relationships\BelongsTo;
 use Fyre\ORM\Relationships\HasMany;
 use Fyre\ORM\Relationships\HasOne;
 use Fyre\ORM\Relationships\ManyToMany;
+use Fyre\Utility\EnumHelper;
 use Fyre\Utility\Inflector;
 use InvalidArgumentException;
 use ReflectionAttribute;
@@ -1065,10 +1066,13 @@ class Model implements EventListenerInterface
                 continue;
             }
 
-            $data[$field] = $schema
-                ->column($field)
-                ->type()
-                ->parse($value);
+            $column = $schema->column($field);
+            $value = $column->type()->parse($value);
+            $enumClass = $column->getEnumClass();
+
+            $data[$field] = $enumClass ?
+                EnumHelper::parseValue($enumClass, $value) :
+                $value;
         }
 
         return $data;
@@ -1561,10 +1565,13 @@ class Model implements EventListenerInterface
         $schema = $this->getSchema();
 
         foreach ($data as $field => $value) {
-            $data[$field] = $schema
-                ->column($field)
-                ->type()
-                ->toDatabase($value);
+            if (!$schema->hasColumn($field)) {
+                continue;
+            }
+
+            $column = $schema->column($field);
+            $value = EnumHelper::normalizeValue($value);
+            $data[$field] = $column->type()->toDatabase($value);
         }
 
         return $data;

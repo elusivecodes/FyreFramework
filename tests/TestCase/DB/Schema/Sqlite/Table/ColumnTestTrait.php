@@ -117,6 +117,7 @@ trait ColumnTestTrait
                     'default' => null,
                     'comment' => null,
                     'autoIncrement' => true,
+                    'enumClass' => null,
                 ],
                 'name' => [
                     'name' => 'name',
@@ -130,6 +131,7 @@ trait ColumnTestTrait
                     'default' => null,
                     'comment' => null,
                     'autoIncrement' => false,
+                    'enumClass' => null,
                 ],
                 'value' => [
                     'name' => 'value',
@@ -143,6 +145,7 @@ trait ColumnTestTrait
                     'default' => 5,
                     'comment' => null,
                     'autoIncrement' => false,
+                    'enumClass' => null,
                 ],
                 'price' => [
                     'name' => 'price',
@@ -156,6 +159,7 @@ trait ColumnTestTrait
                     'default' => 2.5,
                     'comment' => null,
                     'autoIncrement' => false,
+                    'enumClass' => null,
                 ],
                 'text' => [
                     'name' => 'text',
@@ -169,6 +173,7 @@ trait ColumnTestTrait
                     'default' => 'default',
                     'comment' => null,
                     'autoIncrement' => false,
+                    'enumClass' => null,
                 ],
                 'bool' => [
                     'name' => 'bool',
@@ -182,6 +187,7 @@ trait ColumnTestTrait
                     'default' => false,
                     'comment' => null,
                     'autoIncrement' => false,
+                    'enumClass' => null,
                 ],
                 'created' => [
                     'name' => 'created',
@@ -195,6 +201,7 @@ trait ColumnTestTrait
                     'default' => new QueryLiteral('CURRENT_TIMESTAMP'),
                     'comment' => null,
                     'autoIncrement' => false,
+                    'enumClass' => null,
                 ],
                 'modified' => [
                     'name' => 'modified',
@@ -208,6 +215,7 @@ trait ColumnTestTrait
                     'default' => new QueryLiteral('CURRENT_TIMESTAMP'),
                     'comment' => null,
                     'autoIncrement' => false,
+                    'enumClass' => null,
                 ],
             ],
             $columns->map(

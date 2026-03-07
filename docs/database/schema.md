@@ -280,6 +280,17 @@ $table->clear();
 Throws:
 - `InvalidArgumentException` if `column($name)` is called for a missing column.
 
+#### **Attach a PHP enum class to a column** (`setEnumClass()`, `getEnumClass()`, `hasEnumClass()`, `clearEnumClass()`)
+
+Schema introspection can be overlaid with framework enum metadata when a column should hydrate and marshal as a PHP enum.
+
+```php
+use App\Enums\Status;
+
+$table = $schema->table('articles');
+$table->setEnumClass('status', Status::class);
+```
+
 #### **Work with indexes** (`hasIndex()`, `index()`, `indexes()`, `primaryKey()`)
 
 - `hasIndex($name)` checks for an index by name.
@@ -310,10 +321,11 @@ $ok = $table->hasAutoIncrement();
 
 ### `Column`
 
-#### **Get metadata** (`getName()`, `getType()`, `getLength()`, `getPrecision()`, `getDefault()`, `getComment()`, `getTable()`, `toArray()`)
+#### **Get metadata** (`getName()`, `getType()`, `getLength()`, `getPrecision()`, `getDefault()`, `getComment()`, `getTable()`, `getEnumClass()`, `toArray()`)
 
 - `getType()` returns the driver-reported type string.
 - `getDefault()` returns the normalized default value as either a scalar (`string|int|float|bool|null`) or a `QueryLiteral` when the default is a database expression.
+- `getEnumClass()` returns the configured PHP enum class when one has been attached to the column.
 - `toArray()` returns column metadata as an array (driver-specific columns may include additional keys).
 
 #### **Check flags** (`isNullable()`, `isUnsigned()`, `isAutoIncrement()`)

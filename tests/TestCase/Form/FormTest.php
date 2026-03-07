@@ -9,10 +9,12 @@ use Fyre\Core\Lang;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\DB\TypeParser;
 use Fyre\Form\Form;
+use Fyre\Form\Schema;
 use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\Path;
 use Override;
 use PHPUnit\Framework\TestCase;
+use Tests\Mock\Enums\State;
 use Tests\Mock\Forms\TestForm;
 
 use function class_uses;
@@ -21,6 +23,8 @@ use const ROOT;
 
 final class FormTest extends TestCase
 {
+    protected Container $container;
+
     protected Form $form;
 
     public function testDebug(): void
@@ -97,6 +101,53 @@ final class FormTest extends TestCase
     {
         $this->assertTrue(
             $this->form->execute([], false)
+        );
+    }
+
+    public function testExecuteParsesInvalidEnumToNull(): void
+    {
+        $form = new class ($this->container) extends Form
+        {
+            public function buildSchema(Schema $schema): Schema
+            {
+                return $schema
+                    ->addField('status', ['type' => 'string'])
+                    ->setEnumClass('status', State::class);
+            }
+        };
+
+        $this->assertTrue(
+            $form->execute([
+                'status' => 'Invalid',
+            ], false)
+        );
+
+        $this->assertNull(
+            $form->get('status')
+        );
+    }
+
+    public function testExecuteParsesUnitEnum(): void
+    {
+        $form = new class ($this->container) extends Form
+        {
+            public function buildSchema(Schema $schema): Schema
+            {
+                return $schema
+                    ->addField('status', ['type' => 'string'])
+                    ->setEnumClass('status', State::class);
+            }
+        };
+
+        $this->assertTrue(
+            $form->execute([
+                'status' => 'Draft',
+            ], false)
+        );
+
+        $this->assertSame(
+            State::Draft,
+            $form->get('status')
         );
     }
 
@@ -180,16 +231,16 @@ final class FormTest extends TestCase
     #[Override]
     protected function setUp(): void
     {
-        $container = new Container();
-        $container->singleton(TypeParser::class);
-        $container->singleton(Lang::class);
-        $container->singleton(Config::class);
+        $this->container = new Container();
+        $this->container->singleton(TypeParser::class);
+        $this->container->singleton(Lang::class);
+        $this->container->singleton(Config::class);
 
-        $container->use(Config::class)->set('App.locale', 'en');
+        $this->container->use(Config::class)->set('App.locale', 'en');
 
-        $container->use(Lang::class)
+        $this->container->use(Lang::class)
             ->addPath(Path::join(ROOT, 'lang'));
 
-        $this->form = $container->build(TestForm::class);
+        $this->form = $this->container->build(TestForm::class);
     }
 }

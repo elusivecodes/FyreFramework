@@ -440,55 +440,60 @@ class PostgresQueryGenerator extends QueryGenerator
     protected static function buildColumnType(Column $column): string
     {
         $type = $column->getType();
-        $length = $column->getLength();
-        $precision = $column->getPrecision();
-        $scale = $column->getScale();
-        $fractionalSeconds = $column->getFractionalSeconds();
 
         $sql = strtoupper($type);
 
-        if ($length !== null) {
-            switch ($type) {
-                case 'bpchar':
-                case 'character':
-                case 'character varying':
+        switch ($type) {
+            case 'bpchar':
+            case 'character':
+            case 'character varying':
+                $length = $column->getLength();
+                if ($length !== null) {
                     $sql .= '(';
                     $sql .= $length;
                     $sql .= ')';
-                    break;
-            }
-        } else if ($precision !== null) {
-            if ($type === 'numeric') {
-                $sql .= '(';
-                $sql .= $precision;
-                $sql .= ',';
-                $sql .= $scale ?? 0;
-                $sql .= ')';
-            }
-        } else if ($fractionalSeconds !== null) {
-            switch ($type) {
-                case 'time without time zone':
+                }
+                break;
+            case 'numeric':
+                $precision = $column->getPrecision();
+                if ($precision !== null) {
+                    $sql .= '(';
+                    $sql .= $precision;
+                    $sql .= ',';
+                    $sql .= $column->getScale() ?? 0;
+                    $sql .= ')';
+                }
+                break;
+            case 'time without time zone':
+                $fractionalSeconds = $column->getFractionalSeconds();
+                if ($fractionalSeconds !== null) {
                     $sql = 'TIME';
                     $sql .= '(';
                     $sql .= $fractionalSeconds;
                     $sql .= ')';
                     $sql .= ' WITHOUT TIME ZONE';
-                    break;
-                case 'timestamp without time zone':
+                }
+                break;
+            case 'timestamp without time zone':
+                $fractionalSeconds = $column->getFractionalSeconds();
+                if ($fractionalSeconds !== null) {
                     $sql = 'TIMESTAMP';
                     $sql .= '(';
                     $sql .= $fractionalSeconds;
                     $sql .= ')';
                     $sql .= ' WITHOUT TIME ZONE';
-                    break;
-                case 'timestamp with time zone':
+                }
+                break;
+            case 'timestamp with time zone':
+                $fractionalSeconds = $column->getFractionalSeconds();
+                if ($fractionalSeconds !== null) {
                     $sql = 'TIMESTAMP';
                     $sql .= '(';
                     $sql .= $fractionalSeconds;
                     $sql .= ')';
                     $sql .= ' WITH TIME ZONE';
-                    break;
-            }
+                }
+                break;
         }
 
         return $sql;

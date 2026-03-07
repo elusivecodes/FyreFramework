@@ -47,6 +47,21 @@ class FormContext extends Context
      * {@inheritDoc}
      */
     #[Override]
+    public function getEnumClass(string $key): string|null
+    {
+        $schema = $this->item->getSchema();
+
+        if (!$schema->hasField($key)) {
+            return null;
+        }
+
+        return $schema->field($key)->getEnumClass();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
     public function getMax(string $key): float|null
     {
         $validator = $this->item->getValidator();

@@ -6,6 +6,11 @@ namespace Fyre\Form;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\DB\Type;
 use Fyre\DB\TypeParser;
+use InvalidArgumentException;
+use UnitEnum;
+
+use function is_subclass_of;
+use function sprintf;
 
 /**
  * Represents form field metadata.
@@ -25,6 +30,7 @@ class Field
      * @param int|null $scale The field scale.
      * @param int|null $fractionalSeconds The fractional seconds precision.
      * @param mixed $default The field default value.
+     * @param class-string<UnitEnum>|null $enumClass The enum class.
      */
     public function __construct(
         protected TypeParser $typeParser,
@@ -35,6 +41,7 @@ class Field
         protected int|null $scale = null,
         protected int|null $fractionalSeconds = null,
         protected mixed $default = null,
+        protected string|null $enumClass = null,
     ) {
         switch ($this->type) {
             case 'binary':
@@ -64,6 +71,10 @@ class Field
                 $this->scale = null;
                 break;
         }
+
+        if ($this->enumClass !== null) {
+            $this->setEnumClass($this->enumClass);
+        }
     }
 
     /**
@@ -74,6 +85,16 @@ class Field
     public function getDefault(): mixed
     {
         return $this->default;
+    }
+
+    /**
+     * Returns the enum class.
+     *
+     * @return class-string<UnitEnum>|null The enum class.
+     */
+    public function getEnumClass(): string|null
+    {
+        return $this->enumClass;
     }
 
     /**
@@ -137,6 +158,37 @@ class Field
     }
 
     /**
+     * Checks whether the field has an enum class.
+     *
+     * @return bool Whether the field has an enum class.
+     */
+    public function hasEnumClass(): bool
+    {
+        return $this->enumClass !== null;
+    }
+
+    /**
+     * Sets the enum class.
+     *
+     * @param class-string<UnitEnum> $enumClass The enum class.
+     * @return static The Field instance.
+     */
+    public function setEnumClass(string $enumClass): static
+    {
+        if (!is_subclass_of($enumClass, UnitEnum::class, true)) {
+            throw new InvalidArgumentException(sprintf(
+                'Enum class `%s` must implement `%s`.',
+                $enumClass,
+                UnitEnum::class
+            ));
+        }
+
+        $this->enumClass = $enumClass;
+
+        return $this;
+    }
+
+    /**
      * Returns the field data as an array.
      *
      * @return array<string, mixed> The field data.
@@ -151,6 +203,7 @@ class Field
             'scale' => $this->scale,
             'fractionalSeconds' => $this->fractionalSeconds,
             'default' => $this->default,
+            'enumClass' => $this->enumClass,
         ];
     }
 

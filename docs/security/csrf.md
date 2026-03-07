@@ -132,7 +132,7 @@ use Psr\Http\Message\ServerRequestInterface;
 function renderCsrfMeta(ServerRequestInterface $request): string
 {
     $csrf = $request->getAttribute('csrf');
-    if (!$csrf instanceof CsrfProtection) {
+    if (!($csrf instanceof CsrfProtection)) {
         return '';
     }
 

@@ -26,6 +26,7 @@ final class FormContextTest extends TestCase
     use DateTestTrait;
     use DateTimeTestTrait;
     use DecimalTestTrait;
+    use EnumTestTrait;
     use FloatTestTrait;
     use IntegerTestTrait;
     use StringTestTrait;

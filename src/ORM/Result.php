@@ -10,6 +10,7 @@ use Fyre\DB\ResultSet;
 use Fyre\DB\Type;
 use Fyre\ORM\Queries\SelectQuery;
 use Fyre\Utility\Collection;
+use Fyre\Utility\EnumHelper;
 use Generator;
 use Iterator;
 use IteratorAggregate;
@@ -344,7 +345,15 @@ class Result implements Countable, IteratorAggregate, JsonSerializable
                 continue;
             }
 
-            $pointer[$column] = $type->fromDatabase($value);
+            if ($schema && $schema->hasColumn($column)) {
+                $schemaColumn = $schema->column($column);
+                $value = $schemaColumn->type()->fromDatabase($value);
+                $pointer[$column] = $schemaColumn->hasEnumClass() ?
+                    EnumHelper::parseValue($schemaColumn->getEnumClass(), $value) :
+                    $value;
+            } else {
+                $pointer[$column] = $type->fromDatabase($value);
+            }
         }
 
         return $data;

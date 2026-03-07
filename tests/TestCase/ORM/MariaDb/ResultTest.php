@@ -8,6 +8,8 @@ use Fyre\DB\Types\DateTimeType;
 use Fyre\ORM\Result;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Entities\Item;
+use Tests\Mock\Enums\State;
+use Tests\Mock\Enums\Status;
 
 use function class_uses;
 use function json_encode;
@@ -246,6 +248,88 @@ final class ResultTest extends TestCase
         $this->assertInstanceOf(
             Result::class,
             $this->modelRegistry->use('Items')->find()->getResult()
+        );
+    }
+
+    public function testResultHydratesEnum(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $Items->getSchema()->setEnumClass('name', Status::class);
+
+        $this->db->query("INSERT INTO items (name) VALUES ('draft')");
+
+        $item = $Items->find()
+            ->getResult()
+            ->first();
+
+        $this->assertSame(
+            Status::Draft,
+            $item->name
+        );
+    }
+
+    public function testResultHydratesEnumNull(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $Items->getSchema()->setEnumClass('name', Status::class);
+
+        $this->db->query('INSERT INTO items (name) VALUES (NULL)');
+
+        $item = $Items->find()
+            ->getResult()
+            ->first();
+
+        $this->assertNull(
+            $item->name
+        );
+    }
+
+    public function testResultHydratesInvalidEnumAsNull(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $Items->getSchema()->setEnumClass('name', Status::class);
+
+        $this->db->query("INSERT INTO items (name) VALUES ('invalid')");
+
+        $item = $Items->find()
+            ->getResult()
+            ->first();
+
+        $this->assertNull(
+            $item->name
+        );
+    }
+
+    public function testResultHydratesInvalidUnitEnumAsNull(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $Items->getSchema()->setEnumClass('name', State::class);
+
+        $this->db->query("INSERT INTO items (name) VALUES ('Invalid')");
+
+        $item = $Items->find()
+            ->getResult()
+            ->first();
+
+        $this->assertNull(
+            $item->name
+        );
+    }
+
+    public function testResultHydratesUnitEnum(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $Items->getSchema()->setEnumClass('name', State::class);
+
+        $this->db->query("INSERT INTO items (name) VALUES ('Draft')");
+
+        $item = $Items->find()
+            ->getResult()
+            ->first();
+
+        $this->assertSame(
+            State::Draft,
+            $item->name
         );
     }
 

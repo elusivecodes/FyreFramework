@@ -7,6 +7,11 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\DB\QueryLiteral;
 use Fyre\DB\Type;
 use Fyre\DB\TypeParser;
+use InvalidArgumentException;
+use UnitEnum;
+
+use function is_subclass_of;
+use function sprintf;
 
 /**
  * Represents schema column metadata.
@@ -36,6 +41,7 @@ abstract class Column
      * @param bool|float|int|QueryLiteral|string|null $default The column default value.
      * @param string|null $comment The column comment.
      * @param bool $autoIncrement Whether the column is auto-incrementing.
+     * @param class-string<UnitEnum>|null $enumClass The enum class.
      */
     public function __construct(
         protected Table $table,
@@ -51,6 +57,7 @@ abstract class Column
         protected bool|float|int|QueryLiteral|string|null $default = null,
         protected string|null $comment = null,
         protected bool $autoIncrement = false,
+        protected string|null $enumClass = null,
     ) {}
 
     /**
@@ -74,7 +81,7 @@ abstract class Column
                 ->fetchColumn();
         }
 
-        return $this->default;
+        return $this->type()->parse($this->default);
     }
 
     /**
@@ -95,6 +102,16 @@ abstract class Column
     public function getDefault(): bool|float|int|QueryLiteral|string|null
     {
         return $this->default;
+    }
+
+    /**
+     * Returns the enum class.
+     *
+     * @return class-string<UnitEnum>|null The enum class.
+     */
+    public function getEnumClass(): string|null
+    {
+        return $this->enumClass;
     }
 
     /**
@@ -168,6 +185,16 @@ abstract class Column
     }
 
     /**
+     * Checks whether the column has an enum class.
+     *
+     * @return bool Whether the column has an enum class.
+     */
+    public function hasEnumClass(): bool
+    {
+        return $this->enumClass !== null;
+    }
+
+    /**
      * Checks whether the column is an auto increment column.
      *
      * @return bool Whether the column is an auto increment column.
@@ -198,6 +225,27 @@ abstract class Column
     }
 
     /**
+     * Sets the enum class.
+     *
+     * @param class-string<UnitEnum>|null $enumClass The enum class.
+     * @return static The Column instance.
+     */
+    public function setEnumClass(string|null $enumClass): static
+    {
+        if ($enumClass !== null && !is_subclass_of($enumClass, UnitEnum::class, true)) {
+            throw new InvalidArgumentException(sprintf(
+                'Enum class `%s` must implement `%s`.',
+                $enumClass,
+                UnitEnum::class
+            ));
+        }
+
+        $this->enumClass = $enumClass;
+
+        return $this;
+    }
+
+    /**
      * Returns the column data as an array.
      *
      * @return array<string, mixed> The column data.
@@ -216,6 +264,7 @@ abstract class Column
             'default' => $this->default,
             'comment' => $this->comment,
             'autoIncrement' => $this->autoIncrement,
+            'enumClass' => $this->enumClass,
         ];
     }
 

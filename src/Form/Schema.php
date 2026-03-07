@@ -6,6 +6,7 @@ namespace Fyre\Form;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use InvalidArgumentException;
+use UnitEnum;
 
 use function array_keys;
 use function sprintf;
@@ -89,6 +90,28 @@ class Schema
     }
 
     /**
+     * Returns the enum class for a field.
+     *
+     * @param string $name The field name.
+     * @return string|null The enum class.
+     */
+    public function getEnumClass(string $name): string|null
+    {
+        return $this->field($name)->getEnumClass();
+    }
+
+    /**
+     * Checks whether a field has an enum class.
+     *
+     * @param string $name The field name.
+     * @return bool Whether the field has an enum class.
+     */
+    public function hasEnumClass(string $name): bool
+    {
+        return $this->hasField($name) && $this->field($name)->hasEnumClass();
+    }
+
+    /**
      * Checks whether the form has a field.
      *
      * @param string $name The field name.
@@ -108,6 +131,20 @@ class Schema
     public function removeField(string $name): static
     {
         unset($this->fields[$name]);
+
+        return $this;
+    }
+
+    /**
+     * Sets the enum class for a field.
+     *
+     * @param string $name The field name.
+     * @param class-string<UnitEnum> $enumClass The enum class.
+     * @return static The Schema instance.
+     */
+    public function setEnumClass(string $name, string $enumClass): static
+    {
+        $this->field($name)->setEnumClass($enumClass);
 
         return $this;
     }

@@ -9,6 +9,8 @@ use Tests\Mock\Entities\Item;
 use Tests\Mock\Entities\Post;
 use Tests\Mock\Entities\Tag;
 use Tests\Mock\Entities\User;
+use Tests\Mock\Enums\State;
+use Tests\Mock\Enums\Status;
 
 use function array_map;
 
@@ -398,6 +400,21 @@ trait NewEntityTestTrait
         );
     }
 
+    public function testNewEntityEnum(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $Items->getSchema()->setEnumClass('name', Status::class);
+
+        $item = $Items->newEntity([
+            'name' => 'draft',
+        ]);
+
+        $this->assertSame(
+            Status::Draft,
+            $item->get('name')
+        );
+    }
+
     public function testNewEntityHasMany(): void
     {
         $Users = $this->modelRegistry->use('Users');
@@ -660,6 +677,34 @@ trait NewEntityTestTrait
         );
     }
 
+    public function testNewEntityInvalidEnum(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $Items->getSchema()->setEnumClass('name', Status::class);
+
+        $item = $Items->newEntity([
+            'name' => 'invalid',
+        ]);
+
+        $this->assertNull(
+            $item->get('name')
+        );
+    }
+
+    public function testNewEntityInvalidUnitEnum(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $Items->getSchema()->setEnumClass('name', State::class);
+
+        $item = $Items->newEntity([
+            'name' => 'Invalid',
+        ]);
+
+        $this->assertNull(
+            $item->get('name')
+        );
+    }
+
     public function testNewEntityManyToMany(): void
     {
         $Posts = $this->modelRegistry->use('Posts');
@@ -865,6 +910,51 @@ trait NewEntityTestTrait
 
         $this->assertTrue(
             $post->tags[1]->isDirty()
+        );
+    }
+
+    public function testNewEntityUnitEnum(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $Items->getSchema()->setEnumClass('name', State::class);
+
+        $item = $Items->newEntity([
+            'name' => 'Draft',
+        ]);
+
+        $this->assertSame(
+            State::Draft,
+            $item->get('name')
+        );
+    }
+
+    public function testToDatabaseSchemaEnum(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $Items->getSchema()->setEnumClass('name', Status::class);
+
+        $this->assertSame(
+            [
+                'name' => 'published',
+            ],
+            $Items->toDatabaseSchema([
+                'name' => Status::Published,
+            ])
+        );
+    }
+
+    public function testToDatabaseSchemaUnitEnum(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $Items->getSchema()->setEnumClass('name', State::class);
+
+        $this->assertSame(
+            [
+                'name' => 'Published',
+            ],
+            $Items->toDatabaseSchema([
+                'name' => State::Published,
+            ])
         );
     }
 }

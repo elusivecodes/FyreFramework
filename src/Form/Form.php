@@ -6,6 +6,7 @@ namespace Fyre\Form;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\DB\Type;
+use Fyre\Utility\EnumHelper;
 
 /**
  * Represents a form.
@@ -67,7 +68,8 @@ class Form
      * Executes the form validation and processing.
      *
      * Note: Data keys that are not present in the {@see Schema} are preserved unchanged.
-     * Schema fields are parsed via {@see Field::type()} {@see Type::parse()}.
+     * Schema fields are parsed via {@see Field::type()} {@see Type::parse()}, then converted
+     * to enum cases when the field has an enum class configured.
      *
      * @param array<string, mixed> $data The form data.
      * @param bool $validate Whether to validate the form data.
@@ -85,7 +87,13 @@ class Form
                 continue;
             }
 
-            $this->data[$key] = $schema->field($key)->type()->parse($value);
+            $field = $schema->field($key);
+            $value = $field->type()->parse($value);
+            $enumClass = $field->getEnumClass();
+
+            $this->data[$key] = $enumClass ?
+                EnumHelper::parseValue($enumClass, $value) :
+                $value;
         }
 
         if ($validate && !$this->validate($this->data)) {

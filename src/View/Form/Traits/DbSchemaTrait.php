@@ -17,6 +17,7 @@ use Fyre\DB\Types\SetType;
 use Fyre\DB\Types\StringType;
 use Fyre\DB\Types\TextType;
 use Fyre\DB\Types\TimeType;
+use Fyre\Utility\EnumHelper;
 
 use function array_combine;
 use function assert;
@@ -54,8 +55,12 @@ trait DbSchemaTrait
         }
 
         $column = $schema->column($field);
+        $value = $column->defaultValue() |> $column->type()->parse(...);
+        $enumClass = $column->getEnumClass();
 
-        return $column->defaultValue() |> $column->type()->parse(...);
+        return $enumClass ?
+            EnumHelper::parseValue($enumClass, $value) :
+            $value;
     }
 
     /**
@@ -266,7 +271,13 @@ trait DbSchemaTrait
             return 'text';
         }
 
-        $type = $schema->column($field)->type();
+        $column = $schema->column($field);
+
+        if ($column->hasEnumClass()) {
+            return 'select';
+        }
+
+        $type = $column->type();
 
         if ($type instanceof BooleanType) {
             return 'checkbox';

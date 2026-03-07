@@ -61,7 +61,7 @@ use Psr\Http\Message\ServerRequestInterface;
 function handle(ServerRequestInterface $request): void
 {
     $session = $request->getAttribute('session');
-    if (!$session instanceof Session) {
+    if (!($session instanceof Session)) {
         return;
     }
 

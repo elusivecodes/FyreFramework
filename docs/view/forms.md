@@ -112,6 +112,8 @@ echo $this->Form->select('role', options: [
 ]);
 ```
 
+When a form or entity context exposes a PHP enum class for a field, `select()` also derives options automatically. Backed enums use backing values, unit enums use case names, and enums implementing `Fyre\Utility\EnumLabelInterface` provide the option labels.
+
 ### Labels, fieldsets, and buttons
 
 ```php
@@ -167,7 +169,7 @@ Constraints and attributes are derived as available:
 - `maxlength`: derived from schema string length and/or validator `maxLength` rules (the lower of the two is used when both exist)
 - `min` and `max`: derived from schema numeric range and/or validator min/max-like rules (the stricter constraint is used when both exist)
 - `step`: derived from numeric schema type (integers use `1`, floats use `any`, decimals are based on precision)
-- `options` for `select()`/`selectMulti()`: derived from schema enum/set values when available
+- `options` for `select()`/`selectMulti()`: derived from schema enum/set values or configured PHP enum classes when available
 
 ## CSRF integration
 
@@ -456,6 +458,7 @@ function getConstraints(Context $context, string $key): array
         'step' => $context->getStep($key),
         'maxlength' => $context->getMaxLength($key),
         'options' => $context->getOptionValues($key),
+        'enumClass' => $context->getEnumClass($key),
         'default' => $context->getDefaultValue($key),
     ];
 }

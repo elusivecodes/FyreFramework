@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Fyre\DB\Forge\Handlers\Mysql;
 
+use BackedEnum;
 use Fyre\DB\Forge\Column;
 use Fyre\DB\QueryLiteral;
 use Fyre\DB\Schema\Column as SchemaColumn;
@@ -22,11 +23,17 @@ use Fyre\DB\Types\SetType;
 use Fyre\DB\Types\StringType;
 use Fyre\DB\Types\TextType;
 use Fyre\DB\Types\TimeType;
+use InvalidArgumentException;
 use Override;
+use UnitEnum;
 
+use function array_map;
 use function assert;
 use function filter_var;
+use function is_array;
 use function is_string;
+use function is_subclass_of;
+use function sprintf;
 use function str_contains;
 use function str_starts_with;
 use function strtolower;
@@ -54,7 +61,7 @@ class MysqlColumn extends Column
      * @param bool|float|int|QueryLiteral|string|null $default The column default value.
      * @param string|null $comment The column comment.
      * @param bool $autoIncrement Whether the column is auto-incrementing.
-     * @param string[]|null $values The column values.
+     * @param class-string<UnitEnum>|string[]|null $values The column values or enum class.
      * @param string|null $charset The column character set.
      * @param string|null $collation The column collation.
      */
@@ -71,7 +78,7 @@ class MysqlColumn extends Column
         bool|float|int|QueryLiteral|string|null $default = null,
         string|null $comment = '',
         bool $autoIncrement = false,
-        protected array|null $values = null,
+        protected array|string|null $values = null,
         protected string|null $charset = null,
         protected string|null $collation = null,
     ) {
@@ -325,7 +332,7 @@ class MysqlColumn extends Column
         assert($schemaColumn instanceof MysqlSchemaColumn);
 
         return parent::compare($schemaColumn) &&
-            $this->values === $schemaColumn->getValues() &&
+            $this->getValues() === $schemaColumn->getValues() &&
             $this->charset === $schemaColumn->getCharset() &&
             $this->collation === $schemaColumn->getCollation();
     }
@@ -357,7 +364,33 @@ class MysqlColumn extends Column
      */
     public function getValues(): array|null
     {
-        return $this->values;
+        if ($this->values === null) {
+            return null;
+        }
+
+        if (is_array($this->values)) {
+            return $this->values;
+        }
+
+        if (!is_subclass_of($this->values, UnitEnum::class, true)) {
+            throw new InvalidArgumentException(sprintf(
+                'Enum class `%s` must implement `%s`.',
+                $this->values,
+                UnitEnum::class
+            ));
+        }
+
+        if (is_subclass_of($this->values, BackedEnum::class, true)) {
+            return array_map(
+                static fn(BackedEnum $case): string => (string) $case->value,
+                $this->values::cases()
+            );
+        }
+
+        return array_map(
+            static fn(UnitEnum $case): string => $case->name,
+            $this->values::cases()
+        );
     }
 
     /**

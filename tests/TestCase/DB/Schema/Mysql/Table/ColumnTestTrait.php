@@ -140,6 +140,7 @@ trait ColumnTestTrait
                     'collation' => null,
                     'comment' => '',
                     'autoIncrement' => true,
+                    'enumClass' => null,
                 ],
                 'name' => [
                     'name' => 'name',
@@ -156,6 +157,7 @@ trait ColumnTestTrait
                     'collation' => 'utf8mb4_unicode_ci',
                     'comment' => '',
                     'autoIncrement' => false,
+                    'enumClass' => null,
                 ],
                 'value' => [
                     'name' => 'value',
@@ -172,6 +174,7 @@ trait ColumnTestTrait
                     'collation' => null,
                     'comment' => '',
                     'autoIncrement' => false,
+                    'enumClass' => null,
                 ],
                 'price' => [
                     'name' => 'price',
@@ -188,6 +191,7 @@ trait ColumnTestTrait
                     'collation' => null,
                     'comment' => '',
                     'autoIncrement' => false,
+                    'enumClass' => null,
                 ],
                 'text' => [
                     'name' => 'text',
@@ -204,6 +208,7 @@ trait ColumnTestTrait
                     'collation' => 'utf8mb4_unicode_ci',
                     'comment' => '',
                     'autoIncrement' => false,
+                    'enumClass' => null,
                 ],
                 'test' => [
                     'name' => 'test',
@@ -223,6 +228,7 @@ trait ColumnTestTrait
                     'collation' => 'utf8mb4_unicode_ci',
                     'comment' => '',
                     'autoIncrement' => false,
+                    'enumClass' => null,
                 ],
                 'bool' => [
                     'name' => 'bool',
@@ -239,6 +245,7 @@ trait ColumnTestTrait
                     'collation' => null,
                     'comment' => '',
                     'autoIncrement' => false,
+                    'enumClass' => null,
                 ],
                 'date_precision' => [
                     'name' => 'date_precision',
@@ -255,6 +262,7 @@ trait ColumnTestTrait
                     'collation' => null,
                     'comment' => '',
                     'autoIncrement' => false,
+                    'enumClass' => null,
                 ],
                 'created' => [
                     'name' => 'created',
@@ -271,6 +279,7 @@ trait ColumnTestTrait
                     'collation' => null,
                     'comment' => '',
                     'autoIncrement' => false,
+                    'enumClass' => null,
                 ],
                 'modified' => [
                     'name' => 'modified',
@@ -287,6 +296,7 @@ trait ColumnTestTrait
                     'collation' => null,
                     'comment' => '',
                     'autoIncrement' => false,
+                    'enumClass' => null,
                 ],
             ],
             $columns->map(

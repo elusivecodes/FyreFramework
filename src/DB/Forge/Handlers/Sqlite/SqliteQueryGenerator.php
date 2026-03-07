@@ -53,52 +53,51 @@ class SqliteQueryGenerator extends QueryGenerator
         $sql .= ' ';
         $sql .= strtoupper($type);
 
-        $length = $column->getLength();
-        $precision = $column->getPrecision();
-        $scale = $column->getScale();
-        $fractionalSeconds = $column->getFractionalSeconds();
-
-        if ($length !== null) {
-            switch ($type) {
-                case 'char':
-                case 'varchar':
+        switch ($type) {
+            case 'bit':
+            case 'tinyint':
+            case 'smallint':
+            case 'mediumint':
+            case 'int':
+            case 'integer':
+            case 'bigint':
+                $precision = $column->getPrecision();
+                if ($precision !== null) {
+                    $sql .= '(';
+                    $sql .= $precision;
+                    $sql .= ')';
+                }
+                break;
+            case 'char':
+            case 'varchar':
+                $length = $column->getLength();
+                if ($length !== null) {
                     $sql .= '(';
                     $sql .= $length;
                     $sql .= ')';
-                    break;
-            }
-        } else if ($precision !== null) {
-            switch ($type) {
-                case 'bit':
-                case 'tinyint':
-                case 'smallint':
-                case 'mediumint':
-                case 'int':
-                case 'integer':
-                case 'bigint':
-                    $sql .= '(';
-                    $sql .= $precision;
-                    $sql .= ')';
-                    break;
-                case 'decimal':
-                case 'numeric':
-                    $sql .= '(';
-                    $sql .= $precision;
-                    $sql .= ',';
-                    $sql .= $scale ?? 0;
-                    $sql .= ')';
-                    break;
-            }
-        } else if ($fractionalSeconds !== null) {
-            switch ($type) {
-                case 'datetime':
-                case 'time':
-                case 'timestamp':
+                }
+                break;
+            case 'datetime':
+            case 'time':
+            case 'timestamp':
+                $fractionalSeconds = $column->getFractionalSeconds();
+                if ($fractionalSeconds !== null) {
                     $sql .= '(';
                     $sql .= $fractionalSeconds;
                     $sql .= ')';
-                    break;
-            }
+                }
+                break;
+            case 'decimal':
+            case 'numeric':
+                $precision = $column->getPrecision();
+                if ($precision !== null) {
+                    $sql .= '(';
+                    $sql .= $precision;
+                    $sql .= ',';
+                    $sql .= $column->getScale() ?? 0;
+                    $sql .= ')';
+                }
+                break;
         }
 
         if ($column->isNullable()) {

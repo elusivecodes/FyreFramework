@@ -10,6 +10,7 @@ use Fyre\Form\Field;
 use Fyre\Form\Schema;
 use Override;
 use PHPUnit\Framework\TestCase;
+use Tests\Mock\Enums\Status;
 
 use function array_map;
 use function class_uses;
@@ -61,6 +62,10 @@ final class SchemaTest extends TestCase
         $this->assertNull(
             $field->getDefault()
         );
+
+        $this->assertNull(
+            $field->getEnumClass()
+        );
     }
 
     public function testFieldNames(): void
@@ -88,6 +93,7 @@ final class SchemaTest extends TestCase
                     'scale' => null,
                     'fractionalSeconds' => null,
                     'default' => null,
+                    'enumClass' => null,
                 ],
                 'user_id' => [
                     'name' => 'user_id',
@@ -97,6 +103,7 @@ final class SchemaTest extends TestCase
                     'scale' => null,
                     'fractionalSeconds' => null,
                     'default' => null,
+                    'enumClass' => null,
                 ],
             ],
             array_map(
@@ -129,6 +136,23 @@ final class SchemaTest extends TestCase
 
         $this->assertFalse(
             $this->schema->hasField('title')
+        );
+    }
+
+    public function testSetEnumClass(): void
+    {
+        $this->assertSame(
+            $this->schema,
+            $this->schema->setEnumClass('title', Status::class)
+        );
+
+        $this->assertTrue(
+            $this->schema->hasEnumClass('title')
+        );
+
+        $this->assertSame(
+            Status::class,
+            $this->schema->getEnumClass('title')
         );
     }
 

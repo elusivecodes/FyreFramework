@@ -102,6 +102,10 @@
         "test": [
             "Composer\\Config::disableProcessTimeout",
             "phpunit"
+        ],
+        "test:coverage": [
+            "Composer\\Config::disableProcessTimeout",
+            "XDEBUG_MODE=coverage phpunit --coverage-text"
         ]
     }
 }

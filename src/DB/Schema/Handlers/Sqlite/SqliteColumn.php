@@ -7,6 +7,7 @@ use Fyre\DB\QueryLiteral;
 use Fyre\DB\Schema\Column;
 use Fyre\DB\TypeParser;
 use Override;
+use UnitEnum;
 
 /**
  * Provides SQLite column metadata.
@@ -58,6 +59,7 @@ class SqliteColumn extends Column
      * @param bool $unsigned Whether the column is unsigned.
      * @param bool|float|int|QueryLiteral|string|null $default The column default value.
      * @param bool $autoIncrement Whether the column is auto-incrementing.
+     * @param class-string<UnitEnum>|null $enumClass The enum class.
      */
     public function __construct(
         SqliteTable $table,
@@ -72,6 +74,7 @@ class SqliteColumn extends Column
         bool $unsigned = false,
         bool|float|int|QueryLiteral|string|null $default = null,
         bool $autoIncrement = false,
+        string|null $enumClass = null,
     ) {
         parent::__construct(
             $table,
@@ -86,7 +89,8 @@ class SqliteColumn extends Column
             $unsigned,
             $default,
             null,
-            $autoIncrement
+            $autoIncrement,
+            $enumClass
         );
     }
 }

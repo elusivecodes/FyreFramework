@@ -14,6 +14,7 @@ use Fyre\DB\Types\StringType;
 use Fyre\DB\Types\TextType;
 use Fyre\DB\Types\TimeType;
 use Fyre\Form\Schema;
+use Fyre\Utility\EnumHelper;
 
 use function pow;
 
@@ -38,8 +39,12 @@ trait FormSchemaTrait
         }
 
         $formField = $schema->field($field);
+        $value = $formField->type()->parse($formField->getDefault());
+        $enumClass = $formField->getEnumClass();
 
-        return $formField->getDefault() |> $formField->type()->parse(...);
+        return $enumClass ?
+            EnumHelper::parseValue($enumClass, $value) :
+            $value;
     }
 
     /**
@@ -195,7 +200,13 @@ trait FormSchemaTrait
             return 'text';
         }
 
-        $type = $schema->field($field)->type();
+        $formField = $schema->field($field);
+
+        if ($formField->hasEnumClass()) {
+            return 'select';
+        }
+
+        $type = $formField->type();
 
         if ($type instanceof BooleanType) {
             return 'checkbox';

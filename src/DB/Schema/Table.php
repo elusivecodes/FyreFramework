@@ -8,6 +8,7 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\Utility\Collection;
 use Generator;
 use InvalidArgumentException;
+use UnitEnum;
 
 use function array_keys;
 use function sprintf;
@@ -25,6 +26,11 @@ abstract class Table
      * @var array<string, array<string, mixed>>|null
      */
     protected array|null $columns = null;
+
+    /**
+     * @var array<string, class-string<UnitEnum>>
+     */
+    protected array $enumClasses = [];
 
     /**
      * @var array<string, array<string, mixed>>|null
@@ -89,6 +95,23 @@ abstract class Table
     }
 
     /**
+     * Clears the enum class for a column.
+     *
+     * @param string $name The column name.
+     * @return static The Table instance.
+     */
+    public function clearEnumClass(string $name): static
+    {
+        unset($this->enumClasses[$name]);
+
+        if (isset($this->loadedColumns[$name])) {
+            $this->loadedColumns[$name]->setEnumClass(null);
+        }
+
+        return $this;
+    }
+
+    /**
      * Returns a table Column.
      *
      * @param string $name The column name.
@@ -108,7 +131,8 @@ abstract class Table
             ));
         }
 
-        return $this->loadedColumns[$name] ??= $this->buildColumn($name, $this->columns[$name]);
+        return $this->loadedColumns[$name] ??= $this->buildColumn($name, $this->columns[$name])
+            ->setEnumClass($this->enumClasses[$name] ?? null);
     }
 
     /**
@@ -135,7 +159,8 @@ abstract class Table
         return new Collection(
             function(): Generator {
                 foreach ($this->columns ?? [] as $name => $data) {
-                    yield $name => $this->loadedColumns[$name] ??= $this->buildColumn($name, $data);
+                    yield $name => $this->loadedColumns[$name] ??= $this->buildColumn($name, $data)
+                        ->setEnumClass($this->enumClasses[$name] ?? null);
                 }
             }
         );
@@ -193,6 +218,17 @@ abstract class Table
     }
 
     /**
+     * Returns the enum class for a column.
+     *
+     * @param string $name The column name.
+     * @return string|null The enum class.
+     */
+    public function getEnumClass(string $name): string|null
+    {
+        return $this->enumClasses[$name] ?? null;
+    }
+
+    /**
      * Returns the table name.
      *
      * @return string The table name.
@@ -241,6 +277,17 @@ abstract class Table
         $this->loadColumns();
 
         return isset($this->columns[$name]);
+    }
+
+    /**
+     * Checks whether a column has an enum class.
+     *
+     * @param string $name The column name.
+     * @return bool Whether the column has an enum class.
+     */
+    public function hasEnumClass(string $name): bool
+    {
+        return isset($this->enumClasses[$name]);
     }
 
     /**
@@ -326,6 +373,32 @@ abstract class Table
         }
 
         return null;
+    }
+
+    /**
+     * Sets the enum class for a column.
+     *
+     * @param string $name The column name.
+     * @param class-string<UnitEnum> $enumClass The enum class.
+     * @return static The Table instance.
+     */
+    public function setEnumClass(string $name, string $enumClass): static
+    {
+        if (!$this->hasColumn($name)) {
+            throw new InvalidArgumentException(sprintf(
+                'Table column `%s.%s` does not exist.',
+                $this->name,
+                $name
+            ));
+        }
+
+        $this->enumClasses[$name] = $enumClass;
+
+        if (isset($this->loadedColumns[$name])) {
+            $this->loadedColumns[$name]->setEnumClass($enumClass);
+        }
+
+        return $this;
     }
 
     /**

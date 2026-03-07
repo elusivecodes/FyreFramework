@@ -125,55 +125,53 @@ class MysqlQueryGenerator extends QueryGenerator
         $sql .= ' ';
         $sql .= strtoupper($type);
 
-        $length = $column->getLength();
-        $precision = $column->getPrecision();
-        $scale = $column->getScale();
-        $fractionalSeconds = $column->getFractionalSeconds();
-        $values = $column->getValues();
-
-        if ($length !== null) {
-            switch ($type) {
-                case 'char':
-                case 'varchar':
+        switch ($type) {
+            case 'bit':
+            case 'tinyint':
+            case 'smallint':
+            case 'mediumint':
+            case 'int':
+            case 'bigint':
+                $precision = $column->getPrecision();
+                if ($precision !== null) {
+                    $sql .= '(';
+                    $sql .= $precision;
+                    $sql .= ')';
+                }
+                break;
+            case 'char':
+            case 'varchar':
+                $length = $column->getLength();
+                if ($length !== null) {
                     $sql .= '(';
                     $sql .= $length;
                     $sql .= ')';
-                    break;
-            }
-        } else if ($precision !== null) {
-            switch ($type) {
-                case 'bit':
-                case 'tinyint':
-                case 'smallint':
-                case 'mediumint':
-                case 'int':
-                case 'bigint':
-                    $sql .= '(';
-                    $sql .= $precision;
-                    $sql .= ')';
-                    break;
-                case 'decimal':
-                    $sql .= '(';
-                    $sql .= $precision;
-                    $sql .= ',';
-                    $sql .= $scale ?? 0;
-                    $sql .= ')';
-                    break;
-            }
-        } else if ($fractionalSeconds !== null) {
-            switch ($type) {
-                case 'datetime':
-                case 'time':
-                case 'timestamp':
+                }
+                break;
+            case 'datetime':
+            case 'time':
+            case 'timestamp':
+                $fractionalSeconds = $column->getFractionalSeconds();
+                if ($fractionalSeconds !== null) {
                     $sql .= '(';
                     $sql .= $fractionalSeconds;
                     $sql .= ')';
-                    break;
-            }
-        } else if ($values !== null) {
-            switch ($type) {
-                case 'enum':
-                case 'set':
+                }
+                break;
+            case 'decimal':
+                $precision = $column->getPrecision();
+                if ($precision !== null) {
+                    $sql .= '(';
+                    $sql .= $precision;
+                    $sql .= ',';
+                    $sql .= $column->getScale() ?? 0;
+                    $sql .= ')';
+                }
+                break;
+            case 'enum':
+            case 'set':
+                $values = $column->getValues();
+                if ($values !== null) {
                     $values = array_map(
                         static fn(mixed $value): string => $connection->quote((string) $value),
                         $values
@@ -182,8 +180,8 @@ class MysqlQueryGenerator extends QueryGenerator
                     $sql .= '(';
                     $sql .= implode(',', $values);
                     $sql .= ')';
-                    break;
-            }
+                }
+                break;
         }
 
         if ($column->isUnsigned()) {

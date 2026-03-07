@@ -27,6 +27,17 @@ abstract class Context
     }
 
     /**
+     * Returns the enum class for a field.
+     *
+     * @param string $key The field key.
+     * @return string|null The enum class.
+     */
+    public function getEnumClass(string $key): string|null
+    {
+        return null;
+    }
+
+    /**
      * Returns the maximum value.
      *
      * @param string $key The field key.

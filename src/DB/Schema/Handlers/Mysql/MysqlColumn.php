@@ -8,6 +8,7 @@ use Fyre\DB\Schema\Column;
 use Fyre\DB\Type;
 use Fyre\DB\TypeParser;
 use Override;
+use UnitEnum;
 
 /**
  * Provides MySQL column metadata.
@@ -61,6 +62,7 @@ class MysqlColumn extends Column
      * @param bool|float|int|QueryLiteral|string|null $default The column default value.
      * @param string|null $comment The column comment.
      * @param bool $autoIncrement Whether the column is auto-incrementing.
+     * @param class-string<UnitEnum>|null $enumClass The enum class.
      * @param string[]|null $values The column values.
      * @param string|null $charset The column character set.
      * @param string|null $collation The column collation.
@@ -79,6 +81,7 @@ class MysqlColumn extends Column
         bool|float|int|QueryLiteral|string|null $default = null,
         string|null $comment = null,
         bool $autoIncrement = false,
+        string|null $enumClass = null,
         protected array|null $values = null,
         protected string|null $charset = null,
         protected string|null $collation = null,
@@ -96,7 +99,8 @@ class MysqlColumn extends Column
             $unsigned,
             $default,
             $comment,
-            $autoIncrement
+            $autoIncrement,
+            $enumClass
         );
     }
 
@@ -151,6 +155,7 @@ class MysqlColumn extends Column
             'collation' => $this->collation,
             'comment' => $this->comment,
             'autoIncrement' => $this->autoIncrement,
+            'enumClass' => $this->enumClass,
         ];
     }
 

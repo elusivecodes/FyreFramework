@@ -191,6 +191,7 @@ Forge DDL generation is implemented by driver-specific `Forge` classes. `ForgeRe
 Some features are only present on specific driver implementations:
 
 - MySQL and PostgreSQL `Forge` handlers add `createSchema()`, `dropSchema()`, and `dropPrimaryKey()`.
+- For MySQL native `enum` and `set` columns, `values` can be either an explicit value list or a PHP enum class name. When a class name is used, MySQL derives the option values from the enum cases.
 - SQLite’s handler does not add schema-level operations.
 
 If you need a driver-only method, check the concrete handler at runtime:
@@ -201,6 +202,18 @@ use Fyre\DB\Forge\Handlers\Mysql\MysqlForge;
 if ($forge instanceof MysqlForge) {
     $forge->createSchema('analytics');
 }
+```
+
+Example: MySQL enum values from a PHP enum class
+
+```php
+use App\Enums\Status;
+use Fyre\DB\Types\EnumType;
+
+$forge->addColumn('articles', 'status', [
+    'type' => EnumType::class,
+    'values' => Status::class,
+]);
 ```
 
 ### Driver-specific table behavior

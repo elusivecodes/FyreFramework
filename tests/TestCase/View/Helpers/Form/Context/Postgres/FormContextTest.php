@@ -36,6 +36,7 @@ final class FormContextTest extends TestCase
     use CharacterVaryingTestTrait;
     use DateTestTrait;
     use DoublePrecisionTestTrait;
+    use EnumClassTestTrait;
     use IntegerTestTrait;
     use NumericTestTrait;
     use PrimaryKeyTestTrait;

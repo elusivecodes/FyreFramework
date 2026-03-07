@@ -78,6 +78,27 @@ class EntityContext extends Context
      * {@inheritDoc}
      */
     #[Override]
+    public function getEnumClass(string $key): string|null
+    {
+        [$model, $field] = $this->getModelField($key);
+
+        if (!$model) {
+            return null;
+        }
+
+        $schema = $model->getSchema();
+
+        if (!$schema->hasColumn($field)) {
+            return null;
+        }
+
+        return $schema->column($field)->getEnumClass();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
     public function getMax(string $key): float|null
     {
         [$model, $field] = $this->getModelField($key);

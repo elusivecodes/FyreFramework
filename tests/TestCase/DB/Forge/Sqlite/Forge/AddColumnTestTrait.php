@@ -37,6 +37,7 @@ trait AddColumnTestTrait
                 'default' => 1,
                 'comment' => null,
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -72,6 +73,7 @@ trait AddColumnTestTrait
                 'default' => null,
                 'comment' => null,
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -107,6 +109,7 @@ trait AddColumnTestTrait
                 'default' => null,
                 'comment' => null,
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -142,6 +145,7 @@ trait AddColumnTestTrait
                 'default' => null,
                 'comment' => null,
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -177,6 +181,7 @@ trait AddColumnTestTrait
                 'default' => null,
                 'comment' => null,
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -212,6 +217,7 @@ trait AddColumnTestTrait
                 'default' => null,
                 'comment' => null,
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -246,6 +252,7 @@ trait AddColumnTestTrait
                 'default' => null,
                 'comment' => null,
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -282,6 +289,7 @@ trait AddColumnTestTrait
                 'default' => null,
                 'comment' => null,
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -316,6 +324,7 @@ trait AddColumnTestTrait
                 'default' => null,
                 'comment' => null,
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -350,6 +359,7 @@ trait AddColumnTestTrait
                 'default' => null,
                 'comment' => null,
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -385,6 +395,7 @@ trait AddColumnTestTrait
                 'default' => null,
                 'comment' => null,
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -420,6 +431,7 @@ trait AddColumnTestTrait
                 'default' => null,
                 'comment' => null,
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -455,6 +467,7 @@ trait AddColumnTestTrait
                 'default' => null,
                 'comment' => null,
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')
@@ -490,6 +503,7 @@ trait AddColumnTestTrait
                 'default' => null,
                 'comment' => null,
                 'autoIncrement' => false,
+                'enumClass' => null,
             ],
             $this->schema->table('test')
                 ->column('value')

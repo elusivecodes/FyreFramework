@@ -88,10 +88,26 @@ Creating entities through a model ensures they have the correct source and parti
 By default, `newEntity()` and `patchEntity()` perform a full “user input” workflow:
 
 - optional schema parsing (`parseSchema()`) so values are converted using column types
+- configured schema enum classes also convert parsed values into enum cases
 - optional field guarding (accessibility)
 - optional mutation hooks on the entity
 - optional validation (and error population)
 - optional association handling via the `$associated` option
+
+If a field should hydrate and marshal as a PHP enum, configure that on the schema during `initialize()`:
+
+```php
+use App\Enums\Status;
+use Fyre\ORM\Model;
+
+class ArticlesModel extends Model
+{
+    public function initialize(): void
+    {
+        $this->getSchema()->setEnumClass('status', Status::class);
+    }
+}
+```
 
 When selecting relationships, model relationship names can be expressed using dot-notation strings and nested arrays. For querying and eager-loading, see [Finding Data](finding.md).
 
@@ -133,7 +149,6 @@ if ($user) {
 This section assumes you already have a `ModelRegistry` instance available as `$modelRegistry`.
 
 It can also locate specialized model classes when you add namespaces. For a class alias like `Users`, it searches for a `<ClassAlias>Model` class in each configured namespace; when none is found, it falls back to the default model class.
-In the default `Engine` setup, `ModelRegistry` already includes the `App\Models` namespace; see [Engine](../core/engine.md).
 In the default `Engine` setup, `ModelRegistry` already includes the `App\Models` namespace; see [Engine](../core/engine.md).
 
 ```php

@@ -7,6 +7,7 @@ use Fyre\DB\QueryLiteral;
 use Fyre\DB\Schema\Column;
 use Fyre\DB\TypeParser;
 use Override;
+use UnitEnum;
 
 /**
  * Provides PostgreSQL column metadata.
@@ -49,6 +50,7 @@ class PostgresColumn extends Column
      * @param bool|float|int|QueryLiteral|string|null $default The column default value.
      * @param string|null $comment The column comment.
      * @param bool $autoIncrement Whether the column is auto-incrementing.
+     * @param class-string<UnitEnum>|null $enumClass The enum class.
      */
     public function __construct(
         PostgresTable $table,
@@ -63,6 +65,7 @@ class PostgresColumn extends Column
         bool|float|int|QueryLiteral|string|null $default = null,
         string|null $comment = '',
         bool $autoIncrement = false,
+        string|null $enumClass = null,
     ) {
         parent::__construct(
             $table,
@@ -77,7 +80,8 @@ class PostgresColumn extends Column
             false,
             $default,
             $comment,
-            $autoIncrement
+            $autoIncrement,
+            $enumClass
         );
     }
 }

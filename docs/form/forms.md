@@ -117,10 +117,12 @@ The `$options` array is passed as constructor arguments to `Fyre\Form\Field`. Co
 - `scale` (`int|null`): optional scale metadata stored on the field (for example, decimal scale).
 - `fractionalSeconds` (`int|null`): optional fractional-seconds precision metadata.
 - `default` (`mixed`): default metadata stored on the field (not automatically applied during parsing).
+- `enumClass` (`class-string<UnitEnum>|null`): optional PHP enum class used to convert parsed scalars into enum cases.
 
 Parsing behavior during `execute()`:
 
-- If the input key exists in the schema, the value is parsed via `Field::type()->parse($value)`.
+- If the input key exists in the schema, the value is parsed via the field type.
+- If the field also has an `enumClass`, the parsed scalar is converted to an enum case.
 - If the input key does not exist in the schema, the value is stored unchanged.
 
 If you want the output to always include a key (even when it wasn’t present in the input), merge defaults into your input before `execute()`, or merge defaults into the array returned by `getData()` after `execute()`.
@@ -276,6 +278,18 @@ $fields = $schema->fields();
 $fieldNames = $schema->fieldNames();
 ```
 
+#### **Attach a PHP enum class to a field** (`setEnumClass()`, `getEnumClass()`, `hasEnumClass()`)
+
+Use enum metadata when a field should parse into enum cases.
+
+```php
+use App\Enums\Status;
+
+$schema
+    ->addField('status', ['type' => 'string'])
+    ->setEnumClass('status', Status::class);
+```
+
 #### **Remove a field** (`removeField()`)
 
 Remove a field from the schema.
@@ -293,7 +307,7 @@ A few behaviors are worth keeping in mind:
 
 - `Form::execute()` parses only keys that are present in the input array; it does not automatically apply field defaults.
 - When `execute()` receives keys that are not present in the schema, it stores those values unchanged.
-- Field `length`, `precision`, `scale`, and `default` values are stored on `Field` metadata; `execute()` parsing uses only the field `type` identifier.
+- Field `length`, `precision`, `scale`, `default`, and optional `enumClass` values are stored on `Field` metadata.
 - If you call `execute(..., validate: false)`, the form’s existing error map is not updated until you call `validate()`.
 
 ## Related
