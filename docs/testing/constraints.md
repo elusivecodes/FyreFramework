@@ -17,7 +17,7 @@ Fyre’s testing layer includes a set of PHPUnit constraints that power many of 
 
 ## Purpose
 
-🎯 Use constraints when you want to compose custom assertions with PHPUnit’s `assertThat()` (for example, when you’re not using a trait helper, or you want to assert against values you captured yourself).
+Use constraints when you want to compose custom assertions with PHPUnit’s `assertThat()` (for example, when you’re not using a trait helper, or you want to assert against values you captured yourself).
 
 In most test cases, prefer the trait assertion helpers (they are shorter and keep failure output consistent). Constraints are the lower-level building blocks.
 
@@ -94,7 +94,7 @@ Session constraints are used for asserting session values using dot-path keys.
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Response-body constraints read via `$response->getBody()->getContents()`, which consumes the stream; repeated assertions may require rewinding or using a fresh body stream.
 

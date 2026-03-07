@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use InvalidArgumentException;
 
 use function array_unique;
 use function count;
@@ -50,6 +51,22 @@ trait RandomTestTrait
             100,
             count($strings)
         );
+    }
+
+    public function testRandomWithInvalidChars(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Random string characters must not be empty.');
+
+        Str::random(8, '');
+    }
+
+    public function testRandomWithInvalidLength(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Random string length must be greater than or equal to 0.');
+
+        Str::random(-1);
     }
 
     public function testRandomWithLength(): void

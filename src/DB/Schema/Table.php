@@ -76,7 +76,7 @@ abstract class Table
         if ($cache) {
             $prefix = $this->schema->getCachePrefix();
             foreach (['columns', 'indexes', 'foreign_keys'] as $key) {
-                $cache->delete($prefix.'.'.$key);
+                $cache->delete($prefix.'.'.$this->name.'.'.$key);
             }
         }
 

@@ -120,9 +120,6 @@ class ClientResponse extends Response
      * The cookie is stored in the response cookie collection and can be emitted by
      * {@see ResponseEmitter}. It is not added to the `Set-Cookie` header directly.
      *
-     * Note: {@see ResponseEmitter} currently uses PHP's `setcookie()` without passing the
-     * SameSite option, so the `$sameSite` value may not be sent when emitting.
-     *
      * @param string $name The cookie name.
      * @param string $value The cookie value.
      * @param DateTime|int|null $expires The cookie expiration time (DateTime or UNIX timestamp).

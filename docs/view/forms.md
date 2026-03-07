@@ -1,6 +1,6 @@
 # Forms
 
-`Fyre\View\Helpers\FormHelper` generates HTML forms and form fields for templates. It can resolve a "form context" (for example, an ORM entity) to provide default values and derive field metadata from model validation rules and database schema.
+`Fyre\View\Helpers\FormHelper` generates HTML forms and form fields for templates. It can resolve a form context from supported items such as ORM entities or `Fyre\Form\Form` instances to provide default values and derive field metadata from validation rules and schema information.
 
 ## Table of Contents
 
@@ -16,19 +16,21 @@
 - [Form context and defaults](#form-context-and-defaults)
   - [Value resolution order](#value-resolution-order)
   - [Entity-backed context](#entity-backed-context)
+  - [Form-backed context](#form-backed-context)
   - [How types and attributes are derived](#how-types-and-attributes-are-derived)
 - [CSRF integration](#csrf-integration)
 - [Method guide](#method-guide)
   - [`FormHelper`](#formhelper)
   - [`Context`](#context)
   - [`EntityContext`](#entitycontext)
+  - [`FormContext`](#formcontext)
   - [`NullContext`](#nullcontext)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
 ## Purpose
 
-🎯 Use `$this->Form` in templates to generate form tags and inputs without hand-building attributes like `name`, `id`, `value`, and `required`.
+Use `$this->Form` in templates to generate form tags and inputs without hand-building attributes like `name`, `id`, `value`, and `required`.
 
 Most examples on this page assume you are in a template, where `$this` is the current `View` and `$this->Form` is a `FormHelper`.
 
@@ -122,7 +124,7 @@ echo $this->Form->fieldsetClose();
 
 ## Form context and defaults
 
-Form context controls value/default resolution and field metadata (type, required, min/max, step, max length, and option values).
+Form context controls value/default resolution and field metadata such as type, required, min/max, step, max length, and option values.
 
 ### Value resolution order
 
@@ -141,7 +143,15 @@ Calling `open($entity)` uses `EntityContext`, which:
 - derives `required` from the model validator where possible
 - derives type and numeric/text constraints from the model schema where possible
 
-If you call `open()` with no item, `NullContext` is used (it provides no values and no constraints).
+### Form-backed context
+
+Calling `open($form)` with a `Fyre\Form\Form` instance uses `FormContext`, which:
+
+- reads values with `Form::get($key)`
+- derives types and constraints from the form schema
+- derives `required`, min/max-like constraints, and max length from the form validator
+
+If you call `open()` with no item, `NullContext` is used. It provides no values, options, or constraints.
 
 ### How types and attributes are derived
 
@@ -161,7 +171,7 @@ Constraints and attributes are derived as available:
 
 ## CSRF integration
 
-When CSRF protection has attached a `csrf` request attribute, `open()` automatically injects a hidden field containing the CSRF form token. See [CSRF](../security/csrf.md) for CSRF middleware and token behavior.
+When CSRF protection has attached a `csrf` request attribute, `open()` automatically injects a hidden field containing the CSRF form token. If `action` is missing or empty, `open()` also defaults it to the current request URI. See [CSRF](../security/csrf.md) for CSRF middleware and token behavior.
 
 ## Method guide
 
@@ -174,7 +184,7 @@ Applies to `Fyre\View\Helpers\FormHelper` and is typically accessed as `$this->F
 Opens a `<form>` and resolves the current form context from `$item`.
 
 Arguments:
-- `$item` (`object|null`): context item (for example, an ORM entity).
+- `$item` (`object|null`): context item (for example, an ORM entity or `Fyre\Form\Form`).
 - `$attributes` (`array<string, mixed>`): form attributes.
 - `$idPrefix` (`string|null`): optional prefix for generated `id` values.
 
@@ -202,6 +212,8 @@ echo $this->Form->file('attachment');
 #### **Close a form** (`close()`)
 
 Closes the current form.
+
+This also clears the active form context and current `idPrefix`.
 
 ```php
 echo $this->Form->close();
@@ -397,6 +409,8 @@ echo $this->Form->legend('Details');
 
 Applies to `Fyre\View\Form\Context`, the base API a form context must provide.
 
+Examples below assume the relevant form context class is already imported.
+
 #### **Get the field type** (`getType()`)
 
 Returns a renderer name (a `FormHelper` method name) for a key.
@@ -405,8 +419,6 @@ Arguments:
 - `$key` (`string`): field key.
 
 ```php
-use Fyre\View\Form\Context;
-
 function chooseType(Context $context, string $key): string
 {
     return $context->getType($key);
@@ -421,8 +433,6 @@ Arguments:
 - `$key` (`string`): field key.
 
 ```php
-use Fyre\View\Form\Context;
-
 function getFieldValue(Context $context, string $key): mixed
 {
     return $context->getValue($key);
@@ -437,8 +447,6 @@ Arguments:
 - `$key` (`string`): field key.
 
 ```php
-use Fyre\View\Form\Context;
-
 function getConstraints(Context $context, string $key): array
 {
     return [
@@ -465,9 +473,25 @@ Arguments:
 - `$key` (`string`): field key (supports dot notation).
 
 ```php
-use Fyre\View\Form\EntityContext;
-
 function readValue(EntityContext $context, string $key): mixed
+{
+    return $context->getValue($key);
+}
+```
+
+### `FormContext`
+
+Applies to `Fyre\View\Form\FormContext`, the context used when `open()` is called with a `Fyre\Form\Form`.
+
+#### **Read form-backed values and metadata** (`getValue()`, `getType()`, `isRequired()`, `getMin()`, `getMax()`, `getStep()`, `getMaxLength()`, `getDefaultValue()`)
+
+Provides values and metadata derived from a `Form` instance, its schema, and its validator.
+
+Arguments:
+- `$key` (`string`): field key.
+
+```php
+function readFormValue(FormContext $context, string $key): mixed
 {
     return $context->getValue($key);
 }
@@ -485,17 +509,16 @@ Arguments:
 - `$key` (`string`): field key.
 
 ```php
-use Fyre\View\Form\NullContext;
-
 $context = new NullContext();
 echo $context->getValue('anything');
 ```
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `open()` throws if you attempt to open a new form while an existing form context is still open; call `close()` first.
+- `open()` throws if you pass an object class that does not have a mapped form context.
 - `input()` throws if you pass an unknown input `type` (it must map to a method on `FormHelper`).
 - `open()` defaults `action` to the current request URI when `action` is missing or empty.
 - Value resolution prioritizes request data over context values; this is useful for redisplaying user input, but can surprise you if you expected the entity value to win.

@@ -36,6 +36,7 @@ class RedisCacher extends Cacher
         'database' => null,
         'timeout' => 0,
         'persist' => true,
+        'flushDatabase' => false,
         'tls' => false,
         'ssl' => [
             'key' => null,
@@ -132,12 +133,20 @@ class RedisCacher extends Cacher
     /**
      * {@inheritDoc}
      *
-     * Note: When no prefix is configured, this clears the entire Redis database.
+     * Note: Clearing without a prefix requires explicit opt-in because it flushes the entire Redis database.
+     *
+     * @throws CacheException If clearing without a prefix is not allowed.
      */
     #[Override]
     public function clear(): bool
     {
         if (!$this->config['prefix']) {
+            if (!$this->config['flushDatabase']) {
+                throw new CacheException(
+                    'Redis cache clear requires a non-empty prefix or flushDatabase enabled.'
+                );
+            }
+
             return $this->connection->flushDB(false);
         }
 
@@ -145,7 +154,7 @@ class RedisCacher extends Cacher
         $pattern = $this->config['prefix'].'*';
 
         while (($keys = $this->connection->scan($iterator, $pattern, 50)) !== false) {
-            if ($this->connection->unlink($keys) === false) {
+            if ($keys && $this->connection->unlink($keys) === false) {
                 return false;
             }
         }

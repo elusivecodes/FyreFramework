@@ -1,6 +1,6 @@
 # Security
 
-🧭 Security docs cover request-level primitives for protecting state-changing requests, tightening browser security boundaries, encrypting application data, and throttling abusive traffic.
+Security docs cover request-level primitives for protecting state-changing requests, tightening browser security boundaries, encrypting application data, and throttling abusive traffic.
 
 ## Table of Contents
 

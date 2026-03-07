@@ -25,13 +25,13 @@ For record objects (field access, change tracking, errors, and serialization), s
 
 ## Purpose
 
-🎯 Use a model when you want a table-aware API for querying and persisting entities, including relationship definitions and model-level behaviors (validation, rule sets, events).
+Use a model when you want a table-aware API for querying and persisting entities, including relationship definitions and model-level behaviors (validation, rule sets, events).
 
 Most examples assume you already have a model instance (for example, `$Users`).
 
 ## Mental model
 
-🧠 At runtime, a model acts like a table-centric service:
+At runtime, a model acts like a table-centric service:
 
 - creates query objects (`find()`, `selectQuery()`, `insertQuery()`, `updateQuery()`, `deleteQuery()`)
 - builds entities for the model alias (`newEntity()`, `newEmptyEntity()`, `patchEntity()`)
@@ -44,6 +44,7 @@ An entity is a record-centric object:
 - serializes to arrays/JSON
 
 Entities are documented in [Entities](entities.md). When you don’t explicitly wire classes, `ModelRegistry` and `EntityLocator` provide conventions and caching so models and entities can be resolved from simple aliases.
+If helpers are loaded, `model('Users')` is the shorthand for resolving a model from `ModelRegistry`; see [Helpers](../core/helpers.md).
 
 ## Models: persistence and metadata
 
@@ -132,6 +133,8 @@ if ($user) {
 This section assumes you already have a `ModelRegistry` instance available as `$modelRegistry`.
 
 It can also locate specialized model classes when you add namespaces. For a class alias like `Users`, it searches for a `<ClassAlias>Model` class in each configured namespace; when none is found, it falls back to the default model class.
+In the default `Engine` setup, `ModelRegistry` already includes the `App\Models` namespace; see [Engine](../core/engine.md).
+In the default `Engine` setup, `ModelRegistry` already includes the `App\Models` namespace; see [Engine](../core/engine.md).
 
 ```php
 $modelRegistry->addNamespace('App\Models');
@@ -140,6 +143,8 @@ $Users = $modelRegistry->use('Users');
 ```
 
 Aliases are enforced: reusing the same alias with a different class alias will raise an exception.
+
+If you use contextual injection, `#[ORM('Users')]` can resolve a model by alias while the container is building an object or calling a callable; see [Contextual attributes](../core/contextual-attributes.md).
 
 ## Method guide
 
@@ -314,7 +319,7 @@ $modelRegistry->unload('Users');
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Unknown relationship names passed through contain/associated options raise an exception.
 - Relationship properties must not collide with table columns; conflicting relationships are rejected.
@@ -331,3 +336,6 @@ $modelRegistry->unload('Users');
 - [Rule Sets](rulesets.md)
 - [ORM Traits](traits.md)
 - [ORM Events](events.md)
+- [Helpers](../core/helpers.md)
+- [Contextual attributes](../core/contextual-attributes.md)
+- [Engine](../core/engine.md)

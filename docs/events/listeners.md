@@ -1,6 +1,6 @@
 # Event Listeners
 
-Event listeners are callbacks that run in response to events dispatched through the event manager. In addition to registering individual callbacks, you can group handlers into a listener class by implementing `EventListenerInterface` and marking public methods with the `#[On]` attribute.
+Event callbacks run in response to events dispatched through the event manager. In addition to registering individual callbacks, you can group handlers into a listener class by implementing `EventListenerInterface` and marking public methods with the `#[On]` attribute.
 
 For event registration and dispatch basics, see [Event Manager](event-manager.md).
 
@@ -11,19 +11,20 @@ For event registration and dispatch basics, see [Event Manager](event-manager.md
 - [Declaring listener methods](#declaring-listener-methods)
   - [Listening to named events](#listening-to-named-events)
   - [Listening to object events](#listening-to-object-events)
-  - [Listening to multiple events](#listening-to-multiple-events)
+- [Listening to multiple events](#listening-to-multiple-events)
 - [Registering a listener class](#registering-a-listener-class)
 - [Listener discovery and caching](#listener-discovery-and-caching)
-- [Method guide](#method-guide)
-  - [`EventManager`](#eventmanager)
-  - [`On`](#on)
-  - [`EventListenerInterface`](#eventlistenerinterface)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
 ## Purpose
 
-🎯 Use attribute-based listeners when you want to group related event handlers into a single class and register them with one call to `EventManager::addListener()`.
+Use attribute-based listeners when you want to group related event handlers into a single class and register them with one call to `EventManager::addListener()`.
+
+Terminology used in this guide:
+
+- A **callback** is an individual callable registered with `EventManager::on()`.
+- A **listener class** is an object that implements `EventListenerInterface` and is registered with `EventManager::addListener()`.
 
 Most examples on this page assume you already have an `$eventManager` instance (for example via dependency injection).
 
@@ -31,14 +32,14 @@ If helpers are loaded, you can also resolve it from the container (see [Helpers]
 
 ## How attribute listeners work
 
-🧠 Attribute-based listeners are a convenient way to group related event handlers into a single class.
+Attribute-based listeners are a convenient way to group related event handlers into a single class.
 
 To opt in:
 
 - implement `EventListenerInterface` (a marker interface), and
 - annotate public methods with `#[On]`.
 
-When you call `EventManager::addListener()`, the event manager reflects on the listener class, discovers `#[On]` attributes, and registers each annotated method as a listener callback under the attribute’s event name and priority.
+When you call `EventManager::addListener()`, the event manager reflects on the listener class, discovers `#[On]` attributes, and registers each annotated method as a callback under the attribute’s event name and priority.
 
 ## Declaring listener methods
 
@@ -138,84 +139,9 @@ When you register or remove a listener with `addListener()` / `removeListener()`
 
 Discovery scans all public methods and reads attributes using an `instanceof` match for `On`, so attributes that extend `On` are also discovered.
 
-## Method guide
-
-This section is a quick reference to the key APIs involved in attribute-based listeners.
-
-### `EventManager`
-
-#### **Register a listener class** (`addListener()`)
-
-Registers all public methods on `$listener` that are annotated with `#[On]`.
-
-Arguments:
-- `$listener` (`EventListenerInterface`): the listener instance to register.
-
-```php
-use Fyre\Event\Attributes\On;
-use Fyre\Event\Event;
-use Fyre\Event\EventListenerInterface;
-use Fyre\Event\EventManager;
-
-final class AuditListener implements EventListenerInterface
-{
-    #[On('User.created')]
-    public function onUserCreated(Event $event, string $id): void
-    {
-        // ...
-    }
-}
-
-$eventManager->addListener(new AuditListener());
-```
-
-#### **Remove a listener class** (`removeListener()`)
-
-Unregisters the callbacks that were registered for the given listener instance.
-
-Arguments:
-- `$listener` (`EventListenerInterface`): the listener instance to unregister.
-
-```php
-use Fyre\Event\EventManager;
-
-$listener = new AuditListener();
-
-$eventManager->addListener($listener);
-$eventManager->removeListener($listener);
-```
-
-### `On`
-
-#### **Get the event name** (`getName()`)
-
-Returns the event name stored on the attribute instance.
-
-```php
-use Fyre\Event\Attributes\On;
-
-$on = new On('User.created');
-$name = $on->getName();
-```
-
-#### **Get the priority** (`getPriority()`)
-
-Returns the priority stored on the attribute instance (or `null` if none was provided).
-
-```php
-use Fyre\Event\Attributes\On;
-
-$on = new On('User.created');
-$priority = $on->getPriority();
-```
-
-### `EventListenerInterface`
-
-Marker interface used to opt in to attribute-based listener discovery.
-
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Only **public** methods are discovered. Private/protected handlers won’t be registered.
 - If `On` is constructed with a `null` priority, the event manager treats it as `EventManager::PRIORITY_NORMAL`.

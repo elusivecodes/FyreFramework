@@ -16,20 +16,20 @@
 
 ## Purpose
 
-🎯 The worker is the “consume” side of the queue subsystem: it repeatedly pops messages from a handler, invokes the job method through the container, and emits lifecycle events so you can observe failures and retries.
+The worker is the consume side of the queue subsystem: it repeatedly pops messages from a handler, invokes the job method through the container, and emits lifecycle events so you can observe failures and retries.
 
 For queue concepts and how messages are produced, see [Queue](index.md).
 
 ## Running the worker
 
-📌 The most common way to start a worker is the built-in `queue:worker` console command (see [Built-in Console Commands](../console/commands.md#queueworker)).
+The most common way to start a worker is the built-in `queue:worker` console command (see [Console Commands](../console/commands.md#queueworker)).
 
 This command forks:
 
 - The parent process prints the PID and exits immediately.
 - The child process builds a `Worker` and calls `run()`.
 
-📌 Note: `queue:worker` requires the `pcntl` extension and `pcntl_fork()`. In production, run workers under a process supervisor so they restart on failure.
+`queue:worker` requires the `pcntl` extension and `pcntl_fork()`. In production, run workers under a process supervisor so they restart on failure.
 
 Options supported by `queue:worker` are forwarded to `Worker` as-is:
 
@@ -40,7 +40,7 @@ Options supported by `queue:worker` are forwarded to `Worker` as-is:
 
 To customize polling delays (`rest`, `sleep`), build and run a `Worker` directly (see [Worker options](#worker-options)).
 
-📌 Recommended production setup:
+Recommended production setup:
 
 - Run one worker process per logical queue when workloads have different performance or priority characteristics.
 - Set `maxRuntime` and/or `maxJobs` so a supervisor can rotate workers periodically (memory leaks, long-lived connections, and code deploys are easier to manage).
@@ -76,7 +76,7 @@ Execution uses the container to invoke the job method with the message arguments
 - Any other return value: `Queue::complete()` is called and `Queue.success` is emitted.
 - Thrown exception: `Queue::fail()` is called and `Queue.exception` is emitted.
 
-📌 Note: There is no built-in per-job timeout. If jobs can block (network calls, slow queries), enforce timeouts in the job itself (HTTP client timeouts, DB statement timeouts) and rely on a supervisor to restart stuck workers.
+There is no built-in per-job timeout. If jobs can block (network calls, slow queries), enforce timeouts in the job itself (HTTP client timeouts, DB statement timeouts) and rely on a supervisor to restart stuck workers.
 
 ## Lifecycle events
 
@@ -143,7 +143,7 @@ $worker->run();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `Worker::run()` is not re-entrant; a second call on the same instance returns immediately.
 - Signal handling uses `pcntl_async_signals()` and installs handlers for `SIGTERM` and `SIGQUIT` (the worker requires the `pcntl` extension).
@@ -155,6 +155,6 @@ $worker->run();
 ## Related
 
 - [Queue](index.md)
-- [Built-in Console Commands](../console/commands.md)
+- [Console Commands](../console/commands.md)
 - [Events](../events/index.md)
 - [Container](../core/container.md)

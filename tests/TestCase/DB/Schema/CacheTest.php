@@ -261,4 +261,43 @@ final class CacheTest extends TestCase
             $this->cache->get('test.tables')
         );
     }
+
+    public function testSchemaClearDeletesCachedTableMetadata(): void
+    {
+        $this->schema->tables();
+        $this->schema->table('test')->columns();
+        $this->schema->table('test')->indexes();
+        $this->schema->table('test_values')->foreignKeys();
+
+        $this->assertNotNull($this->cache->get('test.tables'));
+        $this->assertNotNull($this->cache->get('test.test.columns'));
+        $this->assertNotNull($this->cache->get('test.test.indexes'));
+        $this->assertNotNull($this->cache->get('test.test_values.foreign_keys'));
+
+        $this->schema->clear();
+
+        $this->assertNull($this->cache->get('test.tables'));
+        $this->assertNull($this->cache->get('test.test.columns'));
+        $this->assertNull($this->cache->get('test.test.indexes'));
+        $this->assertNull($this->cache->get('test.test_values.foreign_keys'));
+    }
+
+    public function testTableClearDeletesOnlyCurrentTableMetadata(): void
+    {
+        $table = $this->schema->table('test');
+
+        $table->columns();
+        $table->indexes();
+        $this->schema->table('test_values')->foreignKeys();
+
+        $this->assertNotNull($this->cache->get('test.test.columns'));
+        $this->assertNotNull($this->cache->get('test.test.indexes'));
+        $this->assertNotNull($this->cache->get('test.test_values.foreign_keys'));
+
+        $table->clear();
+
+        $this->assertNull($this->cache->get('test.test.columns'));
+        $this->assertNull($this->cache->get('test.test.indexes'));
+        $this->assertNotNull($this->cache->get('test.test_values.foreign_keys'));
+    }
 }

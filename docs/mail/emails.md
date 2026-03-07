@@ -27,9 +27,11 @@ Emails are built with `Fyre\Mail\Email` and sent through a configured `Fyre\Mail
 
 ## Purpose
 
-🎯 This guide covers the parts of `Email` most applications use: addressing, subject/body, format, attachments, and sending.
+This guide covers the parts of `Email` most applications use: addressing, subject/body, format, attachments, and sending.
 
 Most examples assume you already have a configured `Mailer` instance. If you don’t, start with [Selecting a mailer](index.md#selecting-a-mailer).
+
+Examples that refer to `Email::TEXT`, `Email::HTML`, or `Email::BOTH` assume `Fyre\Mail\Email` is already imported.
 
 ## Sending an email
 
@@ -40,8 +42,6 @@ A typical flow is:
 3. Send the message via `Email::send()` (or directly via `Mailer::send()`).
 
 ```php
-use Fyre\Mail\Email;
-
 $mailer->email()
     ->setFrom('no-reply@example.com', 'Example App')
     ->setTo('user@example.com')
@@ -58,8 +58,6 @@ These examples assume you already have a `$mailer` (see [Selecting a mailer](ind
 ### Send a text email
 
 ```php
-use Fyre\Mail\Email;
-
 $mailer->email()
     ->setTo('user@example.com')
     ->setSubject('Welcome')
@@ -71,8 +69,6 @@ $mailer->email()
 ### Send an HTML email
 
 ```php
-use Fyre\Mail\Email;
-
 $mailer->email()
     ->setTo('user@example.com')
     ->setSubject('Welcome')
@@ -84,8 +80,6 @@ $mailer->email()
 ### Send text + HTML
 
 ```php
-use Fyre\Mail\Email;
-
 $mailer->email()
     ->setTo('user@example.com')
     ->setSubject('Welcome')
@@ -126,8 +120,6 @@ $mailer->email()
 ### Embed an inline image
 
 ```php
-use Fyre\Mail\Email;
-
 $mailer->email()
     ->setTo('user@example.com')
     ->setSubject('Welcome')
@@ -169,7 +161,7 @@ $email->setTo([
 
 Use `setSubject()` for the subject line and `setBodyText()` / `setBodyHtml()` for the message body.
 
-📌 Note: Setting an HTML body does not automatically change the message format. Use `setFormat(Email::HTML)` (or `Email::BOTH`) when you want HTML output.
+Setting an HTML body does not automatically change the message format. Use `setFormat(Email::HTML)` or `Email::BOTH` when you want HTML output.
 
 ### Return path
 
@@ -196,6 +188,8 @@ To attach files, use `setAttachments()` or `addAttachments()`. Each attachment i
 - `mimeType`: optional; auto-detected when missing
 - `contentId`: optional; marks an attachment as inline (for example an `<img src="cid:...">` in HTML)
 - `disposition`: optional; defaults to `inline` when `contentId` is set, otherwise `attachment`
+
+Each attachment must provide either `file` or `content`. If `file` is used, it should point to a readable file.
 
 ```php
 $email
@@ -395,7 +389,7 @@ $email->send();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Email addresses are validated with `FILTER_VALIDATE_EMAIL`. Invalid addresses are ignored when building recipient lists; sending fails if the final recipient set is empty.
 - When sending via SMTP, the envelope sender uses `setReturnPath()` when set; otherwise it uses `setFrom()`.

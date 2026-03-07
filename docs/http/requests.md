@@ -23,7 +23,7 @@
 
 ## Purpose
 
-🎯 `ServerRequest` represents what the client is asking for (method, target URI, headers, and body), plus server-provided context like query data, cookies, uploads, and server parameters.
+`ServerRequest` represents what the client is asking for (method, target URI, headers, and body), plus server-provided context like query data, cookies, uploads, and server parameters.
 
 Requests are immutable: any `with*` call returns a new instance, which makes it safe to enrich the request as it flows through middleware and handlers.
 
@@ -40,7 +40,7 @@ function handle(ServerRequestInterface $request): string
 }
 ```
 
-📌 Note: This page documents convenience methods on Fyre’s `ServerRequest` implementation (like `getData()`, `getQuery()`, `isSecure()`, and `negotiate()`). If you type-hint `ServerRequestInterface`, only standard PSR-7 methods are available.
+This page documents convenience methods on Fyre’s `ServerRequest` implementation, such as `getData()`, `getQuery()`, `isSecure()`, and `negotiate()`. If you type-hint `ServerRequestInterface`, only standard PSR-7 methods are available.
 
 If helpers are loaded, the `request()` helper resolves the current request from the container (see [Helpers](../core/helpers.md)):
 
@@ -48,7 +48,7 @@ If helpers are loaded, the `request()` helper resolves the current request from 
 $request = request();
 ```
 
-📌 Note: `request()` returns the request object when called with no arguments. When called as `request($key, $as)`, it is shorthand for reading parsed body data; it’s equivalent to `$request->getData($key, $as)` when `$request = request()`.
+`request()` returns the request object when called with no arguments. When called as `request($key, $as)`, it is shorthand for reading parsed body data, equivalent to `$request->getData($key, $as)` when `$request = request()`.
 
 ## Reading request input
 
@@ -233,7 +233,7 @@ if ($file instanceof UploadedFile) {
 }
 ```
 
-📌 Notes:
+Notes:
 - Always validate uploads (size, extension/MIME, and that the upload is present) before moving them.
 - Avoid using the client-provided filename directly; generate a safe destination path/name instead.
 
@@ -374,7 +374,7 @@ $body = (string) $request->getBody();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `ServerRequest` lazily reads and caches values from PHP superglobals, so later changes to superglobals won’t be reflected.
 - `getParsedBody()` always returns an array, but it can throw `RuntimeException` when JSON parsing fails for `application/json` requests.

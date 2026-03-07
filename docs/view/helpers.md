@@ -33,7 +33,7 @@ Form helper usage is documented separately in [Forms (view helper)](forms.md).
 
 ## Purpose
 
-🎯 Helpers are per-view objects that you use from templates to generate markup, URLs, and other view-oriented output without cluttering template files with reusable logic.
+Helpers are per-view objects that you use from templates to generate markup, URLs, and other view-oriented output without cluttering template files with reusable logic.
 
 If you need encapsulated “component-like” chunks that render using their own templates, use [Cells](cells.md) instead.
 
@@ -79,7 +79,7 @@ Built-in helpers live under `Fyre\View\Helpers` and are always considered after 
 
 ### CSP helper
 
-`CspHelper` integrates Content Security Policy (CSP) into templates by generating per-response nonces and adding them to all configured CSP policies.
+`CspHelper` integrates Content Security Policy (CSP) into templates by generating per-render nonces and adding them to all configured CSP policies on the shared `ContentSecurityPolicy` instance.
 
 Example: adding a script nonce to inline scripts:
 
@@ -228,7 +228,7 @@ Applies to `Fyre\View\Helpers\CspHelper` and is typically accessed as `$this->Cs
 
 #### **Generate a script nonce** (`scriptNonce()`)
 
-Generates a nonce and adds it to all configured CSP policies under the `script-src` directive.
+Returns the script nonce for the current helper instance and ensures it is added to all configured CSP policies under the `script-src` directive.
 
 ```php
 $nonce = $this->Csp->scriptNonce();
@@ -236,7 +236,7 @@ $nonce = $this->Csp->scriptNonce();
 
 #### **Generate a style nonce** (`styleNonce()`)
 
-Generates a nonce and adds it to all configured CSP policies under the `style-src` directive.
+Returns the style nonce for the current helper instance and ensures it is added to all configured CSP policies under the `style-src` directive.
 
 ```php
 $nonce = $this->Csp->styleNonce();
@@ -294,10 +294,11 @@ $url = $this->Url->to('user.view', ['id' => 123]);
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `HelperRegistry::find()` caches misses, so once `find('Name')` stores a `null` result, registering a new namespace (or adding a new class) does not change the cached result. `HelperRegistry::clear()` drops the lookup cache, but it also clears configured namespaces.
 - Helper options apply only on first load: `View::loadHelper()` creates the helper once and reuses it, so later calls with different `$options` do not rebuild the helper.
+- `CspHelper::scriptNonce()` and `styleNonce()` reuse the same nonce for repeated calls on the current helper instance while mutating the shared CSP policies for the current response.
 - Helper name casing is not normalized. Prefer matching the class short name (`Url` → `UrlHelper`) to avoid case-sensitive autoloader issues.
 
 ## Related

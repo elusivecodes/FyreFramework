@@ -31,15 +31,20 @@ Database queries are builder objects created from a `Fyre\DB\Connection`. They c
 
 ## Purpose
 
-🎯 Use query builders when you want composable SQL with predictable binding and a consistent result interface, without opting into the ORM layer.
+Use query builders when you want composable SQL with predictable binding and a consistent result interface, without opting into the ORM layer.
 
 ## Query builder basics
 
 Queries are created by a connection and all share the same lifecycle:
 
 1. Build a query (tables, fields, data, conditions).
-2. Compile it with `Query::sql()` (optionally with a `ValueBinder`).
-3. Execute it with `Query::execute()` and consume the returned `ResultSet`.
+2. Compile it to SQL and bind values.
+3. Execute it through the connection.
+4. Consume the returned `ResultSet`.
+
+`Query::execute()` performs the compile/bind/execute flow for you by generating SQL, preparing bindings when enabled, and calling `Connection::execute()`.
+
+Optionally, compile the SQL first with `Query::sql()` (for debugging/logging or when executing manually with `Connection::execute()`).
 
 After a successful `execute()`, the query’s internal “dirty” state is reset, which can matter if you reuse the same query object across multiple operations.
 
@@ -79,13 +84,13 @@ Common query methods (available on all query types):
 - `sql(ValueBinder|null $binder = null): string`
 - `table(array|string $table, bool $overwrite = false): static`
 - `getConnection(): Connection`
-- `getTable(): array`
+- `getTable(): array` (the normalized internal table representation)
 
 ### Binding and expressions
 
 When a `ValueBinder` is used, values compile into placeholders like `:p0` and the binder stores the corresponding values for execution.
 
-- `Query::execute()` creates a binder automatically (binding is enabled by default).
+- `Query::execute()` creates a binder automatically when binding is enabled on the query (the default behavior).
 - `ValueBinder::bindings()` returns the values keyed by placeholder name (without the leading `:`), suitable for `Connection::execute()`.
 - `Connection::execute($sql, $params)` supports both positional parameters (a list) and named parameters (an associative array keyed by placeholder name without `:`).
 
@@ -402,14 +407,14 @@ $db->insertFrom($from, ['id', 'email', 'created'])
 
 `Connection::updateBatch()` creates a `Fyre\DB\Queries\UpdateBatchQuery`, typically used to update multiple rows using a single statement.
 
-This query type compiles to a single `UPDATE ... SET ...` statement that typically uses `CASE` expressions to set different values per row.
+This query type compiles to a single `UPDATE ... SET ...` statement for applying multiple row updates in one query. The exact SQL shape is generator-specific.
 
 The `$keys` argument to `UpdateBatchQuery::set($data, $keys)` defines which column(s) identify each row being updated. These key columns are used to:
 
 - match each input row to a target row in the database, and
 - build the `WHERE` clause that restricts the update to only the key values present in `$data`.
 
-`UpdateBatchQuery` also has a couple practical implications based on how the batch statement is compiled:
+`UpdateBatchQuery` also has a couple practical implications:
 
 - The set of updatable columns is taken from the first row in `$data` (excluding `$keys`). Keep `$data` rows structurally consistent.
 - If a particular row omits a column that is being updated, that row keeps its existing value for that column (the compiled `CASE` uses `ELSE <column>`).
@@ -429,6 +434,8 @@ Buffering vs streaming:
 - `row()` reads forward and increments the internal index.
 - `fetch($index)` may read ahead from the statement to populate the internal buffer up to that index.
 - `all()` fetches the remaining rows, buffers them, and frees the underlying cursor.
+- `count()` may buffer remaining rows when driver row counts are unreliable.
+- `valid()` may also advance the cursor while checking whether another row exists.
 
 ```php
 $result = $db->select('*')

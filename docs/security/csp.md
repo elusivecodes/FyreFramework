@@ -28,18 +28,18 @@ CSP hardens browser security boundaries by restricting what resources a page is 
 
 ## Purpose
 
-🎯 CSP is most valuable for HTML responses where untrusted content might otherwise gain the ability to execute script, load unexpected third-party resources, or embed your pages in hostile contexts.
+CSP is most valuable for HTML responses where untrusted content might otherwise gain the ability to execute script, load unexpected third-party resources, or embed your pages in hostile contexts.
 
 In Fyre, CSP support focuses on two jobs:
 
 - building valid `Content-Security-Policy` / `Content-Security-Policy-Report-Only` header values
 - applying those headers to a `Psr\Http\Message\ResponseInterface`
 
-📌 Note: In production, it’s common to start with report-only CSP, collect reports, then switch to enforced mode once you’re confident the policy won’t break real pages.
+In production, it’s common to start with report-only CSP, collect reports, then switch to enforced mode once you’re confident the policy won’t break real pages.
 
 ## Mental model
 
-🧠 `ContentSecurityPolicy` manages a set of named policies. Each policy is a `Policy` instance, which represents a directive set (for example `default-src`, `script-src`, and `img-src`) and can be converted into a header string.
+`ContentSecurityPolicy` manages a set of named policies. Each policy is a `Policy` instance, which represents a directive set (for example `default-src`, `script-src`, and `img-src`) and can be converted into a header string.
 
 `Policy` is immutable: modifier methods return a cloned instance. `ContentSecurityPolicy` is a stateful container for policies: when you “change” a policy, you replace it (for example via `setPolicy()`).
 
@@ -58,7 +58,7 @@ This is typically used through:
 
 ## Configuring CSP
 
-📌 CSP is configured under the `Csp` key in [Config](../core/config.md). `ContentSecurityPolicy` reads `Csp.default` and `Csp.report` automatically at construction time, and emits them as:
+CSP is configured under the `Csp` key in [Config](../core/config.md). `ContentSecurityPolicy` reads `Csp.default` and `Csp.report` automatically at construction time, and emits them as:
 
 - `Csp.default` is emitted as `Content-Security-Policy` (enforced)
 - `Csp.report` is emitted as `Content-Security-Policy-Report-Only` (report-only)
@@ -160,7 +160,7 @@ For response behavior and emission details, see [HTTP Responses](../http/respons
 
 ## Using nonces in views
 
-`CspHelper` generates per-call nonces for inline `<script>` and `<style>` blocks and adds those nonces to all policies currently stored on the `ContentSecurityPolicy` instance.
+`CspHelper` generates per-render nonces for inline `<script>` and `<style>` blocks and adds those nonces to all policies currently stored on the `ContentSecurityPolicy` instance.
 
 For view helper basics, see [Helpers](../view/helpers.md). For a focused overview of `CspHelper`, see [CSP helper](../view/helpers.md#csp-helper).
 
@@ -176,7 +176,7 @@ $nonce = $this->Csp->scriptNonce();
 echo '<script nonce="'.htmlspecialchars($nonce, ENT_QUOTES, 'UTF-8').'">console.log("ok");</script>';
 ```
 
-`scriptNonce()` updates policies by adding a `nonce-...` value to the `script-src` directive. `styleNonce()` does the same for `style-src`.
+`scriptNonce()` updates policies by adding a `nonce-...` value to the `script-src` directive the first time it is called, then reuses that nonce for the current helper instance. `styleNonce()` does the same for `style-src`.
 
 ## Method guide
 
@@ -237,7 +237,7 @@ Sets `Report-To` data that will be JSON-encoded and emitted as a `Report-To` hea
 Arguments:
 - `$reportTo` (`array`): the report-to payload to emit.
 
-📌 Note: `setReportTo()` only affects the `Report-To` response header. To make CSP use that group for violation reporting, also set a `report-to` directive in your CSP policy (for example `'report-to' => 'csp'`).
+`setReportTo()` only affects the `Report-To` response header. To make CSP use that group for violation reporting, also set a `report-to` directive in your CSP policy (for example `'report-to' => 'csp'`).
 
 ```php
 use Fyre\Security\ContentSecurityPolicy;
@@ -318,7 +318,7 @@ $response = $middleware->process($request, $handler);
 
 #### **Generate a script nonce** (`scriptNonce()`)
 
-Returns a nonce and updates stored policies by adding it to `script-src`.
+Returns the script nonce for the current helper instance and ensures it is present in stored policies under `script-src`.
 
 ```php
 use Fyre\View\View;
@@ -331,7 +331,7 @@ echo '<script nonce="'.$nonce.'"></script>';
 
 #### **Generate a style nonce** (`styleNonce()`)
 
-Returns a nonce and updates stored policies by adding it to `style-src`.
+Returns the style nonce for the current helper instance and ensures it is present in stored policies under `style-src`.
 
 ```php
 use Fyre\View\View;
@@ -344,7 +344,7 @@ echo '<style nonce="'.$nonce.'">body{}</style>';
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Only policies with keys `default` and `report` are emitted as headers; other stored policies are not added by `addHeaders()`.
 - A policy with no directives produces an empty header string and is not emitted.
@@ -352,7 +352,7 @@ echo '<style nonce="'.$nonce.'">body{}</style>';
 - `Report-To` is emitted only when `setReportTo()` has been called with a non-empty array; it does not automatically add a `report-to` directive to your policies.
 - `CspHelper` mutates the `ContentSecurityPolicy` instance by updating stored policies in place (it is not a “pure” formatter).
 - When you enable nonces via `CspHelper`, define a baseline `script-src` / `style-src` yourself (for example including `self`). Adding `script-src` can change CSP fallback behavior by overriding `default-src`.
-- Each call to `scriptNonce()` / `styleNonce()` generates a new nonce and appends an additional `nonce-...` source value to the relevant directive, so it’s best to call once and reuse the nonce within a render.
+- `scriptNonce()` and `styleNonce()` reuse the same nonce for repeated calls on the current helper instance, so you can call them from multiple partials within a render without appending duplicate nonce values.
 - If no policies exist on the `ContentSecurityPolicy` instance, `CspHelper` still returns a nonce but has no policies to update, so the nonce will not appear in emitted headers.
 
 ## Related

@@ -18,7 +18,7 @@
 
 ## Purpose
 
-🎯 User agent parsing is a best-effort signal for tailoring behavior (for example, feature fallbacks, device-specific UI tweaks, or bot-aware logic). `UserAgent` does not aim to be a strict parser; it matches against built-in pattern maps and exposes the most common identification results.
+User agent parsing is a best-effort signal for tailoring behavior, such as feature fallbacks, device-specific UI tweaks, or bot-aware logic. `UserAgent` does not aim to be a strict parser; it matches against built-in pattern maps and exposes the most common identification results.
 
 ## Creating user agents
 
@@ -45,7 +45,7 @@ function isMobileRequest(ServerRequest $request): bool
 }
 ```
 
-📌 Note: `getUserAgent()` is a convenience method on Fyre’s `ServerRequest` implementation (not part of PSR-7’s `ServerRequestInterface`). If you type-hint PSR-7 interfaces, you can still obtain a `UserAgent` by reading the `User-Agent` header and calling `UserAgent::createFromString(...)`.
+`getUserAgent()` is a convenience method on Fyre’s `ServerRequest` implementation, not part of PSR-7’s `ServerRequestInterface`. If you type-hint PSR-7 interfaces, you can still obtain a `UserAgent` by reading the `User-Agent` header and calling `UserAgent::createFromString(...)`.
 
 ## Method guide
 
@@ -177,7 +177,7 @@ $isRobot = $agent->isRobot();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - When a robot match is found, browser matching is skipped (robot user agents are not treated as browsers).
 - Platform defaults to `Unknown Platform` when no platform match is found.

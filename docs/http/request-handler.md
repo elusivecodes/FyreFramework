@@ -15,7 +15,7 @@ This page focuses on request flow through the queue, fallback handler behavior, 
 
 ## Purpose
 
-🎯 Use `RequestHandler` when you have a middleware queue you want to execute, and you want a well-defined “final handler” once the queue is exhausted (often routing).
+Use `RequestHandler` when you have a middleware queue you want to execute, and you want a well-defined final handler once the queue is exhausted, often routing.
 
 Most application code won’t instantiate `RequestHandler` directly, but it can be useful when you’re building a custom HTTP runtime or testing a middleware stack.
 
@@ -42,7 +42,7 @@ If you use `RouteHandler` as the fallback handler, ensure router middleware has 
 
 ## Request handler in the pipeline
 
-🧠 The middleware pipeline is built from three pieces:
+The middleware pipeline is built from three pieces:
 
 - `MiddlewareQueue` stores middleware entries in order.
 - `MiddlewareRegistry` resolves string entries into executable middleware (aliases, groups, and optional inline arguments).
@@ -68,12 +68,12 @@ A common pattern is to use routing as the fallback handler (for example `RouteHa
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `RequestHandler` advances the underlying `MiddlewareQueue` as it runs; if you reuse the same handler/queue instance, call `MiddlewareQueue::rewind()` (or construct a fresh queue) before handling a new request.
 - If the incoming request is `ServerRequest`, `RequestHandler` registers it into the container as the current instance of `ServerRequest::class` for downstream resolution (other `ServerRequestInterface` implementations are not registered).
 - Middleware is resolved before the queue advances; the handler then advances the queue and invokes the middleware. A middleware that calls `$handler->handle($request)` continues with the next item.
-- When a middleware group alias is resolved, it runs in a nested `RequestHandler` and uses the current handler as its fallback (so control returns to the outer queue).
+- When a middleware group alias is resolved, `MiddlewareRegistry` builds a nested `RequestHandler` with its own `MiddlewareQueue` and uses the current handler as its fallback, so control returns to the outer queue after the group finishes.
 - If you use `RouteHandler` as the fallback handler, it expects a `route` attribute on the request (set by router middleware).
 
 ## Related

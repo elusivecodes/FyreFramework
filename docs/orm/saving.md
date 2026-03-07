@@ -28,7 +28,7 @@ Saving in the ORM is entity-first: you build or patch entities from input data, 
 
 ## Purpose
 
-🎯 Use model-driven entity building and saving when you want schema-aware parsing, field guarding, validation, relationship handling, and transactional persistence.
+Use model-driven entity building and saving when you want schema-aware parsing, field guarding, validation, relationship handling, and transactional persistence.
 
 ## Workflow overview
 
@@ -437,7 +437,7 @@ $affected = $Users->updateAll(
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `newEntity()` / `patchEntity()` run validation with the model validator when `$validate` is enabled and write errors onto the entity. See [Form Validators](../form/validators.md).
 - Parse events (`ORM.beforeParse` / `ORM.afterParse`) run only when both `$parse` and `$events` are enabled.

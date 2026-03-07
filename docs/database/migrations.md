@@ -13,7 +13,6 @@ Migrations provide a repeatable way to evolve database structure over time by ap
   - [Discovery and ordering](#discovery-and-ordering)
 - [Running migrations](#running-migrations)
   - [Via console commands](#via-console-commands)
-  - [Getting a MigrationRunner instance](#getting-a-migrationrunner-instance)
   - [Migrate](#migrate)
   - [Rollback](#rollback)
 - [Migration history](#migration-history)
@@ -22,7 +21,7 @@ Migrations provide a repeatable way to evolve database structure over time by ap
 
 ## Purpose
 
-🎯 Use migrations when you want database schema changes to be repeatable, ordered, and tracked per connection.
+Use migrations when you want database schema changes to be repeatable, ordered, and tracked per connection.
 
 Each connection maintains its own migration history in the `migrations` table, so it’s safe to run `migrate()` repeatedly without reapplying the same migration.
 
@@ -31,7 +30,7 @@ Each connection maintains its own migration history in the `migrations` table, s
 In a typical app:
 
 1. Write migrations as `Migration_*` classes (see [Writing migrations](#writing-migrations)).
-2. Register your migration namespace(s) on a `MigrationRunner`.
+2. Register your migration namespace(s) on a `MigrationRunner` when using a custom setup (when resolving `MigrationRunner` via the default `Engine`, the `App\Migrations` namespace is registered automatically).
 3. Run `migrate()` (or run the `db:migrate` console command).
 
 Minimal example running migrations from code:
@@ -40,20 +39,29 @@ Minimal example running migrations from code:
 use Fyre\DB\Migration\MigrationRunner;
 
 $runner = app(MigrationRunner::class);
-$runner->addNamespace('App\Migrations');
 
 $runner->migrate();
 ```
 
-⚠️ Migration execution is not automatically wrapped in a transaction. If you need all-or-nothing behavior, wrap your changes in a transaction where possible, or design migrations to be safe to rerun after a partial failure.
+Migration execution is not automatically wrapped in a transaction. If you need all-or-nothing behavior (and your driver supports transactional DDL), wrap the DDL in a transaction inside your migration’s `up()` / `down()` methods, or design migrations to be safe to rerun after a partial failure.
 
-Example: wrapping a migrate run in a transaction (when your driver supports transactional DDL)
+Example (inside a migration):
 
 ```php
-$db = db();
-$runner->setConnection($db);
-
-$db->transactional(static fn() => $runner->migrate());
+public function up(): void
+{
+    $this->forge->getConnection()->transactional(function(): void {
+        $this->forge->createTable(
+            'roles',
+            [
+                'name' => ['length' => 100],
+            ],
+            [
+                'name' => ['unique' => true],
+            ]
+        );
+    });
+}
 ```
 
 ## Where migrations fit
@@ -80,6 +88,8 @@ Create migrations as classes extending `Migration`. Implement:
 - `down()` to roll them back (optional, but recommended)
 
 Within a migration, the current `Forge` instance is available as `$this->forge`.
+
+`Migration` is just the base class that provides `$this->forge`; it does not define abstract `up()` / `down()` methods, which is why `MigrationRunner` checks for those methods at runtime.
 
 For DDL operations and options, see [Forge](forge.md).
 
@@ -125,7 +135,7 @@ A migration must:
 
 `MigrationRunner` derives the **migration name** from the class short name after the `Migration_` prefix (see the example in [Writing migrations](#writing-migrations)).
 
-Use `MigrationRunner::addNamespace()` to register namespaces to scan (see [Getting a MigrationRunner instance](#getting-a-migrationrunner-instance)).
+Use `MigrationRunner::addNamespace()` to register namespaces to scan.
 
 ### Discovery and ordering
 
@@ -133,11 +143,13 @@ Discovery behavior:
 
 - each configured namespace is searched for files matching `Migration_*.php`
 - each discovered class is checked to be a subclass of `Migration` and non-abstract
+- migration names are derived by stripping the `Migration_` prefix from the class short name
+- if multiple discovered classes produce the same migration name, later discoveries overwrite earlier ones in the internal map
 - migrations are sorted by migration name using natural sorting before execution
 
 ## Running migrations
 
-📌 `MigrationRunner` applies migrations in order and records execution in `MigrationHistory`. Execution is not automatically wrapped in a transaction.
+`MigrationRunner` applies migrations in order and records execution in `MigrationHistory`. Execution is not automatically wrapped in a transaction.
 
 ### Via console commands
 
@@ -148,22 +160,13 @@ Use the built-in database migration commands:
 - `db:migrate` — run all pending migrations
 - `db:rollback` — roll back applied migrations
 
-For invocation details, supported options, and examples, see [Built-in Console Commands](../console/commands.md).
-
-### Getting a MigrationRunner instance
-
-Most examples on this page assume you already have a `$runner` (`MigrationRunner`) instance (see [Quick start](#quick-start)).
-
-```php
-$runner->addNamespace('App\Migrations');
-
-// Optional: target a specific connection.
-$runner->setConnection(db('reporting'));
-```
+For invocation details, supported options, and examples, see [Console Commands](../console/commands.md).
 
 ### Migrate
 
 `MigrationRunner::migrate()` runs all discovered migrations that are not already present in history. For each migration, `up()` is called when present and the migration name is recorded into history as part of a new batch.
+
+To target a specific connection, call `setConnection()` before running (for example `$runner->setConnection(db('reporting'));`).
 
 ```php
 $runner->migrate();
@@ -172,6 +175,10 @@ $runner->migrate();
 ### Rollback
 
 `MigrationRunner::rollback()` rolls back previously applied migrations based on recorded history (latest first). For each matched migration class, `down()` is called when present, and the migration is removed from history.
+
+To target a specific connection, call `setConnection()` before rolling back.
+
+If you provide both `$batches` and `$steps`, rollback stops when either limit is reached.
 
 ```php
 // Roll back the latest batch (default behavior).
@@ -186,7 +193,7 @@ $runner->rollback(null, 3);
 
 ## Migration history
 
-`MigrationHistory` stores applied migrations per connection in a `migrations` table. It also ensures that the table exists with the expected columns and indexes when it is constructed.
+`MigrationHistory` stores applied migrations per connection in a `migrations` table. When it is constructed for a connection, it checks and applies the expected history-table structure for that connection.
 
 The history table includes `id`, `batch`, `migration`, and `timestamp` columns.
 
@@ -198,11 +205,11 @@ History behavior used by `MigrationRunner`:
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `migrate()` skips any migration name already present in history.
 - `rollback()` removes history entries even when the corresponding migration class is not discoverable (in that case, no `down()` can be executed).
-- `MigrationRunner::clear()` resets loaded migrations and cached state; use it when migration files or discovery configuration change.
+- `MigrationRunner::clear()` clears registered migration namespaces and resets the connection, history, and migration caches.
 - Migration execution records history even when a migration does not implement `up()`/`down()`; missing methods are skipped and execution continues.
 
 ## Related

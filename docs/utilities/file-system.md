@@ -18,9 +18,9 @@ For path-only operations (join/normalize/resolve, basename/dirname, etc), see [P
 
 ## Purpose
 
-🎯 Use `File` and `Folder` when you want a small, fluent API for filesystem operations (existence checks, reading/writing, copying/moving, deleting). Both normalize the input path using `Path::resolve()` in the constructor.
+Use `File` and `Folder` when you want a small, fluent API for filesystem operations (existence checks, reading/writing, copying/moving, deleting). Both normalize the input path using `Path::resolve()` in the constructor.
 
-📌 Path handling is platform-sensitive (separators, permissions, and case sensitivity). If you see differences between environments, review the [Paths behavior notes](paths.md#behavior-notes) first.
+Path handling is platform-sensitive (separators, permissions, and case sensitivity). If you see differences between environments, review the [Paths behavior notes](paths.md#behavior-notes) first.
 
 ## Quick start
 
@@ -82,6 +82,8 @@ $file->copy('tmp/cache/routes.backup.json', false);
 - `File::UNLOCK` (release lock; `LOCK_UN`)
 
 ## Method guide
+
+Examples below assume you already have a `$file` or `$folder` instance, depending on the method being demonstrated.
 
 ### Folder
 
@@ -518,7 +520,7 @@ $name = $file->fileName();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `File` methods that operate on a handle (for example: `read()`, `write()`, `seek()`, `tell()`, `csv()`, `lock()`, and `truncate()`) require a prior `open()` call and throw when the handle is not valid.
 - `File::lock()` defaults to a shared lock when `$operation` is `null` (use `File::LOCK_EXCLUSIVE` for an exclusive lock).

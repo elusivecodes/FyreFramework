@@ -22,13 +22,13 @@
 
 ## Purpose
 
-🎯 `Lang` is the framework’s translation and message lookup service. It loads arrays from language files, chooses the best match for the active locale, and returns either raw values (arrays) or formatted strings.
+`Lang` is the framework’s translation and message lookup service. It loads arrays from language files, chooses the best match for the active locale, and returns either raw values (arrays) or formatted strings.
 
 In application code, you’ll often use the global `__()` helper as a shortcut for `Lang::get()`; see [Helpers](helpers.md).
 
 ## Quick start
 
-Most applications load language files lazily as keys are requested. In application code, you typically just call `__()`:
+In a typical application, `Engine` already registers the default app and framework language paths. Most applications just load language files lazily as keys are requested and call `__()`:
 
 ```php
 $message = __('Validation.required', ['field' => 'email']);
@@ -47,7 +47,7 @@ function handler(Lang $lang): string|null
 }
 ```
 
-If you need to add custom language paths (for example, your app’s `lang/` folder), add paths during bootstrapping:
+If you are composing the runtime manually, or want to extend the default language paths, add paths during bootstrapping:
 
 ```php
 use Fyre\Core\Lang;
@@ -69,7 +69,7 @@ Lookup keys use dot notation:
 - The **first segment** is treated as the language **file name** (used as-is).
 - The **remaining segments** index into the returned array (also using dot notation).
 
-📌 Example lookups:
+Example lookups:
 
 ```php
 $allValidationMessages = __('Validation');
@@ -82,6 +82,8 @@ $requiredMessage = __('Validation.required', [
 ## Loading and precedence
 
 `Lang` caches language data per file name. The first time you request a key like `Validation.required`, `Lang` loads and merges all matching `Validation.php` files and stores the merged result for subsequent lookups.
+
+Changing locales clears that cache. Adding or removing paths affects only future loads unless you also clear the loaded data.
 
 When loading a file, two kinds of precedence are applied:
 
@@ -130,7 +132,7 @@ Then messages in `lang/local/<locale>/...` take precedence over messages in `lan
 
 `Lang::get()` formats a message only when:
 
-- the resolved value is a non-empty string (note: `'0'` is treated as empty for this check), and
+- the resolved value is a non-empty string, and
 - you pass a non-empty `$data` array.
 
 Formatting is performed using `MessageFormatter::formatMessage()` with the active locale. This supports ICU-style placeholders, including numeric (`{0}`) and named (`{field}`) arguments:
@@ -191,6 +193,8 @@ $lang->addPath('lang');
 
 #### **Inspect or remove paths** (`getPaths()` / `removePath()`)
 
+`removePath()` normalizes the supplied path before comparison, just like `addPath()`.
+
 ```php
 $paths = $lang->getPaths();
 $lang->removePath('lang');
@@ -226,7 +230,7 @@ $default = $lang->getDefaultLocale();
 
 #### **Clear loaded language data** (`clear()`)
 
-Clears loaded messages and configured paths.
+Clears both loaded messages and configured paths.
 
 ```php
 $lang->clear();
@@ -234,14 +238,14 @@ $lang->clear();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Missing keys return `null`. If you request just a file name and the file is not found, you get an empty array.
 - Locale directory names are matched using lowercase (for example, `en_us`), because resolved locale values are lowercased for folder lookups.
 - Locale variants are derived by splitting on `_` *after* canonicalization, so locales like `en-US` also fall back to `en`.
 - `setLocale()` and `setDefaultLocale()` clear the internal cache of loaded language data.
 - If you add or remove paths after a file has already been loaded, previously loaded files are not automatically reloaded.
-- If message formatting fails, `MessageFormatter::formatMessage()` returns `false` (which becomes an empty string when cast to `string`).
+- If message formatting fails, `Lang::get()` returns an empty string.
 
 ## Related
 

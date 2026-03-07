@@ -67,16 +67,13 @@ class Response extends HttpResponse
     /**
      * Returns the JSON decoded body.
      *
-     * Note: This expects the body to be a JSON object/array. A JSON `null` literal is treated
-     * as an empty array.
-     *
-     * @return array<mixed> The decoded body.
+     * @return mixed The decoded body.
      *
      * @throws RuntimeException If the body is not valid JSON.
      */
-    public function getJson(): array
+    public function getJson(): mixed
     {
-        $data = json_decode((string) $this->body, true) ?? [];
+        $data = json_decode((string) $this->body, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new RuntimeException('The response body is not valid.');

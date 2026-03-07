@@ -28,7 +28,7 @@ Finding data in the ORM starts from `Fyre\ORM\Model`. Use `Model::find()` to bui
 
 ## Purpose
 
-🎯 Use the ORM finding APIs when you want model-aware queries (schema-driven auto-fields, relationship loading, and entity hydration) while still working with familiar query-builder concepts like conditions, joins, ordering, and limits.
+Use the ORM finding APIs when you want model-aware queries (schema-driven auto-fields, relationship loading, and entity hydration) while still working with familiar query-builder concepts like conditions, joins, ordering, and limits.
 
 Most examples assume you already have a model instance (for example, `$Users`). When an example uses a different model variable (for example, `$Memberships`), assume it exists too.
 
@@ -383,7 +383,7 @@ $result->free();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `SelectQuery::getResult()` caches the `Result` until the query is dirtied (for example by adding conditions, joins, fields, or contain configuration).
 - `SelectQuery::count()` counts the *current* query, including any applied `LIMIT`/`OFFSET`.

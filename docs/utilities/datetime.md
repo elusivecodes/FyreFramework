@@ -29,7 +29,7 @@
 
 ## Purpose
 
-🎯 Use `DateTime` when you want an immutable “instant” that can be formatted for humans using a locale and time zone, while still supporting calendar-aware operations (week/year boundaries, month lengths, local week-of-year fields, and so on).
+Use `DateTime` when you want an immutable instant that can be formatted for humans using a locale and time zone, while still supporting calendar-aware operations (week/year boundaries, month lengths, local week-of-year fields, and so on).
 
 If you need a bounded range (or a collection of ranges) with operations like overlap/gaps/subtraction, see [Periods](periods.md).
 
@@ -55,7 +55,7 @@ $dayStart = $dt->startOfDay();
 
 ## `DateTime` mental model
 
-🧠 `DateTime` is designed for application-level work where you care about human-facing formatting and calendar behavior:
+`DateTime` is designed for application-level work where you care about human-facing formatting and calendar behavior:
 
 - It’s immutable: methods like `addDays()` and `withMonth()` always return a new instance.
 - It stores time with millisecond precision: `getTime()` returns milliseconds since the UNIX epoch.
@@ -89,7 +89,7 @@ Alternative constructors exist for common inputs:
 
 Formatting uses ICU patterns (not PHP’s `date()` patterns). For ad-hoc formatting, use `format()`:
 
-📌 If you are formatting values for templates, also see [Formatter](formatter.md). `DateTime` stores locale/time zone on the value itself (used by methods like `toString()` and `format()`), while `Formatter` applies presentation defaults (via config) at formatting time.
+If you are formatting values for templates, also see [Formatter](formatter.md). `DateTime` stores locale/time zone on the value itself (used by methods like `toString()` and `format()`), while `Formatter` applies presentation defaults (via config) at formatting time.
 
 ```php
 $dt = new DateTime('2026-02-01 15:04:05', 'America/New_York', 'en_US');
@@ -138,6 +138,8 @@ Common keys include:
 - Convenience patterns: `date`, `time`, `string`
 
 ## Method guide
+
+Examples below assume `DateTime` refers to `Fyre\Utility\DateTime\DateTime`.
 
 ### Creating instances
 
@@ -1296,7 +1298,7 @@ $leap = DateTime::now('UTC', 'en')->isLeapYear();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `toIsoString()` always formats with locale `en` and time zone `UTC`, regardless of the instance’s current locale/time zone.
 - `createFromIsoString()` parses using locale `en` and then applies the requested locale to the resulting instance.

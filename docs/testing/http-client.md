@@ -14,7 +14,7 @@
 
 ## Purpose
 
-🎯 Use `HttpClientTestTrait` when you want tests that exercise code using `Client` without performing real network I/O.
+Use `HttpClientTestTrait` when you want tests that exercise code using `Client` without performing real network I/O.
 
 ## Quick start
 
@@ -50,7 +50,7 @@ final class ApiClientTest extends TestCase
 
 ## How it works
 
-🧠 `HttpClientTestTrait` registers mock responses on `Client` and clears them automatically after each test.
+`HttpClientTestTrait` registers mock responses on `Client` and clears them automatically after each test.
 
 - Registers mock responses via `Client::addMockResponse()` (method + URL).
 - Optionally filters matches with a callback (`Closure(RequestInterface): bool`).
@@ -58,7 +58,7 @@ final class ApiClientTest extends TestCase
 
 ## Method guide
 
-Most examples assume you’re in a `TestCase` using `HttpClientTestTrait`, and you already have a `$client = new Client()`.
+Most examples assume you’re in a `TestCase` using `HttpClientTestTrait`, and you already have a `$client` instance.
 
 ### `HttpClientTestTrait`
 
@@ -175,7 +175,7 @@ $this->assertSame(204, $result->getStatusCode());
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Mocking is global to `Client` (a static mock handler). The trait clears mocks after each test via `#[After]`.
 - URL matching is exact by default, but `*` in the mock URL matches any character sequence.

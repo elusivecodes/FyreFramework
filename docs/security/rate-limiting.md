@@ -25,7 +25,7 @@ Rate limiting protects endpoints from excessive traffic by tracking request “u
 
 ## Purpose
 
-🎯 Rate limiting is a practical boundary for:
+Rate limiting is a practical boundary for:
 
 - public endpoints (login, password reset, token issuance)
 - expensive operations (search, file generation, report endpoints)
@@ -35,7 +35,7 @@ Unlike a simple “requests per minute” counter, Fyre’s rate limiting can ac
 
 ## Mental model
 
-🧠 Rate limiting is a short pipeline of responsibilities:
+Rate limiting is a short pipeline of responsibilities:
 
 - `RateLimiterMiddleware` decides whether a request should be checked, checks the limit, and either continues or throws.
 - A `RateLimiter` strategy stores and reads the per-identifier state from cache, then returns a rate limit result.
@@ -61,7 +61,7 @@ An identifier is the “key space” used to track usage. It is configured on th
 
 When `identifier` is a list, the identifier is assembled by concatenating these sources (with `_`) in the order provided.
 
-📌 Note: If your app runs behind a reverse proxy, be careful with IP-based identification. The built-in `ip` identifier uses `HTTP_X_FORWARDED_FOR` when present, and that value is not parsed or normalized. Prefer `route`/`user`, or use a callback that applies your proxy trust rules.
+If your app runs behind a reverse proxy, be careful with IP-based identification. The built-in `ip` identifier uses `HTTP_X_FORWARDED_FOR` when present, and that value is not parsed or normalized. Prefer `route` / `user`, or use a callback that applies your proxy trust rules.
 
 ### Supported identifier sources
 
@@ -101,7 +101,7 @@ When a request is rejected, `RateLimiterMiddleware` throws `TooManyRequestsExcep
 
 ## Middleware integration
 
-📌 Rate limiting is applied like any other middleware. Register a middleware alias and add it to a `MiddlewareQueue` (see [HTTP Middleware](../http/middleware.md) for the full pipeline model).
+Rate limiting is applied like any other middleware. Register a middleware alias and add it to a `MiddlewareQueue` (see [HTTP Middleware](../http/middleware.md) for the full pipeline model).
 
 ### Registering a shared rate limiter middleware
 
@@ -154,9 +154,9 @@ Checks the request against the configured limiter and either continues to the ne
 Arguments:
 - `$request` (`ServerRequestInterface`): the incoming request.
 - `$handler` (`RequestHandlerInterface`): the next handler in the chain.
-- `$limit` (`string|null`): optional limit override (cast to `int` when truthy).
-- `$window` (`string|null`): optional window override in seconds (cast to `int` when truthy).
-- `$cost` (`string|null`): optional cost override (cast to `int` when truthy).
+- `$limit` (`string|null`): optional limit override (cast to `int` when provided).
+- `$window` (`string|null`): optional window override in seconds (cast to `int` when provided).
+- `$cost` (`string|null`): optional cost override (cast to `int` when provided).
 
 ```php
 $response = $middleware->process($request, $handler);
@@ -216,9 +216,9 @@ $message = $limiter->getMessage();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
-- Inline middleware arguments are strings; `RateLimiterMiddleware` only applies an override when the value is truthy (so `'0'` is treated as “no override”), and otherwise casts with `(int)`.
+- Inline middleware arguments are strings; when an override is provided, `RateLimiterMiddleware` casts it with `(int)`, so `'0'` is applied as `0` rather than treated as “no override”.
 - The built-in strategies assume `limit` and `window` are positive integers; non-numeric values (cast to `0`) or explicit `0` configured via options can lead to runtime errors or misleading results.
 - The `route` identifier always includes the client IP; it does not group all clients together for the same controller action.
 - The `ip` identifier uses the raw `HTTP_X_FORWARDED_FOR` string when present (it is not parsed or normalized).

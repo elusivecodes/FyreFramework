@@ -22,7 +22,7 @@ Helpers are global functions that provide a small runtime convenience layer over
 
 ## Purpose
 
-🎯 Helpers exist to make common tasks feel lightweight:
+Helpers exist to make common tasks feel lightweight:
 
 - Resolve a service from the container (`app()`) without threading the container everywhere.
 - Provide tiny, intention-revealing shortcuts (`auth()`, `cache()`, `request()`, `__()`).
@@ -37,11 +37,11 @@ use function config;
 use function view;
 ```
 
-⚠️ Helpers are not available by default. The helper functions are defined in `config/functions.php` and must be loaded (see [How helpers work](#how-helpers-work)).
+The helper functions live in `config/functions.php` and are typically loaded during application bootstrap (see [How helpers work](#how-helpers-work)).
 
 ## When to use helpers
 
-📌 Helpers are a good fit when code is naturally “ambient”:
+Helpers are a good fit when code is naturally “ambient”:
 
 - view templates and small view helpers
 - quick controller closures or middleware callbacks
@@ -95,9 +95,11 @@ final class DashboardController
 
 ## How helpers work
 
-🧠 Most helpers follow the same pattern: resolve a service from the engine (via `app()`) and immediately call a method on it. That keeps the “global” surface area thin and lets the container remain the single integration point for real work.
+Most helpers follow the same pattern: resolve a service from the engine (via `app()`) and immediately call a method on it. That keeps the global surface area thin and lets the container remain the single integration point for real work.
 
-The helper functions are defined in `config/functions.php`. To make them available, load that file via the `Config` service (see [Config](config.md)).
+A smaller group are direct runtime conveniences rather than service wrappers, such as `env()`, `dump()`, `dd()`, `abort()`, `collect()`, and `now()`.
+
+The helper functions are defined in `config/functions.php`. In a typical application, that file is loaded during bootstrap via the config system (see [Config](config.md)).
 
 For example, during application bootstrapping:
 
@@ -133,6 +135,22 @@ These mappings show what each helper is doing under the hood (in abbreviated for
 - `auth()` → `app(Auth::class)`
 - `logged_in()` → `auth()->isLoggedIn()`
 - `user()` → `auth()->user()`
+- `authorize($rule, ...$args)` → `auth()->access()->authorize($rule, ...$args)`
+- `can($rule, ...$args)` → `auth()->access()->allows($rule, ...$args)`
+- `cannot($rule, ...$args)` → `auth()->access()->denies($rule, ...$args)`
+- `can_any($rules, ...$args)` → `auth()->access()->any($rules, ...$args)`
+- `can_none($rules, ...$args)` → `auth()->access()->none($rules, ...$args)`
+- `cache($key)` → `app(CacheManager::class)->use($key)`
+- `db($key)` → `app(ConnectionManager::class)->use($key)`
+- `model($alias)` → `app(ModelRegistry::class)->use($alias)`
+- `email($key)` → `app(MailManager::class)->use($key)->email()`
+- `encryption($key)` → `app(EncryptionManager::class)->use($key)`
+- `queue($className, $arguments, $options)` → `app(QueueManager::class)->push($className, $arguments, $options)`
+- `type()` → `app(TypeParser::class)`
+- `type($type)` → `app(TypeParser::class)->use($type)`
+- `view($template, $data, $layout)` → `app(View::class)->setData($data)->setLayout($layout ?? config('App.defaultLayout'))->render($template)`
+- `element($file, $data)` → `app(View::class)->element($file, $data)`
+- `log_message($type, $message, $data)` → `app(LogManager::class)->handle($type, $message, $data)`
 
 For a deeper look at container-based resolution and the underlying API, see [Container](container.md) and [Engine](engine.md).
 
@@ -168,6 +186,8 @@ $service = $app->use(SomeService::class);
 
 #### **Read config values or access Config** (`config()`)
 
+Returns the `Config` instance when called with no arguments, or a config value when a key is provided.
+
 Arguments:
 - `$key` (`string|null`): dot-notation key (or `null` to return the config instance).
 - `$default` (`mixed`): default value when the key is missing.
@@ -201,6 +221,8 @@ $message = __('Validation.required', ['field' => 'email']);
 
 #### **Access request data or the request object** (`request()`)
 
+Returns the request object with no arguments, or reads request data when a key is provided.
+
 Arguments:
 - `$key` (`string|null`): request data key (or `null` to return the request object).
 - `$as` (`string|null`): optional cast/type hint.
@@ -212,7 +234,7 @@ $email = request('email');
 
 #### **Create a response** (`response()`)
 
-Creates a new `ClientResponse` from the container.
+Resolves a `ClientResponse` from the container.
 
 Because responses are immutable, return the instance produced by `with*` calls.
 
@@ -276,7 +298,7 @@ abort(404);
 
 #### **Read/write session values or access Session** (`session()`)
 
-Reads or writes a session value. When called with no arguments, returns the `Session` instance.
+Returns the `Session` instance with no arguments, reads with one argument, and writes with two.
 
 Arguments:
 - `$key` (`string|null`): session key (or `null` to return the session instance).
@@ -506,7 +528,7 @@ queue(SendEmailJob::class, ['userId' => 123]);
 
 #### **Get the type parser or resolve a type** (`type()`)
 
-Returns the type parser (no args) or resolves a type by name.
+Returns the type parser with no arguments, or resolves a type by name when a type is provided.
 
 Arguments:
 - `$type` (`string|null`): type name (or `null` to return the type parser).
@@ -570,7 +592,7 @@ log_message('error', 'Something went wrong');
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Helpers call `Engine::getInstance()` under the hood. If no shared instance has been set via `Engine::setInstance()`, an engine is created on demand using a default `Loader` instance.
 - `abort()` supports a fixed set of status codes (`400`, `401`, `403`, `404`, `405`, `406`, `409`, `410`, `501`, `503`). Other codes throw `InternalServerException` with the provided code.

@@ -26,7 +26,7 @@ Templates are plain PHP files rendered by `View`. The same template lookup syste
 
 ## Purpose
 
-🎯 This guide explains how the view layer loads and renders template files, how data and helpers are made available inside templates, and how to compose output using layouts, elements, cells, and blocks.
+This guide explains how the view layer loads and renders template files, how data and helpers are made available inside templates, and how to compose output using layouts, elements, cells, and blocks.
 
 Most examples on this page are shown from either:
 
@@ -128,7 +128,7 @@ echo $this->cell('RecentPosts::byCategory', ['slug' => $slug]);
 
 ## Working with view blocks
 
-Blocks let templates capture or assign content so layouts (or other templates) can fetch it later during the same render call.
+Blocks let templates capture or assign content so layouts or other templates can fetch it later during the same render call.
 
 Assigning a simple value:
 
@@ -162,8 +162,6 @@ Template lookup is handled by `TemplateLocator`, which searches configured base 
 Register one or more base paths using `TemplateLocator::addPath()`:
 
 ```php
-use Fyre\View\TemplateLocator;
-
 $templateLocator = new TemplateLocator();
 $templateLocator->addPath('/path/to/app/templates');
 $templateLocator->addPath('/path/to/plugin/templates');
@@ -376,8 +374,6 @@ $this->reset('sidebar');
 Applies to `Fyre\View\TemplateLocator`, which locates template files under one or more configured base paths.
 
 ```php
-use Fyre\View\TemplateLocator;
-
 $templateLocator = new TemplateLocator();
 ```
 
@@ -401,7 +397,6 @@ Arguments:
 - `$folder` (`string`): an optional folder segment such as `layouts` or `elements`.
 
 ```php
-$templateLocator->addPath('/path/to/app/templates');
 $filePath = $templateLocator->locate('blog/index');
 ```
 
@@ -489,11 +484,12 @@ echo $cell;
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - View data is injected using `extract()`, so keys can overwrite variables already defined in template scope.
 - `View::element()` injects only the `$data` you pass to it; it does not automatically inject the view’s full data set as local variables.
 - `View::render()` will automatically end any unclosed blocks after layout rendering and then throw a `LogicException` when blocks were left open.
+- Blocks are cleared after each top-level `render()` call, so they do not persist across separate renders on the same `View` instance.
 - `TemplateLocator::locate()` returns `null` when a file cannot be found; `View::render()` and `View::element()` turn missing templates into exceptions.
 - `TemplateLocator::normalize()` does not split consecutive uppercase sequences into separate words (for example, `parseHTML` becomes `parse_html`, but `parseHTMLFragment` becomes `parse_htmlfragment`).
 

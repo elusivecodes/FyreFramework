@@ -1,10 +1,9 @@
 # Cache
 
-🧭 Cache covers configuring cache handlers and using them to reuse expensive values within a request (and, depending on the handler, across requests and processes). `Fyre\Cache\CacheManager` builds and shares configured cache handlers (PSR-16 Simple Cache).
+Cache covers configuring cache handlers and using them to reuse expensive values. `Fyre\Cache\CacheManager` builds and shares configured cache handlers that implement PSR-16 Simple Cache.
 
 ## Table of Contents
 
-- [Quick start](#quick-start)
 - [Purpose](#purpose)
 - [Mental model](#mental-model)
 - [Configuring caches](#configuring-caches)
@@ -24,30 +23,23 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Quick start
-
-Pick a path based on what you’re doing:
-
-- **Getting caching working in a typical app**: configure a `Cache.default` handler in [Config](../core/config.md), then resolve it with `CacheManager::use()` (or `cache()` if helpers are loaded).
-- **Reducing repeated work**: start with `remember()` to cache expensive values with a TTL.
-- **Swapping backends by environment**: keep call sites the same and change only `className` and handler options in config.
-- **Debugging “why is nothing cached?”**: check whether caching is enabled (`CacheManager::isEnabled()`); caching starts disabled when `App.debug` is enabled.
-
 ## Purpose
 
-🎯 Caching is a good fit when you need to:
+Caching is a good fit when you need to:
 
-- avoid recomputing expensive values within a request
+- avoid recomputing expensive values
 - share computed results across requests (for filesystem and network-backed handlers)
 - swap cache backends by environment without changing call sites
 
 ## Mental model
 
-🧠 `Fyre\Cache\CacheManager` reads cache configurations from [Config](../core/config.md) (the `Cache` key) and provides `Fyre\Cache\Cacher` instances by key.
+`Fyre\Cache\CacheManager` reads cache configurations from [Config](../core/config.md) (the `Cache` key) and provides `Fyre\Cache\Cacher` instances by key.
 
 - `CacheManager::use()` returns one shared handler instance per key.
 - `CacheManager::build()` creates a new handler instance from options without storing or sharing it.
 - Handlers implement `Psr\SimpleCache\CacheInterface`; `Cacher` adds convenience methods like `remember()`, `increment()`, and `decrement()`.
+- `CacheManager` shares handler instances; the handler decides where cached values are stored and how long they live.
+- When caching is disabled, `CacheManager::use()` returns a shared `NullCacher` regardless of config. By default, caching starts disabled when `App.debug` is enabled.
 
 ## Configuring caches
 
@@ -123,6 +115,7 @@ Options:
 - `database` (`int|string|null`): default `null`
 - `timeout` (`int|string`): default `0`
 - `persist` (`bool`): default `true`
+- `flushDatabase` (`bool`): default `false` (allows `clear()` to flush the selected Redis database when no `prefix` is configured)
 - `tls` (`bool`): default `false`
 - `ssl` (`array`): keys `key`, `cert`, `ca` (all default `null`)
 
@@ -140,13 +133,17 @@ Options:
 
 ### Null handler
 
-No-op handler (`Fyre\Cache\Handlers\NullCacher`). Reads always return the provided default, and writes are ignored.
+No-op handler (`Fyre\Cache\Handlers\NullCacher`). Reads always return the provided default, writes are ignored, and `increment()` / `decrement()` return the passed amount rather than persisting a counter.
 
 - No handler-specific options.
 
 ## Selecting a cache
 
 Use a cache key to select which stored config to use. When no key is provided, `CacheManager::DEFAULT` (`default`) is used.
+
+When caching is enabled, the key must refer to a configured cache handler. Requesting an unknown key causes `CacheManager` to try building a handler from an empty config, which fails because no valid `className` is available.
+
+When caching is disabled, every key resolves to the shared `NullCacher` instead.
 
 ```php
 use Fyre\Cache\CacheManager;
@@ -164,11 +161,13 @@ $default = cache();
 $redis = cache('redis');
 ```
 
-⚠️ Helpers are not available by default. They are defined in `config/functions.php` and must be loaded (see [Helpers](../core/helpers.md)).
+If you use contextual injection, `#[Cache('redis')]` can resolve a configured cache handler while the container is building an object or calling a callable; see [Contextual attributes](../core/contextual-attributes.md).
 
 ## Common operations
 
 Cache handlers implement `Psr\SimpleCache\CacheInterface` (`get()`, `set()`, `delete()`, `clear()`, and the `*Multiple()` variants). The `Cacher` base class also provides higher-level helpers.
+
+Examples below assume caching is enabled and the requested cache key exists.
 
 ```php
 $cache = $caches->use();
@@ -186,11 +185,13 @@ $cache->increment('counters.reports_generated');
 
 This section focuses on the methods you’ll use most when selecting handlers and working with cached values.
 
+Examples below assume `$caches` is a `CacheManager` instance and `$cache` is a `Cacher` instance.
+
 ### `CacheManager`
 
 #### **Get a shared cache handler** (`use()`)
 
-Returns the shared cache handler instance for a config key. If the handler has not been created yet, it is built from the stored config and cached.
+Returns the shared cache handler instance for a config key. If the handler has not been created yet, it is built from the stored config and cached. When caching is disabled, this returns the shared `NullCacher` regardless of the requested key.
 
 Arguments:
 - `$key` (`string`): the cache config key (defaults to `default`).
@@ -202,7 +203,7 @@ $redis = $caches->use('redis');
 
 #### **Build a cache handler instance** (`build()`)
 
-Builds a new handler instance from an options array (without storing or sharing it).
+Builds a new handler instance from an options array (without storing or sharing it). The options must include a valid `className` that extends `Cacher`.
 
 Arguments:
 - `$options` (`array<string, mixed>`): cache options including `className`.
@@ -254,7 +255,7 @@ $default = $caches->getConfig('default');
 
 #### **Add configuration at runtime** (`setConfig()`)
 
-Stores a cache configuration under a key.
+Stores a cache configuration under a key. The key must not already exist.
 
 Arguments:
 - `$key` (`string`): the cache config key.
@@ -329,16 +330,20 @@ $config = $cache->getConfig();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - When caching is disabled, `CacheManager::use()` (and the `cache()` helper) always returns a `NullCacher` regardless of configuration. By default, caching starts disabled when `App.debug` is enabled (see [Config](../core/config.md)).
 - When caching is enabled, building a handler without a valid `className` (missing, not a string, or not a `Cacher` subclass) throws `Fyre\Cache\Exceptions\InvalidArgumentException`.
+- `CacheManager::setConfig()` throws `Fyre\Cache\Exceptions\InvalidArgumentException` if the config key already exists.
+- `CacheManager::unload()` removes both the loaded handler instance and the stored configuration for that key.
 - Cache keys are rejected if they contain any of these characters: `{ } ( ) / \ @ :` (the key is validated before the configured `prefix` is applied).
 - `FileCacher` rejects a `prefix` that contains the system directory separator, and `FileCacher::clear()` only removes cache files that match the configured prefix.
-- `RedisCacher::clear()` flushes the entire Redis database when no prefix is configured. When a prefix is configured, it scans and deletes matching keys.
+- `RedisCacher::clear()` requires a non-empty `prefix` unless `flushDatabase` is enabled. With a prefix, it scans and deletes matching keys. Without a prefix and with `flushDatabase: true`, it flushes the selected Redis database.
 - `RedisCacher::set()` supports scalar types, arrays, objects, and `null`. Other value types cause `set()` to return `false` without writing.
+- `NullCacher` always returns the provided default on reads, ignores writes, and returns the increment amount from `increment()` / `decrement()` rather than persisting a counter.
 
 ## Related
 
 - [Config](../core/config.md)
 - [Helpers](../core/helpers.md)
+- [Contextual attributes](../core/contextual-attributes.md)

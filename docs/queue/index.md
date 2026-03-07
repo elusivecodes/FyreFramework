@@ -1,6 +1,6 @@
 # Queue
 
-🧭 Queue covers background jobs, message delivery constraints (delay/expiry/retries/uniqueness), handler configuration, and workers that execute jobs through the container.
+Queue covers background jobs, message delivery constraints (delay/expiry/retries/uniqueness), handler configuration, and workers that execute jobs through the container.
 
 ## Table of Contents
 
@@ -30,7 +30,7 @@
 
 ## Purpose
 
-🎯 Queue handlers are a good fit when you need to:
+Queue handlers are a good fit when you need to:
 
 - run potentially slow work outside the main request/command flow
 - delay work until later (for example, “send in 5 minutes”)
@@ -39,16 +39,18 @@
 
 ## Quick start
 
-📌 A typical queue workflow looks like:
+A typical queue workflow looks like:
 
 1) Configure a queue handler in your app config (see [Configuring queue handlers](#configuring-queue-handlers)).
 2) Write a job class with a `run()` method (see [Writing jobs](#writing-jobs)).
 3) Push jobs with `QueueManager::push()` (see [Pushing jobs](#pushing-jobs)).
-4) Run a worker to process jobs (see [Queue Worker](worker.md) and [Built-in Console Commands](../console/commands.md#queueworker)).
+4) Run a worker to process jobs (see [Queue Worker](worker.md) and [Console Commands](../console/commands.md#queueworker)).
 
 Example job and enqueue:
 
 ```php
+use Fyre\Queue\QueueManager;
+
 class SendWelcomeEmailJob
 {
     public function run(Mailer $mailer, string $email): void
@@ -57,15 +59,21 @@ class SendWelcomeEmailJob
     }
 }
 
-$queues = app(\Fyre\Queue\QueueManager::class);
+$queues = app(QueueManager::class);
 $email = 'user@example.com';
 
 $queues->push(SendWelcomeEmailJob::class, ['email' => $email]);
 ```
 
+If helpers are loaded, `queue($className, $arguments, $options)` pushes a job through the shared `QueueManager`; see [Helpers](../core/helpers.md).
+
+```php
+queue(SendWelcomeEmailJob::class, ['email' => $email]);
+```
+
 ## Mental model
 
-🧠 The queue subsystem is built around four core types:
+The queue subsystem is built around four core types:
 
 - `QueueManager` loads handler configurations from [Config](../core/config.md) (the `Queue` key) and provides shared handler instances by config key.
 - `Queue` is the handler contract. Handlers decide how messages are stored and how retries/uniqueness are enforced.
@@ -122,7 +130,7 @@ function queueStats(QueueManager $queues): array
 }
 ```
 
-📌 Note: There are two common “routing” settings and they solve different problems:
+There are two common routing settings and they solve different problems:
 
 - `config` selects *which handler configuration* to use (for example, which Redis connection).
 - `queue` selects *which logical queue* inside that handler to use (for example, `emails` vs `search`).
@@ -165,9 +173,9 @@ The framework ships built-in handlers under `Fyre\Queue\Handlers\*`.
 
 Queue handler backed by Redis.
 
-📌 Note: `RedisQueue` requires the `redis` PHP extension (phpredis).
+`RedisQueue` requires the `redis` PHP extension (phpredis).
 
-⚠️ Security note: `RedisQueue` stores `Message` objects using PHP serialization. Treat your Redis instance as trusted infrastructure (restrict network access, require auth/TLS as appropriate). If an attacker can write to Redis, they may be able to inject malicious serialized payloads.
+Security note: `RedisQueue` stores `Message` objects using PHP serialization. Treat your Redis instance as trusted infrastructure (restrict network access, require auth/TLS as appropriate). If an attacker can write to Redis, they may be able to inject malicious serialized payloads.
 
 Options:
 
@@ -192,7 +200,7 @@ When writing jobs:
 - Prefer **named arguments** when pushing jobs (`['reportId' => 123]`) so the call stays stable if you reorder parameters.
 - Job methods can also type-hint services; the container resolves those automatically.
 
-📌 Note: A job is treated as failed when it returns `false` or throws an exception. Any other return value is treated as success.
+A job is treated as failed when it returns `false` or throws an exception. Any other return value is treated as success.
 
 ```php
 class GenerateReportJob
@@ -248,7 +256,7 @@ Options are stored on the message and interpreted by the worker and/or the handl
 - `maxRetries` (`int`) — maximum retry attempts (default: `5`)
 - `unique` (`bool`) — whether the handler should enforce uniqueness (default: `false`)
 
-📌 Note: If you pass both `delay` and `after`, `after` takes precedence. If you pass both `expires` and `before`, `before` takes precedence.
+If you pass both `delay` and `after`, `after` takes precedence. If you pass both `expires` and `before`, `before` takes precedence.
 
 ## Processing jobs
 
@@ -256,21 +264,23 @@ Messages are processed by a `Worker`, which repeatedly calls `Queue::pop()`, the
 
 For the runtime loop, worker options, and operational guidance, see [Queue Worker](worker.md).
 
-📌 Note: Queues are designed for at-least-once processing. A job may run more than once (for example, due to retries or crashes). Prefer idempotent job design (safe to run multiple times).
+Queues are designed for at-least-once processing. A job may run more than once (for example, due to retries or crashes). Prefer idempotent job design (safe to run multiple times).
 
 ## Inspecting queues
 
 Use `Queue::stats()` to inspect the current queue state. For `RedisQueue`, stats include counts for `queued`, `delayed`, `completed`, `failed`, and `total`.
 
 ```php
-$queues = app(\Fyre\Queue\QueueManager::class);
+use Fyre\Queue\QueueManager;
+
+$queues = app(QueueManager::class);
 
 $queue = $queues->use();
 $queueNames = $queue->queues();
 $stats = $queue->stats('search');
 ```
 
-You can also view stats from the CLI using `queue:stats` (see [Built-in Console Commands](../console/commands.md#queuestats)).
+You can also view stats from the CLI using `queue:stats` (see [Console Commands](../console/commands.md#queuestats)).
 
 Run it via argv parsing:
 
@@ -294,6 +304,8 @@ For event listening and handler patterns, see [Events](../events/index.md).
 ## Method guide
 
 This section focuses on the methods you’ll use most when configuring handlers, pushing jobs, and building custom queue workflows.
+
+Examples below assume `$queues` is a `QueueManager` instance, `$queue` is a `Queue` instance, and `$message` is a `Message` instance unless the snippet is specifically about constructing one of them.
 
 ### `QueueManager`
 
@@ -323,8 +335,7 @@ Arguments:
 - `$key` (`string`): handler config key (defaults to `QueueManager::DEFAULT`).
 
 ```php
-$queue = $queues->use();
-$queued = $queue->stats()['queued'];
+$queued = $queues->use()->stats()['queued'];
 ```
 
 #### **Build a one-off handler** (`build()`)
@@ -425,6 +436,8 @@ Arguments:
 - `$message` (`Message`): message to enqueue.
 
 ```php
+use Fyre\Queue\Message;
+
 $message = new Message([
     'className' => GenerateReportJob::class,
     'method' => 'run',
@@ -664,7 +677,7 @@ $queue->reset('default');
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `delay` and `expires` are normalized into absolute `after` and `before` timestamps when the `Message` is constructed; creating messages long before enqueueing can shift timing unexpectedly.
 - Invalid messages (`Message::isValid() === false`) are skipped and emit `Queue.invalid`; expired messages are dropped silently (no events).
@@ -681,7 +694,8 @@ $queue->reset('default');
 ## Related
 
 - [Config](../core/config.md)
+- [Helpers](../core/helpers.md)
 - [Queue Worker](worker.md)
-- [Built-in Console Commands](../console/commands.md)
+- [Console Commands](../console/commands.md)
 - [Events](../events/index.md)
 - [Container](../core/container.md)

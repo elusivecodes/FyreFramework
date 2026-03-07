@@ -18,7 +18,7 @@ use function explode;
 use function file_exists;
 use function implode;
 use function in_array;
-use function is_array;
+use function is_string;
 use function locale_canonicalize;
 use function locale_get_default;
 use function strtok;
@@ -110,7 +110,7 @@ class Lang
 
         $line = Arr::getDot($this->lang, $key);
 
-        if (!$line || $data === [] || is_array($line)) {
+        if ($data === [] || !is_string($line) || $line === '') {
             return $line;
         }
 

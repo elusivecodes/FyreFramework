@@ -1,7 +1,6 @@
 # Formatter
 
-`Formatter` (`Fyre\Utility\Formatter`) provides locale-aware formatting utilities for numbers, currency, dates/times, and human-readable lists. It wraps PHP’s `intl` formatters and caches formatter instances per locale/pattern for performance.
-
+`Formatter` (`Fyre\Utility\Formatter`) provides locale-aware formatting utilities for numbers, currency, dates/times, and human-readable lists. It wraps PHP’s `intl` formatters and caches formatter instances per locale/style for performance.
 
 ## Table of Contents
 
@@ -18,7 +17,7 @@
 
 ## Purpose
 
-🎯 Use `Formatter` when you want consistent, locale-aware presentation of values (especially in templates) without manually managing ICU patterns or `intl` formatter instances.
+Use `Formatter` when you want consistent, locale-aware presentation of values (especially in templates) without manually managing ICU patterns or `intl` formatter instances.
 
 In views, you will typically access formatting through the [Format helper](../view/helpers.md#format-helper), which forwards calls to an underlying `Formatter` instance.
 
@@ -35,8 +34,6 @@ $formatter = new Formatter($config);
 Format values via a `Formatter` instance:
 
 ```php
-use Fyre\Utility\DateTime\DateTime;
-
 echo $formatter->number(1234.567);      // "1,234.567" (in en_US)
 echo $formatter->currency(123.456);     // "$123.46"
 echo $formatter->percent(0.123);        // "12%"
@@ -72,6 +69,8 @@ $formatter->setDefaultCurrency('USD');
 ```
 
 ## Method guide
+
+Examples below assume you already have a `$formatter` instance, and `DateTime` is imported when needed.
 
 ### Numbers and currency
 
@@ -231,7 +230,7 @@ $formatter->setDefaultCurrency('USD');
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `number()`, `percent()`, and `currency()` cast the value to `float`; avoid using them for arbitrary-precision decimals.
 - `percent()` formats values using the `intl` percent style (for example `0.12` formats as `"12%"`).

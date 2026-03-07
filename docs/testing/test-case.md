@@ -1,6 +1,6 @@
 # `TestCase`
 
-`TestCase` is the base PHPUnit test case for framework-powered tests. It boots an application `Engine` for each test and integrates with fixtures when you opt in.
+`TestCase` is the base PHPUnit test case for framework-powered tests. It uses the shared application `Engine` instance for each test, clears scoped services, and integrates with fixtures when you opt in.
 
 ## Table of Contents
 
@@ -14,7 +14,9 @@
 
 ## Purpose
 
-🎯 Extend `Fyre\TestSuite\TestCase` when you want your tests to run against the framework engine, and when you want the option to apply fixtures automatically per test.
+Extend `Fyre\TestSuite\TestCase` when you want your tests to run against the framework engine, and when you want the option to apply fixtures automatically per test.
+
+`TestCase` expects a shared `Engine` instance to already be available via `Engine::getInstance()`.
 
 ## Quick start
 
@@ -81,9 +83,10 @@ $this->skipUnless(PHP_VERSION_ID >= 80500, 'PHP 8.5+ is required for this test.'
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - When fixtures are enabled via `$fixtures`, `TestCase` applies and truncates fixtures with foreign key checks temporarily disabled (via the active database connection).
+- `TestCase` uses the existing shared `Engine` instance from `Engine::getInstance()`; it does not construct or boot a fresh application by itself.
 - `TestCase` calls `$this->app->clearScoped()` in `setUp()`, so scoped services do not leak across tests.
 
 ## Related

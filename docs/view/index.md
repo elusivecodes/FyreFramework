@@ -1,6 +1,6 @@
 # View
 
-🧭 Views render PHP templates, optionally wrapping them in layouts and composing reusable pieces with elements, helpers, and cells.
+Views render PHP templates, optionally wrapping them in layouts and composing reusable pieces with elements, helpers, and cells.
 
 ## Table of Contents
 
@@ -20,7 +20,7 @@ Pick a path based on what you’re doing:
 
 ## View overview
 
-🧩 The view layer turns template files plus view data into strings (typically HTML). A `View` renders a template, can wrap it in a layout, and can include smaller pieces through elements or delegated components through cells.
+The view layer turns template files plus view data into strings, typically HTML. `View` is the main entry point; it renders templates, can wrap them in a layout, and delegates helper, cell, and template lookup work to the supporting registries and locator classes.
 
 ## Pages in this section
 

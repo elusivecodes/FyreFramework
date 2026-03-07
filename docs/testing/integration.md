@@ -25,7 +25,7 @@
 
 ## Purpose
 
-🎯 Use `IntegrationTestTrait` when you want to send in-process requests (GET/POST/etc.) through the framework’s request handler and make assertions about status codes, response bodies, headers, redirects, cookies, and session state.
+Use `IntegrationTestTrait` when you want to send in-process requests (GET/POST/etc.) through the framework’s request handler and make assertions about status codes, response bodies, headers, redirects, cookies, and session state.
 
 This trait is designed to be used in a `Fyre\TestSuite\TestCase` (it relies on the test case’s application engine via `$this->app`).
 
@@ -65,7 +65,7 @@ $this->get('/search?q=fyre');
 
 ## Setting request state
 
-`IntegrationTestTrait` keeps per-test request state that is applied to the next request.
+`IntegrationTestTrait` keeps per-test request state that is reused across requests in the current test until it is changed or cleared by the trait’s cleanup hook.
 
 ### Cookies
 
@@ -78,7 +78,7 @@ $this->get('/settings');
 
 ### Session
 
-Use `session()` to set session data for the next request (it merges recursively into the existing session state):
+Use `session()` to set session data for subsequent requests in the current test. Repeated calls merge recursively into the existing session state:
 
 ```php
 $this->session([
@@ -92,7 +92,7 @@ $this->get('/account');
 
 ### JSON requests
 
-Use `requestAsJson()` to set `Accept: application/json` and `Content-Type: application/json`. When you send `post()`/`put()`/`patch()` with a non-empty `$data` array, the trait JSON-encodes the data into the request body:
+Use `requestAsJson()` to set `Accept: application/json` and `Content-Type: application/json` for subsequent requests in the current test. When you send `post()`/`put()`/`patch()` with a non-empty `$data` array, the trait JSON-encodes the data into the request body:
 
 ```php
 $this->requestAsJson();
@@ -101,7 +101,7 @@ $this->post('/users', ['name' => 'Test User']);
 
 ### CSRF
 
-Use `enableCsrfToken()` to populate the CSRF cookie and header for the next request, using the framework’s `CsrfProtection` service:
+Use `enableCsrfToken()` to populate the CSRF cookie and header using the framework’s `CsrfProtection` service. Those values then remain part of the current test request state unless you change them:
 
 ```php
 $this->enableCsrfToken();
@@ -208,7 +208,7 @@ $this->options('/api');
 
 #### **Set a request cookie** (`cookie()`)
 
-Adds a cookie that will be included in the next request.
+Adds a cookie that will be included in subsequent requests in the current test unless replaced.
 
 Arguments:
 - `$name` (`string`): the cookie name.
@@ -221,7 +221,7 @@ $this->get('/settings');
 
 #### **Set session data** (`session()`)
 
-Sets session data for the next request. Repeated calls merge recursively.
+Sets session data for subsequent requests in the current test. Repeated calls merge recursively.
 
 Arguments:
 - `$data` (`array<string, mixed>`): the session data to merge.
@@ -231,18 +231,18 @@ $this->session(['Auth' => ['user_id' => 1]]);
 $this->get('/account');
 ```
 
-#### **Mark the next request as JSON** (`requestAsJson()`)
+#### **Mark subsequent requests as JSON** (`requestAsJson()`)
 
-Sets `Accept: application/json` and `Content-Type: application/json` for the next request.
+Sets `Accept: application/json` and `Content-Type: application/json` for subsequent requests in the current test.
 
 ```php
 $this->requestAsJson();
 $this->get('/api/health');
 ```
 
-#### **Enable CSRF token for the next request** (`enableCsrfToken()`)
+#### **Enable CSRF token for subsequent requests** (`enableCsrfToken()`)
 
-Populates the CSRF cookie and header for the next request using the framework’s CSRF protection service.
+Populates the CSRF cookie and header using the framework’s CSRF protection service.
 
 Arguments:
 - `$cookieName` (`string`): the name of the CSRF token cookie.
@@ -628,10 +628,11 @@ $this->assertFlashMessage('Saved', 'default');
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Response assertion helpers require a response; calling most `assert*()` methods before a request fails with “No response has been set.”
-- Request state (`cookie()`, `session()`, `requestAsJson()`, `enableCsrfToken()`) is applied to the next request and cleared automatically after each test; set it again inside each test (or in `setUp()`).
+- Request state (`cookie()`, `session()`, `requestAsJson()`, `enableCsrfToken()`) persists across requests within the same test until you overwrite it. The trait clears it automatically in its `#[After]` cleanup hook.
+- `IntegrationTestTrait` stores only the last response; each new request replaces the previous `$response`.
 - `session()` sets `$_SESSION` for the request, and session assertions read from `$_SESSION` (not the response).
 
 ## Related

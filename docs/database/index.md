@@ -1,6 +1,6 @@
 # Database
 
-🧭 Database is Fyre’s data-access layer: connection management, SQL query building/execution, schema tools, migrations, and type casting.
+Database is Fyre’s data-access layer: connection management, SQL query building and execution, schema tools, migrations, and type casting.
 
 ## Table of Contents
 
@@ -13,21 +13,20 @@
 
 Pick a path based on what you’re doing:
 
-- **Connecting to a database**: start with [Database connections](connections.md) (drivers, config, selecting a connection).
-- **Reading and writing data with SQL**: see [Database queries](queries.md) (query builders, binding, `ResultSet`).
-- **Inspecting an existing database**: see [Schema](schema.md) (tables, columns, indexes, foreign keys).
-- **Changing schema from code**: see [Forge](forge.md) (DDL operations and generated SQL).
-- **Applying schema changes over time**: see [Database Migrations](migrations.md) (discovery, migrate/rollback, history).
-- **Controlling value conversion**: see [Database types](types.md) (parsing, binding, custom types).
+- **Connecting to a database**: [Database connections](connections.md) for drivers, config, and selecting a connection.
+- **Reading and writing data with SQL**: [Database queries](queries.md) for query builders, binding, and `ResultSet`.
+- **Inspecting an existing database**: [Schema](schema.md) for tables, columns, indexes, and foreign keys.
+- **Changing schema from code**: [Forge](forge.md) for DDL operations and generated SQL.
+- **Applying schema changes over time**: [Database Migrations](migrations.md) for discovery, migrate/rollback, and history.
+- **Controlling value conversion**: [Database types](types.md) for parsing, binding, and custom types.
 
 ## Database overview
 
-🧩 The DB layer is centered around two concepts:
+The DB layer is centered around three concepts:
 
 - **Connections**: `Fyre\DB\ConnectionManager` stores named connection configs and provides shared `Fyre\DB\Connection` instances.
 - **Queries**: `Fyre\DB\Query` is the base query-builder abstraction executed via a `Connection` (typically with bound values via `Fyre\DB\ValueBinder`).
-
-⚠️ `ConnectionManager::use()` relies on a valid stored config (including a `className` that extends `Fyre\DB\Connection`); missing or invalid configs fail at build time.
+- **Schema tooling**: `Schema`, `Forge`, and migrations handle introspection and structural database changes.
 
 ## Pages in this section
 
@@ -42,4 +41,4 @@ Pick a path based on what you’re doing:
 
 - [Config](../core/config.md) — where database connection configs are stored.
 - [ORM](../orm/index.md) — working with database records as models, entities, and relationships.
-- [Built-in Console Commands](../console/commands.md) — running database migrations (and other framework commands).
+- [Console Commands](../console/commands.md) — running database migrations (and other framework commands).

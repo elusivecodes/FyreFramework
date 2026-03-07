@@ -14,6 +14,7 @@ use function explode;
 use function getcwd;
 use function implode;
 use function pathinfo;
+use function preg_match;
 
 use const DIRECTORY_SEPARATOR;
 use const PATHINFO_BASENAME;
@@ -90,15 +91,15 @@ abstract class Path
     /**
      * Checks whether a file path is absolute.
      *
-     * Note: This checks for a leading directory separator and does not account
-     * for Windows drive-letter paths (e.g. "C:\path") when running on Windows.
-     *
      * @param string $path The file path.
      * @return bool Whether the file path is absolute.
      */
     public static function isAbsolute(string $path): bool
     {
-        return $path !== '' && $path[0] === DIRECTORY_SEPARATOR;
+        return $path !== '' && (
+            $path[0] === DIRECTORY_SEPARATOR ||
+            preg_match('/^[A-Za-z]:[\\\\\\/]/', $path) === 1
+        );
     }
 
     /**
@@ -198,7 +199,7 @@ abstract class Path
 
             array_unshift($pathSegments, $path);
 
-            if ($path[0] !== DIRECTORY_SEPARATOR) {
+            if (!static::isAbsolute($path)) {
                 continue;
             }
 

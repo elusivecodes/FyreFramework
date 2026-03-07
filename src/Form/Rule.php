@@ -127,7 +127,7 @@ class Rule
     {
         return new static(
             static function(mixed $value, TypeParser $typeParser): bool {
-                return !$value || $typeParser->use('date')->parse($value) !== null;
+                return $typeParser->use('date')->parse($value) !== null;
             },
             __FUNCTION__
         );
@@ -142,7 +142,7 @@ class Rule
     {
         return new static(
             static function(mixed $value, TypeParser $typeParser): bool {
-                return !$value || $typeParser->use('datetime')->parse($value) !== null;
+                return $typeParser->use('datetime')->parse($value) !== null;
             },
             __FUNCTION__
         );
@@ -496,7 +496,7 @@ class Rule
     {
         return new static(
             static function(mixed $value, TypeParser $typeParser): bool {
-                return !$value || $typeParser->use('time')->parse($value) !== null;
+                return $typeParser->use('time')->parse($value) !== null;
             },
             __FUNCTION__
         );

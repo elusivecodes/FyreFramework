@@ -58,14 +58,27 @@ abstract class Schema
      */
     public function clear(): void
     {
-        $this->tables = null;
-        $this->loadedTables = [];
+        $this->loadTables();
+
+        $tableNames = array_keys($this->tables ?? []);
 
         $cache = $this->getCache();
 
         if ($cache) {
-            $cache->delete($this->getCachePrefix().'.tables');
+            $prefix = $this->getCachePrefix();
+            $keys = [$prefix.'.tables'];
+
+            foreach ($tableNames as $tableName) {
+                foreach (['columns', 'indexes', 'foreign_keys'] as $key) {
+                    $keys[] = $prefix.'.'.$tableName.'.'.$key;
+                }
+            }
+
+            $cache->deleteMultiple($keys);
         }
+
+        $this->tables = null;
+        $this->loadedTables = [];
     }
 
     /**

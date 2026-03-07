@@ -1,6 +1,6 @@
 # Auth Middleware
 
-Auth middleware is the bridge between the HTTP pipeline and the `Auth`/`Access` services. It runs authentication for the current request and provides route-level guards for “must be logged in”, “must be logged out”, and “must be authorized”.
+Auth middleware connects the HTTP pipeline to the auth subsystem. `auth` resolves request auth context, and the guard middleware (`authenticated`, `unauthenticated`, and `can`) consume that context to enforce route-level access rules.
 
 This page focuses on wiring Auth into the middleware pipeline and on the behavior of each built-in Auth guard middleware.
 
@@ -16,7 +16,7 @@ This page focuses on wiring Auth into the middleware pipeline and on the behavio
 
 ## Purpose
 
-🎯 Auth middleware connects the HTTP middleware pipeline to the `Auth` and `Access` services. Use it to:
+Auth middleware connects the HTTP middleware pipeline to the `Auth` and `Access` services. Use it to:
 
 - run authenticators and attach the resolved user to the request
 - require a logged-in user for a route (redirect for HTML, error for JSON)
@@ -35,7 +35,7 @@ This page focuses on wiring Auth into the middleware pipeline and on the behavio
 
 For default middleware alias mappings, see [HTTP Middleware](../http/middleware.md#default-middleware-aliases-engine).
 
-📌 Register `auth` as global middleware so the current user is available throughout the request.
+Register `auth` as global middleware so the current user is available throughout the request. When an authenticator succeeds, `AuthMiddleware` logs that user into the shared `Auth` instance for the rest of the request lifecycle, so downstream middleware and handlers can read the same resolved user through both request attributes and `Auth`.
 
 In a typical `Engine::middleware()` queue, place it after `session` (so session-based authenticators can read the session):
 
@@ -91,7 +91,7 @@ $router->group(
 
 `Fyre\Auth\Middleware\UnauthenticatedMiddleware` (mapped as the `unauthenticated` alias) requires the user to be logged out.
 
-When the user is not logged in, it continues to the next handler. Otherwise, it throws `NotFoundException` (HTTP 404) to avoid revealing routes intended only for unauthenticated users.
+When the user is not logged in, it continues to the next handler. Otherwise, it throws `NotFoundException` (HTTP 404) to avoid revealing routes intended only for unauthenticated users. Unlike the other guard middleware, this behavior does not vary by `Accept` header.
 
 Usage example:
 
@@ -101,13 +101,13 @@ $router->get('login', LoginController::class, middleware: ['unauthenticated']);
 
 ## Authorize with access rules
 
-`Fyre\Auth\Middleware\AuthorizedMiddleware` (mapped as the `can` alias) enforces an authorization rule via `Auth::access()->allows(...)`.
+`Fyre\Auth\Middleware\AuthorizedMiddleware` (mapped as the `can` alias) enforces an authorization rule via `Auth::access()->allows(...)`. It is the route-level counterpart to calling `Auth::access()->allows()` or `authorize()` directly inside handlers or actions.
 
 Arguments:
 
-- The **first** argument is the access rule name (the same rule name you pass to `Access::allows()` / `Access::authorize()`).
-- Any additional arguments are forwarded into `allows()`.
-- If a string argument matches a key in the request `routeArguments` attribute, it is replaced with that route argument value before calling `allows()`.
+- The **first** argument is required and must be the access rule name (the same rule name you pass to `Access::allows()` / `Access::authorize()`).
+- Any additional middleware arguments are forwarded into `allows()`.
+- Middleware arguments are strings. If a string argument matches a key in the request `routeArguments` attribute, it is replaced with that route argument value before calling `allows()`.
 
 When access is denied:
 
@@ -115,14 +115,16 @@ When access is denied:
 - If the request negotiates to JSON (`Accept` header), it throws `ForbiddenException` (HTTP 403).
 - Otherwise (HTML + not logged in), it redirects to `Auth::getLoginUrl($request->getUri())`.
 
-This middleware is commonly used with inline arguments (for example `can:admin`).
+This middleware expects inline arguments, so it is typically used like `can:admin`.
 
 Usage example (with route arguments):
 
 ```php
-// Replace `id` with the `{id}` route argument value before calling allows().
-$router->get('posts/{id}', [PostsController::class, 'edit'], middleware: ['can:edit,Posts,id']);
+// `post` is substituted from `{post}` (or the bound entity when using `bindings`).
+$router->get('posts/{post}', [PostsController::class, 'edit'], middleware: ['can:edit,post']);
 ```
+
+If you rely on route bindings for substitution (for example `{post}` resolving to a bound `Post` entity), make sure the `bindings` middleware runs before `can`. Plain route argument substitution does not require `bindings`; bindings only matter when you want substituted values to be resolved entities. See [Route Bindings](../routing/route-bindings.md).
 
 Usage example (inline arguments):
 
@@ -130,12 +132,14 @@ Usage example (inline arguments):
 $router->get('admin', AdminController::class, middleware: ['can:admin']);
 ```
 
+In a typical application, `auth` runs globally to establish request auth context, and `authenticated`, `unauthenticated`, and `can` are applied as route middleware where needed.
+
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `AuthenticatedMiddleware`, `UnauthenticatedMiddleware`, and `AuthorizedMiddleware` read authentication state from `Auth`, so `auth` middleware should run earlier in the pipeline.
-- `AuthorizedMiddleware` uses the `routeArguments` request attribute for argument substitution, so it must run after router middleware has set route attributes (typically as route middleware).
+- `AuthorizedMiddleware` uses the `routeArguments` request attribute for argument substitution, so it must run after router middleware has set route attributes (typically as route middleware). If you use route bindings, ensure `AuthorizedMiddleware` runs after `SubstituteBindingsMiddleware` (the `bindings` alias) so substitutions can use bound entities.
 - The “HTML vs JSON” behavior is based on `Accept` header negotiation between `text/html` and `application/json`.
 
 ## Related

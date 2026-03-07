@@ -20,7 +20,7 @@
 
 ## Purpose
 
-🎯 Use `Pdf` when you want to generate a PDF by rendering HTML in a real browser engine (Chromium). This is a good fit for invoices, receipts, reports, and exports where you already have HTML output.
+Use `Pdf` when you want to generate a PDF by rendering HTML in a real browser engine (Chromium). This is a good fit for invoices, receipts, reports, and exports where you already have HTML output.
 
 `Pdf` shells out to a Chrome/Chromium binary with `--headless` and `--print-to-pdf`.
 
@@ -37,8 +37,8 @@ Before debugging API usage, verify these prerequisites:
 ```php
 use Fyre\Utility\Pdf;
 
-$pdf = Pdf::createFromUrl('https://example.com/invoice/123');
-$pdf->save('tmp/invoice-123.pdf');
+Pdf::createFromUrl('https://example.com/invoice/123')
+    ->save('tmp/invoice-123.pdf');
 ```
 
 ```php
@@ -51,13 +51,13 @@ $bytes = Pdf::createFromHtml($html)->toBinary();
 
 ## Configuration
 
+Examples below assume `Pdf` refers to `Fyre\Utility\Pdf`.
+
 ### Chrome/Chromium binary
 
 By default, the binary path is `google-chrome`. Override it when your environment uses a different binary name or a full path:
 
 ```php
-use Fyre\Utility\Pdf;
-
 Pdf::setBinaryPath('/usr/bin/chromium');
 ```
 
@@ -66,8 +66,6 @@ Pdf::setBinaryPath('/usr/bin/chromium');
 The timeout is expressed in milliseconds and is passed to Chrome/Chromium via `--timeout`.
 
 ```php
-use Fyre\Utility\Pdf;
-
 Pdf::setTimeout(10000);
 ```
 
@@ -83,8 +81,6 @@ Arguments:
 - `$html` (`string`): the HTML string to render.
 
 ```php
-use Fyre\Utility\Pdf;
-
 $pdf = Pdf::createFromHtml('<h1>Report</h1><p>Generated at runtime.</p>');
 ```
 
@@ -164,7 +160,7 @@ Pdf::setTimeout(5000);
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `save()` throws an `InvalidArgumentException` when `$filePath` is empty.
 - `save()` throws a `RuntimeException` if the file already exists or if PDF generation did not produce the output file.

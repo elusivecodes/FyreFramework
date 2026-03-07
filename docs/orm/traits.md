@@ -25,7 +25,7 @@
 
 ## Purpose
 
-🎯 Use traits to share model behavior that is enforced consistently via ORM events (for example, soft deletes or automatic timestamps), while keeping the behavior close to the model.
+Use traits to share model behavior that is enforced consistently via ORM events, for example soft deletes or automatic timestamps, while keeping the behavior close to the model.
 
 Most examples assume you already have a model instance (for example, `$Users`).
 
@@ -259,7 +259,7 @@ $Users->purgeMany($entities);
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Soft delete is implemented in a `BeforeDelete` event handler; if you call `delete(..., events: false)` you’ll bypass the trait and perform a hard delete.
 - Default querying filters deleted rows via a `BeforeFind` handler. If you need deleted rows, use `findWithDeleted()` / `findOnlyDeleted()` (or pass `deleted: true` when building a query).

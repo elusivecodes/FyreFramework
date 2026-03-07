@@ -21,7 +21,7 @@
 
 ## Purpose
 
-🎯 You typically construct a `Loader` once during bootstrapping, register it, then pass it into your application container (see [Engine](engine.md)).
+You typically work with `Loader` during application bootstrap, then pass it into your application container (see [Engine](engine.md)). In day-to-day application code, you usually interact with `Engine` rather than `Loader` directly.
 
 Even if you rely on Composer for autoloading, `Loader` is still useful as a canonical source of “what namespaces exist and where they live” for framework discovery features, such as:
 
@@ -40,7 +40,7 @@ In other words:
 
 ## Bootstrapping from Composer
 
-📌 The most common flow is to load Composer’s autoload data and then register the loader:
+The most common flow is to load Composer’s autoload data and then register the loader:
 
 ```php
 use Fyre\Core\Loader;
@@ -51,7 +51,6 @@ $loader = (new Loader())
 ```
 
 `loadComposer()` is a no-op if the file path does not exist. When present, the file is expected to return a Composer autoloader instance that supports `getClassMap()` and `getPrefixesPsr4()`.
-If the included file returns something else, PHP will error when `Loader` attempts to call those methods.
 
 If you already have the Composer autoloader in hand, you can also feed the data in explicitly:
 
@@ -111,7 +110,7 @@ $loader->addNamespaces([
 ]);
 ```
 
-📌 Notes:
+Notes:
 - Namespace prefixes are normalized to always include a trailing `\` (e.g. `App\`).
 - Paths are resolved and de-duplicated.
 
@@ -130,6 +129,8 @@ $folders = $loader->findFolders('App\Controllers');
 ```
 
 `findFolders()` is intentionally flexible: you can ask for a deep namespace even when only a parent prefix is registered. For example, if you registered `App => src`, `findFolders('App\Console')` can still resolve `src/Console` when it exists.
+
+`findFolders()` only returns directories that actually exist on disk.
 
 If you need to know the base paths for a prefix (without appending sub-namespace segments), use `getNamespace()` / `getNamespacePaths()`:
 
@@ -159,7 +160,7 @@ See [Bootstrapping from Composer](#bootstrapping-from-composer) for the full exa
 
 #### **Register the autoloader** (`register()`)
 
-Registers the loader with `spl_autoload_register()` (prepended so it runs before other loaders).
+Registers the loader with `spl_autoload_register()` (prepended so it runs before other loaders). The registered autoloader is a closure bound to this `Loader` instance.
 
 ```php
 $loader->register();
@@ -203,6 +204,14 @@ $loader->addClassMap([
 $loader->removeClass('App\Support\Uuid');
 ```
 
+#### **Inspect the class map** (`getClassMap()`)
+
+Returns the current normalized class-map entries.
+
+```php
+$classMap = $loader->getClassMap();
+```
+
 #### **Add namespace prefixes** (`addNamespaces()`)
 
 Registers namespace prefixes and their base paths (a PSR-4-style mapping).
@@ -228,6 +237,14 @@ Arguments:
 $loader->addNamespaces(['App' => 'src']);
 
 $loader->removeNamespace('App');
+```
+
+#### **Inspect registered namespaces** (`getNamespaces()`)
+
+Returns all explicitly registered namespace prefixes and their paths.
+
+```php
+$namespaces = $loader->getNamespaces();
 ```
 
 #### **Clear namespaces and class mappings** (`clear()`)
@@ -322,21 +339,21 @@ if ($loader->hasNamespace('App')) {
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - The loader checks the class map first. If a class is mapped there, that file wins even if the class could also be found via a namespace prefix.
 - When no class-map entry exists for a class, the loader falls back to namespace prefixes.
 - `register()` and `unregister()` are idempotent. `register()` prepends the autoloader so it runs before other loaders.
-- `loadComposer()` includes the provided `autoload.php` using `include_once`. If it’s missing, nothing happens.
+- `loadComposer()` is a no-op when the Composer `autoload.php` path does not exist. When present, it expects a Composer autoloader instance that supports `getClassMap()` and `getPrefixesPsr4()`.
 - Namespace matching is prefix-based and case-sensitive.
 - `addNamespaces()` does not validate that a path exists. `findFolders()` only returns paths that are actual directories.
-- `addClassMap()` and `addNamespaces()` normalize paths, but they do not make relative paths absolute. Relative paths are evaluated relative to your current working directory.
-- File loading uses `include_once` after an `is_file()` check. If a file exists but does not define the requested class, the loader cannot detect that mismatch; it simply includes the file.
+- `addClassMap()` and `addNamespaces()` normalize and resolve paths via `Path::resolve()`.
+- The loader only includes files that exist (`is_file()`), using `include_once`. If a file exists but does not define the requested class, the loader cannot detect that mismatch; it simply includes the file.
 
 ## Related
 
 - [Core](index.md)
-- [Built-in Console Commands](../console/commands.md)
+- [Console Commands](../console/commands.md)
 - [Database Migrations](../database/migrations.md)
 - [Engine](engine.md)
 - [Container](container.md)

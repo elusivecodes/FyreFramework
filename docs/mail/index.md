@@ -1,6 +1,6 @@
 # Mail
 
-🧭 Mail covers configuring mailers, sending email messages, and selecting handlers (SMTP, sendmail, debug) for different environments.
+Mail covers configuring mailers, sending email messages, and selecting handlers (SMTP, sendmail, debug) for different environments.
 
 Each mailer configuration selects a handler and provides options that control delivery behavior.
 
@@ -37,7 +37,7 @@ Pick a path based on what you’re doing:
 
 ## Purpose
 
-🎯 Mailers are a good fit when you need to:
+Mailers are a good fit when you need to:
 
 - switch transports by environment (for example, SMTP in production and a debug mailer locally)
 - isolate delivery settings with multiple mailer keys (separate hosts, credentials, or options)
@@ -45,11 +45,12 @@ Pick a path based on what you’re doing:
 
 ## Mental model
 
-🧠 `MailManager` loads mailer configurations from [Config](../core/config.md) (the `Mail` key) and provides `Mailer` instances by key.
+`MailManager` loads mailer configurations from [Config](../core/config.md) (the `Mail` key) and provides `Mailer` instances by key.
 
 - Each config entry must specify a `className` that extends `Mailer`.
 - `MailManager::use()` returns one shared mailer instance per key.
 - `MailManager::build()` creates a new mailer instance from options without storing or sharing it.
+- `MailManager::use()` and `MailManager::build()` fail if the resolved options do not contain a valid `className`.
 
 Mail is split into two layers:
 
@@ -132,13 +133,13 @@ Implemented by `SmtpMailer`. Sends mail via SMTP.
 - `dsn` (`bool`): default `false` (adds DSN hints to `RCPT TO`)
 - `keepAlive` (`bool`): default `false` (reuses the SMTP connection across sends)
 
-📌 Note: `tls=true` enables `STARTTLS`. This mailer does not automatically secure the connection based on port; on most servers, use port `587` for `STARTTLS`.
+`tls=true` enables `STARTTLS`. This mailer does not automatically secure the connection based on port; on most servers, use port `587` for `STARTTLS`.
 
-📌 Note: The default port is `465`, which is commonly used for *implicit TLS* (SMTPS). This handler only performs implicit TLS when you prefix `host` with `tls://` (or `ssl://`) and leave `tls` as `false`.
+The default port is `465`, which is commonly used for implicit TLS (SMTPS). This handler only performs implicit TLS when you prefix `host` with `tls://` (or `ssl://`) and leave `tls` as `false`.
 
 #### Security considerations
 
-⚠️ `SmtpMailer` disables TLS certificate verification (`verify_peer` / `verify_peer_name` are `false`). This means TLS protects against passive eavesdropping, but it does **not** protect you from man-in-the-middle attacks on untrusted networks.
+`SmtpMailer` disables TLS certificate verification (`verify_peer` / `verify_peer_name` are `false`). This means TLS protects against passive eavesdropping, but it does not protect you from man-in-the-middle attacks on untrusted networks.
 
 Practical mitigation options:
 
@@ -168,6 +169,15 @@ $mailers = app(MailManager::class);
 
 $default = $mailers->use();
 $debug = $mailers->use('debug');
+```
+
+If helpers are loaded, `email($key)` creates a new `Email` from the selected mailer; see [Helpers](../core/helpers.md).
+
+```php
+email('debug')
+    ->setTo('user@example.com')
+    ->setSubject('Welcome')
+    ->setBodyText("Hello!\n");
 ```
 
 If you are using contextual injection, you can request a mailer key directly on a parameter:
@@ -201,6 +211,8 @@ function sendWelcomeDebug(#[Mail('debug')] Mailer $mailer): void
         ->send();
 }
 ```
+
+For the attribute behavior and other contextual injection helpers, see [Contextual attributes](../core/contextual-attributes.md).
 
 ## Building one-off mailers
 
@@ -254,6 +266,8 @@ Builds a new mailer instance from an options array (without storing or sharing i
 
 Arguments:
 - `$options` (`array<string, mixed>`): mailer options including `className`.
+
+This throws an `InvalidArgumentException` if `className` is missing or does not extend `Mailer`.
 
 ```php
 use Fyre\Mail\Handlers\DebugMailer;
@@ -366,9 +380,10 @@ if ($mailer instanceof DebugMailer) {
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `Mailer::send()` throws a `MailException` if an email has no recipients.
+- `MailManager::setConfig()` rejects duplicate keys, and `MailManager::unload()` removes both the stored config and any shared mailer instance for that key.
 - `MailManager::use()` requires that the selected key has a valid stored config with a `className`.
 - `SmtpMailer` only enables `STARTTLS` when `tls` is `true` (it does not automatically secure the connection based on port).
 - `SmtpMailer` does not enable implicit TLS unless you prefix `host` with `tls://` (or `ssl://`).
@@ -380,3 +395,5 @@ if ($mailer instanceof DebugMailer) {
 - [Config](../core/config.md)
 - [Emails](emails.md)
 - [Email Testing](../testing/mail.md)
+- [Helpers](../core/helpers.md)
+- [Contextual attributes](../core/contextual-attributes.md)

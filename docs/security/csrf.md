@@ -23,14 +23,14 @@ Cross-Site Request Forgery (CSRF) protection prevents third-party sites from tri
 
 ## Purpose
 
-🎯 CSRF protection is primarily about protecting requests that *change* server state (create/update/delete actions). With CSRF enabled, a request must provide:
+CSRF protection is primarily about protecting requests that change server state (create/update/delete actions). With CSRF enabled, a request must provide:
 
 - a CSRF cookie token issued by the server
 - a matching “user token” sent either as a form field or as a request header
 
 ## Mental model
 
-🧠 `CsrfProtection` works with two token representations:
+`CsrfProtection` works with two token representations:
 
 - **Cookie token**: stored in a cookie and sent automatically by the browser on same-site requests.
 - **Form/header token**: a salted form of the cookie token, safe to embed in HTML and to send back in requests.
@@ -39,11 +39,11 @@ On validation, the user-provided token is “unsalted” and compared against th
 
 ## Configuring CSRF
 
-📌 CSRF behavior is configured under the `Csrf` key in [Config](../core/config.md). The most important setting is `Csrf.salt`, which must be a stable, secret value.
+CSRF behavior is configured under the `Csrf` key in [Config](../core/config.md). The most important setting is `Csrf.salt`, which must be a stable, secret value.
 
 If `Csrf.salt` changes, existing tokens can no longer be validated (and all clients will effectively “lose” their CSRF cookies until they refresh and get a new one).
 
-📌 Note: If `Csrf.salt` is missing or empty, tokens are still generated but the construction is weaker than intended. Always set a real secret.
+If `Csrf.salt` is missing or empty, tokens are still generated but the construction is weaker than intended. Always set a real secret.
 
 ### Example `config/app.php`
 
@@ -151,7 +151,7 @@ Client-side code can then read the meta value and send it as the request header 
 
 ### Example: send the token with `fetch()`
 
-📌 Note: This example uses the default header name (`Csrf-Token`). If you changed `Csrf.header`, update the header name (and the meta selector).
+This example uses the default header name (`Csrf-Token`). If you changed `Csrf.header`, update the header name and the meta selector.
 
 ```js
 const meta = document.querySelector('meta[name="Csrf-Token"]');
@@ -171,6 +171,8 @@ await fetch('/profile', {
 
 Most examples assume you already have a `$request` instance (via dependency injection). After CSRF middleware has run, the request has a `csrf` request attribute that provides the `CsrfProtection` instance.
 
+Examples below also assume the relevant CSRF classes are already imported when needed.
+
 ### `CsrfProtection`
 
 #### **Get the form token** (`getFormToken()`)
@@ -178,8 +180,6 @@ Most examples assume you already have a `$request` instance (via dependency inje
 Returns a salted token suitable for embedding in HTML or sending back via a header.
 
 ```php
-use Fyre\Security\CsrfProtection;
-
 $csrf = $request->getAttribute('csrf');
 if ($csrf instanceof CsrfProtection) {
     $token = $csrf->getFormToken();
@@ -191,8 +191,6 @@ if ($csrf instanceof CsrfProtection) {
 Returns the configured form field name used to read CSRF tokens from parsed request bodies.
 
 ```php
-use Fyre\Security\CsrfProtection;
-
 $csrf = $request->getAttribute('csrf');
 if ($csrf instanceof CsrfProtection) {
     $field = $csrf->getField();
@@ -204,8 +202,6 @@ if ($csrf instanceof CsrfProtection) {
 Returns the configured request header name used to read CSRF tokens.
 
 ```php
-use Fyre\Security\CsrfProtection;
-
 $csrf = $request->getAttribute('csrf');
 if ($csrf instanceof CsrfProtection) {
     $header = $csrf->getHeader();
@@ -275,7 +271,7 @@ $response = $middleware->process($request, $handler);
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Only `DELETE`, `PATCH`, `POST`, and `PUT` are checked by default; other methods still get the `csrf` request attribute.
 - If the token is provided via the configured field name and the parsed body is an array, the token field is removed from the parsed body before it reaches the handler.

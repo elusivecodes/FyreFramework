@@ -1,6 +1,6 @@
 # HTTP
 
-🧭 HTTP covers request/response messages, middleware execution, session integration, and making outbound HTTP calls.
+HTTP covers request/response messages, middleware execution, session integration, and making outbound HTTP calls.
 
 ## Table of Contents
 
@@ -18,7 +18,7 @@ Pick a path based on what you’re doing:
 
 ## HTTP overview
 
-🧩 This section documents the framework’s HTTP primitives (requests, responses, middleware, sessions, and URL utilities) and how they fit together, using PSR-7 messages, PSR-15 middleware, and a PSR-18 HTTP client.
+This section documents the framework’s HTTP primitives (requests, responses, middleware, sessions, and URL utilities) and how they fit together, using PSR-7 messages, PSR-15 middleware, and a PSR-18 HTTP client.
 
 In practice, the HTTP layer is a small set of collaborating pieces:
 
@@ -33,7 +33,7 @@ If you want a simple mental model:
 - **Inbound flow**: `ServerRequest` → middleware queue → router/handler → `Response` → emitter
 - **Outbound flow**: `Client` → handler (cURL/mock/custom) → `Client\Response`
 
-📌 Note: Inbound request handlers typically return `Fyre\Http\ClientResponse` (a server-friendly PSR-7 response). Outbound calls return `Fyre\Http\Client\Response` (the client response wrapper).
+Note: Inbound request handlers typically return `Fyre\Http\ClientResponse` (a server-friendly PSR-7 response). Outbound calls return `Fyre\Http\Client\Response` (the client response wrapper).
 
 If you’re working on inbound HTTP handling, start with requests/responses and the middleware pipeline. For outbound calls, start with the HTTP client.
 

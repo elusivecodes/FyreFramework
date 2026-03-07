@@ -23,7 +23,7 @@
 
 ## Purpose
 
-🎯 Use `Console` when you want consistent terminal output and prompting across commands:
+Use `Console` when you want consistent terminal output and prompting across commands:
 
 - Styled output (`info()`, `success()`, `warning()`, `error()`, `comment()`).
 - Interactive prompts (`prompt()`, `confirm()`, `choice()`).
@@ -37,11 +37,11 @@
 - Prompt for required options when they are missing.
 - Render the command list table when no alias is provided.
 
-Commands can also accept `Console` as a dependency (for example as a `run()` parameter) to share the same streams and styling rules as the runtime. For the broader console subsystem, see [Console](index.md).
+In a typical application, `Console` is resolved from the container and shared by both `CommandRunner` and command classes. Commands can also accept `Console` as a dependency (for example as a `run()` parameter) to share the same streams and styling rules as the runtime. For the broader console subsystem, see [Console](index.md).
 
 ## Styled Output
 
-Most output methods write to the standard output stream via `write()`. `error()` writes to the error stream. Each method applies ANSI styling via `Console::style()`:
+Most output methods write to the standard output stream via `write()`. `error()` writes to the error stream. These methods append a newline. Each method applies ANSI styling via `Console::style()`:
 
 - `info()` defaults to blue
 - `success()` defaults to green
@@ -54,10 +54,10 @@ You can override the color, background, and style on any call.
 ## Prompts and Choices
 
 - `prompt()` writes a prompt line (yellow), then reads a single line from the input stream.
-- `choice()` prompts for a choice and returns the selected option (or the default).
+- `choice()` prompts for a choice and returns the selected option (or the default). Matching is case-insensitive.
   - When `$options` is a list, its values are the choices.
   - When `$options` is associative, keys are the choices and values are displayed as descriptions.
-- `confirm()` is a yes/no prompt implemented via `choice()`.
+- `confirm()` is a yes/no prompt implemented via `choice()` and returns `true` only when the selected value is `y`.
 
 ## Tables
 
@@ -71,7 +71,7 @@ A few constraints apply:
 
 ## Progress Output
 
-`progress()` prints a single-line progress indicator, updating the current terminal line as it advances.
+`progress()` prints a single-line progress indicator, updating the current terminal line as it advances. Calling `progress(null)` clears the indicator.
 
 ## Text Styling and Wrapping
 
@@ -93,9 +93,9 @@ For background, pass a color constant as the `$background` argument.
 `Console` reads from an input stream and writes to output and error streams.
 
 - Under `cli`, it defaults to `STDIN`, `STDOUT`, and `STDERR`
-- Outside `cli`, it writes to `php://output` and uses the output stream for errors by default
+- Outside `cli`, it writes to `php://output` and uses that same output stream for errors by default; no input stream is created automatically
 
-For tests, you can construct a `Console` with in-memory streams and assert against captured output:
+For tests, you can construct a `Console` with in-memory streams and assert against captured output. For end-to-end examples (including testing commands via `CommandRunner`), see [Console Testing](../testing/console.md).
 
 ```php
 use Fyre\Console\Console;
@@ -115,7 +115,7 @@ This section focuses on the methods you’ll use most when writing console comma
 
 #### **Write output** (`write()`)
 
-Write a line to the output stream.
+Write a line to the output stream. If the configured output stream is not a valid resource, this method does nothing.
 
 Arguments:
 - `$text` (`string`): the text to write.
@@ -163,7 +163,7 @@ $console->warning('This may take a while');
 
 #### **Write an error line** (`error()`)
 
-Write a line to the error stream.
+Write a line to the error stream. If the configured error stream is not a valid resource, this method does nothing.
 
 Arguments:
 - `$text` (`string`): the text to write.
@@ -219,6 +219,8 @@ Arguments:
 - `$options` (`array`): the options (list of choices, or an associative array of `choice => description`).
 - `$default` (`int|string|null`): the default choice when the user submits an empty response or enters an unknown option.
 
+When `$options` is associative, the descriptions are displayed to the user, but the returned value is still the selected key.
+
 ```php
 $environment = $console->choice('Environment', [
     'dev' => 'Development',
@@ -248,7 +250,7 @@ $console->table(
 
 #### **Render a progress indicator** (`progress()`)
 
-Render or update a single-line progress indicator.
+Render or update a single-line progress indicator. Repeated calls update the existing indicator, and `null` clears it.
 
 Arguments:
 - `$step` (`int|null`): the current step, or `null` to clear the indicator.
@@ -289,6 +291,22 @@ Arguments:
 $text = Console::wrap('A long line that should wrap automatically.');
 ```
 
+#### **Get terminal width** (`Console::getWidth()`)
+
+Return the terminal width in characters, falling back to `80` when it cannot be determined.
+
+```php
+$width = Console::getWidth();
+```
+
+#### **Get terminal height** (`Console::getHeight()`)
+
+Return the terminal height in characters, falling back to `24` when it cannot be determined.
+
+```php
+$height = Console::getHeight();
+```
+
 ### Streams
 
 #### **Read raw input** (`input()`)
@@ -301,7 +319,7 @@ $line = $console->input();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `choice()` compares user input case-insensitively and returns the default when no match is found.
 - `confirm()` returns `true` only when the user selects `y`.
@@ -312,6 +330,6 @@ $line = $console->input();
 ## Related
 
 - [Console](index.md)
-- [Built-in Console Commands](commands.md)
+- [Console Commands](commands.md)
 - [Console Testing](../testing/console.md)
 - [Events](../events/index.md)

@@ -20,13 +20,15 @@ Because it is a container, `Engine` inherits the same binding and resolution API
 
 ## Purpose
 
-🎯 Use `Engine` as the base application container you extend and configure (for example, `Application extends Engine`).
+Use `Engine` as the base application container you extend and configure (for example, `Application extends Engine`).
 
 In your subclass, you typically:
 
-- register application-specific bindings (commonly in `boot()`)
-- perform runtime initialization in a `boot()` method (invoked via `$app->call()` so dependencies can be injected)
+- register application-specific bindings
+- perform runtime initialization in your own application method such as `boot()` (invoked via `$app->call()` so dependencies can be injected)
 - customize the middleware queue by overriding `middleware()`
+
+`Engine` itself does not define a `boot()` hook; that is an application convention.
 
 ```php
 use Fyre\Core\Config;
@@ -59,13 +61,19 @@ class Application extends Engine
 
 ## How it works
 
-🧠 `Engine` runs the container constructor logic plus its own wiring: it registers default aliases/services up front so application code can type-hint and resolve common framework services without needing to bind everything manually.
+`Engine` runs the container constructor logic plus its own wiring: it registers default aliases and services up front so application code can type-hint and resolve common framework services without binding everything manually.
+
+On top of `Container`, it also:
+
+- registers default middleware aliases and builds the application middleware queue
+- provides namespace and path defaults for common registries and locators
+- loads `CONFIG/routes.php` when constructing the default `Router`
 
 You can add your own bindings in an `Engine` subclass and then keep the rest of your application code focused on behavior (services, controllers, jobs), relying on `build()`, `use()`, and `call()` for consistent dependency injection.
 
 ## Creating and sharing the application instance
 
-To access a single application container globally, create the loader (often from Composer autoload data), construct your application container, and store it as the shared instance:
+To access a single application container globally, construct your application with a configured loader, store it as the shared instance, and then run any application bootstrap method you define:
 
 ```php
 use Fyre\Core\Loader;
@@ -83,13 +91,11 @@ $app->call([$app, 'boot']);
 
 ## Using the `app()` helper
 
-If helper functions have been loaded (for example, during your application `boot()` via the `Config` service), the `app()` helper provides a shorthand for accessing the shared `Engine` instance or resolving a service from it.
+If helper functions have been loaded, the `app()` helper provides a shorthand for accessing the shared `Engine` instance or resolving a service from it.
 
 Under the hood, `app()` calls `Engine::getInstance()` and then either returns that instance (when called with no arguments) or resolves an alias via `$app->use($alias, $arguments)`.
 
 ```php
-use Fyre\Core\Config;
-
 $app = app();
 $config = app(Config::class);
 ```
@@ -104,10 +110,8 @@ Both lifetimes are shared (cached) when resolved without manual constructor argu
 - **Scoped**: a shared service instance intended to be cleared at a boundary you control (while keeping the binding), so the next resolution gets a fresh instance.
 
 ```php
-use Psr\Log\LoggerInterface;
-
-$loggerA = $app->use(LoggerInterface::class);
-$loggerB = $app->use(LoggerInterface::class, ['path' => '/tmp/logs']);
+$configA = $app->use(Config::class);
+$configB = $app->use(Config::class, ['paths' => ['config']]);
 ```
 
 To clear all scoped instances (including dependents) while keeping bindings:
@@ -118,7 +122,7 @@ $app->clearScoped();
 
 ## Default bindings and services
 
-`Engine` registers a small set of aliases plus a default group of scoped and singleton services in its constructor.
+`Engine` registers default bindings and services in its constructor.
 For the authoritative list, see `src/Core/Engine.php`.
 
 ### Existing instance
@@ -177,10 +181,11 @@ For the authoritative list, see `src/Core/Engine.php`.
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `Engine::getInstance()` (and `Application::getInstance()`) lazily creates a new instance using `new Loader()` if no instance has been set via `setInstance()`. Create and share your application instance early if you rely on loader-driven discovery features.
 - Shared lifetimes (`singleton()` / `scoped()`) are cached only when resolved without manual arguments. If you pass constructor arguments to `use()`, the resulting instance is not cached as the shared instance.
+- When `MiddlewareQueue` is built, `Engine` passes it through `middleware()` and then dispatches the `Engine.buildMiddleware` event before returning it.
 
 ## Related
 

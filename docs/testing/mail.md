@@ -20,7 +20,7 @@ Use `EmailTestTrait` in PHPUnit tests to capture outgoing `Fyre\Mail\Email` mess
 
 ## Purpose
 
-🎯 Use `EmailTestTrait` in tests that send email through `MailManager`, then assert on recipients, subject, body, and attachments.
+Use `EmailTestTrait` in tests that send email through `MailManager`, then assert on recipients, subject, body, and attachments.
 
 ```php
 use Fyre\TestSuite\TestCase;
@@ -34,7 +34,7 @@ final class PasswordResetMailTest extends TestCase
 
 ## How it works
 
-🧠 `EmailTestTrait` swaps the configured mail handlers for a test mailer that stores sent messages in memory, then clears captured messages after each test.
+`EmailTestTrait` swaps the configured mail handlers for a test mailer that stores sent messages in memory, then clears captured messages after each test.
 
 - Re-registers the existing `Fyre\Mail\MailManager` configs with `className` forced to `Fyre\TestSuite\Mail\Handlers\TestMailer`.
 - `TestMailer` captures sent `Fyre\Mail\Email` messages in memory.
@@ -44,7 +44,6 @@ final class PasswordResetMailTest extends TestCase
 ## Example: send and assert a single email
 
 ```php
-use Fyre\Mail\Email;
 use Fyre\Mail\MailManager;
 use Fyre\TestSuite\TestCase;
 use Fyre\TestSuite\Traits\EmailTestTrait;
@@ -437,7 +436,7 @@ $first = $this->getMessages(1);
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `...At()` methods use 1-based indexing. If the index is out of range, the assertion behaves like “no emails matched”.
 - `assertMailContains()` searches the full encoded body string. Prefer `assertMailContainsText()` / `assertMailContainsHtml()` when you want to target a specific body type.

@@ -21,17 +21,15 @@
 
 ## Purpose
 
-🎯 Use `Str` when you want consistent, reusable string operations without pulling in extra dependencies. It is an abstract class with static methods. Most methods are thin wrappers around PHP string functions, with a few convenience helpers for identifier-style casing.
+Use `Str` when you want consistent, reusable string operations without pulling in extra dependencies. It is an abstract class with static methods. Most methods are thin wrappers around PHP string functions, with a few convenience helpers for identifier-style casing.
 
 For pluralization/singularization and convention helpers for class/table names, see [Inflection](inflection.md).
 
-Most examples on this page assume `Str` is already imported (for example, `use Fyre\Utility\Str;`).
+Examples on this page assume `Str` refers to `Fyre\Utility\Str`.
 
 ## Quick start
 
 ```php
-use Fyre\Utility\Str;
-
 $class = Str::pascal('user_profile'); // "UserProfile"
 $method = Str::camel('user_profile'); // "userProfile"
 $id = Str::kebab('UserProfile');      // "user-profile"
@@ -633,17 +631,17 @@ $ok = Str::isString('hello'); // true
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `chunk()`, `length()`, `limit()`, `slice()`, and `replaceAt()` operate on bytes (via `str_split()`, `strlen()`, `substr()`, and `substr_replace()`), which can split multi-byte UTF-8 characters.
 - `after()`, `afterLast()`, `before()`, and `beforeLast()` return the original string when the search string is empty or not found.
-- `startsWith()` and `endsWith()` return `false` when the search string is empty (unlike `contains()`, which delegates to `str_contains()`).
+- `startsWith()` and `endsWith()` delegate to PHP’s `str_starts_with()` / `str_ends_with()`, so an empty search string returns `true`.
 - `split()` returns an empty array when the delimiter is an empty string.
 - `replaceFirst()`, `replaceLast()`, and `replaceArray()` return the original string when the search string is empty.
 - `replaceArray()` replaces each match with the next replacement, and uses `''` once replacements run out.
 - `slug()`, `snake()`, and `kebab()` are designed for identifier-style slugs: they do not perform full URL-safe normalization, and they do not normalize existing separators.
 - `transliterate()` temporarily sets `LC_CTYPE` to `en_US.UTF8` and uses `iconv()` with `TRANSLIT//IGNORE`; output depends on the installed locales and iconv implementation.
-- `random()` uses `random_int()` and asserts that `$length >= 0` and `$chars !== ''` (assertions may be disabled depending on runtime configuration).
+- `random()` uses `random_int()` and throws `InvalidArgumentException` when `$length < 0` or `$chars === ''`.
 
 ## Related
 

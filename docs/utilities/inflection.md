@@ -19,7 +19,7 @@ For general string transformations (casing, searching, slicing, escaping), see [
 
 ## Purpose
 
-🎯 Use `Inflector` when you need consistent inflection and naming conventions, such as:
+Use `Inflector` when you need consistent inflection and naming conventions, such as:
 
 - converting between singular class names and plural table names
 - generating variable-style names from class-style identifiers
@@ -41,6 +41,8 @@ $var = $inflector->variable('UserProfile');       // "userProfile"
 ```
 
 ## Method guide
+
+Examples below assume `$inflector` is an `Inflector` instance.
 
 ### Word inflection
 
@@ -179,7 +181,7 @@ $value = $inflector->pluralize('cactus'); // "cacti"
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `Inflector` caches computed results per instance; repeated calls with the same method and input reuse cached values.
 - Calling `rules()` always clears internal caches so subsequent calls use the updated rule sets.

@@ -1,6 +1,6 @@
 # Routing
 
-🧭 Routing maps incoming HTTP requests to handlers by matching the request against a set of route definitions.
+Routing maps incoming HTTP requests to handlers by matching the request against a set of route definitions.
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@ Pick a path based on what you’re doing:
 
 ## Routing overview
 
-🧩 At runtime, routing turns a request into a matched route plus a set of extracted arguments, typically before the request reaches the final handler.
+At runtime, routing turns a request into a matched route plus a set of extracted arguments, typically before the request reaches the final handler.
 
 In practice, the routing layer covers:
 

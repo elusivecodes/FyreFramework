@@ -23,7 +23,9 @@
 
 ## Purpose
 
-🎯 The container exists to centralize object creation and dependency wiring so application code can stay focused on behavior: constructors stay explicit, and the container supplies dependencies when building objects or calling callables.
+The container exists to centralize object creation and dependency wiring so application code can stay focused on behavior: constructors stay explicit, and the container supplies dependencies when building objects or calling callables.
+
+In a typical application, you work through `Fyre\Core\Engine`, which extends `Container` and registers the framework's default bindings. This page focuses on the underlying `Container` API, which is also useful for manual composition and tests.
 
 The container implements `Psr\Container\ContainerInterface`:
 
@@ -49,6 +51,7 @@ use Fyre\Core\Container;
 use Fyre\Core\Config;
 use Fyre\Core\Lang;
 
+// Low-level/manual setup example.
 $container = new Container();
 
 // Bind shared services you plan to reuse across the application lifetime.
@@ -68,6 +71,7 @@ $lang = $container->use(Lang::class);
 `build($className)` constructs a class directly and injects constructor dependencies as needed. It does not consult bindings for the class name; it always attempts to instantiate the class you pass in. Constructor dependencies are still resolved through the container.
 
 ```php
+// Low-level/manual setup example.
 $container = new Container();
 $container->singleton(Config::class);
 
@@ -91,6 +95,7 @@ $langB = $container->build(Lang::class);
 ```php
 use Fyre\Core\Attributes\Config as ConfigAttribute;
 
+// Low-level/manual setup example.
 $container = new Container();
 
 // Bind the shared config service and set a value.
@@ -104,19 +109,14 @@ $name = $container->call(
 
 ## Bindings and lifetimes
 
-🧠 Bindings map an alias to a class name or factory closure. Lifetimes control whether the resolved value is cached.
+Bindings map an alias to a class name or factory closure. Lifetimes control whether the resolved value is cached.
 
 - **Unbound alias**: if the alias is a concrete, instantiable class name, `use()` builds it on demand.
 - `bind()`: bind an alias to a class name or factory closure (not shared by default).
 - `singleton()`: shared binding; the resolved instance is cached.
 - `scoped()`: shared binding intended to be cleared at runtime boundaries via `clearScoped()`.
 - `instance()`: bind an alias directly to a specific instance/value.
-
-```php
-use Fyre\Core\Container;
-
-$container = new Container();
-```
+- Rebinding an alias clears any cached instance for that alias and removes its scoped status before applying the new binding.
 
 String-to-string bindings are commonly used to bind interfaces to concrete implementations:
 
@@ -156,6 +156,8 @@ Any arguments left over after named arguments are applied are appended and passe
 
 Caching note: if you resolve a shared binding via `use()` with manual arguments, the returned instance is not cached as the shared instance.
 
+Cycle detection note: `use()` detects alias recursion, and `build()` / `call()` detect recursive class dependency construction and throw `Fyre\Core\Exceptions\ContainerException` instead of recursing indefinitely.
+
 ## Contextual attributes
 
 Contextual attributes allow parameter injection from runtime context rather than from a container binding. Parameters annotated with an attribute that extends `Fyre\Core\ContextualAttribute` are resolved before type-hints.
@@ -164,6 +166,8 @@ Two resolution paths exist:
 
 - If a handler is registered via `bindAttribute($attributeClass, $handler)`, the handler is executed via `call()` and receives the attribute instance as an argument named `attribute`.
 - Otherwise, the container instantiates the attribute and calls `$attribute->resolve($container)`.
+
+If multiple matching contextual attributes are present on a parameter, the first one is used.
 
 The built-in attributes live under `Fyre\Core\Attributes\*` (for example `Fyre\Core\Attributes\Config` and `Fyre\Core\Attributes\RouteArgument`).
 
@@ -351,7 +355,7 @@ $container->instance(Config::class, $config);
 
 #### **Clear scoped instances** (`clearScoped()`)
 
-Unsets all *scoped* cached instances (but keeps the bindings).
+Unsets all *scoped* cached instances, but keeps the bindings. Any tracked dependent shared instances are also unset.
 
 ```php
 $container->clearScoped();
@@ -411,13 +415,14 @@ $container->bindAttribute(CurrentUser::class, fn(CurrentUser $attribute) => null
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - If an alias resolves (directly or indirectly) back to itself, `use()` throws a `ContainerException`.
 - If class construction would recurse back into a class already in the build stack, resolution fails with a `ContainerException` rather than infinite recursion.
 - When you call `[ClassName::class, 'method']` and the method is not static, `call()` instantiates `ClassName` before invoking the method.
 - Calling `bind()`, `singleton()`, `scoped()`, or `instance()` first removes any cached instance for the alias and removes its scoped status (and `scoped()` then re-marks it as scoped).
 - `clearScoped()` unsets all scoped instances and also unsets tracked dependents.
+- `unset($alias, true)` also unsets tracked dependents for that alias.
 - Dependents are tracked only for dependencies that are already container-managed shared instances at resolution time, and tracking is identity-based.
 
 When running long-lived processes (for example a queue worker), `clearScoped()` is the primary tool for dropping per-job/per-request state while keeping bindings intact; see [Worker](../queue/worker.md).

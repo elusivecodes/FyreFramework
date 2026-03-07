@@ -38,7 +38,7 @@ Database types provide a consistent way to convert values between database repre
 
 ## Purpose
 
-🎯 Use database types when you need predictable, repeatable value conversion:
+Use database types when you need predictable, repeatable value conversion:
 
 - parsing untrusted values into typed PHP values (for example, `"123"` → `123`)
 - converting PHP values into database-safe values (for example, `DateTime` → formatted string)
@@ -86,12 +86,12 @@ $limit = $typeParser->use('integer')->parse($value);
 
 ### Mapping identifiers to custom handlers
 
-To change what an identifier resolves to, use `TypeParser::map()`:
+To change what an identifier resolves to (for example, to support a custom column type you use), use `TypeParser::map()`:
 
 ```php
 use Fyre\DB\Type;
 
-class UppercaseType extends Type
+class UuidType extends Type
 {
     public function parse(mixed $value): string|null
     {
@@ -99,12 +99,19 @@ class UppercaseType extends Type
             return null;
         }
 
-        return strtoupper((string) $value);
+        $value = strtolower((string) $value);
+
+        // Example normalization/validation for a UUID stored as a string column.
+        return preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $value) ?
+            $value :
+            null;
     }
 }
 
-$typeParser->map('upper', UppercaseType::class);
+$typeParser->map('uuid', UuidType::class);
 ```
+
+`map()` updates the identifier-to-class mapping immediately. If a handler for that class has already been instantiated, call `clear()` to force fresh handler resolution on subsequent `use()` calls.
 
 ### Listing mapped types
 
@@ -117,12 +124,14 @@ $map = $typeParser->getTypeMap();
 ### Using the global `type()` helper
 
 If you have the framework’s global helpers available, `type()` provides a shorthand for resolving the shared `TypeParser` and using a mapped type identifier.
+For helper loading and the rest of the helper surface, see [Helpers](../core/helpers.md).
 
 Note: this is different from schema’s `Column::type()` method (which resolves a type handler from column metadata).
 
 ```php
 use Fyre\Utility\DateTime\DateTime;
 
+$typeParser = type();
 $limit = type('integer')->parse('25');
 $cutoff = type('datetime')->toDatabase(DateTime::now());
 ```
@@ -137,9 +146,6 @@ Metadata-driven type resolution is driver-dependent. In particular, `ResultSet::
 
 `Fyre\DB\ResultSet::getType()` returns a `Type` handler for a column name when the driver provides `native_type` metadata for that column.
 
-```php
-use Fyre\DB\ResultSet;
-
 $row = $result->first();
 if ($row !== null) {
     $type = $result->getType('created');
@@ -150,9 +156,6 @@ if ($row !== null) {
 ### From a schema Column
 
 Schema column objects resolve to a `Type` handler using driver-specific column type mappings:
-
-```php
-use Fyre\DB\Schema\Column;
 
 $value = $column->type()->fromDatabase($dbValue);
 ```
@@ -259,7 +262,7 @@ After creating the class, map it to an identifier with `TypeParser::map()` and u
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Unknown identifiers resolve to the `string` type.
 - `bool` and `int` are aliases for `boolean` and `integer` unless you explicitly map `bool` or `int` yourself.
@@ -271,3 +274,4 @@ After creating the class, map it to an identifier with `TypeParser::map()` and u
 - [Database connections](connections.md)
 - [Database queries](queries.md)
 - [Schema](schema.md)
+- [Helpers](../core/helpers.md)

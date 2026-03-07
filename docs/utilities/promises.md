@@ -21,7 +21,7 @@ In Fyre, `Promise` settles synchronously during construction, while `AsyncPromis
 
 ## Purpose
 
-🎯 Use promises when you want to represent “a value later” and compose follow-up work with `then()`/`catch()`/`finally()` instead of nested callbacks.
+Use promises when you want to represent a value later and compose follow-up work with `then()` / `catch()` / `finally()` instead of nested callbacks.
 
 `Promise` is synchronous and best for “wrap this operation and chain handlers”. `AsyncPromise` is for CPU-bound or blocking work you want to run in parallel from a CLI process.
 
@@ -44,6 +44,7 @@ echo Promise::await($value); // "READY!"
 ```php
 use Closure;
 use Fyre\Utility\Promise\AsyncPromise;
+use Fyre\Utility\Promise\Promise;
 
 $promise = new AsyncPromise(function(Closure $resolve, Closure $reject): void {
     $resolve(['pid' => getmypid()]);
@@ -54,7 +55,7 @@ $result = Promise::await($promise);
 
 ## `Promise` model
 
-🧠 A promise can settle in one of two ways:
+A promise can settle in one of two ways:
 
 - Fulfilled: produces a value.
 - Rejected: produces a rejection reason (`Throwable`).
@@ -85,6 +86,8 @@ If the environment can’t fork or serialize results reliably, prefer `Promise` 
 ## Method guide
 
 Use `Promise::await()` when you want to block and unwrap the final value.
+
+Examples below assume `Promise` refers to `Fyre\Utility\Promise\Promise` and `AsyncPromise` refers to `Fyre\Utility\Promise\AsyncPromise`.
 
 ### Chaining (PromiseInterface)
 
@@ -214,6 +217,8 @@ $race = Promise::race([Promise::resolve('first'), Promise::resolve('second')]);
 Blocks the current process until the child process fulfills, rejects, or is cancelled.
 
 ```php
+use Closure;
+
 $promise = new AsyncPromise(function(Closure $resolve, Closure $reject): void {
     $resolve('ok');
 });
@@ -229,6 +234,8 @@ Arguments:
 - `$message` (`string|null`): an optional cancellation message.
 
 ```php
+use Closure;
+
 $promise = new AsyncPromise(function(Closure $resolve, Closure $reject): void {
     // ...
 });
@@ -238,7 +245,7 @@ $promise->cancel('No longer needed');
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Handlers run synchronously when a promise settles; there is no event loop or scheduler.
 - Unhandled rejections are not silent: a rejected promise can throw its rejection reason when it is destroyed if no rejection handler was attached via `then()`/`catch()`/`finally()`.

@@ -28,7 +28,7 @@ Database connections are configured by name and resolved at runtime. A connectio
 
 ## Purpose
 
-🎯 Connections are a good fit when you need to:
+Connections are a good fit when you need to:
 
 - use different database backends in the same codebase (for example, MySQL for app data and SQLite for local analytics)
 - isolate workloads with multiple connections (separate credentials, timeouts, or hosts)
@@ -36,7 +36,7 @@ Database connections are configured by name and resolved at runtime. A connectio
 
 ## Mental model
 
-🧠 `Fyre\DB\ConnectionManager` loads connection configurations from [Config](../core/config.md) (the `Database` key) and provides `Fyre\DB\Connection` instances by key.
+`Fyre\DB\ConnectionManager` loads connection configurations from [Config](../core/config.md) (the `Database` key) during construction and provides `Fyre\DB\Connection` instances by key.
 
 - Each config entry must specify a `className` that extends `Fyre\DB\Connection` (for example, `MysqlConnection::class`).
 - `ConnectionManager::use()` returns one shared connection instance per key.
@@ -158,6 +158,8 @@ Use `SqliteConnection::class` as `className`.
 
 Use a connection key to select which stored config to use. When no key is provided, `ConnectionManager::DEFAULT` (`default`) is used.
 
+If the key does not exist, `use()` will fail when it tries to build a connection from the missing config.
+
 ```php
 use Fyre\DB\ConnectionManager;
 
@@ -174,9 +176,11 @@ $default = db();
 $analytics = db('analytics');
 ```
 
+If you use contextual injection, `#[DB('default')]` can resolve a configured connection while the container is building an object or calling a callable; see [Contextual attributes](../core/contextual-attributes.md).
+
 ## Building one-off connections
 
-Use `build()` to construct a connection directly from options without storing it under a key (and without sharing it).
+Use `build()` to construct a connection directly from options without storing it under a key (and without sharing it). The options must include a valid `className` that extends `Fyre\DB\Connection`.
 
 ```php
 use Fyre\DB\Handlers\Postgres\PostgresConnection;
@@ -217,6 +221,7 @@ Prefer bound values wherever possible. Query builders bind values by default (vi
 Common issues when setting up connections:
 
 - If you get an `InvalidArgumentException` when calling `use()` / `build()`, make sure your connection config includes a valid `className` that extends `Fyre\DB\Connection` (see [Configuring connections](#configuring-connections)).
+- If you call `use()` with a key that has not been configured, connection creation will fail because there is no stored config for that key.
 - If a connection fails immediately on `use()`, connection handlers call `connect()` during construction, so network/credential/database-name errors surface as soon as you resolve the connection. Double-check `host`, `port`, `username`, `password`, and `database`.
 - If SQLite reports “unable to open database file”, verify the directory for your SQLite file exists and is writable by the PHP process. Use an absolute path if your working directory differs between environments.
 - If query logging is enabled but nothing is written, `log: true` emits debug-level logs with the `queries` scope. Ensure your logger is configured for `debug` and includes the `queries` scope (see the example under [Example configuration](#example-configuration)).
@@ -239,7 +244,7 @@ $reporting = $connections->use('reporting');
 
 #### **Build a connection instance** (`build()`)
 
-Builds a new connection instance from an options array (without storing or sharing it).
+Builds a new connection instance from an options array (without storing or sharing it). The options must include a valid `className` that extends `Fyre\DB\Connection`.
 
 Arguments:
 - `$options` (`array<string, mixed>`): connection options including `className`.
@@ -293,7 +298,7 @@ if (!$connections->isLoaded('analytics')) {
 
 #### **Register a config** (`setConfig()`)
 
-Registers a config key and options array.
+Registers a config key and options array. Throws if the key already exists.
 
 Arguments:
 - `$key` (`string`): the connection key to register.
@@ -310,7 +315,7 @@ $connections->setConfig('temp', [
 
 #### **Remove a config and shared instance** (`unload()`)
 
-Removes the stored config and clears any shared connection instance for that key.
+Removes both the stored config and any shared connection instance for that key.
 
 Arguments:
 - `$key` (`string`): the connection key (defaults to `default`).
@@ -709,6 +714,8 @@ if ($db instanceof SqliteConnection) {
 
 - [Database](index.md)
 - [Config](../core/config.md)
+- [Helpers](../core/helpers.md)
+- [Contextual attributes](../core/contextual-attributes.md)
 - [Logging](../logging/index.md)
 - [Events](../events/index.md)
 - [Database queries](queries.md)

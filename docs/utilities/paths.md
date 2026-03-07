@@ -20,9 +20,9 @@ For filesystem operations (reading, writing, copying), see [File System](file-sy
 
 ## Purpose
 
-🎯 Use `Path` when you want predictable, platform-aware path string handling without touching the filesystem. All operations are based on the current runtime `DIRECTORY_SEPARATOR`.
+Use `Path` when you want predictable, platform-aware path string handling without touching the filesystem. All operations are based on the current runtime `DIRECTORY_SEPARATOR`.
 
-📌 If you are working across operating systems (or running on Windows), review the [Behavior notes](#behavior-notes) for separator and absolute-path edge cases.
+If you are working across operating systems (or running on Windows), review the [Behavior notes](#behavior-notes) for separator and absolute-path edge cases.
 
 ## Quick start
 
@@ -55,6 +55,8 @@ $path = Path::format($info); // "tmp/cache/routes.php"
 - `Path::SEPARATOR` The current platform directory separator (alias of `DIRECTORY_SEPARATOR`).
 
 ## Method guide
+
+Examples below assume `Path` is already imported.
 
 ### Joining and normalizing
 
@@ -161,13 +163,14 @@ $fileName = Path::fileName('tmp/cache/routes.php'); // "routes"
 
 #### **Check for an absolute path** (`isAbsolute()`)
 
-Checks whether a path starts with the current platform directory separator.
+Checks whether a path is absolute on the current platform. This includes Unix-style root paths and Windows drive-letter paths.
 
 Arguments:
 - `$path` (`string`): the file path.
 
 ```php
 $ok = Path::isAbsolute('/var/log'); // true (on Unix-like systems)
+$windows = Path::isAbsolute('C:\logs'); // true
 ```
 
 ### Parsing and formatting
@@ -197,13 +200,13 @@ $path = Path::format($info); // "tmp/cache/routes.php"
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `Path` uses the current platform separator (`DIRECTORY_SEPARATOR`, exposed as `Path::SEPARATOR`) for splitting and joining.
 - `normalize()` returns `.` for an empty result. If the original path started with a directory separator and normalization removes all segments, it returns a single directory separator.
 - `join()` filters out empty segments before joining; if all segments are empty, it returns `.`.
 - `resolve()` is not `realpath()`; it does not check the filesystem.
-- `isAbsolute()` only checks for a leading directory separator and does not account for Windows drive-letter paths (for example: `C:\path`) when running on Windows.
+- `isAbsolute()` treats both leading-separator paths and Windows drive-letter paths (for example `C:\path`) as absolute.
 
 ## Related
 

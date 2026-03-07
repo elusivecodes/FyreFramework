@@ -18,13 +18,13 @@ For single instants (time zones, localization, calendar-aware diffs), see [Date/
 
 ## Purpose
 
-🎯 Use `Period` when you need to represent a range as a sequence of evenly-stepped values (for example, “each day from Feb 1 to Feb 5”), and you want range operations like overlap, gap, and subtraction. Use `PeriodCollection` when you need to treat multiple periods as a set (for example, subtract many busy ranges from an availability window and then find the gaps).
+Use `Period` when you need to represent a range as a sequence of evenly-stepped values (for example, each day from Feb 1 to Feb 5), and you want range operations like overlap, gap, and subtraction. Use `PeriodCollection` when you need to treat multiple periods as a set (for example, subtract many busy ranges from an availability window and then find the gaps).
 
 ## Quick start
 
 Create a period, iterate it, and subtract a blocked range:
 
-📌 Boundaries matter: periods can include or exclude the start and/or end. If you see off-by-one results when iterating or calling `includes()`, double-check the boundary flags (see [Behavior notes](#behavior-notes)).
+Boundaries matter: periods can include or exclude the start and/or end. If you see off-by-one results when iterating or calling `includes()`, double-check the boundary flags (see [Behavior notes](#behavior-notes)).
 
 ```php
 use Fyre\Utility\DateTime\Period;
@@ -61,6 +61,8 @@ $gaps = $collection->gaps(); // PeriodCollection
 - Use `PeriodCollection` when you need to work with many ranges as a set (normalize/sort, find gaps, subtract another set).
 
 ## Method guide
+
+Examples below assume any referenced `DateTime`, `Period`, and `PeriodCollection` classes are already imported when needed.
 
 ### Period
 
@@ -587,7 +589,7 @@ $overlap = $a->overlapAll($b, $c);
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `count()` and `length()` answer different questions: `count()` is “how many steps will iteration yield”, while `length()` is the distance between the included boundaries.
 - Boundary exclusion affects both iteration and operations like `includes()`; double-check whether you want to exclude `start`, `end`, or both.

@@ -30,7 +30,7 @@ See [Schema](schema.md) for introspection, [Database connections](connections.md
 
 ## Purpose
 
-🎯 Use Forge when code needs to *change* database structure:
+Use Forge when code needs to *change* database structure:
 
 - create, alter, rename, or drop tables
 - add, remove, or rename columns
@@ -40,7 +40,7 @@ For reading database structure (introspection), use [Schema](schema.md).
 
 ## Mental model
 
-🧠 `ForgeRegistry` resolves a driver-specific `Forge` implementation for a `Connection` and caches that `Forge` per connection object.
+`ForgeRegistry` resolves a driver-specific `Forge` implementation for a `Connection` and caches that `Forge` per connection object using a `WeakMap`.
 
 - `Forge` is the main entry point. Convenience methods (like `addColumn()` or `dropIndex()`) build a `Table` operation and execute it immediately.
 - `Table` represents a table definition plus queued DDL operations. When you call `execute()`, it generates SQL via a driver-specific `QueryGenerator` and runs the queries against the connection.
@@ -52,7 +52,17 @@ Use `ForgeRegistry::use()` to resolve a `Forge` for a connection.
 
 Most examples on this page assume you already have a `$forge` (`Forge`) instance.
 
-If helpers are available, you can resolve it like this:
+Resolve it directly from the registry and a connection:
+
+```php
+use Fyre\DB\ConnectionManager;
+use Fyre\DB\Forge\ForgeRegistry;
+
+$connection = app(ConnectionManager::class)->use();
+$forge = app(ForgeRegistry::class)->use($connection);
+```
+
+If helpers are available, you can resolve the connection part more tersely:
 
 ```php
 use Fyre\DB\Forge\ForgeRegistry;
@@ -152,7 +162,7 @@ $table = $forge->build('roles')
 $queries = $table->sql();
 ```
 
-`sql()` returns an array of driver-specific DDL queries and does not execute them.
+`sql()` returns an array of driver-specific DDL queries and does not execute them. The generated SQL can differ significantly between drivers for the same high-level table change.
 
 ### Naming conventions
 
@@ -170,7 +180,7 @@ Also avoid reusing the same name for an index and a foreign key on the same tabl
 
 ## Driver-specific handlers
 
-Forge DDL generation is implemented per database driver under `Fyre\DB\Forge\Handlers\*`. `ForgeRegistry` ships with default mappings for the built-in connection handlers:
+Forge DDL generation is implemented by driver-specific `Forge` classes. `ForgeRegistry` ships with default mappings for the built-in connection handlers:
 
 - `MysqlConnection` → `MysqlForge`
 - `PostgresConnection` → `PostgresForge`
@@ -208,6 +218,8 @@ if ($forge instanceof MysqlForge) {
 
 Registers the `Forge` implementation to use for a given `Connection` class.
 
+The mapping itself is stored immediately. Validation that the forge class extends `Forge` happens later when a connection is resolved through `use()`.
+
 Arguments:
 - `$connectionClass` (`class-string<Connection>`): the connection class name.
 - `$forgeClass` (`class-string<Forge>`): the forge class name (must extend `Forge`).
@@ -222,6 +234,8 @@ $forgeRegistry->map(MysqlConnection::class, MysqlForge::class);
 #### **Get a shared Forge for a connection** (`use()`)
 
 Returns a shared `Forge` instance for the provided connection object (cached internally with a `WeakMap`).
+
+If the exact connection class is not mapped, `ForgeRegistry` will look through parent connection classes until it finds a mapped forge.
 
 Arguments:
 - `$connection` (`Connection`): the connection instance.
@@ -366,7 +380,7 @@ Notes:
 - Forge executes real DDL against your connection and updates schema caching.
 - Forge convenience methods execute immediately; use `build()->...->execute()` when batching changes.
 - Column `default` values accept scalars (auto-quoted when needed) or `QueryLiteral` for raw SQL expressions.
-- When `changeColumn()` changes `type`, `length` is cleared unless you provide a new `length` (so type changes don’t accidentally keep an incompatible length).
+- When `changeColumn()` changes `type`, `length` and `precision` are cleared unless you provide new values (so type changes don’t accidentally keep incompatible sizing metadata).
 - Some drivers handle defaults specially (for example, MySQL wraps defaults for some text types and normalizes `CURRENT_TIMESTAMP`-style expressions).
 - `Table::execute()` runs generated queries sequentially and does not automatically wrap them in a transaction.
 - `Table::execute()` clears queued operations and refreshes schema state; it clears the owning `Schema` cache on renames/drops and when table metadata changes.

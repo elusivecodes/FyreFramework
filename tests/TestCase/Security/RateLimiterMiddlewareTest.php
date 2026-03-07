@@ -85,6 +85,53 @@ final class RateLimiterMiddlewareTest extends TestCase
         );
     }
 
+    public function testArgumentsWithZeroOverride(): void
+    {
+        $middlewareRegistry = $this->container->build(MiddlewareRegistry::class);
+        $middlewareRegistry->map(
+            'throttle',
+            static fn(Container $container): RateLimiterMiddleware => $container->build(RateLimiterMiddleware::class, [
+                'options' => [
+                    'limit' => 10,
+                    'window' => 10,
+                    'cost' => 5,
+                ],
+            ])
+        );
+
+        $queue = new MiddlewareQueue();
+        $queue->add('throttle:6,5,0');
+
+        $handler = $this->container->build(RequestHandler::class, [
+            'middlewareRegistry' => $middlewareRegistry,
+            'queue' => $queue,
+        ]);
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REMOTE_ADDR' => '127.0.0.1',
+                ],
+            ],
+        ]);
+
+        $response = $handler->handle($request);
+
+        $this->assertSame(
+            204,
+            $response->getStatusCode()
+        );
+
+        $this->assertSame(
+            '6',
+            $response->getHeaderLine('X-RateLimit-Limit')
+        );
+
+        $this->assertSame(
+            '6',
+            $response->getHeaderLine('X-RateLimit-Remaining')
+        );
+    }
+
     public function testCost(): void
     {
         $middleware = $this->container->build(RateLimiterMiddleware::class, [

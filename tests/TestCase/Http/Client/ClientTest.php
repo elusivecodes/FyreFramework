@@ -219,6 +219,28 @@ final class ClientTest extends TestCase
         );
     }
 
+    public function testGetJsonWithNull(): void
+    {
+        $response = new Client()->get('http://localhost:8888/json-null');
+
+        $this->assertTrue(
+            $response->isOk()
+        );
+
+        $this->assertNull($response->getJson());
+    }
+
+    public function testGetJsonWithScalar(): void
+    {
+        $response = new Client()->get('http://localhost:8888/json-true');
+
+        $this->assertTrue(
+            $response->isOk()
+        );
+
+        $this->assertTrue($response->getJson());
+    }
+
     public function testGetMethod(): void
     {
         $response = new Client()->get('http://localhost:8888/method');

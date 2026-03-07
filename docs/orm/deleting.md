@@ -17,7 +17,7 @@ Deleting in the ORM can be entity-first (`delete()`/`deleteMany()`) via `Fyre\OR
 
 ## Purpose
 
-🎯 Use entity deletes when you need lifecycle hooks (events), relationship-aware cascading, or soft-delete behavior; use `deleteAll()` when you want a fast, direct table delete without hydrating entities.
+Use entity deletes when you need lifecycle hooks (events), relationship-aware cascading, or soft-delete behavior. Use `deleteAll()` when you want a fast, direct table delete without hydrating entities.
 
 Most examples assume you already have a model instance (for example, `$Users`). When an example uses a different model variable (for example, `$Sessions`), assume it exists too.
 
@@ -81,6 +81,8 @@ Models that use `Fyre\ORM\Traits\SoftDeleteTrait` change what “delete” means
 
 When soft deleting with cascading enabled, the trait unlinks dependent `HasOne` / `HasMany` relationships whose target models also use `SoftDeleteTrait`.
 
+`SoftDeleteTrait` also provides `purge()` and `purgeMany()` convenience methods for permanent deletes.
+
 ## Delete events
 
 To attach model methods to delete lifecycle events, use the ORM event attributes:
@@ -109,7 +111,7 @@ class UsersModel extends Model
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `delete()` and `deleteMany()` always run inside a transaction, so cascade failures roll back the whole delete.
 - Entity deletes return `false` when no rows are affected (they call `deleteAll()` for the entity’s primary key conditions under the hood).

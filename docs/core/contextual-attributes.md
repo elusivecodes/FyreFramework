@@ -24,7 +24,7 @@ Contextual attributes enable *contextual injection*: resolving a parameter value
 
 ## Purpose
 
-🎯 Contextual attributes participate in the container’s dependency resolution when it resolves parameters for:
+Contextual attributes participate in the container’s dependency resolution when it resolves parameters for:
 
 - `Container::build()` (constructor parameters)
 - `Container::call()` (callable parameters)
@@ -43,7 +43,7 @@ Prefer regular dependency injection (type-hints and bindings) when you want the 
 
 ## How resolution works
 
-🧠 When resolving a parameter, the container checks for a parameter attribute that is an instance of `ContextualAttribute` (using `ReflectionAttribute::IS_INSTANCEOF`). If one is present, the container resolves the attribute *before* it attempts to resolve the parameter by type-hint.
+When resolving a parameter, the container checks for a parameter attribute that is an instance of `ContextualAttribute` (using `ReflectionAttribute::IS_INSTANCEOF`). If one is present, the container resolves the attribute *before* it attempts to resolve the parameter by type-hint.
 
 In short, parameter resolution priority is:
 
@@ -54,13 +54,15 @@ Resolution happens in one of two ways:
 1. **Handler override**: if the container has a handler for the attribute class (registered via `Container::bindAttribute()`), the handler is executed via `Container::call()` and receives the attribute instance in an argument named `attribute`.
 2. Otherwise, the container instantiates the attribute and calls `resolve(Container $container): mixed`.
 
+If multiple matching contextual attributes are present on a parameter, the first one is used.
+
 If no contextual attribute is present, the container falls back to type-hints, defaults, and nullability (see [Container](container.md) for the full resolution order).
 
 ## Built-in attributes
 
-Fyre provides a set of parameter attributes under `Fyre\Core\Attributes\*` that extend `ContextualAttribute`. The container can resolve them when building objects or calling callables.
+Fyre provides a set of built-in contextual parameter attributes under `Fyre\Core\Attributes\*` that extend `ContextualAttribute`. The container can resolve them when building objects or calling callables.
 
-The examples below show function or method signatures. These parameters are only resolved when invoked via `Container::call()` (or when a class is instantiated via `Container::build()`).
+The examples below show function or method signatures. These parameters are only resolved when invoked via `Container::call()` or when a class is instantiated via `Container::build()`; PHP itself does not resolve them automatically.
 
 Each attribute below follows the same shape:
 
@@ -102,6 +104,7 @@ function configExample(#[Config('App.name')] string|null $name): string|null
 
 - **Use**: `#[CurrentUser]`
 - **Resolves**: `Entity|null` via `Auth::user()`
+- **Notes**: depends on auth context already being available for the current request or runtime flow
 
 ```php
 use Fyre\Core\Attributes\CurrentUser;
@@ -192,6 +195,7 @@ function ormExample(#[ORM('Test')] Model $m): Model
 
 - **Use**: `#[RouteArgument(string $name)]`
 - **Resolves**: route argument value from the current request’s `routeArguments` attribute (or `null` if missing)
+- **Notes**: resolves the raw route argument value, not a binding-resolved entity
 
 ```php
 use Fyre\Core\Attributes\RouteArgument;
@@ -244,20 +248,23 @@ $file = $container->call(
 `Container::bindAttribute()` lets you override how an attribute is resolved without changing the attribute class itself. The handler is executed via `Container::call()` and receives the attribute instance in an argument named `attribute`.
 
 ```php
+use Fyre\Core\Attributes\Config as ConfigAttribute;
+use Fyre\Core\Container;
+
 $container = new Container();
 
-$container->bindAttribute(Config::class, function(Config $attribute, Container $container): mixed {
+$container->bindAttribute(ConfigAttribute::class, function(ConfigAttribute $attribute, Container $container): mixed {
     return $attribute->resolve($container);
 });
 ```
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - If you pass an argument with the same name as the parameter, the container uses that value and does not evaluate contextual attributes for that parameter.
 - If a parameter has a contextual attribute, the container uses it rather than resolving the type-hint directly.
-- If multiple `ContextualAttribute` instances are present on the same parameter, the container uses the first one returned by reflection.
+- If multiple matching contextual attributes are present, only the first one is used, so stacking them is ineffective and should be avoided.
 - `bindAttribute()` handlers are called via `Container::call()` with an argument named `attribute`, so accept a parameter named `$attribute` to receive it.
 
 ## Related

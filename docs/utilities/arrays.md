@@ -26,7 +26,7 @@ If you want fluent, chainable pipelines for sequences (with operations like `map
 
 ## Purpose
 
-🎯 Use `Arr` when you already have a plain PHP array and want a focused, explicit operation: dot-path lookups/updates, flattening, selecting keys/values, searching, and small transformations.
+Use `Arr` when you already have a plain PHP array and want a focused, explicit operation: dot-path lookups/updates, flattening, selecting keys/values, searching, and small transformations.
 
 ## Quick start
 
@@ -67,6 +67,8 @@ $nonEmpty = Arr::filter(['a' => 1, 'b' => 0]); // ['a' => 1]
   - `Arr::SORT_LOCALE`, `Arr::SORT_NATURAL`, `Arr::SORT_NUMERIC`, `Arr::SORT_REGULAR`, `Arr::SORT_STRING`
 
 ## Method guide
+
+Examples on this page assume `Arr` refers to `Fyre\Utility\Arr`.
 
 ### Dot-path helpers
 
@@ -721,7 +723,7 @@ $value = Arr::randomValue(['a', 'b', 'c']);
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `filter()` defaults to `Arr::FILTER_BOTH`, so callbacks receive `(value, key)` (unlike PHP’s default `array_filter()` usage which typically passes only the value).
 - `setDot()` creates intermediate arrays, supports `*` wildcard segments, and respects `$overwrite` only for the final segment.

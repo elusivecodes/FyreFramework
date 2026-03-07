@@ -27,7 +27,7 @@
 
 ## Purpose
 
-🎯 Sessions are a good fit when you need state that:
+Sessions are a good fit when you need state that:
 
 - must survive redirects and multiple requests (flash messages, login state, anti-CSRF state)
 - should not be trusted to live solely in the browser
@@ -35,7 +35,7 @@
 
 ## Mental model
 
-🧠 A `Session` instance wraps PHP session mechanics and provides a stable API:
+A `Session` instance wraps PHP session mechanics and provides a stable API:
 
 - session start happens lazily (the first `get()`, `set()`, `has()`, etc. starts the session if needed), unless something starts it explicitly (for example, `SessionMiddleware`)
 - values are stored under `$_SESSION` and can be addressed with dot-notation keys
@@ -82,7 +82,7 @@ The session starts when you call `Session::start()`, or implicitly when you acce
 - closes the underlying PHP session (non-CLI)
 - resets the in-memory “started” state on the `Session` instance
 
-📌 Note: `Session::startReadOnly()` intentionally does less work than `start()`: it starts the session with `read_and_close=true` and marks the session as read-only, but it does not update the activity timestamp, rotate flash data, or clear expired temporary values.
+`Session::startReadOnly()` intentionally does less work than `start()`: it starts the session with `read_and_close=true` and marks the session as read-only, but it does not update the activity timestamp, rotate flash data, or clear expired temporary values.
 
 ### Refreshing the session ID
 
@@ -155,7 +155,7 @@ Implemented by `FileSessionHandler`.
 
 Stores one file per session under `Session.path`. The stored filename is `prefix + sessionId`.
 
-📌 Notes:
+Notes:
 - The session directory is created automatically when missing.
 - Writes use `LOCK_EX` to reduce race conditions.
 - Missing session files read as an empty string (errors are suppressed).
@@ -189,7 +189,7 @@ Implemented by `RedisSessionHandler`.
 
 Stores session payloads in Redis, with a TTL based on `expires`.
 
-📌 Notes:
+Notes:
 - The handler ignores `Session.path`.
 - Redis TTL handles expiration internally; explicit garbage collection is not performed by the handler.
 
@@ -213,7 +213,7 @@ Implemented by `MemcachedSessionHandler`.
 
 Stores session payloads in Memcached, with an expiration time based on `expires`.
 
-📌 Notes:
+Notes:
 - The handler ignores `Session.path`.
 - Memcached handles expiration internally; explicit garbage collection is not performed by the handler.
 
@@ -261,7 +261,7 @@ $session->start();
 
 Starts the session in read-only mode (PHP’s `read_and_close=true`) and marks the `Session` instance as read-only.
 
-📌 Note: `startReadOnly()` does not enforce `allowReadOnly()`.
+`startReadOnly()` does not enforce `allowReadOnly()`.
 
 ```php
 $session->startReadOnly();
@@ -387,7 +387,7 @@ $session->destroy();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Calling `start()` multiple times on the same `Session` instance is a no-op once it has started. If a PHP session is already active but the `Session` instance hasn’t started, `start()` throws.
 - `startReadOnly()` does not enforce `allowReadOnly()`, so check `allowReadOnly()` when choosing to start read-only mode outside of `SessionMiddleware`.

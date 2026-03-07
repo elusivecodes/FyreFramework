@@ -6,8 +6,8 @@ Macros let you extend classes at runtime by registering callbacks that behave li
 
 - [Purpose](#purpose)
 - [How macros work](#how-macros-work)
-  - [MacroTrait binding](#macrotrait-binding)
-  - [StaticMacroTrait binding](#staticmacrotrait-binding)
+  - [`MacroTrait` binding](#macrotrait-binding)
+  - [`StaticMacroTrait` binding](#staticmacrotrait-binding)
   - [Choosing instance vs static macros](#choosing-instance-vs-static-macros)
   - [Macro registry behavior](#macro-registry-behavior)
 - [Method guide](#method-guide)
@@ -21,11 +21,13 @@ Macros let you extend classes at runtime by registering callbacks that behave li
 
 ## Purpose
 
-🎯 Macros are a lightweight way to add convenience methods without subclassing or wrapping. They’re especially useful for small adapters and fluent helpers in application code.
+Macros are a lightweight way to add convenience methods without subclassing or wrapping. They’re especially useful for small adapters and fluent helpers in application code.
+
+They are only reached through `__call()` or `__callStatic()`, so a real method always takes precedence over a macro with the same name.
 
 ## How macros work
 
-### MacroTrait binding
+### `MacroTrait` binding
 
 `MacroTrait` registers macros via `macro()` and invokes them through `__call()` on the instance.
 
@@ -36,7 +38,7 @@ If the registered callback is a `Closure`, it is bound to:
 
 If a `Closure` macro cannot be bound, the call throws `BadMethodCallException`.
 
-### StaticMacroTrait binding
+### `StaticMacroTrait` binding
 
 `StaticMacroTrait` registers macros via `staticMacro()` and invokes them through `__callStatic()` on the class.
 
@@ -53,7 +55,7 @@ Choose based on what the “method” needs to act on:
 
 ### Macro registry behavior
 
-🧠 Both traits store macros in a protected static array, so the registry is shared across instances and (by default) across an inheritance chain:
+Both traits store macros in a protected static array on the trait consumer, so the registry is shared across instances and, by default, across an inheritance chain:
 
 - every instance of a class shares the same macro registry
 - subclasses inherit the registry unless they redeclare the underlying static property
@@ -64,6 +66,8 @@ Choose based on what the “method” needs to act on:
 This section focuses on the macro APIs you’ll use most.
 
 Register macros during application bootstrapping (before first use). Registering a macro with an existing name overwrites the previous macro.
+
+There is no per-name removal API; clearing is all-or-nothing for the class registry.
 
 ### Instance macros
 
@@ -167,10 +171,11 @@ If you want the full list for your version, search the source for `use MacroTrai
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Macros are invoked only when the method does not exist. Missing macros throw `BadMethodCallException`.
 - Macro registries are static, so registering or clearing macros affects all instances that share the underlying static property (including subclasses).
+- Registering a macro with an existing name overwrites the previous macro.
 - If a real method with the same name is added later, it takes precedence over the macro (the macro is no longer invoked).
 - Macro registries persist for the lifetime of the PHP process, so remember to clear them in tests (for example, in `tearDown()`).
 - `Closure` macros are bound to class scope, so they can access non-public members of the class. Treat macro code as part of the class’ trusted implementation.

@@ -17,11 +17,11 @@
 
 ## Purpose
 
-🎯 Use `ConsoleTestTrait` in PHPUnit tests when you want to execute framework console commands and assert against captured output and exit codes.
+Use `ConsoleTestTrait` in PHPUnit tests when you want to execute framework console commands and assert against captured output and exit codes.
 
 ## How it works
 
-🧠 `ConsoleTestTrait` runs commands in-process and stores the captured stdout/stderr and exit code so you can make assertions after execution.
+`ConsoleTestTrait` runs commands in-process and stores the captured stdout/stderr and exit code so you can make assertions after execution.
 
 - Sets up in-memory streams for stdin/stdout/stderr before each test.
 - Registers a `Fyre\Console\Console` instance in the engine container so command output is captured.
@@ -212,7 +212,7 @@ $this->assertErrorEmpty();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `exec()` treats `$input` as a list of lines and appends `PHP_EOL` to each line before running the command.
 - The command string is split using `str_getcsv($command, ' ', '"', '\\')`, which supports quoting with `"` and escaping with `\`.

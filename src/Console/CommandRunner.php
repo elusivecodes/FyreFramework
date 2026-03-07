@@ -338,8 +338,8 @@ class CommandRunner
     /**
      * Parses the command and arguments from argv.
      *
-     * Note: Options are read from `--option value` or `-o value`. When an option is present without a value,
-     * its argument is set to `true`. Non-option arguments are added as positional arguments.
+     * Note: Options are read from `--option value`, `--option=value`, or `-o value`. When an option is present
+     * without a value, its argument is set to `true`. Non-option arguments are added as positional arguments.
      *
      * @param string[] $argv The CLI arguments.
      * @return array{string|null, array<string|true>} The command and arguments.
@@ -354,7 +354,14 @@ class CommandRunner
 
         $key = null;
         foreach ($argv as $arg) {
-            if (preg_match('/^--?([^\s]+)$/', $arg, $match)) {
+            if (preg_match('/^--?([^\s=]+)=(.*)$/', $arg, $match)) {
+                if ($key !== null) {
+                    $arguments[$key] = true;
+                }
+
+                $arguments[$this->inflector->variable($match[1])] = $match[2];
+                $key = null;
+            } else if (preg_match('/^--?([^\s]+)$/', $arg, $match)) {
                 if ($key !== null) {
                     $arguments[$key] = true;
                 }

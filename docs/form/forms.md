@@ -5,31 +5,33 @@
 ## Table of Contents
 
 - [Purpose](#purpose)
-- [Mental Model](#mental-model)
-- [Defining a Form](#defining-a-form)
+- [Mental model](#mental-model)
+- [Defining a form](#defining-a-form)
 - [Schema and Fields](#schema-and-fields)
 - [Validation](#validation)
-- [Executing and Processing](#executing-and-processing)
-- [Accessing Data and Errors](#accessing-data-and-errors)
+- [Executing and processing](#executing-and-processing)
+- [Accessing data and errors](#accessing-data-and-errors)
 - [Method guide](#method-guide)
-  - [Form](#form)
-  - [Schema](#schema)
+  - [`Form`](#form)
+  - [`Schema`](#schema)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
 ## Purpose
 
-🎯 Use a form when you want a reusable, testable way to:
+Use a form when you want a reusable, testable way to:
 
 - parse an input array into typed values (based on a schema)
 - validate those parsed values (based on a validator)
 - run application-specific processing after validation succeeds
 
+Forms are application-layer workflow objects. They are not ORM entity forms; for entity/model validation workflows, use validators and rules directly (see [ORM](../orm/index.md)).
+
 This page is about server-side parsing/validation. If you want to render HTML form markup in templates, see [Forms (view helper)](../view/forms.md).
 
-## Mental Model
+## Mental model
 
-🧠 A form is a small workflow wrapper around two things:
+A form is a small workflow wrapper around two things:
 
 - **Schema parsing**: known schema fields are parsed using their configured types; unknown keys are kept as-is.
 - **Validation**: a validator runs field rules and produces an error map keyed by field name.
@@ -40,11 +42,13 @@ The default `execute()` flow is:
 2. Validate parsed data (unless `execute(..., validate: false)`).
 3. Call `process()` with the parsed data.
 
-## Defining a Form
+## Defining a form
 
 Create a subclass and override `buildSchema()`, `buildValidation()`, and `process()`:
 
 ```php
+namespace App\Forms;
+
 use Fyre\Form\Form;
 use Fyre\Form\Rule;
 use Fyre\Form\Schema;
@@ -84,10 +88,9 @@ Extension points:
 Example: execute a form and read errors.
 
 ```php
-$input = [
-    'email' => 'test@example.com',
-    'password' => 'secret1234',
-];
+use App\Forms\RegisterForm;
+
+$input = request()->getParsedBody();
 
 $form = app(RegisterForm::class);
 
@@ -96,7 +99,7 @@ if (!$form->execute($input)) {
 }
 ```
 
-If you’re validating an HTTP request payload, `$input` typically comes from the request (see [HTTP Requests](../http/requests.md)).
+In an HTTP request handler, `$input` typically comes from the parsed request body (see [HTTP Requests](../http/requests.md)).
 
 ## Schema and Fields
 
@@ -111,6 +114,8 @@ The `$options` array is passed as constructor arguments to `Fyre\Form\Field`. Co
 - `type` (`string`): database type identifier used to parse the value (default: `string`).
 - `length` (`int|null`): optional length metadata stored on the field.
 - `precision` (`int|null`): optional precision metadata stored on the field.
+- `scale` (`int|null`): optional scale metadata stored on the field (for example, decimal scale).
+- `fractionalSeconds` (`int|null`): optional fractional-seconds precision metadata.
 - `default` (`mixed`): default metadata stored on the field (not automatically applied during parsing).
 
 Parsing behavior during `execute()`:
@@ -134,11 +139,11 @@ This populates `$form->getErrors()` and returns whether validation passed.
 
 `validate()` does not parse schema fields and does not update the form’s stored data. If you need schema parsing, use `execute()` (or parse input yourself and pass the parsed array to `validate()`).
 
-If you need type-specific validation (for example, “create” vs “update”), call `Validator::validate(..., type: ...)` directly or override `validate()`/`execute()` in your form to pass a type through (see [Validators](validators.md)).
+If you need different rule sets, use separate form classes or inject a different `Validator` (via `setValidator()`).
 
 For details on validators and rules, see [Validators](validators.md) and [Validation rules](rules.md).
 
-## Executing and Processing
+## Executing and processing
 
 `Form::execute(array $data, bool $validate = true): bool`
 
@@ -150,38 +155,7 @@ Execution flow:
 
 Override `process()` to implement your behavior. Return `true` for success or `false` to indicate failure.
 
-Example: type-specific validation by overriding `validate()`.
-
-```php
-use Fyre\Form\Form;
-
-class RegisterForm extends Form
-{
-    // buildSchema(), buildValidation(), process()...
-
-    public function validate(array $data, string|null $type = null): bool
-    {
-        $this->errors = $this->getValidator()->validate($data, $type);
-
-        return $this->errors === [];
-    }
-}
-
-$form = app(RegisterForm::class);
-$ok = $form->validate($input, type: 'create');
-```
-
-In an HTTP controller/action, the type often maps to what you’re doing:
-
-```php
-$type = $user ? 'update' : 'create';
-
-if (!$form->validate($input, $type)) {
-    return $errors;
-}
-```
-
-## Accessing Data and Errors
+## Accessing data and errors
 
 After `execute()`, you can inspect:
 
@@ -196,7 +170,7 @@ After `validate()`, only the error map is updated (the form’s stored data is u
 
 Most examples below assume you already have a `$form` (a `Form` instance), plus `$input` data to validate/execute.
 
-### Form
+### `Form`
 
 #### **Access schema and validator** (`getSchema()`, `getValidator()`)
 
@@ -275,7 +249,7 @@ $form->setSchema($schema);
 $form->setValidator($validator);
 ```
 
-### Schema
+### `Schema`
 
 Most examples below assume you already have a `$schema` (a `Schema` instance).
 
@@ -285,7 +259,7 @@ Register a field so `Form::execute()` can parse it using the configured type.
 
 Arguments:
 - `$name` (`string`): the field name.
-- `$options` (`array<mixed>`): additional field constructor arguments (commonly `type`, `length`, `precision`, `default`).
+- `$options` (`array<mixed>`): additional field constructor arguments (commonly `type`, `length`, `precision`, `scale`, `default`).
 
 ```php
 $schema->addField('age', ['type' => 'integer']);
@@ -315,11 +289,11 @@ $schema->removeField('email');
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `Form::execute()` parses only keys that are present in the input array; it does not automatically apply field defaults.
 - When `execute()` receives keys that are not present in the schema, it stores those values unchanged.
-- Field `length`, `precision`, and `default` values are stored on `Field` metadata; `execute()` parsing uses only the field `type` identifier.
+- Field `length`, `precision`, `scale`, and `default` values are stored on `Field` metadata; `execute()` parsing uses only the field `type` identifier.
 - If you call `execute(..., validate: false)`, the form’s existing error map is not updated until you call `validate()`.
 
 ## Related

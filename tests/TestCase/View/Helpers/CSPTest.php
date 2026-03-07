@@ -39,6 +39,22 @@ final class CSPTest extends TestCase
         );
     }
 
+    public function testScriptNonceIsReused(): void
+    {
+        $this->csp->createPolicy(ContentSecurityPolicy::DEFAULT, []);
+
+        $first = $this->view->Csp->scriptNonce();
+        $second = $this->view->Csp->scriptNonce();
+
+        $policy = $this->csp->getPolicy(ContentSecurityPolicy::DEFAULT);
+
+        $this->assertSame($first, $second);
+        $this->assertSame(
+            'script-src \'nonce-'.$first.'\';',
+            $policy->getHeaderString()
+        );
+    }
+
     public function testStyleNonce(): void
     {
         $this->csp->createPolicy(ContentSecurityPolicy::DEFAULT, []);
@@ -54,6 +70,22 @@ final class CSPTest extends TestCase
 
         $this->assertSame(
             'style-src \'nonce-'.$nonce.'\';',
+            $policy->getHeaderString()
+        );
+    }
+
+    public function testStyleNonceIsReused(): void
+    {
+        $this->csp->createPolicy(ContentSecurityPolicy::DEFAULT, []);
+
+        $first = $this->view->Csp->styleNonce();
+        $second = $this->view->Csp->styleNonce();
+
+        $policy = $this->csp->getPolicy(ContentSecurityPolicy::DEFAULT);
+
+        $this->assertSame($first, $second);
+        $this->assertSame(
+            'style-src \'nonce-'.$first.'\';',
             $policy->getHeaderString()
         );
     }

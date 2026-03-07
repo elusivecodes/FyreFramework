@@ -15,7 +15,7 @@
 
 ## Purpose
 
-🎯 Use `Benchmark` when you want a lightweight way to compare multiple approaches in the same PHP process (for example: two parsing strategies, hydration approaches, or serialization routines).
+Use `Benchmark` when you want a lightweight way to compare multiple approaches in the same PHP process (for example: two parsing strategies, hydration approaches, or serialization routines).
 
 It is not a substitute for full profiling, but it’s useful for quick “A vs B” checks during development.
 
@@ -39,8 +39,6 @@ $bench->add('serialize', fn(): string => serialize(['a' => 1, 'b' => 2]));
 `run(int $iterations = 1000): array` executes each registered callback `$iterations` times and returns results keyed by test name.
 
 ```php
-use Fyre\TestSuite\Benchmark;
-
 $bench = (new Benchmark())
     ->add('a', fn(): int => 1 + 1)
     ->add('b', fn(): int => 2 + 2);
@@ -64,6 +62,8 @@ Each result contains:
 To compare tests, consider time per iteration (`time / n`) and relative differences between runs.
 
 ## Method guide
+
+Examples below assume you already have a `$bench` instance.
 
 ### Methods
 
@@ -180,7 +180,7 @@ $total = count($bench);
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Benchmarking is inherently noisy; compare relative differences and rerun multiple times.
 - `run()` throws an `InvalidArgumentException` if `$iterations` is less than `1`.

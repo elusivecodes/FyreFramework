@@ -33,7 +33,7 @@
 
 ## Purpose
 
-🎯 A response is the final output of request handling: middleware and application code produce a `Psr\Http\Message\ResponseInterface`, and a response emitter turns it into actual HTTP output (status line, headers, cookies, and body).
+A response is the final output of request handling: middleware and application code produce a `Psr\Http\Message\ResponseInterface`, and a response emitter turns it into actual HTTP output (status line, headers, cookies, and body).
 
 In practice, most responses you send back to browsers or API clients are `ClientResponse` instances (or subclasses). They’re still immutable PSR-7 objects, but they add user-facing helpers for:
 
@@ -98,7 +98,7 @@ $response = (new ClientResponse())
     ->withExpiredCookie('legacy_session');
 ```
 
-If helpers are loaded, `response()` creates a `ClientResponse` via the container, and `json($data)` is shorthand for `response()->withJson($data)` (see [Helpers](../core/helpers.md)).
+If helpers are loaded, `response()` resolves a `ClientResponse` from the container, and `json($data)` is shorthand for `response()->withJson($data)` (see [Helpers](../core/helpers.md)).
 
 ## Redirect responses
 
@@ -195,6 +195,8 @@ This section focuses on the most-used response methods, grouped by class.
 
 Most examples assume you already have a `$response` instance (via dependency injection). If helpers are loaded, you can also set `$response = response();` (see [Helpers](../core/helpers.md)). Examples commonly reassign `$response` to emphasize immutability.
 
+Examples below assume relevant classes are already imported when needed.
+
 ### ClientResponse
 
 #### **Set the content type** (`withContentType()`)
@@ -230,8 +232,6 @@ Arguments:
 - `$data` (`SimpleXMLElement`): the XML document.
 
 ```php
-use SimpleXMLElement;
-
 $xml = new SimpleXMLElement('<root/>');
 $xml->addChild('ok', '1');
 
@@ -368,8 +368,6 @@ Arguments:
 - `$options` (`array`): response options (headers, protocol version, and so on).
 
 ```php
-use Fyre\Http\RedirectResponse;
-
 $response = new RedirectResponse('/login', 302);
 ```
 
@@ -386,8 +384,6 @@ Arguments:
 - `$options` (`array`): response options (headers, protocol version, and so on).
 
 ```php
-use Fyre\Http\DownloadResponse;
-
 $response = DownloadResponse::createFromFile('/path/to/report.pdf');
 ```
 
@@ -402,8 +398,6 @@ Arguments:
 - `$options` (`array`): response options (headers, protocol version, and so on).
 
 ```php
-use Fyre\Http\DownloadResponse;
-
 $response = DownloadResponse::createFromString('Example export content', 'export.txt');
 ```
 
@@ -417,21 +411,18 @@ Arguments:
 - `$response` (`Psr\Http\Message\ResponseInterface`): the response to send.
 
 ```php
-use Fyre\Http\ResponseEmitter;
-
 $emitter = new ResponseEmitter();
 $emitter->emit($response);
 ```
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Status codes must be in the range `100`–`599`, otherwise an `InvalidArgumentException` is thrown.
 - Header names must match the HTTP token format, and header values must be strings/numbers containing only valid header characters (and header value arrays cannot be empty).
 - When `reasonPhrase` is omitted (or an empty string), a default phrase is used when available for the chosen status code.
 - `ClientResponse::withCookie()` stores cookies in a response cookie collection, and `ResponseEmitter` emits them when sending the response.
-- `ResponseEmitter` uses PHP’s legacy `setcookie()` signature, so cookie attributes like `SameSite` are not emitted (including cookies parsed from `Set-Cookie` headers).
 - When the request method is available and the protocol version is `>= 1.1`, non-`GET` redirects force `303`, and `GET` redirects convert a default `302` to `307`.
 - Body range output only applies when `Content-Range` matches the supported `bytes start-end/...` format; otherwise the body is streamed normally.
 

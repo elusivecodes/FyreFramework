@@ -31,9 +31,10 @@
 
 ## Purpose
 
-🎯 Use `Collection` when you want readable, chainable transformations over a sequence of values (especially when the underlying data may be produced lazily). Most transformation methods return a new `Collection`, and values are typically only computed when you iterate or materialize the result.
+Use `Collection` when you want readable, chainable transformations over a sequence of values (especially when the underlying data may be produced lazily). Most transformation methods return a new `Collection`, and values are typically only computed when you iterate or materialize the result.
 
 If you already have a plain array and you want a single operation (or a couple of explicit steps), see [Array Helpers](arrays.md).
+If helpers are loaded, `collect($source)` is the shorthand for creating a `Collection`; see [Helpers](../core/helpers.md).
 
 ## Quick start
 
@@ -61,14 +62,22 @@ $values = Collection::range(1, 10)
     ->toList();
 ```
 
+If helpers are loaded, the same kind of pipeline can start from `collect()`:
+
+```php
+$emails = collect($users)
+    ->extract('profile.email')
+    ->toList();
+```
+
 ## `Collection` mental model
 
-🧠 A `Collection` is a sequence wrapper. It can be backed by either:
+A `Collection` is a sequence wrapper. It can be backed by either:
 
 - an `array` (eager, repeatable), or
 - a `Closure` that returns data when iterated (often lazy).
 
-📌 If you use a lazy `Closure` source, make sure it returns a **fresh** `array` or `Iterator` each time the collection is iterated. Reusing the same iterator instance can lead to partially-consumed results.
+If you use a lazy `Closure` source, make sure it returns a fresh `array` or `Iterator` each time the collection is iterated. Reusing the same iterator instance can lead to partially-consumed results.
 
 Example pattern for a lazy source:
 
@@ -90,7 +99,7 @@ Some operations necessarily materialize the collection (they call `toArray()` in
 
 ## Building pipelines
 
-📌 Common workflow: start with values, apply a few transformations, then materialize the result.
+Common workflow: start with values, apply a few transformations, then materialize the result.
 
 ```php
 $values = Collection::range(1, 10)
@@ -171,11 +180,7 @@ $labels = $categories
 
 This section focuses on the methods you’ll use most when working with `Collection`.
 
-```php
-use Fyre\Utility\Collection;
-
-$collection = new Collection([1, 2, 3]);
-```
+Examples below assume `Collection` is already imported.
 
 ### Creating collections
 
@@ -929,7 +934,7 @@ $subset = (new Collection(['a' => 1, 'b' => 2]))
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - When constructing a `Collection` with a `Closure`, the closure is expected to return a fresh `array` or `Iterator` each time the collection is iterated. Reusing the same iterator instance can lead to partially-consumed results.
 - `count()` fully iterates lazy sources to determine the count.
@@ -942,3 +947,4 @@ $subset = (new Collection(['a' => 1, 'b' => 2]))
 
 - [Utilities](index.md)
 - [Array Helpers](arrays.md)
+- [Helpers](../core/helpers.md)

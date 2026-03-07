@@ -20,7 +20,7 @@ For the underlying event system (listeners, priorities, propagation), see [Event
 
 ## Purpose
 
-🎯 Use ORM events when you want to enforce model behavior at lifecycle boundaries (querying, parsing, saving, deleting) without scattering the logic across controllers or services.
+Use ORM events when you want to enforce model behavior at lifecycle boundaries (querying, parsing, saving, deleting) without scattering the logic across controllers or services.
 
 Common uses include:
 
@@ -31,7 +31,7 @@ Common uses include:
 
 ## Where ORM events fit
 
-🧭 Every `Fyre\ORM\Model` dispatches events named `ORM.*` from the points where work is performed (query preparation/execution, entity parsing, save/delete lifecycles).
+Every `Fyre\ORM\Model` dispatches events named `ORM.*` from the points where work is performed (query preparation/execution, entity parsing, save/delete lifecycles).
 
 Two patterns are common:
 
@@ -40,7 +40,7 @@ Two patterns are common:
 
 ## Per-model event managers
 
-⚙️ Each `Model` builds its own `Fyre\Event\EventManager` and configures the injected event manager as the parent. This keeps listeners scoped by default, while still allowing parent-level listeners to observe the same events.
+Each `Model` builds its own `Fyre\Event\EventManager` and configures the injected event manager as the parent. This keeps listeners scoped by default, while still allowing parent-level listeners to observe the same events.
 
 The most common entry point is `Model::getEventManager()`.
 
@@ -141,7 +141,7 @@ All events are dispatched as `Fyre\Event\Event` with the model as the subject. T
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `ORM.beforeRules`, `ORM.afterRules`, `ORM.beforeSave`, `ORM.afterSave`, `ORM.beforeDelete`, and `ORM.afterDelete` are checked by the ORM to determine whether to continue. If propagation is stopped, the model returns `(bool) $event->getResult()` (and a `false` result will roll back the surrounding transaction). Find/parse/commit events do not short-circuit ORM work.
 - Listener callbacks receive the values of the event data (`array_values()`), not the keys, so signatures must match the documented order for each event.

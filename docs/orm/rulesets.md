@@ -23,7 +23,7 @@
 
 ## Purpose
 
-🎯 Use rule sets to enforce model/entity integrity that typically requires database context (for example: uniqueness, existence of related rows).
+Use rule sets to enforce model/entity integrity that typically requires database context, for example uniqueness or the existence of related rows.
 
 Rule sets are distinct from validation:
 
@@ -302,7 +302,7 @@ class UsersModel extends Model
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Rule checks only run when `$checkRules` is enabled and the ORM does not short-circuit the save (for example: the entity already has errors, or it is neither new nor dirty).
 - `RuleSet::validate()` runs all rules; it does not stop at the first failure.

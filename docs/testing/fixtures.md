@@ -23,7 +23,7 @@ Fixtures provide a repeatable way to load known records into the database for te
 
 ## Purpose
 
-🎯 A fixture is a class that holds a dataset (rows) and knows how to insert it into the table for a model.
+A fixture is a class that holds a dataset (rows) and knows how to insert it into the table for a model.
 
 Fixtures are designed to be:
 - easy to discover by name (an *alias*)
@@ -52,8 +52,6 @@ Namespaces are normalized (trimmed and forced to a trailing `\`) and duplicates 
 Register one or more namespaces before resolving fixtures:
 
 ```php
-use Fyre\TestSuite\Fixture\FixtureRegistry;
-
 $fixtureRegistry->addNamespace('App\Fixtures');
 $fixtureRegistry->addNamespace('Tests\Fixtures');
 ```
@@ -108,8 +106,6 @@ class ItemsFixture extends Fixture
 ### Resolving and running a fixture
 
 ```php
-use Fyre\TestSuite\Fixture\FixtureRegistry;
-
 $fixtureRegistry->addNamespace('App\Fixtures');
 
 $fixtureRegistry->use('Items')->truncate();
@@ -119,8 +115,6 @@ $fixtureRegistry->use('Items')->run();
 ### Rebuilding a fixture instance
 
 ```php
-use Fyre\TestSuite\Fixture\FixtureRegistry;
-
 $fixtureRegistry->use('Items');
 
 if ($fixtureRegistry->isLoaded('Items')) {
@@ -269,7 +263,7 @@ $model = $fixtureRegistry->use('Items')->getModel();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Fixture discovery is namespace-order dependent: when multiple namespaces contain a fixture for the same alias, the first match wins.
 - `$fixtureRegistry->use('ItemsFixture')` looks for an `ItemsFixtureFixture` class; use the alias without the suffix (`Items`).

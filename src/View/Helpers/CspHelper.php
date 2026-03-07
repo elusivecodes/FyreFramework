@@ -17,6 +17,10 @@ use function random_bytes;
  */
 class CspHelper extends Helper
 {
+    protected string|null $scriptNonce = null;
+
+    protected string|null $styleNonce = null;
+
     /**
      * Constructs a CspHelper.
      *
@@ -39,7 +43,7 @@ class CspHelper extends Helper
      */
     public function scriptNonce(): string
     {
-        return $this->addNonce('script-src');
+        return $this->scriptNonce ??= $this->addNonce('script-src');
     }
 
     /**
@@ -49,7 +53,7 @@ class CspHelper extends Helper
      */
     public function styleNonce(): string
     {
-        return $this->addNonce('style-src');
+        return $this->styleNonce ??= $this->addNonce('style-src');
     }
 
     /**

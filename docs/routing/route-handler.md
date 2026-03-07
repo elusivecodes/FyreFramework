@@ -14,7 +14,7 @@
 
 ## Purpose
 
-🎯 Use `RouteHandler` when you want to:
+Use `RouteHandler` when you want to:
 
 - dispatch the matched `Route` produced by router middleware
 - run route-level middleware after global middleware
@@ -24,7 +24,7 @@ If you’re building a middleware pipeline, `RouteHandler` is commonly used as t
 
 ## Route handler in the pipeline
 
-🧠 A typical inbound request flow looks like:
+A typical inbound request flow looks like:
 
 1. Global middleware runs via the [Request Handler](../http/request-handler.md).
 2. Router middleware matches a route and stores it on the request as the `route` attribute (see [HTTP Middleware](../http/middleware.md)).
@@ -52,7 +52,7 @@ This is the right place for per-route concerns like authorization, throttling, o
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `RouteHandler` throws `Fyre\Router\Exceptions\RouterException` when the `route` request attribute is missing.
 

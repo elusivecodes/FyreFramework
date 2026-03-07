@@ -21,12 +21,11 @@ For how rules are attached to a validator and executed, see [Validators](validat
 - [Cross-field Rules](#cross-field-rules)
 - [Presence and Emptiness Rules](#presence-and-emptiness-rules)
 - [Date and Time Rules](#date-and-time-rules)
-- [Behavior notes](#behavior-notes)
 - [Related](#related)
 
 ## Purpose
 
-🎯 Use built-in rule factories when you want consistent, reusable validation logic with predictable “skip empty / skip not set” behavior.
+Use built-in rule factories when you want consistent, reusable validation logic.
 
 If you’re not sure where to start:
 
@@ -151,13 +150,7 @@ These rules accept common string inputs and validate them by parsing through the
 - `Rule::dateTime()`
 - `Rule::time()`
 
-They pass for falsy values (for example `null` or `''`), and otherwise require parsing to succeed.
-
-## Behavior notes
-
-⚠️ A few behaviors are worth keeping in mind:
-
-- `Rule::date()`, `Rule::dateTime()`, and `Rule::time()` treat any falsy `$value` as “empty” (for example `null` or `''`) and pass without parsing.
+They pass for `null` and empty strings, and otherwise require parsing to succeed.
 
 ## Related
 

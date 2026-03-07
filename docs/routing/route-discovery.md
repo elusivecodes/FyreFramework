@@ -20,7 +20,7 @@
 
 ## Purpose
 
-🎯 Use route discovery when you want controller methods to become routes automatically:
+Use route discovery when you want controller methods to become routes automatically:
 
 - define routes with `#[Route]` and method attributes like `#[Get]` / `#[Post]`
 - rely on conventions for paths, methods, and aliases when you don’t want to specify everything
@@ -241,7 +241,7 @@ If the cache manager is disabled, the `_routes` handler is a no-op cacher and ro
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Only the first attribute that is an instance of `Fyre\Router\Attributes\Route` is used on a controller class and on each method.
 - `#[Hidden]` only takes effect if it is that first `Route`-instance attribute on the class/method.

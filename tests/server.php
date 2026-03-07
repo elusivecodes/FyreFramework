@@ -64,6 +64,14 @@ switch ($_SERVER['SCRIPT_NAME']) {
         header('Content-Type: application/json');
         echo json_encode($data);
         break;
+    case '/json-null':
+        header('Content-Type: application/json');
+        echo 'null';
+        break;
+    case '/json-true':
+        header('Content-Type: application/json');
+        echo 'true';
+        break;
     case '/method':
         echo $_SERVER['REQUEST_METHOD'];
         break;

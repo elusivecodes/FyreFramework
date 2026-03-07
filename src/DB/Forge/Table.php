@@ -189,6 +189,7 @@ abstract class Table
 
         if (isset($options['type']) && $options['type'] !== $oldOptions['type']) {
             $options['length'] ??= null;
+            $options['precision'] ??= null;
         }
 
         $options = array_replace($oldOptions, $options);

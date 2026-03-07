@@ -17,7 +17,7 @@
 
 ## Purpose
 
-🎯 Use `Timer` when you want a lightweight way to measure specific phases (bootstrap time, a query phase, serialization) without introducing a full benchmark runner.
+Use `Timer` when you want a lightweight way to measure specific phases (bootstrap time, a query phase, serialization) without introducing a full benchmark runner.
 
 If you want to run named callbacks repeatedly and collect time + memory results, see [Benchmark](benchmark.md).
 
@@ -83,6 +83,8 @@ Useful helpers:
 
 ## Method guide
 
+Examples below assume you already have a `$timer` instance.
+
 ### Timing
 
 #### **Start a timer** (`start()`)
@@ -105,9 +107,7 @@ Arguments:
 
 ```php
 $timer->start('bootstrap');
-
 // ... work ...
-
 $timer->stop('bootstrap');
 ```
 
@@ -134,9 +134,7 @@ Arguments:
 
 ```php
 $timer->start('phase');
-
 // ... work ...
-
 $seconds = $timer->elapsed('phase');
 ```
 
@@ -228,7 +226,7 @@ $timer->clear();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `start($name)` throws if the timer already exists.
 - `stop($name)` throws if the timer does not exist or was already stopped.

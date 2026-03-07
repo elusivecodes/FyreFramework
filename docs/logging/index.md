@@ -1,6 +1,6 @@
 # Logging
 
-🧭 Logging covers configuring handlers and writing log messages (PSR-3), with optional filtering by level and scope.
+Logging covers configuring handlers and writing log messages (PSR-3), with optional filtering by level and scope.
 
 `Fyre\Log\LogManager` dispatches log messages to one or more configured handlers.
 
@@ -31,7 +31,7 @@
 
 ## Purpose
 
-🎯 Use logging when you want to:
+Use logging when you want to:
 
 - keep an audit trail of important events (sign-in attempts, state changes, payments, etc.)
 - capture errors and warnings to persistent storage for later triage
@@ -69,10 +69,11 @@ $logs->handle('error', 'Payment failed for user {id}', ['id' => 123], 'payments'
 
 ## Mental model
 
-🧠 `Fyre\Log\LogManager` loads handler configurations from [Config](../core/config.md) (the `Log` key). Each config entry must specify a `className` that extends `Fyre\Log\Logger`.
+`Fyre\Log\LogManager` loads handler configurations from [Config](../core/config.md) (the `Log` key). Each config entry must specify a `className` that extends `Fyre\Log\Logger`.
 
 - `LogManager::handle()` validates the log level and dispatches the message to every configured handler whose `Logger::canHandle()` returns `true` for the given level and scope.
-- `LogManager::use()` returns a shared handler instance for a config key (building and caching it on first use).
+- `LogManager::use()` returns a shared handler instance for a config key, building and caching it on first use.
+- `LogManager::use()` and `LogManager::build()` will fail if the resolved options do not contain a valid `className`.
 
 ## Configuring handlers
 
@@ -189,6 +190,12 @@ Use `LogManager::handle()` to log a message to all configured handlers that matc
 $logs->handle('error', 'Payment failed for user {id}', ['id' => 123], 'payments');
 ```
 
+If helpers are loaded, `log_message($type, $message, $data)` forwards to `LogManager::handle()`; see [Helpers](../core/helpers.md).
+
+```php
+log_message('error', 'Payment failed for user {id}', ['id' => 123]);
+```
+
 ### A single handler with `use()`
 
 To write to a specific configured handler, resolve it by key with `use()` and call PSR-3 methods on the returned `Logger` instance:
@@ -212,6 +219,8 @@ $logs->handle('info', 'Literal placeholder: \{id}');
 ## Method guide
 
 This section focuses on the methods you’ll use most when configuring handlers and writing messages.
+
+Examples below assume `$logs` is a `LogManager` instance and `$logger` is a `Logger` instance unless the snippet is specifically about direct handler construction.
 
 ### `LogManager`
 
@@ -240,16 +249,17 @@ Arguments:
 - `$key` (`string`): the handler config key (defaults to `default`).
 
 ```php
-$logger = $logs->use();
-$logger->error('Something went wrong');
+$logs->use()->error('Something went wrong');
 ```
 
 #### **Build a handler instance** (`build()`)
 
-Builds a handler from an options array (without caching it on the manager).
+Builds a handler from an options array without caching it on the manager.
 
 Arguments:
 - `$options` (`array<string, mixed>`): handler options including `className`.
+
+This throws an `InvalidArgumentException` if `className` is missing or does not extend `Logger`.
 
 ```php
 $logger = $logs->build([
@@ -265,6 +275,8 @@ Registers a config key and options array.
 Arguments:
 - `$key` (`string`): the handler key to register.
 - `$options` (`array<string, mixed>`): handler options including `className`.
+
+This throws an `InvalidArgumentException` if the config key already exists.
 
 ```php
 $logs->setConfig('buffer', [
@@ -341,10 +353,8 @@ Arguments:
 - `$scope` (`array|string|null`): the scope(s) to check (defaults to `null`).
 
 ```php
-$logger = $logs->use();
-
-if ($logger->canHandle('debug', 'queries')) {
-    $logger->debug('Query logging is enabled');
+if ($logs->use()->canHandle('debug', 'queries')) {
+    $logs->use()->debug('Query logging is enabled');
 }
 ```
 
@@ -353,8 +363,7 @@ if ($logger->canHandle('debug', 'queries')) {
 Returns the handler’s resolved config array (defaults merged with provided options).
 
 ```php
-$logger = $logs->use();
-$config = $logger->getConfig();
+$config = $logs->use()->getConfig();
 ```
 
 ### `FileLogger`
@@ -383,6 +392,8 @@ Applies to `Fyre\Log\Handlers\ArrayLogger` (useful for tests and assertions).
 
 Returns the buffered log content.
 
+`ArrayLogger` stores formatted messages in memory without the date prefix that `FileLogger` includes by default.
+
 ```php
 $logger = new ArrayLogger();
 $logger->info('Queued job {id}', ['id' => 42]);
@@ -403,12 +414,15 @@ $logger->clear();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `LogManager::handle()` validates levels against the supported list and is case-sensitive (for example, `error` is valid but `ERROR` is not).
+- `LogManager::setConfig()` rejects duplicate keys, and `LogManager::unload()` removes both the stored config and any shared handler instance for that key.
+- `LogManager::use()` does not silently ignore unknown keys. If the key has no stored config, handler building fails because there is no valid `className`.
 - Scope filtering is opt-in: when a handler has the default `scopes` value of `[]`, it matches only when `scope` is `null`. Passing a scope will skip those handlers unless `scopes` is configured (or `scopes` is `null`).
 - `FileLogger` creates the `path` folder when it does not exist (and throws if it cannot create it).
 - `FileLogger` rotates by copying the current file when it reaches `maxSize` and then truncating the original file in place. If the destination file cannot be opened for appending, the write is skipped.
+- `ArrayLogger` keeps messages in memory only and stores them without timestamps.
 - Message interpolation supports `{key}` placeholders from your context array and special keys like `{get_vars}`, `{post_vars}`, `{server_vars}`, `{session_vars}`, and `{backtrace}`. Escape placeholders with a backslash (for example `\{id}`).
 - When values are encoded as JSON during interpolation, encoding errors can throw and are not swallowed.
 - Be careful with the special interpolation keys: `{get_vars}`, `{post_vars}`, `{server_vars}`, `{session_vars}`, and `{backtrace}` can include secrets or personal data. Avoid logging them in production unless you are sure the output is safe.
@@ -416,4 +430,5 @@ $logger->clear();
 ## Related
 
 - [Config](../core/config.md)
+- [Helpers](../core/helpers.md)
 - [Contextual attributes](../core/contextual-attributes.md)

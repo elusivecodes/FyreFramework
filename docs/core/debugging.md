@@ -1,6 +1,6 @@
 # Debugging
 
-`DebugTrait` provides predictable, safe debug output by masking sensitive values while still showing enough structure to understand what an object contains. In the framework, core classes use `DebugTrait` as the standard mechanism for safe `__debugInfo()` output.
+`DebugTrait` provides predictable, safe debug output by masking sensitive values while still showing enough structure to understand what an object contains. Across the framework, many classes use `DebugTrait` as the common mechanism for safe `__debugInfo()` output.
 
 ## Table of Contents
 
@@ -18,7 +18,7 @@
 
 ## Purpose
 
-🎯 Debug output should be useful and safe. `DebugTrait` implements `__debugInfo()` so common tools like `var_dump()` can show structured information without accidentally leaking secrets.
+Debug output should be useful and safe. `DebugTrait` implements `__debugInfo()` so common tools like `var_dump()` can show structured information without accidentally leaking secrets.
 
 ## Safe debug output
 
@@ -26,7 +26,7 @@
 
 ### Masking with attributes
 
-Masking is opt-in and driven by attributes on properties.
+Masking is opt-in and driven by attributes on properties. The trait looks for attributes that extend `SensitiveProperty`, which is why both `SensitiveProperty` and `SensitivePropertyArray` participate in masking.
 
 - `SensitiveProperty` masks the entire property value.
 - `SensitivePropertyArray` masks selected nested keys within an array property.
@@ -43,13 +43,15 @@ If the value is `null` or `''`, masking does not change it.
 
 `__debugInfo()` normalizes values to keep debug output readable:
 
-- arrays are expanded until the maximum depth is reached (`3`); deeper arrays become `[...]`
+- arrays are expanded until the maximum depth is reached (`DEBUG_MAX_DEPTH = 3`); deeper arrays become `[...]`
 - scalars and `null` are kept as-is
 - non-scalar non-array values (objects/resources) become their debug type (e.g. `[stdClass]`)
 
+This page is about object-level debug representation. Helper functions such as `dump()` and `dd()` are separate conveniences that can display values, but `DebugTrait` controls what an object exposes through `__debugInfo()`.
+
 ## Usage patterns
 
-📌 These patterns show how to enable structured debug output and how to mask secrets intentionally.
+These patterns show how to enable structured debug output and how to mask secrets intentionally.
 
 ### Add `DebugTrait` to a class
 
@@ -131,10 +133,11 @@ $info = (new Job('abc'))->__debugInfo();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `__debugInfo()` includes only properties visible to the current scope (as per `get_object_vars()`) and skips uninitialized typed properties.
 - Masking is applied only to keys declared via attributes. Arrays beyond the max depth are collapsed to `[...]` before nested keys can be inspected.
+- Non-array objects and other non-scalar values are reduced to debug-type strings such as `[Foo\Bar]`.
 - If you use `DebugTrait`, treat debug output as potentially user-visible (logs, error pages) and mask secrets by default.
 
 ## Related

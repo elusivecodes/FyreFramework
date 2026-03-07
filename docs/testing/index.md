@@ -1,8 +1,8 @@
 # Testing
 
-🧭 Testing docs cover the framework’s PHPUnit-focused test suite layer: a base test case, fixture support, and reusable assertion helpers to help you write repeatable tests against framework-powered code.
+Testing docs cover the framework’s PHPUnit-focused test suite layer: a base test case, fixture support, and reusable assertion helpers to help you write repeatable tests against framework-powered code.
 
-If you’re testing framework-powered code, the key idea is: extend [`TestCase`](test-case.md) to get a ready-to-use `Engine`, then compose the trait helpers that match what you need to assert.
+If you’re testing framework-powered code, the key idea is: extend [`TestCase`](test-case.md) to work against the shared application `Engine`, then compose the trait helpers that match what you need to assert.
 
 ## Table of Contents
 
@@ -24,9 +24,9 @@ Pick a path based on what you’re testing:
 
 ## Testing overview
 
-🧩 The testing layer builds on PHPUnit and provides a small set of tools that layer on top of your application:
+The testing layer builds on PHPUnit and provides a small set of tools that layer on top of your application:
 
-- `TestCase` wires PHPUnit into the framework engine and (optionally) the fixture lifecycle.
+- `TestCase` wires PHPUnit into the shared framework engine and, when configured, the fixture lifecycle.
 - **Fixtures** provide repeatable datasets that can be applied and cleaned up per test.
 - **Constraints and trait helpers** keep assertions short and consistent across common framework outputs (response, console, email, log, session).
 

@@ -15,7 +15,7 @@
 
 ## Purpose
 
-🎯 Use URL generation when you want stable links that don’t break when paths change:
+Use URL generation when you want stable links that don’t break when paths change:
 
 - generate paths and full URLs from route aliases
 - keep query strings and fragments out of hard-coded strings
@@ -23,7 +23,7 @@
 
 ## How URL generation works
 
-🧠 URL generation is driven by route aliases (`as`). Instead of hard-coding `'/posts/42'`, generate a URL from an alias and a set of placeholder values.
+URL generation is driven by route aliases (`as`). Instead of hard-coding `'/posts/42'`, generate a URL from an alias and a set of placeholder values.
 
 `Router::url()` looks up the route by alias, substitutes `{placeholders}` using `$arguments`, and then decides whether to return a path-only URL (like `/posts/42`) or a full URL (like `https://example.com/posts/42`).
 
@@ -37,6 +37,12 @@ Routes become “named” by providing an alias when connecting them. Aliases ar
 use Fyre\Router\Router;
 
 $router = app(Router::class);
+```
+
+If helpers are loaded, `route($name, $arguments, ...)` is the shorthand for `Router::url()`; see [Helpers](../core/helpers.md).
+
+```php
+$url = route('posts.show', ['id' => 42]);
 ```
 
 ### Generate a URL (`Router::url()`)
@@ -91,7 +97,7 @@ The `?` and `#` keys are handled separately and are not used for `{placeholder}`
 
 ## Base URI and full URLs
 
-📌 Note: The router reads `App.baseUri` during construction and stores it as a `Uri` (see [URI](../http/uri.md)).
+The router reads `App.baseUri` during construction and stores it as a `Uri` (see [URI](../http/uri.md)).
 
 The base URI affects two things:
 
@@ -106,7 +112,7 @@ To configure the base URI, set `App.baseUri` in your application config (see [Co
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `Router::url()` throws `Fyre\Router\Exceptions\RouterException` when the alias does not exist.
 - `Router::url()` throws `Fyre\Router\Exceptions\RouterException` when a required placeholder value is missing from `$arguments`.
@@ -123,4 +129,5 @@ To configure the base URI, set `App.baseUri` in your application config (see [Co
 - [Router](router.md)
 - [Routing](index.md)
 - [Config](../core/config.md)
+- [Helpers](../core/helpers.md)
 - [Route Bindings](route-bindings.md)

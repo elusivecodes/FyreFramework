@@ -22,6 +22,7 @@ This page focuses on configuring authenticators, how authentication is applied t
   - [Logging in a known user](#logging-in-a-known-user)
   - [Logging out](#logging-out)
 - [Resolving the current user](#resolving-the-current-user)
+- [Building the login URL](#building-the-login-url)
 - [Identifying users with Identifier](#identifying-users-with-identifier)
 - [Method guide](#method-guide)
   - [`Auth`](#auth)
@@ -31,22 +32,23 @@ This page focuses on configuring authenticators, how authentication is applied t
 
 ## Purpose
 
-🎯 Use `Auth` to coordinate authenticators, resolve the current user, and manage login/logout consistently across the request lifecycle.
+Use `Auth` to coordinate authenticators, resolve the current user, and manage login and logout consistently across the request lifecycle.
 
 - Attempt a login using credentials (via `Identifier`)
 - Log in or log out a known user
 - Check whether a user is logged in
 - Retrieve the current user entity
 
-It also acts as the integration point for authenticators that persist identity between requests (session, cookie, tokens).
+It also acts as the integration point for authenticators that persist identity between requests, such as sessions, cookies, and tokens.
+Once a user has been resolved, `Auth` also provides `access()` as the authorization entry point for that user; see [Authorization](authorization.md).
 
 ## Quick start
 
 In a typical HTTP app:
 
 1. Configure one or more authenticators (for example, session + cookie).
-2. Register the `auth` middleware alias in your global middleware queue (usually after `session`).
-3. Read the current user from the request (or from helpers) and guard routes as needed.
+2. Register the `auth` middleware alias in your global middleware queue, usually after `session`.
+3. Read the current user from the request (or from helpers), use auth middleware for route guards, and use `Auth::access()` for authorization checks inside handlers or actions.
 
 If you haven’t set up middleware yet, start with [Auth Middleware](middleware.md).
 
@@ -56,7 +58,7 @@ These are the main pieces involved in authentication:
 
 - `Auth`: stores the current user and coordinates authenticators
 - `Authenticator`: base class for implementations that can authenticate a request and optionally persist/clear state
-- `Identifier`: verifies credentials and loads a user from the configured model
+- `Identifier`: verifies credentials and loads a user from the configured model for credential-based login flows
 - `AuthMiddleware`: HTTP integration that runs authentication and attaches `auth`/`user` request attributes
 
 ### Built-in authenticators
@@ -83,9 +85,11 @@ For details on the HTTP middleware and route-level guards, see [Auth Middleware]
 
 ## Configuring authenticators
 
-Authenticators are configured via the `Auth.authenticators` config key. Each entry must specify a `className` that extends `Authenticator`. Options are forwarded to the authenticator constructor.
+Authenticators are configured in the `Auth` config section, under the `authenticators` key. Each entry must specify a `className` that extends `Authenticator`. Remaining options are forwarded to the authenticator constructor.
 
 For configuration basics, see [Config](../core/config.md).
+
+The example below is intentionally mixed to show the available options. In practice, most applications use a smaller stack, such as session-only or session plus cookie for HTML apps, or token-only for APIs.
 
 ```php
 use Fyre\Auth\Authenticators\CookieAuthenticator;
@@ -113,7 +117,7 @@ return [
 ];
 ```
 
-`Auth.loginRoute` controls where unauthenticated HTML requests are redirected by middleware. If not configured, it defaults to `login`.
+`Auth.loginRoute` controls where unauthenticated HTML requests are redirected by middleware. This value is a *route alias* (the `as` name), not a URL path; see [Router aliases](../routing/router.md#aliases-and-url-generation). If not configured, it defaults to `login`.
 
 ### Authenticator responsibilities
 
@@ -126,7 +130,7 @@ Each authenticator can participate in these hooks:
 
 ## Common setups
 
-Most applications use one of these configurations.
+Most applications use one of these configurations. Authenticators run in order and stop at the first one that returns a user, so order them by intended precedence. For example, use session before cookie in a browser app, and use a token authenticator by itself for a typical API.
 
 ### Session-only (typical HTML app)
 
@@ -193,7 +197,7 @@ return [
 
 There are two common ways to set the current user on `Auth`.
 
-Examples below use the `auth()` helper (see [Helpers](../core/helpers.md)). If helpers aren’t loaded, resolve `Auth` from the container:
+Examples below assume you have an `Auth` instance in `$auth`. You can resolve it from the container:
 
 ```php
 use Fyre\Auth\Auth;
@@ -203,10 +207,9 @@ $auth = app(Auth::class);
 
 ### Attempting a credential login
 
-`Auth::attempt()` delegates to `Identifier::attempt()` and, on success, calls `Auth::login()`. The `$rememberMe` flag is forwarded to authenticators via `login()`.
+`Auth::attempt()` delegates to `Identifier::attempt()` and, on success, calls `Auth::login()`. The `$rememberMe` flag is forwarded to authenticators via `login()`. It returns the resolved user on success, or `null` when credentials are invalid.
 
 ```php
-$auth = auth();
 $user = $auth->attempt($login, $password, true);
 
 if (!$user) {
@@ -216,10 +219,9 @@ if (!$user) {
 
 ### Logging in a known user
 
-When you already have an identity entity, call `login()` directly:
+When you already have an identity entity, call `login()` directly. This updates the current in-memory user on `Auth` immediately and then notifies authenticators so they can persist state:
 
 ```php
-$auth = auth();
 $auth->login($user);
 ```
 
@@ -228,7 +230,6 @@ $auth->login($user);
 Logout clears the current user and notifies all configured authenticators so they can clear any persisted state:
 
 ```php
-$auth = auth();
 $auth->logout();
 ```
 
@@ -251,7 +252,11 @@ $auth = $request->getAttribute('auth');
 $user = $request->getAttribute('user');
 ```
 
-If you need to generate the login URL (for redirects), `Auth::getLoginUrl()` uses the configured login route and optionally includes a redirect target via the `url` query parameter:
+If you need the current user inside container-resolved code, `#[CurrentUser]` can inject it directly when auth context has already been established; see [Contextual attributes](../core/contextual-attributes.md).
+
+## Building the login URL
+
+If you need to generate the login URL for redirects, `Auth::getLoginUrl()` uses the configured login route and can include a redirect target via the `url` query parameter. When you pass a `UriInterface`, the generated redirect value keeps only the path, query string, and fragment.
 
 - `getLoginUrl(string|UriInterface|null $redirect = null): string`
 
@@ -261,19 +266,24 @@ If you need to generate the login URL (for redirects), `Auth::getLoginUrl()` use
 
 In most applications, you’ll access it via `Auth::identifier()`:
 
-- `auth()->identifier()`
+- `$identifier = $auth->identifier();`
 
 Commonly used methods:
 
 - `attempt(string $identifier, string $password): Entity|null`
 - `identify(string $identifier): Entity|null`
+- `getIdentifierFields(): array`
+- `getModel(): Model`
+- `getPasswordField(): string`
 
-`Identifier` reads options from `Auth.identifier`, with defaults:
+`Identifier` reads options from the `Auth` config section, under the `identifier` key, with defaults:
 
 - `identifierFields` (default `['email']`) — fields matched using an `or` condition when multiple fields are configured
 - `passwordField` (default `'password'`)
 - `modelAlias` (default `'Users'`)
 - `queryCallback` (default `null`) — optional callback to customize the `SelectQuery` used to identify the user
+
+`Identifier::attempt()` returns `null` if either the identifier or password is empty, or if the credentials do not match. On successful login, it also upgrades and persists the stored password hash when rehashing is needed.
 
 ## Method guide
 
@@ -290,8 +300,11 @@ Arguments:
 - `$password` (`string`): the plain password to verify.
 - `$rememberMe` (`bool`): forwarded to authenticators via `login()`.
 
+Returns:
+- `Entity|null`: the authenticated user, or `null` if authentication fails.
+
 ```php
-$user = auth()->attempt($login, $password, true);
+$user = $auth->attempt($login, $password, true);
 ```
 
 #### **Log in a known user** (`login()`)
@@ -303,7 +316,7 @@ Arguments:
 - `$rememberMe` (`bool`): forwarded to authenticators.
 
 ```php
-auth()->login($user);
+$auth->login($user);
 ```
 
 #### **Log out** (`logout()`)
@@ -311,7 +324,7 @@ auth()->login($user);
 Clears the current user and notifies authenticators to clear persisted state.
 
 ```php
-auth()->logout();
+$auth->logout();
 ```
 
 #### **Read the current user** (`user()`)
@@ -319,7 +332,7 @@ auth()->logout();
 Returns the current user entity, or `null` when not authenticated.
 
 ```php
-$user = auth()->user();
+$user = $auth->user();
 ```
 
 #### **Check login state** (`isLoggedIn()`)
@@ -327,20 +340,20 @@ $user = auth()->user();
 Returns whether a user is currently logged in.
 
 ```php
-if (auth()->isLoggedIn()) {
+if ($auth->isLoggedIn()) {
     // ...
 }
 ```
 
 #### **Build the login URL** (`getLoginUrl()`)
 
-Builds the configured login URL and optionally appends the current URL as the `url` query parameter.
+Builds the configured login URL and optionally appends the current URL as the `url` query parameter. If `$redirect` is a `UriInterface`, only the path, query, and fragment are preserved.
 
 Arguments:
 - `$redirect` (`string|UriInterface|null`): a URL to preserve as the post-login redirect target.
 
 ```php
-$loginUrl = auth()->getLoginUrl($request->getUri());
+$loginUrl = $auth->getLoginUrl($request->getUri());
 ```
 
 #### **Access the Identifier** (`identifier()`)
@@ -348,10 +361,12 @@ $loginUrl = auth()->getLoginUrl($request->getUri());
 Returns the configured `Identifier` instance.
 
 ```php
-$identifier = auth()->identifier();
+$identifier = $auth->identifier();
 ```
 
 ### `Identifier`
+
+Examples below assume you already have an `Identifier` instance in `$identifier` (for example, `$identifier = $auth->identifier();`).
 
 #### **Attempt a credential verification** (`attempt()`)
 
@@ -361,8 +376,11 @@ Arguments:
 - `$identifier` (`string`): the login identifier (for example, email).
 - `$password` (`string`): the plain password.
 
+Returns:
+- `Entity|null`: the identified user, or `null` if the identifier/password is empty or invalid.
+
 ```php
-$user = auth()->identifier()->attempt($login, $password);
+$user = $identifier->attempt($login, $password);
 ```
 
 #### **Identify a user by identifier** (`identify()`)
@@ -372,13 +390,16 @@ Finds and returns the user for the identifier, without verifying a password.
 Arguments:
 - `$identifier` (`string`): the login identifier (for example, email).
 
+Returns:
+- `Entity|null`: the identified user, or `null` if no matching record is found.
+
 ```php
-$user = auth()->identifier()->identify($login);
+$user = $identifier->identify($login);
 ```
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Authenticator configuration is validated at construction time. Each configured `className` must extend `Authenticator`, or `Auth` throws `InvalidArgumentException`.
 - Authenticators are executed in order and stop at the first one that returns a user.
@@ -392,3 +413,4 @@ $user = auth()->identifier()->identify($login);
 - [Authorization](authorization.md)
 - [Config](../core/config.md)
 - [Helpers](../core/helpers.md)
+- [Contextual attributes](../core/contextual-attributes.md)

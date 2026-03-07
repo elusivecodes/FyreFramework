@@ -20,11 +20,11 @@ For the persistence layer (tables, relationships, validation/rules hooks, and qu
 
 ## Purpose
 
-🎯 Use an entity when you want a record object that can be validated, saved, serialized, and passed through save/delete workflows with dirty tracking and error state.
+Use an entity when you want a record object that can be validated, saved, serialized, and passed through save/delete workflows with dirty tracking and error state.
 
 ## Mental model
 
-🧠 A `Fyre\ORM\Entity` is a record-centric object:
+A `Fyre\ORM\Entity` is a record-centric object:
 
 - holds fields and relationships as values
 - enforces field accessibility when you opt into guarding
@@ -252,7 +252,7 @@ $json = $entity->toJson();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Mutation hooks only run on subclasses (not on the base `Entity` class).
 - `set()` with guarding enabled silently skips inaccessible fields.

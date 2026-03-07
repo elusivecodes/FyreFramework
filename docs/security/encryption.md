@@ -26,13 +26,13 @@ Fyre’s encryption subsystem provides configurable encrypters for encrypting an
 
 ## Purpose
 
-🎯 Encryption is a good fit when values must remain confidential outside the process (for example, client-side storage) while also detecting tampering when they come back.
+Encryption is a good fit when values must remain confidential outside the process, for example client-side storage, while also detecting tampering when they come back.
 
 `EncryptionManager` is the entry point: it holds named configurations and returns shared `Encrypter` instances.
 
 ## Mental model
 
-🧠 An `Encrypter` implements three operations:
+An `Encrypter` implements three operations:
 
 - `encrypt(mixed $data, string $key): string` — serialize and encrypt data into an opaque string.
 - `decrypt(string $data, string $key): mixed` — verify integrity, decrypt, then unserialize back to the original value.
@@ -108,6 +108,13 @@ $default = $encrypters->use();
 $openssl = $encrypters->use('openssl');
 ```
 
+If helpers are loaded, `encryption($key)` resolves the configured encrypter directly; see [Helpers](../core/helpers.md).
+
+```php
+$encrypter = encryption();
+$openssl = encryption('openssl');
+```
+
 ## Building one-off encrypters
 
 Use `build()` to construct an encrypter directly from options without storing it under a key (and without sharing it).
@@ -152,7 +159,7 @@ $restored = $encrypter->decrypt($decoded, $key);
 
 Keys are provided by the caller, and must be treated as secrets. Generating keys with `Encrypter::generateKey()` avoids weak or predictable input.
 
-📌 Note: Encrypter keys are raw bytes. If you store them in environment variables or config files, encode them (for example with base64) and decode back to bytes before calling `encrypt()` / `decrypt()`.
+Encrypter keys are raw bytes. If you store them in environment variables or config files, encode them (for example with base64) and decode back to bytes before calling `encrypt()` / `decrypt()`.
 
 ### Example: generate and store a key (one-time)
 
@@ -181,6 +188,8 @@ To add a custom encrypter handler:
 ## Method guide
 
 `$key` must contain raw encryption key bytes (not a base64 string).
+
+If you use contextual injection, `#[Encryption('key')]` can request a configured encrypter while the container is building an object or calling a callable; see [Contextual attributes](../core/contextual-attributes.md).
 
 ### `EncryptionManager`
 
@@ -301,7 +310,7 @@ $options = $encrypter->getConfig();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Ciphertext is binary; encode it for transport through text systems and decode back to the original bytes before calling `decrypt()`.
 - Encrypted values are serialized before encryption and unserialized after decryption; only decrypt values you previously encrypted, and ensure any object types are available at decrypt time.
@@ -314,3 +323,5 @@ $options = $encrypter->getConfig();
 
 - [Security](index.md) — security primitives applied at the HTTP boundary and beyond.
 - [Config](../core/config.md) — configuring services via `config/app.php`.
+- [Helpers](../core/helpers.md) — `encryption($key)` helper.
+- [Contextual attributes](../core/contextual-attributes.md) — `#[Encryption]`.

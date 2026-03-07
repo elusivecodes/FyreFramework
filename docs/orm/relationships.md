@@ -33,7 +33,7 @@
 
 ## Purpose
 
-🎯 Use relationships when you want the ORM to understand how models connect so you can load related data with `contain()`, filter with relationship-aware joins, and coordinate saves/deletes across related entities.
+Use relationships when you want the ORM to understand how models connect so you can load related data with `contain()`, filter with relationship-aware joins, and coordinate saves/deletes across related entities.
 
 Most examples assume you already have a model instance (for example, `$Users`).
 
@@ -461,7 +461,7 @@ For `ManyToMany`, unlinking removes rows from the junction model/table; it does 
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Invalid relationship names in `contain()` throw an ORM exception during normalization.
 - Relationship properties cannot conflict with real table columns; use `propertyName` to avoid collisions.

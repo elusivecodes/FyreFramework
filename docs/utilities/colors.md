@@ -27,7 +27,7 @@
 
 ## Purpose
 
-🎯 Use `Color` when you need to accept CSS-like color input, convert between spaces (including wide-gamut profiles), and produce consistent CSS output strings.
+Use `Color` when you need to accept CSS-like color input, convert between spaces (including wide-gamut profiles), and produce consistent CSS output strings.
 
 This API is intentionally “space-aware”: each instance has a current color space, can convert to other spaces, and formats to the appropriate CSS representation for that space.
 
@@ -53,6 +53,8 @@ $bg = Color::createFromString('#0f172a');
 $contrast = $bg->contrast(Color::createFromString('white'));
 ```
 
+Examples below assume any referenced color classes are already imported when needed.
+
 ## Constants
 
 `Color` exposes a public constant containing CSS named colors:
@@ -72,7 +74,7 @@ Color spaces are implemented as concrete classes under `Fyre\Utility\Color\Color
 - Perceptual: `Lab`, `Lch`, `OkLab`, `OkLch`
 - Reference: `XyzD50`, `XyzD65`
 
-📌 In practice, most application code can stay in `srgb` and convert when you need a specific output format or analysis (wide-gamut output, perceptual comparisons, contrast checks, or gamut fitting).
+In practice, most application code can stay in `srgb` and convert when you need a specific output format or analysis (wide-gamut output, perceptual comparisons, contrast checks, or gamut fitting).
 
 When converting with `to(string $space)`, use one of these space identifiers:
 
@@ -151,7 +153,7 @@ Convenience methods also exist for common conversions, such as `toHex()`, `toRgb
 
 Use `fitGamut()` to fit the color into a target space’s gamut by reducing OKLCH chroma. The returned color is in the current color space.
 
-📌 Use this when you have a wide-gamut color (for example `display-p3`) but you need to output CSS for a smaller target gamut (most commonly `srgb`).
+Use this when you have a wide-gamut color (for example `display-p3`) but you need to output CSS for a smaller target gamut (most commonly `srgb`).
 
 ```php
 use Fyre\Utility\Color\Colors\DisplayP3;
@@ -178,7 +180,7 @@ Formatting depends on the concrete color space:
 - `Hsl`, `Hwb`, `Lab`, `Lch`, `OkLab`, `OkLch` format as their CSS functional form
 - Other spaces format as `color(<space> <c1> <c2> <c3> / <alpha>)`
 
-📌 Common workflow: parse input → normalize to the output space → format as CSS.
+Common workflow: parse input -> normalize to the output space -> format as CSS.
 
 ```php
 $css = Color::createFromString('color(display-p3 1 0.2 0.2)')
@@ -381,7 +383,7 @@ Many spaces also expose getters and “with*” cloning helpers:
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Alpha values are clamped to `0..1` on construction, and hue values are wrapped to `0..360`.
 - Other channels are required to be finite numbers, but are not generally clamped (to avoid conversion clipping).

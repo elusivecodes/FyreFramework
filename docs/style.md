@@ -7,7 +7,7 @@ This file documents the conventions used across `docs/` so pages read as if writ
 Most pages follow this order:
 
 1. `# Title` (Title Case)
-2. One–two sentence intro (plain prose; no emojis)
+2. One-two sentence intro (plain prose; no emojis)
 3. `## Table of Contents`
 4. Core sections (concepts → workflows → optional reference sections)
 5. `## Behavior notes`
@@ -17,8 +17,7 @@ If a page has meaningful subsections, include them as nested items in the table 
 
 Notes:
 
-- Index pages (`docs/*/index.md`) may use 🧭 in the intro paragraph.
-- Index pages do not require a `## Related` section, but may include one when it adds high-value navigation (for example, pointing to a cross-cutting subsystem page readers typically need next).
+- Index pages do not require a `## Related` section, but may include one when it adds high-value navigation (for example, pointing to a shared subsystem page readers typically need next).
 
 Table of contents guidance:
 
@@ -29,17 +28,9 @@ Table of contents guidance:
 
 ## Emojis
 
-Emoji usage is intentional and consistent:
+Do not use emojis in documentation pages.
 
-- 🧭 Section index overview (for `docs/*/index.md`)
-- 🎯 Purpose statement (first paragraph under `## Purpose`)
-- 🧩 Overview / how the pieces fit together
-- 🧠 Mental model / “how it works” explanation
-- 📌 Notes, caveats, or “when to use” guidance
-- ⚠️ Behavior notes that can affect real-world usage
-
-Avoid adding emojis elsewhere unless they match one of the meanings above.
-Avoid using emojis in the intro paragraph (except for index pages); place them under the section they describe (for example under `## Purpose`, `## How it works`, or `## Behavior notes`).
+Write headings and section openings as plain prose instead of icon-led callouts.
 
 ## Headings
 
@@ -76,7 +67,7 @@ Method guide is optional:
 Behavior notes document gotchas that affect real-world usage.
 
 - Do not include full examples or code blocks in `## Behavior notes`.
-- Start the section with the pattern `⚠️ A few behaviors are worth keeping in mind:` and then list the behaviors as bullets.
+- Start the section with a plain sentence such as `A few behaviors are worth keeping in mind:` and then list the behaviors as bullets.
 - Write notes as complete sentences (prefer bullets).
 - Avoid “label: explanation” formatting, especially with `**bold labels**:`. Prefer sentence-form bullets that read naturally.
 

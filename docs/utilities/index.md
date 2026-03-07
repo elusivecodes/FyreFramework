@@ -1,6 +1,6 @@
 # Utilities
 
-🧭 Utilities are small, focused helpers for common tasks like strings, arrays, collections, paths, formatting, promises, and locale-aware date/time.
+Utilities are small, focused helpers for common tasks like strings, arrays, collections, paths, formatting, promises, and locale-aware date/time.
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@ Pick a page based on what you’re trying to do:
 
 ## Utilities overview
 
-🧩 Utilities are reusable helpers that don’t belong to a single subsystem. Most live under the `Fyre\Utility` namespace, with date/time utilities under `Fyre\Utility\DateTime`.
+Utilities are reusable helpers that don’t belong to a single subsystem. Most live under the `Fyre\Utility` namespace, with date/time utilities under `Fyre\Utility\DateTime`.
 
 This `index.md` is a navigation hub: use it to choose the next page to read based on the kind of data you’re working with. Some utilities have environment prerequisites (extensions, locales, OS differences, or external binaries); those details are documented on the relevant pages.
 

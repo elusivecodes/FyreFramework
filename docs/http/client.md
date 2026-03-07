@@ -27,7 +27,7 @@
 
 ## Purpose
 
-🎯 Use `Client` when application code needs to call external HTTP services (APIs, webhooks, internal services) using PSR-7 requests/responses and a PSR-18 client interface, while keeping a simple “call a URL and get a response” workflow.
+Use `Client` when application code needs to call external HTTP services (APIs, webhooks, internal services) using PSR-7 requests/responses and a PSR-18 client interface, while keeping a simple “call a URL and get a response” workflow.
 
 ## Making requests
 
@@ -139,14 +139,14 @@ $contentType = $response->getHeaderLine('Content-Type');
 
 ### Decode JSON responses
 
-Use `getJson()` when the response body is a JSON object/array:
+Use `getJson()` when the response body is JSON:
 
 ```php
 $data = $response->getJson();
 ```
 
-📌 Notes:
-- A JSON `null` literal is treated as an empty array.
+Notes:
+- Valid JSON scalars are returned as their decoded PHP values (for example `true`, `123`, or `'ok'`), and a JSON `null` literal returns `null`.
 - Invalid JSON throws a `RuntimeException`.
 
 ### Read response cookies
@@ -376,13 +376,12 @@ if ($response->isRedirect()) {
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `Client::sendRequest()` intentionally bypasses `Client::send()` conveniences, so it does not follow redirects, it does not update or send cookies, it does not pass client options to the handler, and it does not use the mock handler.
 - When `auth.type` is set to `digest`, the client sends an initial request (via `sendRequest()`), and if it receives a `401`, it parses `WWW-Authenticate` and then sends the request again (via `send()`), which can result in two network calls.
 - When you pass array `$data` to non-`GET` requests, the request body encoding depends on the request `Content-Type`. If it does not start with `application/json`, the request is encoded as either `multipart/form-data` (when files/streams are present) or `application/x-www-form-urlencoded`, and `Content-Type` is set accordingly.
 - Query parameters are merged recursively when building the final URI (including when the URL already contains a query string).
-- `Response::getJson()` is intended for JSON objects/arrays; JSON scalars (for example `true` or `"ok"`) are valid JSON but are not supported by this helper.
 
 ## Related
 

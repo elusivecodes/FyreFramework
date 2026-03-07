@@ -87,9 +87,9 @@ class RateLimiterMiddleware implements MiddlewareInterface
 
         $data = $this->limiter->checkLimit(
             $request,
-            $limit ? (int) $limit : null,
-            $window ? (int) $window : null,
-            $cost ? (int) $cost : null
+            $limit !== null ? (int) $limit : null,
+            $window !== null ? (int) $window : null,
+            $cost !== null ? (int) $cost : null
         );
 
         if (!$data['allowed']) {

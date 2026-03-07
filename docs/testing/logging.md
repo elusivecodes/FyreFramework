@@ -15,11 +15,11 @@
 
 ## Purpose
 
-🎯 Use `LogTestTrait` when you want to verify that code logged the right messages without writing to disk, and when you need to assert against both log levels and scopes.
+Use `LogTestTrait` when you want to verify that code logged the right messages without writing to disk, and when you need to assert against both log levels and scopes.
 
 ## How it works
 
-🧠 `setupLogs()` clears the current `LogManager` configuration and registers one or more `ArrayLogger` handlers. The assertion helpers read from every configured `ArrayLogger` that can handle the requested level and scope (see [Logging](../logging/index.md)).
+`setupLogs()` clears the current `LogManager` configuration and registers one or more `ArrayLogger` handlers. The assertion helpers read from every configured `ArrayLogger` that can handle the requested level and scope (see [Logging](../logging/index.md)).
 
 ## Setting up handlers
 
@@ -135,7 +135,7 @@ $this->assertLogMessageContains('declined', 'error', 'payments');
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Scope matching is strict: assertions only read from handlers that can handle both the level and the scope.
 - `setupLogs()` clears the current `LogManager` config; call it after any setup that depends on your normal logging configuration.

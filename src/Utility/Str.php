@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Fyre\Utility;
 
 use Fyre\Core\Traits\StaticMacroTrait;
+use InvalidArgumentException;
 
 use function array_keys;
 use function array_map;
@@ -462,8 +463,13 @@ abstract class Str
      */
     public static function random(int $length = 16, string $chars = self::ALPHANUMERIC): string
     {
-        assert($length >= 0);
-        assert($chars !== '');
+        if ($length < 0) {
+            throw new InvalidArgumentException('Random string length must be greater than or equal to 0.');
+        }
+
+        if ($chars === '') {
+            throw new InvalidArgumentException('Random string characters must not be empty.');
+        }
 
         $max = strlen($chars) - 1;
 

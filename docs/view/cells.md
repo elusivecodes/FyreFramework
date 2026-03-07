@@ -20,7 +20,7 @@ For long-lived, per-view utilities accessed through `$this->SomeHelperName`, see
 
 ## Purpose
 
-🎯 Use cells when you want a “component-like” chunk that can prepare data in PHP, then render a dedicated template without involving the parent view’s layout.
+Use cells when you want a component-like chunk that can prepare data in PHP, then render a dedicated template without involving the parent view’s layout.
 
 ## Basic usage
 
@@ -117,6 +117,7 @@ echo '</div>';
 
 - Use keyed arguments to match action parameter names (recommended).
 - Use `Cell::set()` / `Cell::setData()` inside the action method to set template variables.
+- The cell renders with a fresh child `View` that shares the parent request, but not the parent view data or layout.
 
 Example: pass parameters to the default `display()` action, then read them in the template:
 
@@ -137,12 +138,13 @@ echo $this->cell('RecentPosts', ['limit' => 5])
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
+- `View::cell()` throws an `InvalidArgumentException` if the cell class cannot be resolved.
 - The action defaults to `display`. If the action method does not exist, `Cell::render()` throws a `RuntimeException`.
 - If the resolved template does not exist under the `cells/` folder, `Cell::render()` throws a `RuntimeException`.
 - Each `View::cell()` call creates a new instance; use [Helpers](helpers.md) when you need a reusable per-view object.
-- Cell class lookups are cached (including misses). If you add a new cell class or change namespaces at runtime, clear the registry cache (for example, via `CellRegistry::clear()`).
+- Cell class lookups are cached, including misses. If you add a new cell class or change namespaces at runtime, clear the registry cache. `CellRegistry::clear()` also clears configured namespaces.
 - Only the first `::` is treated as the action separator; avoid using `::` anywhere else in the cell string.
 
 ## Related

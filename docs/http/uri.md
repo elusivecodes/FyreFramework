@@ -18,7 +18,7 @@
 
 ## Purpose
 
-🎯 A URI captures the address a request targets: scheme, authority (user info, host, port), path, query, and fragment. In Fyre, `Uri` wraps an RFC 3986 URI object and adds small helpers for common application needs like reading query values, keeping or removing query keys, and reading path segments.
+A URI captures the address a request targets: scheme, authority (user info, host, port), path, query, and fragment. In Fyre, `Uri` wraps an RFC 3986 URI object and adds small helpers for common application needs like reading query values, keeping or removing query keys, and reading path segments.
 
 ## Creating URIs
 
@@ -336,7 +336,7 @@ $total = $uri->getTotalSegments();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `getSegment()` is 1-based and returns an empty string when the segment does not exist.
 - `getQueryParams()` uses `parse_str()`, so repeated keys can produce arrays and nested structures.

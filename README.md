@@ -7,12 +7,19 @@ FyreFramework is a modern, modular PHP framework built around small, focused com
 - [Introduction](#introduction)
 - [Requirements](#requirements)
 - [Installation](#installation)
-- [Quick Start (Mental Model)](#quick-start-mental-model)
 - [Where to start](#where-to-start)
 
 ## Introduction
 
 FyreFramework aims to give you a cohesive set of services without locking you into a single monolith. You can adopt the parts you need (or use them together) while keeping boundaries clear between subsystems.
+
+It is built for projects that want framework-level cohesion without framework-level lock-in. If you use the default runtime, that cohesion is provided through the container-centric `Engine`, which pre-registers the framework’s common services and namespaces.
+
+Key characteristics:
+
+- Modular by default, so you can adopt individual subsystems or run the full stack together
+- PSR-aligned HTTP, container, logging, and event abstractions that fit cleanly into modern PHP applications
+- Strong built-in tooling for common application concerns including ORM, validation, queues, mail, caching, and testing
 
 Common use cases include:
 
@@ -36,7 +43,7 @@ Optional (depending on the parts you use):
 - `ext-pdo` (database connections)
 - `ext-redis` (Redis cache and queue handlers)
 
-📌 Note: Fyre has no third-party runtime dependencies beyond PSR interfaces (`psr/*`).
+Fyre has no third-party runtime dependencies beyond PSR interfaces (`psr/*`).
 
 ## Installation
 
@@ -46,32 +53,21 @@ Use Composer:
 composer require fyre/framework
 ```
 
-## Quick Start (Mental Model)
-
-🧠 Fyre is designed around a small set of concepts that compose:
-
-- **Container (Engine)** wires services and config: [Engine](docs/core/engine.md), [Core](docs/core/index.md)
-- **Middleware pipeline** runs cross-cutting concerns: [HTTP Middleware](docs/http/middleware.md)
-- **Router** matches a request to a handler: [Router](docs/routing/router.md)
-- **Request handler** executes middleware and falls back to routing: [Request Handler](docs/http/request-handler.md)
-- **Response** is emitted to the client: [HTTP Responses](docs/http/responses.md)
-
 ## Where to start
 
-Pick a path based on what you’re building:
+Start with the [documentation index](docs/index.md), or pick a path based on what you’re building:
 
-- **Build an HTTP app**: [Core](docs/core/index.md) → [HTTP](docs/http/index.md) → [Routing](docs/routing/index.md)
-  - Recommended deep dives: [Engine](docs/core/engine.md), [HTTP Middleware](docs/http/middleware.md), [Router](docs/routing/router.md)
-- **Persistence (DB + ORM)**: [Database](docs/database/index.md) → [ORM](docs/orm/index.md)
-- **Templates and view helpers**: [View](docs/view/index.md)
-- **CLI and background work**: [Console](docs/console/index.md) and [Queue](docs/queue/index.md)
+- **HTTP applications**: [Core](docs/core/index.md) → [HTTP](docs/http/index.md) → [Routing](docs/routing/index.md)
+- **Data/persistence**: [Database](docs/database/index.md) → [ORM](docs/orm/index.md)
 
-Or start at the full documentation index:
+Common next stops:
 
-- [Documentation](docs/index.md)
-
-More sections:
-
-- [Utilities](docs/utilities/index.md)
-- [Logging](docs/logging/index.md)
-- [Testing](docs/testing/index.md)
+- Templates, rendering, and view helpers: [View](docs/view/index.md)
+- Server-side schemas and validation: [Form](docs/form/index.md)
+- CLI commands and tooling: [Console](docs/console/index.md)
+- Background work and workers: [Queue](docs/queue/index.md)
+- Caching adapters: [Cache](docs/cache/index.md)
+- Logging and log handlers: [Logging](docs/logging/index.md)
+- Security primitives: [Security](docs/security/index.md)
+- Test utilities and fixtures: [Testing](docs/testing/index.md)
+- General-purpose building blocks: [Utilities](docs/utilities/index.md)

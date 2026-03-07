@@ -242,6 +242,14 @@ final class CommandRunnerTest extends TestCase
         );
     }
 
+    public function testHandleCommandArgumentsNamedEquals(): void
+    {
+        $this->assertSame(
+            0,
+            $this->runner->handle(['', 'arguments', '--value=value'])
+        );
+    }
+
     public function testHandleCommandArgumentTypeOptionValue(): void
     {
         $date = DateTime::now()->toNativeDateTime()->format('Y-m-d');

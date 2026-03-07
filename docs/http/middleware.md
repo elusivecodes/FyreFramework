@@ -20,7 +20,7 @@
 
 ## Purpose
 
-🎯 Middleware is used when you want logic to run consistently around request handling:
+Middleware is used when you want logic to run consistently around request handling:
 
 - validate or normalize incoming requests before business logic runs
 - attach attributes (for example, resolved identity or route context) to the request
@@ -53,7 +53,7 @@ When ordering middleware, prefer to place middleware that creates request contex
 
 ## Middleware pipeline model
 
-🧠 The pipeline is built from three pieces:
+The pipeline is built from three pieces:
 
 - `MiddlewareQueue` stores middleware entries in order.
 - `MiddlewareRegistry` resolves string entries into executable middleware (aliases, groups, and optional inline arguments).
@@ -149,7 +149,7 @@ $queue = (new MiddlewareQueue())
     ->add('throttle:120,60,2');
 ```
 
-📌 Note: The string prefix (for example `throttle`) must be a mapped alias (or a resolvable class name). See [`MiddlewareRegistry::map()`](#map-an-alias-map) for mapping custom aliases.
+Note: The string prefix (for example `throttle`) must be a mapped alias (or a resolvable class name). See [`MiddlewareRegistry::map()`](#map-an-alias) for mapping custom aliases.
 
 ## Method guide
 
@@ -274,7 +274,7 @@ $authMiddleware = $registry->use('auth');
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `MiddlewareQueue::current()` throws when the queue is exhausted; check `valid()` before calling it outside of `RequestHandler` execution.
 - String middleware entries are resolved through `MiddlewareRegistry::use()` and cached as shared instances/callables per string; calling `map()` or `group()` clears the cached instance for that alias (this also applies when the string is a middleware class name).

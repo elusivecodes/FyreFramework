@@ -23,12 +23,14 @@
 
 ## Purpose
 
-🎯 Config centralizes application and subsystem settings so constructors can stay explicit while still being configurable.
+Config centralizes application and subsystem settings so constructors can stay explicit while still being configurable.
+
+It stores configuration in memory and can merge PHP config files from registered paths when you call `load()`.
 
 If you are using the global helpers, `config()` can be used in two ways:
 
 - `config()` returns the shared `Config` instance.
-- `config('A.B.C', $default)` is shorthand for `$config->get('A.B.C', $default)` when `$config = config()` (see [Helpers](helpers.md)).
+- `config('A.B.C', $default)` is shorthand for reading a config value directly (see [Helpers](helpers.md)).
 
 If you prefer dependency injection (or if helpers aren’t loaded), inject `Config` where you need it:
 
@@ -43,21 +45,26 @@ function handler(Config $config): bool
 
 ## Quick start
 
-Most applications follow a simple pattern: load config early, then read values throughout the app.
+In a typical application, `Config` is resolved from the container and already has the default app and framework config paths registered by `Engine`.
+
+```php
+config()->load('app');
+
+$debug = config()->get('App.debug', false);
+```
+
+If you are composing the runtime manually, or want to load additional config locations, register those paths yourself:
 
 ```php
 $config = config();
-
 $config->addPath('config');
 $config->addPath('config/local');
 $config->load('app');
-
-$debug = $config->get('App.debug', false);
 ```
 
 ## Configuration model
 
-🧠 Config stores a single nested array. Keys passed to `get()`, `has()`, `set()`, `delete()`, and `consume()` are split on `.` and used to walk that nested structure.
+Config stores a single nested array. Keys passed to `get()`, `has()`, `set()`, `delete()`, and `consume()` are split on `.` and used to walk that nested structure.
 
 - `get('A.B.C')` retrieves `$config['A']['B']['C']` when present, otherwise returns the provided default.
 - `has('A.B.C')` checks for existence using `array_key_exists` at each level, so a key set to `null` still “exists”.
@@ -65,16 +72,15 @@ $debug = $config->get('App.debug', false);
 
 ## Loading and overriding
 
-Config can load PHP config files (arrays) from one or more configured paths. Files are searched by base name (without extension) and loaded with `require`.
+Config can load PHP config files (arrays) from one or more configured paths. Files are searched by base name (without extension) and loaded with `require`. Each `load()` call merges matching arrays into the existing in-memory config.
 
 - `addPath()` stores a normalized version of the path (via `Fyre\Utility\Path::resolve()`), so equivalent paths aren’t duplicated.
 - `load($file)` looks for `$file.'.php'` in each configured path, in the order stored by `getPaths()`.
 - When multiple files are found, arrays are merged with `array_replace_recursive()` so later paths override earlier paths.
+- `addPath($path, prepend: true)` inserts the path earlier in that search order, so later appended paths still override it when the same keys exist.
 - Missing files and non-array results are ignored.
 
 ```php
-$config = config();
-
 $config->addPath('config');
 $config->addPath('config/local');
 $config->load('app');
@@ -99,8 +105,6 @@ return ['App' => ['debug' => true]];
 Then after:
 
 ```php
-$config = config();
-
 $config->addPath('config');
 $config->addPath('config/local');
 $config->load('app');
@@ -133,7 +137,7 @@ This is a quick map of which services consume which config namespaces (not exhau
 
 ## Example `config/app.php`
 
-📌 In an application, `config/app.php` is typically the main place you define framework configuration.
+In an application, `config/app.php` is typically the main place you define framework configuration because the default `Engine` setup registers the app config directory. `Config` itself only loads files from paths you add.
 
 ### Minimal example
 
@@ -396,7 +400,7 @@ $config->clear();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - `get()` returns the default when a segment is missing *or* when an intermediate segment exists but is not an array.
 - `has()` treats `null` values as present (it checks keys, not truthiness).

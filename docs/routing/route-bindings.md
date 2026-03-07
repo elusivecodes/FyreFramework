@@ -17,7 +17,7 @@
 
 ## Purpose
 
-🎯 Route bindings are for handlers that want typed entities (for example `Post $post`) while keeping routes readable (for example `posts/{post}`):
+Route bindings are for handlers that want typed entities (for example `Post $post`) while keeping routes readable (for example `posts/{post}`):
 
 - bind placeholder values to ORM entities before the handler runs
 - keep binding logic centralized in middleware (instead of repeated lookups in handlers)
@@ -42,7 +42,7 @@ class Application extends Engine
 }
 ```
 
-📌 Note: If you use route bindings, placeholders should be compatible with PHP parameter names. For example, `{postId}` can bind to `Post $postId`, but `{post-id}` cannot.
+If you use route bindings, placeholders should be compatible with PHP parameter names. For example, `{postId}` can bind to `Post $postId`, but `{post-id}` cannot.
 
 ## Defining bindable routes
 
@@ -89,6 +89,8 @@ $router->get(
 ### Connecting routes with route attributes
 
 When using route discovery, you can define the placeholder name directly in the attribute path. If you rely on discovery conventions (no explicit `path`), placeholder segments generated from method parameters use the parameter name as-is (for example `$postId` becomes `{postId}`), which keeps them compatible with bindings.
+
+When you only need the raw matched route value rather than a bound ORM entity, `#[RouteArgument('postId')]` can inject it directly through the container; see [Contextual attributes](../core/contextual-attributes.md).
 
 ```php
 use Fyre\Router\Attributes\Get;
@@ -144,7 +146,7 @@ In this example, `$comment` is resolved with `$post` as the parent. Scoping only
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Binding only runs when a route matched and `routeArguments` is not empty.
 - Only parameters with a single named type are considered for binding; union and intersection types are ignored.
@@ -160,5 +162,6 @@ In this example, `$comment` is resolved with `$post` as the parent. Scoping only
 - [Route Discovery](route-discovery.md)
 - [URL Generation](url-generation.md)
 - [HTTP Middleware](../http/middleware.md)
+- [Contextual attributes](../core/contextual-attributes.md)
 - [ORM](../orm/index.md)
 - [ORM Relationships](../orm/relationships.md)

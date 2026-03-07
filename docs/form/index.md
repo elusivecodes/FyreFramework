@@ -1,6 +1,6 @@
 # Form
 
-🧭 Form covers server-side forms, schemas, and validators for parsing and validating structured input (request payloads, form submissions, and similar).
+Form covers server-side forms, schemas, and validators for parsing and validating structured input (request payloads, form submissions, and similar).
 
 ## Table of Contents
 
@@ -18,16 +18,16 @@ Pick a path based on what you’re doing:
 
 ## Form overview
 
-🧩 This section documents the framework’s server-side form subsystem:
+This section documents the framework’s server-side form subsystem:
 
-- **Forms** define a schema to parse raw input into typed values, validate the parsed data, then run an optional processing step.
+- **Forms** are application-layer objects for custom input workflows: define a schema to parse raw input into typed values, validate the parsed data, then run an optional processing step.
 - **Validators** attach field rules and produce error maps you can use anywhere you accept structured input.
-- **Rules** are reusable `Rule::*()` factories (and custom callbacks) with predictable “skip empty / skip not set” behavior.
+- **Rules** are reusable `Rule::*()` factories (and custom callbacks) for common validation checks.
 
-Validators and rules are reusable outside of form classes (for example, validating entity fields in the [ORM](../orm/index.md)).
+Forms are not ORM entity forms. For entity/model validation workflows, use validators and rules directly (see [ORM](../orm/index.md)).
 
 ## Pages in this section
 
 - [Forms](forms.md) — Define schemas and forms, parse values, validate, and process.
-- [Validators](validators.md) — Attach per-field rules and produce an error map (used by forms and other subsystems).
+- [Validators](validators.md) — Define per-field rules, validate input arrays, and return an error map.
 - [Validation rules](rules.md) — Built-in `Rule::*()` factories and their skip behavior.

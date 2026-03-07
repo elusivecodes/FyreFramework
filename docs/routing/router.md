@@ -29,7 +29,7 @@
 
 ## Purpose
 
-🎯 Use `Router` when you want to:
+Use `Router` when you want to:
 
 - define routes, placeholders, and groups in one place
 - match inbound requests and extract placeholder values into `routeArguments`
@@ -37,7 +37,7 @@
 
 ## How routing works
 
-🧠 Routing is a match-and-dispatch workflow that runs before your final handler:
+Routing is a match-and-dispatch workflow that runs before your final handler:
 
 - Routes can constrain matching by HTTP method, scheme, host, port, and path.
 - When a route matches, placeholder values are extracted into `routeArguments`.
@@ -61,13 +61,13 @@ use Fyre\Router\Router;
 $router = app(Router::class);
 ```
 
+Examples below also assume `ServerRequestInterface` is already imported when needed.
+
 All route paths are normalized to a leading slash with no surrounding slashes (for example, `posts/` becomes `/posts`).
 
 ### Basic route (closure destination)
 
 ```php
-use Psr\Http\Message\ServerRequestInterface;
-
 $router->get(
     'health',
     static fn(ServerRequestInterface $request): string => 'ok',
@@ -94,8 +94,6 @@ $router->get('posts/{id}', [PostsController::class, 'show'], as: 'posts.show');
 Scheme, host, and port constraints are optional. If provided, they must match the incoming request URI.
 
 ```php
-use Psr\Http\Message\ServerRequestInterface;
-
 $router->get(
     'account',
     static fn(ServerRequestInterface $request): string => 'secure area',
@@ -113,8 +111,6 @@ A route can be constrained to one or more HTTP methods via the `methods:` argume
 - If `methods` is provided, methods are uppercased and de-duplicated when the route is connected.
 
 ```php
-use Psr\Http\Message\ServerRequestInterface;
-
 $router->connect(
     'contact',
     static fn(ServerRequestInterface $request): string => 'contact',
@@ -141,7 +137,6 @@ Group settings are applied in stack order (nested groups last). Middleware and p
 
 ```php
 use Fyre\Router\Router;
-use Psr\Http\Message\ServerRequestInterface;
 
 $router->group(
     static function(Router $router): void {

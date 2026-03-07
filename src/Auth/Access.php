@@ -248,21 +248,23 @@ class Access
 
         $user = ($this->userResolver)();
 
-        if (!$user || !$item) {
-            $params = new ReflectionClass($policy)
-                ->getMethod($method)
-                ->getParameters();
+        $params = new ReflectionClass($policy)
+            ->getMethod($method)
+            ->getParameters();
 
-            if (!$user && $params !== [] && !$params[0]->allowsNull()) {
-                return false;
-            }
-
-            if (!$item && count($params) > 1 && !$params[1]->allowsNull()) {
-                return false;
-            }
+        if (!$user && $params !== [] && !$params[0]->allowsNull()) {
+            return false;
         }
 
-        return $policy->$method($user, $item);
+        if (!$item && count($params) > 1 && !$params[1]->allowsNull()) {
+            return false;
+        }
+
+        return match (count($params)) {
+            0 => $policy->$method(),
+            1 => $policy->$method($user),
+            default => $policy->$method($user, $item),
+        };
     }
 
     /**

@@ -25,7 +25,7 @@ See [Database connections](connections.md) for connection setup, [Forge](forge.m
 
 ## Purpose
 
-🎯 Use Schema when code needs to *observe* database structure:
+Use Schema when code needs to *observe* database structure:
 
 - Detect whether a table exists.
 - List tables and iterate table definitions.
@@ -35,7 +35,7 @@ For applying schema changes, use [Forge](forge.md) (DDL) or [Database Migrations
 
 ## Mental model
 
-🧠 `SchemaRegistry` resolves a database-specific `Schema` implementation for a `Connection` and caches that `Schema` per connection object.
+`SchemaRegistry` resolves a database-specific `Schema` implementation for a `Connection` and caches that `Schema` per connection object using a `WeakMap`.
 
 - `Schema` provides access to tables and a shared caching mechanism for introspection reads.
 - `Table` provides access to a table’s columns, indexes, and foreign keys (loaded lazily).
@@ -47,7 +47,17 @@ Use `SchemaRegistry::use()` to resolve a `Schema` for a connection.
 
 Most examples on this page assume you already have a `$schema` (`Schema`) instance.
 
-If helpers are available, you can resolve it like this:
+Resolve it directly from the registry and a connection:
+
+```php
+use Fyre\DB\ConnectionManager;
+use Fyre\DB\Schema\SchemaRegistry;
+
+$connection = app(ConnectionManager::class)->use();
+$schema = app(SchemaRegistry::class)->use($connection);
+```
+
+If helpers are available, you can resolve the connection part more tersely:
 
 ```php
 use Fyre\DB\Schema\SchemaRegistry;
@@ -131,7 +141,7 @@ $parsedDefault = $created->defaultValue(); // may execute a query
 
 ## Driver-specific handlers
 
-Schema introspection is implemented per database driver under `Fyre\DB\Schema\Handlers\*`. `SchemaRegistry` ships with default mappings for the built-in connection handlers:
+Schema introspection is implemented by driver-specific `Schema` classes. `SchemaRegistry` ships with default mappings for the built-in connection handlers:
 
 - `MysqlConnection` → `MysqlSchema`
 - `PostgresConnection` → `PostgresSchema`
@@ -155,6 +165,8 @@ Some schema metadata is only available on certain drivers via driver-specific su
 
 Registers the `Schema` implementation to use for a given `Connection` class.
 
+The mapping itself is stored immediately. Validation that the schema class extends `Schema` happens later when a connection is resolved through `use()`.
+
 Arguments:
 - `$connectionClass` (`class-string<Connection>`): the connection class name.
 - `$schemaClass` (`class-string<Schema>`): the schema class name (must extend `Schema`).
@@ -169,6 +181,8 @@ $schemaRegistry->map(MysqlConnection::class, MysqlSchema::class);
 #### **Get a shared Schema for a connection** (`use()`)
 
 Returns a shared `Schema` instance for the provided connection object (cached internally with a `WeakMap`).
+
+If the exact connection class is not mapped, `SchemaRegistry` will look through parent connection classes until it finds a mapped schema.
 
 Arguments:
 - `$connection` (`Connection`): the connection instance.
@@ -238,18 +252,6 @@ $schema->clear();
 - `getCache()` returns the configured `Cacher` when a cache config named `_schema` exists, otherwise `null`.
 - `getCachePrefix()` returns the cache prefix derived from connection config (`cacheKeyPrefix` + `database`, with `:` replaced by `_`).
 
-#### **Load cached data via a callback** (`load()`)
-
-Loads data via a callback and caches it when schema caching is enabled.
-
-Arguments:
-- `$key` (`string`): cache key suffix (appended to the schema cache prefix).
-- `$callback` (`Closure(): array<string, mixed>`): data loader callback.
-
-```php
-$data = $schema->load('example', static fn(): array => ['ok' => true]);
-```
-
 ### `Table`
 
 #### **Get metadata** (`getName()`, `getComment()`, `getSchema()`, `toArray()`)
@@ -261,7 +263,7 @@ $data = $schema->load('example', static fn(): array => ['ok' => true]);
 
 #### **Clear loaded state** (`clear()`)
 
-Clears in-memory column/index/foreign key data for the table. If schema caching is enabled, it also deletes cache keys named `columns`, `indexes`, and `foreign_keys` under the schema cache prefix.
+Clears in-memory column/index/foreign key data for the table. If schema caching is enabled, it also deletes the cached table-specific keys `<table>.columns`, `<table>.indexes`, and `<table>.foreign_keys` under the schema cache prefix.
 
 ```php
 $table = $schema->table('users');
@@ -334,6 +336,8 @@ $default = $column->defaultValue();
 
 Returns a `Type` instance resolved via the driver’s type map and the `TypeParser`. MySQL-style `tinyint(1)` columns are treated as booleans.
 
+See [Database types](types.md) for the built-in type system and casting behavior.
+
 ```php
 $table = $schema->table('users');
 $column = $table->column('id');
@@ -353,11 +357,11 @@ $type = $column->type();
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Schema caching is enabled only when `CacheManager` has a config named `_schema`; otherwise all reads are uncached.
-- Cache keys are namespaced by `Schema::getCachePrefix()` and the key passed to `Schema::load()` (for example `tables`, `<table>.columns`, `<table>.indexes`, and `<table>.foreign_keys`).
-- `Schema::clear()` clears in-memory state and deletes only the cached `tables` list; if you rely on schema caching, you may need to clear cached per-table keys (like `<table>.columns`) to fully refresh introspection results.
+- Cache keys are namespaced by `Schema::getCachePrefix()` and the introspection area being cached (for example `tables`, `<table>.columns`, `<table>.indexes`, and `<table>.foreign_keys`).
+- `Schema::clear()` loads the current table list, clears in-memory state, and deletes the cached `tables` list plus cached per-table keys (like `<table>.columns`, `<table>.indexes`, and `<table>.foreign_keys`).
 - Schema introspection lists tables only (not views). `Schema::tableNames()` reflects what each driver exposes as a “base table” (and SQLite also excludes `sqlite_sequence`).
 - `Column::defaultValue()` may execute a `SELECT` query to evaluate expression defaults (for example `CURRENT_TIMESTAMP`), which can matter if you call it in a tight loop.
 - SQLite does not expose foreign key constraint names via `PRAGMA foreign_key_list`, so the SQLite handler generates names in the form `<table>_<column>_<column>...`.

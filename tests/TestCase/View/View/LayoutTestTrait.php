@@ -6,6 +6,8 @@ namespace Tests\TestCase\View\View;
 use Fyre\Event\Event;
 use Fyre\Utility\Path;
 
+use function str_replace;
+
 use const PHP_EOL;
 
 trait LayoutTestTrait
@@ -32,7 +34,7 @@ trait LayoutTestTrait
             $this->assertSame(
                 'Layout: 1'.PHP_EOL.
                 'Content: Template: 1',
-                $content
+                str_replace(["\r\n", "\r"], PHP_EOL, $content)
             );
         });
 
@@ -78,10 +80,12 @@ trait LayoutTestTrait
 
         $this->view->setLayout('test');
 
+        $content = $this->view->render('test/template');
+
         $this->assertSame(
             'Layout: 1'.PHP_EOL.
             'Content: Template: 1',
-            $this->view->render('test/template')
+            str_replace(["\r\n", "\r"], PHP_EOL, $content)
         );
     }
 }

@@ -1,6 +1,6 @@
 # Validators
 
-Attach per-field rules to input data (forms, request payloads, ORM entity workflows) and produce a simple error map keyed by field name.
+Define per-field rules, validate an input array (for example, a request payload), and return a simple error map keyed by field name.
 
 ## Table of Contents
 
@@ -10,13 +10,13 @@ Attach per-field rules to input data (forms, request payloads, ORM entity workfl
 - [Running Validation](#running-validation)
 - [Error Messages and Language Fallback](#error-messages-and-language-fallback)
 - [Method guide](#method-guide)
-  - [Validator](#validator)
+  - [`Validator`](#validator)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
 ## Purpose
 
-🎯 `Fyre\Form\Validator` stores rules for each field and validates an input array, returning a list of error messages per field.
+`Fyre\Form\Validator` stores rules for each field and validates an input array, returning a list of error messages per field.
 
 Validators are commonly used by:
 
@@ -24,8 +24,6 @@ Validators are commonly used by:
 - [Models](../orm/models.md) (`Fyre\ORM\Model`) to validate user input and populate entity errors.
 
 Validation rules are represented by `Fyre\Form\Rule`. Rules can be created using built-in `Rule::*()` factories (see [Validation rules](rules.md)), or by providing a custom callback when adding a rule.
-
-Most examples on this page assume you already have a `$validator` instance (for example, `$validator = app(Fyre\Form\Validator::class);`).
 
 ## Defining Rules
 
@@ -44,18 +42,16 @@ Use the optional arguments to configure the rule:
 - `$message` sets a default failure message (used when the callback does not return a custom message).
 - `$name` sets the language fallback key under `Validation.{name}` (see [Error Messages and Language Fallback](#error-messages-and-language-fallback)).
 
-📌 Example: validating a registration payload with type-specific rules.
+Example: validating a registration payload with type-specific rules.
 
 ```php
 use Fyre\Form\Rule;
-use Fyre\Form\Validator;
 
 $data = [
     'email' => 'not-an-email',
     'password' => '',
 ];
 
-$validator = app(Validator::class);
 $validator->clear();
 
 $validator->add('email', Rule::email(), name: 'email');
@@ -129,7 +125,7 @@ The return value is an array keyed by field name, where each value is a unique l
 - If a field has no errors, it is omitted from the returned array.
 - Duplicate messages for the same field are collapsed into a unique list.
 
-📌 Note: When `$type` is `null`, no filtering is applied and all rules are evaluated (including rules that have an `$on` type).
+Note: When `$type` is `null`, no filtering is applied and all rules are evaluated (including rules that have an `$on` type).
 
 ## Error Messages and Language Fallback
 
@@ -159,7 +155,7 @@ See [Language (Lang)](../core/lang.md) for how language keys are loaded and form
 
 This section highlights the `Validator` methods you’ll use most often when defining and running validation.
 
-### Validator
+### `Validator`
 
 #### **Attach a rule to a field** (`add()`)
 
@@ -226,7 +222,7 @@ $rules = $validator->getFieldRules('email');
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Presence is checked using `array_key_exists()`, so `null` values count as “set”.
 - “Empty” values are `null`, empty string, or empty array; most `Rule::*()` factories skip empty values by default.

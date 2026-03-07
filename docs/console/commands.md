@@ -1,4 +1,4 @@
-# Built-in Console Commands
+# Console Commands
 
 The framework ships a small set of ready-to-use console commands for database migrations, queue operations, and common scaffolding tasks.
 
@@ -39,11 +39,13 @@ The framework ships a small set of ready-to-use console commands for database mi
 
 ## Purpose
 
-🎯 Use these commands when you want consistent CLI behavior (argument parsing, prompting for missing required options, and dependency injection) without writing your own tooling.
+Use the console command system to run built-in commands (migrations, queue operations, scaffolding) and to build your own commands with the same consistent CLI behavior: argument parsing, prompting for missing required values, type conversion, and dependency injection.
 
 ## Where Commands Fit
 
-Built-in commands live under `Fyre\Commands` and are intended to be discovered and executed through the framework’s console runtime (`CommandRunner`).
+`CommandRunner` is the console runtime that discovers and executes commands.
+
+In a typical application, you resolve `CommandRunner` from the container, usually via `Engine`, which pre-registers the `App\Commands` and `Fyre\Commands` namespaces. In a custom runtime, you can register namespaces manually on `CommandRunner`.
 
 `CommandRunner` discovers commands by scanning its registered namespaces for `*Command.php` files, then reflecting each command’s default `alias`, `description`, and `options` values. The command list is cached after it is first built.
 
@@ -65,7 +67,7 @@ The first `argv` value is the script name. If you construct `argv` arrays manual
 
 When no alias is provided, `handle()` prints a table of available commands (alias, description, and option keys).
 
-You can also execute a command directly (bypassing `argv` parsing) with `CommandRunner::run()`:
+`handle()` is the usual entry point for raw CLI `argv`. You can also execute a command directly (bypassing `argv` parsing) with `CommandRunner::run()`:
 
 ```php
 $exitCode = $commandRunner->run('db:migrate', [
@@ -78,11 +80,13 @@ Exit codes follow `Fyre\Console\Command`:
 - `Command::CODE_SUCCESS` (`0`)
 - `Command::CODE_ERROR` (`1`)
 
+If the alias is invalid, or if the resolved command class does not implement `run()`, `CommandRunner::run()` prints an error and returns `Command::CODE_ERROR`.
+
 Argument parsing rules used by the console runtime:
 
 - Options are read from `--option value` or `-o value`.
 - Options without a value are treated as `true`.
-- For boolean options, values `false`, `n`, and `no` (and also `0`) are treated as `false`; other non-empty values are treated as `true`.
+- For boolean options, values `false`, `n`, and `no` are treated as `false`; other non-empty values are treated as `true`.
 - Option names are normalized to lower camelCase (for example, `--max-runtime` becomes `maxRuntime`).
 - Non-option arguments are treated as positional values and can be used instead of named options.
 
@@ -117,10 +121,8 @@ $commandRunner->handle(['app', 'db:migrate', '--db', 'default']);
 Programmatic invocation:
 
 ```php
-use Fyre\DB\ConnectionManager;
-
 $exitCode = $commandRunner->run('db:migrate', [
-    'db' => ConnectionManager::DEFAULT,
+    'db' => 'default',
 ]);
 ```
 
@@ -382,13 +384,73 @@ The output is written beneath the resolved template path.
 
 ### Creating a command
 
-To add your own commands, create a concrete class that:
+If you’re using the default `Engine` setup, `CommandRunner` already discovers commands from `App\Commands` and `Fyre\Commands`. If you’re building a custom runtime, register the namespace you want to scan:
+
+```php
+$commandRunner->addNamespace('App\Commands');
+```
+
+Create a concrete class that:
 
 - extends `Fyre\Console\Command`
 - ends with `Command` (for example, `ClearCacheCommand`)
 - lives in a namespace registered on `CommandRunner` via `addNamespace()`
 
 By default, the command alias is taken from the command’s `$alias` property. If `$alias` is `null`, it is derived from the class name (short name without `Command`, converted to `snake_case`).
+
+Example command:
+
+```php
+namespace App\Commands;
+
+use Fyre\Cache\CacheManager;
+use Fyre\Console\Command;
+use Fyre\Console\Console;
+
+class ClearCacheCommand extends Command
+{
+    protected string|null $alias = 'app:clear-cache';
+
+    protected string $description = 'Delete a cache key (with an optional confirmation prompt).';
+
+    protected array $options = [
+        'cache' => [
+            'text' => 'Cache config key',
+            'default' => 'default',
+        ],
+        'key' => [
+            'text' => 'Cache key to delete',
+            'required' => true,
+        ],
+        'force' => [
+            'text' => 'Skip confirmation',
+            'as' => 'boolean',
+            'default' => false,
+        ],
+    ];
+
+    public function run(CacheManager $cacheManager, Console $io, string $cache, string $key, bool $force): int
+    {
+        if (!$force && !$io->confirm('Delete cache key "'.$key.'"?', false)) {
+            return self::CODE_SUCCESS;
+        }
+
+        $cacheManager->use($cache)->delete($key);
+        $io->success('Deleted: '.$key);
+
+        return self::CODE_SUCCESS;
+    }
+}
+```
+
+You can then run it by alias (for example):
+
+```php
+$exitCode = $commandRunner->run('app:clear-cache', [
+    'cache' => 'default',
+    'key' => 'posts.42',
+]);
+```
 
 ### Defining options
 
@@ -409,16 +471,18 @@ Supported metadata keys:
 
 `CommandRunner` executes the command’s `run()` method through the container:
 
-- parameters matching option keys receive parsed option values
+- parameters whose names match option keys receive parsed option values
 - other parameters are resolved as services by the container
 
-If you change registered namespaces or add new command classes after the command list is built, create a fresh `CommandRunner` instance (or call `clear()` and re-register namespaces) to force rediscovery.
+That means option names and `run()` parameter names need to stay aligned for values to be passed correctly.
+
+If you change registered namespaces or add new command classes after the command list is built, call `clear()` and then re-register any namespaces you want to scan, or create a fresh `CommandRunner` instance.
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
-- Use space-separated options like `--db default`; `--db=default` is treated as a different option name.
+- Long options support both `--db default` and `--db=default`.
 - `-o` is supported, but built-in commands do not define single-letter option keys, so prefer `--name`, `--file`, `--template`, and similar.
 - Positional arguments are mapped to option keys in the order the command defines them; mixing positional and named values can be confusing.
 - `queue:worker` requires process forking; if `pcntl_fork()` is unavailable, the worker cannot be started this way.

@@ -120,9 +120,6 @@ class ResponseEmitter
     /**
      * Sets a cookie.
      *
-     * Note: This uses PHP's legacy `setcookie()` signature, so attributes like SameSite are
-     * not emitted.
-     *
      * @param Cookie $cookie The Cookie to set.
      */
     protected function setCookie(Cookie $cookie): void
@@ -130,11 +127,14 @@ class ResponseEmitter
         setcookie(
             $cookie->getName(),
             $cookie->getValue(),
-            (int) $cookie->getExpires(),
-            $cookie->getPath(),
-            $cookie->getDomain(),
-            $cookie->isSecure(),
-            $cookie->isHttpOnly()
+            [
+                'expires' => (int) $cookie->getExpires(),
+                'path' => $cookie->getPath(),
+                'domain' => $cookie->getDomain(),
+                'secure' => $cookie->isSecure(),
+                'httponly' => $cookie->isHttpOnly(),
+                'samesite' => $cookie->getSameSite(),
+            ],
         );
     }
 
