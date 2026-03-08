@@ -156,7 +156,7 @@ class TaggedCacher
      */
     public function tags(array|string $tags): static
     {
-        return new self(
+        return new static(
             $this->cacher,
             [
                 ...$this->tags,
