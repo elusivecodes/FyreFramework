@@ -6,6 +6,9 @@ namespace Fyre\Form;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\DB\Type;
+use Fyre\Event\EventListenerInterface;
+use Fyre\Event\EventManager;
+use Fyre\Event\Traits\EventDispatcherTrait;
 use Fyre\Utility\EnumHelper;
 
 /**
@@ -15,9 +18,10 @@ use Fyre\Utility\EnumHelper;
  * types, optionally validating the parsed data using the configured {@see Validator}, and
  * then processing the data via {@see process()}.
  */
-class Form
+class Form implements EventListenerInterface
 {
     use DebugTrait;
+    use EventDispatcherTrait;
 
     /**
      * @var array<string, mixed>
@@ -37,10 +41,18 @@ class Form
      * Constructs a Form.
      *
      * @param Container $container The Container.
+     * @param EventManager $eventManager The EventManager.
      */
     public function __construct(
         protected Container $container,
-    ) {}
+        EventManager $eventManager
+    ) {
+        $this->eventManager = $container->build(EventManager::class, [
+            'parentEventManager' => $eventManager,
+        ]);
+
+        $this->eventManager->addListener($this);
+    }
 
     /**
      * Builds the form schema.
@@ -59,7 +71,7 @@ class Form
      * @param Validator $validator The Validator.
      * @return Validator The Validator instance.
      */
-    public function buildValidation(Validator $validator): Validator
+    public function buildValidator(Validator $validator): Validator
     {
         return $validator;
     }
@@ -158,11 +170,19 @@ class Form
     /**
      * Returns the form Validator.
      *
-     * @return Validator The form Validator.
+     * @return Validator The Validator instance.
      */
     public function getValidator(): Validator
     {
-        return $this->validator ??= $this->buildValidation($this->container->build(Validator::class));
+        if (isset($this->validator)) {
+            return $this->validator;
+        }
+
+        $validator = $this->buildValidator($this->container->build(Validator::class));
+
+        $this->dispatchEvent('Form.buildValidator', ['validator' => $validator]);
+
+        return $this->validator = $validator;
     }
 
     /**

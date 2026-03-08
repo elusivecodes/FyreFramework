@@ -30,7 +30,7 @@ class TagsModel extends Model
     }
 
     #[Override]
-    public function buildValidation(Validator $validator): Validator
+    public function buildValidator(Validator $validator): Validator
     {
         $validator->add('tag', Rule::required(), on: 'create');
 

@@ -110,7 +110,7 @@ class EntityContext extends Context
         $validator = $model->getValidator();
         $schema = $model->getSchema();
 
-        $validatorMax = static::getValidationMax($validator, $field);
+        $validatorMax = static::getValidatorMax($validator, $field);
         $schemaMax = static::getSchemaMax($schema, $field);
 
         if ($validatorMax !== null && $schemaMax !== null) {
@@ -135,7 +135,7 @@ class EntityContext extends Context
         $validator = $model->getValidator();
         $schema = $model->getSchema();
 
-        $validatorMaxLength = static::getValidationMaxLength($validator, $field);
+        $validatorMaxLength = static::getValidatorMaxLength($validator, $field);
         $schemaMaxLength = static::getSchemaMaxLength($schema, $field);
 
         if ($validatorMaxLength !== null && $schemaMaxLength !== null) {
@@ -160,7 +160,7 @@ class EntityContext extends Context
         $validator = $model->getValidator();
         $schema = $model->getSchema();
 
-        $validatorMin = static::getValidationMin($validator, $field);
+        $validatorMin = static::getValidatorMin($validator, $field);
         $schemaMin = static::getSchemaMin($schema, $field);
 
         if ($validatorMin !== null && $schemaMin !== null) {

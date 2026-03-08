@@ -24,7 +24,7 @@ trait ValidationTrait
      * @param string $field The field name.
      * @return float|null The maximum value.
      */
-    public static function getValidationMax(Validator $validator, string $field): float|null
+    public static function getValidatorMax(Validator $validator, string $field): float|null
     {
         $rules = $validator->getFieldRules($field);
 
@@ -73,7 +73,7 @@ trait ValidationTrait
      * @param string $field The field name.
      * @return int|null The maximum length.
      */
-    public static function getValidationMaxLength(Validator $validator, string $field): int|null
+    public static function getValidatorMaxLength(Validator $validator, string $field): int|null
     {
         $rules = $validator->getFieldRules($field);
 
@@ -108,7 +108,7 @@ trait ValidationTrait
      * @param string $field The field name.
      * @return float|null The minimum value.
      */
-    public static function getValidationMin(Validator $validator, string $field): float|null
+    public static function getValidatorMin(Validator $validator, string $field): float|null
     {
         $rules = $validator->getFieldRules($field);
 

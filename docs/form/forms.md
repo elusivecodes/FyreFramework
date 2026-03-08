@@ -44,7 +44,7 @@ The default `execute()` flow is:
 
 ## Defining a form
 
-Create a subclass and override `buildSchema()`, `buildValidation()`, and `process()`:
+Create a subclass and override `buildSchema()`, `buildValidator()`, and `process()`:
 
 ```php
 namespace App\Forms;
@@ -63,7 +63,7 @@ class RegisterForm extends Form
             ->addField('password', ['type' => 'string']);
     }
 
-    public function buildValidation(Validator $validator): Validator
+    public function buildValidator(Validator $validator): Validator
     {
         return $validator
             ->add('email', Rule::email(), name: 'email')
@@ -82,7 +82,7 @@ class RegisterForm extends Form
 Extension points:
 
 - `buildSchema()` defines the schema fields used for parsing.
-- `buildValidation()` defines the validator rules used for validation.
+- `buildValidator()` defines the validator rules used for validation.
 - `process()` runs your processing logic after parsing (and validation, if enabled) succeeds.
 
 Example: execute a form and read errors.
@@ -131,7 +131,7 @@ For details on available type identifiers and how parsing works, see [Database t
 
 ## Validation
 
-`Form::getValidator()` lazily constructs a `Fyre\Form\Validator` instance via the container and calls `buildValidation()` so your form can attach rules.
+`Form::getValidator()` lazily constructs a `Fyre\Form\Validator` instance via the container, calls `buildValidator()` so your form can attach rules, dispatches `Form.buildValidator`, and then caches the validator.
 
 To validate without processing, you can call:
 
@@ -176,7 +176,7 @@ Most examples below assume you already have a `$form` (a `Form` instance), plus 
 
 #### **Access schema and validator** (`getSchema()`, `getValidator()`)
 
-Retrieve the lazily-built schema or validator instance for inspection or customization.
+Retrieve the lazily-built schema or validator instance for inspection or customization. When a validator is first built, `getValidator()` also dispatches `Form.buildValidator`.
 
 ```php
 $schema = $form->getSchema();

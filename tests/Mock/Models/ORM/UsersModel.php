@@ -36,7 +36,7 @@ class UsersModel extends Model
     }
 
     #[Override]
-    public function buildValidation(Validator $validator): Validator
+    public function buildValidator(Validator $validator): Validator
     {
         $validator->add('name', Rule::required(), on: 'create');
 

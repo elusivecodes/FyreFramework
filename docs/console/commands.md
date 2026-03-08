@@ -18,6 +18,7 @@ The framework ships a small set of ready-to-use console commands for database mi
   - [`make:config`](#makeconfig)
   - [`make:controller`](#makecontroller)
   - [`make:entity`](#makeentity)
+  - [`make:form`](#makeform)
   - [`make:helper`](#makehelper)
   - [`make:job`](#makejob)
   - [`make:lang`](#makelang)
@@ -246,6 +247,17 @@ Options:
 
 - `name` (`string`): entity name (required)
 - `namespace` (`string|null`): target namespace (default: first registered entity namespace, or `App\Entities`)
+
+### `make:form`
+
+Generates a form class using the `form` stub.
+
+Options:
+
+- `name` (`string`): form name (required)
+- `namespace` (`string|null`): target namespace (default: `App\Forms`)
+
+The generated class name is suffixed with `Form`.
 
 ### `make:helper`
 

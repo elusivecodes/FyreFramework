@@ -11,6 +11,7 @@ For the underlying event system (listeners, priorities, propagation), see [Event
 - [Per-model event managers](#per-model-event-managers)
 - [Listening with ORM event attributes](#listening-with-orm-event-attributes)
 - [Built-in ORM events](#built-in-orm-events)
+  - [Build events](#build-events)
   - [Find events](#find-events)
   - [Parsing events](#parsing-events)
   - [Save events](#save-events)
@@ -102,6 +103,11 @@ class UsersModel extends Model
 ## Built-in ORM events
 
 All events are dispatched as `Fyre\Event\Event` with the model as the subject. The payload below lists the additional arguments a listener receives after the `Event` itself.
+
+### Build events
+
+- `ORM.buildValidator` — fired when `Model::getValidator()` first constructs the model validator, after `buildValidator()` returns and before the validator is cached.
+  - Payload: `Fyre\Form\Validator $validator`
 
 ### Find events
 

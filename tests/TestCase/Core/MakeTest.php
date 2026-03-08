@@ -156,6 +156,23 @@ final class MakeTest extends TestCase
         );
     }
 
+    public function testMakeForm(): void
+    {
+        $this->commandRunner->run('make:form', ['Example', 'namespace' => 'Example\Forms']);
+
+        $filePath = 'tmp/Forms/ExampleForm.php';
+
+        $this->assertFileExists($filePath);
+
+        $this->assertFileMatchesFormat(
+            Make::loadStub('form', [
+                '{namespace}' => 'Example\Forms',
+                '{class}' => 'ExampleForm',
+            ]),
+            $filePath
+        );
+    }
+
     public function testMakeHelper(): void
     {
         $this->commandRunner->run('make:helper', ['Example']);

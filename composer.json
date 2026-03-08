@@ -83,32 +83,17 @@
     "scripts": {
         "cs": "php-cs-fixer fix --ansi --verbose --dry-run --diff",
         "cs-fix": "php-cs-fixer fix --ansi --verbose --diff",
-        "phpstan": [
-            "Composer\\Config::disableProcessTimeout",
-            "phpstan analyse"
-        ],
-        "phpstan-tests": [
-            "Composer\\Config::disableProcessTimeout",
-            "phpstan analyse -c tests/phpstan.neon"
-        ],
+        "phpstan": "phpstan analyse",
+        "phpstan-tests": "phpstan analyse -c tests/phpstan.neon",
         "test:core": "phpunit --testsuite core",
-        "test:mysql": [
-            "Composer\\Config::disableProcessTimeout",
-            "phpunit --testsuite mysql"
-        ],
+        "test:mysql": "phpunit --testsuite mysql",
         "test:mariadb": "phpunit --testsuite mariadb",
         "test:postgres": "phpunit --testsuite postgres",
         "test:sqlite": "phpunit --testsuite sqlite",
         "test:redis": "phpunit --testsuite redis",
         "test:memcached": "phpunit --testsuite memcached",
         "test:smtp": "phpunit --testsuite smtp",
-        "test": [
-            "Composer\\Config::disableProcessTimeout",
-            "phpunit"
-        ],
-        "test:coverage": [
-            "Composer\\Config::disableProcessTimeout",
-            "XDEBUG_MODE=coverage phpunit --coverage-text"
-        ]
+        "test": "phpunit",
+        "test:coverage": "XDEBUG_MODE=coverage phpunit --coverage-text"
     }
 }

@@ -8,8 +8,12 @@ use Fyre\Core\Container;
 use Fyre\Core\Lang;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\DB\TypeParser;
+use Fyre\Event\Event;
+use Fyre\Event\EventManager;
 use Fyre\Form\Form;
+use Fyre\Form\Rule;
 use Fyre\Form\Schema;
+use Fyre\Form\Validator;
 use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\Path;
 use Override;
@@ -26,6 +30,25 @@ final class FormTest extends TestCase
     protected Container $container;
 
     protected Form $form;
+
+    public function testBuildValidatorEvent(): void
+    {
+        $this->form->getEventManager()->on('Form.buildValidator', static function(Event $event, Validator $validator): void {
+            $validator->add('event', Rule::maxLength(4), name: 'maxLength');
+        });
+
+        $validator = $this->form->getValidator();
+
+        $this->assertSame(
+            $validator,
+            $this->form->getValidator()
+        );
+
+        $this->assertCount(
+            1,
+            $validator->getFieldRules('event')
+        );
+    }
 
     public function testDebug(): void
     {
@@ -106,7 +129,7 @@ final class FormTest extends TestCase
 
     public function testExecuteParsesInvalidEnumToNull(): void
     {
-        $form = new class ($this->container) extends Form
+        $form = new class ($this->container, $this->container->build(EventManager::class)) extends Form
         {
             public function buildSchema(Schema $schema): Schema
             {
@@ -129,7 +152,7 @@ final class FormTest extends TestCase
 
     public function testExecuteParsesUnitEnum(): void
     {
-        $form = new class ($this->container) extends Form
+        $form = new class ($this->container, $this->container->build(EventManager::class)) extends Form
         {
             public function buildSchema(Schema $schema): Schema
             {

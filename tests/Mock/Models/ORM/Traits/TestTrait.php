@@ -5,6 +5,8 @@ namespace Tests\Mock\Models\ORM\Traits;
 
 use ArrayObject;
 use Fyre\Event\Event;
+use Fyre\Form\Rule;
+use Fyre\Form\Validator;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Events\AfterDelete;
 use Fyre\ORM\Events\AfterParse;
@@ -14,6 +16,7 @@ use Fyre\ORM\Events\BeforeDelete;
 use Fyre\ORM\Events\BeforeParse;
 use Fyre\ORM\Events\BeforeRules;
 use Fyre\ORM\Events\BeforeSave;
+use Fyre\ORM\Events\BuildValidator;
 
 use function is_string;
 use function trim;
@@ -98,5 +101,11 @@ trait TestTrait
 
             return;
         }
+    }
+
+    #[BuildValidator]
+    public function buildValidatorEvent(Event $event, Validator $validator): void
+    {
+        $validator->add('event', Rule::maxLength(4), name: 'maxLength');
     }
 }

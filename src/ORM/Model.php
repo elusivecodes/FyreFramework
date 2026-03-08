@@ -383,7 +383,7 @@ class Model implements EventListenerInterface
      * @param Validator $validator The Validator.
      * @return Validator The Validator instance.
      */
-    public function buildValidation(Validator $validator): Validator
+    public function buildValidator(Validator $validator): Validator
     {
         return $validator;
     }
@@ -830,7 +830,15 @@ class Model implements EventListenerInterface
      */
     public function getValidator(): Validator
     {
-        return $this->validator ??= $this->buildValidation($this->container->build(Validator::class));
+        if (isset($this->validator)) {
+            return $this->validator;
+        }
+
+        $validator = $this->buildValidator($this->container->build(Validator::class));
+
+        $this->dispatchEvent('ORM.buildValidator', ['validator' => $validator]);
+
+        return $this->validator = $validator;
     }
 
     /**

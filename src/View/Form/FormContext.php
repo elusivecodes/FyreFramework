@@ -67,7 +67,7 @@ class FormContext extends Context
         $validator = $this->item->getValidator();
         $schema = $this->item->getSchema();
 
-        $validatorMax = static::getValidationMax($validator, $key);
+        $validatorMax = static::getValidatorMax($validator, $key);
         $schemaMax = static::getSchemaMax($schema, $key);
 
         if ($validatorMax !== null && $schemaMax !== null) {
@@ -86,7 +86,7 @@ class FormContext extends Context
         $validator = $this->item->getValidator();
         $schema = $this->item->getSchema();
 
-        $validatorMaxLength = static::getValidationMaxLength($validator, $key);
+        $validatorMaxLength = static::getValidatorMaxLength($validator, $key);
         $schemaMaxLength = static::getSchemaMaxLength($schema, $key);
 
         if ($validatorMaxLength !== null && $schemaMaxLength !== null) {
@@ -105,7 +105,7 @@ class FormContext extends Context
         $validator = $this->item->getValidator();
         $schema = $this->item->getSchema();
 
-        $validatorMin = static::getValidationMin($validator, $key);
+        $validatorMin = static::getValidatorMin($validator, $key);
         $schemaMin = static::getSchemaMin($schema, $key);
 
         if ($validatorMin !== null && $schemaMin !== null) {

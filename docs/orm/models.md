@@ -11,6 +11,7 @@ For record objects (field access, change tracking, errors, and serialization), s
 - [Models: persistence and metadata](#models-persistence-and-metadata)
   - [Identity: alias, class alias, and table](#identity-alias-class-alias-and-table)
   - [Building entities from a model](#building-entities-from-a-model)
+  - [Model validation](#model-validation)
   - [Saving and deleting entities](#saving-and-deleting-entities)
 - [ModelRegistry](#modelregistry)
   - [Locating and sharing models](#locating-and-sharing-models)
@@ -19,6 +20,7 @@ For record objects (field access, change tracking, errors, and serialization), s
   - [Entity building](#entity-building)
   - [Persistence](#persistence)
   - [Configuration](#configuration)
+  - [Validation](#validation)
   - [Registry](#registry)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
@@ -122,6 +124,31 @@ $user = $Users->newEntity(
 
 $Users->save($user);
 ```
+
+### Model validation
+
+Models define validation by overriding `buildValidator(Validator $validator): Validator`. The model lazily builds and caches the validator the first time `getValidator()` is called, and `newEntity()` / `patchEntity()` use that validator when `$validate` is enabled.
+
+Use model validation for input-shape and field-level checks such as required fields, lengths, formats, and custom per-field rules. Use [Rule Sets](rulesets.md) for integrity checks that depend on database state.
+
+```php
+use Fyre\Form\Rule;
+use Fyre\Form\Validator;
+use Fyre\ORM\Model;
+
+class UsersModel extends Model
+{
+    public function buildValidator(Validator $validator): Validator
+    {
+        return $validator
+            ->add('email', Rule::email(), name: 'email')
+            ->add('email', Rule::required(), name: 'required')
+            ->add('name', Rule::maxLength(255), name: 'maxLength');
+    }
+}
+```
+
+If you need to inspect or replace the validator instance directly, use `getValidator()` or `setValidator()`. For validator APIs and built-in rules, see [Form Validators](../form/validators.md) and [Validation rules](../form/rules.md).
 
 ### Saving and deleting entities
 
@@ -293,6 +320,16 @@ class UsersModel extends Model
         $this->setTable('users');
     }
 }
+```
+
+### Validation
+
+#### **Access the model validator** (`getValidator()`)
+
+Retrieve the lazily-built validator instance for the model. On first access, the model creates a `Fyre\Form\Validator` via the container and passes it to `buildValidator()`.
+
+```php
+$validator = $Users->getValidator();
 ```
 
 ### Registry

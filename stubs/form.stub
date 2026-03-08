@@ -3,25 +3,28 @@ declare(strict_types=1);
 
 namespace {namespace};
 
-use Fyre\Event\Event;
-use Fyre\Form\Rule;
+use Fyre\Form\Form;
+use Fyre\Form\Schema;
 use Fyre\Form\Validator;
-use Fyre\ORM\Entity;
-use Fyre\ORM\Model;
-use Fyre\ORM\RuleSet;
 use Override;
 
-class {class} extends Model
+class {class} extends Form
 {
     #[Override]
-    public function buildRules(RuleSet $rules): RuleSet
+    public function buildSchema(Schema $schema): Schema
     {
-        return $rules;
+        return $schema;
     }
 
     #[Override]
     public function buildValidator(Validator $validator): Validator
     {
         return $validator;
+    }
+
+    #[Override]
+    protected function process(array $data): bool
+    {
+        return true;
     }
 }

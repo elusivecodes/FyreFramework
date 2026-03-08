@@ -386,6 +386,18 @@ trait CallbacksTestTrait
         );
     }
 
+    public function testBuildValidator(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $validator = $Items->getValidator();
+
+        $this->assertCount(
+            1,
+            $validator->getFieldRules('event')
+        );
+    }
+
     public function testRules(): void
     {
         $Items = $this->modelRegistry->use('Items');
