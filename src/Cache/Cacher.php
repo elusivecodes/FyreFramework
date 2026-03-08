@@ -200,7 +200,7 @@ abstract class Cacher implements CacheInterface
     /**
      * Creates a tagged cache wrapper.
      *
-     * @param string[]|string $tags The tags.
+     * @param string|string[] $tags The tags.
      * @return TaggedCacher The tagged cache wrapper.
      */
     public function tags(array|string $tags): TaggedCacher

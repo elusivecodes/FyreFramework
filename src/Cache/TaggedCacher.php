@@ -151,7 +151,7 @@ class TaggedCacher
     /**
      * Returns a new tagged cache wrapper with merged tags.
      *
-     * @param string[]|string $tags The tags.
+     * @param string|string[] $tags The tags.
      * @return static The tagged cache wrapper.
      */
     public function tags(array|string $tags): static
