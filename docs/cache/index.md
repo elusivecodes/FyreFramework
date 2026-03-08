@@ -17,6 +17,7 @@ Cache covers configuring cache handlers and using them to reuse expensive values
   - [Null handler](#null-handler)
 - [Selecting a cache](#selecting-a-cache)
 - [Common operations](#common-operations)
+  - [Tagged cache entries](#tagged-cache-entries)
 - [Method guide](#method-guide)
   - [`CacheManager`](#cachemanager)
   - [`Cacher`](#cacher)
@@ -181,6 +182,30 @@ $value = $cache->remember('report.123', static fn() => buildReport(), 300);
 $cache->increment('counters.reports_generated');
 ```
 
+### Tagged cache entries
+
+Use `tags()` when you want cached values to become stale after one or more tag invalidations.
+
+```php
+$users = $cache->tags('users');
+
+$users->set('user.1', $user, 300);
+$user = $users->get('user.1');
+
+$cache->invalidateTag('users');
+```
+
+Tags can be chained or provided as an array:
+
+```php
+$activeUsers = $cache->tags('users')->tags('active');
+$activeUsers->set('user.1', $user, 300);
+
+$same = $cache->tags(['active', 'users'])->get('user.1');
+```
+
+Tag invalidation is version-based. Invalidating a tag does not eagerly delete every tagged key; instead, tagged entries become stale and are treated as cache misses on the next read.
+
 ## Method guide
 
 This section focuses on the methods you’ll use most when selecting handlers and working with cached values.
@@ -328,6 +353,31 @@ Returns the handler configuration array after defaults are applied.
 $config = $cache->getConfig();
 ```
 
+#### **Create a tagged cache wrapper** (`tags()`)
+
+Returns a lightweight tagged cache wrapper.
+
+Arguments:
+- `$tags` (`string|string[]`): one or more tags.
+
+```php
+$users = $cache->tags('users');
+$users->set('user.1', $user, 300);
+```
+
+#### **Invalidate cache tags** (`invalidateTag()` / `invalidateTags()`)
+
+Invalidates one or more cache tags.
+
+Arguments:
+- `$tag` (`string`): the tag to invalidate.
+- `$tags` (`string[]`): the tags to invalidate.
+
+```php
+$cache->invalidateTag('users');
+$cache->invalidateTags(['users', 'active']);
+```
+
 ## Behavior notes
 
 A few behaviors are worth keeping in mind:
@@ -341,6 +391,8 @@ A few behaviors are worth keeping in mind:
 - `RedisCacher::clear()` requires a non-empty `prefix` unless `flushDatabase` is enabled. With a prefix, it scans and deletes matching keys. Without a prefix and with `flushDatabase: true`, it flushes the selected Redis database.
 - `RedisCacher::set()` supports scalar types, arrays, objects, and `null`. Other value types cause `set()` to return `false` without writing.
 - `NullCacher` always returns the provided default on reads, ignores writes, and returns the increment amount from `increment()` / `decrement()` rather than persisting a counter.
+- `tags()` returns a lightweight wrapper; normal `get()` / `set()` calls remain untagged.
+- Invalidating a tag marks matching tagged entries as stale. They are deleted lazily when the next tagged read detects a version mismatch.
 
 ## Related
 

@@ -17,6 +17,7 @@ use Tests\TestCase\Cache\Cacher\GetSetTestTrait;
 use Tests\TestCase\Cache\Cacher\HasTestTrait;
 use Tests\TestCase\Cache\Cacher\IncrementTestTrait;
 use Tests\TestCase\Cache\Cacher\RememberTestTrait;
+use Tests\TestCase\Cache\Cacher\TagsTestTrait;
 
 use function getenv;
 
@@ -29,6 +30,7 @@ final class RedisTest extends TestCase
     use HasTestTrait;
     use IncrementTestTrait;
     use RememberTestTrait;
+    use TagsTestTrait;
 
     protected Cacher $cache;
 

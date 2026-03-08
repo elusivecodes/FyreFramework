@@ -221,7 +221,7 @@ trait ConsoleTestTrait
      * Run a command.
      *
      * @param string $command The command.
-     * @param array $input The input.
+     * @param string[] $input The input.
      */
     public function exec(string $command, array $input = []): void
     {

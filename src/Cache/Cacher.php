@@ -123,6 +123,39 @@ abstract class Cacher implements CacheInterface
     abstract public function increment(string $key, int $amount = 1): false|int;
 
     /**
+     * Invalidates a cache tag.
+     *
+     * @param string $tag The tag.
+     * @return bool Whether the tag version was updated.
+     */
+    public function invalidateTag(string $tag): bool
+    {
+        return $this->set(
+            TaggedCacher::tagKey($tag),
+            TaggedCacher::generateToken()
+        );
+    }
+
+    /**
+     * Invalidates multiple cache tags.
+     *
+     * @param string[] $tags The tags.
+     * @return bool Whether all tag versions were updated.
+     */
+    public function invalidateTags(array $tags): bool
+    {
+        $result = true;
+
+        foreach ($tags as $tag) {
+            if (!$this->invalidateTag($tag)) {
+                $result = false;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * Retrieves an item from the cache, or saves a new value if it does not exist.
      *
      * @param string $key The cache key.
@@ -162,6 +195,17 @@ abstract class Cacher implements CacheInterface
         }
 
         return true;
+    }
+
+    /**
+     * Creates a tagged cache wrapper.
+     *
+     * @param string[]|string $tags The tags.
+     * @return TaggedCacher The tagged cache wrapper.
+     */
+    public function tags(array|string $tags): TaggedCacher
+    {
+        return new TaggedCacher($this, (array) $tags);
     }
 
     /**

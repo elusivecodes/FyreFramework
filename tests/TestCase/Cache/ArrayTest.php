@@ -16,6 +16,7 @@ use Tests\TestCase\Cache\Cacher\GetSetTestTrait;
 use Tests\TestCase\Cache\Cacher\HasTestTrait;
 use Tests\TestCase\Cache\Cacher\IncrementTestTrait;
 use Tests\TestCase\Cache\Cacher\RememberTestTrait;
+use Tests\TestCase\Cache\Cacher\TagsTestTrait;
 
 final class ArrayTest extends TestCase
 {
@@ -26,6 +27,7 @@ final class ArrayTest extends TestCase
     use HasTestTrait;
     use IncrementTestTrait;
     use RememberTestTrait;
+    use TagsTestTrait;
 
     protected Cacher $cache;
 

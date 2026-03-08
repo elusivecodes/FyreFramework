@@ -59,7 +59,7 @@ Runs a console command through `CommandRunner`, capturing stdout/stderr and stor
 
 Arguments:
 - `$command` (`string`): the full command string (command alias plus arguments).
-- `$input` (`array<int, string>`): lines to write to stdin before running the command.
+- `$input` (`string[]`): lines to write to stdin before running the command.
 
 ```php
 $this->exec('arguments --value value');

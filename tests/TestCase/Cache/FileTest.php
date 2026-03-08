@@ -16,10 +16,10 @@ use Tests\TestCase\Cache\Cacher\GetSetTestTrait;
 use Tests\TestCase\Cache\Cacher\HasTestTrait;
 use Tests\TestCase\Cache\Cacher\IncrementTestTrait;
 use Tests\TestCase\Cache\Cacher\RememberTestTrait;
+use Tests\TestCase\Cache\Cacher\TagsTestTrait;
 
 use function mkdir;
 use function rmdir;
-use function unlink;
 
 final class FileTest extends TestCase
 {
@@ -30,6 +30,7 @@ final class FileTest extends TestCase
     use HasTestTrait;
     use IncrementTestTrait;
     use RememberTestTrait;
+    use TagsTestTrait;
 
     protected Cacher $cache;
 
@@ -70,9 +71,7 @@ final class FileTest extends TestCase
     #[Override]
     protected function tearDown(): void
     {
-        @unlink('cache/prefix.test');
-        @unlink('cache/prefix.test1');
-        @unlink('cache/prefix.test2');
+        $this->cache->clear();
         @rmdir('cache');
     }
 }
