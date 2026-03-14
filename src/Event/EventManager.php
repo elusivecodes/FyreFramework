@@ -323,6 +323,18 @@ class EventManager implements EventDispatcherInterface, ListenerProviderInterfac
     }
 
     /**
+     * Resolves a callback closure for a listener method.
+     *
+     * @param EventListenerInterface $listener The EventListener.
+     * @param string $method The method name.
+     * @return Closure The callback closure.
+     */
+    protected function resolveListenerCallback(EventListenerInterface $listener, string $method): Closure
+    {
+        return (new ReflectionMethod($listener, $method))->getClosure($listener);
+    }
+
+    /**
      * Finds events for an EventListener.
      *
      * @param EventListenerInterface $listener The EventListener.
@@ -350,17 +362,5 @@ class EventManager implements EventDispatcherInterface, ListenerProviderInterfac
         }
 
         return $events;
-    }
-
-    /**
-     * Resolves a callback closure for a listener method.
-     *
-     * @param EventListenerInterface $listener The EventListener.
-     * @param string $method The method name.
-     * @return Closure The callback closure.
-     */
-    protected function resolveListenerCallback(EventListenerInterface $listener, string $method): Closure
-    {
-        return (new ReflectionMethod($listener, $method))->getClosure($listener);
     }
 }

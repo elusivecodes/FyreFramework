@@ -150,6 +150,30 @@ final class FormTest extends TestCase
         );
     }
 
+    public function testExecuteParsesUnitEnum(): void
+    {
+        $form = new class ($this->container, $this->container->build(EventManager::class)) extends Form
+        {
+            public function buildSchema(Schema $schema): Schema
+            {
+                return $schema
+                    ->addField('status', ['type' => 'string'])
+                    ->setEnumClass('status', State::class);
+            }
+        };
+
+        $this->assertTrue(
+            $form->execute([
+                'status' => 'Draft',
+            ], false)
+        );
+
+        $this->assertSame(
+            State::Draft,
+            $form->get('status')
+        );
+    }
+
     public function testExecuteValidatesBeforeParsing(): void
     {
         $form = new class ($this->container, $this->container->build(EventManager::class)) extends Form
@@ -205,30 +229,6 @@ final class FormTest extends TestCase
         $this->assertSame(
             '1',
             $form->get('user_id')
-        );
-    }
-
-    public function testExecuteParsesUnitEnum(): void
-    {
-        $form = new class ($this->container, $this->container->build(EventManager::class)) extends Form
-        {
-            public function buildSchema(Schema $schema): Schema
-            {
-                return $schema
-                    ->addField('status', ['type' => 'string'])
-                    ->setEnumClass('status', State::class);
-            }
-        };
-
-        $this->assertTrue(
-            $form->execute([
-                'status' => 'Draft',
-            ], false)
-        );
-
-        $this->assertSame(
-            State::Draft,
-            $form->get('status')
         );
     }
 

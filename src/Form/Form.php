@@ -238,17 +238,6 @@ class Form implements EventListenerInterface
     }
 
     /**
-     * Processes the form data.
-     *
-     * @param array<string, mixed> $data The form data.
-     * @return bool Whether the form data was successfully processed.
-     */
-    protected function process(array $data): bool
-    {
-        return true;
-    }
-
-    /**
      * Parses form data using the configured schema.
      *
      * @param array<string, mixed> $data The form data.
@@ -276,5 +265,16 @@ class Form implements EventListenerInterface
         }
 
         return $parsedData;
+    }
+
+    /**
+     * Processes the form data.
+     *
+     * @param array<string, mixed> $data The form data.
+     * @return bool Whether the form data was successfully processed.
+     */
+    protected function process(array $data): bool
+    {
+        return true;
     }
 }
