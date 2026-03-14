@@ -1,13 +1,12 @@
 # Entities
 
-`Fyre\ORM\Entity` represents an individual record. It holds field values, tracks change state, collects validation errors, and serializes to arrays or JSON.
+Use entities when you want record objects with fields, dirty tracking, errors, and serialization.
 
-For the persistence layer (tables, relationships, validation/rules hooks, and query helpers), see [Models](models.md).
+Most entities are created through a model rather than by calling the entity constructor directly.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Mental model](#mental-model)
+- [Start here](#start-here)
 - [Creating entities](#creating-entities)
 - [Field access and guarding](#field-access-and-guarding)
 - [Change tracking and original values](#change-tracking-and-original-values)
@@ -18,19 +17,16 @@ For the persistence layer (tables, relationships, validation/rules hooks, and qu
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use an entity when you want a record object that can be validated, saved, serialized, and passed through save/delete workflows with dirty tracking and error state.
+Entities are a good fit when you want to:
 
-## Mental model
+- work with records as objects instead of arrays
+- track which fields changed
+- attach validation errors to a record
+- serialize a record back to an array or JSON
 
-A `Fyre\ORM\Entity` is a record-centric object:
-
-- holds fields and relationships as values
-- enforces field accessibility when you opt into guarding
-- tracks dirty fields and preserves original values
-- collects validation errors (including nested error trees)
-- serializes to arrays/JSON with support for hidden and virtual fields
+In normal ORM usage, create and patch entities through a model so schema parsing, guarding, validation, and relationship handling all run in one place.
 
 ## Creating entities
 
@@ -42,7 +38,7 @@ In normal ORM usage, you don’t manually construct entities. Instead, create an
 
 For the full workflows, see [Models](models.md), [Finding Data](finding.md), and [Saving Data](saving.md).
 
-If you use custom entity subclasses, entity class resolution is handled via the ORM’s `EntityLocator` conventions. In most applications, the only direct customization you need is adding additional namespaces to search.
+If you use custom entity subclasses, the ORM resolves them using the usual alias and namespace conventions.
 
 ## Field access and guarding
 

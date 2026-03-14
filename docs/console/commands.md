@@ -1,74 +1,47 @@
 # Console Commands
 
-The framework ships a small set of ready-to-use console commands for database migrations, queue operations, and common scaffolding tasks.
+Use console commands to run framework tasks such as migrations and queue workers, scaffold files with `make:*`, and add your own CLI tasks.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Where Commands Fit](#where-commands-fit)
-- [Running Commands](#running-commands)
-- [Database Commands](#database-commands)
-  - [`db:migrate`](#dbmigrate)
-  - [`db:rollback`](#dbrollback)
-- [Queue Commands](#queue-commands)
-  - [`queue:worker`](#queueworker)
-  - [`queue:stats`](#queuestats)
-- [Make Commands](#make-commands)
-  - [`make:command`](#makecommand)
-  - [`make:config`](#makeconfig)
-  - [`make:controller`](#makecontroller)
-  - [`make:entity`](#makeentity)
-  - [`make:form`](#makeform)
-  - [`make:helper`](#makehelper)
-  - [`make:job`](#makejob)
-  - [`make:lang`](#makelang)
-  - [`make:layout`](#makelayout)
-  - [`make:middleware`](#makemiddleware)
-  - [`make:migration`](#makemigration)
-  - [`make:model`](#makemodel)
-  - [`make:policy`](#makepolicy)
-  - [`make:cell`](#makecell)
-  - [`make:cell_template`](#makecell_template)
-  - [`make:element`](#makeelement)
-  - [`make:template`](#maketemplate)
-- [Custom Commands](#custom-commands)
+- [Start here](#start-here)
+- [Running commands](#running-commands)
+- [Built-in commands](#built-in-commands)
+  - [Database commands](#database-commands)
+  - [Queue commands](#queue-commands)
+  - [Make commands](#make-commands)
+- [Writing custom commands](#writing-custom-commands)
   - [Creating a command](#creating-a-command)
   - [Defining options](#defining-options)
   - [Implementing `run()`](#implementing-run)
+- [Method guide](#method-guide)
+  - [`CommandRunner`](#commandrunner)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use the console command system to run built-in commands (migrations, queue operations, scaffolding) and to build your own commands with the same consistent CLI behavior: argument parsing, prompting for missing required values, type conversion, and dependency injection.
+Pick a path based on what you are doing:
 
-## Where Commands Fit
+- **Running built-in commands**: start with [Running commands](#running-commands)
+- **Working with migrations**: see [Database commands](#database-commands)
+- **Working with queues**: see [Queue commands](#queue-commands)
+- **Generating classes and files**: see [Make commands](#make-commands)
+- **Adding your own CLI task**: start with [Creating a command](#creating-a-command)
 
-`CommandRunner` is the console runtime that discovers and executes commands.
+## Running commands
 
-In a typical application, you resolve `CommandRunner` from the container, usually via `Engine`, which pre-registers the `App\Commands` and `Fyre\Commands` namespaces. In a custom runtime, you can register namespaces manually on `CommandRunner`.
+Most examples on this page assume you already have a `$commandRunner` instance.
 
-`CommandRunner` discovers commands by scanning its registered namespaces for `*Command.php` files, then reflecting each command’s default `alias`, `description`, and `options` values. The command list is cached after it is first built.
-
-At runtime, each command is resolved through the container. `Console` is injected into the command constructor and stored on the command as `$this->io`. The `run()` method is then invoked through the container, which means `run()` parameters can still include both services (injected) and option values (parsed from `argv`).
-
-## Running Commands
-
-Commands are invoked by alias (for example, `db:migrate`), followed by any options.
-
-Most examples on this page assume you already have a `$commandRunner` instance (for example via dependency injection).
-
-When using the console runtime directly, `CommandRunner::handle()` accepts a normal PHP `argv` array (script name first), parses the alias and options, and returns the command’s exit code:
+When you already have a CLI `argv` array, use `CommandRunner::handle()`:
 
 ```php
 $exitCode = $commandRunner->handle($_SERVER['argv']);
 ```
 
-The first `argv` value is the script name. If you construct `argv` arrays manually (as in the examples below), the first value can be any placeholder.
+The first `argv` value is the script name. If you build an `argv` array manually, the first value can be any placeholder.
 
-When no alias is provided, `handle()` prints a table of available commands (alias, description, and option keys).
-
-`handle()` is the usual entry point for raw CLI `argv`. You can also execute a command directly (bypassing `argv` parsing) with `CommandRunner::run()`:
+When you want to run a command directly by alias, use `CommandRunner::run()`:
 
 ```php
 $exitCode = $commandRunner->run('db:migrate', [
@@ -76,58 +49,45 @@ $exitCode = $commandRunner->run('db:migrate', [
 ]);
 ```
 
-Exit codes follow `Fyre\Console\Command`:
+If no alias is provided, `handle()` prints the available command list.
 
-- `Command::CODE_SUCCESS` (`0`)
-- `Command::CODE_ERROR` (`1`)
+Command input follows a few simple rules:
 
-If the alias is invalid, or if the resolved command class does not implement `run()`, `CommandRunner::run()` prints an error and returns `Command::CODE_ERROR`.
+- `--name value` and `--name=value` are both supported
+- options without a value are treated as `true`
+- `-o value` is supported when the option key is a single character
+- positional values are matched to option keys in the order the command defines them
 
-Argument parsing rules used by the console runtime:
+For example, `db:rollback default 2 --steps 5` resolves as `db = default`, `batches = 2`, `steps = 5`.
 
-- Options are read from `--option value` or `-o value`.
-- Options without a value are treated as `true`.
-- For boolean options, values `false`, `n`, and `no` are treated as `false`; other non-empty values are treated as `true`.
-- Option names are normalized to lower camelCase (for example, `--max-runtime` becomes `maxRuntime`).
-- Non-option arguments are treated as positional values and can be used instead of named options.
+## Built-in commands
 
-`CommandRunner` resolves option values in two passes:
+### Database commands
 
-- Named values are applied first (for example, `--steps 5` becomes `['steps' => '5']`).
-- Any remaining positional values are assigned to option keys in the order the command defines them.
+#### `db:migrate`
 
-For example, given `db:rollback`’s option order (`db`, `batches`, `steps`), the `argv` equivalent of `db:rollback default 2 --steps 5` resolves as `db = default`, `batches = 2`, `steps = 5`.
-
-## Database Commands
-
-### `db:migrate`
-
-Runs all pending migrations using the configured migration namespaces.
+Runs all pending migrations.
 
 Options:
 
 - `db` (`string`): connection key (default: `ConnectionManager::DEFAULT`)
 
-This command resolves the requested connection and forwards it into `MigrationRunner`, then calls `MigrationRunner::migrate()`.
-
-For migration discovery, ordering, and rollback behavior, see [Database Migrations](../database/migrations.md).
-
-Run it via `argv` parsing:
+Examples:
 
 ```php
 $commandRunner->handle(['app', 'db:migrate']);
 $commandRunner->handle(['app', 'db:migrate', '--db', 'default']);
 ```
 
-Programmatic invocation:
-
 ```php
 $exitCode = $commandRunner->run('db:migrate', [
     'db' => 'default',
 ]);
 ```
 
-### `db:rollback`
+See [Database Migrations](../database/migrations.md) for the migration workflow itself.
+
+#### `db:rollback`
 
 Rolls back previously applied migrations.
 
@@ -137,68 +97,78 @@ Options:
 - `batches` (`int|null`): number of batches to roll back (default: `1`)
 - `steps` (`int|null`): number of migrations to roll back (default: `null`)
 
-This command resolves the requested connection and forwards it into `MigrationRunner`, then calls `MigrationRunner::rollback($batches, $steps)`.
-
-For migration discovery, ordering, and rollback behavior, see [Database Migrations](../database/migrations.md).
-
-Run it via `argv` parsing:
+Examples:
 
 ```php
 $commandRunner->handle(['app', 'db:rollback']);
 $commandRunner->handle(['app', 'db:rollback', 'default', '2', '--steps', '5']);
 ```
 
-## Queue Commands
+### Queue commands
 
-### `queue:worker`
+#### `queue:worker`
 
-Starts a background queue worker process.
+Starts a queue worker.
 
 Options:
 
 - `config` (`string`): queue handler config key (default: `QueueManager::DEFAULT`)
 - `queue` (`string`): queue name to poll (default: `Queue::DEFAULT`)
-- `maxJobs` (`int`): maximum number of jobs to process before stopping (default: `0`, unlimited)
-- `maxRuntime` (`int`): maximum runtime in seconds before stopping (default: `0`, unlimited)
+- `maxJobs` (`int`): maximum number of jobs to process before stopping (default: `0`)
+- `maxRuntime` (`int`): maximum runtime in seconds before stopping (default: `0`)
 
-This command forks a new process and runs `Worker::run()` in the child process. The parent process prints the PID and exits immediately.
-
-For the worker loop, job execution rules, and lifecycle events, see [Queue Worker](../queue/worker.md).
-
-Run it via `argv` parsing:
+Examples:
 
 ```php
 $commandRunner->handle(['app', 'queue:worker']);
 $commandRunner->handle(['app', 'queue:worker', '--max-runtime', '60']);
 ```
 
-### `queue:stats`
+See [Queue Worker](../queue/worker.md) for worker behavior and lifecycle details.
 
-Displays per-queue stats for configured queue handlers.
+#### `queue:stats`
+
+Displays queue stats.
 
 Options:
 
-- `config` (`string|null`): filter output to a single queue handler config key (default: `null`)
-- `queue` (`string|null`): filter output to a single queue name (default: `null`)
+- `config` (`string|null`): limit output to one queue handler config key
+- `queue` (`string|null`): limit output to one queue name
 
-When no filters are provided, stats are displayed for all configured queue handlers and each handler’s active queues.
-
-Run it via `argv` parsing:
+Examples:
 
 ```php
 $commandRunner->handle(['app', 'queue:stats']);
 $commandRunner->handle(['app', 'queue:stats', '--config', 'default']);
 ```
 
-## Make Commands
+### Make commands
 
-`make:*` commands generate new PHP classes and template/config files from stubs shipped with the framework. They create missing directories, but do not overwrite existing files.
+`make:*` commands generate common application files from framework stubs. They create missing directories, but they do not overwrite existing files.
 
-Namespace-based generators resolve a filesystem output path from the provided namespace. If the namespace cannot be resolved, the command fails with `Namespace path not found.`
+Namespace-based generators write to the first matching configured namespace path. Template-style generators write beneath the resolved template path and support dot notation such as `admin.posts.index`.
 
-Template-style generators accept a base `path` and write into a subfolder based on the type (layouts, elements, cells). The `template`/`file` value supports dot notation via `Make::normalizePath()` (for example, `admin.users/index` and `admin.users.index` both target nested folders).
+Common generators:
 
-Run generators via `argv` parsing:
+- `make:command` - generate a console command class
+- `make:config` - generate a config file
+- `make:controller` - generate a controller class
+- `make:entity` - generate an entity class
+- `make:form` - generate a form class
+- `make:helper` - generate a helper class
+- `make:job` - generate a job class
+- `make:lang` - generate a language file
+- `make:layout` - generate a layout template
+- `make:middleware` - generate a middleware class
+- `make:migration` - generate a migration class
+- `make:model` - generate a model class
+- `make:policy` - generate a policy class
+- `make:cell` - generate a cell class
+- `make:cell_template` - generate a cell template
+- `make:element` - generate an element template
+- `make:template` - generate a template
+
+Examples:
 
 ```php
 $commandRunner->handle(['app', 'make:controller', 'Posts']);
@@ -206,211 +176,26 @@ $commandRunner->handle(['app', 'make:migration', 'CreatePosts']);
 $commandRunner->handle(['app', 'make:template', 'admin.posts.index']);
 ```
 
-### `make:command`
-
-Generates a console command class using the `command` stub.
-
-Options:
-
-- `name` (`string`): command class name (required)
-- `alias` (`string|null`): command alias (default: derived from the class name)
-- `description` (`string|null`): description text (default: `''`)
-- `namespace` (`string|null`): target namespace (default: first registered command namespace, or `App\Commands`)
-
-When `alias` is omitted, it is generated from the class name (class short name without `Command`, converted to `snake_case` and lowercased).
-
-### `make:config`
-
-Generates a config file using the `config` stub.
-
-Options:
-
-- `file` (`string`): config file name (required)
-- `path` (`string|null`): base config path (default: first configured config path)
-
-### `make:controller`
-
-Generates a controller class using the `controller` stub.
-
-Options:
-
-- `name` (`string`): controller name (required)
-- `namespace` (`string|null`): target namespace (default: `App\Controllers`)
-
-The generated class name is suffixed with `Controller`.
-
-### `make:entity`
-
-Generates an entity class using the `entity` stub.
-
-Options:
-
-- `name` (`string`): entity name (required)
-- `namespace` (`string|null`): target namespace (default: first registered entity namespace, or `App\Entities`)
-
-### `make:form`
-
-Generates a form class using the `form` stub.
-
-Options:
-
-- `name` (`string`): form name (required)
-- `namespace` (`string|null`): target namespace (default: `App\Forms`)
-
-The generated class name is suffixed with `Form`.
-
-### `make:helper`
-
-Generates a helper class using the `helper` stub.
-
-Options:
-
-- `name` (`string`): helper name (required)
-- `namespace` (`string|null`): target namespace (default: first registered helper namespace, or `App\Helpers`)
-
-The generated class name is suffixed with `Helper`.
-
-### `make:job`
-
-Generates a job class using the `job` stub.
-
-Options:
-
-- `name` (`string`): job name (required)
-- `namespace` (`string|null`): target namespace (default: `App\Jobs`)
-
-The generated class name is suffixed with `Job`.
-
-### `make:lang`
-
-Generates a language file using the `lang` stub.
-
-Options:
-
-- `file` (`string`): language file name (required)
-- `language` (`string|null`): locale folder name (default: `Lang` default locale)
-- `path` (`string|null`): base lang path (default: first configured lang path)
-
-### `make:layout`
-
-Generates a layout template file using the `layout` stub.
-
-Options:
-
-- `template` (`string`): layout template name (required)
-- `path` (`string|null`): base template path (default: first configured template path)
-
-The output is written beneath the resolved template path in the `layouts` folder.
-
-### `make:middleware`
-
-Generates a middleware class using the `middleware` stub.
-
-Options:
-
-- `name` (`string`): middleware name (required)
-- `namespace` (`string|null`): target namespace (default: `App\Middleware`)
-
-The generated class name is suffixed with `Middleware`.
-
-### `make:migration`
-
-Generates a migration class using the `migration` stub.
-
-Options:
-
-- `name` (`string`): migration name (required)
-- `version` (`string|null`): version prefix (default: current timestamp formatted as `YmdHis`)
-- `namespace` (`string|null`): target namespace (default: first registered migration namespace, or `App\Migrations`)
-
-The generated class name is `Migration_{version}_{name}`.
-
-### `make:model`
-
-Generates a model class using the `model` stub.
-
-Options:
-
-- `name` (`string`): model name (required)
-- `namespace` (`string|null`): target namespace (default: first registered model namespace, or `App\Models`)
-
-The generated class name is suffixed with `Model`.
-
-### `make:policy`
-
-Generates a policy class using the `policy` stub.
-
-Options:
-
-- `name` (`string`): policy name (required)
-- `namespace` (`string|null`): target namespace (default: first registered policy namespace, or `App\Policies`)
-
-The generated class name is suffixed with `Policy`.
-
-### `make:cell`
-
-Generates a cell class using the `cell` stub.
-
-Options:
-
-- `name` (`string`): cell name (required)
-- `method` (`string`): generated method name (default: `display`)
-- `namespace` (`string|null`): target namespace (default: first registered cell namespace, or `App\Cells`)
-
-The generated class name is suffixed with `Cell`.
-
-### `make:cell_template`
-
-Generates a cell template file using the `cell_template` stub.
-
-Options:
-
-- `template` (`string`): cell template name (required)
-- `path` (`string|null`): base template path (default: first configured template path)
-
-The output is written beneath the resolved template path in the `cells` folder.
-
-### `make:element`
-
-Generates an element template file using the `element` stub.
-
-Options:
-
-- `template` (`string`): element template name (required)
-- `path` (`string|null`): base template path (default: first configured template path)
-
-The output is written beneath the resolved template path in the `elements` folder.
-
-### `make:template`
-
-Generates a template file using the `template` stub.
-
-Options:
-
-- `template` (`string`): template name (required)
-- `path` (`string|null`): base template path (default: first configured template path)
-
-The output is written beneath the resolved template path.
-
-## Custom Commands
+## Writing custom commands
 
 ### Creating a command
 
-If you’re using the default `Engine` setup, `CommandRunner` already discovers commands from `App\Commands` and `Fyre\Commands`. If you’re building a custom runtime, register the namespace you want to scan:
+If you are using the usual application setup, place commands in `App\Commands`. If you want to load commands from another namespace, register it with `addNamespace()`:
 
 ```php
-$commandRunner->addNamespace('App\Commands');
+$commandRunner->addNamespace('Plugin\Commands');
 ```
 
-Create a concrete class that:
+Create a command class that:
 
 - extends `Fyre\Console\Command`
-- ends with `Command` (for example, `ClearCacheCommand`)
-- lives in a namespace registered on `CommandRunner` via `addNamespace()`
+- ends with `Command`
+- defines an alias, description, and options
+- implements `run()`
 
-By default, the command alias is taken from the command’s `$alias` property. If `$alias` is `null`, it is derived from the class name (short name without `Command`, converted to `snake_case`).
+If `$alias` is `null`, the alias is generated from the class name.
 
-Example command:
+Example:
 
 ```php
 namespace App\Commands;
@@ -430,7 +215,7 @@ class ClearCacheCommand extends Command
 
     protected string|null $alias = 'app:clear-cache';
 
-    protected string $description = 'Delete a cache key (with an optional confirmation prompt).';
+    protected string $description = 'Delete a cache key.';
 
     protected array $options = [
         'cache' => [
@@ -462,7 +247,7 @@ class ClearCacheCommand extends Command
 }
 ```
 
-You can then run it by alias (for example):
+Run it by alias:
 
 ```php
 $exitCode = $commandRunner->run('app:clear-cache', [
@@ -473,44 +258,89 @@ $exitCode = $commandRunner->run('app:clear-cache', [
 
 ### Defining options
 
-Command option definitions come from the command’s `$options` property. Each option key maps to either:
+Command options come from the command's `$options` property. Each option key maps to either:
 
-- a string (used as prompt text when the option is required), or
+- a string, used as prompt text for a required value
 - an array of option metadata
 
 Supported metadata keys:
 
-- `text` (`string`): prompt text
-- `required` (`bool`): whether a value is required (missing values are prompted for)
-- `values` (`array|null`): list/map of allowed values (when `required` is `true`, missing/invalid values prompt a choice list)
-- `as` (`string`): parse type (defaults to `string`)
-- `default` (`mixed`): default value when omitted
+- `text` (`string`) - prompt text
+- `required` (`bool`) - whether a value must be provided
+- `values` (`array|null`) - allowed values
+- `as` (`string`) - parse type (defaults to `string`)
+- `default` (`mixed`) - default value when omitted
 
 ### Implementing `run()`
 
-`CommandRunner` executes the command’s `run()` method through the container:
+`run()` should accept the input values your command needs.
 
-- parameters whose names match option keys receive parsed option values
-- other parameters are resolved as services by the container
+- parameter names that match option keys receive parsed option values
+- constructor injection is a good place for shared services and `$this->io`
+- `run()` parameters are a good place for per-invocation command input
 
-That means option names and `run()` parameter names need to stay aligned for values to be passed correctly.
+If you add new namespaces after commands have already been discovered, call `clear()`, re-add the namespaces you want, and run discovery again.
 
-For command classes, prefer this split:
+## Method guide
 
-- constructor injection for `Console` and shared dependencies you want available as command state
-- `run()` parameters for CLI option values and any optional per-invocation services
+This section focuses on the `CommandRunner` methods you are most likely to call directly.
 
-If you change registered namespaces or add new command classes after the command list is built, call `clear()` and then re-register any namespaces you want to scan, or create a fresh `CommandRunner` instance.
+### `CommandRunner`
+
+#### **Run a command from `argv`** (`handle()`)
+
+Parse a CLI-style `argv` array, run the resolved command, and return the exit code.
+
+Arguments:
+- `$argv` (`string[]`): the CLI arguments, including the script name as the first item.
+
+```php
+$exitCode = $commandRunner->handle($_SERVER['argv']);
+```
+
+#### **Run a command by alias** (`run()`)
+
+Run a command directly by alias.
+
+Arguments:
+- `$alias` (`string`): the command alias.
+- `$arguments` (`array<string|true>`): parsed option and argument values.
+
+```php
+$exitCode = $commandRunner->run('db:migrate', [
+    'db' => 'default',
+]);
+```
+
+#### **Add a command namespace** (`addNamespace()`)
+
+Register a namespace used for command discovery.
+
+Arguments:
+- `$namespace` (`string`): the namespace to add.
+
+```php
+$commandRunner->addNamespace('Plugin\Commands');
+```
+
+#### **Reset discovered commands** (`clear()`)
+
+Reset command discovery state.
+
+```php
+$commandRunner->clear();
+$commandRunner->addNamespace('App\\Commands');
+```
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
+A few practical details are worth keeping in mind:
 
-- Long options support both `--db default` and `--db=default`.
-- `-o` is supported, but built-in commands do not define single-letter option keys, so prefer `--name`, `--file`, `--template`, and similar.
-- Positional arguments are mapped to option keys in the order the command defines them; mixing positional and named values can be confusing.
-- `queue:worker` requires process forking; if `pcntl_fork()` is unavailable, the worker cannot be started this way.
-- `make:*` commands will not overwrite files and will fail when the target path already exists.
+- long options support both `--db default` and `--db=default`
+- positional arguments follow the option order defined by the command
+- `clear()` also removes registered namespaces, so add them again before rediscovering commands
+- `queue:worker` requires process forking (`ext-pcntl`)
+- `make:*` commands do not overwrite existing files
 
 ## Related
 

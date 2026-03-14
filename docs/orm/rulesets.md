@@ -1,10 +1,12 @@
 # Rule Sets
 
-`Fyre\ORM\RuleSet` provides model-level integrity rules that run as part of the ORM save workflow. Use it for checks like uniqueness and foreign-key existence that depend on the database and the current model configuration.
+Use rule sets when you need save-time integrity checks such as uniqueness or foreign-key existence.
+
+Rule sets are for model and database integrity, not for validating raw user input.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Where rule sets run](#where-rule-sets-run)
 - [Defining rules](#defining-rules)
   - [Building rules in a model](#building-rules-in-a-model)
@@ -16,14 +18,18 @@
   - [`RuleSet::isClean()`](#rulesetisclean)
 - [Error messages and language keys](#error-messages-and-language-keys)
 - [Method guide](#method-guide)
-  - [RuleSet methods](#ruleset-methods)
+  - [`RuleSet` methods](#ruleset-methods)
   - [Model hooks](#model-hooks)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use rule sets to enforce model/entity integrity that typically requires database context, for example uniqueness or the existence of related rows.
+Use rule sets when you want to:
+
+- check constraints that depend on existing database state
+- attach save errors to an entity
+- block a save when a model-level rule fails
 
 Rule sets are distinct from validation:
 
@@ -36,7 +42,7 @@ Rules run during `Model::save()` and `Model::saveMany()` when `$checkRules` is e
 
 At a high level, the workflow looks like this:
 
-1. The ORM checks for obvious short-circuits (for example: not new and not dirty, or the entity already has errors).
+1. The save can return early if the entity already has errors or no changes.
 2. If rule checks are enabled, the model runs its `RuleSet` against the entity.
 3. If any rule fails, the save fails.
 
@@ -44,7 +50,7 @@ At a high level, the workflow looks like this:
 
 ### Building rules in a model
 
-Override `Model::buildRules(RuleSet $rules): RuleSet` in your model to register the rules you want. The ORM builds and caches the `RuleSet` on first use per model instance.
+Override `Model::buildRules(RuleSet $rules): RuleSet` in your model to register the rules you want. The model builds the `RuleSet` the first time it needs it.
 
 ```php
 use Fyre\ORM\Model;
@@ -147,7 +153,7 @@ $rules->add(RuleSet::isUnique(['email']));
 Notes:
 
 - For updates, the current entity’s primary key is excluded from the uniqueness check.
-- If `$allowMultipleNulls` is `true`, any nullable `null` value in the checked fields short-circuits to pass the rule.
+- If `$allowMultipleNulls` is `true`, any nullable `null` value in the checked fields makes the rule pass immediately.
 - The check is performed using an ORM `find()` query with events disabled (`events: false`).
 
 ### `RuleSet::existsIn()`
@@ -163,7 +169,7 @@ $rules->add(RuleSet::existsIn(['role_id'], 'Roles'));
 Notes:
 
 - The relationship name must exist on the model (`$model->getRelationship($name)` must resolve).
-- By default (`$allowNullableNulls === null`), the rule can short-circuit to pass when **all** values are `null` and at least one of the involved columns is nullable.
+- By default (`$allowNullableNulls === null`), the rule can pass immediately when **all** values are `null` and at least one of the involved columns is nullable.
 - The check is performed against the target model using an ORM `find()` query with events disabled (`events: false`).
 - You can provide `$targetFields` to match against non-primary fields, and a query callback to further constrain the lookup.
 
@@ -180,7 +186,7 @@ $rules->add(RuleSet::isClean(['email_verified_at']));
 Notes:
 
 - New entities always pass this rule.
-- Only fields that are dirty are considered; non-dirty fields short-circuit to pass.
+- Only fields that are dirty are considered; unchanged fields pass immediately.
 
 ## Error messages and language keys
 
@@ -194,7 +200,7 @@ If no language value is available, the rules fall back to `'invalid'`.
 
 ## Method guide
 
-### RuleSet methods
+### `RuleSet` methods
 
 #### **Unique constraint** (`RuleSet::isUnique()`)
 
@@ -202,7 +208,7 @@ Create a rule closure that checks whether the given fields are unique in the mod
 
 Arguments:
 - `$fields` (`string[]`): the fields to check for uniqueness.
-- `$allowMultipleNulls` (`bool`): whether nullable `null` values should short-circuit to pass.
+- `$allowMultipleNulls` (`bool`): whether nullable `null` values should pass immediately.
 - `$callback` (`Closure|null`): an optional callback to further constrain the query.
 - `$message` (`string|null`): an optional error message to use instead of language lookup.
 
@@ -219,7 +225,7 @@ Create a rule closure that checks whether the given local fields match an existi
 Arguments:
 - `$fields` (`string[]`): the local fields to match.
 - `$name` (`string`): the relationship name on the model.
-- `$allowNullableNulls` (`bool|null`): whether nullable `null` values should short-circuit to pass.
+- `$allowNullableNulls` (`bool|null`): whether nullable `null` values should pass immediately.
 - `$targetFields` (`string[]|null`): target fields to match against (defaults to the target primary key).
 - `$callback` (`Closure|null`): an optional callback to further constrain the query.
 - `$message` (`string|null`): an optional error message to use instead of language lookup.
@@ -304,9 +310,9 @@ class UsersModel extends Model
 
 A few behaviors are worth keeping in mind:
 
-- Rule checks only run when `$checkRules` is enabled and the ORM does not short-circuit the save (for example: the entity already has errors, or it is neither new nor dirty).
+- Rule checks only run when `$checkRules` is enabled and the save has not already returned early because the entity has errors or no changes.
 - `RuleSet::validate()` runs all rules; it does not stop at the first failure.
-- Built-in rules commonly short-circuit: empty field lists and “not dirty” fields usually return `true` without querying.
+- Built-in rules often return early for cases like empty field lists or unchanged fields.
 - `existsIn()` requires the relationship to exist; if it does not, an assertion may fail at runtime (depending on how PHP assertions are configured).
 - Query-based rules disable ORM events for the constraint check (`events: false`), so event-driven behavior will not influence rule queries.
 - If ORM events are enabled, `ORM.beforeRules` is dispatched before validation. `ORM.afterRules` is dispatched only after validation succeeds.

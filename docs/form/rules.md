@@ -1,29 +1,31 @@
 # Validation Rules
 
-`Fyre\Form\Rule` provides factory methods for common validations. Each factory returns a configured `Rule` instance that wraps a callback and metadata (name, arguments, skip behavior).
+Use built-in rule factories when you want consistent, reusable validation checks.
+
+Each `Rule::*()` factory returns a `Rule` object you can attach to a validator.
 
 For how rules are attached to a validator and executed, see [Validators](validators.md).
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Rule Factories and Skip Behavior](#rule-factories-and-skip-behavior)
-- [Common Patterns](#common-patterns)
+- [Start here](#start-here)
+- [Rule factories and skip behavior](#rule-factories-and-skip-behavior)
+- [Common patterns](#common-patterns)
   - [Optional format check](#optional-format-check)
   - [Required + format](#required--format)
   - [Require presence vs required](#require-presence-vs-required)
   - [Cross-field matching](#cross-field-matching)
-- [Text Rules](#text-rules)
-- [Numeric Rules](#numeric-rules)
-- [Length Rules](#length-rules)
-- [Comparison Rules](#comparison-rules)
-- [Membership and Format Rules](#membership-and-format-rules)
-- [Cross-field Rules](#cross-field-rules)
-- [Presence and Emptiness Rules](#presence-and-emptiness-rules)
-- [Date and Time Rules](#date-and-time-rules)
+- [Text rules](#text-rules)
+- [Numeric rules](#numeric-rules)
+- [Length rules](#length-rules)
+- [Comparison rules](#comparison-rules)
+- [Membership and format rules](#membership-and-format-rules)
+- [Cross-field rules](#cross-field-rules)
+- [Presence and emptiness rules](#presence-and-emptiness-rules)
+- [Date and time rules](#date-and-time-rules)
 - [Related](#related)
 
-## Purpose
+## Start here
 
 Use built-in rule factories when you want consistent, reusable validation logic.
 
@@ -35,7 +37,7 @@ If you’re not sure where to start:
 
 In this subsystem, “empty” means `null`, empty string, or empty array.
 
-## Rule Factories and Skip Behavior
+## Rule factories and skip behavior
 
 Most `Rule::*()` factories default to:
 
@@ -48,7 +50,7 @@ So a rule is typically evaluated only when a field is present and non-empty, unl
 - `Rule::required()` — does not skip empty values and does not skip when the field is not set.
 - `Rule::requirePresence()` — does not skip empty values and does not skip when the field is not set.
 
-## Common Patterns
+## Common patterns
 
 Most examples below assume you already have a `$validator` instance.
 
@@ -86,20 +88,20 @@ Use `matches()` when one field must match another (for example, password confirm
 $validator->add('password_confirm', Rule::matches('password'), name: 'matches');
 ```
 
-## Text Rules
+## Text rules
 
 - `Rule::alpha()` — value is scalar and consists of letters only (`ctype_alpha`).
 - `Rule::alphaNumeric()` — value is scalar and consists of letters/digits only (`ctype_alnum`).
 - `Rule::ascii()` — value is scalar and consists of printable characters only (`ctype_print`).
 
-## Numeric Rules
+## Numeric rules
 
 - `Rule::integer()` — value validates as an integer (`FILTER_VALIDATE_INT`).
 - `Rule::decimal()` — value validates as a float (`FILTER_VALIDATE_FLOAT`).
 - `Rule::naturalNumber()` — value is scalar and consists of digits only (`ctype_digit`).
 - `Rule::boolean()` — value validates as a boolean (`FILTER_VALIDATE_BOOLEAN` with `FILTER_NULL_ON_FAILURE`).
 
-## Length Rules
+## Length rules
 
 Length rules use `strlen((string) $value)` (byte length):
 
@@ -107,7 +109,7 @@ Length rules use `strlen((string) $value)` (byte length):
 - `Rule::minLength(int $length)`
 - `Rule::maxLength(int $length)`
 
-## Comparison Rules
+## Comparison rules
 
 Comparison rules compare `$value` directly:
 
@@ -117,7 +119,7 @@ Comparison rules compare `$value` directly:
 - `Rule::lessThan(int $max)` — `$value < $max`
 - `Rule::lessThanOrEquals(int $max)` — `$value <= $max`
 
-## Membership and Format Rules
+## Membership and format rules
 
 - `Rule::in(string[] $values)` — strict membership (`in_array(..., true)`).
 - `Rule::equals(mixed $other)` — loose equality (`==`).
@@ -128,21 +130,21 @@ Comparison rules compare `$value` directly:
 - `Rule::ipv4()` — IPv4 validation (`FILTER_VALIDATE_IP` + IPv4 flag).
 - `Rule::ipv6()` — IPv6 validation (`FILTER_VALIDATE_IP` + IPv6 flag).
 
-## Cross-field Rules
+## Cross-field rules
 
 These rules compare the current field value against another field in the same input data array:
 
 - `Rule::matches(string $field)` — strict match (`===`) against `$data[$field]`.
 - `Rule::differs(string $field)` — strict difference (`!==`) against `$data[$field]`.
 
-## Presence and Emptiness Rules
+## Presence and emptiness rules
 
 - `Rule::notEmpty()` — fails when the value is `null`, `''`, or `[]` (and does not skip empty values).
 - `Rule::required()` — requires the field to be present and not `''`/`[]`; `null` is treated as missing (uses `isset()`).
 - `Rule::requirePresence()` — requires the field key to exist in the data (uses `array_key_exists()`), so `null` counts as present.
 - `Rule::empty()` — always fails when evaluated; with default skip behavior this effectively enforces “must be empty or not set”.
 
-## Date and Time Rules
+## Date and time rules
 
 These rules accept common string inputs and validate them by parsing through the DB type parser:
 

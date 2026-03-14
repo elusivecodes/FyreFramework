@@ -1,10 +1,12 @@
 # Deleting Data
 
-Deleting in the ORM can be entity-first (`delete()`/`deleteMany()`) via `Fyre\ORM\Model`, or bulk (`deleteAll()`). Entity deletes support events and optional cascading into relationships, while bulk deletes are direct table operations.
+Use entity deletes when you want relationship-aware deletes, lifecycle events, or soft-delete behavior.
+
+Use `deleteAll()` when you want a direct bulk delete without entities.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Deleting entities](#deleting-entities)
   - [`delete()`](#delete)
   - [`deleteMany()`](#deletemany)
@@ -15,11 +17,15 @@ Deleting in the ORM can be entity-first (`delete()`/`deleteMany()`) via `Fyre\OR
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use entity deletes when you need lifecycle hooks (events), relationship-aware cascading, or soft-delete behavior. Use `deleteAll()` when you want a fast, direct table delete without hydrating entities.
+Choose the delete style based on what you need:
 
-Most examples assume you already have a model instance (for example, `$Users`). When an example uses a different model variable (for example, `$Sessions`), assume it exists too.
+- use `delete()` or `deleteMany()` when callbacks, cascades, or traits should run
+- use `deleteAll()` when you want a direct table delete
+- use `SoftDeleteTrait` when deletes should mark rows instead of removing them
+
+Most examples on this page assume you already have a model instance such as `$Users`.
 
 ## Deleting entities
 

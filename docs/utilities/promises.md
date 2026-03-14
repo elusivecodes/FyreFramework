@@ -1,31 +1,26 @@
 # Promises
 
-`Promise` (`Fyre\Utility\Promise\Promise`) and `AsyncPromise` (`Fyre\Utility\Promise\AsyncPromise`) provide a small, chainable abstraction for deferred results: handle success, handle failure, and compose multiple operations without deeply nested callbacks.
+Use promises when you want to represent a value later and compose follow-up work with `then()`, `catch()`, and `finally()` instead of nested callbacks.
 
-In Fyre, `Promise` settles synchronously during construction, while `AsyncPromise` runs work in a forked child process and is settled once you poll/wait for it.
+Use `Promise` when the work can run in the current process and you mainly want chaining. Use `AsyncPromise` for CLI workloads you want to run in a forked child process and wait on later.
 
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
-- [`Promise` model](#promise-model)
-- [Environment constraints](#environment-constraints)
+- [Start here](#start-here)
+- [Choosing `Promise` or `AsyncPromise`](#choosing-promise-or-asyncpromise)
+- [Environment requirements](#environment-requirements)
 - [Method guide](#method-guide)
-  - [Chaining (PromiseInterface)](#chaining-promiseinterface)
-  - [Creating and converting (Promise)](#creating-and-converting-promise)
-  - [Waiting and composition (Promise)](#waiting-and-composition-promise)
-  - [Running work in a child process (AsyncPromise)](#running-work-in-a-child-process-asyncpromise)
+  - [Chaining (`PromiseInterface`)](#chaining-promiseinterface)
+  - [Creating and converting (`Promise`)](#creating-and-converting-promise)
+  - [Waiting and composition (`Promise`)](#waiting-and-composition-promise)
+  - [Running work in a child process (`AsyncPromise`)](#running-work-in-a-child-process-asyncpromise)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use promises when you want to represent a value later and compose follow-up work with `then()` / `catch()` / `finally()` instead of nested callbacks.
-
-`Promise` is synchronous and best for “wrap this operation and chain handlers”. `AsyncPromise` is for CPU-bound or blocking work you want to run in parallel from a CLI process.
-
-## Quick start
+`Promise` is synchronous and best for "wrap this operation and chain handlers". `AsyncPromise` is for CPU-bound or blocking work you want to run in parallel from a CLI process.
 
 ```php
 use Fyre\Utility\Promise\Promise;
@@ -53,7 +48,7 @@ $promise = new AsyncPromise(function(Closure $resolve, Closure $reject): void {
 $result = Promise::await($promise);
 ```
 
-## `Promise` model
+## Choosing `Promise` or `AsyncPromise`
 
 A promise can settle in one of two ways:
 
@@ -73,7 +68,7 @@ To create a promise:
 - `Promise` supports a zero-argument callback (the return value becomes the fulfillment value), or a callback that receives `resolve`/`reject` callbacks.
 - `AsyncPromise` runs the callback in a child process; the callback should accept `resolve`/`reject` parameters and call exactly one of them.
 
-## Environment constraints
+## Environment requirements
 
 `AsyncPromise` depends on forking and IPC and is only suitable when the runtime allows it:
 
@@ -89,7 +84,7 @@ Use `Promise::await()` when you want to block and unwrap the final value.
 
 Examples below assume `Promise` refers to `Fyre\Utility\Promise\Promise` and `AsyncPromise` refers to `Fyre\Utility\Promise\AsyncPromise`.
 
-### Chaining (PromiseInterface)
+### Chaining (`PromiseInterface`)
 
 #### **Transform a settled value** (`then()`)
 
@@ -135,7 +130,7 @@ $value = Promise::resolve('ok')
     });
 ```
 
-### Creating and converting (Promise)
+### Creating and converting (`Promise`)
 
 #### **Wrap a value as a promise** (`Promise::resolve()`)
 
@@ -161,7 +156,7 @@ use Exception;
 $promise = Promise::reject(new Exception('nope'));
 ```
 
-### Waiting and composition (Promise)
+### Waiting and composition (`Promise`)
 
 #### **Block for a promise result** (`Promise::await()`)
 
@@ -210,7 +205,7 @@ Arguments:
 $race = Promise::race([Promise::resolve('first'), Promise::resolve('second')]);
 ```
 
-### Running work in a child process (AsyncPromise)
+### Running work in a child process (`AsyncPromise`)
 
 #### **Wait for settlement** (`AsyncPromise::wait()`)
 

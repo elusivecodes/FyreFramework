@@ -1,24 +1,23 @@
 # `TestCase`
 
-`TestCase` is the base PHPUnit test case for framework-powered tests. It uses the shared application `Engine` instance for each test, clears scoped services, and integrates with fixtures when you opt in.
+Use `Fyre\TestSuite\TestCase` as the base class for framework-powered PHPUnit tests.
+
+It gives each test access to the shared application engine, clears scoped services before each test, and can load fixtures automatically when you opt in.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
+- [Start here](#start-here)
 - [Using fixtures](#using-fixtures)
 - [Method guide](#method-guide)
   - [`TestCase`](#testcase)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Extend `Fyre\TestSuite\TestCase` when you want your tests to run against the framework engine, and when you want the option to apply fixtures automatically per test.
+Extend `TestCase` when your test needs the framework engine or any of the testing traits.
 
-`TestCase` expects a shared `Engine` instance to already be available via `Engine::getInstance()`.
-
-## Quick start
+`TestCase` expects a shared `Engine` instance to already be available through `Engine::getInstance()`.
 
 ```php
 use Fyre\TestSuite\TestCase;
@@ -49,7 +48,7 @@ final class UsersTableTest extends TestCase
 }
 ```
 
-For full fixture definitions, discovery rules, and examples, see [Fixtures](fixtures.md).
+For fixture definitions, discovery rules, and examples, see [Fixtures](fixtures.md).
 
 ## Method guide
 
@@ -59,7 +58,7 @@ Most examples assume you’re in a `TestCase`.
 
 #### **Skip a test when a condition is true** (`skipIf()`)
 
-Skip the current test by calling PHPUnit’s `markTestSkipped()` when the condition is true.
+Skip the current test when the condition is true.
 
 Arguments:
 - `$condition` (`bool`): whether to skip the test.
@@ -71,7 +70,7 @@ $this->skipIf(!extension_loaded('pdo_mysql'), 'pdo_mysql is required for this te
 
 #### **Skip a test unless a condition is true** (`skipUnless()`)
 
-Skip the current test by calling PHPUnit’s `markTestSkipped()` unless the condition is true.
+Skip the current test unless the condition is true.
 
 Arguments:
 - `$condition` (`bool`): whether the test can run.
@@ -85,8 +84,8 @@ $this->skipUnless(PHP_VERSION_ID >= 80500, 'PHP 8.5+ is required for this test.'
 
 A few behaviors are worth keeping in mind:
 
-- When fixtures are enabled via `$fixtures`, `TestCase` applies and truncates fixtures with foreign key checks temporarily disabled (via the active database connection).
-- `TestCase` uses the existing shared `Engine` instance from `Engine::getInstance()`; it does not construct or boot a fresh application by itself.
+- When fixtures are enabled via `$fixtures`, `TestCase` applies and truncates fixtures with foreign key checks temporarily disabled on the active database connection.
+- `TestCase` uses the existing shared `Engine` instance from `Engine::getInstance()` and does not boot a fresh application by itself.
 - `TestCase` calls `$this->app->clearScoped()` in `setUp()`, so scoped services do not leak across tests.
 
 ## Related

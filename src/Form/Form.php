@@ -14,9 +14,9 @@ use Fyre\Utility\EnumHelper;
 /**
  * Represents a form.
  *
- * Note: Forms are executed by parsing input values using the configured {@see Schema} field
- * types, optionally validating the parsed data using the configured {@see Validator}, and
- * then processing the data via {@see process()}.
+ * Note: Forms are executed by optionally validating raw input data using the configured
+ * {@see Validator}, then parsing input values using the configured {@see Schema} field
+ * types, and finally processing the parsed data via {@see process()}.
  */
 class Form implements EventListenerInterface
 {
@@ -79,9 +79,10 @@ class Form implements EventListenerInterface
     /**
      * Executes the form validation and processing.
      *
-     * Note: Data keys that are not present in the {@see Schema} are preserved unchanged.
-     * Schema fields are parsed via {@see Field::type()} {@see Type::parse()}, then converted
-     * to enum cases when the field has an enum class configured.
+     * Note: If validation is enabled, raw input data is validated before schema parsing. Data
+     * keys that are not present in the {@see Schema} are preserved unchanged. Schema fields are
+     * parsed via {@see Field::type()} {@see Type::parse()}, then converted to enum cases when
+     * the field has an enum class configured.
      *
      * @param array<string, mixed> $data The form data.
      * @param bool $validate Whether to validate the form data.
@@ -89,28 +90,13 @@ class Form implements EventListenerInterface
      */
     public function execute(array $data, bool $validate = true): bool
     {
-        $schema = $this->getSchema();
+        $this->data = $data;
 
-        $this->data = [];
-        foreach ($data as $key => $value) {
-            if (!$schema->hasField($key)) {
-                $this->data[$key] = $value;
-
-                continue;
-            }
-
-            $field = $schema->field($key);
-            $value = $field->type()->parse($value);
-            $enumClass = $field->getEnumClass();
-
-            $this->data[$key] = $enumClass ?
-                EnumHelper::parseValue($enumClass, $value) :
-                $value;
-        }
-
-        if ($validate && !$this->validate($this->data)) {
+        if ($validate && !$this->validate($data)) {
             return false;
         }
+
+        $this->data = $this->parseData($data);
 
         return $this->process($this->data);
     }
@@ -260,5 +246,35 @@ class Form implements EventListenerInterface
     protected function process(array $data): bool
     {
         return true;
+    }
+
+    /**
+     * Parses form data using the configured schema.
+     *
+     * @param array<string, mixed> $data The form data.
+     * @return array<string, mixed> The parsed data.
+     */
+    protected function parseData(array $data): array
+    {
+        $schema = $this->getSchema();
+
+        $parsedData = [];
+        foreach ($data as $key => $value) {
+            if (!$schema->hasField($key)) {
+                $parsedData[$key] = $value;
+
+                continue;
+            }
+
+            $field = $schema->field($key);
+            $value = $field->type()->parse($value);
+            $enumClass = $field->getEnumClass();
+
+            $parsedData[$key] = $enumClass ?
+                EnumHelper::parseValue($enumClass, $value) :
+                $value;
+        }
+
+        return $parsedData;
     }
 }

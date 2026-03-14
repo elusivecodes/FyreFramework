@@ -1,6 +1,6 @@
 # Security
 
-Security docs cover request-level primitives for protecting state-changing requests, tightening browser security boundaries, encrypting application data, and throttling abusive traffic.
+Security covers CSRF protection, Content Security Policy, encryption, and rate limiting.
 
 ## Table of Contents
 
@@ -12,20 +12,28 @@ Security docs cover request-level primitives for protecting state-changing reque
 
 Pick a path based on what you’re trying to protect:
 
-- **Browser form submissions**: start with [CSRF](csrf.md) (tokens, token sources, and middleware behavior).
-- **HTML response hardening**: start with [Content Security Policy (CSP)](csp.md) (policies, report-only mode, and response header emission).
-- **Abusive traffic**: start with [Rate Limiting](rate-limiting.md) (strategies, identifiers/cost, and middleware integration).
-- **Sensitive values outside the process**: start with [Encryption](encryption.md) (encrypters, key handling, and common workflows).
+- **Browser form submissions**: start with [CSRF](csrf.md)
+- **HTML response hardening**: start with [Content Security Policy (CSP)](csp.md)
+- **Abusive traffic**: start with [Rate Limiting](rate-limiting.md)
+- **Sensitive values outside the process**: start with [Encryption](encryption.md)
 
 ## Security overview
 
-In Fyre, many security features are applied at the HTTP boundary (middleware and response headers), while keeping the core APIs usable anywhere services are available.
+Most applications use the security section in two ways:
 
-Most applications will apply these features centrally through [HTTP Middleware](../http/middleware.md), and then read request attributes or helpers when rendering HTML (for example, CSRF and CSP nonces).
+- **At the HTTP boundary**: middleware and response headers protect requests and responses
+- **At storage boundaries**: encryption protects values that leave the process
+
+The main pieces are straightforward:
+
+- `CsrfProtection` issues and validates CSRF tokens
+- `ContentSecurityPolicy` builds CSP headers and works with nonce helpers
+- `RateLimiterMiddleware` throttles requests based on identifiers and cost
+- `EncryptionManager` gives you named encrypters for encrypting and decrypting values
 
 ## Pages in this section
 
-- [CSRF](csrf.md) — CSRF tokens, token sources, and middleware behavior.
-- [Content Security Policy (CSP)](csp.md) — CSP policies, report-only mode, and response header emission.
-- [Rate Limiting](rate-limiting.md) — limiter strategies, identifiers and cost, and middleware integration.
-- [Encryption](encryption.md) — encrypter handlers, shared instances, and common encryption workflows.
+- [CSRF](csrf.md) - protect state-changing requests with cookie and form/header tokens
+- [Content Security Policy (CSP)](csp.md) - build CSP headers, report-only policies, and view nonces
+- [Rate Limiting](rate-limiting.md) - throttle requests by identifier, limit, and cost
+- [Encryption](encryption.md) - encrypt and decrypt values with named encrypters

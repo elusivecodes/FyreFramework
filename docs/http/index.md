@@ -1,6 +1,6 @@
 # HTTP
 
-HTTP covers request/response messages, middleware execution, session integration, and making outbound HTTP calls.
+HTTP covers incoming requests, outgoing responses, middleware, sessions, and the outbound HTTP client.
 
 ## Table of Contents
 
@@ -10,40 +10,36 @@ HTTP covers request/response messages, middleware execution, session integration
 
 ## Start here
 
-Pick a path based on what you’re doing:
+Pick the path that matches what you are doing:
 
-- **Handling inbound requests**: start with [HTTP Requests](requests.md) and [HTTP Responses](responses.md), then learn the [HTTP Middleware](middleware.md) pipeline and the [Request Handler](request-handler.md).
-- **Calling external services**: start with the [HTTP Client](client.md) (then see [HTTP Client](client.md#handlers) for transport handlers and [HTTP Client](client.md#testing) for mocks).
-- **Working with sessions**: see [Sessions](sessions.md) (typically initialized via middleware).
+- **Handling incoming requests**: [HTTP Requests](requests.md) -> [HTTP Responses](responses.md) -> [HTTP Middleware](middleware.md)
+- **Running request flow through middleware**: [HTTP Middleware](middleware.md) -> [Request Handler](request-handler.md)
+- **Working with sessions**: [Sessions](sessions.md)
+- **Calling external services**: [HTTP Client](client.md)
+- **Working with URLs and user agents**: [URI](uri.md) and [User Agents](user-agents.md)
 
 ## HTTP overview
 
-This section documents the framework’s HTTP primitives (requests, responses, middleware, sessions, and URL utilities) and how they fit together, using PSR-7 messages, PSR-15 middleware, and a PSR-18 HTTP client.
+Most applications use the HTTP section in two ways:
 
-In practice, the HTTP layer is a small set of collaborating pieces:
+- **Inbound HTTP**: read a request, pass it through middleware, and return a response
+- **Outbound HTTP**: send requests to other services with the HTTP client
 
-- Requests and responses are PSR-7 message objects your code reads from and returns.
-- Middleware (PSR-15) composes request handling into an ordered pipeline, ending in a response.
-- Sessions are attached to requests and typically managed by middleware during the pipeline.
-- The HTTP client (PSR-18) provides outbound requests, response handling, and test-friendly hooks.
-- URI and user agent utilities cover common parsing and inspection tasks.
+The core pieces are straightforward:
 
-If you want a simple mental model:
-
-- **Inbound flow**: `ServerRequest` → middleware queue → router/handler → `Response` → emitter
-- **Outbound flow**: `Client` → handler (cURL/mock/custom) → `Client\Response`
-
-Note: Inbound request handlers typically return `Fyre\Http\ClientResponse` (a server-friendly PSR-7 response). Outbound calls return `Fyre\Http\Client\Response` (the client response wrapper).
-
-If you’re working on inbound HTTP handling, start with requests/responses and the middleware pipeline. For outbound calls, start with the HTTP client.
+- `ServerRequest` gives you request data, headers, uploads, locale negotiation, and request attributes
+- `ClientResponse` and its subclasses help you return HTML, JSON, redirects, downloads, and cookies
+- `MiddlewareQueue` and `RequestHandler` run shared request logic in order
+- `Session` manages per-user state across requests
+- `Client` makes outbound HTTP calls and returns client responses
 
 ## Pages in this section
 
-- [HTTP Requests](requests.md) — reading input, uploaded files, attributes, and request utilities.
-- [HTTP Responses](responses.md) — response types, headers/cookies, and emitting responses.
-- [HTTP Middleware](middleware.md) — middleware pipeline model, queue, and registry.
-- [Request Handler](request-handler.md) — how middleware is executed and how fallbacks work.
-- [HTTP Client](client.md) — making outbound requests, handlers, and testing.
-- [Sessions](sessions.md) — session lifecycle and request integration.
-- [URI](uri.md) — parsing and manipulating URIs, queries, and paths.
-- [User Agents](user-agents.md) — parsing and identifying browsers, platforms, and bots.
+- [HTTP Requests](requests.md) - read request data, uploaded files, context, and attributes
+- [HTTP Responses](responses.md) - return HTML, JSON, redirects, downloads, and cookies
+- [HTTP Middleware](middleware.md) - define the middleware queue and register aliases or groups
+- [Request Handler](request-handler.md) - execute a middleware queue and hand off to a fallback handler
+- [HTTP Client](client.md) - make outbound HTTP requests and work with client responses
+- [Sessions](sessions.md) - store state across requests and configure session handlers
+- [URI](uri.md) - read and update URI parts, query parameters, and path segments
+- [User Agents](user-agents.md) - identify browsers, platforms, bots, and mobile devices

@@ -70,7 +70,7 @@ abstract class Fixture
      */
     public function getModel(): Model
     {
-        return $this->model ??= $this->modelRegistry->use($this->getClassAlias());
+        return $this->model ??= $this->getClassAlias() |> $this->modelRegistry->use(...);
     }
 
     /**
@@ -107,6 +107,6 @@ abstract class Fixture
     public function truncate(): void
     {
         $model = $this->getModel();
-        $model->getConnection()->truncate($model->getTable());
+        $model->getTable() |> $model->getConnection()->truncate(...);
     }
 }

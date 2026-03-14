@@ -1,69 +1,41 @@
 # Schema
 
-Schema reads the structure of an existing database (introspection): tables, columns, indexes, and foreign keys. Schema objects are resolved per connection type, so the same code can work across supported drivers.
+Use `Schema` when you need to inspect an existing database: list tables, read columns, or check indexes and foreign keys.
 
-See [Database connections](connections.md) for connection setup, [Forge](forge.md) for schema modification (DDL), and [Database Migrations](migrations.md) for applying schema changes over time.
+Use [Forge](forge.md) or [Database Migrations](migrations.md) when you need to change structure instead of read it.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Mental model](#mental-model)
-- [Getting a Schema instance](#getting-a-schema-instance)
+- [Start here](#start-here)
 - [Working with schema objects](#working-with-schema-objects)
   - [Performance note: parsing default values](#performance-note-parsing-default-values)
-- [Driver-specific handlers](#driver-specific-handlers)
-  - [Driver-specific metadata](#driver-specific-metadata)
+- [Driver-specific metadata](#driver-specific-metadata)
+  - [Built-in schema handlers](#built-in-schema-handlers)
+  - [Extra metadata](#extra-metadata)
 - [Method guide](#method-guide)
   - [`SchemaRegistry`](#schemaregistry)
   - [`Schema`](#schema-1)
   - [`Table`](#table)
   - [`Column`](#column)
-  - [`Index`](#index)
-  - [`ForeignKey`](#foreignkey)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use Schema when code needs to *observe* database structure:
-
-- Detect whether a table exists.
-- List tables and iterate table definitions.
-- Inspect columns, indexes, and foreign keys for a table.
-
-For applying schema changes, use [Forge](forge.md) (DDL) or [Database Migrations](migrations.md) (repeatable DDL over time).
-
-## Mental model
-
-`SchemaRegistry` resolves a database-specific `Schema` implementation for a `Connection` and caches that `Schema` per connection object using a `WeakMap`.
-
-- `Schema` provides access to tables and a shared caching mechanism for introspection reads.
-- `Table` provides access to a table’s columns, indexes, and foreign keys (loaded lazily).
-- `Column`, `Index`, and `ForeignKey` represent metadata objects built from introspection results.
-
-## Getting a Schema instance
-
-Use `SchemaRegistry::use()` to resolve a `Schema` for a connection.
-
-Most examples on this page assume you already have a `$schema` (`Schema`) instance.
-
-Resolve it directly from the registry and a connection:
-
-```php
-use Fyre\DB\ConnectionManager;
-use Fyre\DB\Schema\SchemaRegistry;
-
-$connection = app(ConnectionManager::class)->use();
-$schema = app(SchemaRegistry::class)->use($connection);
-```
-
-You can resolve the connection part more tersely:
+Resolve a `Schema` from a connection, then open the tables you want to inspect.
 
 ```php
 use Fyre\DB\Schema\SchemaRegistry;
 
-$schema = app(SchemaRegistry::class)->use(db());
+$db = db();
+$schema = app(SchemaRegistry::class)->use($db);
 ```
+
+Common tasks:
+
+- call `hasTable()` before working with an optional table
+- open a table with `table('users')`
+- inspect columns, indexes, or foreign keys from the returned `Table`
 
 ## Working with schema objects
 
@@ -139,17 +111,19 @@ $normalizedDefault = $created->getDefault();
 $parsedDefault = $created->defaultValue(); // may execute a query
 ```
 
-## Driver-specific handlers
+## Driver-specific metadata
 
-Schema introspection is implemented by driver-specific `Schema` classes. `SchemaRegistry` ships with default mappings for the built-in connection handlers:
+### Built-in schema handlers
+
+Schema introspection is implemented by a handler matched to your connection type. The built-in mappings are:
 
 - `MysqlConnection` → `MysqlSchema`
 - `PostgresConnection` → `PostgresSchema`
 - `SqliteConnection` → `SqliteSchema`
 
-The objects returned at runtime are typically driver-specific subclasses (for example, MySQL tables/columns include extra metadata like engine/charset/collation and enum values). When you need to register your own mapping, use `SchemaRegistry::map()`.
+When you need to register a custom handler for your own connection class, use `SchemaRegistry::map()`.
 
-### Driver-specific metadata
+### Extra metadata
 
 Some schema metadata is only available on certain drivers via driver-specific subclasses:
 
@@ -165,8 +139,6 @@ Some schema metadata is only available on certain drivers via driver-specific su
 
 Registers the `Schema` implementation to use for a given `Connection` class.
 
-The mapping itself is stored immediately. Validation that the schema class extends `Schema` happens later when a connection is resolved through `use()`.
-
 Arguments:
 - `$connectionClass` (`class-string<Connection>`): the connection class name.
 - `$schemaClass` (`class-string<Schema>`): the schema class name (must extend `Schema`).
@@ -178,11 +150,9 @@ use Fyre\DB\Schema\Handlers\Mysql\MysqlSchema;
 $schemaRegistry->map(MysqlConnection::class, MysqlSchema::class);
 ```
 
-#### **Get a shared Schema for a connection** (`use()`)
+#### **Get a Schema for a connection** (`use()`)
 
-Returns a shared `Schema` instance for the provided connection object (cached internally with a `WeakMap`).
-
-If the exact connection class is not mapped, `SchemaRegistry` will look through parent connection classes until it finds a mapped schema.
+Returns the `Schema` instance for the provided connection object.
 
 Arguments:
 - `$connection` (`Connection`): the connection instance.
@@ -237,20 +207,18 @@ foreach ($schema->tables() as $name => $table) {
 }
 ```
 
-#### **Clear loaded state** (`clear()`)
+#### **Clear loaded schema data** (`clear()`)
 
-Clears in-memory table data and deletes the cached tables list when schema caching is enabled.
+Clears loaded table data and any schema cache entries for this schema.
 
 ```php
 $schema->clear();
 ```
 
-#### **Access connection and cache information** (`getConnection()`, `getDatabaseName()`, `getCache()`, `getCachePrefix()`)
+#### **Get the connection or database name** (`getConnection()`, `getDatabaseName()`)
 
 - `getConnection()` returns the `Connection` backing this schema.
 - `getDatabaseName()` returns the configured database name (or `''`).
-- `getCache()` returns the configured `Cacher` when a cache config named `_schema` exists, otherwise `null`.
-- `getCachePrefix()` returns the cache prefix derived from connection config (`cacheKeyPrefix` + `database`, with `:` replaced by `_`).
 
 ### `Table`
 
@@ -261,9 +229,9 @@ $schema->clear();
 - `getSchema()` returns the owning `Schema`.
 - `toArray()` returns table metadata as an array (driver-specific tables may include additional keys).
 
-#### **Clear loaded state** (`clear()`)
+#### **Clear loaded table data** (`clear()`)
 
-Clears in-memory column/index/foreign key data for the table. If schema caching is enabled, it also deletes the cached table-specific keys `<table>.columns`, `<table>.indexes`, and `<table>.foreign_keys` under the schema cache prefix.
+Clears loaded column, index, and foreign-key data for the table. If schema caching is enabled, it also clears cached entries for that table.
 
 ```php
 $table = $schema->table('users');
@@ -357,27 +325,15 @@ $column = $table->column('id');
 $type = $column->type();
 ```
 
-### `Index`
-
-#### **Get metadata** (`getName()`, `getColumns()`, `getType()`, `getTable()`, `toArray()`)
-
-#### **Check flags** (`isUnique()`, `isPrimary()`)
-
-### `ForeignKey`
-
-#### **Get metadata** (`getName()`, `getColumns()`, `getReferencedTable()`, `getReferencedColumns()`, `getOnUpdate()`, `getOnDelete()`, `getTable()`, `toArray()`)
-
 ## Behavior notes
 
 A few behaviors are worth keeping in mind:
 
-- Schema caching is enabled only when `CacheManager` has a config named `_schema`; otherwise all reads are uncached.
-- Cache keys are namespaced by `Schema::getCachePrefix()` and the introspection area being cached (for example `tables`, `<table>.columns`, `<table>.indexes`, and `<table>.foreign_keys`).
-- `Schema::clear()` loads the current table list, clears in-memory state, and deletes the cached `tables` list plus cached per-table keys (like `<table>.columns`, `<table>.indexes`, and `<table>.foreign_keys`).
-- Schema introspection lists tables only (not views). `Schema::tableNames()` reflects what each driver exposes as a “base table” (and SQLite also excludes `sqlite_sequence`).
-- `Column::defaultValue()` may execute a `SELECT` query to evaluate expression defaults (for example `CURRENT_TIMESTAMP`), which can matter if you call it in a tight loop.
-- SQLite does not expose foreign key constraint names via `PRAGMA foreign_key_list`, so the SQLite handler generates names in the form `<table>_<column>_<column>...`.
-- `SchemaRegistry` selects a handler by the connection’s class name, walking up the inheritance chain until a mapping is found; `SchemaRegistry::map()` also normalizes class names by trimming a leading `\`.
+- Schema caching is only used when `CacheManager` has a config named `_schema`; otherwise reads go straight to the database.
+- `Schema::clear()` clears loaded table data and any schema cache entries for that connection.
+- Schema introspection lists tables only, not views. `Schema::tableNames()` reflects what each driver exposes as a base table, and SQLite also excludes `sqlite_sequence`.
+- `Column::defaultValue()` may execute a `SELECT` query to evaluate expression defaults such as `CURRENT_TIMESTAMP`, which can matter if you call it in a tight loop.
+- SQLite does not expose foreign key constraint names via `PRAGMA foreign_key_list`, so generated names follow the form `<table>_<column>_<column>...`.
 
 ## Related
 

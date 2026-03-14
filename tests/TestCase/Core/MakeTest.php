@@ -371,6 +371,7 @@ final class MakeTest extends TestCase
         @unlink('tmp/config/example.php');
         @unlink('tmp/Controllers/ExampleController.php');
         @unlink('tmp/Entities/Example.php');
+        @unlink('tmp/Forms/ExampleForm.php');
         @unlink('tmp/Middleware/ExampleMiddleware.php');
         @unlink('tmp/Jobs/ExampleJob.php');
         @unlink('tmp/lang/en/Example.php');
@@ -388,6 +389,7 @@ final class MakeTest extends TestCase
         @rmdir('tmp/config');
         @rmdir('tmp/Controllers');
         @rmdir('tmp/Entities');
+        @rmdir('tmp/Forms');
         @rmdir('tmp/Middleware');
         @rmdir('tmp/Jobs');
         @rmdir('tmp/lang/en');

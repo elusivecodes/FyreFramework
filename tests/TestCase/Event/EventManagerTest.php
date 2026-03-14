@@ -13,6 +13,7 @@ use Override;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Event\MockListener;
 use Tests\Mock\Event\MockPriorityListener;
+use Tests\Mock\Event\MockProtectedListener;
 
 use function class_uses;
 use function mkdir;
@@ -53,6 +54,25 @@ final class EventManagerTest extends TestCase
         $this->assertSame(1, $listener2->getResult());
     }
 
+    public function testAddProtectedListener(): void
+    {
+        $container = new Container();
+        $container->singleton(CacheManager::class);
+        $eventManager = $container->build(EventManager::class, [
+            'parentEventManager' => null,
+        ]);
+        $listener = new MockProtectedListener();
+
+        $this->assertSame(
+            $eventManager,
+            $eventManager->addListener($listener)
+        );
+
+        $eventManager->trigger('test', 1);
+
+        $this->assertSame(1, $listener->getResult());
+    }
+
     public function testCacheListener(): void
     {
         $listener = new MockListener();
@@ -70,6 +90,26 @@ final class EventManagerTest extends TestCase
             $this->container->use(CacheManager::class)
                 ->use('_events')
                 ->get('Tests.Mock.Event.MockListener')
+        );
+    }
+
+    public function testCacheProtectedListener(): void
+    {
+        $listener = new MockProtectedListener();
+
+        $this->eventManager->addListener($listener);
+
+        $this->assertSame(
+            [
+                [
+                    'name' => 'test',
+                    'priority' => 100,
+                    'callback' => 'setResult',
+                ],
+            ],
+            $this->container->use(CacheManager::class)
+                ->use('_events')
+                ->get('Tests.Mock.Event.MockProtectedListener')
         );
     }
 
@@ -280,6 +320,27 @@ final class EventManagerTest extends TestCase
         $this->assertNull($listener->getResult());
     }
 
+    public function testRemoveProtectedListener(): void
+    {
+        $container = new Container();
+        $container->singleton(CacheManager::class);
+        $eventManager = $container->build(EventManager::class, [
+            'parentEventManager' => null,
+        ]);
+        $listener = new MockProtectedListener();
+
+        $eventManager->addListener($listener);
+
+        $this->assertSame(
+            $eventManager,
+            $eventManager->removeListener($listener)
+        );
+
+        $eventManager->trigger('test', 1);
+
+        $this->assertNull($listener->getResult());
+    }
+
     public function testTriggerArguments(): void
     {
         $i = 0;
@@ -334,6 +395,7 @@ final class EventManagerTest extends TestCase
     {
         @unlink('tmp/events.Tests.Mock.Event.MockListener');
         @unlink('tmp/events.Tests.Mock.Event.MockPriorityListener');
+        @unlink('tmp/events.Tests.Mock.Event.MockProtectedListener');
         @rmdir('tmp');
     }
 }

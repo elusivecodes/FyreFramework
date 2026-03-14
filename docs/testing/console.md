@@ -1,33 +1,31 @@
 # Console Testing
 
-`ConsoleTestTrait` runs console commands through `Fyre\Console\CommandRunner` and captures stdout/stderr and exit codes for assertions.
+Use `ConsoleTestTrait` when you want to run console commands in tests and assert on stdout, stderr, and exit codes.
+
+The trait captures command I/O in memory so you can test commands without spawning a separate process.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [How it works](#how-it-works)
-- [Example: invalid command handling](#example-invalid-command-handling)
+- [Start here](#start-here)
+- [Running commands](#running-commands)
+- [Feeding input](#feeding-input)
 - [Method guide](#method-guide)
-  - [Running commands](#running-commands)
+  - [Command execution](#command-execution)
   - [Exit code assertions](#exit-code-assertions)
   - [Stdout assertions](#stdout-assertions)
   - [Stderr assertions](#stderr-assertions)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use `ConsoleTestTrait` in PHPUnit tests when you want to execute framework console commands and assert against captured output and exit codes.
+The usual workflow is:
 
-## How it works
+1. Call `exec()` with the command string you want to run.
+2. Optionally pass input lines for interactive prompts.
+3. Assert on the exit code, stdout, or stderr.
 
-`ConsoleTestTrait` runs commands in-process and stores the captured stdout/stderr and exit code so you can make assertions after execution.
-
-- Sets up in-memory streams for stdin/stdout/stderr before each test.
-- Registers a `Fyre\Console\Console` instance in the engine container so command output is captured.
-- Parses the command string using `str_getcsv()` (space-delimited) to support quoting and escaping.
-
-## Example: invalid command handling
+## Running commands
 
 ```php
 use Fyre\TestSuite\TestCase;
@@ -47,15 +45,27 @@ final class ConsoleRunnerTest extends TestCase
 }
 ```
 
+`exec()` runs the command in-process and stores the exit code plus captured stdout and stderr for later assertions.
+
+## Feeding input
+
+Pass input lines as the second argument to `exec()` when the command reads from stdin:
+
+```php
+$this->exec('confirm-delete', [
+    'yes',
+]);
+```
+
 ## Method guide
 
 Most examples assume you’re in a `TestCase` using `ConsoleTestTrait`.
 
-### Running commands
+### Command execution
 
 #### **Run a command** (`exec()`)
 
-Runs a console command through `CommandRunner`, capturing stdout/stderr and storing the exit code for later assertions.
+Run a console command through `CommandRunner`, capturing stdout, stderr, and the exit code.
 
 Arguments:
 - `$command` (`string`): the full command string (command alias plus arguments).
@@ -215,7 +225,7 @@ $this->assertErrorEmpty();
 A few behaviors are worth keeping in mind:
 
 - `exec()` treats `$input` as a list of lines and appends `PHP_EOL` to each line before running the command.
-- The command string is split using `str_getcsv($command, ' ', '"', '\\')`, which supports quoting with `"` and escaping with `\`.
+- The command string is split using `str_getcsv($command, ' ', '"', '\\')`, so quoting with `"` and escaping with `\` are supported.
 - `CommandRunner` is resolved from the engine container during setup; if your test commands live outside the default namespaces, add them to `$this->runner` before calling `exec()`.
 
 ## Related

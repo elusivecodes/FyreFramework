@@ -2,35 +2,81 @@
 
 This file documents the conventions used across `docs/` so pages read as if written by a single author.
 
+## Goals
+
+Write for end users of the framework, not maintainers of the internals.
+
+The docs should feel:
+
+- practical
+- direct
+- task-focused
+- consistent enough to read like one person wrote them
+
+Prefer helping the reader do the next thing over explaining how the subsystem is implemented.
+
+## Page openings
+
+Most API and feature pages start with one or two short paragraphs:
+
+1. a direct opening sentence, often ``Use `Thing` when you want to...``
+2. an optional second sentence that narrows the common case (for example `Most applications...`)
+
+Good openings are concrete and user-facing:
+
+- ``Use `Fyre\Http\Client` when your application needs to call external APIs, webhooks, or internal HTTP services.``
+- `Use route bindings when you want route placeholders to resolve to ORM entities before your controller action or closure runs.`
+
+Avoid openings that read like internals or architecture notes:
+
+- `X is a PSR-15 request handler...`
+- `Internally, X delegates to...`
+- `At runtime, the locator...`
+- `Use this for broad architectural concerns...`
+
+Only keep implementation detail in the opening when it is necessary for correct usage.
+
 ## Page structure
 
-Most pages follow this order:
+Most non-index pages follow this order:
 
-1. `# Title` (Title Case)
-2. One-two sentence intro (plain prose; no emojis)
+1. `# Title`
+2. one or two short intro paragraphs
 3. `## Table of Contents`
-4. Core sections (concepts → workflows → optional reference sections)
-5. `## Behavior notes`
-6. `## Related` (always last)
+4. `## Start here`
+5. core usage sections
+6. optional `## Method guide`
+7. `## Behavior notes`
+8. `## Related`
 
-If a page has meaningful subsections, include them as nested items in the table of contents (maximum 1 nested level).
+Most index pages follow this order:
 
-Notes:
+1. `# Section title`
+2. short section summary
+3. `## Table of Contents`
+4. `## Start here`
+5. `## <Section> overview`
+6. `## Pages in this section`
+7. optional `## Related`
 
-- Index pages do not require a `## Related` section, but may include one when it adds high-value navigation (for example, pointing to a shared subsystem page readers typically need next).
+Use `## Start here` for the practical entry point on most pages.
 
-Table of contents guidance:
+Prefer `Start here` over generic sections like `Purpose` or `How it works`.
 
-- Use the same casing and wording as the target heading when practical.
-- Use backticks in TOC link text when the heading includes identifiers (for example `CommandRunner`, `argv`, `Console::wrap()`).
-- Link all `###` subsections in the table of contents so readers can navigate the page structure.
-- Keep nested TOC items to a single level (don’t add `####` entries to the TOC).
+Use `How it works` only when the mechanics genuinely help the reader use the feature correctly and the content is still written from the user’s point of view.
 
-## Emojis
+## Table of contents
 
-Do not use emojis in documentation pages.
+If a page has meaningful sections, include a table of contents.
 
-Write headings and section openings as plain prose instead of icon-led callouts.
+Guidance:
+
+- use the same casing and wording as the target heading when practical
+- use backticks in TOC link text when the heading includes identifiers
+- link meaningful `###` subsections when they help navigation
+- keep nested TOC items to a single level
+
+Index pages usually include only the main `##` sections in the table of contents.
 
 ## Headings
 
@@ -39,7 +85,30 @@ Write headings and section openings as plain prose instead of icon-led callouts.
 - Keep small words lowercase when it improves readability (for example `When to use helpers`, `Service lifetimes (singleton vs scoped)`).
 - Use backticks for identifiers in headings when they are part of the subject (for example `How \`CommandRunner\` Runs Commands`, `Parse \`argv\``).
 - Use sentence case in body text.
-- Prefer descriptive section names (`Purpose`, `Quick start`, `How it works`, `Method guide`, `Behavior notes`, `Related`).
+- Prefer task-oriented section names such as `Start here`, `Method guide`, `Behavior notes`, `Related`, and `Pages in this section`.
+
+Avoid heading patterns that push the page toward internals-first structure:
+
+- `Purpose`
+- `Execution model`
+- `Pipeline`
+- `Internals`
+
+Those headings are only worth using when the content genuinely needs them.
+
+## Lists
+
+Use bullets heavily, but use them intentionally:
+
+- use short bullets for workflows, options, section navigation, and “pages in this section”
+- use full-sentence bullets for behavior notes
+- use concise fragments when the surrounding heading already provides the grammar
+
+Examples:
+
+- good for `Start here`: `- **Generating links from aliases**: see [URL Generation](url-generation.md)`
+- good for `Pages in this section`: `- [HTTP Client](client.md) - make outbound HTTP requests and work with client responses`
+- good for `Behavior notes`: `- Optional placeholders like \`{id?}\` use the base placeholder name for argument lookup.`
 
 ## Method guide
 
@@ -70,6 +139,7 @@ Behavior notes document gotchas that affect real-world usage.
 - Start the section with a plain sentence such as `A few behaviors are worth keeping in mind:` and then list the behaviors as bullets.
 - Write notes as complete sentences (prefer bullets).
 - Avoid “label: explanation” formatting, especially with `**bold labels**:`. Prefer sentence-form bullets that read naturally.
+- Keep this section short. If a note is only interesting as an implementation detail, it probably does not belong here.
 
 ## Examples
 
@@ -79,18 +149,25 @@ Example guidelines:
 - Assume obvious setup variables exist when repeating them adds no value (for example, reuse `$client`, `$timer`, `$bench`).
 - Prefer importing classes via `use` and using short names instead of FQCNs.
 - Favor realistic values (`/health`, `user@example.com`, `https://api.example.com`) over placeholder noise.
+- Prefer examples that match the common application path, not unusual edge cases.
+- When possible, show the smallest example that still teaches the pattern.
 
 ## Formatting
 
 - Use backticks for code identifiers, class names, method names, config keys, and file paths.
+- Use backticks for naming-form literals and placeholder forms when you are referring to them literally (for example `camelCase`, `PascalCase`, `snake_case`, `kebab-case`, `ClassName`, `table_name`).
 - Use **bold** for emphasis in lists, not to style code.
 - Avoid bolding inline code (avoid wrapping backticked identifiers in `**...**`).
 - Avoid italics except for occasional emphasis in prose.
 - Keep internal links relative (for example `../http/client.md`).
 - Use Title Case link text that matches the target page title when practical, but shortening is okay when it improves readability and the meaning stays clear (for example `Language (Lang)` → `Lang`, `HTTP Client Testing` → `HTTP client testing`).
+- Do not use emojis or icon-led callouts.
 
-## Tone
+## Tone and scope
 
-- Write for end users of the framework, not maintainers.
 - Prefer direct, instructional language (“Use…”, “Start with…”, “If you… then…”).
-- Avoid unnecessary implementation details unless they change behavior or affect debugging.
+- Prefer concrete phrasing over abstract framing.
+- Avoid architecture jargon in user-facing prose when a plain phrase works better (`shared rules` instead of abstract architecture terms, `request flow` instead of `pipeline orchestration`).
+- Avoid unnecessary implementation details unless they change behavior, affect debugging, or explain a real limitation.
+- Prefer “what the reader should do” over “what the framework is doing internally”.
+- Keep the voice calm and neutral. Do not write marketing copy, cheerleading, or filler.

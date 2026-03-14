@@ -1,83 +1,25 @@
 # Macros
 
-Macros let you extend classes at runtime by registering callbacks that behave like methods. Because macros are invoked via `__call()` / `__callStatic()`, they are only considered when the real method does not exist.
+Macros let you add small convenience methods to macro-enabled classes at runtime.
+
+They are a good fit for lightweight application helpers when subclassing or wrapping a class would be more work than the feature needs.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [How macros work](#how-macros-work)
-  - [`MacroTrait` binding](#macrotrait-binding)
-  - [`StaticMacroTrait` binding](#staticmacrotrait-binding)
-  - [Choosing instance vs static macros](#choosing-instance-vs-static-macros)
-  - [Macro registry behavior](#macro-registry-behavior)
+- [Start here](#start-here)
+- [Choosing instance vs static macros](#choosing-instance-vs-static-macros)
+- [Common macro targets](#common-macro-targets)
 - [Method guide](#method-guide)
   - [Instance macros](#instance-macros)
   - [Static macros](#static-macros)
-- [Framework usage](#framework-usage)
-  - [Common instance-macro targets](#common-instance-macro-targets)
-  - [Common static-macro targets](#common-static-macro-targets)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Macros are a lightweight way to add convenience methods without subclassing or wrapping. They’re especially useful for small adapters and fluent helpers in application code.
+Register macros during application bootstrap, then call them like normal methods.
 
-They are only reached through `__call()` or `__callStatic()`, so a real method always takes precedence over a macro with the same name.
-
-## How macros work
-
-### `MacroTrait` binding
-
-`MacroTrait` registers macros via `macro()` and invokes them through `__call()` on the instance.
-
-If the registered callback is a `Closure`, it is bound to:
-
-- the instance (`$this`)
-- the calling class scope (so the macro can access non-public members of that class)
-
-If a `Closure` macro cannot be bound, the call throws `BadMethodCallException`.
-
-### `StaticMacroTrait` binding
-
-`StaticMacroTrait` registers macros via `staticMacro()` and invokes them through `__callStatic()` on the class.
-
-If the registered callback is a `Closure`, it is bound to the calling class scope when invoked. That gives the macro access to non-public static members (and enables `self::...` inside the macro body).
-
-If a `Closure` macro cannot be bound, the call throws `BadMethodCallException`.
-
-### Choosing instance vs static macros
-
-Choose based on what the “method” needs to act on:
-
-- Use an instance macro (`MacroTrait`) when the macro needs instance state (for example, it reads `$this->...` or should behave like a per-object convenience method).
-- Use a static macro (`StaticMacroTrait`) when the macro is purely class-level behavior (for example, helper methods that don’t depend on an object instance and can be called as `ClassName::method()`).
-
-### Macro registry behavior
-
-Both traits store macros in a protected static array on the trait consumer, so the registry is shared across instances and, by default, across an inheritance chain:
-
-- every instance of a class shares the same macro registry
-- subclasses inherit the registry unless they redeclare the underlying static property
-- `clearMacros()` / `clearStaticMacros()` clears the registry for the called class (and therefore affects subclasses that share the same static property)
-
-## Method guide
-
-This section focuses on the macro APIs you’ll use most.
-
-Register macros during application bootstrapping (before first use). Registering a macro with an existing name overwrites the previous macro.
-
-There is no per-name removal API; clearing is all-or-nothing for the class registry.
-
-### Instance macros
-
-#### **Register an instance macro** (`macro()`)
-
-Registers a macro by name. The macro is invoked only when the real method does not exist.
-
-Arguments:
-- `$name` (`string`): macro name.
-- `$macro` (`callable`): macro callback (a `Closure` is bound to the instance on call).
+Instance macros are useful when the macro should act on an object:
 
 ```php
 use Fyre\Utility\Formatter;
@@ -85,11 +27,56 @@ use Fyre\Utility\Formatter;
 Formatter::macro('usd', function (float|int|string $value): string {
     return $this->currency($value, 'USD');
 });
+```
 
-function formatTotal(Formatter $formatter): string
-{
-    return $formatter->usd(19.95);
-}
+Static macros are useful when the macro should act like a class-level helper:
+
+```php
+use Fyre\Utility\Str;
+
+Str::staticMacro('surround', static function (string $value, string $prefix, string $suffix): string {
+    return $prefix.$value.$suffix;
+});
+```
+
+## Choosing instance vs static macros
+
+- Use an **instance macro** when the macro needs `$this` or should feel like an object method.
+- Use a **static macro** when the macro should be called on the class itself.
+
+When you register a macro with a `Closure`, Fyre binds it so it can behave like a normal method for that class.
+
+## Common macro targets
+
+Common macro-enabled classes include:
+
+- **Core**: `Container`, `Config`, `Lang`, `Loader`
+- **HTTP**: `Client`, `Request`, `Response`, `ServerRequest`
+- **Routing**: `Router`
+- **Utilities**: `Arr`, `Collection`, `Formatter`, `Str`
+
+If you want the full list for your version, search the source for `use MacroTrait;` or `use StaticMacroTrait;`.
+
+## Method guide
+
+Register macros before first use. Registering a macro with an existing name overwrites the previous one.
+
+### Instance macros
+
+#### **Register an instance macro** (`macro()`)
+
+Adds a macro that can be called on an object instance.
+
+Arguments:
+- `$name` (`string`): macro name.
+- `$macro` (`callable`): macro callback.
+
+```php
+use Fyre\Utility\Formatter;
+
+Formatter::macro('usd', function (float|int|string $value): string {
+    return $this->currency($value, 'USD');
+});
 ```
 
 #### **Check whether a macro exists** (`hasMacro()`)
@@ -105,7 +92,7 @@ if (Formatter::hasMacro('usd')) {
 
 #### **Clear instance macros** (`clearMacros()`)
 
-Clears the macro registry for the class (and any subclasses sharing the same static registry).
+Clears the instance macro registry for the class.
 
 ```php
 Formatter::clearMacros();
@@ -115,11 +102,11 @@ Formatter::clearMacros();
 
 #### **Register a static macro** (`staticMacro()`)
 
-Registers a static macro by name. The macro is invoked only when the real static method does not exist.
+Adds a macro that can be called on the class.
 
 Arguments:
 - `$name` (`string`): macro name.
-- `$macro` (`callable`): macro callback (a `Closure` is bound to class scope on call).
+- `$macro` (`callable`): macro callback.
 
 ```php
 use Fyre\Utility\Str;
@@ -127,8 +114,6 @@ use Fyre\Utility\Str;
 Str::staticMacro('surround', static function (string $value, string $prefix, string $suffix): string {
     return $prefix.$value.$suffix;
 });
-
-echo Str::surround('name', '[', ']');
 ```
 
 #### **Check whether a static macro exists** (`hasStaticMacro()`)
@@ -144,41 +129,20 @@ if (Str::hasStaticMacro('surround')) {
 
 #### **Clear static macros** (`clearStaticMacros()`)
 
-Clears the static macro registry for the class (and any subclasses sharing the same static registry).
+Clears the static macro registry for the class.
 
 ```php
 Str::clearStaticMacros();
 ```
 
-## Framework usage
-
-Many framework classes include these traits, so they can be extended with macros the same way as the examples above (by calling `::macro()` / `::staticMacro()` on the class).
-
-Rather than listing every macro-enabled class here, these are some of the more common ones you may want to extend:
-
-### Common instance-macro targets
-
-- Core: `Container`, `Config`, `Lang`, `Loader`
-- HTTP: `Client`, `Request`, `Response`, `ServerRequest`
-- Router: `Router`
-- Utility: `Collection`, `Formatter`
-
-### Common static-macro targets
-
-- Utility: `Arr`, `Collection`, `Str`
-
-If you want the full list for your version, search the source for `use MacroTrait;` or `use StaticMacroTrait;`.
-
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
+A few practical details are worth keeping in mind:
 
-- Macros are invoked only when the method does not exist. Missing macros throw `BadMethodCallException`.
-- Macro registries are static, so registering or clearing macros affects all instances that share the underlying static property (including subclasses).
-- Registering a macro with an existing name overwrites the previous macro.
-- If a real method with the same name is added later, it takes precedence over the macro (the macro is no longer invoked).
-- Macro registries persist for the lifetime of the PHP process, so remember to clear them in tests (for example, in `tearDown()`).
-- `Closure` macros are bound to class scope, so they can access non-public members of the class. Treat macro code as part of the class’ trusted implementation.
+- Macros are used only when the real method does not exist.
+- Macro registries are static, so changes affect all instances of that class in the current PHP process.
+- Registering a macro with an existing name overwrites the previous one.
+- Macro registrations persist for the lifetime of the process, so clear them in tests when needed.
 
 ## Related
 
@@ -187,4 +151,3 @@ A few behaviors are worth keeping in mind:
 - [Language (Lang)](lang.md)
 - [Loader](loader.md)
 - [Router](../routing/router.md)
-- [Forge](../database/forge.md)

@@ -1,25 +1,30 @@
 # Benchmark
 
-`Benchmark` provides simple in-process benchmarking for named tests. Each test callback is executed synchronously for a requested number of iterations, and results include total runtime and peak additional memory usage.
+Use `Benchmark` when you want a quick in-process comparison between a few named callbacks.
+
+Each registered callback runs synchronously for a chosen number of iterations, and the results include total runtime and peak additional memory usage.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Registering tests](#registering-tests)
 - [Running benchmarks](#running-benchmarks)
-- [Understanding results](#understanding-results)
+- [Reading results](#reading-results)
 - [Method guide](#method-guide)
   - [Methods](#methods)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use `Benchmark` when you want a lightweight way to compare multiple approaches in the same PHP process (for example: two parsing strategies, hydration approaches, or serialization routines).
+The usual workflow is:
 
-It is not a substitute for full profiling, but it’s useful for quick “A vs B” checks during development.
+1. Create a `Benchmark`.
+2. Register a few named callbacks with `add()`.
+3. Run them with a fixed iteration count.
+4. Compare total time, time per iteration, and memory.
 
-If you want to measure named phases (start/stop) rather than repeatedly running callbacks, see [Timers](timers.md).
+It is a good fit for quick "A vs B" checks during development. If you want to measure named phases instead of repeatedly running callbacks, see [Timers](timers.md).
 
 ## Registering tests
 
@@ -51,13 +56,13 @@ $results = $bench->run(5000);
 // ]
 ```
 
-## Understanding results
+## Reading results
 
 Each result contains:
 
-- `time` — total wall time in seconds (float) for all iterations.
-- `memory` — peak additional memory usage in bytes (int) observed during the iterations.
-- `n` — iteration count (int).
+- `time` - total wall time in seconds for all iterations
+- `memory` - peak additional memory usage in bytes
+- `n` - iteration count
 
 To compare tests, consider time per iteration (`time / n`) and relative differences between runs.
 
@@ -99,7 +104,7 @@ $secondsPerIteration = $a['time'] / $a['n'];
 
 #### **Remove a test** (`remove()`)
 
-Remove a registered test by name. This method throws an `InvalidArgumentException` if the test does not exist.
+Remove a registered test by name.
 
 Arguments:
 - `$name` (`string`): the test name.
@@ -169,7 +174,7 @@ $bench->clear();
 
 #### **Count registered tests** (`count()`)
 
-Return the number of registered tests (this class implements `Countable`, so `count($bench)` works).
+Return the number of registered tests.
 
 ```php
 $bench->add('a', static fn(): int => 1 + 1);
@@ -182,12 +187,12 @@ $total = count($bench);
 
 A few behaviors are worth keeping in mind:
 
-- Benchmarking is inherently noisy; compare relative differences and rerun multiple times.
+- Benchmarking is inherently noisy, so compare relative differences and rerun multiple times.
 - `run()` throws an `InvalidArgumentException` if `$iterations` is less than `1`.
-- Timing uses `hrtime(true)` (a monotonic clock) and reports total wall time for the entire loop.
+- Timing uses `hrtime(true)` and reports total wall time for the full loop.
 - Each test triggers `gc_collect_cycles()` once before timing begins, but allocations inside callbacks can still vary between iterations.
 - Memory is sampled using `memory_get_usage(true)` and reported as the peak additional memory usage relative to the starting memory for that test.
-- The callback result is assigned and then unset on every iteration, so return values are not retained across iterations by the benchmark runner.
+- The callback result is unset on every iteration, so results are not retained by the benchmark runner.
 
 ## Related
 

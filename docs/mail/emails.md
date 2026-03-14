@@ -1,10 +1,10 @@
 # Emails
 
-Emails are built with `Fyre\Mail\Email` and sent through a configured `Fyre\Mail\Mailer`. For mailer configuration (SMTP, sendmail, debug), see [Mail](index.md).
+Use `Fyre\Mail\Email` when you want to build a message, set recipients, and send it through a configured mailer.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Sending an email](#sending-an-email)
 - [Recipes](#recipes)
   - [Send a text email](#send-a-text-email)
@@ -25,11 +25,16 @@ Emails are built with `Fyre\Mail\Email` and sent through a configured `Fyre\Mail
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-This guide covers the parts of `Email` most applications use: addressing, subject/body, format, attachments, and sending.
+Most email flows look like this:
 
-Most examples assume you already have a configured `Mailer` instance. If you don’t, start with [Selecting a mailer](index.md#selecting-a-mailer).
+1. Choose a mailer.
+2. Create a new email with `email()`.
+3. Set recipients, subject, and body.
+4. Send it with `send()`.
+
+Most examples assume you already have a configured `Mailer` instance. If you do not, start with [Selecting a mailer](index.md#selecting-a-mailer).
 
 Examples that refer to `Email::TEXT`, `Email::HTML`, or `Email::BOTH` assume `Fyre\Mail\Email` is already imported.
 
@@ -37,9 +42,10 @@ Examples that refer to `Email::TEXT`, `Email::HTML`, or `Email::BOTH` assume `Fy
 
 A typical flow is:
 
-1. Select a mailer configuration via `MailManager` (commonly the shared instance from `use()`).
-2. Create an `Email` via `Mailer::email()` and set recipients, subject, and body.
-3. Send the message via `Email::send()` (or directly via `Mailer::send()`).
+1. Select a mailer.
+2. Create an `Email` via `Mailer::email()`.
+3. Set recipients, subject, body, and any attachments.
+4. Send the message via `Email::send()` (or directly via `Mailer::send()`).
 
 ```php
 $mailer->email()
@@ -136,7 +142,7 @@ $mailer->email()
 
 ## Building an email
 
-An `Email` represents the message being built (recipients, headers, body, attachments) and can be sent through its associated mailer.
+An `Email` holds the message you are building: recipients, headers, body, and attachments.
 
 Most examples in this section assume you already have an `$email` instance:
 

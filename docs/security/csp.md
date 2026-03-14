@@ -1,13 +1,12 @@
 # Content Security Policy (CSP)
 
-`Fyre\Security\ContentSecurityPolicy` builds and applies Content Security Policy (CSP) headers to HTTP responses.
+Use `Fyre\Security\ContentSecurityPolicy` when you want to build and apply Content Security Policy headers to your responses.
 
-CSP hardens browser security boundaries by restricting what resources a page is allowed to load. In Fyre, CSP is modeled as policy objects that are emitted as response headers (usually via middleware), with optional view integration for generating script/style nonces.
+CSP restricts what a page is allowed to load and is commonly applied through middleware, with optional nonce support in views.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Mental model](#mental-model)
+- [Start here](#start-here)
 - [Configuring CSP](#configuring-csp)
   - [Example `config/app.php`](#example-configappphp)
 - [Building policies](#building-policies)
@@ -26,22 +25,15 @@ CSP hardens browser security boundaries by restricting what resources a page is 
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-CSP is most valuable for HTML responses where untrusted content might otherwise gain the ability to execute script, load unexpected third-party resources, or embed your pages in hostile contexts.
+Use CSP when you want to:
 
-In Fyre, CSP support focuses on two jobs:
-
-- building valid `Content-Security-Policy` / `Content-Security-Policy-Report-Only` header values
-- applying those headers to a `Psr\Http\Message\ResponseInterface`
+- restrict what scripts, styles, images, and other resources a page may load
+- start in report-only mode before enforcing a policy
+- generate nonces for inline scripts and styles in your views
 
 In production, it’s common to start with report-only CSP, collect reports, then switch to enforced mode once you’re confident the policy won’t break real pages.
-
-## Mental model
-
-`ContentSecurityPolicy` manages a set of named policies. Each policy is a `Policy` instance, which represents a directive set (for example `default-src`, `script-src`, and `img-src`) and can be converted into a header string.
-
-`Policy` is immutable: modifier methods return a cloned instance. `ContentSecurityPolicy` is a stateful container for policies: when you “change” a policy, you replace it (for example via `setPolicy()`).
 
 When emitting headers, `ContentSecurityPolicy` can output:
 
@@ -294,7 +286,7 @@ $value = $policy->getHeaderString();
 
 ### `CspMiddleware`
 
-#### **Apply CSP headers to the next handler’s response** (`process()`)
+#### **Apply CSP headers as middleware** (`process()`)
 
 Delegates to the next handler and applies CSP headers to the returned response.
 
@@ -357,5 +349,5 @@ A few behaviors are worth keeping in mind:
 
 ## Related
 
-- [HTTP Responses](../http/responses.md) — how responses and headers are represented and emitted.
-- [Helpers](../view/helpers.md) — view helper fundamentals, including `CspHelper`.
+- [HTTP Responses](../http/responses.md) - work with response headers and emission
+- [Helpers](../view/helpers.md) - view helper fundamentals, including `CspHelper`

@@ -1,11 +1,10 @@
 # Cache
 
-Cache covers configuring cache handlers and using them to reuse expensive values. `Fyre\Cache\CacheManager` builds and shares configured cache handlers that implement PSR-16 Simple Cache.
+Use cache to store expensive values behind named cache handlers.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Mental model](#mental-model)
+- [Start here](#start-here)
 - [Configuring caches](#configuring-caches)
   - [Base cache options](#base-cache-options)
   - [Example configuration](#example-configuration)
@@ -15,32 +14,24 @@ Cache covers configuring cache handlers and using them to reuse expensive values
   - [Redis handler](#redis-handler)
   - [Memcached handler](#memcached-handler)
   - [Null handler](#null-handler)
-- [Selecting a cache](#selecting-a-cache)
+- [Using a cache](#using-a-cache)
 - [Common operations](#common-operations)
   - [Tagged cache entries](#tagged-cache-entries)
 - [Method guide](#method-guide)
   - [`CacheManager`](#cachemanager)
   - [`Cacher`](#cacher)
+  - [`TaggedCacher`](#taggedcacher)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Caching is a good fit when you need to:
+Most applications follow the same flow:
 
-- avoid recomputing expensive values
-- share computed results across requests (for filesystem and network-backed handlers)
-- swap cache backends by environment without changing call sites
-
-## Mental model
-
-`Fyre\Cache\CacheManager` reads cache configurations from [Config](../core/config.md) (the `Cache` key) and provides `Fyre\Cache\Cacher` instances by key.
-
-- `CacheManager::use()` returns one shared handler instance per key.
-- `CacheManager::build()` creates a new handler instance from options without storing or sharing it.
-- Handlers implement `Psr\SimpleCache\CacheInterface`; `Cacher` adds convenience methods like `remember()`, `increment()`, and `decrement()`.
-- `CacheManager` shares handler instances; the handler decides where cached values are stored and how long they live.
-- When caching is disabled, `CacheManager::use()` returns a shared `NullCacher` regardless of config. By default, caching starts disabled when `App.debug` is enabled.
+- define one or more named caches in config
+- resolve a cache with `CacheManager::use()` or the `cache()` helper
+- use `remember()` for values you want to compute on a miss
+- use tags when you want to invalidate groups of cached values
 
 ## Configuring caches
 
@@ -95,7 +86,7 @@ Caches values in an in-memory array for the current PHP process (`Fyre\Cache\Han
 
 Caches values on the filesystem (`Fyre\Cache\Handlers\FileCacher`).
 
-Make sure the configured `path` exists and is writable by the PHP process.
+Make sure the configured `path` exists or can be created, and is writable by the PHP process.
 
 Options:
 
@@ -138,13 +129,11 @@ No-op handler (`Fyre\Cache\Handlers\NullCacher`). Reads always return the provid
 
 - No handler-specific options.
 
-## Selecting a cache
+## Using a cache
 
-Use a cache key to select which stored config to use. When no key is provided, `CacheManager::DEFAULT` (`default`) is used.
+Use a config key to choose which named cache to work with. When no key is provided, `default` is used.
 
-When caching is enabled, the key must refer to a configured cache handler. Requesting an unknown key causes `CacheManager` to try building a handler from an empty config, which fails because no valid `className` is available.
-
-When caching is disabled, every key resolves to the shared `NullCacher` instead.
+When caching is disabled, newly resolved caches behave like a no-op cache, so reads miss and writes are ignored. This is common in debug mode.
 
 ```php
 use Fyre\Cache\CacheManager;
@@ -161,8 +150,6 @@ You can resolve a cache handler by key directly (see [Helpers](../core/helpers.m
 $default = cache();
 $redis = cache('redis');
 ```
-
-If you use contextual injection, `#[Cache('redis')]` can resolve a configured cache handler while the container is building an object or calling a callable; see [Contextual attributes](../core/contextual-attributes.md).
 
 ## Common operations
 
@@ -208,15 +195,15 @@ Tag invalidation is version-based. Invalidating a tag does not eagerly delete ev
 
 ## Method guide
 
-This section focuses on the methods you’ll use most when selecting handlers and working with cached values.
+This section focuses on the methods you are most likely to use when selecting handlers and caching values.
 
-Examples below assume `$caches` is a `CacheManager` instance and `$cache` is a `Cacher` instance.
+Examples below assume `$caches` is a `CacheManager` instance, `$cache` is a `Cacher` instance, and `$tagged` is a `TaggedCacher` instance.
 
 ### `CacheManager`
 
 #### **Get a shared cache handler** (`use()`)
 
-Returns the shared cache handler instance for a config key. If the handler has not been created yet, it is built from the stored config and cached. When caching is disabled, this returns the shared `NullCacher` regardless of the requested key.
+Returns the shared cache handler instance for a config key.
 
 Arguments:
 - `$key` (`string`): the cache config key (defaults to `default`).
@@ -228,7 +215,7 @@ $redis = $caches->use('redis');
 
 #### **Build a cache handler instance** (`build()`)
 
-Builds a new handler instance from an options array (without storing or sharing it). The options must include a valid `className` that extends `Cacher`.
+Build a one-off handler from an options array without storing it on the manager.
 
 Arguments:
 - `$options` (`array<string, mixed>`): cache options including `className`.
@@ -240,14 +227,6 @@ $cache = $caches->build([
     'className' => ArrayCacher::class,
     'prefix' => 'tmp_',
 ]);
-```
-
-#### **Check whether caching is enabled** (`isEnabled()`)
-
-Returns whether caching is currently enabled for this `CacheManager` instance.
-
-```php
-$enabled = $caches->isEnabled();
 ```
 
 #### **Enable caching** (`enable()`)
@@ -264,18 +243,6 @@ Disables caching.
 
 ```php
 $caches->disable();
-```
-
-#### **Read stored configuration** (`getConfig()`)
-
-Returns the stored cache config array. When called with no key, it returns all stored configs.
-
-Arguments:
-- `$key` (`string|null`): the cache config key, or `null` to return all configs.
-
-```php
-$all = $caches->getConfig();
-$default = $caches->getConfig('default');
 ```
 
 #### **Add configuration at runtime** (`setConfig()`)
@@ -295,15 +262,12 @@ $caches->setConfig('local', [
 ]);
 ```
 
-#### **Unload a cache** (`unload()`)
+#### **Check whether caching is enabled** (`isEnabled()`)
 
-Unloads a cache key by removing both the cached handler instance and the stored configuration.
-
-Arguments:
-- `$key` (`string`): the cache config key (defaults to `default`).
+Returns whether caching is currently enabled.
 
 ```php
-$caches->unload('redis');
+$enabled = $caches->isEnabled();
 ```
 
 ### `Cacher`
@@ -345,14 +309,6 @@ Arguments:
 $cache->decrement('counters.reports_generated');
 ```
 
-#### **Read handler configuration** (`getConfig()`)
-
-Returns the handler configuration array after defaults are applied.
-
-```php
-$config = $cache->getConfig();
-```
-
 #### **Create a tagged cache wrapper** (`tags()`)
 
 Returns a lightweight tagged cache wrapper.
@@ -378,24 +334,80 @@ $cache->invalidateTag('users');
 $cache->invalidateTags(['users', 'active']);
 ```
 
+### `TaggedCacher`
+
+#### **Get a tagged value** (`get()`)
+
+Retrieves a tagged cache value, returning the default if the key is missing or any of the tag versions no longer match.
+
+Arguments:
+- `$key` (`string`): the cache key.
+- `$default` (`mixed`): the default value when the tagged value is missing or stale.
+
+```php
+$user = $tagged->get('user.1');
+```
+
+#### **Set a tagged value** (`set()`)
+
+Stores a tagged cache value together with the current tag version snapshot.
+
+Arguments:
+- `$key` (`string`): the cache key.
+- `$value` (`mixed`): the value to store.
+- `$expire` (`DateInterval|int|null`): time to live for this value, in seconds or as a `DateInterval`.
+
+```php
+$tagged->set('user.1', $user, 300);
+```
+
+#### **Get or compute a tagged value** (`remember()`)
+
+Retrieves a tagged value, or computes and stores it when the tagged key is missing or stale.
+
+Arguments:
+- `$key` (`string`): the cache key.
+- `$callback` (`Closure`): callback that generates the value on a miss.
+- `$expire` (`DateInterval|int|null`): time to live for this value, in seconds or as a `DateInterval`.
+
+```php
+$user = $tagged->remember('user.1', static fn() => loadUser(1), 300);
+```
+
+#### **Delete a tagged value** (`delete()`)
+
+Deletes a tagged cache value for this tag namespace.
+
+Arguments:
+- `$key` (`string`): the cache key.
+
+```php
+$tagged->delete('user.1');
+```
+
+#### **Merge additional tags** (`tags()`)
+
+Returns a new tagged wrapper with additional tags merged into the current tag set.
+
+Arguments:
+- `$tags` (`string|string[]`): one or more tags to merge.
+
+```php
+$activeUsers = $cache->tags('users')->tags('active');
+```
+
 ## Behavior notes
 
 A few behaviors are worth keeping in mind:
 
-- When caching is disabled, `CacheManager::use()` (and the `cache()` helper) always returns a `NullCacher` regardless of configuration. By default, caching starts disabled when `App.debug` is enabled (see [Config](../core/config.md)).
-- When caching is enabled, building a handler without a valid `className` (missing, not a string, or not a `Cacher` subclass) throws `Fyre\Cache\Exceptions\InvalidArgumentException`.
-- `CacheManager::setConfig()` throws `Fyre\Cache\Exceptions\InvalidArgumentException` if the config key already exists.
-- `CacheManager::unload()` removes both the loaded handler instance and the stored configuration for that key.
-- Cache keys are rejected if they contain any of these characters: `{ } ( ) / \ @ :` (the key is validated before the configured `prefix` is applied).
-- `FileCacher` rejects a `prefix` that contains the system directory separator, and `FileCacher::clear()` only removes cache files that match the configured prefix.
-- `RedisCacher::clear()` requires a non-empty `prefix` unless `flushDatabase` is enabled. With a prefix, it scans and deletes matching keys. Without a prefix and with `flushDatabase: true`, it flushes the selected Redis database.
-- `RedisCacher::set()` supports scalar types, arrays, objects, and `null`. Other value types cause `set()` to return `false` without writing.
-- `NullCacher` always returns the provided default on reads, ignores writes, and returns the increment amount from `increment()` / `decrement()` rather than persisting a counter.
-- `tags()` returns a lightweight wrapper; normal `get()` / `set()` calls remain untagged.
-- Invalidating a tag marks matching tagged entries as stale. They are deleted lazily when the next tagged read detects a version mismatch.
+- in debug mode, caching is often disabled, so newly resolved caches act like a no-op cache
+- disabling caching affects newly built handlers only; already-loaded cache instances keep behaving as before until they are rebuilt
+- cache keys cannot contain `{ } ( ) / \ @ :`
+- `FileCacher` needs a writable path, and its prefix cannot contain the system directory separator
+- `RedisCacher::clear()` needs a prefix unless `flushDatabase` is enabled
+- invalidating a tag is lazy: tagged values become stale and disappear on the next tagged read
 
 ## Related
 
 - [Config](../core/config.md)
 - [Helpers](../core/helpers.md)
-- [Contextual attributes](../core/contextual-attributes.md)

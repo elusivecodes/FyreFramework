@@ -1,12 +1,12 @@
 # Auth Middleware
 
-Auth middleware connects the HTTP pipeline to the auth subsystem. `auth` resolves request auth context, and the guard middleware (`authenticated`, `unauthenticated`, and `can`) consume that context to enforce route-level access rules.
+Use auth middleware to run authenticators on each request and protect routes with login and authorization checks.
 
-This page focuses on wiring Auth into the middleware pipeline and on the behavior of each built-in Auth guard middleware.
+This page covers the built-in `auth`, `authenticated`, `unauthenticated`, and `can` middleware.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Run authentication on requests](#run-authentication-on-requests)
 - [Require a logged-in user](#require-a-logged-in-user)
 - [Require a logged-out user](#require-a-logged-out-user)
@@ -14,9 +14,9 @@ This page focuses on wiring Auth into the middleware pipeline and on the behavio
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Auth middleware connects the HTTP middleware pipeline to the `Auth` and `Access` services. Use it to:
+Use auth middleware when you want to:
 
 - run authenticators and attach the resolved user to the request
 - require a logged-in user for a route (redirect for HTML, error for JSON)
@@ -101,7 +101,7 @@ $router->get('login', LoginController::class, middleware: ['unauthenticated']);
 
 ## Authorize with access rules
 
-`Fyre\Auth\Middleware\AuthorizedMiddleware` (mapped as the `can` alias) enforces an authorization rule via `Auth::access()->allows(...)`. It is the route-level counterpart to calling `Auth::access()->allows()` or `authorize()` directly inside handlers or actions.
+`Fyre\Auth\Middleware\AuthorizedMiddleware` (mapped as the `can` alias) enforces an authorization rule via `Auth::access()->allows(...)`.
 
 Arguments:
 
@@ -115,7 +115,7 @@ When access is denied:
 - If the request negotiates to JSON (`Accept` header), it throws `ForbiddenException` (HTTP 403).
 - Otherwise (HTML + not logged in), it redirects to `Auth::getLoginUrl($request->getUri())`.
 
-This middleware expects inline arguments, so it is typically used like `can:admin`.
+Use inline arguments such as `can:admin`.
 
 Usage example (with route arguments):
 

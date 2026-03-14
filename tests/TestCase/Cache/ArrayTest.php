@@ -6,7 +6,9 @@ namespace Tests\TestCase\Cache;
 use Fyre\Cache\CacheManager;
 use Fyre\Cache\Cacher;
 use Fyre\Cache\Handlers\ArrayCacher;
+use Fyre\Cache\TaggedCacher;
 use Fyre\Core\Container;
+use Fyre\Core\Traits\DebugTrait;
 use Override;
 use PHPUnit\Framework\TestCase;
 use Tests\TestCase\Cache\Cacher\DecrementTestTrait;
@@ -17,6 +19,8 @@ use Tests\TestCase\Cache\Cacher\HasTestTrait;
 use Tests\TestCase\Cache\Cacher\IncrementTestTrait;
 use Tests\TestCase\Cache\Cacher\RememberTestTrait;
 use Tests\TestCase\Cache\Cacher\TagsTestTrait;
+
+use function class_uses;
 
 final class ArrayTest extends TestCase
 {
@@ -46,6 +50,11 @@ final class ArrayTest extends TestCase
                 ],
             ],
             $data
+        );
+
+        $this->assertContains(
+            DebugTrait::class,
+            class_uses(TaggedCacher::class)
         );
     }
 

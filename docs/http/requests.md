@@ -1,10 +1,10 @@
 # HTTP Requests
 
-`Fyre\Http\ServerRequest` represents an incoming HTTP request as a PSR-7 server request backed by PHP superglobals.
+Use `Fyre\Http\ServerRequest` to read incoming request data, headers, uploaded files, locale preferences, and request-scoped attributes.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Getting a server request](#getting-a-server-request)
 - [Reading request input](#reading-request-input)
 - [Working with uploaded files](#working-with-uploaded-files)
@@ -17,15 +17,20 @@
   - [Locale, negotiation, and user agent](#locale-negotiation-and-user-agent)
   - [Attributes](#attributes)
   - [Request context](#request-context)
-  - [PSR-7 request basics](#psr-7-request-basics)
+  - [Common request basics](#common-request-basics)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-`ServerRequest` represents what the client is asking for (method, target URI, headers, and body), plus server-provided context like query data, cookies, uploads, and server parameters.
+In most request-handling code:
 
-Requests are immutable: any `with*` call returns a new instance, which makes it safe to enrich the request as it flows through middleware and handlers.
+- use `getData()` for parsed body values and `getQuery()` for query string values
+- use `getUploadedFile()` for uploads and `getAttribute()` for middleware-added context
+- use `prefersJson()` or `negotiate()` when the response depends on the request headers
+- use `request()` when you need the current request from the container
+
+Requests are immutable, so any `with*` call returns a new instance.
 
 ## Getting a server request
 
@@ -40,7 +45,7 @@ function handle(ServerRequestInterface $request): string
 }
 ```
 
-This page documents convenience methods on Fyre’s `ServerRequest` implementation, such as `getData()`, `getQuery()`, `getClientIp()`, `isSecure()`, `prefersJson()`, and `negotiate()`. If you type-hint `ServerRequestInterface`, only standard PSR-7 methods are available.
+This page focuses on the convenience methods Fyre adds on top of the standard request API, such as `getData()`, `getQuery()`, `getClientIp()`, `isSecure()`, `prefersJson()`, and `negotiate()`. If you type-hint `ServerRequestInterface`, you only get the standard request methods.
 
 The `request()` helper resolves the current request from the container (see [Helpers](../core/helpers.md)):
 
@@ -410,9 +415,9 @@ Checks whether the runtime is `cli`.
 $cli = $request->isCli();
 ```
 
-### PSR-7 request basics
+### Common request basics
 
-These are standard request operations available on `ServerRequest` through its PSR-7 interfaces.
+These are the standard request methods you will commonly use alongside the helpers above.
 
 #### **Read the HTTP method** (`getMethod()`)
 
@@ -440,14 +445,12 @@ $body = (string) $request->getBody();
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
+A few practical details are worth keeping in mind:
 
-- `ServerRequest` lazily reads and caches values from PHP superglobals, so later changes to superglobals won’t be reflected.
 - `getParsedBody()` always returns an array, but it can throw `RuntimeException` when JSON parsing fails for `application/json` requests.
 - `getParsedBody()` treats `application/x-www-form-urlencoded` bodies specially only for `PUT`, `PATCH`, and `DELETE` requests; other cases fall back to `$_POST`.
 - `withUploadedFiles()` expects `UploadedFile` instances (and nested arrays of them) and throws when other values are provided.
-- `getClientIp()` uses `REMOTE_ADDR` by default. It only consults `X-Forwarded-For` after `trustProxy()` is enabled, and if `setTrustedProxies()` is used, the immediate remote address must be in that list.
-- `isSecure()` reflects what the server environment provides and checks proxy headers in addition to the `HTTPS` server parameter.
+- `getClientIp()` uses `REMOTE_ADDR` by default. It only consults `X-Forwarded-For` after `trustProxy()` is enabled, and `setTrustedProxies()` can restrict which proxies are allowed to supply it.
 - `negotiate('content', $supported, strictMatch: true)` returns an empty string when no acceptable match is found.
 
 ## Related

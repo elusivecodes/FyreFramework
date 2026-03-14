@@ -1,14 +1,13 @@
 # Paths
 
-`Path` (`Fyre\Utility\Path`) is a static utility class for joining, normalizing, resolving, and inspecting file paths.
+Use `Path` when you want platform-aware path string handling without touching the filesystem.
 
 For filesystem operations (reading, writing, copying), see [File System](file-system.md).
 
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
+- [Start here](#start-here)
 - [Constants](#constants)
 - [Method guide](#method-guide)
   - [Joining and normalizing](#joining-and-normalizing)
@@ -18,13 +17,11 @@ For filesystem operations (reading, writing, copying), see [File System](file-sy
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use `Path` when you want predictable, platform-aware path string handling without touching the filesystem. All operations are based on the current runtime `DIRECTORY_SEPARATOR`.
+All operations are based on the current runtime `DIRECTORY_SEPARATOR`.
 
-If you are working across operating systems (or running on Windows), review the [Behavior notes](#behavior-notes) for separator and absolute-path edge cases.
-
-## Quick start
+If you are working across operating systems, review the [Behavior notes](#behavior-notes) for separator and absolute-path edge cases.
 
 Joining and normalizing:
 

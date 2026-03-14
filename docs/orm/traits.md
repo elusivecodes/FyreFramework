@@ -1,49 +1,52 @@
 # ORM Traits
 
-`Fyre\ORM\Traits\SoftDeleteTrait` and `Fyre\ORM\Traits\TimestampsTrait` are opt-in model traits that add common behavior through ORM events. You can also write your own traits to share reusable model helpers or ORM event listeners.
+Use ORM traits when you want reusable model behavior such as soft deletes or automatic timestamps.
+
+You can also write your own traits to share model helpers or event-based behavior across models.
 
 - `SoftDeleteTrait` — soft deletes, restore, and “include deleted” query helpers.
 - `TimestampsTrait` — automatic `created`/`modified` timestamp updates on save.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [SoftDeleteTrait](#softdeletetrait)
-  - [How it works](#how-it-works)
+- [Start here](#start-here)
+- [`SoftDeleteTrait`](#softdeletetrait)
+  - [Soft delete behavior](#soft-delete-behavior)
   - [Query helpers](#query-helpers)
   - [Delete vs purge](#delete-vs-purge)
   - [Restore](#restore)
   - [Configuration](#configuration)
-- [TimestampsTrait](#timestampstrait)
-  - [How timestamps work](#how-timestamps-work)
+- [`TimestampsTrait`](#timestampstrait)
+  - [When timestamps are set](#when-timestamps-are-set)
   - [Timestamp configuration](#timestamp-configuration)
 - [Custom traits](#custom-traits)
 - [Method guide](#method-guide)
-  - [SoftDeleteTrait methods](#softdeletetrait-methods)
+  - [`SoftDeleteTrait` methods](#softdeletetrait-methods)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use traits to share model behavior that is enforced consistently via ORM events, for example soft deletes or automatic timestamps, while keeping the behavior close to the model.
+The built-in traits cover two common cases:
 
-Most examples assume you already have a model instance (for example, `$Users`).
+- `SoftDeleteTrait` for deleted-at style records and restore or purge helpers
+- `TimestampsTrait` for automatic created and modified fields
 
-## SoftDeleteTrait
+Most examples on this page assume you already have a model instance such as `$Users`.
 
-`SoftDeleteTrait` adds soft-delete behavior to a model by listening for `ORM.beforeDelete` and `ORM.beforeFind`. For a deeper overview of the delete lifecycle, see [Deleting Data](deleting.md). For the underlying attribute-based listener mechanism, see [ORM Events](events.md).
+## `SoftDeleteTrait`
 
-### How it works
+`SoftDeleteTrait` turns deletes into timestamp updates and filters deleted rows from normal queries.
 
-Soft deletes don’t remove rows. Instead, the trait intercepts deletes and sets a configured “deleted” field to the current timestamp (`DateTime::now()`), then saves the entity.
+### Soft delete behavior
 
-It also intercepts queries and, by default, filters out deleted rows:
+Soft deletes do not remove rows. Instead, the trait sets a configured deleted field to the current timestamp and saves the entity.
 
-- on find, adds `...deleted_field IS NULL` unless the `deleted` find option is enabled.
+Normal `find()` queries exclude deleted rows unless you opt in to include them.
 
 ### Query helpers
 
-The trait adds helpers that set the `deleted` find option and apply the appropriate condition:
+The trait adds helpers that change that default:
 
 - `findWithDeleted(...)` — returns all records, including soft-deleted ones.
 - `findOnlyDeleted(...)` — returns only soft-deleted records.
@@ -114,9 +117,9 @@ class PostsModel extends Model
 }
 ```
 
-## TimestampsTrait
+## `TimestampsTrait`
 
-### How timestamps work
+### When timestamps are set
 
 On save, the trait sets timestamps to `DateTime::now()`:
 
@@ -147,7 +150,7 @@ class UsersModel extends Model
 
 ## Custom traits
 
-You can write your own PHP traits and apply them to models to share reusable logic. This is especially useful for ORM event listeners: because a model registers itself as a listener, methods contributed by traits are discovered the same way as methods defined directly on the model (see [ORM Events](events.md)).
+You can write your own PHP traits and apply them to models to share reusable logic. This is especially useful for ORM event listeners, since trait methods can use the same event attributes as methods defined directly on the model.
 
 For example, you can bundle a `#[BeforeSave]` listener into a trait:
 
@@ -181,7 +184,7 @@ class UsersModel extends Model
 
 This guide focuses on the public helper methods added by `SoftDeleteTrait`. `TimestampsTrait` does not add public helper methods; it is configured via `$createdField` / `$modifiedField`.
 
-### SoftDeleteTrait methods
+### `SoftDeleteTrait` methods
 
 #### **Find with deleted** (`findWithDeleted()`)
 

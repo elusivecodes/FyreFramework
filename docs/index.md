@@ -1,64 +1,60 @@
 # FyreFramework Documentation
 
-FyreFramework is organized around focused subsystems that are designed to compose cleanly.
+Use this page to find the part of the framework you need.
 
 ## Table of Contents
 
 - [Start here](#start-here)
-- [How to use these docs](#how-to-use-these-docs)
-- [Mental model](#mental-model)
+- [What these docs cover](#what-these-docs-cover)
+- [Framework overview](#framework-overview)
 - [Pages in this section](#pages-in-this-section)
 
 ## Start here
 
-Pick a path based on what you’re building:
+Pick a path based on what you are building:
 
-- **HTTP applications**: [Core](core/index.md) → [HTTP](http/index.md) → [Routing](routing/index.md)
-- **Data/persistence**: [Database](database/index.md) → [ORM](orm/index.md)
+- **Core services**: [Core](core/index.md) -> [Container](core/container.md) -> [Engine](core/engine.md)
+- **HTTP applications**: [HTTP](http/index.md) -> [Routing](routing/index.md)
+- **Data and persistence**: [Database](database/index.md) -> [ORM](orm/index.md)
+- **Auth and security**: [Auth](auth/index.md) -> [Security](security/index.md)
+- **Shared services**: [Events](events/index.md) -> [Logging](logging/index.md) -> [Mail](mail/index.md) -> [Cache](cache/index.md) -> [Queue](queue/index.md)
+- **Rendering and forms**: [View](view/index.md) -> [Form](form/index.md)
+- **Tooling and tests**: [Console](console/index.md) -> [Testing](testing/index.md) -> [Utilities](utilities/index.md)
 
-Common next stops (depending on what you’re building):
+## What these docs cover
 
-- CLI commands and tooling: [Console](console/index.md)
-- Templates, rendering, and view helpers: [View](view/index.md)
-- Server-side schemas and validation: [Form](form/index.md)
-- Authentication and authorization: [Auth](auth/index.md)
-- Logging and log handlers: [Logging](logging/index.md)
-- Test utilities and fixtures: [Testing](testing/index.md)
-- Background work and workers: [Queue](queue/index.md)
-- Caching adapters: [Cache](cache/index.md)
-- Security primitives (CSP, CSRF, encryption): [Security](security/index.md)
-- General-purpose building blocks: [Utilities](utilities/index.md)
+These pages document the `fyre/framework` package and the APIs your application uses.
 
-## How to use these docs
+Project layout, entry points, and app-specific bootstrap live in your application. These docs stay focused on the framework package itself.
 
-Use this page as a subsystem-first map of the framework. Start with the path that matches your application, then move into the subsystem pages for the APIs and workflows you need. The docs assume the default container-centric runtime unless a page says otherwise.
+## Framework overview
 
-## Mental model
+Most applications touch a few main areas:
 
-FyreFramework’s subsystems are designed to compose cleanly: wire services into the container, then layer middleware, routing, persistence, rendering, and utilities on top.
+- **Core**: container, configuration, language, helpers, and the default `Engine`
+- **HTTP and routing**: requests, responses, middleware, sessions, and route handling
+- **Database and ORM**: connections, queries, models, entities, and relationships
+- **Shared services**: auth, security, cache, events, logging, mail, and queue processing
+- **Presentation and forms**: templates, helpers, forms, and validation
 
-- **Start with the container and defaults.** [Core](core/index.md) explains the container-centric model used across the framework, and [Engine](core/engine.md) shows the “ready-to-use” baseline that pre-registers common bindings.
-- **Think in request flow when building HTTP apps.** Requests pass through [HTTP Middleware](http/middleware.md), then routing selects a handler, and the handler produces a response. Start with [HTTP](http/index.md), then move to [Routing](routing/index.md) and the [Request handler](http/request-handler.md).
-- **Treat persistence as two layers.** The database layer handles connections and queries, and the ORM builds a record/relationship layer on top of database access. Start with [Database](database/index.md), then move to [ORM](orm/index.md).
-
-After that, add the shared subsystems you need (events, caching, logging, queues, forms/validation, security, and so on) and keep the container as the integration point.
+Start with the section you need most, then follow the related links from there.
 
 ## Pages in this section
 
-- [Core](core/index.md) — container-centric runtime services, configuration, language, helpers, macros, and debugging.
-- [HTTP](http/index.md) — requests, responses, middleware execution, sessions, and the HTTP client for outbound calls.
-- [Routing](routing/index.md) — route definition, matching, discovery, bindings, and URL generation.
-- [View](view/index.md) — template rendering with layouts, elements, cells, and helpers.
-- [Form](form/index.md) — server-side schemas and validators for parsing input, validating fields, and processing submissions; for template-side form markup, see [View Forms](view/forms.md).
-- [Auth](auth/index.md) — authentication, current-user resolution, and authorization checks.
-- [Security](security/index.md) — CSP, CSRF, encryption, and rate limiting primitives for hardening apps.
-- [Database](database/index.md) — connections, query building and execution, schema tools, migrations, and type casting.
-- [ORM](orm/index.md) — models, entities, relationships, querying, and persistence workflows.
-- [Cache](cache/index.md) — value caching with configurable handlers and consistent key and TTL behavior.
-- [Events](events/index.md) — events and listeners for observing or altering runtime behavior.
-- [Logging](logging/index.md) — structured logging with levels, scope filtering, and configurable handlers.
-- [Mail](mail/index.md) — email construction and delivery through configurable transports.
-- [Queue](queue/index.md) — background jobs, message processing, and the worker runtime.
-- [Console](console/index.md) — command discovery, argument parsing, and the CLI lifecycle.
-- [Testing](testing/index.md) — PHPUnit utilities including the base test case, fixtures, and reusable assertions.
-- [Utilities](utilities/index.md) — general-purpose utilities for filesystem operations, collections, promises, date/time, colors, and PDF generation.
+- [Core](core/index.md) - configuration, language, helpers, the container, and the default engine
+- [HTTP](http/index.md) - requests, responses, middleware, sessions, and outbound HTTP calls
+- [Routing](routing/index.md) - route definition, matching, bindings, and URL generation
+- [View](view/index.md) - templates, layouts, elements, cells, and view helpers
+- [Form](form/index.md) - server-side forms, schemas, validation, and submission handling
+- [Auth](auth/index.md) - authentication, authorization, and auth middleware
+- [Security](security/index.md) - CSP, CSRF, encryption, and rate limiting
+- [Database](database/index.md) - connections, queries, schema tools, migrations, and types
+- [ORM](orm/index.md) - models, entities, relationships, queries, and persistence
+- [Cache](cache/index.md) - cache handlers, cache usage, and tagged cache entries
+- [Events](events/index.md) - events and listeners
+- [Logging](logging/index.md) - loggers, levels, scopes, and handlers
+- [Mail](mail/index.md) - building and sending email
+- [Queue](queue/index.md) - jobs, queues, and worker processing
+- [Console](console/index.md) - commands, prompts, and CLI tooling
+- [Testing](testing/index.md) - PHPUnit helpers, fixtures, and framework test utilities
+- [Utilities](utilities/index.md) - general-purpose helpers such as files, collections, promises, and date/time tools

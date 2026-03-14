@@ -150,6 +150,64 @@ final class FormTest extends TestCase
         );
     }
 
+    public function testExecuteValidatesBeforeParsing(): void
+    {
+        $form = new class ($this->container, $this->container->build(EventManager::class)) extends Form
+        {
+            public function buildSchema(Schema $schema): Schema
+            {
+                return $schema
+                    ->addField('start', ['type' => 'date']);
+            }
+
+            public function buildValidator(Validator $validator): Validator
+            {
+                return $validator
+                    ->add('start', Rule::exactLength(10));
+            }
+        };
+
+        $this->assertTrue(
+            $form->execute([
+                'start' => '2026-01-01',
+            ])
+        );
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $form->get('start')
+        );
+    }
+
+    public function testExecuteValidationFailureKeepsRawData(): void
+    {
+        $form = new class ($this->container, $this->container->build(EventManager::class)) extends Form
+        {
+            public function buildSchema(Schema $schema): Schema
+            {
+                return $schema
+                    ->addField('user_id', ['type' => 'integer']);
+            }
+
+            public function buildValidator(Validator $validator): Validator
+            {
+                return $validator
+                    ->add('user_id', Rule::exactLength(2));
+            }
+        };
+
+        $this->assertFalse(
+            $form->execute([
+                'user_id' => '1',
+            ])
+        );
+
+        $this->assertSame(
+            '1',
+            $form->get('user_id')
+        );
+    }
+
     public function testExecuteParsesUnitEnum(): void
     {
         $form = new class ($this->container, $this->container->build(EventManager::class)) extends Form

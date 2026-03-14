@@ -1,14 +1,13 @@
 # Inflection
 
-`Inflector` (`Fyre\Utility\Inflector`) is an instance utility for pluralization/singularization and convention helpers for class, table, and variable naming.
+Use `Inflector` when you need pluralization, singularization, and naming-convention helpers for class, table, or variable names.
 
 For general string transformations (casing, searching, slicing, escaping), see [Strings](strings.md).
 
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
+- [Start here](#start-here)
 - [Method guide](#method-guide)
   - [Word inflection](#word-inflection)
   - [Naming conventions](#naming-conventions)
@@ -17,15 +16,13 @@ For general string transformations (casing, searching, slicing, escaping), see [
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use `Inflector` when you need consistent inflection and naming conventions, such as:
+Common uses include:
 
 - converting between singular class names and plural table names
 - generating variable-style names from class-style identifiers
-- pluralizing/singularizing user-facing nouns while respecting irregular and uncountable words
-
-## Quick start
+- pluralizing and singularizing words while respecting irregular and uncountable forms
 
 ```php
 use Fyre\Utility\Inflector;
@@ -97,7 +94,7 @@ $table = $inflector->tableize('AuditLog'); // "audit_logs"
 
 #### **Convert a string into a variable name** (`variable()`)
 
-Builds a lower camelCase name, commonly used for variables derived from class names or identifiers.
+Builds a lower `camelCase` name, commonly used for variables derived from class names or identifiers.
 
 Arguments:
 - `$string` (`string`): the input string.
@@ -108,7 +105,7 @@ $var = $inflector->variable('UserProfile'); // "userProfile"
 
 ### Delimiter and casing helpers
 
-#### **Convert a delimited string into CamelCase** (`camelize()`)
+#### **Convert a delimited string into `CamelCase`** (`camelize()`)
 
 Converts a delimited string into `CamelCase`.
 
@@ -121,7 +118,7 @@ $value = $inflector->camelize('user_profile');     // "UserProfile"
 $value = $inflector->camelize('user-profile', '-'); // "UserProfile"
 ```
 
-#### **Convert a string into kebab-case** (`dasherize()`)
+#### **Convert a string into `kebab-case`** (`dasherize()`)
 
 Converts a string into `kebab-case` using `-` as the delimiter.
 
@@ -144,7 +141,7 @@ Arguments:
 $value = $inflector->humanize('user_profile'); // "User Profile"
 ```
 
-#### **Convert a string into snake_case** (`underscore()`)
+#### **Convert a string into `snake_case`** (`underscore()`)
 
 Converts a string into `snake_case` using `_` as the delimiter.
 

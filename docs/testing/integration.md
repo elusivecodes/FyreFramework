@@ -1,11 +1,12 @@
 # Integration Testing
 
-`IntegrationTestTrait` provides request helpers and PHPUnit assertions for exercising your application through its HTTP stack and asserting against the captured response.
+Use `IntegrationTestTrait` when you want to send in-process HTTP requests through your application and assert on the captured response.
+
+It is a good fit for request and response testing, redirects, cookies, session state, and controller or middleware flows that should run through the full HTTP stack.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
+- [Start here](#start-here)
 - [Making requests](#making-requests)
 - [Setting request state](#setting-request-state)
   - [Cookies](#cookies)
@@ -23,13 +24,14 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use `IntegrationTestTrait` when you want to send in-process requests (GET/POST/etc.) through the framework’s request handler and make assertions about status codes, response bodies, headers, redirects, cookies, and session state.
+The usual workflow is:
 
-This trait is designed to be used in a `Fyre\TestSuite\TestCase` (it relies on the test case’s application engine via `$this->app`).
-
-## Quick start
+1. Use `IntegrationTestTrait` in a `TestCase`.
+2. Set any request state you need such as session, cookies, JSON headers, or CSRF tokens.
+3. Send a request with `get()`, `post()`, or the other verb helpers.
+4. Assert on the last captured response.
 
 ```php
 use Fyre\TestSuite\TestCase;
@@ -65,7 +67,7 @@ $this->get('/search?q=fyre');
 
 ## Setting request state
 
-`IntegrationTestTrait` keeps per-test request state that is reused across requests in the current test until it is changed or cleared by the trait’s cleanup hook.
+`IntegrationTestTrait` keeps per-test request state that is reused across requests in the current test until it is changed or cleared.
 
 ### Cookies
 
@@ -630,8 +632,8 @@ $this->assertFlashMessage('Saved', 'default');
 
 A few behaviors are worth keeping in mind:
 
-- Response assertion helpers require a response; calling most `assert*()` methods before a request fails with “No response has been set.”
-- Request state (`cookie()`, `session()`, `requestAsJson()`, `enableCsrfToken()`) persists across requests within the same test until you overwrite it. The trait clears it automatically in its `#[After]` cleanup hook.
+- Response assertion helpers require a response; calling most `assert*()` methods before a request fails with "No response has been set."
+- Request state (`cookie()`, `session()`, `requestAsJson()`, `enableCsrfToken()`) persists across requests within the same test until you overwrite it. The trait clears it automatically after each test.
 - `IntegrationTestTrait` stores only the last response; each new request replaces the previous `$response`.
 - `session()` sets `$_SESSION` for the request, and session assertions read from `$_SESSION` (not the response).
 

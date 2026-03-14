@@ -1,13 +1,14 @@
 # Collections
 
-`Collection` (`Fyre\Utility\Collection`) is the primary tool for shaping sequences of values with fluent, chainable pipelines. It lives in the utilities layer alongside other small, reusable helpers (see [Utilities](index.md)), and for array-first helpers (dot-path access, flattening, etc.), see [Array Helpers](arrays.md).
+Use `Collection` (`Fyre\Utility\Collection`) when you want fluent, chainable pipelines for a sequence of values.
+
+For array-first helpers like dot-path access and flattening, see [Array Helpers](arrays.md).
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
-- [`Collection` mental model](#collection-mental-model)
-  - [Eager vs lazy checkpoints](#eager-vs-lazy-checkpoints)
+- [Start here](#start-here)
+- [Working with lazy collections](#working-with-lazy-collections)
+  - [When collections materialize](#when-collections-materialize)
 - [Building pipelines](#building-pipelines)
 - [Selecting values with paths](#selecting-values-with-paths)
 - [Working with nested data](#working-with-nested-data)
@@ -29,14 +30,12 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
 Use `Collection` when you want readable, chainable transformations over a sequence of values (especially when the underlying data may be produced lazily). Most transformation methods return a new `Collection`, and values are typically only computed when you iterate or materialize the result.
 
 If you already have a plain array and you want a single operation (or a couple of explicit steps), see [Array Helpers](arrays.md).
 `collect($source)` is the shorthand for creating a `Collection`; see [Helpers](../core/helpers.md).
-
-## Quick start
 
 ```php
 use Fyre\Utility\Collection;
@@ -70,9 +69,9 @@ $emails = collect($users)
     ->toList();
 ```
 
-## `Collection` mental model
+## Working with lazy collections
 
-A `Collection` is a sequence wrapper. It can be backed by either:
+A `Collection` is a sequence wrapper. In practice, the source is usually one of two things:
 
 - an `array` (eager, repeatable), or
 - a `Closure` that returns data when iterated (often lazy).
@@ -89,7 +88,7 @@ $collection = new Collection(static function(): array {
 
 Most transformation methods (like `map()`, `filter()`, `groupBy()`) return a new `Collection`. Values are typically produced only when you iterate (for example via `foreach`) or materialize (for example via `toArray()`, `toList()`, `toJson()`, `count()`).
 
-### Eager vs lazy checkpoints
+### When collections materialize
 
 Some operations necessarily materialize the collection (they call `toArray()` internally), including:
 

@@ -1,11 +1,12 @@
 # Sessions
 
-`Fyre\Http\Session\Session` wraps PHP’s native session handling and provides dot-notation access, flash/temp helpers, and pluggable storage handlers.
+Use `Fyre\Http\Session\Session` when you need state to survive across requests, such as login state, flash messages, or short-lived workflow data.
+
+It wraps PHP sessions and adds dot-notation access, flash and temporary values, and pluggable storage handlers.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Mental model](#mental-model)
+- [Start here](#start-here)
 - [Using sessions in requests](#using-sessions-in-requests)
 - [Session lifecycle](#session-lifecycle)
   - [Starting and closing](#starting-and-closing)
@@ -25,17 +26,9 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Sessions are a good fit when you need state that:
-
-- must survive redirects and multiple requests (flash messages, login state, anti-CSRF state)
-- should not be trusted to live solely in the browser
-- should be accessed consistently across middleware and request handlers
-
-## Mental model
-
-A `Session` instance wraps PHP session mechanics and provides a stable API:
+A `Session` instance wraps PHP session handling and gives you a simpler application API:
 
 - session start happens lazily (the first `get()`, `set()`, `has()`, etc. starts the session if needed), unless something starts it explicitly (for example, `SessionMiddleware`)
 - values are stored under `$_SESSION` and can be addressed with dot-notation keys
@@ -82,7 +75,7 @@ The session starts when you call `Session::start()`, or implicitly when you acce
 - closes the underlying PHP session (non-CLI)
 - resets the in-memory “started” state on the `Session` instance
 
-`Session::startReadOnly()` intentionally does less work than `start()`: it starts the session with `read_and_close=true` and marks the session as read-only, but it does not update the activity timestamp, rotate flash data, or clear expired temporary values.
+`Session::startReadOnly()` starts the session in read-only mode and skips the write-oriented housekeeping that happens during a normal `start()`.
 
 ### Refreshing the session ID
 
@@ -110,12 +103,7 @@ Session configuration is read from the `Session` key in your config (see [Config
   - `secure` (`bool`)
   - `sameSite` (`string`) for example `Lax`
 
-Fyre always enables a few PHP session flags at runtime:
-
-- `session.cookie_httponly` is enabled
-- `session.use_cookies` is enabled
-- `session.use_strict_mode` is enabled
-- `session.lazy_write` is enabled
+Fyre also enables the usual safety-focused PHP session flags at runtime, such as HTTP-only cookies and strict mode.
 
 ### Example configuration
 
@@ -141,13 +129,13 @@ return [
 
 ## Session handlers
 
-By default, Fyre uses a session handler that stores each session under the configured save path. Session handlers are regular `SessionHandlerInterface` implementations, and the selected handler is registered with PHP via `session_set_save_handler()`.
+By default, Fyre stores session data under the configured save path. You can switch to database, Redis, or Memcached storage through `Session.handler`.
 
 Handlers are configured under `Session.handler`:
 
 - `className` (`class-string<SessionHandlerInterface>`): the handler class to build and register.
 - `expires` (`int`): handler expiration in seconds. Defaults to `Session.expires`.
-- `prefix` (`string`): optional storage key prefix (used by handlers that call `prepareKey()`, such as `FileSessionHandler`, `RedisSessionHandler`, and `MemcachedSessionHandler`).
+- `prefix` (`string`): optional storage key prefix for handlers that support it.
 
 ### File storage
 
@@ -226,10 +214,7 @@ Common options:
 
 ### Custom handlers
 
-If you build a custom handler, extending the framework’s `SessionHandler` base class provides:
-
-- default configuration merging (including `prefix` and `expires`)
-- a `prepareKey(string $sessionId): string` helper for prefixing storage keys
+If you build a custom handler, extending the framework's `SessionHandler` base class gives you default config merging and a helper for prefixed storage keys.
 
 ## Method guide
 
@@ -389,13 +374,11 @@ $session->destroy();
 
 A few behaviors are worth keeping in mind:
 
-- Calling `start()` multiple times on the same `Session` instance is a no-op once it has started. If a PHP session is already active but the `Session` instance hasn’t started, `start()` throws.
 - `startReadOnly()` does not enforce `allowReadOnly()`, so check `allowReadOnly()` when choosing to start read-only mode outside of `SessionMiddleware`.
 - Writing methods throw a `SessionException` when the session is started in read-only mode.
 - `startReadOnly()` does not update activity tracking, rotate flash values, or clear expired temporary values; these happen during `start()`.
 - The default session cookie is marked `Secure`, so browsers will not send it over plain HTTP.
-- When the session starts, `_last_activity` is checked and the session data is destroyed and restarted if it has exceeded the configured expiry window. This does not regenerate the session id, so use `refresh()` after authentication state changes.
-- In CLI, `$_SESSION` is initialized (if needed) and the session ID is set to `"cli"`.
+- When a session has expired, Fyre clears it and starts a new one on the next request. Use `refresh()` after authentication state changes when you want a new session ID as well.
 
 ## Related
 

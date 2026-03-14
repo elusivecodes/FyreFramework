@@ -1,15 +1,15 @@
 # ORM Events
 
-`Fyre\ORM\Model` dispatches ORM events (`ORM.*`) around querying, entity parsing, and persistence so you can enforce model-specific rules, apply defaults, or react to lifecycle changes without tightly coupling your application logic.
+Use ORM events when you want model behavior to run around finding, parsing, saving, or deleting records.
 
-For the underlying event system (listeners, priorities, propagation), see [Events](../events/index.md). For ORM basics, see [Models](models.md) and [Entities](entities.md).
+They are a good fit for timestamps, defaults, audit fields, and save or delete guards.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Where ORM events fit](#where-orm-events-fit)
-- [Per-model event managers](#per-model-event-managers)
-- [Listening with ORM event attributes](#listening-with-orm-event-attributes)
+- [Start here](#start-here)
+- [Common event patterns](#common-event-patterns)
+- [Registering listeners](#registering-listeners)
+- [Using event attributes](#using-event-attributes)
 - [Built-in ORM events](#built-in-orm-events)
   - [Build events](#build-events)
   - [Find events](#find-events)
@@ -19,31 +19,27 @@ For the underlying event system (listeners, priorities, propagation), see [Event
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use ORM events when you want to enforce model behavior at lifecycle boundaries (querying, parsing, saving, deleting) without scattering the logic across controllers or services.
+Use ORM events when you want to:
 
-Common uses include:
+- normalize or default input during parsing
+- block invalid saves or deletes
+- add reusable model behavior such as timestamps or soft deletes
+- observe model activity for logging or metrics
 
-- normalizing or defaulting input during entity parsing
-- blocking invalid saves/deletes and attaching entity errors
-- adding shared model behavior like timestamps, soft deletes, or audit trails
-- observing queries and results for logging/metrics
+For the underlying event system, see [Events](../events/index.md). For ORM basics, see [Models](models.md) and [Entities](entities.md).
 
-## Where ORM events fit
-
-Every `Fyre\ORM\Model` dispatches events named `ORM.*` from the points where work is performed (query preparation/execution, entity parsing, save/delete lifecycles).
+## Common event patterns
 
 Two patterns are common:
 
-- **Model-local behavior**: attach listeners to a model’s event manager (ideal for defaults, invariants, auditing, and model-specific policy).
-- **Shared behavior across models**: attach listeners to a parent `Fyre\Event\EventManager` to observe the same ORM events from multiple models. Parent listeners run after the model’s listeners unless propagation is stopped; the dispatched `Fyre\Event\Event` uses the model as its subject.
+- **Model-local behavior**: keep listeners on the model for defaults, invariants, and model-specific policy.
+- **Reusable behavior**: put annotated listener methods in a trait and apply that trait to multiple models.
 
-## Per-model event managers
+## Registering listeners
 
-Each `Model` builds its own `Fyre\Event\EventManager` and configures the injected event manager as the parent. This keeps listeners scoped by default, while still allowing parent-level listeners to observe the same events.
-
-The most common entry point is `Model::getEventManager()`.
+The most direct entry point is `Model::getEventManager()`.
 
 Registering listeners directly on the model is a straightforward way to keep behavior close to the data:
 
@@ -63,14 +59,14 @@ class UsersModel extends Model
 }
 ```
 
-## Listening with ORM event attributes
+## Using event attributes
 
-`Fyre\ORM\Events\*` provides attributes that map directly to ORM event names (for example `#[BeforeSave]` → `ORM.beforeSave`). Because the model registers itself as a listener, any annotated methods on the model (including methods contributed by traits) are discovered automatically.
+`Fyre\ORM\Events\*` provides attributes that map directly to ORM event names (for example `#[BeforeSave]` → `ORM.beforeSave`).
 
 Listener methods receive:
 
 - `Fyre\Event\Event $event` as the first parameter
-- the payload values in the documented order for each event
+- the event arguments in the documented order
 
 ```php
 use ArrayObject;
@@ -102,54 +98,54 @@ class UsersModel extends Model
 
 ## Built-in ORM events
 
-All events are dispatched as `Fyre\Event\Event` with the model as the subject. The payload below lists the additional arguments a listener receives after the `Event` itself.
+All events below pass `Fyre\Event\Event` first, followed by the additional arguments listed for that event.
 
 ### Build events
 
-- `ORM.buildValidator` — fired when `Model::getValidator()` first constructs the model validator, after `buildValidator()` returns and before the validator is cached.
-  - Payload: `Fyre\Form\Validator $validator`
+- `ORM.buildValidator` — fired when `Model::getValidator()` first builds the model validator.
+  - Arguments: `Fyre\Form\Validator $validator`
 
 ### Find events
 
 - `ORM.beforeFind` — fired once when a `Fyre\ORM\Queries\SelectQuery` is prepared (for example when executing, counting, or generating SQL).
-  - Payload: `Fyre\ORM\Queries\SelectQuery $query`, `array $options`
-- `ORM.afterFind` — fired when the query result is first materialized and wrapped into a `Fyre\ORM\Result`.
-  - Payload: `Fyre\ORM\Result $result`, `array $options`
+  - Arguments: `Fyre\ORM\Queries\SelectQuery $query`, `array $options`
+- `ORM.afterFind` — fired when the query result is first wrapped in a `Fyre\ORM\Result`.
+  - Arguments: `Fyre\ORM\Result $result`, `array $options`
 
 ### Parsing events
 
 - `ORM.beforeParse` — fired before schema parsing when building or patching an entity; `$data` is mutable.
-  - Payload: `ArrayObject $data`, `array $options`
+  - Arguments: `ArrayObject $data`, `array $options`
 - `ORM.afterParse` — fired after parsed data and relationships have been applied to the entity.
-  - Payload: `Fyre\ORM\Entity $entity`, `array $options`
+  - Arguments: `Fyre\ORM\Entity $entity`, `array $options`
 
 ### Save events
 
 - `ORM.beforeRules` — fired before rules are evaluated during `Model::save()` when rule checking is enabled.
-  - Payload: `Fyre\ORM\Entity $entity`, `array $options`
+  - Arguments: `Fyre\ORM\Entity $entity`, `array $options`
 - `ORM.afterRules` — fired after rules validation passes (still within the save transaction).
-  - Payload: `Fyre\ORM\Entity $entity`, `array $options`
+  - Arguments: `Fyre\ORM\Entity $entity`, `array $options`
 - `ORM.beforeSave` — fired immediately before persistence begins (still within the save transaction).
-  - Payload: `Fyre\ORM\Entity $entity`, `array $options`
+  - Arguments: `Fyre\ORM\Entity $entity`, `array $options`
 - `ORM.afterSave` — fired after persistence and related saves complete (still within the save transaction).
-  - Payload: `Fyre\ORM\Entity $entity`, `array $options`
+  - Arguments: `Fyre\ORM\Entity $entity`, `array $options`
 - `ORM.afterSaveCommit` — fired after the save transaction commits.
-  - Payload: `Fyre\ORM\Entity $entity`, `array $options`
+  - Arguments: `Fyre\ORM\Entity $entity`, `array $options`
 
 ### Delete events
 
 - `ORM.beforeDelete` — fired before the delete operation begins (within the delete transaction).
-  - Payload: `Fyre\ORM\Entity $entity`, `array $options`
+  - Arguments: `Fyre\ORM\Entity $entity`, `array $options`
 - `ORM.afterDelete` — fired after deletion and cascades complete (still within the delete transaction).
-  - Payload: `Fyre\ORM\Entity $entity`, `array $options`
+  - Arguments: `Fyre\ORM\Entity $entity`, `array $options`
 - `ORM.afterDeleteCommit` — fired after the delete transaction commits.
-  - Payload: `Fyre\ORM\Entity $entity`, `array $options`
+  - Arguments: `Fyre\ORM\Entity $entity`, `array $options`
 
 ## Behavior notes
 
 A few behaviors are worth keeping in mind:
 
-- `ORM.beforeRules`, `ORM.afterRules`, `ORM.beforeSave`, `ORM.afterSave`, `ORM.beforeDelete`, and `ORM.afterDelete` are checked by the ORM to determine whether to continue. If propagation is stopped, the model returns `(bool) $event->getResult()` (and a `false` result will roll back the surrounding transaction). Find/parse/commit events do not short-circuit ORM work.
+- Stopping `ORM.beforeRules`, `ORM.afterRules`, `ORM.beforeSave`, `ORM.afterSave`, `ORM.beforeDelete`, or `ORM.afterDelete` can stop the ORM operation. Find, parse, and commit events are observational.
 - Listener callbacks receive the values of the event data (`array_values()`), not the keys, so signatures must match the documented order for each event.
 - `ORM.afterSaveCommit` / `ORM.afterDeleteCommit` are dispatched before the model’s post-commit entity cleaning runs (when enabled), so entities may still be “new” until cleaning completes.
 - `Model::save()` returns early (and does not dispatch save events) when the entity is not new and has no dirty fields.

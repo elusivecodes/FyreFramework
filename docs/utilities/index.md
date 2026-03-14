@@ -27,15 +27,15 @@ This `index.md` is a navigation hub: use it to choose the next page to read base
 
 ## Pages in this section
 
-- [Strings](strings.md) — casing, slicing, searching, escaping.
-- [Inflection](inflection.md) — pluralization/singularization and naming conventions.
-- [Array Helpers](arrays.md) — dot-path access and small array transformations.
-- [Collections](collections.md) — fluent pipelines for sequences.
-- [Paths](paths.md) — join/normalize/resolve/inspect path strings (no filesystem access).
-- [File System](file-system.md) — file/folder wrappers for common operations.
-- [Formatter](formatter.md) — locale-aware numbers, currency, dates/times, lists.
-- [Colors](colors.md) — parse/convert/format CSS colors and compute contrast.
-- [PDF](pdf.md) — render HTML to PDF via headless Chrome/Chromium.
-- [Promises](promises.md) — synchronous and forked async promises.
-- [Date/time](datetime.md) — immutable instants with locale-aware formatting.
-- [Periods](periods.md) — ranges and set operations over ranges.
+- [Strings](strings.md) - casing, slicing, searching, and escaping
+- [Inflection](inflection.md) - pluralization, singularization, and naming conventions
+- [Array Helpers](arrays.md) - dot-path access and small array transformations
+- [Collections](collections.md) - fluent pipelines for sequences
+- [Paths](paths.md) - join, normalize, resolve, and inspect path strings without touching the filesystem
+- [File System](file-system.md) - common file and folder operations
+- [Formatter](formatter.md) - locale-aware numbers, currency, dates, times, and lists
+- [Colors](colors.md) - parse, convert, and format CSS colors and compute contrast
+- [PDF](pdf.md) - render HTML to PDF through headless Chrome or Chromium
+- [Promises](promises.md) - synchronous and forked async promises
+- [Date/time](datetime.md) - immutable instants with locale-aware formatting
+- [Periods](periods.md) - ranges and set operations over ranges

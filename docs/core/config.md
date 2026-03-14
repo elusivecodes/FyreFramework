@@ -1,11 +1,12 @@
 # Config
 
-`Fyre\Core\Config` provides configuration storage and lookup using nested arrays and dot-notation keys. It’s a small, predictable API that other subsystems read from to configure themselves at runtime.
+Use `Fyre\Core\Config` to store application settings and subsystem options.
+
+It supports nested arrays, dot-notation keys, and loading PHP config files from one or more paths.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
+- [Start here](#start-here)
 - [Configuration model](#configuration-model)
 - [Loading and overriding](#loading-and-overriding)
   - [Example: override precedence](#example-override-precedence)
@@ -21,18 +22,20 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Config centralizes application and subsystem settings so constructors can stay explicit while still being configurable.
+Use `Config` when you want to:
 
-It stores configuration in memory and can merge PHP config files from registered paths when you call `load()`.
+- keep application and subsystem settings in one place
+- load PHP config files from one or more directories
+- read nested values with dot notation
 
 `config()` can be used in two ways:
 
 - `config()` returns the shared `Config` instance.
 - `config('A.B.C', $default)` is shorthand for reading a config value directly (see [Helpers](helpers.md)).
 
-If you prefer dependency injection (or if helpers aren’t loaded), inject `Config` where you need it:
+If you prefer dependency injection, inject `Config` where you need it:
 
 ```php
 use Fyre\Core\Config;
@@ -43,22 +46,20 @@ function handler(Config $config): bool
 }
 ```
 
-## Quick start
-
-In a typical application, `Config` is resolved from the container and already has the default app and framework config paths registered by `Engine`.
+In a typical application, `Config` is resolved from the container and, if the `CONFIG` constant is defined, `Engine` adds that app config directory as a default search path.
 
 ```php
 config()->load('app');
 
-$debug = config()->get('App.debug', false);
+$debug = config('App.debug', false);
 ```
 
 If you are composing the runtime manually, or want to load additional config locations, register those paths yourself:
 
 ```php
 $config = config();
-$config->addPath('config');
-$config->addPath('config/local');
+$config->addPath('/path/to/config');
+$config->addPath('/path/to/config/local');
 $config->load('app');
 ```
 
@@ -80,23 +81,17 @@ Config can load PHP config files (arrays) from one or more configured paths. Fil
 - `addPath($path, prepend: true)` inserts the path earlier in that search order, so later appended paths still override it when the same keys exist.
 - Missing files and non-array results are ignored.
 
-```php
-$config->addPath('config');
-$config->addPath('config/local');
-$config->load('app');
-```
-
 ### Example: override precedence
 
 When the same config file exists in multiple paths, later paths override earlier paths.
 
-For example, if `config/app.php` returns:
+For example, if `/path/to/config/app.php` returns:
 
 ```php
 return ['App' => ['debug' => false]];
 ```
 
-…and `config/local/app.php` returns:
+…and `/path/to/config/local/app.php` returns:
 
 ```php
 return ['App' => ['debug' => true]];
@@ -105,12 +100,12 @@ return ['App' => ['debug' => true]];
 Then after:
 
 ```php
-$config->addPath('config');
-$config->addPath('config/local');
+$config->addPath('/path/to/config');
+$config->addPath('/path/to/config/local');
 $config->load('app');
-```
 
-`App.debug` resolves to `true`.
+$debug = $config->get('App.debug'); // true
+```
 
 ## Services that read config
 
@@ -137,7 +132,7 @@ This is a quick map of which services consume which config namespaces (not exhau
 
 ## Example `config/app.php`
 
-In an application, `config/app.php` is typically the main place you define framework configuration because the default `Engine` setup registers the app config directory. `Config` itself only loads files from paths you add.
+In an application, `config/app.php` is typically the main place you define framework configuration.
 
 ### Minimal example
 
@@ -354,9 +349,7 @@ Arguments:
 - `$prepend` (`bool`): when `true`, inserts the path at the start (lower precedence than later paths).
 
 ```php
-$config->addPath('config');
-$config->addPath('config/local');
-$config->load('app');
+$config->addPath('/path/to/config/local');
 ```
 
 #### **Remove a config path** (`removePath()`)
@@ -367,7 +360,7 @@ Arguments:
 - `$path` (`string`): the folder to remove.
 
 ```php
-$config->removePath('config/local');
+$config->removePath('/path/to/config/local');
 ```
 
 #### **Get configured paths** (`getPaths()`)
@@ -386,7 +379,6 @@ Arguments:
 - `$file` (`string`): the base file name (without `.php`).
 
 ```php
-$config->addPath('config');
 $config->load('app');
 ```
 

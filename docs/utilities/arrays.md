@@ -7,8 +7,7 @@ If you want fluent, chainable pipelines for sequences (with operations like `map
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
+- [Start here](#start-here)
 - [Constants](#constants)
 - [Method guide](#method-guide)
   - [Dot-path helpers](#dot-path-helpers)
@@ -24,11 +23,9 @@ If you want fluent, chainable pipelines for sequences (with operations like `map
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
 Use `Arr` when you already have a plain PHP array and want a focused, explicit operation: dot-path lookups/updates, flattening, selecting keys/values, searching, and small transformations.
-
-## Quick start
 
 ```php
 use Fyre\Utility\Arr;

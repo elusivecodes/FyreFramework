@@ -12,4 +12,5 @@ Thumbs.db
 # Tools
 .php-cs-fixer.cache
 .phpunit.result.cache
+coverage_report/
 phpunit.xml

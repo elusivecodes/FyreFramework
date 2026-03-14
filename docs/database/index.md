@@ -1,6 +1,6 @@
 # Database
 
-Database is Fyre’s data-access layer: connection management, SQL query building and execution, schema tools, migrations, and type casting.
+Use the database layer when you want to connect to SQL databases, run queries, inspect schema, or manage schema changes from code.
 
 ## Table of Contents
 
@@ -22,18 +22,18 @@ Pick a path based on what you’re doing:
 
 ## Database overview
 
-The DB layer is centered around three concepts:
+Most database work in Fyre falls into three areas:
 
-- **Connections**: `Fyre\DB\ConnectionManager` stores named connection configs and provides shared `Fyre\DB\Connection` instances.
-- **Queries**: `Fyre\DB\Query` is the base query-builder abstraction executed via a `Connection` (typically with bound values via `Fyre\DB\ValueBinder`).
-- **Schema tooling**: `Schema`, `Forge`, and migrations handle introspection and structural database changes.
+- **Connections**: define one or more named databases and resolve the connection you want to use.
+- **Queries**: build SQL with bound values and work with results through `ResultSet`.
+- **Schema tooling**: inspect existing tables, change schema, and apply migrations over time.
 
 ## Pages in this section
 
-- [Database connections](connections.md) — configuring connections and selecting a connection for runtime work.
+- [Database connections](connections.md) — configuring connections and selecting a connection for application code.
 - [Database queries](queries.md) — building and executing queries, value binding, and result handling.
-- [Schema](schema.md) — schema introspection and schema handler resolution.
-- [Forge](forge.md) — creating and altering schema with the forge layer.
+- [Schema](schema.md) — reading tables, columns, indexes, and foreign keys from an existing database.
+- [Forge](forge.md) — creating and altering schema from PHP code.
 - [Database Migrations](migrations.md) — running schema changes safely across environments.
 - [Database types](types.md) — database type casting and custom type registration.
 

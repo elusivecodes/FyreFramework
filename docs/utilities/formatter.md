@@ -1,11 +1,12 @@
 # Formatter
 
-`Formatter` (`Fyre\Utility\Formatter`) provides locale-aware formatting utilities for numbers, currency, dates/times, and human-readable lists. It wraps PHP’s `intl` formatters and caches formatter instances per locale/style for performance.
+Use `Formatter` when you want locale-aware formatting for numbers, currency, dates, times, and human-readable lists.
+
+It wraps PHP's `intl` formatters and gives you one place to apply locale and currency defaults.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
+- [Start here](#start-here)
 - [Configuration and defaults](#configuration-and-defaults)
 - [Method guide](#method-guide)
   - [Numbers and currency](#numbers-and-currency)
@@ -15,13 +16,11 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use `Formatter` when you want consistent, locale-aware presentation of values (especially in templates) without manually managing ICU patterns or `intl` formatter instances.
+Use `Formatter` when you want consistent presentation of user-facing values without managing ICU patterns or `intl` formatter instances yourself.
 
-In views, you will typically access formatting through the [Format helper](../view/helpers.md#format-helper), which forwards calls to an underlying `Formatter` instance.
-
-## Quick start
+In views, you will usually access the same behavior through the [Format helper](../view/helpers.md#format-helper).
 
 ```php
 use Fyre\Core\Config;
@@ -127,7 +126,7 @@ If you provide a locale or time zone and it differs from the `DateTime` value’
 Formats a `DateTime` as a localized date/time string.
 
 Arguments:
-- `$value` (`DateTime`): the DateTime value.
+- `$value` (`DateTime`): the `DateTime` value.
 - `$format` (`string|null`): the ICU pattern to use (or `null` to use a locale-derived default).
 - `$timeZone` (`string|null`): a time zone override (for example `America/New_York`).
 - `$locale` (`string|null`): a locale override (for example `ar`).
@@ -144,7 +143,7 @@ echo $formatter->datetime($dt, 'yyyy-MM-dd HH:mm:ss', 'America/New_York', 'ar');
 Formats a `DateTime` as a localized date string.
 
 Arguments:
-- `$value` (`DateTime`): the DateTime value.
+- `$value` (`DateTime`): the `DateTime` value.
 - `$format` (`string|null`): the ICU pattern to use (or `null` to use a locale-derived default).
 - `$timeZone` (`string|null`): a time zone override.
 - `$locale` (`string|null`): a locale override.
@@ -160,7 +159,7 @@ echo $formatter->date($date, 'yyyy-MM-dd', locale: 'ar');
 Formats a `DateTime` as a localized time string.
 
 Arguments:
-- `$value` (`DateTime`): the DateTime value.
+- `$value` (`DateTime`): the `DateTime` value.
 - `$format` (`string|null`): the ICU pattern to use (or `null` to use a locale-derived default).
 - `$timeZone` (`string|null`): a time zone override.
 - `$locale` (`string|null`): a locale override.

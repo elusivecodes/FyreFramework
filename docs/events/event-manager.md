@@ -1,14 +1,15 @@
 # Event Manager
 
-`Fyre\Event\EventManager` registers callbacks (and attribute-based listener classes) and dispatches events (as a PSR-14 dispatcher and listener provider). It supports both named `Event` events and arbitrary event objects matched by class name.
+Use `Fyre\Event\EventManager` when you want to register callbacks and dispatch events across your application.
+
+It supports direct callbacks, listener classes that use `#[On]`, the framework's named `Event` object, and arbitrary event objects.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Core idea](#core-idea)
+- [Start here](#start-here)
 - [Registering listeners](#registering-listeners)
   - [Register a callback](#register-a-callback)
-  - [Register an attribute-based listener](#register-an-attribute-based-listener)
+  - [Register a listener class](#register-a-listener-class)
   - [Removing listeners](#removing-listeners)
 - [Dispatching events](#dispatching-events)
   - [Dispatching a named `Event`](#dispatching-a-named-event)
@@ -23,29 +24,31 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use `EventManager` to publish and react to framework behavior without tightly coupling your code to the implementation details of the component raising the event.
+The usual event workflow is:
 
-## Core idea
+1. Get an `EventManager` instance.
+2. Register a callback with `on()` or a listener class with `addListener()`.
+3. Dispatch a named `Event` or another event object.
+4. Stop propagation when you need later listeners to be skipped.
 
-Think of the event manager as a map from **event identifier → ordered list of callbacks**:
+```php
+use Fyre\Event\Event;
+use Fyre\Event\EventManager;
 
-- For `Event`, the identifier is the string returned by `Event::getName()`.
-- For other events, the identifier is the event object’s class name (for example, `UserRegistered::class`).
+$eventManager = app(EventManager::class);
 
-`dispatch()` resolves callbacks via `getListenersForEvent()` and then executes them in order.
+$eventManager->on('User.created', static function(Event $event, string $id): void {
+    // ...
+});
 
-Terminology used in this guide:
-
-- A **callback** is an individual callable registered with `on()`.
-- A **listener class** is an object that implements `EventListenerInterface` and is registered with `addListener()` (its annotated methods are registered as callbacks).
+$eventManager->trigger('User.created', '42');
+```
 
 ## Registering listeners
 
-Most examples on this page assume you already have an `$eventManager` instance (for example via dependency injection).
-
-You can also resolve it from the container (see [Helpers](../core/helpers.md)) via `$eventManager = app(Fyre\Event\EventManager::class);`.
+Most examples on this page assume you already have an `$eventManager` instance.
 
 ### Register a callback
 
@@ -64,7 +67,7 @@ $eventManager->on(
 );
 ```
 
-When dispatching an object event, register the callback under the class name:
+For object events, register the callback under the event class name:
 
 ```php
 final class UserRegistered {}
@@ -77,9 +80,9 @@ $eventManager->on(
 );
 ```
 
-### Register an attribute-based listener
+### Register a listener class
 
-If a class implements `EventListenerInterface`, `addListener()` discovers public methods annotated with `#[On]` and registers them under the attribute’s event name and priority.
+If a class implements `EventListenerInterface`, `addListener()` registers the methods marked with `#[On]`.
 
 ```php
 use Fyre\Event\Attributes\On;
@@ -100,7 +103,7 @@ $listener = new AuditListener();
 $eventManager->addListener($listener);
 ```
 
-For the full attribute-based listener workflow (including discovery caching), see [Event Listeners](listeners.md).
+For the fuller listener-class workflow, see [Event Listeners](listeners.md).
 
 ### Removing listeners
 
@@ -111,7 +114,7 @@ For the full attribute-based listener workflow (including discovery caching), se
 
 ## Dispatching events
 
-Note: `dispatch()` returns the event object, so you can read any changes made by callbacks (PSR-14 semantics).
+`dispatch()` returns the event object, so you can inspect any changes made by listeners afterward.
 
 ### Dispatching a named `Event`
 
@@ -138,7 +141,7 @@ $eventManager->dispatch($event);
 
 ### Dispatching an object event
 
-For non-`Event` objects, each callback receives the event object as the only argument.
+Most framework events use `Fyre\Event\Event`. You can also dispatch other event objects directly. For non-`Event` objects, each callback receives the event object as the only argument.
 
 If the event implements PSR-14 `StoppableEventInterface`, dispatch stops before invoking the next listener when `isPropagationStopped()` returns `true`.
 
@@ -163,7 +166,7 @@ To make an object event stoppable, implement `StoppableEventInterface` and retur
 
 ### Using `trigger()`
 
-`trigger()` is a convenience for dispatching a named `Event`: it creates a new `Event($name, null, $args)`, dispatches it, and returns the `Event` instance. The `...$args` values become the event data (and are passed to callbacks as positional values).
+`trigger()` is a convenience for dispatching a named `Event`. It creates a new `Event`, dispatches it, and returns the `Event` instance.
 
 ```php
 use Fyre\Event\Event;
@@ -192,18 +195,18 @@ If `on()` is called without a priority, `PRIORITY_NORMAL` is used.
 
 ## Parent event managers
 
-An event manager may be constructed with a parent manager. When present:
+Use a parent event manager when you want local listeners plus a shared higher-level listener set.
+
+When a parent manager is configured:
 
 - local callbacks are dispatched first
 - the event is then dispatched to the parent manager, unless propagation has been stopped
-- for `Event`, propagation is checked via `Event::isPropagationStopped()`
-- for other events, the parent dispatch is skipped only when the event implements `StoppableEventInterface` and reports `isPropagationStopped() === true`
 
-This enables layering callbacks (for example, request-scoped callbacks in a child manager with process-wide callbacks in a parent manager) while keeping ordering predictable within each manager.
+This is useful when you want request-scoped or subsystem-specific listeners in a child manager, while still keeping shared process-wide listeners in a parent manager.
 
 ## Method guide
 
-This section is a quick reference to the methods you’ll use most when registering callbacks (and listener classes) and dispatching events.
+This section covers the methods you are most likely to use directly.
 
 ### Listener registration
 
@@ -243,7 +246,7 @@ $eventManager->off('User.created');
 
 #### **Register a listener class** (`addListener()`)
 
-Discover `#[On]` attributes on a listener object and register its annotated public methods as callbacks.
+Register a listener object that uses `#[On]` attributes.
 
 Arguments:
 - `$listener` (`EventListenerInterface`): the listener object to register.
@@ -282,7 +285,7 @@ $eventManager->removeListener($listener);
 
 #### **Dispatch an event** (`dispatch()`)
 
-Dispatch an event object to all registered callbacks for that event.
+Dispatch an event object to all matching listeners.
 
 Arguments:
 - `$event` (`object`): the event to dispatch.
@@ -295,7 +298,7 @@ $eventManager->dispatch(new Event('Mail.sent'));
 
 #### **Trigger a named event** (`trigger()`)
 
-Create and dispatch a named `Event` with a null subject, returning the `Event` instance.
+Create and dispatch a named `Event` with a null subject.
 
 Arguments:
 - `$name` (`string`): the event name.
@@ -328,41 +331,19 @@ Remove all registered callbacks (including those registered via listener classes
 $eventManager->clear();
 ```
 
-#### **Resolve callbacks for an event** (`getListenersForEvent()`)
-
-Return the list of callbacks that would be invoked for a given event by the current manager (in dispatch order).
-
-If a parent event manager is configured, parent listeners are dispatched separately by `dispatch()`.
-
-Arguments:
-- `$event` (`object`): the event instance to resolve callbacks for.
-
-```php
-use Fyre\Event\Event;
-
-$callbacks = $eventManager->getListenersForEvent(new Event('Mail.sent'));
-```
-
-#### **Access the discovery cache** (`getCache()`)
-
-Return the configured `Cacher` used to cache attribute listener discovery, or `null` when no `_events` cache is configured.
-
-```php
-$cache = $eventManager->getCache();
-```
-
 ## Behavior notes
 
 A few behaviors are worth keeping in mind:
 
 - Listener ordering is by ascending priority (lower values run first).
 - For `Event`, callbacks receive the `Event` instance first, then the event data values only (keys are not passed).
+- For object events, listeners receive only the event object.
 - If the event implements `StoppableEventInterface` (including `Event`), dispatch stops before the next listener when propagation has been stopped, and parent dispatch is skipped.
 - For `Event`, if a listener sets the result to `false`, the event manager calls `Event::stopPropagation()` after that listener runs.
 
 ## Related
 
-- [Events](index.md) — overview and key concepts.
-- [Event Listeners](listeners.md) — defining listener classes with `#[On]`.
-- [Cache](../cache/index.md) — configuring the `_events` cache.
-- [ORM Events](../orm/events.md) — events published by the ORM layer.
+- [Events](index.md) - overview and key concepts
+- [Event Listeners](listeners.md) - define listener classes with `#[On]`
+- [Cache](../cache/index.md) - configure the `_events` cache
+- [ORM Events](../orm/events.md) - events published by the ORM layer

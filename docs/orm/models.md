@@ -1,61 +1,56 @@
 # Models
 
-`Fyre\ORM\Model` represents a table and provides ORM-aware queries and persistence for entities. `Fyre\ORM\ModelRegistry` locates and caches model instances by alias.
+Use a model when you want one place to query a table, build entities, define relationships, and save or delete records.
 
-For record objects (field access, change tracking, errors, and serialization), see [Entities](entities.md).
+Most application code starts from a model instance such as `$Users`.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Mental model](#mental-model)
-- [Models: persistence and metadata](#models-persistence-and-metadata)
-  - [Identity: alias, class alias, and table](#identity-alias-class-alias-and-table)
+- [Start here](#start-here)
+- [Working with models](#working-with-models)
+  - [Model identity](#model-identity)
   - [Building entities from a model](#building-entities-from-a-model)
   - [Model validation](#model-validation)
   - [Saving and deleting entities](#saving-and-deleting-entities)
-- [ModelRegistry](#modelregistry)
-  - [Locating and sharing models](#locating-and-sharing-models)
+- [Loading models](#loading-models)
+  - [Using `ModelRegistry`](#using-modelregistry)
 - [Method guide](#method-guide)
   - [Querying](#querying)
   - [Entity building](#entity-building)
   - [Persistence](#persistence)
   - [Configuration](#configuration)
   - [Validation](#validation)
-  - [Registry](#registry)
+  - [Loading models](#loading-models-1)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use a model when you want a table-aware API for querying and persisting entities, including relationship definitions and model-level behaviors (validation, rule sets, events).
+Use a model when you want to:
 
-Most examples assume you already have a model instance (for example, `$Users`).
+- start queries with `find()` or `get()`
+- build new or patched entities through `newEntity()` and `patchEntity()`
+- define relationships in one place
+- save or delete records through model methods
 
-## Mental model
+Most examples on this page assume you already have a model instance such as `$Users`.
 
-At runtime, a model acts like a table-centric service:
+```php
+$Users = model('Users');
+```
 
-- creates query objects (`find()`, `selectQuery()`, `insertQuery()`, `updateQuery()`, `deleteQuery()`)
-- builds entities for the model alias (`newEntity()`, `newEmptyEntity()`, `patchEntity()`)
-- saves and deletes entities (`save()`, `delete()`)
+For record objects and field state, see [Entities](entities.md).
 
-An entity is a record-centric object:
+## Working with models
 
-- holds fields and relationships as values
-- tracks state (new/dirty/original) and validation errors
-- serializes to arrays/JSON
+A model is the main ORM entry point for a table.
 
-Entities are documented in [Entities](entities.md). When you don’t explicitly wire classes, `ModelRegistry` and `EntityLocator` provide conventions and caching so models and entities can be resolved from simple aliases.
-`model('Users')` is the shorthand for resolving a model from `ModelRegistry`; see [Helpers](../core/helpers.md).
-
-## Models: persistence and metadata
-
-### Identity: alias, class alias, and table
+### Model identity
 
 Models have two related identities:
 
-- **Class alias**: derived from the model class name (the short class name with `Model` trimmed). When the default model class is used, `Fyre\ORM\ModelRegistry` sets this explicitly.
-- **Alias**: the runtime alias used for query aliasing and relationship lookup. If you don’t set one, it defaults to the class alias.
+- **Class alias**: usually the model class name with `Model` trimmed.
+- **Alias**: the name used for query aliasing and relationship lookup. If you do not set one, it defaults to the class alias.
 
 Table metadata is derived from the model and schema:
 
@@ -127,7 +122,7 @@ $Users->save($user);
 
 ### Model validation
 
-Models define validation by overriding `buildValidator(Validator $validator): Validator`. The model lazily builds and caches the validator the first time `getValidator()` is called, and `newEntity()` / `patchEntity()` use that validator when `$validate` is enabled.
+Models define validation by overriding `buildValidator(Validator $validator): Validator`. `newEntity()` and `patchEntity()` use that validator when `$validate` is enabled.
 
 Use model validation for input-shape and field-level checks such as required fields, lengths, formats, and custom per-field rules. Use [Rule Sets](rulesets.md) for integrity checks that depend on database state.
 
@@ -167,16 +162,13 @@ if ($user) {
 }
 ```
 
-## ModelRegistry
+## Loading models
 
-### Locating and sharing models
+### Using `ModelRegistry`
 
-`Fyre\ORM\ModelRegistry` is a cache for shared model instances keyed by alias.
+Use `model()` or `ModelRegistry` when you want to resolve a model by alias.
 
-This section assumes you already have a `ModelRegistry` instance available as `$modelRegistry`.
-
-It can also locate specialized model classes when you add namespaces. For a class alias like `Users`, it searches for a `<ClassAlias>Model` class in each configured namespace; when none is found, it falls back to the default model class.
-In the default `Engine` setup, `ModelRegistry` already includes the `App\Models` namespace; see [Engine](../core/engine.md).
+In the default `Engine` setup, `ModelRegistry` already includes the `App\Models` namespace; see [Engine](../core/engine.md). If you add more namespaces, the registry can resolve `<ClassAlias>Model` classes from those namespaces too.
 
 ```php
 $modelRegistry->addNamespace('App\Models');
@@ -332,11 +324,11 @@ Retrieve the lazily-built validator instance for the model. On first access, the
 $validator = $Users->getValidator();
 ```
 
-### Registry
+### Loading models
 
-#### **Load a shared model instance** (`use()`)
+#### **Load a model by alias** (`use()`)
 
-Load (and cache) a model by alias. If `$classAlias` is provided and differs from `$alias`, the registry loads the `<ClassAlias>Model` class and assigns the runtime alias.
+Load a model by alias. If `$classAlias` is provided and differs from `$alias`, the registry loads the `<ClassAlias>Model` class and assigns the alias you requested.
 
 Arguments:
 - `$alias` (`string`): the shared alias key.
@@ -347,7 +339,7 @@ $Users = $modelRegistry->use('Users');
 $ArchivedUsers = $modelRegistry->use('ArchivedUsers', 'Users');
 ```
 
-#### **Add a lookup namespace** (`addNamespace()`)
+#### **Add a model namespace** (`addNamespace()`)
 
 Register a namespace to search for `<ClassAlias>Model` classes.
 
@@ -360,7 +352,7 @@ $modelRegistry->addNamespace('App\Models');
 
 #### **Unload a model** (`unload()`)
 
-Remove a cached model instance from the registry.
+Remove a loaded model from the registry.
 
 Arguments:
 - `$alias` (`string`): the alias to unload.
@@ -375,7 +367,7 @@ A few behaviors are worth keeping in mind:
 
 - Unknown relationship names passed through contain/associated options raise an exception.
 - Relationship properties must not collide with table columns; conflicting relationships are rejected.
-- `save()` short-circuits: an existing entity with no dirty fields saves successfully without issuing queries.
+- `save()` returns `true` without issuing queries when an existing entity has no dirty fields.
 
 ## Related
 

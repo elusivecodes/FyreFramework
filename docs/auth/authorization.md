@@ -1,14 +1,13 @@
 # Authorization
 
-Authorization answers a single question: can the current user perform an action? In Fyre, you make authorization checks with `Access`, backed by policy classes resolved via `PolicyRegistry`.
+Use `Access` when you want to check whether the current user can perform an action, whether through named rules or policies.
 
-This page focuses on how `Access` evaluates rules and policies, how policy resolution works, and the APIs you’ll use most to authorize actions.
+This page covers the rule and policy flow, policy resolution, and the APIs you will use most to authorize actions.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
-- [How authorization works](#how-authorization-works)
+- [Start here](#start-here)
+- [Authorization flow](#authorization-flow)
 - [Using `Access`](#using-access)
   - [Checking a named rule](#checking-a-named-rule)
   - [Global before and after callbacks](#global-before-and-after-callbacks)
@@ -26,9 +25,9 @@ This page focuses on how `Access` evaluates rules and policies, how policy resol
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Authorization answers a single question: “Is the current user allowed to do this?” In practice, it’s used to:
+Use authorization when you want to:
 
 - guard controller actions and endpoints
 - control which UI options appear for a user
@@ -38,24 +37,22 @@ In a typical application, authorization starts from `Auth::access()` after authe
 
 Use named rules for checks you define directly on `Access`, and use policies when access depends on a specific model or entity subject.
 
-## Quick start
-
 In a typical application:
 
 1. Get an `Access` instance from `Auth`.
 2. Define named rules for general checks such as `admin`, and use policies for subject-specific rules such as `edit` on an article.
 3. Call `allows()` to branch on the result, `authorize()` to fail immediately when access is denied, or `can` middleware for route-level authorization.
 
-## How authorization works
+## Authorization flow
 
-`Access::allows()` evaluates authorization in this order:
+When you call `Access::allows()`, Fyre checks authorization in this order:
 
-1. **Before callbacks** (registered via `Access::before()`)
-2. **Named rules** (registered via `Access::define()`)
-3. **Policy methods** (resolved via `PolicyRegistry`)
-4. **After callbacks** (registered via `Access::after()`)
+1. before callbacks
+2. named rules
+3. policy methods
+4. after callbacks
 
-The first non-`null` result becomes the decision. If nothing applies, access is denied (the final return value becomes `false`).
+The first non-`null` result wins. If nothing matches, access is denied.
 
 ## Using `Access`
 
@@ -183,25 +180,23 @@ $access->allows('edit', 'Articles', 42);
 
 ## Resolving policies with `PolicyRegistry`
 
-`PolicyRegistry` resolves the alias first, then resolves a policy in three layers:
+Most applications let `PolicyRegistry` discover policy classes automatically. The common convention is to place them in `App\Policies` and use names such as `ArticlePolicy`.
 
-1. **Explicit map**: if the resolved alias was mapped via `PolicyRegistry::map()`, that class is built via the container.
-2. **Namespace search**: otherwise, registered namespaces are searched for a `<SingularAlias>Policy` class based on the resolved alias (for example, alias `Articles` → `ArticlePolicy`).
-3. **No match**: if nothing resolves, policy evaluation is skipped.
-
-Examples below assume you already have a `PolicyRegistry` instance in `$policyRegistry` (for example, `$policyRegistry = app(PolicyRegistry::class);`).
+Examples below assume you already have a `PolicyRegistry` instance in `$policyRegistry`.
 
 ### Namespace-based discovery
 
-Register one or more namespaces, then follow the `<SingularAlias>Policy` naming convention:
+In a standard application, policies in `App\Policies` that follow the `<SingularAlias>Policy` naming convention are discovered automatically.
+
+Add namespaces only when you want `PolicyRegistry` to search additional locations, such as a plugin namespace:
 
 ```php
-$policyRegistry->addNamespace('App\Policies');
+$policyRegistry->addNamespace('Plugin\Policies');
 ```
 
 ### Explicit mappings
 
-An explicit policy map bypasses naming and namespace conventions. The alias is normalized through `resolveAlias()` before the mapping is stored:
+Use an explicit map when you want a policy class that does not match the usual naming or namespace convention:
 
 ```php
 use Fyre\ORM\Entity;
@@ -220,11 +215,7 @@ $policyRegistry->map('Articles', ContentRules::class);
 
 ### Model attribute aliases
 
-When a policy alias is derived from a model subject (an `Entity`, a `Model` instance, or a model class name), the framework resolves a string alias that is used to look up the policy class. When the subject is a **model class name**, `PolicyRegistry::resolveAlias()` derives that alias in this order:
-
-1. `#[Policy('...')]` attribute, when present
-2. the model's `alias` property default value
-3. the class short name with a trailing `Model` removed
+When you authorize with a model class name, the policy alias comes from the `#[Policy]` attribute when present, then the model alias, then the class name.
 
 ```php
 use Fyre\ORM\Attributes\Policy;
@@ -340,7 +331,7 @@ Arguments:
 - `$namespace` (`string`): a namespace (normalized to include a trailing `\`).
 
 ```php
-$policyRegistry->addNamespace('App\Policy');
+$policyRegistry->addNamespace('Plugin\Policies');
 ```
 
 #### **Map an alias to a policy class** (`map()`)
@@ -394,10 +385,8 @@ A few behaviors are worth keeping in mind:
 
 - `allows()` defaults to deny when no before callback, named rule, policy method, or after callback applies.
 - If a named rule produces a non-`null` result (including `false`), policy lookup is skipped.
-- Policy methods receive `(user)` or `(user, item)` depending on the policy method signature; any extra arguments passed to `allows()` are only used to resolve the item by primary key values.
 - When authorizing with an `Entity`, the entity must have a non-`null` source (`Entity::getSource()`) or no policy can be resolved for it.
-- `before()`/`after()` callbacks are skipped when there is no current user and the callback’s first parameter does not allow `null`.
-- `after()` callbacks run even when an earlier step has produced a result, but they only influence the final decision when the current result is `null`.
+- If guests are allowed, make the user parameter nullable in your rule or policy method signature.
 
 ## Related
 

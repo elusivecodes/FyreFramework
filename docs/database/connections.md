@@ -1,13 +1,14 @@
 # Database connections
 
-Database connections are configured by name and resolved at runtime. A connection key (like `default` or `reporting`) selects which `Fyre\DB\Connection` instance is used for queries, schema tools, and migrations.
+Use database connections to configure one or more databases and resolve the one a given piece of code should use.
+
+Most applications define a single `default` connection and only add more when they need separate databases, credentials, or drivers.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Mental model](#mental-model)
-- [Configuring connections](#configuring-connections)
-  - [Base connection options](#base-connection-options)
+- [Start here](#start-here)
+- [Connection configuration](#connection-configuration)
+  - [Common connection options](#common-connection-options)
   - [Example configuration](#example-configuration)
 - [Built-in connection handlers](#built-in-connection-handlers)
   - [MySQL](#mysql)
@@ -22,31 +23,34 @@ Database connections are configured by name and resolved at runtime. A connectio
   - [`Connection`](#connection)
   - [`MysqlConnection`](#mysqlconnection)
   - [`PostgresConnection`](#postgresconnection)
-  - [`SqliteConnection`](#sqliteconnection)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Connections are a good fit when you need to:
+In most applications:
 
-- use different database backends in the same codebase (for example, MySQL for app data and SQLite for local analytics)
-- isolate workloads with multiple connections (separate credentials, timeouts, or hosts)
-- keep database access code driver-agnostic by selecting a handler via configuration
+- define one or more connections under the `Database` config key
+- resolve the default connection with `db()` or `ConnectionManager::use()`
+- pass a connection key when you need a non-default database
+- use `build()` only for temporary connections you do not want to store or share
 
-## Mental model
+Most code can stay database-agnostic once the connection is configured.
 
-`Fyre\DB\ConnectionManager` loads connection configurations from [Config](../core/config.md) (the `Database` key) during construction and provides `Fyre\DB\Connection` instances by key.
+```php
+use Fyre\DB\ConnectionManager;
 
-- Each config entry must specify a `className` that extends `Fyre\DB\Connection` (for example, `MysqlConnection::class`).
-- `ConnectionManager::use()` returns one shared connection instance per key.
-- `ConnectionManager::build()` creates a new connection instance from options without storing or sharing it.
+$connections = app(ConnectionManager::class);
 
-## Configuring connections
+$default = $connections->use();
+$analytics = $connections->use('analytics');
+```
 
-Connection configuration is read from the `Database` key in your config (see [Config](../core/config.md)). Each named connection config is an options array passed to the selected connection handler.
+## Connection configuration
 
-### Base connection options
+Define connections under the `Database` key in your config (see [Config](../core/config.md)). Each named entry is an options array passed to the selected connection handler.
+
+### Common connection options
 
 These options apply to all connection handlers:
 
@@ -198,6 +202,11 @@ $temp = $connections->build([
 
 Once you have a `Connection`, most day-to-day database work is done through query builder objects. Each builder compiles to SQL and executes through the connection (usually via `Query::execute()`).
 
+You can also run SQL directly on the connection when needed:
+
+- `execute($sql, $params)` for parameterized SQL with bound values
+- `query($sql)` for direct SQL that should return a normal `ResultSet`
+
 Common query types:
 
 - **SELECT**: `$db->select()` returns a `SelectQuery` (see [Select queries](queries.md#select-queries)).
@@ -213,7 +222,10 @@ For a deeper guide to building and executing queries (including value binding, r
 Prefer bound values wherever possible. Query builders bind values by default (via `Query::execute()`), while raw SQL fragments bypass binding:
 
 - Use query builder methods and condition arrays for parameterized values (see [Binding and expressions](queries.md#binding-and-expressions)).
+- Use `Connection::execute()` when you need direct SQL with bound parameters.
+- Use `Connection::query()` when you need to run direct SQL and want the normal `ResultSet` wrapper.
 - Use `Connection::literal()` only for safe, deliberate SQL fragments (like functions or column expressions).
+- Use `Connection::rawQuery()` only when you specifically need the underlying `PDOStatement`.
 - Avoid embedding user input into literals or raw snippets; see [Raw SQL fragments](queries.md#raw-sql-fragments).
 
 ## Troubleshooting
@@ -232,7 +244,7 @@ Common issues when setting up connections:
 
 #### **Get a shared connection** (`use()`)
 
-Returns the shared connection instance for a config key. If the connection has not been created yet, it is built from the stored config and cached.
+Returns the connection instance for a config key. The first call builds it from config, and later calls return the same loaded instance.
 
 Arguments:
 - `$key` (`string`): the connection key (defaults to `default`).
@@ -285,7 +297,7 @@ if ($connections->hasConfig('reporting')) {
 
 #### **Check whether a connection is loaded** (`isLoaded()`)
 
-Returns whether a shared connection instance has been created for a key.
+Returns whether a loaded connection instance exists for a key.
 
 Arguments:
 - `$key` (`string`): the connection key (defaults to `default`).
@@ -313,9 +325,9 @@ $connections->setConfig('temp', [
 ]);
 ```
 
-#### **Remove a config and shared instance** (`unload()`)
+#### **Remove a config and loaded connection** (`unload()`)
 
-Removes both the stored config and any shared connection instance for that key.
+Removes both the stored config and any loaded connection for that key.
 
 Arguments:
 - `$key` (`string`): the connection key (defaults to `default`).
@@ -324,9 +336,9 @@ Arguments:
 $connections->unload('analytics');
 ```
 
-#### **Clear all configs and instances** (`clear()`)
+#### **Clear all configs and loaded connections** (`clear()`)
 
-Clears all stored configs and all shared connection instances.
+Clears all stored configs and all loaded connections.
 
 ```php
 $connections->clear();
@@ -334,7 +346,7 @@ $connections->clear();
 
 ### `Connection`
 
-This section documents the `Fyre\DB\Connection` APIs you’ll use most often after resolving a connection from `ConnectionManager`.
+Once you have a connection, these are the methods you will use most often.
 
 ```php
 $db = $connections->use();
@@ -682,31 +694,14 @@ if ($db instanceof PostgresConnection) {
 }
 ```
 
-### `SqliteConnection`
-
-#### **Check for SQLite sequences** (`hasSequences()`)
-
-Returns whether the database contains the `sqlite_sequence` table.
-
-```php
-use Fyre\DB\Handlers\Sqlite\SqliteConnection;
-
-$db = db();
-
-if ($db instanceof SqliteConnection) {
-    $hasSequences = $db->hasSequences();
-}
-```
-
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
-- `ConnectionManager::use()` creates the connection instance the first time a key is requested and returns the same shared instance for subsequent calls.
-- Connection handlers call `connect()` during construction, so failures surface when you call `use()` or `build()`.
+- `ConnectionManager::use()` builds the connection the first time a key is requested and returns that same loaded instance on later calls.
+- Connection handlers connect during construction, so credential, host, and database-name errors usually surface as soon as you call `use()` or `build()`.
 - Building fails when a config is missing `className` or `className` does not extend `Fyre\DB\Connection`.
-- `ConnectionManager::setConfig()` throws when the key already exists; use `unload()` or `clear()` before re-registering.
-- `Connection::execute()` and `Connection::rawQuery()` dispatch the `Db.query` event with the executed SQL (and bound params for `execute()`); see [Events](../events/index.md).
+- `ConnectionManager::setConfig()` throws when the key already exists; use `unload()` or `clear()` before registering it again.
 - Nested transactions use savepoints when you call `begin()` inside an active transaction.
 - For file-backed SQLite databases, the handler applies `mask` when creating a new database file.
 

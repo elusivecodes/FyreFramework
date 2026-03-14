@@ -1,20 +1,19 @@
 # Database types
 
-Database types provide a consistent way to convert values between database representations (strings, numbers, driver-native values) and the PHP values your code wants to work with. In Fyre, types are resolved by a `TypeParser` and used throughout the database layer for parsing, binding, and metadata-driven conversions.
+Use database types when you need consistent value conversion between PHP and the database.
+
+The same type system is used across queries, schema metadata, forms, and other input parsing features.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Type handlers](#type-handlers)
 - [Where types are used](#where-types-are-used)
-- [Working with TypeParser](#working-with-typeparser)
-  - [Type identifiers and aliases](#type-identifiers-and-aliases)
-  - [Resolving and using a type](#resolving-and-using-a-type)
-  - [Mapping identifiers to custom handlers](#mapping-identifiers-to-custom-handlers)
+- [Working with `TypeParser`](#working-with-typeparser)
+  - [Resolving and using types](#resolving-and-using-types)
   - [Listing mapped types](#listing-mapped-types)
-  - [Using the global `type()` helper](#using-the-global-type-helper)
 - [Retrieving types from metadata](#retrieving-types-from-metadata)
-  - [From a ResultSet column](#from-a-resultset-column)
+  - [From a `ResultSet` column](#from-a-resultset-column)
   - [From a schema Column](#from-a-schema-column)
 - [Built-in types](#built-in-types)
   - [Binary (`binary`)](#binary-binary)
@@ -36,13 +35,19 @@ Database types provide a consistent way to convert values between database repre
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use database types when you need predictable, repeatable value conversion:
+Use database types when you want to:
 
-- parsing untrusted values into typed PHP values (for example, `"123"` → `123`)
-- converting PHP values into database-safe values (for example, `DateTime` → formatted string)
-- interpreting driver/native values using metadata (for example, “this column is a `datetime`”)
+- parse untrusted values into typed PHP values such as `"123"` → `123`
+- convert PHP values into database-safe values such as `DateTime` → formatted string
+- interpret database values using metadata such as “this column is a `datetime`”
+
+Most code starts with the shared `TypeParser`:
+
+```php
+$typeParser = type();
+```
 
 ## Type handlers
 
@@ -56,27 +61,22 @@ Most built-in types override one or more of these methods to validate and normal
 
 ## Where types are used
 
-Types show up in a few places across the database layer:
+Types show up in a few places across the framework:
 
-- **Query compilation**: `Fyre\DB\QueryGenerator` converts `Fyre\Utility\DateTime\DateTime` values to a database string using the `datetime` type before binding.
-- **Schema metadata**: schema column objects resolve a `Fyre\DB\Type` instance for a column based on driver-specific type mapping.
-- **Result metadata**: `Fyre\DB\ResultSet::getType()` resolves a `Fyre\DB\Type` for a column based on driver-provided `native_type` metadata.
+- **ORM entities**: entity data is hydrated from database values through column types, and the same type information is commonly used when parsing incoming form data before it is written back.
+- **Forms and view form helpers**: `Fyre\Form\Form`, form fields, and the view `FormHelper` use `TypeParser` to normalize submitted values before validation or writing.
+- **Console argument parsing**: command option values can be parsed into typed PHP values through the same type system.
+- **Request data parsing**: request query / post / body values can also be normalized with `TypeParser` when you want explicit typed input handling.
+- **Query execution**: values such as `Fyre\Utility\DateTime\DateTime` are converted to database-safe values before binding.
+- **Schema and result metadata**: schema columns and `ResultSet` metadata can resolve a `Fyre\DB\Type` based on driver-reported column information.
 
-## Working with TypeParser
+## Working with `TypeParser`
 
-Most examples on this page assume you already have a `$typeParser` (`TypeParser`) instance.
+Use `type()` to get the shared `TypeParser`, or resolve `Fyre\DB\TypeParser` through dependency injection if you prefer.
 
-- `type()` returns the shared `TypeParser`.
-- Otherwise, resolve `TypeParser` from your container and pass it into the code that needs it.
+### Resolving and using types
 
-### Type identifiers and aliases
-
-`Fyre\DB\TypeParser` resolves short identifiers (like `integer` or `json`) to `Fyre\DB\Type` handlers.
-
-- Unknown identifiers fall back to `string`.
-- `bool` and `int` are aliases for `boolean` and `integer` (unless you explicitly map `bool` or `int` yourself).
-
-### Resolving and using a type
+`Fyre\DB\TypeParser` resolves short identifiers (like `integer` or `json`) to `Fyre\DB\Type` handlers. Unknown identifiers fall back to `string`, and `bool` / `int` are aliases for `boolean` / `integer` unless you explicitly remap them.
 
 Use `TypeParser::use()` to get a handler instance, then call `parse()`, `toDatabase()`, or `fromDatabase()`:
 
@@ -84,34 +84,11 @@ Use `TypeParser::use()` to get a handler instance, then call `parse()`, `toDatab
 $limit = $typeParser->use('integer')->parse($value);
 ```
 
-### Mapping identifiers to custom handlers
-
-To change what an identifier resolves to (for example, to support a custom column type you use), use `TypeParser::map()`:
+If you only need a single mapped type, you can use the helper directly:
 
 ```php
-use Fyre\DB\Type;
-
-class UuidType extends Type
-{
-    public function parse(mixed $value): string|null
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        $value = strtolower((string) $value);
-
-        // Example normalization/validation for a UUID stored as a string column.
-        return preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $value) ?
-            $value :
-            null;
-    }
-}
-
-$typeParser->map('uuid', UuidType::class);
+$cutoff = type('datetime')->fromDatabase($dbValue);
 ```
-
-`map()` updates the identifier-to-class mapping immediately. If a handler for that class has already been instantiated, call `clear()` to force fresh handler resolution on subsequent `use()` calls.
 
 ### Listing mapped types
 
@@ -121,31 +98,17 @@ To see which identifiers are currently mapped (built-ins plus any overrides you 
 $map = $typeParser->getTypeMap();
 ```
 
-### Using the global `type()` helper
-
-`type()` provides a shorthand for resolving the shared `TypeParser` and using a mapped type identifier.
-For helper loading and the rest of the helper surface, see [Helpers](../core/helpers.md).
-
-Note: this is different from schema’s `Column::type()` method (which resolves a type handler from column metadata).
-
-```php
-use Fyre\Utility\DateTime\DateTime;
-
-$typeParser = type();
-$limit = type('integer')->parse('25');
-$cutoff = type('datetime')->toDatabase(DateTime::now());
-```
-
 ## Retrieving types from metadata
 
 Sometimes you do not know a value’s type up-front and want the database layer to tell you what to use.
 
 Metadata-driven type resolution is driver-dependent. In particular, `ResultSet::getType()` may return `null` when column metadata is unavailable.
 
-### From a ResultSet column
+### From a `ResultSet` column
 
 `Fyre\DB\ResultSet::getType()` returns a `Type` handler for a column name when the driver provides `native_type` metadata for that column.
 
+```php
 $row = $result->first();
 if ($row !== null) {
     $type = $result->getType('created');
@@ -157,6 +120,7 @@ if ($row !== null) {
 
 Schema column objects resolve to a `Type` handler using driver-specific column type mappings:
 
+```php
 $value = $column->type()->fromDatabase($dbValue);
 ```
 
@@ -254,11 +218,35 @@ Parses a time into a `Fyre\Utility\DateTime\DateTime` instance. Uses server time
 
 Custom types are regular classes extending `Fyre\DB\Type`. In practice, most custom types override one or more of:
 
-- `Type::parse()` for general “user input” parsing
+- `Type::parse()` for general input parsing
 - `Type::toDatabase()` for database-safe values
-- `Type::fromDatabase()` for database → PHP conversion
+- `Type::fromDatabase()` for database-to-PHP conversion
 
 After creating the class, map it to an identifier with `TypeParser::map()` and use that identifier consistently across the database layer.
+
+```php
+use Fyre\DB\Type;
+
+class UuidType extends Type
+{
+    public function parse(mixed $value): string|null
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = strtolower((string) $value);
+
+        return preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $value) ?
+            $value :
+            null;
+    }
+}
+
+$typeParser->map('uuid', UuidType::class);
+```
+
+`map()` updates the identifier-to-class mapping immediately. If a handler for that class has already been instantiated, call `clear()` on the `TypeParser` to force fresh handler resolution on subsequent `use()` calls.
 
 ## Behavior notes
 

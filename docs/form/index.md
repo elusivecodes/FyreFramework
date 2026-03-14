@@ -1,6 +1,6 @@
 # Form
 
-Form covers server-side forms, schemas, and validators for parsing and validating structured input (request payloads, form submissions, and similar).
+Use the form subsystem when you want to parse, validate, and process structured input on the server.
 
 ## Table of Contents
 
@@ -12,19 +12,19 @@ Form covers server-side forms, schemas, and validators for parsing and validatin
 
 Pick a path based on what you’re doing:
 
-- **Validating input with a reusable form object**: start with [Forms](forms.md).
+- **Building a reusable validation/processing workflow for input**: start with [Forms](forms.md).
 - **Reusing rules outside of forms (ORM, custom workflows)**: start with [Validators](validators.md), then see [Validation rules](rules.md).
 - **Generating HTML form markup**: see [Forms (view helper)](../view/forms.md).
 
 ## Form overview
 
-This section documents the framework’s server-side form subsystem:
+Most form work in Fyre falls into three pieces:
 
-- **Forms** are application-layer objects for custom input workflows: define a schema to parse raw input into typed values, validate the parsed data, then run an optional processing step.
+- **Forms** let you validate raw input, parse it into typed values, and then run application-specific processing.
 - **Validators** attach field rules and produce error maps you can use anywhere you accept structured input.
 - **Rules** are reusable `Rule::*()` factories (and custom callbacks) for common validation checks.
 
-Forms are not ORM entity forms. For entity/model validation workflows, use validators and rules directly (see [ORM](../orm/index.md)).
+`Fyre\Form\Form` is not an ORM entity form abstraction. For entity/model validation workflows, use validators and rules directly; see [ORM](../orm/index.md).
 
 ## Pages in this section
 

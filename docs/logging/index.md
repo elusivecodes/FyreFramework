@@ -1,16 +1,14 @@
 # Logging
 
-Logging covers configuring handlers and writing log messages (PSR-3), with optional filtering by level and scope.
+Use the logging subsystem when you want to configure handlers and write PSR-3 log messages.
 
-`Fyre\Log\LogManager` dispatches log messages to one or more configured handlers.
+Most applications configure one or more handlers, then write messages through `LogManager`.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
-- [Mental model](#mental-model)
+- [Start here](#start-here)
 - [Configuring handlers](#configuring-handlers)
-  - [Base handler options](#base-handler-options)
+  - [Common handler options](#common-handler-options)
   - [Scope filtering example](#scope-filtering-example)
   - [`FileLogger` options](#filelogger-options)
   - [Example configuration](#example-configuration)
@@ -29,15 +27,7 @@ Logging covers configuring handlers and writing log messages (PSR-3), with optio
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
-
-Use logging when you want to:
-
-- keep an audit trail of important events (sign-in attempts, state changes, payments, etc.)
-- capture errors and warnings to persistent storage for later triage
-- route the same message to multiple destinations by configuring multiple handlers
-
-## Quick start
+## Start here
 
 Most applications do two things:
 
@@ -67,21 +57,13 @@ $logs = app(LogManager::class);
 $logs->handle('error', 'Payment failed for user {id}', ['id' => 123], 'payments');
 ```
 
-## Mental model
-
-`Fyre\Log\LogManager` loads handler configurations from [Config](../core/config.md) (the `Log` key). Each config entry must specify a `className` that extends `Fyre\Log\Logger`.
-
-- `LogManager::handle()` validates the log level and dispatches the message to every configured handler whose `Logger::canHandle()` returns `true` for the given level and scope.
-- `LogManager::use()` returns a shared handler instance for a config key, building and caching it on first use.
-- `LogManager::use()` and `LogManager::build()` will fail if the resolved options do not contain a valid `className`.
-
 ## Configuring handlers
 
 Handler configuration is read from the `Log` key in your config (see [Config](../core/config.md)). Each named handler config is an options array passed to the selected handler class.
 
 Config examples assume any referenced handler classes (for example `FileLogger` / `ArrayLogger`) are already imported at the top of the config file.
 
-### Base handler options
+### Common handler options
 
 These options apply to all handlers that extend `Fyre\Log\Logger`:
 
@@ -218,18 +200,15 @@ $logs->handle('info', 'Literal placeholder: \{id}');
 
 ## Method guide
 
-This section focuses on the methods you’ll use most when configuring handlers and writing messages.
+This section focuses on the methods you’re most likely to use directly when configuring handlers and writing messages.
 
-Examples below assume `$logs` is a `LogManager` instance and `$logger` is a `Logger` instance unless the snippet is specifically about direct handler construction.
+Examples below assume `$logs` is a `LogManager` instance and `$logger` is a `Logger` instance.
 
 ### `LogManager`
 
-Applies to `Fyre\Log\LogManager`, typically resolved from the container.
-
 #### **Dispatch a message to handlers** (`handle()`)
 
-Validates the log level and forwards the message to all configured handlers that can handle the level and scope.
-Throws a `BadMethodCallException` when `$level` is not supported.
+Validate the log level and forward the message to all configured handlers that can handle the level and scope.
 
 Arguments:
 - `$level` (`string`): the log level (one of `emergency`, `alert`, `critical`, `error`, `warning`, `notice`, `info`, `debug`).
@@ -241,9 +220,9 @@ Arguments:
 $logs->handle('warning', 'Rate limit exceeded for {ip}', ['ip' => '127.0.0.1'], 'security');
 ```
 
-#### **Get a shared handler instance** (`use()`)
+#### **Get a handler** (`use()`)
 
-Returns the shared handler instance for a config key. If the handler has not been created yet, it is built from the stored config and cached.
+Returns the handler for a config key. The first call creates it from config, and later calls return the same handler.
 
 Arguments:
 - `$key` (`string`): the handler config key (defaults to `default`).
@@ -254,12 +233,10 @@ $logs->use()->error('Something went wrong');
 
 #### **Build a handler instance** (`build()`)
 
-Builds a handler from an options array without caching it on the manager.
+Build a one-off handler from an options array without storing it on the manager.
 
 Arguments:
 - `$options` (`array<string, mixed>`): handler options including `className`.
-
-This throws an `InvalidArgumentException` if `className` is missing or does not extend `Logger`.
 
 ```php
 $logger = $logs->build([
@@ -270,13 +247,11 @@ $logger = $logs->build([
 
 #### **Register a handler config** (`setConfig()`)
 
-Registers a config key and options array.
+Register a handler config at runtime.
 
 Arguments:
 - `$key` (`string`): the handler key to register.
 - `$options` (`array<string, mixed>`): handler options including `className`.
-
-This throws an `InvalidArgumentException` if the config key already exists.
 
 ```php
 $logs->setConfig('buffer', [
@@ -297,52 +272,7 @@ $all = $logs->getConfig();
 $default = $logs->getConfig('default');
 ```
 
-#### **Check whether a config exists** (`hasConfig()`)
-
-Returns whether a handler configuration key exists.
-
-Arguments:
-- `$key` (`string`): the handler key to check (defaults to `default`).
-
-```php
-if (!$logs->hasConfig('audit')) {
-    $logs->setConfig('audit', ['className' => FileLogger::class, 'path' => 'tmp/logs']);
-}
-```
-
-#### **Check whether a handler is loaded** (`isLoaded()`)
-
-Returns whether a shared handler instance has been built and cached for a key.
-
-Arguments:
-- `$key` (`string`): the handler key to check (defaults to `default`).
-
-```php
-$loaded = $logs->isLoaded('default');
-```
-
-#### **Remove a config and shared instance** (`unload()`)
-
-Removes the stored config and clears any shared handler instance for that key.
-
-Arguments:
-- `$key` (`string`): the handler key (defaults to `default`).
-
-```php
-$logs->unload('buffer');
-```
-
-#### **Clear all configs and instances** (`clear()`)
-
-Clears all stored configs and all shared handler instances.
-
-```php
-$logs->clear();
-```
-
 ### `Logger`
-
-Applies to `Fyre\Log\Logger`, the base class for all handlers.
 
 #### **Check whether a handler can handle a message** (`canHandle()`)
 
@@ -358,39 +288,11 @@ if ($logs->use()->canHandle('debug', 'queries')) {
 }
 ```
 
-#### **Read handler configuration** (`getConfig()`)
-
-Returns the handler’s resolved config array (defaults merged with provided options).
-
-```php
-$config = $logs->use()->getConfig();
-```
-
-### `FileLogger`
-
-Applies to `Fyre\Log\Handlers\FileLogger` (most applications use it via `LogManager` rather than instantiating it directly).
-
-#### **Write a log entry** (`log()`)
-
-Writes a formatted message to a file under the configured `path`.
-
-Arguments:
-- `$level` (`mixed`): the log level.
-- `$message` (`string|Stringable`): the message to log.
-- `$context` (`array<string, mixed>`): context values for interpolation (defaults to `[]`).
-
-```php
-$logger = new FileLogger(['path' => 'tmp/logs']);
-$logger->log('info', 'Worker started');
-```
-
 ### `ArrayLogger`
-
-Applies to `Fyre\Log\Handlers\ArrayLogger` (useful for tests and assertions).
 
 #### **Read buffered messages** (`read()`)
 
-Returns the buffered log content.
+Return the buffered log content.
 
 `ArrayLogger` stores formatted messages in memory without the date prefix that `FileLogger` includes by default.
 
@@ -403,12 +305,9 @@ $messages = $logger->read();
 
 #### **Clear buffered messages** (`clear()`)
 
-Clears the buffered log content.
+Clear the buffered log content.
 
 ```php
-$logger = new ArrayLogger();
-$logger->notice('Once');
-
 $logger->clear();
 ```
 
@@ -416,9 +315,9 @@ $logger->clear();
 
 A few behaviors are worth keeping in mind:
 
-- `LogManager::handle()` validates levels against the supported list and is case-sensitive (for example, `error` is valid but `ERROR` is not).
-- `LogManager::setConfig()` rejects duplicate keys, and `LogManager::unload()` removes both the stored config and any shared handler instance for that key.
-- `LogManager::use()` does not silently ignore unknown keys. If the key has no stored config, handler building fails because there is no valid `className`.
+- `LogManager::handle()` validates levels against the supported list and is case-sensitive, so `error` is valid but `ERROR` is not.
+- `LogManager::setConfig()` rejects duplicate keys.
+- `LogManager::use()` does not ignore unknown keys. If the key has no stored config, handler building fails because there is no valid `className`.
 - Scope filtering is opt-in: when a handler has the default `scopes` value of `[]`, it matches only when `scope` is `null`. Passing a scope will skip those handlers unless `scopes` is configured (or `scopes` is `null`).
 - `FileLogger` creates the `path` folder when it does not exist (and throws if it cannot create it).
 - `FileLogger` rotates by copying the current file when it reaches `maxSize` and then truncating the original file in place. If the destination file cannot be opened for appending, the write is skipped.

@@ -1,17 +1,14 @@
 # HTTP Responses
 
-`Fyre\Http\ClientResponse` is a server-friendly PSR-7 response that adds convenience helpers for headers, cookies, and JSON/XML output. All response objects are immutable: any `with*` method returns a new instance.
+Use `ClientResponse` and its subclasses when you want to return HTML, JSON, redirects, downloads, headers, or cookies from your application.
+
+All response objects are immutable, so every `with*` call returns a new instance.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Choosing a response type](#choosing-a-response-type)
-- [Building client responses](#building-client-responses)
-  - [Defaults you get with `ClientResponse`](#defaults-you-get-with-clientresponse)
-  - [Common constructor options](#common-constructor-options)
-  - [Example: build a client response](#example-build-a-client-response)
-  - [Example: return JSON](#example-return-json)
-  - [Example: set and expire cookies](#example-set-and-expire-cookies)
+- [Common response patterns](#common-response-patterns)
 - [Redirect responses](#redirect-responses)
   - [Example: simple redirect](#example-simple-redirect)
   - [Status code behavior](#status-code-behavior)
@@ -20,55 +17,43 @@
   - [Example: download generated content](#example-download-generated-content)
   - [Header defaults](#header-defaults)
 - [Emitting responses](#emitting-responses)
-  - [Example: emit a response](#example-emit-a-response)
-  - [Cookies](#cookies)
-  - [Body streaming and ranges](#body-streaming-and-ranges)
 - [Method guide](#method-guide)
-  - [ClientResponse](#clientresponse)
-  - [RedirectResponse](#redirectresponse)
-  - [DownloadResponse](#downloadresponse)
-  - [ResponseEmitter](#responseemitter)
+  - [`ClientResponse`](#clientresponse)
+  - [`RedirectResponse`](#redirectresponse)
+  - [`DownloadResponse`](#downloadresponse)
+  - [`ResponseEmitter`](#responseemitter)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-A response is the final output of request handling: middleware and application code produce a `Psr\Http\Message\ResponseInterface`, and a response emitter turns it into actual HTTP output (status line, headers, cookies, and body).
+In most application code:
 
-In practice, most responses you send back to browsers or API clients are `ClientResponse` instances (or subclasses). They’re still immutable PSR-7 objects, but they add user-facing helpers for:
+- use `response()` when you want a general response object
+- use `json($data)` when you want a JSON response quickly
+- use `RedirectResponse` or `redirect()` for redirects
+- use `DownloadResponse` for file or generated-content downloads
 
-- sensible default headers (like `Content-Type`)
-- formatting JSON and XML bodies
-- managing cookies as structured objects (emitted later by `ResponseEmitter`)
+```php
+$response = response()
+    ->withContentType('text/plain')
+    ->withHeader('X-Request-Id', 'abc123');
+```
 
 ## Choosing a response type
 
 Pick the response type that matches what you’re trying to send:
 
 - `ClientResponse`: general “send something to a client” responses (HTML/text/JSON/XML, cache headers, cookies).
-- `Response`: lower-level PSR-7 response when you don’t want the client-focused helpers.
+- `Response`: lower-level response when you do not need the client-focused helpers.
 - `RedirectResponse`: sets `Location` and a redirect status code (subclass of `ClientResponse`).
 - `DownloadResponse`: sets a stream body and common download headers (subclass of `ClientResponse`).
 
-## Building client responses
+## Common response patterns
 
-`ClientResponse` is built from an `$options` array, and supports PSR-7-style “with*” methods that return a new instance.
+`ClientResponse` is the usual choice for server responses. It gives you a sensible default content type, plus helpers for JSON, XML, cookies, cache headers, and dates.
 
-### Defaults you get with `ClientResponse`
-
-If you don’t set it yourself, `ClientResponse` defaults the `Content-Type` header to `text/html; charset=UTF-8`.
-
-### Common constructor options
-
-The constructor uses message options (body, headers, protocol version), plus response-specific options:
-
-- `body` (string, `Stringable`, or `Psr\Http\Message\StreamInterface`)
-- `headers` (array of header name => value)
-- `protocolVersion` (string; allowed: `1.0`, `1.1`, `2.0`)
-- `statusCode` (int; allowed: `100`–`599`)
-- `reasonPhrase` (string)
-
-### Example: build a client response
+### Example: build a response
 
 ```php
 use Fyre\Http\ClientResponse;
@@ -154,18 +139,11 @@ $response = DownloadResponse::createFromString(
 
 ### Header defaults
 
-Both download builders populate (or preserve) common headers via the `$options['headers']` array:
-
-- `Content-Type` defaults to the detected/provided MIME type with `charset=UTF-8`
-- `Content-Disposition` defaults to `attachment; filename="..."`
-- `Content-Length` is set from the file size or string length
-- `Expires` defaults to `0`
-- `Content-Transfer-Encoding` defaults to `binary`
-- `Cache-Control` is set to an array of values (`private`, `no-transform`, `no-store`, `must-revalidate`)
+Both download builders set the usual download headers for you, including `Content-Type`, `Content-Disposition`, and `Content-Length`.
 
 ## Emitting responses
 
-`ResponseEmitter` converts a `Psr\Http\Message\ResponseInterface` into actual output using PHP’s `header()` and `http_response_code()`, then streams the body.
+`ResponseEmitter` sends a response to the client by outputting the status code, headers, cookies, and body stream.
 
 ### Example: emit a response
 
@@ -181,13 +159,7 @@ $emitter = new ResponseEmitter();
 $emitter->emit($response);
 ```
 
-### Cookies
-
-When emitting a `ClientResponse` (including `RedirectResponse` and `DownloadResponse`), the emitter outputs cookies from the response cookie collection. In addition, any `Set-Cookie` headers present on the response are parsed and merged into the cookie set; when cookie identifiers collide, the last parsed cookie wins.
-
-### Body streaming and ranges
-
-If the response includes a valid `Content-Range` header in the form `bytes start-end/size` (or `bytes start-end/*`), the emitter outputs only that byte range from the body stream. For seekable streams, this is streamed in chunks; for non-seekable streams, the full contents are read to support range slicing.
+Most applications do not create the emitter directly because the framework handles response emission for you, but it is useful in custom entry points.
 
 ## Method guide
 
@@ -197,7 +169,7 @@ Most examples assume you already have a `$response` instance (via dependency inj
 
 Examples below assume relevant classes are already imported when needed.
 
-### ClientResponse
+### `ClientResponse`
 
 #### **Set the content type** (`withContentType()`)
 
@@ -284,7 +256,7 @@ Adds a cookie to the response cookie collection. These cookies are emitted later
 Arguments:
 - `$name` (`string`): the cookie name.
 - `$value` (`string`): the cookie value.
-- `$expires` (`Fyre\Utility\DateTime\DateTime|int|null`): expiration time (DateTime or UNIX timestamp).
+- `$expires` (`Fyre\Utility\DateTime\DateTime|int|null`): expiration time (`DateTime` or UNIX timestamp).
 - `$path` (`string`): cookie path (defaults to `/`).
 - `$domain` (`string`): cookie domain.
 - `$httpOnly` (`bool`): whether the cookie is HTTP only.
@@ -356,7 +328,7 @@ Arguments:
 $response = $response->withStatus(404);
 ```
 
-### RedirectResponse
+### `RedirectResponse`
 
 #### **Create a redirect response** (`__construct()`)
 
@@ -371,7 +343,7 @@ Arguments:
 $response = new RedirectResponse('/login', 302);
 ```
 
-### DownloadResponse
+### `DownloadResponse`
 
 #### **Create a download from a file** (`createFromFile()`)
 
@@ -401,7 +373,7 @@ Arguments:
 $response = DownloadResponse::createFromString('Example export content', 'export.txt');
 ```
 
-### ResponseEmitter
+### `ResponseEmitter`
 
 #### **Emit a response** (`emit()`)
 
@@ -419,12 +391,9 @@ $emitter->emit($response);
 
 A few behaviors are worth keeping in mind:
 
-- Status codes must be in the range `100`–`599`, otherwise an `InvalidArgumentException` is thrown.
-- Header names must match the HTTP token format, and header values must be strings/numbers containing only valid header characters (and header value arrays cannot be empty).
-- When `reasonPhrase` is omitted (or an empty string), a default phrase is used when available for the chosen status code.
+- Response objects are immutable, so remember to keep the value returned by each `with*` call.
 - `ClientResponse::withCookie()` stores cookies in a response cookie collection, and `ResponseEmitter` emits them when sending the response.
 - When the request method is available and the protocol version is `>= 1.1`, non-`GET` redirects force `303`, and `GET` redirects convert a default `302` to `307`.
-- Body range output only applies when `Content-Range` matches the supported `bytes start-end/...` format; otherwise the body is streamed normally.
 
 ## Related
 

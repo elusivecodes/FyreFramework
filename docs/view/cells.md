@@ -1,12 +1,14 @@
 # Cells
 
-Cells are small, short-lived renderables for encapsulating view logic plus markup. Each call to `View::cell()` produces a new `Cell` instance that runs an action method and then renders a cell template using a child `View` with no layout.
+Use cells when you want a small renderable component with its own PHP action and template.
+
+Each `View::cell()` call creates a new cell instance, runs an action method, and renders a dedicated template.
 
 For long-lived, per-view utilities accessed through `$this->SomeHelperName`, see [Helpers](helpers.md).
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Basic usage](#basic-usage)
   - [Rendering a cell](#rendering-a-cell)
   - [Selecting an action](#selecting-an-action)
@@ -18,9 +20,13 @@ For long-lived, per-view utilities accessed through `$this->SomeHelperName`, see
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use cells when you want a component-like chunk that can prepare data in PHP, then render a dedicated template without involving the parent view’s layout.
+Use cells when you want to:
+
+- keep a small piece of view logic out of the parent template
+- render a reusable chunk with its own template
+- pass arguments into a renderable component-like object
 
 ## Basic usage
 
@@ -28,7 +34,7 @@ Most examples on this page assume you are in a template, where `$this` is the cu
 
 ### Rendering a cell
 
-`View::cell(string $cell, array $args = []): Cell` creates the cell instance. You can explicitly render it, or echo it directly (cells implement `Cell::__toString()`).
+`View::cell(string $cell, array $args = []): Cell` creates the cell instance. You can explicitly render it, or echo it directly.
 
 Example: render a cell in a template:
 
@@ -61,7 +67,7 @@ echo $this->cell('RecentPosts::byCategory', ['slug' => 'php']);
 
 ### Cell class naming and location
 
-`View::cell('RecentPosts')` resolves a cell class named `RecentPostsCell` in one of the configured namespaces. By default, the framework registers `App\Cells` with the `CellRegistry`, so application cells typically live under that namespace.
+`View::cell('RecentPosts')` looks for a cell class named `RecentPostsCell` in one of the configured cell namespaces. In most applications, cells live under `App\Cells`.
 
 Example cell class:
 
@@ -144,7 +150,6 @@ A few behaviors are worth keeping in mind:
 - The action defaults to `display`. If the action method does not exist, `Cell::render()` throws a `RuntimeException`.
 - If the resolved template does not exist under the `cells/` folder, `Cell::render()` throws a `RuntimeException`.
 - Each `View::cell()` call creates a new instance; use [Helpers](helpers.md) when you need a reusable per-view object.
-- Cell class lookups are cached, including misses. If you add a new cell class or change namespaces at runtime, clear the registry cache. `CellRegistry::clear()` also clears configured namespaces.
 - Only the first `::` is treated as the action separator; avoid using `::` anywhere else in the cell string.
 
 ## Related

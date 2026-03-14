@@ -1,10 +1,12 @@
 # Templates
 
-Templates are plain PHP files rendered by `View`. The same template lookup system is used for regular templates, layouts, elements, and cell templates via `TemplateLocator`.
+Use templates when you want to render PHP views with data from your application.
+
+Most view work comes down to rendering a template, optionally wrapping it in a layout, and composing smaller pieces with elements, blocks, helpers, and cells.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Template files and naming](#template-files-and-naming)
 - [Rendering templates and layouts](#rendering-templates-and-layouts)
 - [Passing data to templates](#passing-data-to-templates)
@@ -12,9 +14,9 @@ Templates are plain PHP files rendered by `View`. The same template lookup syste
 - [Including elements](#including-elements)
 - [Rendering cells](#rendering-cells)
 - [Working with view blocks](#working-with-view-blocks)
-- [How templates are located](#how-templates-are-located)
+- [Template paths and lookup](#template-paths-and-lookup)
   - [Configuring template paths](#configuring-template-paths)
-  - [Folders and lookup rules](#folders-and-lookup-rules)
+  - [Folders and file names](#folders-and-file-names)
   - [File extension handling](#file-extension-handling)
   - [Cell template defaults](#cell-template-defaults)
 - [Method guide](#method-guide)
@@ -24,9 +26,14 @@ Templates are plain PHP files rendered by `View`. The same template lookup syste
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-This guide explains how the view layer loads and renders template files, how data and helpers are made available inside templates, and how to compose output using layouts, elements, cells, and blocks.
+Most template work looks like this:
+
+1. Create a `View`.
+2. Pass data with `set()` or `setData()`.
+3. Render a template with `render()`.
+4. Use layouts, elements, and blocks when the page needs structure or reuse.
 
 Most examples on this page are shown from either:
 
@@ -54,7 +61,7 @@ templates/
 Inside templates and layouts:
 
 - `$this` is the current `View` instance.
-- View data is injected as local variables via `extract()`.
+- View data is available as local variables.
 
 In a layout file, output the rendered template body using `View::content()`:
 
@@ -90,7 +97,7 @@ echo $title;
 
 ## Using helpers in templates
 
-Helpers are exposed to templates as properties on the view (for example `$this->Url`). Helpers are lazy-loaded the first time they are accessed.
+Helpers are exposed to templates as properties on the view (for example `$this->Url`). They are loaded the first time you use them.
 
 For helper discovery and usage, see [Helpers](helpers.md).
 
@@ -117,7 +124,7 @@ echo $this->element('shared/alert', [
 
 ## Rendering cells
 
-Cells are short-lived renderables invoked from templates. Each call to `View::cell()` returns a new `Cell` instance, and cells can be echoed directly (they implement `__toString()`).
+Cells are short-lived renderables invoked from templates. Each call to `View::cell()` returns a new `Cell` instance, and cells can be echoed directly.
 
 For creating cells and selecting actions/templates, see [Cells](cells.md).
 
@@ -153,9 +160,9 @@ echo $this->fetch('sidebar');
 
 To append or prepend to an existing block, use `View::append()` / `View::prepend()` (they behave like `start()` with a block type).
 
-## How templates are located
+## Template paths and lookup
 
-Template lookup is handled by `TemplateLocator`, which searches configured base paths in the order they were added and returns the first matching file.
+Templates are loaded from configured base paths. `TemplateLocator` searches those paths in order and uses the first match.
 
 ### Configuring template paths
 
@@ -167,7 +174,7 @@ $templateLocator->addPath('/path/to/app/templates');
 $templateLocator->addPath('/path/to/plugin/templates');
 ```
 
-### Folders and lookup rules
+### Folders and file names
 
 `TemplateLocator::locate($name, $folder)` inserts the optional `$folder` between the base path and the template name.
 
@@ -429,7 +436,7 @@ $templateLocator->clear();
 
 #### **Normalize a template segment** (`normalize()`)
 
-Normalizes a string (for example camelCase/PascalCase) into a snake_case segment.
+Normalizes a string (for example `camelCase` / `PascalCase`) into a `snake_case` segment.
 
 Arguments:
 - `$string` (`string`): the input string.
@@ -491,7 +498,6 @@ A few behaviors are worth keeping in mind:
 - `View::render()` will automatically end any unclosed blocks after layout rendering and then throw a `LogicException` when blocks were left open.
 - Blocks are cleared after each top-level `render()` call, so they do not persist across separate renders on the same `View` instance.
 - `TemplateLocator::locate()` returns `null` when a file cannot be found; `View::render()` and `View::element()` turn missing templates into exceptions.
-- `TemplateLocator::normalize()` does not split consecutive uppercase sequences into separate words (for example, `parseHTML` becomes `parse_html`, but `parseHTMLFragment` becomes `parse_htmlfragment`).
 
 ## Related
 

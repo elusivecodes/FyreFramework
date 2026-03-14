@@ -1,10 +1,10 @@
 # URI
 
-`Fyre\Http\Uri` is a PSR-7 `Psr\Http\Message\UriInterface` implementation that wraps an RFC 3986 URI object and adds small, practical helpers for query parameters and path segments.
+Use `Fyre\Http\Uri` when you need to inspect or modify a URL, build links, or work with query strings and path segments.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Creating URIs](#creating-uris)
 - [Method guide](#method-guide)
   - [String output](#string-output)
@@ -16,9 +16,14 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-A URI captures the address a request targets: scheme, authority (user info, host, port), path, query, and fragment. In Fyre, `Uri` wraps an RFC 3986 URI object and adds small helpers for common application needs like reading query values, keeping or removing query keys, and reading path segments.
+Common uses for `Uri` are:
+
+- reading and updating the path, host, query string, or fragment
+- adding, removing, or replacing query parameters
+- resolving relative URLs against a known base URL
+- reading path segments when routing or building links
 
 ## Creating URIs
 

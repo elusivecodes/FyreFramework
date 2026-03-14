@@ -5,6 +5,7 @@ namespace Fyre\Cache;
 
 use Closure;
 use DateInterval;
+use Fyre\Core\Traits\DebugTrait;
 use stdClass;
 
 use function array_key_exists;
@@ -22,6 +23,8 @@ use function sort;
  */
 class TaggedCacher
 {
+    use DebugTrait;
+
     /**
      * Generates a tag invalidation token.
      *

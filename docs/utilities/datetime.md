@@ -1,14 +1,15 @@
 # Date/time
 
-`DateTime` (`Fyre\Utility\DateTime\DateTime`) represents an immutable date/time value with locale-aware formatting and calendar-aware operations. It lives in the [Utilities](index.md) layer, and for ranges (and sets of ranges), see [Periods](periods.md).
+Use `DateTime` (`Fyre\Utility\DateTime\DateTime`) when you need an immutable date/time value with locale-aware formatting and calendar-aware operations.
+
+For ranges and sets of ranges, see [Periods](periods.md).
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
-- [Choosing the right tool](#choosing-the-right-tool)
-- [`DateTime` mental model](#datetime-mental-model)
-- [Creating DateTime values](#creating-datetime-values)
+- [Start here](#start-here)
+- [Choosing `DateTime` or periods](#choosing-datetime-or-periods)
+- [Working with `DateTime` values](#working-with-datetime-values)
+- [Creating `DateTime` values](#creating-datetime-values)
 - [Formatting and localization](#formatting-and-localization)
 - [Working immutably](#working-immutably)
 - [Comparisons and differences](#comparisons-and-differences)
@@ -27,13 +28,11 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
 Use `DateTime` when you want an immutable instant that can be formatted for humans using a locale and time zone, while still supporting calendar-aware operations (week/year boundaries, month lengths, local week-of-year fields, and so on).
 
 If you need a bounded range (or a collection of ranges) with operations like overlap/gaps/subtraction, see [Periods](periods.md).
-
-## Quick start
 
 ```php
 use Fyre\Utility\DateTime\DateTime;
@@ -47,13 +46,13 @@ $nextWeek = $dt->addWeeks(1);
 $dayStart = $dt->startOfDay();
 ```
 
-## Choosing the right tool
+## Choosing `DateTime` or periods
 
 - Use `DateTime` for a single moment (with a time zone and locale for presentation).
 - Use `Period` when you need a bounded range at a specific granularity (days, hours, months, …); see [Periods](periods.md).
 - Use `PeriodCollection` when you need set-style operations over many ranges (normalize/sort, find gaps, subtract another set); see [Periods](periods.md).
 
-## `DateTime` mental model
+## Working with `DateTime` values
 
 `DateTime` is designed for application-level work where you care about human-facing formatting and calendar behavior:
 
@@ -66,7 +65,7 @@ It also implements `Stringable` and `JsonSerializable`:
 - `(string) $dateTime` uses `toString()`.
 - `json_encode($dateTime)` serializes as an ISO string via `toIsoString()`.
 
-## Creating DateTime values
+## Creating `DateTime` values
 
 You can construct a `DateTime` from a “time string” supported by PHP’s `DateTimeImmutable`, with optional overrides for time zone and locale:
 
@@ -197,7 +196,7 @@ Arguments:
 $dt = DateTime::createFromTimestamp(1760000000, 'UTC', 'en');
 ```
 
-#### **Create from a native DateTime** (`createFromNativeDateTime()`)
+#### **Create from a native `DateTimeInterface`** (`createFromNativeDateTime()`)
 
 Creates a `DateTime` from a `DateTimeInterface`, copying seconds and milliseconds.
 
@@ -338,7 +337,7 @@ $dt = new DateTime('2026-02-01 15:04:05.123', 'America/New_York', 'en_US');
 $out = $dt->toIsoString();
 ```
 
-#### **Convert to a native DateTime** (`toNativeDateTime()`)
+#### **Convert to a native `DateTime`** (`toNativeDateTime()`)
 
 Converts the object to a native PHP `DateTime` instance.
 

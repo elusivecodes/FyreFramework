@@ -1,14 +1,15 @@
 # Email Testing
 
-Use `EmailTestTrait` in PHPUnit tests to capture outgoing `Fyre\Mail\Email` messages and assert against what was sent, without delivering real email.
+Use `EmailTestTrait` when your test sends email and you want to assert on what would have been delivered.
+
+The trait swaps configured mailers to a test handler, captures sent messages in memory, and gives you helpers for recipients, subject, body, and attachments.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [How it works](#how-it-works)
-- [Example: send and assert a single email](#example-send-and-assert-a-single-email)
+- [Start here](#start-here)
+- [Sending and asserting email](#sending-and-asserting-email)
+- [Common assertion groups](#common-assertion-groups)
 - [Method guide](#method-guide)
-  - [API summary](#api-summary)
   - [Counting and presence](#counting-and-presence)
   - [Recipients and headers](#recipients-and-headers)
   - [Subject](#subject)
@@ -18,32 +19,20 @@ Use `EmailTestTrait` in PHPUnit tests to capture outgoing `Fyre\Mail\Email` mess
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use `EmailTestTrait` in tests that send email through `MailManager`, then assert on recipients, subject, body, and attachments.
+The usual workflow is:
 
-```php
-use Fyre\TestSuite\TestCase;
-use Fyre\TestSuite\Traits\EmailTestTrait;
+1. Use `EmailTestTrait` in your test case.
+2. Run the code that sends email through `MailManager`.
+3. Assert on the captured messages.
 
-final class PasswordResetMailTest extends TestCase
-{
-    use EmailTestTrait;
-}
-```
+Methods with an `At` suffix target a specific email by 1-based index.
 
-## How it works
-
-`EmailTestTrait` swaps the configured mail handlers for a test mailer that stores sent messages in memory, then clears captured messages after each test.
-
-- Re-registers the existing `Fyre\Mail\MailManager` configs with `className` forced to `Fyre\TestSuite\Mail\Handlers\TestMailer`.
-- `TestMailer` captures sent `Fyre\Mail\Email` messages in memory.
-- Captured messages are cleared after each test.
-- Methods with an `At` suffix target a specific email by 1-based index (for example: “email #1”).
-
-## Example: send and assert a single email
+## Sending and asserting email
 
 ```php
+use Fyre\Mail\Email;
 use Fyre\Mail\MailManager;
 use Fyre\TestSuite\TestCase;
 use Fyre\TestSuite\Traits\EmailTestTrait;
@@ -72,45 +61,20 @@ final class PasswordResetMailTest extends TestCase
 }
 ```
 
+## Common assertion groups
+
+The helpers fall into a few practical groups:
+
+- count and presence: `assertMailCount()`, `assertNoMailSent()`
+- recipients and headers: `assertMailSentTo()`, `assertMailSentFrom()`, `assertMailSentWithCc()`, `assertMailSentWithBcc()`, `assertMailSentWithReplyTo()`, `assertMailSentWithSender()`
+- subject and body: `assertMailSubjectContains()`, `assertMailContains()`, `assertMailContainsText()`, `assertMailContainsHtml()`
+- attachments and message access: `assertMailContainsAttachment()`, `getMessages()`
+
+Every helper that ends in `At()` checks a specific captured email by 1-based index.
+
 ## Method guide
 
 Most examples assume you’re in a `TestCase` using `EmailTestTrait`.
-
-### API summary
-
-```text
-assertMailCount(int $count, string $message = ''): void
-assertNoMailSent(string $message = ''): void
-
-assertMailSentTo(string $address, string $message = ''): void
-assertMailSentToAt(string $address, int $at, string $message = ''): void
-assertMailSentFrom(string $address, string $message = ''): void
-assertMailSentFromAt(string $address, int $at, string $message = ''): void
-
-assertMailSentWithBcc(string $address, string $message = ''): void
-assertMailSentWithBccAt(string $address, int $at, string $message = ''): void
-assertMailSentWithCc(string $address, string $message = ''): void
-assertMailSentWithCcAt(string $address, int $at, string $message = ''): void
-assertMailSentWithReplyTo(string $address, string $message = ''): void
-assertMailSentWithReplyToAt(string $address, int $at, string $message = ''): void
-assertMailSentWithSender(string $address, string $message = ''): void
-assertMailSentWithSenderAt(string $address, int $at, string $message = ''): void
-
-assertMailSubjectContains(string $needle, string $message = ''): void
-assertMailSubjectContainsAt(string $needle, int $at, string $message = ''): void
-
-assertMailContains(string $needle, string $message = ''): void
-assertMailContainsAt(string $needle, int $at, string $message = ''): void
-assertMailContainsText(string $needle, string $message = ''): void
-assertMailContainsTextAt(string $needle, int $at, string $message = ''): void
-assertMailContainsHtml(string $needle, string $message = ''): void
-assertMailContainsHtmlAt(string $needle, int $at, string $message = ''): void
-
-assertMailContainsAttachment(string $filename, string $message = ''): void
-assertMailContainsAttachmentAt(string $filename, int $at, string $message = ''): void
-
-getMessages(int|null $at = null): array
-```
 
 ### Counting and presence
 

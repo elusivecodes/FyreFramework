@@ -1,10 +1,10 @@
 # Route Discovery
 
-`Fyre\Router\Router::discoverRoutes()` converts controller classes into routes by reading route attributes and applying conventions for paths, HTTP methods, and aliases.
+Use `Fyre\Router\Router::discoverRoutes()` when you want controller attributes and conventions to define routes for you.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Route attributes](#route-attributes)
   - [HTTP method attributes](#http-method-attributes)
   - [The `Route` attribute](#the-route-attribute)
@@ -18,7 +18,7 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
 Use route discovery when you want controller methods to become routes automatically:
 
@@ -26,7 +26,7 @@ Use route discovery when you want controller methods to become routes automatica
 - rely on conventions for paths, methods, and aliases when you don’t want to specify everything
 - optionally cache discovered routes per namespace
 
-Discovery is typically run through `Router::discoverRoutes()`, which delegates to `RouteLocator::discover()` and then connects each discovered route.
+Run discovery through `Router::discoverRoutes()`:
 
 ```php
 $router->discoverRoutes([
@@ -36,19 +36,9 @@ $router->discoverRoutes([
 
 For routing basics, see [Router](router.md). For URL generation, see [URL Generation](url-generation.md).
 
-Internally, discovery produces route definition arrays that match `Router::connect()` argument names, so they can be connected using named argument unpacking.
-
-When discovering routes for a namespace, the locator:
-
-1. Scans PHP files under folders registered for the namespace.
-2. Builds a class name from the namespace and file path and skips classes that are not loadable.
-3. Skips abstract classes.
-4. Treats each public method as a route candidate.
-5. Reads route metadata from attributes and fills in missing pieces using conventions.
-
 ## Route attributes
 
-Route discovery reads the first attribute on a controller class and on each controller method that is an instance of `Fyre\Router\Attributes\Route`. Because attributes are read in “instance-of” mode, any attribute class that extends `Route` can supply route metadata.
+Route discovery reads route attributes from controller classes and methods.
 
 ### HTTP method attributes
 
@@ -62,7 +52,7 @@ For the common case of “one method → one HTTP verb”, the router provides m
 
 All of these attributes live in `Fyre\Router\Attributes`.
 
-These attributes can be applied to a controller class or a controller method. They support the same parameters as `Route`, except the `methods` value is fixed to a single HTTP method.
+These attributes can be applied to a controller class or a controller method. They support the same parameters as `Route`, except the HTTP method is fixed.
 
 When routes are connected, paths are normalized to a leading `/`, so attributes may use either `'posts'` or `'/posts'`. Examples in this page omit the leading `/`.
 
@@ -138,7 +128,7 @@ Use `Fyre\Router\Attributes\Hidden` to prevent discovery:
 
 ## Conventions
 
-When you don’t provide an explicit route `path`, `methods`, or `as`, the `RouteLocator` derives them from the controller name, method name, and method parameters.
+When you do not provide an explicit route `path`, `methods`, or `as`, discovery derives them from the controller name, method name, and method parameters.
 
 ### Default path
 
@@ -231,22 +221,16 @@ class PostsController
 
 ## Caching
 
-Routes are cached per discovered namespace when a cache configuration named `_routes` exists in `Fyre\Cache\CacheManager`.
-
-- Cache keys are built from the namespace by replacing `\` with `.` (for example `App\Http\Controllers` becomes `App.Http.Controllers`).
-- Values are stored via `Fyre\Cache\Cacher::remember()`.
-- `Fyre\Router\RouteLocator::clear()` clears discovered routes and calls `clear()` on the `_routes` cache handler.
-
-If the cache manager is disabled, the `_routes` handler is a no-op cacher and routes are rebuilt on every discovery call.
+If you configure a cache named `_routes`, discovered routes are cached per namespace. Otherwise, routes are rediscovered each time you call `discoverRoutes()`.
 
 ## Behavior notes
 
 A few behaviors are worth keeping in mind:
 
-- Only the first attribute that is an instance of `Fyre\Router\Attributes\Route` is used on a controller class and on each method.
-- `#[Hidden]` only takes effect if it is that first `Route`-instance attribute on the class/method.
+- Use one route attribute per controller and per method.
+- If you want discovery to skip a controller or action, make `#[Hidden]` the route attribute on that class or method.
 - All public methods are route candidates, including inherited public methods.
-- Discovered routes are sorted by most-specific path first (longer paths first).
+- More specific discovered routes are connected before less specific ones.
 
 ## Related
 

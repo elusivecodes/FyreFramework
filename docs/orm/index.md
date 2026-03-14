@@ -1,6 +1,6 @@
 # ORM
 
-The ORM is the framework’s model-first layer for working with database records as objects: models build queries and persist data, entities represent records with state and errors, and relationships connect records across tables.
+Use the ORM when you want to work with database records as models, entities, and relationships instead of raw SQL rows.
 
 ## Table of Contents
 
@@ -32,7 +32,7 @@ Most ORM work starts from a model and flows through entities:
 - **Relationships** connect models, control how related data is loaded, and influence saving/deleting behavior.
 - **Rule sets** run integrity checks during save workflows (distinct from input validation).
 
-Persistence is intentionally strict: entities with errors are not saved, and existing entities that haven’t changed may short-circuit saves.
+Saves fail when entities have errors, and existing entities with no changes are skipped.
 
 ## Pages in this section
 

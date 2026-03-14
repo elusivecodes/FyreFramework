@@ -1,8 +1,8 @@
 # Testing
 
-Testing docs cover the framework’s PHPUnit-focused test suite layer: a base test case, fixture support, and reusable assertion helpers to help you write repeatable tests against framework-powered code.
+Use the testing layer when you want PHPUnit helpers for framework-powered code.
 
-If you’re testing framework-powered code, the key idea is: extend [`TestCase`](test-case.md) to work against the shared application `Engine`, then compose the trait helpers that match what you need to assert.
+The section covers the base `TestCase`, fixtures, in-process HTTP and console testing, outbound client mocks, captured mail and log assertions, and a few small timing utilities.
 
 ## Table of Contents
 
@@ -14,8 +14,8 @@ If you’re testing framework-powered code, the key idea is: extend [`TestCase`]
 
 Pick a path based on what you’re testing:
 
-- **Getting started with the test base**: [`TestCase`](test-case.md)
-- **HTTP requests/responses**: [Integration Testing](integration.md)
+- **Getting started with the base test case**: [`TestCase`](test-case.md)
+- **HTTP requests and responses**: [Integration Testing](integration.md)
 - **Database-backed code**: [Fixtures](fixtures.md)
 - **Outbound HTTP calls**: [HTTP Client Testing](http-client.md)
 - **Console commands**: [Console Testing](console.md)
@@ -24,21 +24,22 @@ Pick a path based on what you’re testing:
 
 ## Testing overview
 
-The testing layer builds on PHPUnit and provides a small set of tools that layer on top of your application:
+The testing tools fall into a few simple groups:
 
-- `TestCase` wires PHPUnit into the shared framework engine and, when configured, the fixture lifecycle.
-- **Fixtures** provide repeatable datasets that can be applied and cleaned up per test.
-- **Constraints and trait helpers** keep assertions short and consistent across common framework outputs (response, console, email, log, session).
+- `TestCase` gives tests access to the shared framework engine and optional fixture loading
+- fixtures provide repeatable database datasets
+- trait helpers make common assertions shorter for HTTP responses, console output, outbound HTTP, mail, and logs
+- `Timer` and `Benchmark` help with quick performance checks during development
 
 ## Pages in this section
 
-- [`TestCase`](test-case.md) — the PHPUnit base class: framework engine access, fixture integration, and test helpers.
-- [Constraints](constraints.md)
-- [Fixtures](fixtures.md)
-- [Integration Testing](integration.md)
-- [HTTP Client Testing](http-client.md)
-- [Console Testing](console.md)
-- [Email Testing](mail.md)
-- [Log Testing](logging.md)
-- [Timers](timers.md)
-- [Benchmark](benchmark.md)
+- [`TestCase`](test-case.md) - base PHPUnit test case for framework-powered tests
+- [Constraints](constraints.md) - lower-level PHPUnit constraints behind the higher-level helpers
+- [Fixtures](fixtures.md) - define and load repeatable database data
+- [Integration Testing](integration.md) - send in-process HTTP requests and assert on responses
+- [HTTP Client Testing](http-client.md) - mock outbound `Client` calls
+- [Console Testing](console.md) - run commands and assert on captured output
+- [Email Testing](mail.md) - capture sent email and assert on recipients, subject, body, and attachments
+- [Log Testing](logging.md) - capture log output with in-memory handlers
+- [Timers](timers.md) - measure named phases with lightweight timers
+- [Benchmark](benchmark.md) - compare named callbacks in-process

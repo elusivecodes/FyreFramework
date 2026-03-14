@@ -1,10 +1,12 @@
 # Saving Data
 
-Saving in the ORM is entity-first: you build or patch entities from input data, then persist them through `Fyre\ORM\Model` using `save()` or `saveMany()`. For bulk updates, `updateAll()` modifies matching rows directly without hydrating entities.
+Use model-driven saving when you want schema parsing, validation, relationship handling, and transactions around your writes.
+
+For direct bulk updates without entities, use `updateAll()`.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Workflow overview](#workflow-overview)
 - [Building entities from input](#building-entities-from-input)
   - [Creating empty entities](#creating-empty-entities)
@@ -26,21 +28,19 @@ Saving in the ORM is entity-first: you build or patch entities from input data, 
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use model-driven entity building and saving when you want schema-aware parsing, field guarding, validation, relationship handling, and transactional persistence.
+Most save workflows look like this:
 
-## Workflow overview
-
-Most examples assume you already have a model instance (for example, `$Users`). When an example uses a different model variable (for example, `$Articles`), assume it exists too.
-
-The ORM’s write workflow generally looks like this:
-
-1. Build or patch entities with `newEntity()` / `patchEntity()` (and their plural variants).
-2. Review validation errors on the entity (if validation is enabled).
-3. Persist with `save()` / `saveMany()` (optionally running rule sets and saving related entities).
+1. Build or patch entities with `newEntity()` or `patchEntity()`.
+2. Check the entity for validation errors if validation is enabled.
+3. Call `save()` or `saveMany()`.
 
 If you need to update many rows and don’t need entity-level behavior, use `updateAll()` instead.
+
+Most examples on this page assume you already have a model instance such as `$Users`.
+
+## Workflow overview
 
 ## Building entities from input
 

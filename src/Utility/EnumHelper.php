@@ -11,7 +11,7 @@ use function is_subclass_of;
 /**
  * Provides helpers for working with PHP enums.
  */
-final class EnumHelper
+abstract class EnumHelper
 {
     /**
      * Converts an enum case to its normalized scalar value.

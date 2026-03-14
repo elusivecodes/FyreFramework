@@ -33,6 +33,25 @@ final class CacheManagerTest extends TestCase
         );
     }
 
+    public function testBuildDisabled(): void
+    {
+        $this->cache->disable();
+
+        $handler1 = $this->cache->build([
+            'className' => FileCacher::class,
+        ]);
+        $handler2 = $this->cache->build([
+            'className' => FileCacher::class,
+        ]);
+
+        $this->assertSame($handler1, $handler2);
+
+        $this->assertInstanceOf(
+            NullCacher::class,
+            $handler1
+        );
+    }
+
     public function testBuildInvalidHandler(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -231,6 +250,16 @@ final class CacheManagerTest extends TestCase
             FileCacher::class,
             $handler1
         );
+    }
+
+    public function testUseDisabledInvalid(): void
+    {
+        $this->cache->disable();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Cacher `` must extend `Fyre\Cache\Cacher`.');
+
+        $this->cache->use('invalid');
     }
 
     #[Override]

@@ -1,11 +1,10 @@
 # URL Generation
 
-`Fyre\Router\Router::url()` generates URLs from route aliases, substituting placeholder values and applying base URI behavior.
+Use `Fyre\Router\Router::url()` or the `route()` helper to generate links from route aliases.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [How URL generation works](#how-url-generation-works)
+- [Start here](#start-here)
 - [Generating a URL by alias](#generating-a-url-by-alias)
   - [Generate a URL (`Router::url()`)](#generate-a-url-routerurl)
 - [Query strings and fragments](#query-strings-and-fragments)
@@ -13,21 +12,13 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
 Use URL generation when you want stable links that don’t break when paths change:
 
 - generate paths and full URLs from route aliases
 - keep query strings and fragments out of hard-coded strings
 - support subdirectory deployments via `App.baseUri`
-
-## How URL generation works
-
-URL generation is driven by route aliases (`as`). Instead of hard-coding `'/posts/42'`, generate a URL from an alias and a set of placeholder values.
-
-`Router::url()` looks up the route by alias, substitutes `{placeholders}` using `$arguments`, and then decides whether to return a path-only URL (like `/posts/42`) or a full URL (like `https://example.com/posts/42`).
-
-When a request has been routed via `Router::parseRequest()`, the router stores the matched request internally and uses it as the default comparison context for full URL decisions (scheme/host/port).
 
 ## Generating a URL by alias
 
@@ -97,18 +88,18 @@ The `?` and `#` keys are handled separately and are not used for `{placeholder}`
 
 ## Base URI and full URLs
 
-The router reads `App.baseUri` during construction and stores it as a `Uri` (see [URI](../http/uri.md)).
+Set `App.baseUri` when your application runs from a subdirectory or when full URL generation needs a default scheme, host, and port.
 
 The base URI affects two things:
 
 - Request parsing: when `App.baseUri` contains a path (for example `/subdir`), that path is removed from the start of the incoming request path before route matching.
 - URL generation: the base path is prepended back onto generated route paths, so links continue to work when the application is served from a subdirectory.
 
-When generating full URLs (`full: true`, or when `Router::url()` decides a full URL is required), `App.baseUri` also acts as the default source for scheme/host/port when they are not provided.
+When generating full URLs, `App.baseUri` also acts as the default source for scheme, host, and port when they are not provided.
 
 If the base URI path is empty or `/`, it has no effect on request parsing or URL generation. When it includes a non-root path, stripping during request parsing only occurs when the incoming request path starts with that base path.
 
-To configure the base URI, set `App.baseUri` in your application config (see [Config](../core/config.md)). You can also read the router’s configured base URI at runtime via `Router::getBaseUri()`.
+To configure the base URI, set `App.baseUri` in your application config (see [Config](../core/config.md)). If you need to inspect it later, use `Router::getBaseUri()`.
 
 ## Behavior notes
 
@@ -120,7 +111,7 @@ A few behaviors are worth keeping in mind:
 - Placeholder values are cast to strings before validation.
 - If a placeholder value is a `Fyre\ORM\Entity`, the router uses the model route key field; `{name:field}` uses `field` as an override when extracting the value from the entity.
 - Optional placeholders like `{id?}` use the base placeholder name for argument lookup (for example `['id' => 123]`).
-- If a routed request is available, `Router::url()` defaults to returning a path-only URL when the scheme/host/port match the current request, and a full URL when they differ.
+- If a routed request is available, `Router::url()` returns a path-only URL when the scheme, host, and port match the current request, and a full URL when they differ.
 - If no routed request is available, `Router::url()` defaults to returning a full URL unless `full: false` is provided.
 - Port comparisons treat the scheme’s default port (for example 80/443) as equivalent to an omitted port on the current request.
 

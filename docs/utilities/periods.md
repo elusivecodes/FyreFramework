@@ -1,26 +1,25 @@
 # Periods
 
-`Period` (`Fyre\Utility\DateTime\Period`) represents a bounded date/time range at a specific granularity, while `PeriodCollection` (`Fyre\Utility\DateTime\PeriodCollection`) models sets of ranges and provides set-style operations.
+Use `Period` (`Fyre\Utility\DateTime\Period`) when you need a bounded date/time range at a specific granularity.
+
+Use `PeriodCollection` (`Fyre\Utility\DateTime\PeriodCollection`) when you need to work with multiple ranges as a set.
 
 For single instants (time zones, localization, calendar-aware diffs), see [Date/time](datetime.md).
 
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
-- [Choosing the right tool](#choosing-the-right-tool)
+- [Start here](#start-here)
+- [Choosing `Period` or `PeriodCollection`](#choosing-period-or-periodcollection)
 - [Method guide](#method-guide)
   - [Period](#period)
-  - [PeriodCollection](#periodcollection)
+  - [`PeriodCollection`](#periodcollection)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
 Use `Period` when you need to represent a range as a sequence of evenly-stepped values (for example, each day from Feb 1 to Feb 5), and you want range operations like overlap, gap, and subtraction. Use `PeriodCollection` when you need to treat multiple periods as a set (for example, subtract many busy ranges from an availability window and then find the gaps).
-
-## Quick start
 
 Create a period, iterate it, and subtract a blocked range:
 
@@ -55,7 +54,7 @@ $boundaries = $collection->boundaries(); // Period|null
 $gaps = $collection->gaps(); // PeriodCollection
 ```
 
-## Choosing the right tool
+## Choosing `Period` or `PeriodCollection`
 
 - Use `Period` when you need a bounded range at a specific granularity (days, hours, months, …) and you want range operations (overlap, gap, subtract).
 - Use `PeriodCollection` when you need to work with many ranges as a set (normalize/sort, find gaps, subtract another set).
@@ -476,7 +475,7 @@ $p = new Period('2026-02-01', '2026-02-05');
 $next = $p->renew();
 ```
 
-### PeriodCollection
+### `PeriodCollection`
 
 #### **Add periods** (`add()`)
 

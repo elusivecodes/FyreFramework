@@ -1,11 +1,12 @@
 # Log Testing
 
-`LogTestTrait` captures log output during tests by registering in-memory `ArrayLogger` handlers, then provides assertions for matching messages (optionally scoped).
+Use `LogTestTrait` when you want to verify log output without writing to disk.
+
+The trait registers in-memory `ArrayLogger` handlers and gives you assertions for exact messages, partial matches, and empty logs.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [How it works](#how-it-works)
+- [Start here](#start-here)
 - [Setting up handlers](#setting-up-handlers)
 - [Asserting log output](#asserting-log-output)
 - [Method guide](#method-guide)
@@ -13,22 +14,23 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use `LogTestTrait` when you want to verify that code logged the right messages without writing to disk, and when you need to assert against both log levels and scopes.
+The usual workflow is:
 
-## How it works
-
-`setupLogs()` clears the current `LogManager` configuration and registers one or more `ArrayLogger` handlers. The assertion helpers read from every configured `ArrayLogger` that can handle the requested level and scope (see [Logging](../logging/index.md)).
+1. Call `setupLogs()` in `setUp()`.
+2. Choose the levels or handler configs you want to capture.
+3. Run the code that logs.
+4. Assert on the captured messages.
 
 ## Setting up handlers
 
-Call `setupLogs()` in your test’s `setUp()` method to register the handlers you want to capture.
+Call `setupLogs()` in your test's `setUp()` method to register the handlers you want to capture.
 
 `$logHandlers` supports two shapes:
 
-- A simple list of log levels (each becomes a handler that captures only that level).
-- An associative array of handler keys to options (each becomes a handler, and you supply options like `levels` and `scopes`).
+- a simple list of log levels, where each level becomes its own handler
+- an associative array of handler keys to full option arrays, where you can set `levels` and `scopes`
 
 Example:
 
@@ -83,7 +85,7 @@ Most examples assume you’re in a `TestCase` using `LogTestTrait`.
 
 #### **Set up in-memory log handlers** (`setupLogs()`)
 
-Registers one or more `ArrayLogger` handlers and resets the `LogManager` config for the current test case.
+Register one or more `ArrayLogger` handlers for the current test case.
 
 Arguments:
 - `$logHandlers` (`array`): handler definitions (levels and/or handler option arrays).
@@ -94,7 +96,7 @@ $this->setupLogs(['error', 'warning']);
 
 #### **Assert no messages were logged** (`assertLogIsEmpty()`)
 
-Asserts that no log messages were captured for the given level (and optional scope).
+Assert that no log messages were captured for the given level and optional scope.
 
 Arguments:
 - `$level` (`string`): the log level to assert against.
@@ -107,7 +109,7 @@ $this->assertLogIsEmpty('error');
 
 #### **Assert an exact message was logged** (`assertLogMessage()`)
 
-Asserts that a log message exactly matches the expected message for the given level (and optional scope).
+Assert that a log message exactly matches the expected message for the given level and optional scope.
 
 Arguments:
 - `$expectedMessage` (`string`): the expected log message.
@@ -121,7 +123,7 @@ $this->assertLogMessage('Card declined', 'error', 'payments');
 
 #### **Assert a message contains a string** (`assertLogMessageContains()`)
 
-Asserts that at least one log message contains the provided substring for the given level (and optional scope).
+Assert that at least one log message contains the provided substring for the given level and optional scope.
 
 Arguments:
 - `$needle` (`string`): the substring to search for.
@@ -137,9 +139,9 @@ $this->assertLogMessageContains('declined', 'error', 'payments');
 
 A few behaviors are worth keeping in mind:
 
-- Scope matching is strict: assertions only read from handlers that can handle both the level and the scope.
-- `setupLogs()` clears the current `LogManager` config; call it after any setup that depends on your normal logging configuration.
-- When you use associative keys in `$logHandlers`, always provide `levels`: if you omit it, the key value is used as the default `levels` value, which usually won’t match real log levels.
+- Scope matching is strict, so assertions only read from handlers that can handle both the level and the scope.
+- `setupLogs()` clears the current `LogManager` config, so call it after any setup that depends on your normal logging configuration.
+- When you use associative keys in `$logHandlers`, provide `levels`; otherwise the key name becomes the default `levels` value.
 
 ## Related
 

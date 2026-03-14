@@ -1,11 +1,13 @@
 # Finding Data
 
-Finding data in the ORM starts from `Fyre\ORM\Model`. Use `Model::find()` to build a `Fyre\ORM\Queries\SelectQuery`, `Model::get()` to fetch a single entity by primary key, and `Fyre\ORM\Result` to iterate hydrated entities.
+Use the ORM finding APIs when you want model-aware queries and entity results.
+
+Start with a model, call `find()` for lists, and use `get()` for primary-key lookups.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Where finding fits](#where-finding-fits)
+- [Start here](#start-here)
+- [Finding overview](#finding-overview)
 - [Finding many records](#finding-many-records)
   - [Building a `SelectQuery`](#building-a-selectquery)
   - [Common query options](#common-query-options)
@@ -26,17 +28,22 @@ Finding data in the ORM starts from `Fyre\ORM\Model`. Use `Model::find()` to bui
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use the ORM finding APIs when you want model-aware queries (schema-driven auto-fields, relationship loading, and entity hydration) while still working with familiar query-builder concepts like conditions, joins, ordering, and limits.
+Use the ORM finding APIs when you want to:
 
-Most examples assume you already have a model instance (for example, `$Users`). When an example uses a different model variable (for example, `$Memberships`), assume it exists too.
+- query through a model instead of writing table names directly
+- return entities instead of raw database rows
+- load related data with `contain()`
+- filter through relationship-aware joins like `matching()`
 
-## Where finding fits
+Most examples on this page assume you already have a model instance such as `$Users`.
 
-- `Model::find()` returns a `Fyre\ORM\Queries\SelectQuery` (an ORM-aware wrapper around the database select query builder).
-- `SelectQuery::all()` / `SelectQuery::getResult()` return a `Fyre\ORM\Result`, which maps result rows into entities.
-- `Model::get()` is a convenience wrapper around `find()` for primary-key lookups and returns `Entity|null`.
+## Finding overview
+
+- `Model::find()` returns an ORM-aware `SelectQuery`.
+- `SelectQuery::all()` and `SelectQuery::getResult()` return a `Fyre\ORM\Result` that maps rows into entities.
+- `Model::get()` is a convenience method for primary-key lookups and returns `Entity|null`.
 
 For the underlying query builder syntax (conditions, joins, ordering, grouping, and SQL compilation), see [Database queries](../database/queries.md). For entity field access and `_matchingData`, see [Entities](entities.md).
 
@@ -175,7 +182,7 @@ foreach ($Users->find()->all() as $user) {
 
 ### Buffering vs streaming
 
-By default, results are buffered: entities are cached in memory so you can iterate multiple times without re-executing the query.
+By default, results are buffered in memory so you can iterate multiple times without re-executing the query.
 
 If you disable buffering on the query, iteration becomes streaming:
 
@@ -211,7 +218,7 @@ foreach ($result as $user) {
 When events are enabled for a query (the default), `SelectQuery` triggers:
 
 - `ORM.beforeFind` once when the query is prepared (for example when executing, counting, or generating SQL)
-- `ORM.afterFind` when the query result is first materialized and wrapped into a `Result`
+- `ORM.afterFind` when the query result is first wrapped in a `Result`
 
 To learn how to listen using `#[BeforeFind]` / `#[AfterFind]` attributes or event-manager listeners, see [ORM Events](events.md).
 
@@ -385,9 +392,9 @@ $result->free();
 
 A few behaviors are worth keeping in mind:
 
-- `SelectQuery::getResult()` caches the `Result` until the query is dirtied (for example by adding conditions, joins, fields, or contain configuration).
+- `SelectQuery::getResult()` reuses the same `Result` until you modify the query.
 - `SelectQuery::count()` counts the *current* query, including any applied `LIMIT`/`OFFSET`.
-- Generating SQL with `SelectQuery::sql()` prepares the query (auto-fields and contain/join expansion); by default it resets the prepared state after SQL generation.
+- Generating SQL with `SelectQuery::sql()` expands auto-fields and contain/join configuration for the current query.
 - When buffering is disabled, `Result::fetch()` may advance the underlying cursor, and `Result::free()` stops streaming iteration.
 
 ## Related

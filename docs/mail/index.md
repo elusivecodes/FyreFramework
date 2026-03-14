@@ -1,16 +1,14 @@
 # Mail
 
-Mail covers configuring mailers, sending email messages, and selecting handlers (SMTP, sendmail, debug) for different environments.
+Use the mail subsystem when you want to configure one or more mailers and send email through them.
 
-Each mailer configuration selects a handler and provides options that control delivery behavior.
+Most applications configure a default mailer for production and a debug or test mailer for local development.
 
 ## Table of Contents
 
 - [Start here](#start-here)
-- [Purpose](#purpose)
-- [Mental model](#mental-model)
 - [Configuring mailers](#configuring-mailers)
-  - [Base mailer options](#base-mailer-options)
+  - [Common mailer options](#common-mailer-options)
   - [Example configuration](#example-configuration)
 - [Built-in mailer handlers](#built-in-mailer-handlers)
   - [SMTP](#smtp)
@@ -35,33 +33,11 @@ Pick a path based on what you’re doing:
 - **Configuring transports**: continue on this page (SMTP, sendmail, debug mailers).
 - **Testing email output**: see [Email Testing](../testing/mail.md) (debug mailer and assertions).
 
-## Purpose
-
-Mailers are a good fit when you need to:
-
-- switch transports by environment (for example, SMTP in production and a debug mailer locally)
-- isolate delivery settings with multiple mailer keys (separate hosts, credentials, or options)
-- keep message-building code stable while swapping the underlying transport
-
-## Mental model
-
-`MailManager` loads mailer configurations from [Config](../core/config.md) (the `Mail` key) and provides `Mailer` instances by key.
-
-- Each config entry must specify a `className` that extends `Mailer`.
-- `MailManager::use()` returns one shared mailer instance per key.
-- `MailManager::build()` creates a new mailer instance from options without storing or sharing it.
-- `MailManager::use()` and `MailManager::build()` fail if the resolved options do not contain a valid `className`.
-
-Mail is split into two layers:
-
-- `Mailer` is the transport layer. Handlers implement `send()` and can create new messages via `email()`.
-- `Email` is the message being built (recipients, subject, headers, body, attachments). See [Emails](emails.md).
-
 ## Configuring mailers
 
 Mailer configuration is read from the `Mail` key in your config (see [Config](../core/config.md)). Each named mailer config is an options array passed to the selected handler.
 
-### Base mailer options
+### Common mailer options
 
 These options apply to all mailer handlers:
 
@@ -248,9 +224,9 @@ $mailer->email()
 
 ### `MailManager`
 
-#### **Get a shared mailer** (`use()`)
+#### **Get a mailer** (`use()`)
 
-Returns the shared mailer instance for a config key. If the mailer has not been created yet, it is built from the stored config and cached.
+Returns the mailer for a config key. The first call builds it from config, and later calls return the same loaded instance.
 
 Arguments:
 - `$key` (`string`): the mailer key (defaults to `MailManager::DEFAULT`).
@@ -289,9 +265,9 @@ $all = $mailers->getConfig();
 $default = $mailers->getConfig('default');
 ```
 
-#### **Unregister a mailer key** (`unload()`)
+#### **Unload a mailer key** (`unload()`)
 
-Unloads a mailer instance (if loaded) and removes its stored configuration.
+Removes the stored configuration and any loaded mailer for that key.
 
 Arguments:
 - `$key` (`string`): the mailer key (defaults to `MailManager::DEFAULT`).
@@ -312,7 +288,7 @@ $email = $mailer->email();
 
 #### **Send a message** (`send()`)
 
-Sends an `Email` through the handler implementation.
+Sends an `Email` through the current mailer.
 
 Arguments:
 - `$email` (`Email`): the email to send.
@@ -326,9 +302,9 @@ $email = $mailer->email()
 $mailer->send($email);
 ```
 
-#### **Read handler configuration** (`getConfig()`)
+#### **Read mailer configuration** (`getConfig()`)
 
-Returns the handler config array (merged defaults and configured options).
+Returns the mailer config array (merged defaults and configured options).
 
 ```php
 $config = $mailer->getConfig();
@@ -383,7 +359,7 @@ if ($mailer instanceof DebugMailer) {
 A few behaviors are worth keeping in mind:
 
 - `Mailer::send()` throws a `MailException` if an email has no recipients.
-- `MailManager::setConfig()` rejects duplicate keys, and `MailManager::unload()` removes both the stored config and any shared mailer instance for that key.
+- `MailManager::setConfig()` rejects duplicate keys, and `MailManager::unload()` removes both the stored config and any loaded mailer for that key.
 - `MailManager::use()` requires that the selected key has a valid stored config with a `className`.
 - `SmtpMailer` only enables `STARTTLS` when `tls` is `true` (it does not automatically secure the connection based on port).
 - `SmtpMailer` does not enable implicit TLS unless you prefix `host` with `tls://` (or `ssl://`).

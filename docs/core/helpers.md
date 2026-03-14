@@ -1,13 +1,14 @@
 # Helpers
 
-Helpers are global functions that provide a small runtime convenience layer over the container and commonly used services. They keep glue code terse in places where dependency injection would be noisy, while still routing everything through the same underlying APIs.
+Use helpers when you want concise access to common framework tasks in templates, small callbacks, and other lightweight code paths.
+
+They keep code short while routing real work through the same underlying services.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [When to use helpers](#when-to-use-helpers)
-- [How helpers work](#how-helpers-work)
-  - [Helper-to-service mapping](#helper-to-service-mapping)
+- [Helper patterns](#helper-patterns)
 - [Helper reference](#helper-reference)
   - [Engine and container](#engine-and-container)
   - [Configuration, environment, and i18n](#configuration-environment-and-i18n)
@@ -20,9 +21,9 @@ Helpers are global functions that provide a small runtime convenience layer over
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Helpers exist to make common tasks feel lightweight:
+Use helpers when you want to:
 
 - Resolve a service from the container (`app()`) without threading the container everywhere.
 - Provide tiny, intention-revealing shortcuts (`auth()`, `cache()`, `request()`, `__()`).
@@ -37,7 +38,7 @@ use function config;
 use function view;
 ```
 
-The helper functions are defined in [`src/functions.php`](../../src/functions.php) and autoloaded via Composer.
+The helper functions are defined in `src/functions.php` and autoloaded via Composer.
 
 ## When to use helpers
 
@@ -93,55 +94,15 @@ final class DashboardController
 }
 ```
 
-## How helpers work
+## Helper patterns
 
-Most helpers follow the same pattern: resolve a service from the engine (via `app()`) and immediately call a method on it. That keeps the global surface area thin and lets the container remain the single integration point for real work.
+Most helpers do one of three things:
 
-A smaller group are direct runtime conveniences rather than service wrappers, such as `env()`, `dump()`, `dd()`, `abort()`, `collect()`, and `now()`.
+- resolve a shared service and return it (`auth()`, `cache()`, `db()`, `model()`)
+- resolve a shared service and perform a common call (`config()`, `__()`, `route()`, `json()`, `view()`)
+- provide a small runtime convenience (`env()`, `collect()`, `now()`, `dump()`, `dd()`, `abort()`)
 
-They are available anywhere the framework package autoloader is active.
-
-### Helper-to-service mapping
-
-These mappings show what each helper is doing under the hood (in abbreviated form):
-
-- `app()` → `Engine::getInstance()`
-- `app($alias, $arguments)` → `Engine::getInstance()->use($alias, $arguments)`
-- `config()` → `app(Config::class)`
-- `config($key, $default)` → `app(Config::class)->get($key, $default)`
-- `env($name, $default)` → `getenv($name)` (empty string treated as “not set”) then default fallback
-- `__($key, $data)` → `app(Lang::class)->get($key, $data)`
-- `request()` → `app(ServerRequest::class)`
-- `request($key, $as)` → `app(ServerRequest::class)->getData($key, $as)`
-- `response()` → `app(ClientResponse::class)`
-- `json($data)` → `response()->withJson($data)`
-- `route($name, $arguments, $scheme, $host, $port, $full)` → `app(Router::class)->url($name, $arguments, $scheme, $host, $port, $full)`
-- `redirect($uri, $code, $options)` → `app(RedirectResponse::class, ['uri' => $uri, 'code' => $code, 'options' => $options])`
-- `abort($code, $message)` → throws a specific HTTP exception for supported status codes, otherwise `InternalServerException($message, $code)`
-- `session()` → `app(Session::class)`
-- `session($key)` → `app(Session::class)->get($key)`
-- `session($key, $value)` → `app(Session::class)->set($key, $value)`
-- `auth()` → `app(Auth::class)`
-- `logged_in()` → `auth()->isLoggedIn()`
-- `user()` → `auth()->user()`
-- `authorize($rule, ...$args)` → `auth()->access()->authorize($rule, ...$args)`
-- `can($rule, ...$args)` → `auth()->access()->allows($rule, ...$args)`
-- `cannot($rule, ...$args)` → `auth()->access()->denies($rule, ...$args)`
-- `can_any($rules, ...$args)` → `auth()->access()->any($rules, ...$args)`
-- `can_none($rules, ...$args)` → `auth()->access()->none($rules, ...$args)`
-- `cache($key)` → `app(CacheManager::class)->use($key)`
-- `db($key)` → `app(ConnectionManager::class)->use($key)`
-- `model($alias)` → `app(ModelRegistry::class)->use($alias)`
-- `email($key)` → `app(MailManager::class)->use($key)->email()`
-- `encryption($key)` → `app(EncryptionManager::class)->use($key)`
-- `queue($className, $arguments, $options)` → `app(QueueManager::class)->push($className, $arguments, $options)`
-- `type()` → `app(TypeParser::class)`
-- `type($type)` → `app(TypeParser::class)->use($type)`
-- `view($template, $data, $layout)` → `app(View::class)->setData($data)->setLayout($layout ?? config('App.defaultLayout'))->render($template)`
-- `element($file, $data)` → `app(View::class)->element($file, $data)`
-- `log_message($type, $message, $data)` → `app(LogManager::class)->handle($type, $message, $data)`
-
-For a deeper look at container-based resolution and the underlying API, see [Container](container.md) and [Engine](engine.md).
+That keeps the global surface area small and lets the container remain the single integration point for the real work.
 
 ## Helper reference
 
@@ -296,7 +257,7 @@ Arguments:
 ```php
 $session = session();
 $token = session('csrf');
-session('flash.success', 'Saved');
+session('wizard.step', 2);
 ```
 
 #### **Build an asset URL** (`asset()`)
@@ -583,7 +544,7 @@ log_message('error', 'Something went wrong');
 
 A few behaviors are worth keeping in mind:
 
-- Helpers call `Engine::getInstance()` under the hood. If no shared instance has been set via `Engine::setInstance()`, an engine is created on demand using a default `Loader` instance.
+- Helpers rely on the shared `Engine` instance, so set that instance early in bootstrap when you rely on loader mappings or discovery features.
 - `abort()` supports a fixed set of status codes (`400`, `401`, `403`, `404`, `405`, `406`, `409`, `410`, `501`, `503`). Other codes throw `InternalServerException` with the provided code.
 - `cache()` returns a no-op cache handler when caching is disabled (by default, cache is disabled when `App.debug` is enabled).
 - `env()` treats an empty string as “not set” and returns the default value.

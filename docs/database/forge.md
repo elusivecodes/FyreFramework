@@ -1,74 +1,44 @@
 # Forge
 
-Forge applies database schema changes (DDL): creating, altering, renaming, and dropping tables, columns, indexes, and foreign keys. Forge is resolved per connection type, so the same code can run against different drivers.
+Use `Forge` when you want to create or change database tables from PHP code.
 
-See [Schema](schema.md) for introspection, [Database connections](connections.md) for connection setup, and [Database Migrations](migrations.md) for applying repeatable schema changes over time.
+Most applications use it inside migrations, but it also works well for setup scripts and tooling.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Mental model](#mental-model)
-- [Getting a Forge instance](#getting-a-forge-instance)
+- [Start here](#start-here)
 - [Working with DDL operations](#working-with-ddl-operations)
   - [Creating tables](#creating-tables)
   - [Altering existing tables](#altering-existing-tables)
   - [Dropping and renaming](#dropping-and-renaming)
   - [Previewing generated SQL](#previewing-generated-sql)
   - [Naming conventions](#naming-conventions)
-- [Driver-specific handlers](#driver-specific-handlers)
-  - [Driver-specific APIs](#driver-specific-apis)
-  - [Driver-specific table behavior](#driver-specific-table-behavior)
+- [Driver differences](#driver-differences)
+  - [Built-in forge handlers](#built-in-forge-handlers)
+  - [Driver-specific features](#driver-specific-features)
 - [Method guide](#method-guide)
   - [`ForgeRegistry`](#forgeregistry)
   - [`Forge`](#forge-1)
   - [`Table`](#table)
-  - [`Column`](#column)
-  - [`Index`](#index)
-  - [`ForeignKey`](#foreignkey)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use Forge when code needs to *change* database structure:
-
-- create, alter, rename, or drop tables
-- add, remove, or rename columns
-- add or remove indexes and foreign keys
-
-For reading database structure (introspection), use [Schema](schema.md).
-
-## Mental model
-
-`ForgeRegistry` resolves a driver-specific `Forge` implementation for a `Connection` and caches that `Forge` per connection object using a `WeakMap`.
-
-- `Forge` is the main entry point. Convenience methods (like `addColumn()` or `dropIndex()`) build a `Table` operation and execute it immediately.
-- `Table` represents a table definition plus queued DDL operations. When you call `execute()`, it generates SQL via a driver-specific `QueryGenerator` and runs the queries against the connection.
-- `Column`, `Index`, and `ForeignKey` are metadata objects used by `Table` to build DDL.
-
-## Getting a Forge instance
-
-Use `ForgeRegistry::use()` to resolve a `Forge` for a connection.
-
-Most examples on this page assume you already have a `$forge` (`Forge`) instance.
-
-Resolve it directly from the registry and a connection:
-
-```php
-use Fyre\DB\ConnectionManager;
-use Fyre\DB\Forge\ForgeRegistry;
-
-$connection = app(ConnectionManager::class)->use();
-$forge = app(ForgeRegistry::class)->use($connection);
-```
-
-You can resolve the connection part more tersely:
+Resolve a `Forge` from a connection, then either run a one-off change or build a table definition and execute it.
 
 ```php
 use Fyre\DB\Forge\ForgeRegistry;
 
-$forge = app(ForgeRegistry::class)->use(db());
+$db = db();
+$forge = app(ForgeRegistry::class)->use($db);
 ```
+
+Use Forge when you want to:
+
+- create tables and indexes from code
+- batch several schema changes together before running them
+- preview generated SQL before you execute it
 
 ## Working with DDL operations
 
@@ -129,7 +99,7 @@ $forge->build('roles')
     ->execute();
 ```
 
-Example: use convenience methods (each call executes immediately)
+Alternative: use convenience methods instead of batching with `build()` (each call executes immediately)
 
 ```php
 $forge->addColumn('roles', 'description', ['nullable' => true]);
@@ -178,15 +148,17 @@ In practice, either:
 
 Also avoid reusing the same name for an index and a foreign key on the same table: `dropIndex()` and `dropForeignKey()` will also remove same-named objects from the in-memory definition.
 
-## Driver-specific handlers
+## Driver differences
 
-Forge DDL generation is implemented by driver-specific `Forge` classes. `ForgeRegistry` ships with default mappings for the built-in connection handlers:
+### Built-in forge handlers
+
+Forge uses a handler matched to your connection type. The built-in mappings are:
 
 - `MysqlConnection` → `MysqlForge`
 - `PostgresConnection` → `PostgresForge`
 - `SqliteConnection` → `SqliteForge`
 
-### Driver-specific APIs
+### Driver-specific features
 
 Some features are only present on specific driver implementations:
 
@@ -194,7 +166,7 @@ Some features are only present on specific driver implementations:
 - For MySQL native `enum` and `set` columns, `values` can be either an explicit value list or a PHP enum class name. When a class name is used, MySQL derives the option values from the enum cases.
 - SQLite’s handler does not add schema-level operations.
 
-If you need a driver-only method, check the concrete handler at runtime:
+If you need a driver-only method, check the concrete handler first:
 
 ```php
 use Fyre\DB\Forge\Handlers\Mysql\MysqlForge;
@@ -231,8 +203,6 @@ $forge->addColumn('articles', 'status', [
 
 Registers the `Forge` implementation to use for a given `Connection` class.
 
-The mapping itself is stored immediately. Validation that the forge class extends `Forge` happens later when a connection is resolved through `use()`.
-
 Arguments:
 - `$connectionClass` (`class-string<Connection>`): the connection class name.
 - `$forgeClass` (`class-string<Forge>`): the forge class name (must extend `Forge`).
@@ -244,11 +214,9 @@ use Fyre\DB\Handlers\Mysql\MysqlConnection;
 $forgeRegistry->map(MysqlConnection::class, MysqlForge::class);
 ```
 
-#### **Get a shared Forge for a connection** (`use()`)
+#### **Get a Forge for a connection** (`use()`)
 
-Returns a shared `Forge` instance for the provided connection object (cached internally with a `WeakMap`).
-
-If the exact connection class is not mapped, `ForgeRegistry` will look through parent connection classes until it finds a mapped forge.
+Returns the `Forge` instance for the provided connection object.
 
 Arguments:
 - `$connection` (`Connection`): the connection instance.
@@ -306,10 +274,9 @@ These methods build a `Table` operation and call `execute()` as part of the meth
 
 Use them for one-off operations; use `build()->...->execute()` to apply multiple changes as a single generated set of queries.
 
-#### **Access the connection and generator** (`getConnection()`, `generator()`)
+#### **Access the connection** (`getConnection()`)
 
 - `getConnection()` returns the `Connection` backing this `Forge`.
-- `generator()` returns the driver-specific `QueryGenerator` used to generate DDL.
 
 ### `Table`
 
@@ -364,41 +331,18 @@ Foreign key options include:
 - `sql()` returns the generated SQL queries without executing them (driver-specific output).
 - `getName()`, `getComment()`, `columns()`, `indexes()`, and `foreignKeys()` expose the current in-memory definition.
 
-### `Column`
-
-#### **Read column metadata** (getters, `toArray()`)
-
-`Column` represents a single DDL column definition with getters like `getType()`, `getLength()`, `isNullable()`, and `isAutoIncrement()`, plus `toArray()` for serialization.
-
-### `Index`
-
-#### **Read index metadata** (getters, `toArray()`)
-
-`Index` represents a single DDL index definition.
-
-Notes:
-- Setting `primary` implies `unique`.
-- When `type` is provided it is normalized to lowercase.
-
-### `ForeignKey`
-
-#### **Read foreign key metadata** (getters, `toArray()`)
-
-`ForeignKey` represents a single DDL foreign key definition and normalizes `columns` / `referencedColumns` to arrays.
-
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
-- Forge executes real DDL against your connection and updates schema caching.
-- Forge convenience methods execute immediately; use `build()->...->execute()` when batching changes.
-- Column `default` values accept scalars (auto-quoted when needed) or `QueryLiteral` for raw SQL expressions.
-- When `changeColumn()` changes `type`, `length` and `precision` are cleared unless you provide new values (so type changes don’t accidentally keep incompatible sizing metadata).
-- Some drivers handle defaults specially (for example, MySQL wraps defaults for some text types and normalizes `CURRENT_TIMESTAMP`-style expressions).
+- Forge runs real DDL against your connection.
+- Forge convenience methods execute immediately; use `build()->...->execute()` when you want to batch changes together.
+- Column `default` values accept scalars or `QueryLiteral` for raw SQL expressions.
+- When `changeColumn()` changes `type`, `length` and `precision` are cleared unless you provide new values.
+- Some drivers handle defaults specially. For example, MySQL normalizes some expression defaults.
 - `Table::execute()` runs generated queries sequentially and does not automatically wrap them in a transaction.
-- `Table::execute()` clears queued operations and refreshes schema state; it clears the owning `Schema` cache on renames/drops and when table metadata changes.
-- SQLite has strict limitations for existing tables: columns cannot be modified, foreign keys cannot be added/dropped, and primary keys cannot be added/dropped (operations throw `RuntimeException`).
-- Avoid reusing the same name for an index and a foreign key on the same table; drops can affect same-named objects in the in-memory definition.
+- SQLite has strict limitations for existing tables: columns cannot be modified, foreign keys cannot be added or dropped, and primary keys cannot be added or dropped.
+- Avoid reusing the same name for an index and a foreign key on the same table; drops can affect same-named objects in the pending table definition.
 
 ## Related
 

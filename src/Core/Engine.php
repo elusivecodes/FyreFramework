@@ -53,11 +53,8 @@ use Fyre\View\HelperRegistry;
 use Fyre\View\TemplateLocator;
 use Psr\Http\Message\ServerRequestInterface;
 
+use function defined;
 use function file_exists;
-
-use const CONFIG;
-use const LANG;
-use const TEMPLATES;
 
 /**
  * Configures core services and application bindings.
@@ -133,9 +130,15 @@ class Engine extends Container
             )
             ->singleton(
                 Config::class,
-                fn(): Config => $this->build(Config::class)
-                    ->addPath(CONFIG)
-                    ->addPath(Path::join(__DIR__, '../../config'))
+                function(): Config {
+                    $config = $this->build(Config::class);
+
+                    if (defined('CONFIG')) {
+                        $config->addPath(CONFIG);
+                    }
+
+                    return $config;
+                }
             )
             ->singleton(ConnectionManager::class)
             ->singleton(Console::class)
@@ -171,9 +174,15 @@ class Engine extends Container
             ->singleton(Inflector::class)
             ->singleton(
                 Lang::class,
-                fn(): Lang => $this->build(Lang::class)
-                    ->addPath(LANG)
-                    ->addPath(Path::join(__DIR__, '../../lang'))
+                function(): Lang {
+                    $lang = $this->build(Lang::class);
+
+                    if (defined('LANG')) {
+                        $lang->addPath(LANG);
+                    }
+
+                    return $lang->addPath(Path::join(__DIR__, '../../lang'));
+                }
             )
             ->singleton(LogManager::class)
             ->singleton(MailManager::class)
@@ -197,10 +206,13 @@ class Engine extends Container
             ->singleton(RouteLocator::class)
             ->singleton(Router::class, function(): Router {
                 $router = $this->build(Router::class);
-                $routesPath = Path::join(CONFIG, 'routes.php');
 
-                if (file_exists($routesPath)) {
-                    require $routesPath;
+                if (defined('CONFIG')) {
+                    $routesPath = Path::join(CONFIG, 'routes.php');
+
+                    if (file_exists($routesPath)) {
+                        require $routesPath;
+                    }
                 }
 
                 return $router;
@@ -209,8 +221,15 @@ class Engine extends Container
             ->singleton(Session::class)
             ->singleton(
                 TemplateLocator::class,
-                fn(): TemplateLocator => $this->build(TemplateLocator::class)
-                    ->addPath(TEMPLATES)
+                function(): TemplateLocator {
+                    $templateLocator = $this->build(TemplateLocator::class);
+
+                    if (defined('TEMPLATES')) {
+                        $templateLocator->addPath(TEMPLATES);
+                    }
+
+                    return $templateLocator;
+                }
             )
             ->singleton(TypeParser::class);
     }

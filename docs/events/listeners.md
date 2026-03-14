@@ -1,45 +1,44 @@
 # Event Listeners
 
-Event callbacks run in response to events dispatched through the event manager. In addition to registering individual callbacks, you can group handlers into a listener class by implementing `EventListenerInterface` and marking public methods with the `#[On]` attribute.
+Use listener classes when you want to group related event handlers and register them with one call.
 
-For event registration and dispatch basics, see [Event Manager](event-manager.md).
+Listener classes work with `EventManager`: you implement `EventListenerInterface`, mark methods with `#[On]`, and register the object with `addListener()`.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [How attribute listeners work](#how-attribute-listeners-work)
+- [Start here](#start-here)
 - [Declaring listener methods](#declaring-listener-methods)
   - [Listening to named events](#listening-to-named-events)
   - [Listening to object events](#listening-to-object-events)
 - [Listening to multiple events](#listening-to-multiple-events)
 - [Registering a listener class](#registering-a-listener-class)
-- [Listener discovery and caching](#listener-discovery-and-caching)
+- [Discovery and caching](#discovery-and-caching)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use attribute-based listeners when you want to group related event handlers into a single class and register them with one call to `EventManager::addListener()`.
+The usual listener-class workflow is:
 
-Terminology used in this guide:
+1. Implement `EventListenerInterface`.
+2. Add `#[On]` to the methods that should handle events.
+3. Register the listener instance with `EventManager::addListener()`.
+4. Remove it later with `removeListener()` if needed.
 
-- A **callback** is an individual callable registered with `EventManager::on()`.
-- A **listener class** is an object that implements `EventListenerInterface` and is registered with `EventManager::addListener()`.
+```php
+use Fyre\Event\Attributes\On;
+use Fyre\Event\Event;
+use Fyre\Event\EventListenerInterface;
 
-Most examples on this page assume you already have an `$eventManager` instance (for example via dependency injection).
-
-You can also resolve it from the container (see [Helpers](../core/helpers.md)) via `$eventManager = app(Fyre\Event\EventManager::class);`.
-
-## How attribute listeners work
-
-Attribute-based listeners are a convenient way to group related event handlers into a single class.
-
-To opt in:
-
-- implement `EventListenerInterface` (a marker interface), and
-- annotate public methods with `#[On]`.
-
-When you call `EventManager::addListener()`, the event manager reflects on the listener class, discovers `#[On]` attributes, and registers each annotated method as a callback under the attribute’s event name and priority.
+final class AuditListener implements EventListenerInterface
+{
+    #[On('User.created')]
+    public function onUserCreated(Event $event, string $id): void
+    {
+        // ...
+    }
+}
+```
 
 ## Declaring listener methods
 
@@ -67,11 +66,9 @@ final class AuditListener implements EventListenerInterface
 
 ### Listening to object events
 
-`On` stores the event name as a string. To listen to arbitrary event objects, register the listener under the object’s class name (for example, `SomeEvent::class`).
+To listen to an object event, use the event class name in `#[On(...)]`.
 
-For object events, the callback is invoked with the event object as the only argument.
-
-See [Dispatching an object event](event-manager.md#dispatching-an-object-event) for how object events are dispatched and stopped.
+For object events, the listener method receives the event object as the only argument.
 
 ```php
 use Fyre\Event\Attributes\On;
@@ -116,6 +113,9 @@ final class MetricsListener implements EventListenerInterface
 Register the listener instance with the event manager:
 
 ```php
+use Fyre\Event\EventManager;
+
+$eventManager = app(EventManager::class);
 $listener = new AuditListener();
 
 $eventManager->addListener($listener);
@@ -127,29 +127,25 @@ Remove the listener later by passing the same instance:
 $eventManager->removeListener($listener);
 ```
 
-## Listener discovery and caching
+## Discovery and caching
 
-Attribute discovery happens via reflection and is cached per listener class.
+When you call `addListener()`, the event manager discovers the methods marked with `#[On]` and registers them as callbacks.
 
-When you register or remove a listener with `addListener()` / `removeListener()`:
+That discovery is cached per listener class. If a cache configuration exists under the key `_events`, the metadata can also be stored through the cache layer.
 
-- If a parent event manager is configured, discovery and caching are delegated to the parent manager.
-- Otherwise, the event manager caches discovered metadata in-memory by `$listener::class`.
-- If a cache configuration exists under the key `_events`, it is used to remember the discovered metadata (keyed by the listener class name, with namespace separators replaced by `.`).
-
-Discovery scans all public methods and reads attributes using an `instanceof` match for `On`, so attributes that extend `On` are also discovered.
+This matters mostly when you change listener attributes or method names while using cached metadata: clear the `_events` cache so the new definitions are discovered.
 
 ## Behavior notes
 
 A few behaviors are worth keeping in mind:
 
-- Only **public** methods are discovered. Private/protected handlers won’t be registered.
-- If `On` is constructed with a `null` priority, the event manager treats it as `EventManager::PRIORITY_NORMAL`.
+- Public and protected methods can be discovered. Private handlers won’t be registered.
+- If the `On` priority argument is omitted, the event manager uses `EventManager::PRIORITY_NORMAL`.
 - For named `Event` dispatch, handler parameters must match what is actually passed: the `Event` instance first, then event data values only (keys are not passed).
-- For object event dispatch, the handler receives **only** the event object.
+- For object event dispatch, the handler receives only the event object.
 - Discovery caching is per listener class; if you change attributes or method names while using the `_events` cache, clear the cache so the updated metadata is discovered.
 
 ## Related
 
-- [Events](index.md) — overview and key concepts.
-- [Event Manager](event-manager.md) — registering listeners and dispatching events.
+- [Events](index.md) - overview and key concepts
+- [Event Manager](event-manager.md) - register listeners and dispatch events

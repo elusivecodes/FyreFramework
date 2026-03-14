@@ -1,13 +1,12 @@
 # Encryption
 
-`Fyre\Security\Encryption\EncryptionManager` manages encrypter configurations and shared encrypter instances.
+Use `Fyre\Security\Encryption\EncryptionManager` when you need to encrypt values before storing them outside the process.
 
-Fyre’s encryption subsystem provides configurable encrypters for encrypting and decrypting application data. It’s designed for “encrypt at the edges” workflows like storing opaque values in cookies, URLs, or external stores where you want confidentiality plus tamper detection.
+It is designed for edge-storage cases such as cookies, URLs, and external stores where you need confidentiality plus tamper detection.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Mental model](#mental-model)
+- [Start here](#start-here)
 - [Configuring encrypters](#configuring-encrypters)
   - [Base options](#base-options)
   - [Built-in encrypter handlers](#built-in-encrypter-handlers)
@@ -24,19 +23,19 @@ Fyre’s encryption subsystem provides configurable encrypters for encrypting an
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Encryption is a good fit when values must remain confidential outside the process, for example client-side storage, while also detecting tampering when they come back.
+Use encryption when you want to:
 
-`EncryptionManager` is the entry point: it holds named configurations and returns shared `Encrypter` instances.
-
-## Mental model
+- keep stored values confidential outside the process
+- detect tampering when encrypted values come back
+- choose between named encrypter configs or one-off encrypter instances
 
 An `Encrypter` implements three operations:
 
 - `encrypt(mixed $data, string $key): string` — serialize and encrypt data into an opaque string.
 - `decrypt(string $data, string $key): mixed` — verify integrity, decrypt, then unserialize back to the original value.
-- `generateKey(int|null $length = null): string` — generate cryptographically random bytes for use as a key (and internally, for IVs/nonces).
+- `generateKey(int|null $length = null): string` — generate cryptographically random bytes for use as a key
 
 `EncryptionManager` ships with two built-in handler configs: `default` (libsodium) and `openssl`.
 
@@ -195,7 +194,7 @@ If you use contextual injection, `#[Encryption('key')]` can request a configured
 
 #### **Get a shared encrypter** (`use()`)
 
-Returns the shared encrypter instance for a config key. If the instance has not been created yet, it is built from the stored config and cached.
+Returns the shared encrypter instance for a config key.
 
 Arguments:
 - `$key` (`string`): the encrypter key (defaults to `default`).
@@ -321,7 +320,7 @@ A few behaviors are worth keeping in mind:
 
 ## Related
 
-- [Security](index.md) — security primitives applied at the HTTP boundary and beyond.
-- [Config](../core/config.md) — configuring services via `config/app.php`.
-- [Helpers](../core/helpers.md) — `encryption($key)` helper.
-- [Contextual attributes](../core/contextual-attributes.md) — `#[Encryption]`.
+- [Security](index.md) - security features for requests, responses, and stored values
+- [Config](../core/config.md) - configure encrypters in `config/app.php`
+- [Helpers](../core/helpers.md) - `encryption($key)` helper
+- [Contextual attributes](../core/contextual-attributes.md) - `#[Encryption]`

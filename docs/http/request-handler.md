@@ -1,25 +1,20 @@
 # Request Handler
 
-`Fyre\Http\RequestHandler` executes middleware from a `MiddlewareQueue` and uses `MiddlewareRegistry` to resolve aliases and groups into executable middleware.
+Use `Fyre\Http\RequestHandler` when you need to run a middleware queue manually in a custom entry point or a middleware test.
 
-This page focuses on request flow through the queue, fallback handler behavior, and how the container is updated during request handling.
+Most applications will not instantiate it directly.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Request handler in the pipeline](#request-handler-in-the-pipeline)
-- [Execution model](#execution-model)
+- [Start here](#start-here)
+- [What the request handler does](#what-the-request-handler-does)
 - [Fallback handler](#fallback-handler)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use `RequestHandler` when you have a middleware queue you want to execute, and you want a well-defined final handler once the queue is exhausted, often routing.
-
-Most application code won’t instantiate `RequestHandler` directly, but it can be useful when you’re building a custom HTTP runtime or testing a middleware stack.
-
-The example below uses the `app()` helper to resolve services from the engine container (see [Helpers](../core/helpers.md)).
+A common custom entry point pattern is:
 
 ```php
 use Fyre\Http\RequestHandler;
@@ -36,51 +31,40 @@ $request = $app->use(ServerRequestInterface::class);
 $response = $handler->handle($request);
 ```
 
-If you prefer dependency injection, accept a `RequestHandler` (or `RequestHandlerInterface`) parameter and call `handle()` directly.
+If you already receive a `RequestHandler` or `RequestHandlerInterface` through dependency injection, just call `handle($request)`.
 
-If you use `RouteHandler` as the fallback handler, ensure router middleware has already matched a route and stored it on the request (via the `route` attribute). Otherwise, route dispatch will fail.
+## What the request handler does
 
-## Request handler in the pipeline
+For each request it:
 
-The middleware pipeline is built from three pieces:
+1. takes the next queue entry
+2. resolves aliases and groups through `MiddlewareRegistry`
+3. calls the middleware
+4. continues to the next queue item when that middleware calls `$handler->handle($request)`
 
-- `MiddlewareQueue` stores middleware entries in order.
-- `MiddlewareRegistry` resolves string entries into executable middleware (aliases, groups, and optional inline arguments).
-- `RequestHandler` executes the queue, calling each middleware with the request and a handler for “the next step”.
-
-For middleware authoring and registry behavior, see [HTTP Middleware](middleware.md).
-
-## Execution model
-
-- Each call to `handle()` resolves the current queue item via `MiddlewareRegistry` and executes it.
-- `RequestHandler` resolves the current middleware, advances the queue, then invokes it; a middleware that calls `$handler->handle($request)` continues with the next item.
-- Middleware entries can be callables or PSR-15 `MiddlewareInterface` instances (which are invoked via `process()`).
-- Callable middleware is invoked as `$middleware($request, $handler)` and is expected to return a `ResponseInterface`.
+For middleware authoring and queue definitions, see [HTTP Middleware](middleware.md).
 
 ## Fallback handler
 
-When the middleware queue is exhausted, `RequestHandler`:
+When the queue runs out, `RequestHandler`:
 
-- calls `fallbackHandler->handle($request)` if a fallback handler was provided, otherwise
-- returns a `ClientResponse` with status code `204 No Content` (see [HTTP Responses](responses.md)).
+- calls `fallbackHandler->handle($request)` when a fallback handler was provided, or
+- returns a `204 No Content` `ClientResponse` when there is no fallback handler
 
-A common pattern is to use routing as the fallback handler (for example `RouteHandler`) so routes only run after global middleware completes.
+A common pattern is to use routing as the fallback handler so routes only run after global middleware completes.
+
+If you use `RouteHandler` as the fallback handler, router middleware must already have matched a route and stored it on the request.
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
+A few practical details are worth keeping in mind:
 
-- `RequestHandler` advances the underlying `MiddlewareQueue` as it runs; if you reuse the same handler/queue instance, call `MiddlewareQueue::rewind()` (or construct a fresh queue) before handling a new request.
-- If the incoming request is `ServerRequest`, `RequestHandler` registers it into the container as the current instance of `ServerRequest::class` for downstream resolution (other `ServerRequestInterface` implementations are not registered).
-- Middleware is resolved before the queue advances; the handler then advances the queue and invokes the middleware. A middleware that calls `$handler->handle($request)` continues with the next item.
-- When a middleware group alias is resolved, `MiddlewareRegistry` builds a nested `RequestHandler` with its own `MiddlewareQueue` and uses the current handler as its fallback, so control returns to the outer queue after the group finishes.
-- If you use `RouteHandler` as the fallback handler, it expects a `route` attribute on the request (set by router middleware).
+- `RequestHandler` advances the underlying queue as it runs, so rewind the queue or use a fresh one before handling another request with the same instance.
+- Middleware groups run as nested queues and return control to the outer queue when they finish.
 
 ## Related
 
+- [HTTP Middleware](middleware.md)
 - [HTTP Requests](requests.md)
 - [HTTP Responses](responses.md)
-- [HTTP Middleware](middleware.md)
-- [Engine](../core/engine.md)
 - [Router](../routing/router.md)
-- [Security](../security/index.md)

@@ -1,8 +1,6 @@
 # Core
 
-Core is the container-centric runtime foundation Fyre builds on: service wiring, configuration, translations, and a small set of shared primitives used across subsystems.
-
-If you’re new to Fyre’s internals, the key idea is: `Engine` is your application container — a pre-wired `Container` you extend and configure.
+Core covers the services most applications start with: the application container, configuration, translations, helpers, and a few supporting tools.
 
 ## Table of Contents
 
@@ -12,33 +10,31 @@ If you’re new to Fyre’s internals, the key idea is: `Engine` is your applica
 
 ## Start here
 
-If you’re new to the framework, start here:
+Pick the path that matches what you are doing:
 
-- **Understanding the application runtime**: [Engine](engine.md) → [Container](container.md)
-- **Working with configuration and messages**: [Config](config.md) and [Language (Lang)](lang.md)
-- **Using helpers**: [Helpers](helpers.md)
-- **Autoloading and discovery**: [Loader](loader.md)
+- **Building your application around framework defaults**: [Engine](engine.md) -> [Container](container.md)
+- **Working with settings and messages**: [Config](config.md) and [Language (Lang)](lang.md)
+- **Reaching common services quickly**: [Helpers](helpers.md)
+- **Enabling discovery features**: [Loader](loader.md)
 
 ## Core overview
 
-Most framework features are built by wiring services into the container, then consuming them via dependency injection (or, when appropriate, helpers):
+Most applications only need a few pieces from this section:
 
-- **Loader** bootstraps autoload data and provides namespace discovery.
-- **Engine** is the application container: it pre-registers common services/bindings and gives you a single integration point (see [Engine](engine.md) for the default bindings list).
-- **Container** defines resolution rules, factories, and service lifetimes.
-- **Config** and **Lang** are shared stores: configuration values and locale-aware messages.
-- **Helpers** are an optional convenience layer on top of container services.
-- **Contextual attributes** extend dependency injection by resolving parameter values from runtime context.
-- **Macros** and **Debugging** cover runtime extension and safe inspection.
+- **Engine** is the default application object and service container.
+- **Container** is the lower-level dependency injection API behind `Engine`.
+- **Config** and **Lang** hold application settings and translated messages.
+- **Loader** supplies the namespace map used by discovery features such as routes, commands, and migrations.
+- **Helpers**, **contextual attributes**, **macros**, and **debugging** are optional conveniences you can add where they help readability.
 
 ## Pages in this section
 
-- [Engine](engine.md) — service wiring, default bindings, and what “singleton vs scoped” means in practice.
-- [Loader](loader.md) — autoloading and namespace/class-map resolution (also used for discovery).
-- [Container](container.md) — dependency resolution rules and how `build()`, `use()`, and `call()` behave.
-- [Contextual attributes](contextual-attributes.md) — contextual injection and the built-in contextual parameter attributes.
-- [Config](config.md) — configuration lookup model and how subsystems consume config.
-- [Language (Lang)](lang.md) — translation lookup, locale fallbacks, and integration points (e.g. validation messages).
-- [Helpers](helpers.md) — global helper conveniences and when to prefer dependency injection instead.
-- [Macros](macros.md) — runtime extension of classes via instance and static macros.
-- [Debugging](debugging.md) — safe debug output with sensitive masking.
+- [Engine](engine.md) - build your application around framework defaults and shared services
+- [Loader](loader.md) - bootstrap autoload data and tell the framework where namespaces live
+- [Container](container.md) - resolve services, build objects, and call code with dependency injection
+- [Contextual attributes](contextual-attributes.md) - inject values such as route arguments, the current user, or keyed services
+- [Config](config.md) - load and read application settings
+- [Language (Lang)](lang.md) - load translated messages and switch locales
+- [Helpers](helpers.md) - use global shortcuts for common framework tasks
+- [Macros](macros.md) - add small convenience methods to macro-enabled classes
+- [Debugging](debugging.md) - make object debug output safer and easier to read

@@ -1,80 +1,68 @@
 # Contextual attributes
 
-Contextual attributes enable *contextual injection*: resolving a parameter value from runtime context instead of from an explicit argument or a container binding.
+Contextual attributes let you inject a value from the current runtime context instead of from a normal container binding.
+
+They are useful when a parameter depends on "what is happening right now", such as the current user, a route argument, or a specific keyed service.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [When to use contextual attributes](#when-to-use-contextual-attributes)
-- [How resolution works](#how-resolution-works)
+- [How they are applied](#how-they-are-applied)
 - [Built-in attributes](#built-in-attributes)
-  - [Cache](#cache)
-  - [Config](#config)
-  - [CurrentUser](#currentuser)
-  - [DB](#db)
-  - [Encryption](#encryption)
-  - [Log](#log)
-  - [Mail](#mail)
-  - [ORM](#orm)
-  - [RouteArgument](#routeargument)
+  - [`Cache`](#cache)
+  - [`Config`](#config)
+  - [`CurrentUser`](#currentuser)
+  - [`DB`](#db)
+  - [`Encryption`](#encryption)
+  - [`Log`](#log)
+  - [`Mail`](#mail)
+  - [`ORM`](#orm)
+  - [`RouteArgument`](#routeargument)
 - [Custom contextual attributes](#custom-contextual-attributes)
 - [Attribute handler overrides](#attribute-handler-overrides)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Contextual attributes participate in the container’s dependency resolution when it resolves parameters for:
+Contextual attributes are only used when the container is resolving parameters through:
 
-- `Container::build()` (constructor parameters)
-- `Container::call()` (callable parameters)
+- `Container::build()`
+- `Container::call()`
 
-They are useful when a value should come from “what’s happening right now” (the current request, current user, selected connection key, etc.) rather than being an always-the-same container-managed service.
+They do not do anything when PHP calls the function or constructor directly.
 
 ## When to use contextual attributes
 
-Use contextual attributes when the value depends on runtime context and shouldn’t be modeled as a stable container-managed service:
+Use them when the value should come from runtime context rather than a stable shared service:
 
-- current request data (route arguments, request attributes)
-- current identity/user
-- “selected by key” services (a specific connection, logger, cache, mailer, encrypter, etc.)
+- the current user
+- a route argument
+- a config value
+- a keyed service such as a specific cache, database connection, logger, mailer, or encrypter
 
-Prefer regular dependency injection (type-hints and bindings) when you want the same service instance every time without depending on request/job context.
+Prefer normal dependency injection when you want the same service every time and there is no runtime context involved.
 
-## How resolution works
+## How they are applied
 
-When resolving a parameter, the container checks for a parameter attribute that is an instance of `ContextualAttribute` (using `ReflectionAttribute::IS_INSTANCEOF`). If one is present, the container resolves the attribute *before* it attempts to resolve the parameter by type-hint.
+When a parameter has a contextual attribute, the container lets that attribute supply the value before it falls back to the parameter's type-hint.
 
-In short, parameter resolution priority is:
+In practice, the order is:
 
-**named argument** → **contextual attribute** → **class type-hint** → **default/null** → **exception**
-
-Resolution happens in one of two ways:
-
-1. **Handler override**: if the container has a handler for the attribute class (registered via `Container::bindAttribute()`), the handler is executed via `Container::call()` and receives the attribute instance in an argument named `attribute`.
-2. Otherwise, the container instantiates the attribute and calls `resolve(Container $container): mixed`.
-
-If multiple matching contextual attributes are present on a parameter, the first one is used.
-
-If no contextual attribute is present, the container falls back to type-hints, defaults, and nullability (see [Container](container.md) for the full resolution order).
+1. a named argument you pass explicitly
+2. a contextual attribute on the parameter
+3. the class or interface type-hint
+4. the parameter default value or `null`
 
 ## Built-in attributes
 
-Fyre provides a set of built-in contextual parameter attributes under `Fyre\Core\Attributes\*` that extend `ContextualAttribute`. The container can resolve them when building objects or calling callables.
+Fyre provides a set of built-in contextual attributes under `Fyre\Core\Attributes\*`.
 
-The examples below show function or method signatures. These parameters are only resolved when invoked via `Container::call()` or when a class is instantiated via `Container::build()`; PHP itself does not resolve them automatically.
-
-Each attribute below follows the same shape:
-
-- **Use**: attach it to a parameter: `fn(#[AttributeName(...)] Type $param) => ...`
-- **Resolution**: the container instantiates the attribute and calls `resolve($container)` (unless overridden via `bindAttribute()`)
-
-Attributes are listed alphabetically for quick lookup.
-
-### Cache
+### `Cache`
 
 - **Use**: `#[Cache(string $key = CacheManager::DEFAULT)]`
-- **Resolves**: `Cacher` via `CacheManager::use($key)`
+- **Resolves**: `Cacher`
 
 ```php
 use Fyre\Cache\Cacher;
@@ -86,10 +74,10 @@ function cacheExample(#[Cache] Cacher $cacher): Cacher
 }
 ```
 
-### Config
+### `Config`
 
 - **Use**: `#[Config(string $key)]`
-- **Resolves**: config value via `Config::get($key)` (dot-notation)
+- **Resolves**: a config value
 
 ```php
 use Fyre\Core\Attributes\Config;
@@ -100,11 +88,10 @@ function configExample(#[Config('App.name')] string|null $name): string|null
 }
 ```
 
-### CurrentUser
+### `CurrentUser`
 
 - **Use**: `#[CurrentUser]`
-- **Resolves**: `Entity|null` via `Auth::user()`
-- **Notes**: depends on auth context already being available for the current request or runtime flow
+- **Resolves**: the current authenticated user, or `null`
 
 ```php
 use Fyre\Core\Attributes\CurrentUser;
@@ -116,10 +103,10 @@ function currentUserExample(#[CurrentUser] Entity|null $currentUser): Entity|nul
 }
 ```
 
-### DB
+### `DB`
 
 - **Use**: `#[DB(string $key = ConnectionManager::DEFAULT)]`
-- **Resolves**: `Connection` via `ConnectionManager::use($key)`
+- **Resolves**: `Connection`
 
 ```php
 use Fyre\Core\Attributes\DB;
@@ -131,10 +118,10 @@ function dbExample(#[DB] Connection $db): Connection
 }
 ```
 
-### Encryption
+### `Encryption`
 
 - **Use**: `#[Encryption(string $key = EncryptionManager::DEFAULT)]`
-- **Resolves**: `Encrypter` via `EncryptionManager::use($key)`
+- **Resolves**: `Encrypter`
 
 ```php
 use Fyre\Core\Attributes\Encryption;
@@ -146,10 +133,10 @@ function encryptionExample(#[Encryption('openssl')] Encrypter $enc): Encrypter
 }
 ```
 
-### Log
+### `Log`
 
 - **Use**: `#[Log(string $key = LogManager::DEFAULT)]`
-- **Resolves**: `Psr\Log\LoggerInterface` via `LogManager::use($key)`
+- **Resolves**: `LoggerInterface`
 
 ```php
 use Fyre\Core\Attributes\Log;
@@ -161,10 +148,10 @@ function logExample(#[Log('other')] LoggerInterface $log): LoggerInterface
 }
 ```
 
-### Mail
+### `Mail`
 
 - **Use**: `#[Mail(string $key = MailManager::DEFAULT)]`
-- **Resolves**: `Mailer` via `MailManager::use($key)`
+- **Resolves**: `Mailer`
 
 ```php
 use Fyre\Core\Attributes\Mail;
@@ -176,26 +163,25 @@ function mailExample(#[Mail('other')] Mailer $mail): Mailer
 }
 ```
 
-### ORM
+### `ORM`
 
 - **Use**: `#[ORM(string $alias)]`
-- **Resolves**: `Model` via `ModelRegistry::use($alias)`
+- **Resolves**: `Model`
 
 ```php
 use Fyre\Core\Attributes\ORM;
 use Fyre\ORM\Model;
 
-function ormExample(#[ORM('Test')] Model $m): Model
+function ormExample(#[ORM('Users')] Model $model): Model
 {
-    return $m;
+    return $model;
 }
 ```
 
-### RouteArgument
+### `RouteArgument`
 
 - **Use**: `#[RouteArgument(string $name)]`
-- **Resolves**: route argument value from the current request’s `routeArguments` attribute (or `null` if missing)
-- **Notes**: resolves the raw route argument value, not a binding-resolved entity
+- **Resolves**: a route argument value, or `null` when missing
 
 ```php
 use Fyre\Core\Attributes\RouteArgument;
@@ -208,7 +194,7 @@ function routeArgumentExample(#[RouteArgument('id')] int|null $routeId): int|nul
 
 ## Custom contextual attributes
 
-To create your own contextual attribute, define a parameter attribute class that extends `ContextualAttribute` and implements `resolve(Container $container): mixed`.
+Create your own contextual attribute when you want a reusable parameter shortcut for runtime-specific data.
 
 ```php
 use Attribute;
@@ -233,11 +219,9 @@ class StorageFile extends ContextualAttribute
 }
 ```
 
-Use it anywhere the container resolves parameters:
+Use it anywhere the container is building or calling code:
 
 ```php
-$container = new Container();
-
 $file = $container->call(
     static fn(#[StorageFile('storage/example.txt')] File $f): File => $f
 );
@@ -245,7 +229,7 @@ $file = $container->call(
 
 ## Attribute handler overrides
 
-`Container::bindAttribute()` lets you override how an attribute is resolved without changing the attribute class itself. The handler is executed via `Container::call()` and receives the attribute instance in an argument named `attribute`.
+Use `Container::bindAttribute()` when you want to override how an attribute resolves, especially in tests or custom runtimes.
 
 ```php
 use Fyre\Core\Attributes\Config as ConfigAttribute;
@@ -253,23 +237,26 @@ use Fyre\Core\Container;
 
 $container = new Container();
 
-$container->bindAttribute(ConfigAttribute::class, static function(ConfigAttribute $attribute, Container $container): mixed {
-    return $attribute->resolve($container);
-});
+$container->bindAttribute(
+    ConfigAttribute::class,
+    static function(ConfigAttribute $attribute, Container $container): mixed {
+        return $attribute->resolve($container);
+    }
+);
 ```
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
+A few practical details are worth keeping in mind:
 
-- If you pass an argument with the same name as the parameter, the container uses that value and does not evaluate contextual attributes for that parameter.
-- If a parameter has a contextual attribute, the container uses it rather than resolving the type-hint directly.
-- If multiple matching contextual attributes are present, only the first one is used, so stacking them is ineffective and should be avoided.
-- `bindAttribute()` handlers are called via `Container::call()` with an argument named `attribute`, so accept a parameter named `$attribute` to receive it.
+- If you pass a named argument for the parameter, that value wins and the attribute is not used.
+- If a parameter has a contextual attribute, the container uses it before trying the type-hint directly.
+- Only the first matching contextual attribute on a parameter is used.
 
 ## Related
 
 - [Container](container.md)
+- [Helpers](helpers.md)
 - [Auth](../auth/index.md)
 - [Cache](../cache/index.md)
 - [Config](config.md)

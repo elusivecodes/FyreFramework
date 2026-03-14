@@ -1,18 +1,15 @@
 # Authentication
 
-Authentication in Fyre centers on the `Auth` service. It coordinates one or more authenticators to resolve a user for the current request and exposes that user for the rest of the request lifecycle.
+Use `Auth` to coordinate authenticators, resolve the current user, and manage login and logout consistently across the request lifecycle.
 
-This page focuses on configuring authenticators, how authentication is applied to HTTP requests, and the `Auth` / `Identifier` APIs you’ll use most.
+This page covers authenticator configuration, request flow, and the `Auth` / `Identifier` APIs you will use most.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
-- [Core components](#core-components)
-  - [Built-in authenticators](#built-in-authenticators)
-- [How authentication works](#how-authentication-works)
+- [Start here](#start-here)
+- [Built-in authenticators](#built-in-authenticators)
+- [Authentication flow](#authentication-flow)
 - [Configuring authenticators](#configuring-authenticators)
-  - [Authenticator responsibilities](#authenticator-responsibilities)
 - [Common setups](#common-setups)
   - [Session-only (typical HTML app)](#session-only-typical-html-app)
   - [Session + cookie “remember me”](#session--cookie-remember-me)
@@ -30,19 +27,16 @@ This page focuses on configuring authenticators, how authentication is applied t
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use `Auth` to coordinate authenticators, resolve the current user, and manage login and logout consistently across the request lifecycle.
+Use `Auth` when you want to:
 
 - Attempt a login using credentials (via `Identifier`)
 - Log in or log out a known user
 - Check whether a user is logged in
 - Retrieve the current user entity
 
-It also acts as the integration point for authenticators that persist identity between requests, such as sessions, cookies, and tokens.
-Once a user has been resolved, `Auth` also provides `access()` as the authorization entry point for that user; see [Authorization](authorization.md).
-
-## Quick start
+`Auth` also acts as the integration point for authenticators that persist identity between requests, such as sessions, cookies, and tokens. Once a user has been resolved, `Auth` also provides `access()` as the authorization entry point for that user; see [Authorization](authorization.md).
 
 In a typical HTTP app:
 
@@ -52,16 +46,7 @@ In a typical HTTP app:
 
 If you haven’t set up middleware yet, start with [Auth Middleware](middleware.md).
 
-## Core components
-
-These are the main pieces involved in authentication:
-
-- `Auth`: stores the current user and coordinates authenticators
-- `Authenticator`: base class for implementations that can authenticate a request and optionally persist/clear state
-- `Identifier`: verifies credentials and loads a user from the configured model for credential-based login flows
-- `AuthMiddleware`: HTTP integration that runs authentication and attaches `auth`/`user` request attributes
-
-### Built-in authenticators
+## Built-in authenticators
 
 Fyre includes several built-in authenticators:
 
@@ -69,11 +54,9 @@ Fyre includes several built-in authenticators:
 - `CookieAuthenticator`: reads a cookie and validates it against the stored user (optionally writing/clearing the cookie in `beforeResponse()`)
 - `TokenAuthenticator`: extracts a token from a request header or query parameter and loads the user from the configured model
 
-## How authentication works
+## Authentication flow
 
-`Auth` itself does not inspect HTTP requests. In a typical HTTP pipeline, authentication happens in middleware:
-
-At a high level:
+On a normal HTTP request, authentication usually happens in middleware:
 
 1. `AuthMiddleware` adds the `auth` request attribute (the `Auth` instance).
 2. Authenticators are executed in order until one returns a user (first match wins).
@@ -119,14 +102,7 @@ return [
 
 `Auth.loginRoute` controls where unauthenticated HTML requests are redirected by middleware. This value is a *route alias* (the `as` name), not a URL path; see [Router aliases](../routing/router.md#aliases-and-url-generation). If not configured, it defaults to `login`.
 
-### Authenticator responsibilities
-
-Each authenticator can participate in these hooks:
-
-- `authenticate(ServerRequestInterface $request): Entity|null` — inspect the request and return a user, or `null` when it does not apply
-- `login(Entity $user, bool $rememberMe = false): void` — persist state after a user is logged in
-- `logout(): void` — clear persisted state after logout
-- `beforeResponse(ResponseInterface $response, Entity|null $user = null): ResponseInterface` — update the response before sending it
+If you need custom authentication behavior, create your own authenticator class and add it to the stack alongside the built-in ones.
 
 ## Common setups
 
@@ -197,12 +173,14 @@ return [
 
 There are two common ways to set the current user on `Auth`.
 
-Examples below assume you have an `Auth` instance in `$auth`. You can resolve it from the container:
+Examples below assume you have an `Auth` instance in `$auth`. You can resolve it from the container or use the `auth()` helper:
 
 ```php
 use Fyre\Auth\Auth;
 
 $auth = app(Auth::class);
+// or
+$auth = auth();
 ```
 
 ### Attempting a credential login
@@ -235,12 +213,12 @@ $auth->logout();
 
 ## Resolving the current user
 
-The current user is stored on `Auth`:
+From the `Auth` service, use these methods:
 
 - `user(): Entity|null`
 - `isLoggedIn(): bool`
 
-You can also use:
+Global helper alternatives:
 
 - `user(): Entity|null`
 - `logged_in(): bool`
@@ -252,8 +230,6 @@ $auth = $request->getAttribute('auth');
 $user = $request->getAttribute('user');
 ```
 
-If you need the current user inside container-resolved code, `#[CurrentUser]` can inject it directly when auth context has already been established; see [Contextual attributes](../core/contextual-attributes.md).
-
 ## Building the login URL
 
 If you need to generate the login URL for redirects, `Auth::getLoginUrl()` uses the configured login route and can include a redirect target via the `url` query parameter. When you pass a `UriInterface`, the generated redirect value keeps only the path, query string, and fragment.
@@ -264,7 +240,7 @@ If you need to generate the login URL for redirects, `Auth::getLoginUrl()` uses 
 
 `Identifier` is responsible for locating a user record and verifying the password hash.
 
-In most applications, you’ll access it via `Auth::identifier()`:
+In most applications, you’ll access it via `Auth::identifier()` (or `auth()->identifier()`):
 
 - `$identifier = $auth->identifier();`
 
@@ -333,6 +309,8 @@ Returns the current user entity, or `null` when not authenticated.
 
 ```php
 $user = $auth->user();
+// or
+$user = user();
 ```
 
 #### **Check login state** (`isLoggedIn()`)
@@ -341,6 +319,10 @@ Returns whether a user is currently logged in.
 
 ```php
 if ($auth->isLoggedIn()) {
+    // ...
+}
+
+if (logged_in()) {
     // ...
 }
 ```
@@ -362,11 +344,13 @@ Returns the configured `Identifier` instance.
 
 ```php
 $identifier = $auth->identifier();
+// or
+$identifier = auth()->identifier();
 ```
 
 ### `Identifier`
 
-Examples below assume you already have an `Identifier` instance in `$identifier` (for example, `$identifier = $auth->identifier();`).
+Examples below assume you already have an `Identifier` instance in `$identifier` (for example, `$identifier = $auth->identifier();` or `$identifier = auth()->identifier();`).
 
 #### **Attempt a credential verification** (`attempt()`)
 
@@ -401,11 +385,9 @@ $user = $identifier->identify($login);
 
 A few behaviors are worth keeping in mind:
 
-- Authenticator configuration is validated at construction time. Each configured `className` must extend `Authenticator`, or `Auth` throws `InvalidArgumentException`.
 - Authenticators are executed in order and stop at the first one that returns a user.
 - `Identifier::attempt()` can automatically upgrade stored password hashes on successful login when the hash needs rehashing.
-- `CookieAuthenticator` clears invalid cookies after it detects an invalid payload/token and logs the user out.
-- `SessionAuthenticator` writes the session key lazily during the response phase (only when a user is present and the key is not already set).
+- `CookieAuthenticator` clears invalid cookies automatically when it detects a bad remember-me payload.
 
 ## Related
 
@@ -413,4 +395,3 @@ A few behaviors are worth keeping in mind:
 - [Authorization](authorization.md)
 - [Config](../core/config.md)
 - [Helpers](../core/helpers.md)
-- [Contextual attributes](../core/contextual-attributes.md)

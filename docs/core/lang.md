@@ -1,17 +1,18 @@
-# Language (Lang)
+# Language (`Lang`)
 
-`Fyre\Core\Lang` loads translation arrays from language files and returns locale-specific messages using dot-notation keys. When you provide placeholder data, messages are formatted using ICU `MessageFormatter`.
+Use `Fyre\Core\Lang` to load translated messages from language files and return the best match for the current locale.
+
+When you provide placeholder data, messages are formatted using ICU `MessageFormatter`.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
+- [Start here](#start-here)
 - [Language files and keys](#language-files-and-keys)
 - [Loading and precedence](#loading-and-precedence)
   - [Locale resolution](#locale-resolution)
   - [Example: path precedence](#example-path-precedence)
 - [Message formatting](#message-formatting)
-- [Where Lang is used](#where-lang-is-used)
+- [Where `Lang` is used](#where-lang-is-used)
 - [Method guide](#method-guide)
   - [Looking up messages](#looking-up-messages)
   - [Managing paths](#managing-paths)
@@ -20,15 +21,17 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-`Lang` is the framework’s translation and message lookup service. It loads arrays from language files, chooses the best match for the active locale, and returns either raw values (arrays) or formatted strings.
+Use `Lang` when you want to:
 
-In application code, you’ll often use the global `__()` helper as a shortcut for `Lang::get()`; see [Helpers](helpers.md).
+- load translated messages from language files
+- return the best match for the current locale
+- format messages with placeholder data
 
-## Quick start
+In application code, you will often use the global `__()` helper as a shortcut for `Lang::get()`; see [Helpers](helpers.md).
 
-In a typical application, `Engine` already registers the default app and framework language paths. Most applications just load language files lazily as keys are requested and call `__()`:
+In a typical application, `Engine` adds the app language path when `LANG` is defined, and also adds the framework’s built-in `lang` directory. Most applications just load language files lazily as keys are requested and call `__()`:
 
 ```php
 $message = __('Validation.required', ['field' => 'email']);
@@ -36,7 +39,7 @@ $message = __('Validation.required', ['field' => 'email']);
 
 `__()` can return a string (for message keys) or an array (when you request a whole file key like `__('Validation')`).
 
-If you prefer dependency injection (or if helpers aren’t loaded), inject `Lang` and call `get()`:
+If you prefer dependency injection, inject `Lang` and call `get()`:
 
 ```php
 use Fyre\Core\Lang;
@@ -54,7 +57,7 @@ use Fyre\Core\Lang;
 
 function boot(Lang $lang): void
 {
-    $lang->addPath('lang');
+    $lang->addPath('/path/to/lang');
 }
 ```
 
@@ -103,7 +106,7 @@ For each of these (default and current), locales are:
 - normalized to lowercase for folder lookups (so `en_US` becomes `en_us`)
 - split on `_` to build variants from least-specific to most-specific (for example, `en`, then `en_us`)
 
-📌 Example locale folders:
+Example locale folders:
 
 - `en-US` → `en_us` (falls back to `en`)
 - `en_US` → `en_us` (falls back to `en`)
@@ -114,19 +117,19 @@ If the current locale differs from the default locale, default-locale variants a
 
 When the same language file exists in multiple paths, later paths override earlier paths.
 
-For example, if `lang/en_us/Validation.php` contains a `required` message, and your app adds a second path with an override:
+For example, if `/path/to/lang/en_us/Validation.php` contains a `required` message, and your app adds a second path with an override:
 
 ```php
 use Fyre\Core\Lang;
 
 function boot(Lang $lang): void
 {
-    $lang->addPath('lang');
-    $lang->addPath('lang/local');
+    $lang->addPath('/path/to/lang');
+    $lang->addPath('/path/to/lang-overrides');
 }
 ```
 
-Then messages in `lang/local/<locale>/...` take precedence over messages in `lang/<locale>/...` for the same keys.
+Then messages in `/path/to/lang-overrides/<locale>/...` take precedence over messages in `/path/to/lang/<locale>/...` for the same keys.
 
 ## Message formatting
 
@@ -147,7 +150,7 @@ $message = __('Validation.between', [
 
 If the resolved value is an array (for example, requesting the whole file key), `Lang::get()` returns the array as-is.
 
-## Where Lang is used
+## Where `Lang` is used
 
 - [Form Validators](../form/validators.md) — `Fyre\Form\Validator` looks up default rule messages under `Validation.*` when a rule fails and no explicit message is provided.
 - [ORM](../orm/index.md) — rules in `Fyre\ORM\RuleSet` look up messages under `RuleSet.*`.
@@ -188,7 +191,7 @@ Arguments:
 - `$prepend` (`bool`): whether to prepend the path.
 
 ```php
-$lang->addPath('lang');
+$lang->addPath('/path/to/lang');
 ```
 
 #### **Inspect or remove paths** (`getPaths()` / `removePath()`)
@@ -197,7 +200,7 @@ $lang->addPath('lang');
 
 ```php
 $paths = $lang->getPaths();
-$lang->removePath('lang');
+$lang->removePath('/path/to/lang');
 ```
 
 ### Setting locales

@@ -1,20 +1,22 @@
 # Validators
 
-Define per-field rules, validate an input array (for example, a request payload), and return a simple error map keyed by field name.
+Use validators when you want to attach field rules to an input array and get back a simple error map.
+
+They are useful in forms, ORM workflows, and any custom code path that accepts structured input.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Defining Rules](#defining-rules)
-- [Custom Callback Rules](#custom-callback-rules)
-- [Running Validation](#running-validation)
-- [Error Messages and Language Fallback](#error-messages-and-language-fallback)
+- [Start here](#start-here)
+- [Defining rules](#defining-rules)
+- [Custom callback rules](#custom-callback-rules)
+- [Running validation](#running-validation)
+- [Error messages and language fallback](#error-messages-and-language-fallback)
 - [Method guide](#method-guide)
   - [`Validator`](#validator)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
 `Fyre\Form\Validator` stores rules for each field and validates an input array, returning a list of error messages per field.
 
@@ -25,7 +27,7 @@ Validators are commonly used by:
 
 Validation rules are represented by `Fyre\Form\Rule`. Rules can be created using built-in `Rule::*()` factories (see [Validation rules](rules.md)), or by providing a custom callback when adding a rule.
 
-## Defining Rules
+## Defining rules
 
 Rules are attached to a field using:
 
@@ -63,7 +65,7 @@ $validator->add('password', Rule::required(), on: 'create', name: 'required');
 $errors = $validator->validate($data, type: 'create');
 ```
 
-## Custom Callback Rules
+## Custom callback rules
 
 Prefer `Rule::*()` factories when they exist (they’re reusable and come with consistent metadata). Use callbacks for application-specific checks.
 
@@ -103,12 +105,16 @@ $validator->add(
 Example: use other input fields with the `data` argument.
 
 ```php
-$validator->add('password_confirm', static function(mixed $value, array $data): bool {
-    return $value === ($data['password'] ?? null);
-}, name: 'matches');
+$validator->add('state', static function(mixed $value, array $data): bool {
+    if (($data['country'] ?? null) !== 'AU') {
+        return true;
+    }
+
+    return $value !== null && $value !== '';
+}, message: 'State is required when country is AU.');
 ```
 
-## Running Validation
+## Running validation
 
 Validation runs field-by-field and rule-by-rule, calling each rule callback through the container. A callback can declare any of these named arguments:
 
@@ -127,7 +133,7 @@ The return value is an array keyed by field name, where each value is a unique l
 
 Note: When `$type` is `null`, no filtering is applied and all rules are evaluated (including rules that have an `$on` type).
 
-## Error Messages and Language Fallback
+## Error messages and language fallback
 
 Rule callbacks may return:
 

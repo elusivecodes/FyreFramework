@@ -314,7 +314,7 @@ class Container implements ContainerInterface
             $seen[$current] = true;
 
             if (!isset($this->bindings[$current])) {
-                return class_exists($current) && (new ReflectionClass($current))->isInstantiable();
+                return class_exists($current) && new ReflectionClass($current)->isInstantiable();
             }
 
             [$factory] = $this->bindings[$current];

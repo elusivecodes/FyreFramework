@@ -1,13 +1,14 @@
 # PDF
 
-`Pdf` (`Fyre\Utility\Pdf`) generates PDFs by invoking a headless Chrome/Chromium binary. You can render a URL or file path, or render an in-memory HTML string.
+Use `Pdf` when you want to generate PDFs by rendering HTML through headless Chrome or Chromium.
+
+You can render a URL, a file path, or an in-memory HTML string.
 
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Environment checklist](#environment-checklist)
-- [Quick start](#quick-start)
 - [Configuration](#configuration)
   - [Chrome/Chromium binary](#chromechromium-binary)
   - [Timeout](#timeout)
@@ -18,21 +19,11 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use `Pdf` when you want to generate a PDF by rendering HTML in a real browser engine (Chromium). This is a good fit for invoices, receipts, reports, and exports where you already have HTML output.
+This is a good fit for invoices, receipts, reports, and exports where you already have HTML output.
 
-`Pdf` shells out to a Chrome/Chromium binary with `--headless` and `--print-to-pdf`.
-
-## Environment checklist
-
-Before debugging API usage, verify these prerequisites:
-
-- A Chrome/Chromium binary is installed and executable (see [Configuration → Chrome/Chromium binary](#chromechromium-binary)).
-- The output directory is writable by the current PHP process.
-- When rendering HTML, use absolute URLs for assets (or set a `<base>` tag) so CSS/images/fonts can be loaded.
-
-## Quick start
+`Pdf` shells out to a Chrome or Chromium binary with `--headless` and `--print-to-pdf`.
 
 ```php
 use Fyre\Utility\Pdf;
@@ -48,6 +39,14 @@ $html = '<h1>Invoice</h1><p>Thanks!</p>';
 
 $bytes = Pdf::createFromHtml($html)->toBinary();
 ```
+
+## Environment checklist
+
+Before debugging API usage, verify these prerequisites:
+
+- A Chrome/Chromium binary is installed and executable (see [Configuration → Chrome/Chromium binary](#chromechromium-binary)).
+- The output directory is writable by the current PHP process.
+- When rendering HTML, use absolute URLs for assets (or set a `<base>` tag) so CSS/images/fonts can be loaded.
 
 ## Configuration
 

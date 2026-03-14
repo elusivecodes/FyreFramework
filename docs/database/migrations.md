@@ -1,12 +1,13 @@
 # Database Migrations
 
-Migrations provide a repeatable way to evolve database structure over time by applying ordered schema changes and tracking what has run on a connection.
+Use migrations when you want database changes to be versioned, repeatable, and applied in order.
+
+In most applications you write migration classes and run them through the console commands.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
-- [Where migrations fit](#where-migrations-fit)
+- [Start here](#start-here)
+- [Migration workflow](#migration-workflow)
 - [Writing migrations](#writing-migrations)
 - [Migration discovery](#migration-discovery)
   - [Naming rules](#naming-rules)
@@ -19,19 +20,15 @@ Migrations provide a repeatable way to evolve database structure over time by ap
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use migrations when you want database schema changes to be repeatable, ordered, and tracked per connection.
+In a typical application:
 
-Each connection maintains its own migration history in the `migrations` table, so it’s safe to run `migrate()` repeatedly without reapplying the same migration.
+1. Write migrations as `Migration_*` classes.
+2. Make sure the runner knows which namespace to scan.
+3. Run `db:migrate` or call `migrate()` from code.
 
-## Quick start
-
-In a typical app:
-
-1. Write migrations as `Migration_*` classes (see [Writing migrations](#writing-migrations)).
-2. Register your migration namespace(s) on a `MigrationRunner` when using a custom setup (when resolving `MigrationRunner` via the default `Engine`, the `App\Migrations` namespace is registered automatically).
-3. Run `migrate()` (or run the `db:migrate` console command).
+Each connection keeps its own migration history in the `migrations` table, so you can run `migrate()` repeatedly without reapplying the same migration.
 
 Minimal example running migrations from code:
 
@@ -64,11 +61,11 @@ public function up(): void
 }
 ```
 
-## Where migrations fit
+## Migration workflow
 
-Migrations sit on top of [Forge](forge.md): migrations define schema changes, and Forge executes the DDL for the current connection driver.
+Migrations sit on top of [Forge](forge.md): you describe the change in a migration class, and Forge executes the DDL for the current connection driver.
 
-The migration system centers on three classes:
+Most migration work comes down to three pieces:
 
 - `Migration` is the base class you extend to define changes.
 - `MigrationRunner` discovers migrations and runs `up()` / `down()`.
@@ -88,8 +85,6 @@ Create migrations as classes extending `Migration`. Implement:
 - `down()` to roll them back (optional, but recommended)
 
 Within a migration, the current `Forge` instance is available as `$this->forge`.
-
-`Migration` is just the base class that provides `$this->forge`; it does not define abstract `up()` / `down()` methods, which is why `MigrationRunner` checks for those methods at runtime.
 
 For DDL operations and options, see [Forge](forge.md).
 
@@ -144,7 +139,7 @@ Discovery behavior:
 - each configured namespace is searched for files matching `Migration_*.php`
 - each discovered class is checked to be a subclass of `Migration` and non-abstract
 - migration names are derived by stripping the `Migration_` prefix from the class short name
-- if multiple discovered classes produce the same migration name, later discoveries overwrite earlier ones in the internal map
+- if multiple discovered classes produce the same migration name, the later discovery wins
 - migrations are sorted by migration name using natural sorting before execution
 
 ## Running migrations
@@ -208,9 +203,9 @@ History behavior used by `MigrationRunner`:
 A few behaviors are worth keeping in mind:
 
 - `migrate()` skips any migration name already present in history.
-- `rollback()` removes history entries even when the corresponding migration class is not discoverable (in that case, no `down()` can be executed).
-- `MigrationRunner::clear()` clears registered migration namespaces and resets the connection, history, and migration caches.
-- Migration execution records history even when a migration does not implement `up()`/`down()`; missing methods are skipped and execution continues.
+- `rollback()` removes history entries even when the corresponding migration class is no longer discoverable, so there may be nothing to call for `down()`.
+- Migration execution is not automatically wrapped in a transaction.
+- If a migration does not implement `up()` or `down()`, the missing method is skipped and execution continues.
 
 ## Related
 

@@ -16,7 +16,7 @@ use function sprintf;
 /**
  * Manages cache configurations and shared cache instances.
  *
- * Note: When disabled, {@see self::use()} returns a {@see NullCacher} regardless of config.
+ * Note: When disabled, valid cache builds resolve to a shared {@see NullCacher}.
  * By default the cache is disabled when `App.debug` is enabled.
  */
 class CacheManager
@@ -78,6 +78,10 @@ class CacheManager
                 $options['className'] ?? '',
                 Cacher::class
             ));
+        }
+
+        if (!$this->enabled) {
+            return $this->nullCacher ??= new NullCacher();
         }
 
         /** @var class-string<Cacher> $className */
@@ -208,18 +212,13 @@ class CacheManager
     /**
      * Loads a shared handler instance.
      *
-     * Note: If the cache is disabled, this always returns a {@see NullCacher}.
-     * If no config exists for the requested key, the cacher is built with an empty config.
+     * Note: If no config exists for the requested key, the cacher is built with an empty config.
      *
      * @param string $key The config key.
      * @return Cacher The Cacher instance.
      */
     public function use(string $key = self::DEFAULT): Cacher
     {
-        if (!$this->enabled) {
-            return $this->nullCacher ??= new NullCacher();
-        }
-
         return $this->instances[$key] ??= $this->build($this->config[$key] ?? []);
     }
 }

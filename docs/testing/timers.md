@@ -1,13 +1,14 @@
 # Timers
 
-`Timer` is a small utility for measuring elapsed time for named phases in a test or script. It uses `hrtime(true)` (a monotonic clock) and returns durations in seconds.
+Use `Timer` when you want lightweight timing around named phases in a test or script.
+
+It uses `hrtime(true)` and returns durations in seconds.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Basic usage](#basic-usage)
+- [Start here](#start-here)
 - [Reading elapsed time](#reading-elapsed-time)
-- [Inspecting and managing timers](#inspecting-and-managing-timers)
+- [Inspecting timers](#inspecting-timers)
 - [Method guide](#method-guide)
   - [Timing](#timing)
   - [Inspection](#inspection)
@@ -15,13 +16,11 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use `Timer` when you want a lightweight way to measure specific phases (bootstrap time, a query phase, serialization) without introducing a full benchmark runner.
+Use named timers when you want to measure a few phases such as bootstrap, rendering, or serialization without setting up a full benchmark run.
 
-If you want to run named callbacks repeatedly and collect time + memory results, see [Benchmark](benchmark.md).
-
-## Basic usage
+If you want repeated callback execution with time and memory results, see [Benchmark](benchmark.md).
 
 Timers are created by name:
 
@@ -64,7 +63,7 @@ $timer->stop('phase');
 $finalSeconds = $timer->elapsed('phase');
 ```
 
-## Inspecting and managing timers
+## Inspecting timers
 
 Timer state is stored as timer data with:
 
@@ -74,12 +73,12 @@ Timer state is stored as timer data with:
 
 Useful helpers:
 
-- `all()` returns all timers.
-- `get($name)` returns timer data or `null`.
-- `has($name)` checks existence.
-- `isStopped($name)` checks whether a timer is stopped.
-- `remove($name)` removes a timer (throws if missing).
-- `clear()` removes all timers.
+- `all()` returns all timers
+- `get($name)` returns timer data or `null`
+- `has($name)` checks whether a timer exists
+- `isStopped($name)` checks whether a timer has been stopped
+- `remove($name)` removes a timer
+- `clear()` removes all timers
 
 ## Method guide
 
@@ -89,7 +88,7 @@ Examples below assume you already have a `$timer` instance.
 
 #### **Start a timer** (`start()`)
 
-A timer name must be unique. Starting a timer records its start time.
+Start a named timer.
 
 Arguments:
 - `$name` (`string`): the timer name.
@@ -100,7 +99,7 @@ $timer->start('bootstrap');
 
 #### **Stop a timer** (`stop()`)
 
-Stopping a timer records its end time and freezes its duration.
+Stop a timer and freeze its duration.
 
 Arguments:
 - `$name` (`string`): the timer name.
@@ -127,7 +126,7 @@ $timer->stopAll();
 
 #### **Read elapsed time** (`elapsed()`)
 
-Returns elapsed seconds for a timer. If the timer has already been stopped, this returns the recorded duration.
+Return elapsed seconds for a timer.
 
 Arguments:
 - `$name` (`string`): the timer name.
@@ -142,7 +141,7 @@ $seconds = $timer->elapsed('phase');
 
 #### **Check whether a timer exists** (`has()`)
 
-Returns `true` if a timer with the given name exists.
+Check whether a timer exists.
 
 Arguments:
 - `$name` (`string`): the timer name.
@@ -155,7 +154,7 @@ if ($timer->has('phase')) {
 
 #### **Fetch timer data** (`get()`)
 
-Returns the timer data array, or `null` if the timer does not exist.
+Return the timer data array, or `null` if the timer does not exist.
 
 Arguments:
 - `$name` (`string`): the timer name.
@@ -166,7 +165,7 @@ $data = $timer->get('phase');
 
 #### **Check whether a timer is stopped** (`isStopped()`)
 
-Returns whether the timer has been stopped.
+Return whether the timer has been stopped.
 
 Arguments:
 - `$name` (`string`): the timer name.
@@ -177,7 +176,7 @@ $stopped = $timer->isStopped('phase');
 
 #### **Get all timers** (`all()`)
 
-Returns all timers keyed by name.
+Return all timers keyed by name.
 
 ```php
 $timer
@@ -189,7 +188,7 @@ $all = $timer->all();
 
 #### **Count timers** (`count()`)
 
-Returns the number of timers currently stored.
+Return the number of timers currently stored.
 
 ```php
 $timer
@@ -203,7 +202,7 @@ $count = $timer->count();
 
 #### **Remove a timer** (`remove()`)
 
-Removes a timer by name.
+Remove a timer by name.
 
 Arguments:
 - `$name` (`string`): the timer name.
@@ -214,7 +213,7 @@ $timer->remove('phase');
 
 #### **Clear all timers** (`clear()`)
 
-Clears all timers.
+Clear all timers.
 
 ```php
 $timer

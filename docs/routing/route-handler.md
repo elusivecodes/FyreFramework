@@ -1,46 +1,38 @@
 # Route Handler
 
-`Fyre\Router\RouteHandler` is a PSR-15 request handler that dispatches a request to the matched `Route`. It is commonly used as the fallback handler after global middleware has executed.
+Use `Fyre\Router\RouteHandler` to dispatch the route that router middleware already matched.
+
+Most applications use it as the final handler after global middleware has run.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Route handler in the pipeline](#route-handler-in-the-pipeline)
+- [Start here](#start-here)
 - [Requirements](#requirements)
-- [Execution model](#execution-model)
+- [Dispatching the route](#dispatching-the-route)
 - [Route middleware](#route-middleware)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
 Use `RouteHandler` when you want to:
 
-- dispatch the matched `Route` produced by router middleware
-- run route-level middleware after global middleware
-- keep a clean “middleware pipeline → fallback handler” mental model
+- dispatch the matched route produced by router middleware
+- run route-level middleware before the route destination
+- keep route dispatch separate from your global middleware setup
 
-If you’re building a middleware pipeline, `RouteHandler` is commonly used as the fallback handler for the [Request Handler](../http/request-handler.md).
-
-## Route handler in the pipeline
-
-A typical inbound request flow looks like:
-
-1. Global middleware runs via the [Request Handler](../http/request-handler.md).
-2. Router middleware matches a route and stores it on the request as the `route` attribute (see [HTTP Middleware](../http/middleware.md)).
-3. `RouteHandler` dispatches the request to the matched `Route`.
+If you are building a middleware flow manually, `RouteHandler` is the piece that usually runs after the [Request Handler](../http/request-handler.md) has finished the global middleware stack.
 
 ## Requirements
 
 `RouteHandler` expects the request to already have a matched route stored as the `route` attribute.
 
-## Execution model
+## Dispatching the route
 
-At `handle()` time:
+When `handle()` runs:
 
-- `RouteHandler` reads `$request->getAttribute('route')`.
-- If the route has no route-level middleware (`Route::getMiddleware()` returns an empty array), it calls `Route::handle($request)` directly.
-- If the route has middleware, it builds a `MiddlewareQueue` from that middleware, appends a final middleware that calls `Route::handle()`, then executes that queue using a nested `RequestHandler`.
+- if the route has no route middleware, it dispatches the route directly
+- if the route has route middleware, that middleware runs first and the route destination runs last
 
 ## Route middleware
 
@@ -55,6 +47,7 @@ This is the right place for per-route concerns like authorization, throttling, o
 A few behaviors are worth keeping in mind:
 
 - `RouteHandler` throws `Fyre\Router\Exceptions\RouterException` when the `route` request attribute is missing.
+- Route middleware only runs for the matched route. Use global middleware for concerns that should apply to every request.
 
 ## Related
 

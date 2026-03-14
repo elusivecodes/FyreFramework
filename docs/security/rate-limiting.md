@@ -1,14 +1,13 @@
 # Rate Limiting
 
-`Fyre\Security\Middleware\RateLimiterMiddleware` enforces request rate limits in an HTTP middleware pipeline.
+Use `Fyre\Security\Middleware\RateLimiterMiddleware` when you want to throttle requests by client, route, or user.
 
-Rate limiting protects endpoints from excessive traffic by tracking request “usage” over time and rejecting requests that exceed a configured budget. In Fyre, rate limiting is implemented as HTTP middleware backed by cache, with flexible identifiers (who is being limited) and request cost (how expensive a request is).
+Rate limiting tracks request usage over time and rejects requests that exceed a configured budget.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Mental model](#mental-model)
-  - [Built-in strategies](#built-in-strategies)
+- [Start here](#start-here)
+- [Built-in strategies](#built-in-strategies)
 - [Identifiers](#identifiers)
   - [Supported identifier sources](#supported-identifier-sources)
 - [Limits and cost](#limits-and-cost)
@@ -23,26 +22,17 @@ Rate limiting protects endpoints from excessive traffic by tracking request “u
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Rate limiting is a practical boundary for:
+Use rate limiting when you want to:
 
-- public endpoints (login, password reset, token issuance)
-- expensive operations (search, file generation, report endpoints)
-- burst smoothing on APIs consumed by automated clients
+- protect public endpoints such as login, password reset, and token issuance
+- limit expensive operations such as search, file generation, and report endpoints
+- smooth bursts on APIs consumed by automated clients
 
 Unlike a simple “requests per minute” counter, Fyre’s rate limiting can account for request cost so that a single expensive request can consume more of the budget than a cheap one.
 
-## Mental model
-
-Rate limiting is a short pipeline of responsibilities:
-
-- `RateLimiterMiddleware` decides whether a request should be checked, checks the limit, and either continues or throws.
-- A `RateLimiter` strategy stores and reads the per-identifier state from cache, then returns a rate limit result.
-- On success, the middleware adds standard rate limit headers to the response.
-- On rejection, the middleware throws `TooManyRequestsException` with a `Retry-After` header based on the limiter’s reset time.
-
-### Built-in strategies
+## Built-in strategies
 
 `RateLimiterMiddleware` can select a built-in strategy using the `strategy` option:
 
@@ -61,7 +51,7 @@ An identifier is the “key space” used to track usage. It is configured on th
 
 When `identifier` is a list, the identifier is assembled by concatenating these sources (with `_`) in the order provided.
 
-If your app runs behind a reverse proxy, be careful with IP-based identification. By default, the built-in `ip` identifier uses `REMOTE_ADDR`. When `trustProxy` is enabled, it can use a configured forwarded IP header (by default `X-Forwarded-For`), optionally restricted by `trustedProxies`. Header names are case-insensitive and normalized internally. For custom trust rules, you can still use an `identifier` callback.
+If your app runs behind a reverse proxy, be careful with IP-based identification. By default, the built-in `ip` identifier uses `REMOTE_ADDR`. When `trustProxy` is enabled, it can use a configured forwarded IP header (by default `X-Forwarded-For`), optionally restricted by `trustedProxies`. Header names are matched case-insensitively. For custom trust rules, you can still use an `identifier` callback.
 
 ### Supported identifier sources
 
@@ -70,8 +60,6 @@ The base `RateLimiter` supports three identifier source strings:
 - `ip` — uses `REMOTE_ADDR` by default. When `trustProxy` is enabled, it uses the first value from the configured forwarded IP header when the immediate remote address is trusted.
 - `route` — uses `Controller::action` when the request has a `route` attribute that is a `ControllerRoute`, and always includes the client IP
 - `user` — uses `user_{id}` when the request has a `user` attribute with an `id` property, otherwise falls back to the client IP
-
-Internally, the assembled identifier is converted into a cache key; the raw identifier is not used as the cache key directly.
 
 ## Limits and cost
 
@@ -107,7 +95,7 @@ When a request is rejected, `RateLimiterMiddleware` throws `TooManyRequestsExcep
 
 ## Middleware integration
 
-Rate limiting is applied like any other middleware. Register a middleware alias and add it to a `MiddlewareQueue` (see [HTTP Middleware](../http/middleware.md) for the full pipeline model).
+Rate limiting is applied like any other middleware. Register a middleware alias and add it to a `MiddlewareQueue` (see [HTTP Middleware](../http/middleware.md)).
 
 ### Registering a shared rate limiter middleware
 
@@ -153,7 +141,7 @@ $queue->add('throttle:30,60,1');
 
 ### `RateLimiterMiddleware`
 
-#### **Run rate limiting in a middleware pipeline** (`process()`)
+#### **Run rate limiting as middleware** (`process()`)
 
 Checks the request against the configured limiter and either continues to the next handler or throws `TooManyRequestsException`.
 
@@ -225,14 +213,14 @@ $message = $limiter->getMessage();
 A few behaviors are worth keeping in mind:
 
 - Inline middleware arguments are strings; when an override is provided, `RateLimiterMiddleware` casts it with `(int)`, so `'0'` is applied as `0` rather than treated as “no override”.
-- The built-in strategies assume `limit` and `window` are positive integers; non-numeric values (cast to `0`) or explicit `0` configured via options can lead to runtime errors or misleading results.
+- The built-in strategies assume `limit` and `window` are positive integers; non-numeric values (cast to `0`) or explicit `0` configured via options can lead to invalid results.
 - The `route` identifier always includes the client IP; it does not group all clients together for the same controller action.
 - The `ip` identifier uses `REMOTE_ADDR` by default. When `trustProxy` is enabled and the immediate proxy is trusted, it uses the first value from the first matching `ipHeader`.
 - If the configured cache does not include the `ratelimiter` config key, `RateLimiter` registers one automatically using `FileCacher` with a `ratelimiter:` prefix.
-- Rate limiting relies on cache persistence; when `CacheManager` is disabled (by default when `App.debug` is enabled), it uses a no-op cache handler and will not throttle across requests.
+- Rate limiting relies on cache persistence; when `CacheManager` is disabled (by default when `App.debug` is enabled), it uses a do-nothing cache handler and will not throttle across requests.
 
 ## Related
 
-- [HTTP Middleware](../http/middleware.md) — how to register middleware and pass inline arguments.
-- [Cache](../cache/index.md) — how cache persistence affects rate limiting behavior.
-- [Routing](../routing/index.md) — how route matching influences the `route` identifier source.
+- [HTTP Middleware](../http/middleware.md) - register middleware and pass inline arguments
+- [Cache](../cache/index.md) - cache persistence affects rate limiting behavior
+- [Routing](../routing/index.md) - route matching influences the `route` identifier source

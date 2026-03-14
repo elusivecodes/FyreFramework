@@ -1,20 +1,22 @@
 # ORM Relationships
 
-`Fyre\ORM\Relationship` defines how models connect, how related data is stored on entities, and how related records can be loaded, joined, saved, and unlinked through the ORM.
+Use relationships when you want the ORM to understand how your models connect.
+
+Relationships drive `contain()`, relationship-aware joins, related saves, and delete cascades.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Where relationships fit](#where-relationships-fit)
+- [Start here](#start-here)
+- [Relationship overview](#relationship-overview)
 - [Defining relationships](#defining-relationships)
   - [Using `initialize()` helpers](#using-initialize-helpers)
   - [Using model attributes](#using-model-attributes)
   - [Relationship names and entity properties](#relationship-names-and-entity-properties)
 - [Relationship types](#relationship-types)
-  - [BelongsTo](#belongsto)
-  - [HasOne](#hasone)
-  - [HasMany](#hasmany)
-  - [ManyToMany](#manytomany)
+  - [`BelongsTo`](#belongsto)
+  - [`HasOne`](#hasone)
+  - [`HasMany`](#hasmany)
+  - [`ManyToMany`](#manytomany)
 - [Common relationship options](#common-relationship-options)
 - [Loading related data with `contain()`](#loading-related-data-with-contain)
   - [Contain shapes](#contain-shapes)
@@ -31,13 +33,18 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use relationships when you want the ORM to understand how models connect so you can load related data with `contain()`, filter with relationship-aware joins, and coordinate saves/deletes across related entities.
+Use relationships when you want to:
 
-Most examples assume you already have a model instance (for example, `$Users`).
+- load related records with `contain()`
+- join through related tables with `matching()` or `leftJoinWith()`
+- save nested data through a model
+- control how deletes and unlinking work across related records
 
-## Where relationships fit
+Most examples on this page assume you already have a model instance such as `$Users`.
+
+## Relationship overview
 
 - A relationship is a model-level definition that ties a **source** model to a **target** model.
 - Relationships drive:
@@ -117,7 +124,7 @@ class PostsModel extends Model
 
 ## Relationship types
 
-### BelongsTo
+### `BelongsTo`
 
 Use `belongsTo()` when the **source** model stores the foreign key and the related record is a single entity.
 
@@ -151,7 +158,7 @@ use Fyre\ORM\Model;
 class PostsModel extends Model {}
 ```
 
-### HasOne
+### `HasOne`
 
 Use `hasOne()` when the **target** model stores the foreign key and the related record is a single entity.
 
@@ -185,7 +192,7 @@ use Fyre\ORM\Model;
 class UsersModel extends Model {}
 ```
 
-### HasMany
+### `HasMany`
 
 Use `hasMany()` when the **target** model stores the foreign key and the related records are a list of entities.
 
@@ -222,7 +229,7 @@ use Fyre\ORM\Model;
 class UsersModel extends Model {}
 ```
 
-### ManyToMany
+### `ManyToMany`
 
 Use `manyToMany()` when the source and target are linked through a junction (link) model/table.
 

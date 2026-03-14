@@ -1,101 +1,88 @@
 # Console I/O
 
-`Fyre\Console\Console` is a lightweight console I/O facade used by the console runtime and command classes to print styled output, prompt for input, and render tables.
+Use `Fyre\Console\Console` to write styled output, ask questions, render tables, and show progress from a command.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Where `Console` Fits](#where-console-fits)
-- [Styled Output](#styled-output)
-- [Prompts and Choices](#prompts-and-choices)
-- [Tables](#tables)
-- [Progress Output](#progress-output)
-- [Text Styling and Wrapping](#text-styling-and-wrapping)
-- [Streams and Testing](#streams-and-testing)
+- [Start here](#start-here)
+- [Common output](#common-output)
+- [Prompting](#prompting)
+- [Displaying tables and progress](#displaying-tables-and-progress)
+- [Working with text](#working-with-text)
+- [Streams and testing](#streams-and-testing)
 - [Method guide](#method-guide)
-  - [Output](#output)
+  - [Output](#output-1)
   - [Prompts](#prompts)
-  - [Tables and progress](#tables-and-progress)
-  - [Text utilities](#text-utilities)
+  - [Tables and progress](#tables-and-progress-1)
+  - [Text utilities](#text-utilities-1)
   - [Streams](#streams)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use `Console` when you want consistent terminal output and prompting across commands:
+The usual way to use `Console` is from a command class through `$this->io`.
 
-- Styled output (`info()`, `success()`, `warning()`, `error()`, `comment()`).
-- Interactive prompts (`prompt()`, `confirm()`, `choice()`).
-- Simple tables and progress indicators (`table()`, `progress()`).
+```php
+use Fyre\Console\Command;
 
-## Where `Console` Fits
+class ExampleCommand extends Command
+{
+    public function run(): int
+    {
+        $this->io->success('Finished.');
 
-`Fyre\Console\CommandRunner` uses a `Console` instance to:
+        return self::CODE_SUCCESS;
+    }
+}
+```
 
-- Print errors (for example, invalid command aliases or option values).
-- Prompt for required options when they are missing.
-- Render the command list table when no alias is provided.
+If you need console I/O outside a command class, you can also construct `Console` directly.
 
-In a typical application, `Console` is resolved from the container and shared by both `CommandRunner` and command classes. Commands can also accept `Console` as a dependency (for example as a `run()` parameter) to share the same streams and styling rules as the runtime. For the broader console subsystem, see [Console](index.md).
+## Common output
 
-## Styled Output
+`Console` gives you a few convenience methods for common command output:
 
-Most output methods write to the standard output stream via `write()`. `error()` writes to the error stream. These methods append a newline. Each method applies ANSI styling via `Console::style()`:
+- `info()` for informational messages
+- `success()` for success messages
+- `warning()` for warnings
+- `error()` for errors
+- `comment()` for quieter supporting text
 
-- `info()` defaults to blue
-- `success()` defaults to green
-- `warning()` defaults to yellow
-- `comment()` defaults to dim text
-- `error()` defaults to red and writes to the error stream
+These methods write a line immediately. You can also use `write()` when you want to control colors or styles directly.
 
-You can override the color, background, and style on any call.
+## Prompting
 
-## Prompts and Choices
+- `prompt()` asks for a free-form value
+- `confirm()` asks a `y/n` question
+- `choice()` asks the user to pick from a list
 
-- `prompt()` writes a prompt line (yellow), then reads a single line from the input stream.
-- `choice()` prompts for a choice and returns the selected option (or the default). Matching is case-insensitive.
-  - When `$options` is a list, its values are the choices.
-  - When `$options` is associative, keys are the choices and values are displayed as descriptions.
-- `confirm()` is a yes/no prompt implemented via `choice()` and returns `true` only when the selected value is `y`.
+When `$options` is associative, `choice()` displays the descriptions but still returns the selected key.
 
-## Tables
+## Displaying tables and progress
 
-`table()` renders a simple ASCII table.
+Use `table()` to print simple tabular output and `progress()` to show a single-line progress indicator.
 
-A few constraints apply:
+`table()` expects each row to have the same number of columns. `progress(null)` clears the current indicator.
 
-- Each `$data` row must have the same number of columns.
-- When `$header` is provided it is rendered as the first row and separated by a horizontal border.
-- ANSI style codes inside cell text are preserved, but do not affect column width calculation.
+## Working with text
 
-## Progress Output
+The static helpers are useful when you need to build strings before writing them:
 
-`progress()` prints a single-line progress indicator, updating the current terminal line as it advances. Calling `progress(null)` clears the indicator.
-
-## Text Styling and Wrapping
-
-Use the static helpers when you need to produce styled/wrapped strings before writing them:
-
-- `Console::style()` wraps text with ANSI escape codes
-- `Console::wrap()` wraps text to the terminal width (or a smaller max width)
-- `Console::getWidth()` and `Console::getHeight()` query terminal size (falling back to `80` and `24` when unavailable)
+- `Console::style()` applies ANSI styling
+- `Console::wrap()` wraps text to the terminal width
+- `Console::getWidth()` and `Console::getHeight()` return the current terminal size, or sensible defaults
 
 Common constants:
 
 - Colors: `Console::BLACK`, `Console::RED`, `Console::GREEN`, `Console::YELLOW`, `Console::BLUE`, `Console::PURPLE`, `Console::CYAN`, `Console::WHITE`
 - Styles: `Console::BOLD`, `Console::DIM`, `Console::ITALIC`, `Console::UNDERLINE`, `Console::FLASH`
 
-For background, pass a color constant as the `$background` argument.
-
-## Streams and Testing
+## Streams and testing
 
 `Console` reads from an input stream and writes to output and error streams.
 
-- Under `cli`, it defaults to `STDIN`, `STDOUT`, and `STDERR`
-- Outside `cli`, it writes to `php://output` and uses that same output stream for errors by default; no input stream is created automatically
-
-For tests, you can construct a `Console` with in-memory streams and assert against captured output. For end-to-end examples (including testing commands via `CommandRunner`), see [Console Testing](../testing/console.md).
+For tests, you can pass in-memory streams and assert against captured output:
 
 ```php
 use Fyre\Console\Console;
@@ -104,12 +91,14 @@ $input = fopen('php://memory', 'r+');
 $output = fopen('php://memory', 'w+');
 $error = fopen('php://memory', 'w+');
 
-$console = new Console($input, $output, $error);
+$io = new Console($input, $output, $error);
 ```
+
+See [Console Testing](../testing/console.md) for end-to-end command examples.
 
 ## Method guide
 
-This section focuses on the methods you’ll use most when writing console commands.
+This section focuses on the methods you are most likely to use in a command.
 
 ### Output
 
@@ -124,8 +113,8 @@ Arguments:
 - `$style` (`int`): the text style (a `Console::*` constant).
 
 ```php
-$console->write('Hello');
-$console->write('Important', Console::WHITE, Console::RED, Console::BOLD);
+$io->write('Hello');
+$io->write('Important', Console::WHITE, Console::RED, Console::BOLD);
 ```
 
 #### **Write a status line** (`info()`)
@@ -136,7 +125,7 @@ Arguments:
 - `$text` (`string`): the text to write.
 
 ```php
-$console->info('Starting…');
+$io->info('Starting…');
 ```
 
 #### **Write a success line** (`success()`)
@@ -147,7 +136,7 @@ Arguments:
 - `$text` (`string`): the text to write.
 
 ```php
-$console->success('Done');
+$io->success('Done');
 ```
 
 #### **Write a warning line** (`warning()`)
@@ -158,7 +147,7 @@ Arguments:
 - `$text` (`string`): the text to write.
 
 ```php
-$console->warning('This may take a while');
+$io->warning('This may take a while');
 ```
 
 #### **Write an error line** (`error()`)
@@ -169,7 +158,7 @@ Arguments:
 - `$text` (`string`): the text to write.
 
 ```php
-$console->error('Invalid option');
+$io->error('Invalid option');
 ```
 
 #### **Write a dim comment** (`comment()`)
@@ -180,7 +169,7 @@ Arguments:
 - `$text` (`string`): the text to write.
 
 ```php
-$console->comment('Use --help to list options.');
+$io->comment('Use --help to list options.');
 ```
 
 ### Prompts
@@ -193,7 +182,7 @@ Arguments:
 - `$text` (`string`): the prompt text.
 
 ```php
-$name = $console->prompt('Name:');
+$name = $io->prompt('Name:');
 ```
 
 #### **Prompt for confirmation** (`confirm()`)
@@ -205,8 +194,8 @@ Arguments:
 - `$default` (`bool`): the default choice when the user submits an empty response.
 
 ```php
-if ($console->confirm('Continue?', true)) {
-    $console->success('Continuing…');
+if ($io->confirm('Continue?', true)) {
+    $io->success('Continuing…');
 }
 ```
 
@@ -222,7 +211,7 @@ Arguments:
 When `$options` is associative, the descriptions are displayed to the user, but the returned value is still the selected key.
 
 ```php
-$environment = $console->choice('Environment', [
+$environment = $io->choice('Environment', [
     'dev' => 'Development',
     'prod' => 'Production',
 ], 'dev');
@@ -239,7 +228,7 @@ Arguments:
 - `$header` (`array`): optional header row.
 
 ```php
-$console->table(
+$io->table(
     [
         ['db:migrate', 'Run pending migrations'],
         ['db:rollback', 'Rollback the last batch'],
@@ -257,10 +246,10 @@ Arguments:
 - `$totalSteps` (`int`): the total step count used to compute the percentage.
 
 ```php
-$console->progress(1, 3);
-$console->progress(2, 3);
-$console->progress(3, 3);
-$console->progress(null);
+$io->progress(1, 3);
+$io->progress(2, 3);
+$io->progress(3, 3);
+$io->progress(null);
 ```
 
 ### Text utilities
@@ -314,7 +303,20 @@ $height = Console::getHeight();
 Read one line from the input stream.
 
 ```php
-$line = $console->input();
+$line = $io->input();
+```
+
+#### **Construct a `Console` instance** (`__construct()`)
+
+Create a `Console` with custom input, output, and error streams. Under `cli`, omitted streams default to `STDIN`, `STDOUT`, and `STDERR`. Outside `cli`, output defaults to `php://output` and errors default to the same stream.
+
+Arguments:
+- `$input` (`resource|null`): the input stream.
+- `$output` (`resource|null`): the output stream.
+- `$error` (`resource|null`): the error stream.
+
+```php
+$io = new Console($input, $output, $error);
 ```
 
 ## Behavior notes
@@ -323,13 +325,12 @@ A few behaviors are worth keeping in mind:
 
 - `choice()` compares user input case-insensitively and returns the default when no match is found.
 - `confirm()` returns `true` only when the user selects `y`.
-- `write()` and `error()` do nothing if the configured output stream is not a valid resource.
-- `progress(null)` clears the indicator and emits terminal control sequences (and an audible bell in many terminals).
-- `Console::getWidth()` and `Console::getHeight()` depend on `tput` when available and fall back to default sizes when terminal size can’t be resolved.
+- `input()` returns an empty string when no input stream is available.
+- `progress(null)` clears the current indicator.
+- `Console::getWidth()` and `Console::getHeight()` fall back to `80` and `24` when terminal size cannot be determined.
 
 ## Related
 
 - [Console](index.md)
 - [Console Commands](commands.md)
 - [Console Testing](../testing/console.md)
-- [Events](../events/index.md)

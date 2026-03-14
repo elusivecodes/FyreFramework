@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Fyre\Http;
 
+use Fyre\Core\Traits\DebugTrait;
 use Psr\Http\Message\ResponseInterface;
 
 use function array_values;
@@ -22,6 +23,8 @@ use function substr;
  */
 class ResponseEmitter
 {
+    use DebugTrait;
+
     protected const MAX_BUFFER_SIZE = 8192;
 
     /**

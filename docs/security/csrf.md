@@ -1,13 +1,12 @@
 # CSRF
 
-`Fyre\Security\CsrfProtection` generates and validates CSRF tokens for incoming requests.
+Use `Fyre\Security\CsrfProtection` when you want to protect state-changing requests with CSRF tokens.
 
-Cross-Site Request Forgery (CSRF) protection prevents third-party sites from triggering state-changing requests as an authenticated user. In Fyre, CSRF protection ties a cookie token to a per-client secret and requires a matching user token (form field or header) on unsafe HTTP methods.
+In Fyre, CSRF protection uses a cookie token plus a matching form field or request header on unsafe HTTP methods.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Mental model](#mental-model)
+- [Start here](#start-here)
 - [Configuring CSRF](#configuring-csrf)
   - [Example `config/app.php`](#example-configappphp)
 - [Middleware integration](#middleware-integration)
@@ -21,21 +20,18 @@ Cross-Site Request Forgery (CSRF) protection prevents third-party sites from tri
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-CSRF protection is primarily about protecting requests that change server state (create/update/delete actions). With CSRF enabled, a request must provide:
+Use CSRF protection when you want to:
 
-- a CSRF cookie token issued by the server
-- a matching “user token” sent either as a form field or as a request header
+- protect form posts and other unsafe requests from third-party sites
+- send a hidden token in HTML forms or a header in AJAX and JSON requests
+- keep token handling centralized in middleware and form helpers
 
-## Mental model
-
-`CsrfProtection` works with two token representations:
+With CSRF enabled, a checked request must provide:
 
 - **Cookie token**: stored in a cookie and sent automatically by the browser on same-site requests.
 - **Form/header token**: a salted form of the cookie token, safe to embed in HTML and to send back in requests.
-
-On validation, the user-provided token is “unsalted” and compared against the cookie token using a constant-time comparison.
 
 ## Configuring CSRF
 
@@ -69,7 +65,7 @@ return [
 
 ## Middleware integration
 
-`CsrfProtectionMiddleware` enforces CSRF checks and makes the current `CsrfProtection` instance available to downstream middleware/handlers:
+`CsrfProtectionMiddleware` enforces CSRF checks and makes the current `CsrfProtection` instance available to downstream code:
 
 - The middleware calls `CsrfProtection::checkToken()` for the request.
 - The middleware then calls `CsrfProtection::beforeResponse()` to ensure the CSRF cookie is sent when it’s missing.
@@ -241,13 +237,13 @@ $token = $csrf->getCookieToken();
 
 ### `CsrfProtectionMiddleware`
 
-#### **Run CSRF checks in a middleware pipeline** (`process()`)
+#### **Run CSRF checks as middleware** (`process()`)
 
 Validates the request and ensures the CSRF cookie behavior is applied to the response.
 
 Arguments:
 - `$request` (`ServerRequestInterface`): the request to validate.
-- `$handler` (`RequestHandlerInterface`): the next pipeline handler.
+- `$handler` (`RequestHandlerInterface`): the next handler.
 
 ```php
 use Fyre\Security\Middleware\CsrfProtectionMiddleware;
@@ -282,5 +278,5 @@ A few behaviors are worth keeping in mind:
 
 ## Related
 
-- [HTTP Middleware](../http/middleware.md) — middleware pipeline model, including the default `csrf` alias.
-- [Forms](../view/forms.md) — using `FormHelper` to inject CSRF tokens into HTML forms.
+- [HTTP Middleware](../http/middleware.md) - register the default `csrf` alias
+- [Forms](../view/forms.md) - use `FormHelper` to inject CSRF tokens into HTML forms

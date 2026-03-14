@@ -1,10 +1,10 @@
 # Route Bindings
 
-`Fyre\Router\Middleware\SubstituteBindingsMiddleware` enables route bindings: it can replace matched route arguments with ORM entities (see [Entities](../orm/entities.md)) before your handler is called. When enabled, a route path like `posts/{post}` (normalized to `/posts/{post}` when connected) can pass a resolved `Post` entity instead of the raw `{post}` value.
+Use route bindings when you want route placeholders to resolve to ORM entities before your controller action or closure runs.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Enabling route bindings](#enabling-route-bindings)
 - [Defining bindable routes](#defining-bindable-routes)
   - [Connecting routes with router methods](#connecting-routes-with-router-methods)
@@ -15,7 +15,7 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
 Route bindings are for handlers that want typed entities (for example `Post $post`) while keeping routes readable (for example `posts/{post}`):
 
@@ -25,7 +25,7 @@ Route bindings are for handlers that want typed entities (for example `Post $pos
 
 ## Enabling route bindings
 
-Bindings are performed by `SubstituteBindingsMiddleware`, which is mapped by default as the `bindings` middleware alias (see [HTTP Middleware](../http/middleware.md)). It must run after router middleware so the request already has `route` and `routeArguments` attributes.
+Bindings are performed by `SubstituteBindingsMiddleware`, which is mapped by default as the `bindings` middleware alias (see [HTTP Middleware](../http/middleware.md)). It must run after router middleware.
 
 ```php
 use Fyre\Core\Engine;
@@ -46,12 +46,12 @@ If you use route bindings, placeholders should be compatible with PHP parameter 
 
 ## Defining bindable routes
 
-A route argument is eligible for binding when:
+A route parameter is eligible for binding when:
 
-- the route matched and produced a `routeArguments` entry for the placeholder name (without `?` or any `:field` suffix), and
-- the destination handler has a parameter with the same name, typed as a subclass of `Fyre\ORM\Entity`.
+- the route placeholder name matches the handler parameter name, and
+- the handler parameter is typed as a subclass of `Fyre\ORM\Entity`
 
-Bindings reflect the destination signature, so they work with controller actions and closure routes.
+Bindings work with controller actions and closure routes.
 
 When a bindable argument cannot be resolved, bindings throw `Fyre\Http\Exceptions\NotFoundException`.
 
@@ -88,9 +88,9 @@ $router->get(
 
 ### Connecting routes with route attributes
 
-When using route discovery, you can define the placeholder name directly in the attribute path. If you rely on discovery conventions (no explicit `path`), placeholder segments generated from method parameters use the parameter name as-is (for example `$postId` becomes `{postId}`), which keeps them compatible with bindings.
+When using route discovery, you can define the placeholder name directly in the attribute path. If you rely on discovery conventions, placeholder segments generated from method parameters use the parameter name as-is (for example `$postId` becomes `{postId}`), which keeps them compatible with bindings.
 
-When you only need the raw matched route value rather than a bound ORM entity, `#[RouteArgument('postId')]` can inject it directly through the container; see [Contextual attributes](../core/contextual-attributes.md).
+When you only need the raw matched route value rather than a bound entity, `#[RouteArgument('postId')]` can inject it directly; see [Contextual attributes](../core/contextual-attributes.md).
 
 ```php
 use Fyre\Router\Attributes\Get;
@@ -128,8 +128,8 @@ When multiple entity parameters are bound, bindings pass the most recently resol
 
 In practice:
 
-- Put parameters in parent → child order (for example `$post` then `$comment`).
-- Ensure the ORM relationships needed for scoping exist (see [ORM Relationships](../orm/relationships.md)).
+- put parameters in parent -> child order (for example `$post` then `$comment`)
+- ensure the ORM relationships needed for scoping exist (see [ORM Relationships](../orm/relationships.md))
 
 ### Example
 
@@ -142,7 +142,7 @@ $router->get(
 );
 ```
 
-In this example, `$comment` is resolved with `$post` as the parent. Scoping only applies when the child model has a relationship matching the parent entity’s `source` value.
+In this example, `$comment` is resolved with `$post` as the parent.
 
 ## Behavior notes
 
@@ -153,7 +153,6 @@ A few behaviors are worth keeping in mind:
 - Optional placeholders like `{post?}` are present as `null` when the segment is missing; use a nullable entity parameter (for example `Post|null`) to allow that case.
 - If an optional placeholder is missing and the parameter is a non-nullable entity type (for example `Post $post`), bindings will throw `NotFoundException`.
 - Placeholder names must match handler parameter names exactly; placeholders like `{post-id}` produce an argument key of `post-id` and cannot bind to a PHP parameter name like `$postId`.
-- When using discovery conventions, placeholders derived from method parameters already match the handler parameter names.
 - For nested binding, parameter order matters: the “parent” for a binding is the last successfully resolved entity parameter.
 
 ## Related

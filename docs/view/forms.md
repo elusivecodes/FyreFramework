@@ -1,10 +1,12 @@
 # Forms
 
-`Fyre\View\Helpers\FormHelper` generates HTML forms and form fields for templates. It can resolve a form context from supported items such as ORM entities or `Fyre\Form\Form` instances to provide default values and derive field metadata from validation rules and schema information.
+Use `$this->Form` when you want to generate form tags and fields from templates.
+
+It can use an ORM entity or a `Fyre\Form\Form` instance to supply default values and field metadata.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Opening and closing forms](#opening-and-closing-forms)
   - [Basic forms](#basic-forms)
   - [Multipart forms](#multipart-forms)
@@ -13,11 +15,11 @@
   - [Choosing an input type](#choosing-an-input-type)
   - [Common field methods](#common-field-methods)
   - [Labels, fieldsets, and buttons](#labels-fieldsets-and-buttons)
-- [Form context and defaults](#form-context-and-defaults)
+- [Form values and defaults](#form-values-and-defaults)
   - [Value resolution order](#value-resolution-order)
-  - [Entity-backed context](#entity-backed-context)
-  - [Form-backed context](#form-backed-context)
-  - [How types and attributes are derived](#how-types-and-attributes-are-derived)
+  - [Using an entity](#using-an-entity)
+  - [Using a `Form` instance](#using-a-form-instance)
+  - [How field types and attributes are chosen](#how-field-types-and-attributes-are-chosen)
 - [CSRF integration](#csrf-integration)
 - [Method guide](#method-guide)
   - [`FormHelper`](#formhelper)
@@ -28,11 +30,18 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
 Use `$this->Form` in templates to generate form tags and inputs without hand-building attributes like `name`, `id`, `value`, and `required`.
 
 Most examples on this page assume you are in a template, where `$this` is the current `View` and `$this->Form` is a `FormHelper`.
+
+A typical workflow is:
+
+1. Open the form with `open()` or `openMultipart()`.
+2. Pass an entity or form object if you want defaults and metadata.
+3. Render fields with helper methods such as `text()`, `select()`, or `input()`.
+4. Close the form with `close()`.
 
 ## Opening and closing forms
 
@@ -79,7 +88,7 @@ If you pass an `$idPrefix` to `open()`/`openMultipart()`, it is prepended (as do
 Use `input()` when you want the helper to choose a renderer:
 
 - If you pass `['type' => '...']`, that method name is used (for example, `type: 'email'` calls `email()`).
-- Otherwise, the active form context chooses via `Context::getType($key)` (for example, `EntityContext` can derive types from schema and relationships).
+- Otherwise, the helper chooses based on the current form source (for example, an entity can derive types from schema and relationships).
 
 ```php
 echo $this->Form->input('email', ['type' => 'email']);
@@ -124,40 +133,40 @@ echo $this->Form->button('Save', ['type' => 'submit']);
 echo $this->Form->fieldsetClose();
 ```
 
-## Form context and defaults
+## Form values and defaults
 
-Form context controls value/default resolution and field metadata such as type, required, min/max, step, max length, and option values.
+The helper can use a backing entity or form object to supply values, defaults, and field metadata such as type, required, min/max, step, max length, and option values.
 
 ### Value resolution order
 
 For most field methods, the helper resolves the field value in this order:
 
 1) **Request data**: if the computed/provided `name` exists in the parsed request body and the parsed body is an array, that value wins (useful for redisplaying user input after validation errors).
-2) **Context value**: `Context::getValue($key)` (for example, the current entity value).
+2) **Backed value**: the current value from the entity or form object.
 3) **Explicit default**: `['default' => ...]` in attributes.
-4) **Context default**: `Context::getDefaultValue($key)` (for `EntityContext`, this is derived from schema defaults for new entities).
+4) **Backed default**: a default derived from the current entity or form object.
 
-### Entity-backed context
+### Using an entity
 
-Calling `open($entity)` uses `EntityContext`, which:
+Calling `open($entity)` lets the helper read values and metadata from an ORM entity:
 
 - reads values from the entity (supports dot notation through related entities and arrays)
 - derives `required` from the model validator where possible
 - derives type and numeric/text constraints from the model schema where possible
 
-### Form-backed context
+### Using a `Form` instance
 
-Calling `open($form)` with a `Fyre\Form\Form` instance uses `FormContext`, which:
+Calling `open($form)` with a `Fyre\Form\Form` instance lets the helper read values and metadata from that form object:
 
 - reads values with `Form::get($key)`
 - derives types and constraints from the form schema
 - derives `required`, min/max-like constraints, and max length from the form validator
 
-If you call `open()` with no item, `NullContext` is used. It provides no values, options, or constraints.
+If you call `open()` with no item, the helper has no backing source for values, options, or constraints.
 
-### How types and attributes are derived
+### How field types and attributes are chosen
 
-When using `EntityContext`, type selection is influenced by both relationships and schema:
+When using an entity-backed form, type selection is influenced by both relationships and schema:
 
 - If `$key` refers to a field that is a foreign key on an inverse relationship, `getType()` returns `select`.
 - If `$key` is a primary key column, `getType()` returns `hidden`.

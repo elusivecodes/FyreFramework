@@ -1,10 +1,12 @@
 # Database queries
 
-Database queries are builder objects created from a `Fyre\DB\Connection`. They compile to SQL, execute with bound values by default, and return a `Fyre\DB\ResultSet` for consuming rows.
+Use query builders when you want to write SQL without moving up to the ORM layer.
+
+Start with a `Connection`, build the query you need, then call `execute()`.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Query builder basics](#query-builder-basics)
   - [Query types and SQL mapping](#query-types-and-sql-mapping)
   - [Tables and aliases](#tables-and-aliases)
@@ -24,14 +26,23 @@ Database queries are builder objects created from a `Fyre\DB\Connection`. They c
   - [Upsert queries](#upsert-queries)
   - [Insert-from queries](#insert-from-queries)
   - [Update-batch queries](#update-batch-queries)
-- [Working with ResultSet](#working-with-resultset)
+- [Working with `ResultSet`](#working-with-resultset)
   - [Indexed access](#indexed-access)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use query builders when you want composable SQL with predictable binding and a consistent result interface, without opting into the ORM layer.
+Query builders are a good fit when you want to:
+
+- write SQL in application code without stitching strings together
+- keep values parameterized by default
+- stay close to SQL while still working with a consistent result object
+
+Most examples on this page assume you already have a `$db` (`Connection`) instance.
+
+- `db()` returns the default connection (see [Database connections](connections.md)).
+- Otherwise, resolve a `Connection` from your container and pass it into the code that needs it.
 
 ## Query builder basics
 
@@ -42,16 +53,9 @@ Queries are created by a connection and all share the same lifecycle:
 3. Execute it through the connection.
 4. Consume the returned `ResultSet`.
 
-`Query::execute()` performs the compile/bind/execute flow for you by generating SQL, preparing bindings when enabled, and calling `Connection::execute()`.
+`Query::execute()` performs the compile/bind/execute flow for you by generating SQL, preparing bindings, and calling `Connection::execute()`.
 
 Optionally, compile the SQL first with `Query::sql()` (for debugging/logging or when executing manually with `Connection::execute()`).
-
-After a successful `execute()`, the query’s internal “dirty” state is reset, which can matter if you reuse the same query object across multiple operations.
-
-Most examples on this page assume you already have a `$db` (`Connection`) instance.
-
-- `db()` returns the default connection (see [Database connections](connections.md)).
-- Otherwise, resolve a `Connection` from your container and pass it into the code that needs it.
 
 ### Query types and SQL mapping
 
@@ -88,9 +92,9 @@ Common query methods (available on all query types):
 
 ### Binding and expressions
 
-When a `ValueBinder` is used, values compile into placeholders like `:p0` and the binder stores the corresponding values for execution.
+Queries compile values into placeholders like `:p0`, and the binder stores the corresponding values for execution.
 
-- `Query::execute()` creates a binder automatically when binding is enabled on the query (the default behavior).
+- `Query::execute()` creates a binder automatically.
 - `ValueBinder::bindings()` returns the values keyed by placeholder name (without the leading `:`), suitable for `Connection::execute()`.
 - `Connection::execute($sql, $params)` supports both positional parameters (a list) and named parameters (an associative array keyed by placeholder name without `:`).
 
@@ -121,9 +125,9 @@ $bindings = $binder->bindings();
 
 ### Condition arrays
 
-The query compiler supports a compact condition-array format (used by `where()` and `having()`). Both methods also accept a raw string, which is treated as a literal SQL fragment and bypasses binding.
+The query compiler supports a compact condition-array format (used by `where()` and `having()`). Both methods also accept a raw string, which is treated as a literal SQL fragment and bypasses the normal parameter binding path.
 
-- **Equality by default**: `['id' => 5]` compiles as `id = :p0` when a binder is used.
+- **Equality by default**: `['id' => 5]` compiles as `id = :p0`.
 - **Operator suffixes**: append an operator to the key (for example `>=`, `!=`, `LIKE`, `IN`, `IS NOT`).
 - `IN` / `NOT IN`: an array value compiles as `IN (...)` by default, or respect an explicit `IN` / `NOT IN` suffix.
 - **Logical groups**: use `['and' => [...]]`, `['or' => [...]]`, `['not' => [...]]` (nestable).
@@ -166,7 +170,7 @@ $rows = $db->select([
     ])
     ->from('users')
     ->where([
-        0 => 'archived = 0',
+       'archived = 0',
     ])
     ->execute()
     ->all();
@@ -250,7 +254,7 @@ $rows = $db->select('*')
         'Items' => [
             'table' => 'items',
             'type' => 'LEFT',
-            'using' => '(order_id)',
+            'using' => 'order_id',
         ],
     ])
     ->execute()
@@ -376,7 +380,10 @@ This query type compiles to an insert statement with a database-specific conflic
 
 The `upsert()` argument (`$conflictKeys`) defines which column(s) determine a conflict. The exact SQL generated is database-specific, but conceptually it is “insert, and if these key(s) conflict, update”.
 
-`UpsertQuery::values()` takes an optional `$excludeUpdateKeys` list of columns to skip in the “update-on-conflict” portion (for example, primary keys or immutable fields).
+- On PostgreSQL and SQLite, `conflictKeys` is used to build the `ON CONFLICT (...)` target.
+- On MySQL, `conflictKeys` is ignored for SQL generation because MySQL uses `ON DUPLICATE KEY UPDATE`.
+
+`UpsertQuery::values()` takes an optional `$excludeUpdateKeys` list of columns to skip in the “update-on-conflict” portion (for example, primary keys or immutable fields). `conflictKeys` are always excluded from the update set, even if you do not include them explicitly in `$excludeUpdateKeys`.
 
 ```php
 $db->upsert('id')
@@ -425,9 +432,9 @@ $db->updateBatch('users')
     ->execute();
 ```
 
-## Working with ResultSet
+## Working with `ResultSet`
 
-`Fyre\DB\ResultSet` is a buffered iterator over a PDO statement. You can iterate it, fetch rows by index, or stream forward one row at a time.
+Use `ResultSet` to iterate rows, fetch by index, or consume the full result as an array.
 
 Buffering vs streaming:
 
@@ -443,9 +450,9 @@ $result = $db->select('*')
     ->where(['level' => 'error'])
     ->execute();
 
-$count = 0;
+$messages = [];
 foreach ($result as $row) {
-    $count++;
+    $messages[] = $row['message'];
 }
 ```
 
@@ -476,7 +483,7 @@ Common `ResultSet` methods:
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Casting a query to string uses `Query::__toString()` → `sql()` with no binder, so values are inlined/quoted instead of using placeholders.
 - Numeric keys in condition/data arrays are treated as raw SQL fragments and bypass value binding.

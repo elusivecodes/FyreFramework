@@ -1,11 +1,13 @@
 # Fixtures
 
-Fixtures provide a repeatable way to load known records into the database for tests, using framework-managed discovery and execution. For how fixtures are applied automatically in `TestCase`, see [`TestCase`](test-case.md).
+Use fixtures when you want repeatable database rows for tests.
+
+Fixtures are classes that define rows, resolve the target model, and can be loaded or truncated from tests. For automatic per-test fixture handling, see [`TestCase`](test-case.md).
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Discovery and registration](#discovery-and-registration)
+- [Start here](#start-here)
+- [Finding fixtures](#finding-fixtures)
   - [Naming conventions](#naming-conventions)
   - [Managing namespaces](#managing-namespaces)
 - [Defining fixture data](#defining-fixture-data)
@@ -21,16 +23,16 @@ Fixtures provide a repeatable way to load known records into the database for te
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-A fixture is a class that holds a dataset (rows) and knows how to insert it into the table for a model.
+The usual fixture workflow is:
 
-Fixtures are designed to be:
-- easy to discover by name (an *alias*)
-- easy to reuse across tests (a shared instance per alias)
-- explicit about what gets written to the database
+1. Create a fixture class that extends `Fixture`.
+2. Register one or more fixture namespaces.
+3. Resolve fixtures by alias through `FixtureRegistry`.
+4. Run them before a test and truncate them after, or let [`TestCase`](test-case.md) do that for you.
 
-## Discovery and registration
+## Finding fixtures
 
 Fixture discovery is handled by `Fyre\TestSuite\Fixture\FixtureRegistry`.
 
@@ -38,7 +40,7 @@ The registry resolves fixtures by:
 1. Iterating over configured namespaces (in order)
 2. Building a candidate class name using `{Namespace}{Alias}Fixture`
 3. Accepting the first class found that is a subclass of `Fyre\TestSuite\Fixture\Fixture`
-4. Building the fixture instance via the container (so constructor dependencies can be injected)
+4. Building the fixture instance via the container
 
 ### Naming conventions
 
@@ -126,8 +128,6 @@ $fixtureRegistry->use('Items');
 
 ## Method guide
 
-Methods below refer to `Fyre\TestSuite\Fixture\FixtureRegistry` and `Fyre\TestSuite\Fixture\Fixture`.
-
 Most examples assume you already have a `$fixtureRegistry` instance.
 
 ### `FixtureRegistry`
@@ -157,7 +157,7 @@ $fixture->run();
 
 #### **Unload a fixture** (`unload()`)
 
-Remove a cached fixture instance so it will be rebuilt next time it is used.
+Remove a cached fixture instance so it will be rebuilt the next time you use it.
 
 Arguments:
 - `$alias` (`string`): the fixture alias to unload.
@@ -265,7 +265,7 @@ $model = $fixtureRegistry->use('Items')->getModel();
 
 A few behaviors are worth keeping in mind:
 
-- Fixture discovery is namespace-order dependent: when multiple namespaces contain a fixture for the same alias, the first match wins.
+- Fixture discovery is namespace-order dependent, so when multiple namespaces contain a fixture for the same alias, the first match wins.
 - `$fixtureRegistry->use('ItemsFixture')` looks for an `ItemsFixtureFixture` class; use the alias without the suffix (`Items`).
 - `FixtureRegistry::clear()` resets both the cached fixtures *and* the configured namespaces.
 - `FixtureRegistry::use()` returns a shared instance per alias; call `unload()` to force a rebuild (including any constructor-injected dependencies).

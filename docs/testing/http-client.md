@@ -1,22 +1,27 @@
 # HTTP Client Testing
 
-`HttpClientTestTrait` provides PHPUnit helpers for mocking `Fyre\Http\Client` responses in tests and clearing those mocks after each test.
+Use `HttpClientTestTrait` when your code calls `Fyre\Http\Client` and you want tests without real network traffic.
+
+The trait lets you register mock responses for common HTTP verbs and clears them automatically after each test.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
-- [How it works](#how-it-works)
+- [Start here](#start-here)
+- [Mocking responses](#mocking-responses)
+- [Matching requests](#matching-requests)
 - [Method guide](#method-guide)
   - [`HttpClientTestTrait`](#httpclienttesttrait)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use `HttpClientTestTrait` when you want tests that exercise code using `Client` without performing real network I/O.
+The usual workflow is:
 
-## Quick start
+1. Create a mock `Response`.
+2. Register it for the verb and URL you expect.
+3. Run the code that uses `Client`.
+4. Assert against the returned response.
 
 Mock a `GET` request and assert that your code received the expected response:
 
@@ -48,13 +53,21 @@ final class ApiClientTest extends TestCase
 }
 ```
 
-## How it works
+## Mocking responses
 
-`HttpClientTestTrait` registers mock responses on `Client` and clears them automatically after each test.
+Use the verb-specific helpers to register mock responses:
 
-- Registers mock responses via `Client::addMockResponse()` (method + URL).
-- Optionally filters matches with a callback (`Closure(RequestInterface): bool`).
-- Clears all mocks after each test using PHPUnit’s `#[After]` hook.
+- `mockClientGet()`
+- `mockClientPost()`
+- `mockClientPut()`
+- `mockClientPatch()`
+- `mockClientDelete()`
+
+Each helper takes a URL, a `Response`, and an optional match callback.
+
+## Matching requests
+
+URL matching is exact by default, but `*` acts as a wildcard. If you need more control, pass a match callback that receives the `RequestInterface` and returns `true` only for requests you want that mock to handle.
 
 ## Method guide
 
@@ -177,11 +190,11 @@ $this->assertSame(204, $result->getStatusCode());
 
 A few behaviors are worth keeping in mind:
 
-- Mocking is global to `Client` (a static mock handler). The trait clears mocks after each test via `#[After]`.
+- Mocking is global to `Client`, and the trait clears mocks after each test.
 - URL matching is exact by default, but `*` in the mock URL matches any character sequence.
-- When a mock response matches, it is moved to the end of the internal list, which results in a round-robin rotation when multiple mocks match the same request.
+- When a mock response matches, it is moved to the end of the internal list, so multiple matching mocks rotate in round-robin order.
 - If you provide a match callback and it returns `false`, the next mock is checked instead.
-- If no mock response matches, a `RuntimeException` is thrown with a message like `No mock response found for http://localhost/test (GET).`.
+- If no mock response matches, a `RuntimeException` is thrown.
 - Mocks affect `Client::send()` and the verb methods (`get()`, `post()`, …). `Client::sendRequest()` bypasses the mock handler.
 
 ## Related

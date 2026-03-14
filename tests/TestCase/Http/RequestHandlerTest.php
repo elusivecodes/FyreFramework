@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\Http;
 
 use Fyre\Core\Container;
+use Fyre\Core\Traits\DebugTrait;
 use Fyre\Http\ClientResponse;
 use Fyre\Http\MiddlewareQueue;
 use Fyre\Http\MiddlewareRegistry;
@@ -15,11 +16,21 @@ use Psr\Http\Server\MiddlewareInterface;
 use Tests\Mock\Http\Middleware\ArgsMiddleware;
 use Tests\Mock\Http\Middleware\MockMiddleware;
 
+use function class_uses;
+
 final class RequestHandlerTest extends TestCase
 {
     protected Container $container;
 
     protected MiddlewareRegistry $middlewareRegistry;
+
+    public function testDebug(): void
+    {
+        $this->assertContains(
+            DebugTrait::class,
+            class_uses(RequestHandler::class)
+        );
+    }
 
     public function testDefaultResponse(): void
     {

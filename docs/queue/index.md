@@ -1,17 +1,16 @@
 # Queue
 
-Queue covers background jobs, message delivery constraints (delay/expiry/retries/uniqueness), handler configuration, and workers that execute jobs through the container.
+Use queue handlers when you want to move slow or retryable work out of the main request or command flow.
+
+Queue lets you push jobs, delay them, expire them, enforce uniqueness, and process them with long-running workers.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
-- [Mental model](#mental-model)
+- [Start here](#start-here)
+- [Queue overview](#queue-overview)
 - [Configuring queue handlers](#configuring-queue-handlers)
   - [Base handler options](#base-handler-options)
   - [Example configuration](#example-configuration)
-- [Selecting a handler](#selecting-a-handler)
-- [Building one-off handlers](#building-one-off-handlers)
 - [Built-in queue handlers](#built-in-queue-handlers)
   - [Redis](#redis)
 - [Writing jobs](#writing-jobs)
@@ -24,29 +23,18 @@ Queue covers background jobs, message delivery constraints (delay/expiry/retries
   - [`QueueManager`](#queuemanager)
   - [`Queue`](#queue-1)
   - [`Message`](#message)
-  - [`RedisQueue`](#redisqueue)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Queue handlers are a good fit when you need to:
+The usual queue workflow is:
 
-- run potentially slow work outside the main request/command flow
-- delay work until later (for example, “send in 5 minutes”)
-- retry work that can fail transiently (network calls, rate limits)
-- enforce uniqueness so the same job doesn’t enqueue repeatedly
-
-## Quick start
-
-A typical queue workflow looks like:
-
-1) Configure a queue handler in your app config (see [Configuring queue handlers](#configuring-queue-handlers)).
-2) Write a job class with a `run()` method (see [Writing jobs](#writing-jobs)).
-3) Push jobs with `QueueManager::push()` (see [Pushing jobs](#pushing-jobs)).
-4) Run a worker to process jobs (see [Queue Worker](worker.md) and [Console Commands](../console/commands.md#queueworker)).
-
-Example job and enqueue:
+1. Configure a handler under the `Queue` config key.
+2. Write a job class with a `run()` method.
+3. Push jobs with `QueueManager::push()` or `queue()`.
+4. Run a worker to process jobs.
+5. Inspect queue health with `stats()` or `queue:stats`.
 
 ```php
 use Fyre\Queue\QueueManager;
@@ -60,42 +48,39 @@ class SendWelcomeEmailJob
 }
 
 $queues = app(QueueManager::class);
-$email = 'user@example.com';
 
-$queues->push(SendWelcomeEmailJob::class, ['email' => $email]);
+$queues->push(SendWelcomeEmailJob::class, [
+    'email' => 'user@example.com',
+]);
 ```
 
-`queue($className, $arguments, $options)` pushes a job through the shared `QueueManager`; see [Helpers](../core/helpers.md).
+The `queue($className, $arguments, $options)` helper pushes a job through the shared `QueueManager`; see [Helpers](../core/helpers.md).
 
-```php
-queue(SendWelcomeEmailJob::class, ['email' => $email]);
-```
+## Queue overview
 
-## Mental model
+Most applications use the queue layer in four ways:
 
-The queue subsystem is built around four core types:
+- configure one or more named handlers through [Config](../core/config.md)
+- separate workloads into logical queue names such as `emails` or `search`
+- push plain PHP job classes with arguments and delivery options
+- run workers that consume and execute those jobs
 
-- `QueueManager` loads handler configurations from [Config](../core/config.md) (the `Queue` key) and provides shared handler instances by config key.
-- `Queue` is the handler contract. Handlers decide how messages are stored and how retries/uniqueness are enforced.
-- `Message` is a job payload plus delivery constraints (delay/expiry, retries, uniqueness).
-- `Worker` polls a handler, executes messages, and dispatches lifecycle events.
+Two queue settings are easy to confuse:
 
-A “job” is represented by a class name and method name stored on the message (`className` + `method`), plus an `arguments` array passed to the container call.
+- `config` selects which configured handler to use
+- `queue` selects which logical queue name inside that handler to use
 
-The worker executes jobs via `Container::call()`, which means:
-
-- message arguments can be passed by **parameter name** (recommended) or positionally
-- any remaining parameters can be resolved by **type-hint** through the container
+Use `config` when you need different backends or connections. Use `queue` when you want to separate workloads within the same backend.
 
 ## Configuring queue handlers
 
-Queue handler configuration is read from the `Queue` key in your config (see [Config](../core/config.md)). Each named config entry is an options array passed to `QueueManager::build()`.
+Queue handler configuration is read from the `Queue` key in your app config. Each named entry is an options array used to build a handler.
 
 ### Base handler options
 
-These options apply to all queue handlers:
+These options apply to all handlers:
 
-- `className` (`class-string`) — handler class name (must extend `Queue`).
+- `className` (`class-string`) - handler class name, which must extend `Queue`
 
 Other options depend on the selected handler.
 
@@ -115,55 +100,14 @@ return [
 ];
 ```
 
-## Selecting a handler
-
-Use a config key to select which stored handler config to use. When no key is provided, `QueueManager::DEFAULT` (`default`) is used.
+Use `QueueManager::use()` to get a shared handler for one of those config keys:
 
 ```php
-use Fyre\Queue\QueueManager;
-
-function queueStats(QueueManager $queues): array
-{
-    $default = $queues->use();
-
-    return $default->stats();
-}
+$queue = $queues->use('default');
+$stats = $queue->stats();
 ```
 
-There are two common routing settings and they solve different problems:
-
-- `config` selects *which handler configuration* to use (for example, which Redis connection).
-- `queue` selects *which logical queue* inside that handler to use (for example, `emails` vs `search`).
-
-You can set both when enqueueing:
-
-```php
-$queues->push(SendWelcomeEmailJob::class, ['email' => $email], [
-    'config' => 'default',
-    'queue' => 'emails',
-]);
-```
-
-## Building one-off handlers
-
-Use `build()` to construct a handler directly from options without storing it under a key (and without sharing it).
-
-```php
-use Fyre\Queue\Handlers\RedisQueue;
-use Fyre\Queue\QueueManager;
-
-function connectToAltRedis(QueueManager $queues): void
-{
-    $temp = $queues->build([
-        'className' => RedisQueue::class,
-        'host' => '127.0.0.1',
-        'port' => 6379,
-        'database' => 2,
-    ]);
-
-    $temp->reset();
-}
-```
+If you need a one-off handler without storing it under a config key, use `QueueManager::build()`; see the [Method guide](#method-guide).
 
 ## Built-in queue handlers
 
@@ -171,36 +115,28 @@ The framework ships built-in handlers under `Fyre\Queue\Handlers\*`.
 
 ### Redis
 
-Queue handler backed by Redis.
+`RedisQueue` stores queued messages in Redis and is a good fit when you need delayed jobs, retries, and simple queue inspection.
 
-`RedisQueue` requires the `redis` PHP extension (phpredis).
-
-Security note: `RedisQueue` stores `Message` objects using PHP serialization. Treat your Redis instance as trusted infrastructure (restrict network access, require auth/TLS as appropriate). If an attacker can write to Redis, they may be able to inject malicious serialized payloads.
+It requires the `redis` PHP extension.
 
 Options:
 
-- `host` (`string`) — Redis host (default: `127.0.0.1`)
-- `port` (`int`) — Redis port (default: `6379`)
-- `password` (`string|null`) — Redis password (default: `null`)
-- `database` (`int|null`) — Redis database index (default: `null`)
-- `timeout` (`int`) — connection timeout in seconds (default: `0`)
-- `persist` (`bool`) — use a persistent connection (default: `true`)
-- `tls` (`bool`) — connect using `tls://` (default: `false`)
-- `ssl` (`array`) — TLS client settings (all default to `null`):
-  - `key` (`string|null`)
-  - `cert` (`string|null`)
-  - `ca` (`string|null`)
+- `host` (`string`) - Redis host (default: `127.0.0.1`)
+- `port` (`int`) - Redis port (default: `6379`)
+- `password` (`string|null`) - Redis password (default: `null`)
+- `database` (`int|null`) - Redis database index (default: `null`)
+- `timeout` (`int`) - connection timeout in seconds (default: `0`)
+- `persist` (`bool`) - whether to use a persistent connection (default: `true`)
+- `tls` (`bool`) - whether to connect using `tls://` (default: `false`)
+- `ssl` (`array`) - TLS client settings (`key`, `cert`, `ca`)
+
+`RedisQueue` stores `Message` objects using PHP serialization, so treat the Redis instance as trusted infrastructure and lock it down accordingly.
 
 ## Writing jobs
 
-Jobs are plain classes with a method (default `run`) that the worker can call.
+Jobs are plain classes with a method that the worker can call. The default method name is `run`.
 
-When writing jobs:
-
-- Prefer **named arguments** when pushing jobs (`['reportId' => 123]`) so the call stays stable if you reorder parameters.
-- Job methods can also type-hint services; the container resolves those automatically.
-
-A job is treated as failed when it returns `false` or throws an exception. Any other return value is treated as success.
+Prefer named arguments when you push jobs so the call stays readable and stable if you reorder parameters later. You can also type-hint services, and the container will resolve them when the job runs.
 
 ```php
 class GenerateReportJob
@@ -211,78 +147,75 @@ class GenerateReportJob
     }
 }
 
-$queues->push(GenerateReportJob::class, ['reportId' => $reportId]);
+$queues->push(GenerateReportJob::class, [
+    'reportId' => $reportId,
+]);
 ```
+
+A job is treated as failed when it returns `false` or throws an exception. Any other return value is treated as success.
 
 ## Pushing jobs
 
-Use `QueueManager::push()` to enqueue a job class + method call. The default message method is `run`.
+Use `QueueManager::push()` to enqueue a job class and method call.
 
 ```php
-$queues->push(SearchIndexJob::class, ['postId' => $postId], [
-    // Queue name inside the handler (use this to separate workloads).
+$queues->push(SearchIndexJob::class, [
+    'postId' => $postId,
+], [
+    'config' => 'default',
     'queue' => 'search',
-
-    // Delay execution until later.
     'delay' => 60,
-
-    // Prevent enqueuing duplicates (handler-dependent).
     'unique' => true,
 ]);
 ```
 
-To call a non-`run` method, set the `method` option:
+To call a method other than `run`, set the `method` option:
 
 ```php
-$queues->push(CacheWarmupJob::class, ['userId' => $userId], [
+$queues->push(CacheWarmupJob::class, [
+    'userId' => $userId,
+], [
     'method' => 'handle',
 ]);
 ```
 
 ### Message options
 
-Options are stored on the message and interpreted by the worker and/or the handler:
+The most common message options are:
 
-- `className` (`class-string`) — job class name (set by `QueueManager::push()`)
-- `arguments` (`array<string, mixed>`) — job arguments (set by `QueueManager::push()`)
-- `method` (`string`) — job method name (default: `run`)
-- `config` (`string`) — queue handler config key (default: `QueueManager::DEFAULT`)
-- `queue` (`string`) — queue name inside the handler (default: `Queue::DEFAULT`)
-- `delay` (`int`) — seconds to delay before becoming ready (converted to `after` at construction)
-- `expires` (`int`) — seconds until the message expires (converted to `before` at construction)
-- `after` (`int|null`) — absolute ready timestamp (seconds since epoch)
-- `before` (`int|null`) — absolute expiry timestamp (seconds since epoch)
-- `retry` (`bool`) — whether retries are allowed (default: `true`)
-- `maxRetries` (`int`) — maximum retry attempts (default: `5`)
-- `unique` (`bool`) — whether the handler should enforce uniqueness (default: `false`)
+- `method` (`string`) - job method name (default: `run`)
+- `config` (`string`) - queue handler config key (default: `default`)
+- `queue` (`string`) - logical queue name inside the handler (default: `default`)
+- `delay` (`int`) - delay in seconds before the job becomes ready
+- `expires` (`int`) - number of seconds before the job expires
+- `retry` (`bool`) - whether retries are allowed (default: `true`)
+- `maxRetries` (`int`) - maximum retry attempts (default: `5`)
+- `unique` (`bool`) - whether the handler should enforce uniqueness (default: `false`)
 
-If you pass both `delay` and `after`, `after` takes precedence. If you pass both `expires` and `before`, `before` takes precedence.
+For more direct control, you can also set absolute `after` and `before` timestamps instead of `delay` and `expires`.
 
 ## Processing jobs
 
-Messages are processed by a `Worker`, which repeatedly calls `Queue::pop()`, then executes the job via the container and marks it as `complete()` or `fail()`.
+Jobs are processed by a [Queue Worker](worker.md). The worker pops the next available message, executes the job, and marks it as complete or failed.
 
-For the runtime loop, worker options, and operational guidance, see [Queue Worker](worker.md).
+The built-in way to run a worker is the `queue:worker` console command; see [Console Commands](../console/commands.md#queueworker).
 
-Queues are designed for at-least-once processing. A job may run more than once (for example, due to retries or crashes). Prefer idempotent job design (safe to run multiple times).
+Queues are designed for at-least-once processing. A job may run more than once, so prefer idempotent job design.
 
 ## Inspecting queues
 
-Use `Queue::stats()` to inspect the current queue state. For `RedisQueue`, stats include counts for `queued`, `delayed`, `completed`, `failed`, and `total`.
+Use `Queue::stats()` to inspect the current queue state and `Queue::queues()` to list known queue names.
 
 ```php
-use Fyre\Queue\QueueManager;
-
-$queues = app(QueueManager::class);
-
 $queue = $queues->use();
+
 $queueNames = $queue->queues();
 $stats = $queue->stats('search');
 ```
 
-You can also view stats from the CLI using `queue:stats` (see [Console Commands](../console/commands.md#queuestats)).
+With `RedisQueue`, stats include `queued`, `delayed`, `completed`, `failed`, and `total`.
 
-Run it via argv parsing:
+You can also inspect queue stats from the CLI using `queue:stats`; see [Console Commands](../console/commands.md#queuestats).
 
 ```php
 $commandRunner->handle(['app', 'queue:stats']);
@@ -293,59 +226,59 @@ $commandRunner->handle(['app', 'queue:stats', '--config', 'default', '--queue', 
 
 The worker dispatches queue lifecycle events through the event system:
 
-- `Queue.start` — `message`
-- `Queue.success` — `message`
-- `Queue.failure` — `message`, `shouldRetry`
-- `Queue.exception` — `message`, `exception`, `shouldRetry`
-- `Queue.invalid` — `message`
+- `Queue.start` - `message`
+- `Queue.success` - `message`
+- `Queue.failure` - `message`, `shouldRetry`
+- `Queue.exception` - `message`, `exception`, `shouldRetry`
+- `Queue.invalid` - `message`
 
-For event listening and handler patterns, see [Events](../events/index.md).
+For event listening patterns, see [Events](../events/index.md).
 
 ## Method guide
 
-This section focuses on the methods you’ll use most when configuring handlers, pushing jobs, and building custom queue workflows.
-
-Examples below assume `$queues` is a `QueueManager` instance, `$queue` is a `Queue` instance, and `$message` is a `Message` instance unless the snippet is specifically about constructing one of them.
+Examples below assume `$queues` is a `QueueManager` instance, `$queue` is a `Queue` instance, and `$message` is a `Message` instance.
 
 ### `QueueManager`
 
 #### **Push a job** (`push()`)
 
-Queue a job as a class + method call. This builds a `Message` from the supplied `$arguments` and `$options`, selects the handler via the message `config` option, and enqueues the message.
+Queue a job as a class and method call.
 
 Arguments:
 - `$className` (`class-string`): job class name.
-- `$arguments` (`array<string, mixed>`): arguments passed to the container call.
-- `$options` (`array<string, mixed>`): message options (queue, delay, expires, retry, uniqueness, etc.).
+- `$arguments` (`array<string, mixed>`): arguments passed to the job method.
+- `$options` (`array<string, mixed>`): message options such as `queue`, `delay`, `expires`, and `unique`.
 
 ```php
-$queues->push(GenerateReportJob::class, ['reportId' => 123], [
-    'method' => 'run',
-    'queue' => 'default',
+$queues->push(GenerateReportJob::class, [
+    'reportId' => 123,
+], [
+    'queue' => 'reports',
     'delay' => 10,
-    'unique' => true,
 ]);
 ```
 
 #### **Use a configured handler** (`use()`)
 
-Get a shared handler instance for a config key (building it on first use).
+Get a shared handler instance for a config key.
 
 Arguments:
-- `$key` (`string`): handler config key (defaults to `QueueManager::DEFAULT`).
+- `$key` (`string`): handler config key (default: `default`).
 
 ```php
-$queued = $queues->use()->stats()['queued'];
+$stats = $queues->use()->stats();
 ```
 
 #### **Build a one-off handler** (`build()`)
 
-Build a handler from an options array without storing or sharing it under a config key.
+Build a handler directly from an options array without storing it under a config key.
 
 Arguments:
-- `$options` (`array<string, mixed>`): handler options; must include `className` for a class extending `Queue`.
+- `$options` (`array<string, mixed>`): handler options, including `className`.
 
 ```php
+use Fyre\Queue\Handlers\RedisQueue;
+
 $tempQueue = $queues->build([
     'className' => RedisQueue::class,
     'host' => '127.0.0.1',
@@ -355,15 +288,31 @@ $tempQueue = $queues->build([
 $tempQueue->reset();
 ```
 
+#### **Read handler config** (`getConfig()`)
+
+Get all queue configs or one config by key.
+
+Arguments:
+- `$key` (`string|null`): config key, or `null` for all configs.
+
+```php
+$allConfigs = $queues->getConfig();
+$defaultConfig = $queues->getConfig('default');
+```
+
 #### **Set handler config** (`setConfig()`)
 
-Register a handler configuration under a key. Keys are write-once: calling this method with an existing key throws an exception.
+Register a new queue config at runtime.
+
+The key must not already exist.
 
 Arguments:
 - `$key` (`string`): config key.
-- `$options` (`array<string, mixed>`): handler options (including `className`).
+- `$options` (`array<string, mixed>`): handler options.
 
 ```php
+use Fyre\Queue\Handlers\RedisQueue;
+
 $queues->setConfig('reports', [
     'className' => RedisQueue::class,
     'host' => '127.0.0.1',
@@ -372,164 +321,54 @@ $queues->setConfig('reports', [
 ]);
 ```
 
-#### **Read handler config** (`getConfig()`)
-
-Get all handler configs or a single config by key.
-
-Arguments:
-- `$key` (`string|null`): config key, or `null` to return all configs.
-
-```php
-$allConfigs = $queues->getConfig();
-$defaultConfig = $queues->getConfig('default');
-```
-
-#### **Check whether a config exists** (`hasConfig()`)
-
-`hasConfig()` checks whether a config exists.
-
-Arguments:
-- `$key` (`string`): config key (defaults to `QueueManager::DEFAULT`).
-
-```php
-$exists = $queues->hasConfig();
-```
-
-#### **Check whether a handler is loaded** (`isLoaded()`)
-
-`isLoaded()` checks whether a shared handler instance has been built for that key.
-
-Arguments:
-- `$key` (`string`): config key (defaults to `QueueManager::DEFAULT`).
-
-```php
-$loaded = $queues->isLoaded();
-```
-
-#### **Unload a handler** (`unload()`)
-
-Remove a handler instance and its config entry.
-
-Arguments:
-- `$key` (`string`): config key (defaults to `QueueManager::DEFAULT`).
-
-```php
-$queues->unload('reports');
-```
-
-#### **Clear all configs and instances** (`clear()`)
-
-Remove all handler configs and all shared instances from the manager.
-
-```php
-$queues->clear();
-```
-
 ### `Queue`
 
-`Queue` is an abstract base class that defines the public contract a handler must implement.
+#### **List queue names** (`queues()`)
 
-#### **Push a message** (`push()`)
-Add a message to the handler. Returns `false` when the handler declines to enqueue the message (for example, because it is expired or violates uniqueness constraints).
-
-Arguments:
-- `$message` (`Message`): message to enqueue.
-
-```php
-use Fyre\Queue\Message;
-
-$message = new Message([
-    'className' => GenerateReportJob::class,
-    'method' => 'run',
-    'arguments' => ['reportId' => 123],
-]);
-
-$ok = $queue->push($message);
-```
-
-#### **Pop the next message** (`pop()`)
-
-Pop the next ready message from a named queue. Returns `null` when the queue is empty.
-
-Arguments:
-- `$queue` (`string`): queue name (defaults to `Queue::DEFAULT`).
-
-```php
-$message = $queue->pop();
-
-if ($message) {
-    $queue->complete($message);
-}
-```
-
-#### **Mark completion** (`complete()`)
-
-Mark a message as successfully processed.
-
-Arguments:
-- `$message` (`Message`): processed message.
-
-```php
-$queue->complete($message);
-```
-
-#### **Mark failure and retry** (`fail()`)
-
-Mark a message as failed and optionally retry it. The handler decides how retries are implemented and returns whether the message was retried.
-
-Arguments:
-- `$message` (`Message`): failed message.
-
-```php
-$shouldRetry = $queue->fail($message);
-```
-
-#### **List queues** (`queues()`)
-
-Return the set of active queue names known to the handler.
+Return the set of queue names known to the handler.
 
 ```php
 $queueNames = $queue->queues();
 ```
 
-#### **Queue stats** (`stats()`)
+#### **Read queue stats** (`stats()`)
 
-Return queue statistics for a named queue.
+Return queue statistics for a queue name.
 
 Arguments:
-- `$queue` (`string`): queue name (defaults to `Queue::DEFAULT`).
+- `$queue` (`string`): queue name (default: `default`).
 
 ```php
-$stats = $queue->stats('default');
+$stats = $queue->stats('search');
 ```
 
 #### **Clear a queue** (`clear()`)
 
-`clear()` removes all items from a queue.
+Remove all pending items from a queue.
 
 Arguments:
-- `$queue` (`string`): queue name (defaults to `Queue::DEFAULT`).
+- `$queue` (`string`): queue name (default: `default`).
 
 ```php
-$queue->clear('default');
+$queue->clear('search');
 ```
 
 #### **Reset queue statistics** (`reset()`)
 
-`reset()` resets a queue’s statistics.
+Reset the stored counters for a queue.
 
 Arguments:
-- `$queue` (`string`): queue name (defaults to `Queue::DEFAULT`).
+- `$queue` (`string`): queue name (default: `default`).
 
 ```php
-$queue->reset('default');
+$queue->reset('search');
 ```
 
 ### `Message`
 
 #### **Validate a message** (`isValid()`)
 
-Check whether the target class exists and the configured method exists on that class. Invalid messages are skipped by the worker and emit `Queue.invalid`.
+Check whether the target class and method exist.
 
 ```php
 $ok = $message->isValid();
@@ -551,145 +390,33 @@ Check whether a message has expired.
 $expired = $message->isExpired();
 ```
 
-#### **Get ready timestamp** (`getAfter()`)
-
-Read the absolute ready timestamp (seconds since epoch).
-
-```php
-$after = $message->getAfter();
-```
-
 #### **Retry decisions** (`shouldRetry()`)
 
-Check whether a message should be retried. This method increments the retry attempt counter, so call it only once per failure.
+Check whether a message should be retried.
 
 ```php
 $shouldRetry = $message->shouldRetry();
 ```
 
-#### **Check uniqueness** (`isUnique()`)
+#### **Get a uniqueness hash** (`getHash()`)
 
-Check whether the message is marked as unique.
-
-```php
-$unique = $message->isUnique();
-```
-
-#### **Get a message hash** (`getHash()`)
-
-Use `getHash()` to identify messages for uniqueness checks (class name, method, and JSON-encoded arguments with sorted keys).
+Get a stable hash based on the class name, method, and arguments.
 
 ```php
-$hash = $message->isUnique() ? $message->getHash() : null;
-```
-
-#### **Get the queue name** (`getQueue()`)
-
-Read the configured queue name.
-
-```php
-$queueName = $message->getQueue();
-```
-
-#### **Get message config** (`getConfig()`)
-
-Read the full message option array.
-
-```php
-$config = $message->getConfig();
-```
-
-### `RedisQueue`
-
-`RedisQueue` implements the standard queue handler contract (see [`Queue`](#queue-1)) and adds Redis-specific behavior for delayed jobs and uniqueness.
-
-#### **Enqueue** (`push()`)
-
-Enqueue a message into Redis.
-
-If the message is not ready yet, it is stored as delayed until its `after` timestamp.
-
-Arguments:
-- `$message` (`Message`): message to enqueue.
-
-```php
-$ok = $queue->push($message);
-```
-
-#### **Dequeue** (`pop()`)
-
-Pop the next available message from Redis.
-
-When delayed messages become ready, they are moved into the main queue before popping.
-
-Arguments:
-- `$queue` (`string`): queue name (defaults to `Queue::DEFAULT`).
-
-```php
-$message = $queue->pop('search');
-```
-
-#### **Enforce uniqueness** (`push()`)
-
-When a message is marked unique, `RedisQueue` tracks a hash key to prevent enqueuing duplicates.
-
-```php
-$message = new Message([
-    'className' => GenerateReportJob::class,
-    'arguments' => ['reportId' => 123],
-    'unique' => true,
-]);
-
-$ok = $queue->push($message);
-```
-
-#### **Get queue stats** (`stats()`)
-
-Use the standard queue handler methods to inspect Redis queues.
-
-```php
-$defaultStats = $queue->stats();
-```
-
-#### **List queues** (`queues()`)
-
-List the active queue names known to Redis.
-
-```php
-$queueNames = $queue->queues();
-```
-
-#### **Clear a queue** (`clear()`)
-
-Remove all items from a queue.
-
-```php
-$queue->clear('default');
-```
-
-#### **Reset queue statistics** (`reset()`)
-
-Reset a queue’s statistics.
-
-```php
-$queue->reset('default');
+$hash = $message->getHash();
 ```
 
 ## Behavior notes
 
 A few behaviors are worth keeping in mind:
 
-- `delay` and `expires` are normalized into absolute `after` and `before` timestamps when the `Message` is constructed; creating messages long before enqueueing can shift timing unexpectedly.
-- Invalid messages (`Message::isValid() === false`) are skipped and emit `Queue.invalid`; expired messages are dropped silently (no events).
-- A job is considered failed when it returns `false` or throws; the handler decides whether to retry by implementing `Queue::fail()`.
-- `Message::shouldRetry()` increments an internal attempt counter; calling it more than once per failure can consume retries unintentionally.
-- `QueueManager::push()` does not surface the boolean return value from `Queue::push()`; handlers may decline to enqueue (for example, due to expiry or uniqueness) without raising an error.
-- `RedisQueue` uniqueness is based on `Message::getHash()` (class name, method, and JSON-encoded arguments with sorted keys).
-- `RedisQueue` retries have no built-in backoff: on failure, `RedisQueue::fail()` re-enqueues immediately when retries remain (unless the message already has a future `after` timestamp).
-- `RedisQueue` uniqueness only applies while a message is waiting in Redis (queued or delayed). The uniqueness key is removed when the message is popped, so duplicates can be enqueued again while the job is executing.
-- Design jobs to be idempotent (safe to run more than once) and side-effect aware, especially when enabling retries.
-- `Worker::run()` is not re-entrant and uses `pcntl_async_signals()` with handlers for `SIGTERM` and `SIGQUIT`.
-- Delays/expiries depend on system time. Keep worker hosts time-synced (for example via NTP) to avoid “early” or “late” execution when using `after`/`before`.
+- `delay` and `expires` are converted into absolute `after` and `before` timestamps when the `Message` is created.
+- Invalid messages are skipped and emit `Queue.invalid`; expired messages are dropped silently.
+- `QueueManager::push()` does not return whether the handler accepted the message, so uniqueness or expiry can prevent enqueueing without raising an error.
+- `Message::shouldRetry()` increments the retry counter, so call it only once for a given failure.
+- `RedisQueue` removes its uniqueness key when a message is popped, so uniqueness only applies while the job is waiting in Redis.
+- `RedisQueue` retries happen immediately unless the message already has a future `after` timestamp.
+- Delays and expiries depend on system time, so keep worker hosts time-synced.
 
 ## Related
 
@@ -698,4 +425,3 @@ A few behaviors are worth keeping in mind:
 - [Queue Worker](worker.md)
 - [Console Commands](../console/commands.md)
 - [Events](../events/index.md)
-- [Container](../core/container.md)

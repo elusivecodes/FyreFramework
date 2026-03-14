@@ -1,13 +1,15 @@
 # Forms
 
-`Fyre\Form\Form` provides a simple pattern for parsing input, validating it, and then running your own processing logic.
+Use `Fyre\Form\Form` when you want one class to own input validation, typed parsing, and post-validation processing.
+
+It works well for request payloads, settings forms, multi-step workflows, and other structured input that does not belong in the ORM.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Mental model](#mental-model)
+- [Start here](#start-here)
+- [Workflow overview](#workflow-overview)
 - [Defining a form](#defining-a-form)
-- [Schema and Fields](#schema-and-fields)
+- [Schema and fields](#schema-and-fields)
 - [Validation](#validation)
 - [Executing and processing](#executing-and-processing)
 - [Accessing data and errors](#accessing-data-and-errors)
@@ -17,29 +19,29 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use a form when you want a reusable, testable way to:
+Use a form when you want to:
 
-- parse an input array into typed values (based on a schema)
-- validate those parsed values (based on a validator)
+- validate an input array (based on a validator)
+- parse it into typed values (based on a schema)
 - run application-specific processing after validation succeeds
 
-Forms are application-layer workflow objects. They are not ORM entity forms; for entity/model validation workflows, use validators and rules directly (see [ORM](../orm/index.md)).
+Forms are not ORM entity forms. For entity and model validation workflows, use validators and rules directly; see [ORM](../orm/index.md).
 
 This page is about server-side parsing/validation. If you want to render HTML form markup in templates, see [Forms (view helper)](../view/forms.md).
 
-## Mental model
+## Workflow overview
 
-A form is a small workflow wrapper around two things:
+A form combines two things:
 
-- **Schema parsing**: known schema fields are parsed using their configured types; unknown keys are kept as-is.
-- **Validation**: a validator runs field rules and produces an error map keyed by field name.
+- **Validation**: a validator runs field rules against the raw input and produces an error map keyed by field name.
+- **Schema parsing**: after validation succeeds, known schema fields are parsed using their configured types; unknown keys are kept as-is.
 
-The default `execute()` flow is:
+`execute()` combines those steps into one workflow:
 
-1. Parse input using the schema.
-2. Validate parsed data (unless `execute(..., validate: false)`).
+1. Validate raw input (unless `execute(..., validate: false)`).
+2. Parse input using the schema.
 3. Call `process()` with the parsed data.
 
 ## Defining a form
@@ -82,7 +84,7 @@ class RegisterForm extends Form
 Extension points:
 
 - `buildSchema()` defines the schema fields used for parsing.
-- `buildValidator()` defines the validator rules used for validation.
+- `buildValidator()` defines the validator rules used for raw-input validation.
 - `process()` runs your processing logic after parsing (and validation, if enabled) succeeds.
 
 Example: execute a form and read errors.
@@ -101,9 +103,11 @@ if (!$form->execute($input)) {
 
 In an HTTP request handler, `$input` typically comes from the parsed request body (see [HTTP Requests](../http/requests.md)).
 
-## Schema and Fields
+## Schema and fields
 
-`Fyre\Form\Schema` is a registry of known fields. During `Form::execute()`, any input keys that match schema fields are parsed using the field type, and any unknown keys are stored as-is.
+`Fyre\Form\Schema` defines which input keys should be parsed and how they should be parsed. During `Form::execute()`, keys that match schema fields are parsed using the field type, and unknown keys are left unchanged.
+
+This is form schema metadata for input parsing. It is separate from the database schema layer documented under [Database Schema](../database/schema.md).
 
 Declare schema fields with:
 
@@ -111,7 +115,7 @@ Declare schema fields with:
 
 The `$options` array is passed as constructor arguments to `Fyre\Form\Field`. Common options include:
 
-- `type` (`string`): database type identifier used to parse the value (default: `string`).
+- `type` (`string`): type identifier used to parse the value (default: `string`).
 - `length` (`int|null`): optional length metadata stored on the field.
 - `precision` (`int|null`): optional precision metadata stored on the field.
 - `scale` (`int|null`): optional scale metadata stored on the field (for example, decimal scale).
@@ -131,7 +135,7 @@ For details on available type identifiers and how parsing works, see [Database t
 
 ## Validation
 
-`Form::getValidator()` lazily constructs a `Fyre\Form\Validator` instance via the container, calls `buildValidator()` so your form can attach rules, dispatches `Form.buildValidator`, and then caches the validator.
+When you first call `Form::getValidator()`, the form creates a `Fyre\Form\Validator`, lets your form attach rules in `buildValidator()`, dispatches `Form.buildValidator`, and then reuses that validator instance.
 
 To validate without processing, you can call:
 
@@ -139,7 +143,7 @@ To validate without processing, you can call:
 
 This populates `$form->getErrors()` and returns whether validation passed.
 
-`validate()` does not parse schema fields and does not update the form’s stored data. If you need schema parsing, use `execute()` (or parse input yourself and pass the parsed array to `validate()`).
+`validate()` does not parse schema fields and does not update the form’s stored data. If you need schema parsing, use `execute()`.
 
 If you need different rule sets, use separate form classes or inject a different `Validator` (via `setValidator()`).
 
@@ -151,8 +155,8 @@ For details on validators and rules, see [Validators](validators.md) and [Valida
 
 Execution flow:
 
-1. Parse input using the schema.
-2. If `$validate` is `true`, run `validate()` and stop on failure.
+1. If `$validate` is `true`, run `validate()` against the raw input and stop on failure.
+2. Parse input using the schema.
 3. Call `process(array $data): bool`.
 
 Override `process()` to implement your behavior. Return `true` for success or `false` to indicate failure.
@@ -166,7 +170,7 @@ After `execute()`, you can inspect:
 - `Form::getErrors(): array` — error map keyed by field.
 - `Form::getError(string $field): array` — errors for a single field.
 
-After `validate()`, only the error map is updated (the form’s stored data is unchanged).
+After `validate()`, only the error map is updated; the form’s stored data is unchanged. By contrast, a failed `execute()` leaves the raw submitted input in the stored data because parsing has not run yet.
 
 ## Method guide
 
@@ -176,7 +180,7 @@ Most examples below assume you already have a `$form` (a `Form` instance), plus 
 
 #### **Access schema and validator** (`getSchema()`, `getValidator()`)
 
-Retrieve the lazily-built schema or validator instance for inspection or customization. When a validator is first built, `getValidator()` also dispatches `Form.buildValidator`.
+Retrieve the schema or validator instance for inspection or customization. When the validator is first built, `getValidator()` also dispatches `Form.buildValidator`.
 
 ```php
 $schema = $form->getSchema();
@@ -185,7 +189,7 @@ $validator = $form->getValidator();
 
 #### **Execute the form** (`execute()`)
 
-Parse input using the schema, optionally validate it, and then call `process()` with the parsed data.
+Optionally validate raw input, then parse it using the schema, and call `process()` with the parsed data.
 
 Arguments:
 - `$data` (`array<string, mixed>`): the input data.
@@ -218,7 +222,7 @@ $email = $form->get('email');
 
 #### **Read validation errors** (`getErrors()`, `getError()`)
 
-Inspect validation errors after `validate()` or after `execute(..., validate: true)` fails.
+Inspect validation errors after `validate()` or after `execute(..., validate: true)` fails. On failed `execute()`, `getData()` still contains the raw input because parsing has not run yet.
 
 ```php
 $errors = $form->getErrors();
@@ -307,6 +311,7 @@ A few behaviors are worth keeping in mind:
 
 - `Form::execute()` parses only keys that are present in the input array; it does not automatically apply field defaults.
 - When `execute()` receives keys that are not present in the schema, it stores those values unchanged.
+- When `execute(..., validate: true)` fails, parsing does not run and the stored form data remains the raw input.
 - Field `length`, `precision`, `scale`, `default`, and optional `enumClass` values are stored on `Field` metadata.
 - If you call `execute(..., validate: false)`, the form’s existing error map is not updated until you call `validate()`.
 

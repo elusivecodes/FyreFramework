@@ -5,8 +5,7 @@
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
+- [Start here](#start-here)
 - [Constants](#constants)
 - [Method guide](#method-guide)
   - [Casing and identifiers](#casing-and-identifiers)
@@ -19,15 +18,13 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
 Use `Str` when you want consistent, reusable string operations without pulling in extra dependencies. It is an abstract class with static methods. Most methods are thin wrappers around PHP string functions, with a few convenience helpers for identifier-style casing.
 
 For pluralization/singularization and convention helpers for class/table names, see [Inflection](inflection.md).
 
 Examples on this page assume `Str` refers to `Fyre\Utility\Str`.
-
-## Quick start
 
 ```php
 $class = Str::pascal('user_profile'); // "UserProfile"
@@ -60,7 +57,7 @@ $html = Str::escape('<a href="?q=test">link</a>');
 
 ### Casing and identifiers
 
-#### **Convert to camelCase** (`camel()`)
+#### **Convert to `camelCase`** (`camel()`)
 
 A convenience wrapper around `pascal()` that lowercases the first character.
 
@@ -71,7 +68,7 @@ Arguments:
 $value = Str::camel('user_profile'); // "userProfile"
 ```
 
-#### **Convert to PascalCase** (`pascal()`)
+#### **Convert to `PascalCase`** (`pascal()`)
 
 Converts `-` and `_` to word breaks, uppercases each word, then concatenates.
 
@@ -82,7 +79,7 @@ Arguments:
 $value = Str::pascal('user_profile'); // "UserProfile"
 ```
 
-#### **Convert to snake_case** (`snake()`)
+#### **Convert to `snake_case`** (`snake()`)
 
 Builds an identifier-style slug using `_` as the delimiter.
 
@@ -93,7 +90,7 @@ Arguments:
 $value = Str::snake('UserProfile'); // "user_profile"
 ```
 
-#### **Convert to kebab-case** (`kebab()`)
+#### **Convert to `kebab-case`** (`kebab()`)
 
 Builds an identifier-style slug using `-` as the delimiter.
 

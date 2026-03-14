@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Http;
 
+use Fyre\Core\Traits\DebugTrait;
 use Fyre\Http\ClientResponse;
 use Fyre\Http\Cookie;
 use Fyre\Http\ResponseEmitter;
@@ -11,6 +12,7 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 use function assert;
+use function class_uses;
 use function ob_get_clean;
 use function ob_start;
 
@@ -21,6 +23,14 @@ final class ResponseEmitterTest extends TestCase
     protected static array $headers = [];
 
     protected ResponseEmitter $emitter;
+
+    public function testDebug(): void
+    {
+        $this->assertContains(
+            DebugTrait::class,
+            class_uses(ResponseEmitter::class)
+        );
+    }
 
     public function testEmit(): void
     {

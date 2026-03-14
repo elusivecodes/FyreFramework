@@ -1,12 +1,13 @@
 # Colors
 
-`Color` (`Fyre\Utility\Color\Color`) provides parsing, formatting, conversion, and UI-oriented helpers for working with CSS-style colors. Concrete color spaces are represented by `Colors\*` classes such as `Srgb`, `Lab`, and `XyzD65`.
+Use `Color` when you need to parse CSS-like color input, convert between color spaces, and format colors back to CSS.
+
+Concrete color spaces are represented by `Colors\*` classes such as `Srgb`, `Lab`, and `XyzD65`.
 
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
+- [Start here](#start-here)
 - [Constants](#constants)
 - [Supported color spaces](#supported-color-spaces)
 - [Parsing and creating colors](#parsing-and-creating-colors)
@@ -25,13 +26,9 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use `Color` when you need to accept CSS-like color input, convert between spaces (including wide-gamut profiles), and produce consistent CSS output strings.
-
-This API is intentionally “space-aware”: each instance has a current color space, can convert to other spaces, and formats to the appropriate CSS representation for that space.
-
-## Quick start
+This API is intentionally space-aware: each instance has a current color space, can convert to other spaces, and formats to the appropriate CSS representation for that space.
 
 ```php
 use Fyre\Utility\Color\Color;

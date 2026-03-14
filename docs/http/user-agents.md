@@ -1,10 +1,10 @@
 # User Agents
 
-`Fyre\Http\UserAgent` provides heuristic identification of common browsers, platforms, robots, and mobile devices from a user agent string. It’s commonly used through `ServerRequest::getUserAgent()`, which builds a `UserAgent` instance from the request’s `User-Agent` header.
+Use `Fyre\Http\UserAgent` when you want a best-effort read on the browser, platform, robot, or mobile device behind a request.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Creating user agents](#creating-user-agents)
 - [Method guide](#method-guide)
   - [Practical workflow](#practical-workflow)
@@ -16,9 +16,15 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-User agent parsing is a best-effort signal for tailoring behavior, such as feature fallbacks, device-specific UI tweaks, or bot-aware logic. `UserAgent` does not aim to be a strict parser; it matches against built-in pattern maps and exposes the most common identification results.
+Common uses for `UserAgent` are:
+
+- bot-aware behavior, such as skipping expensive work for crawlers
+- broad mobile or desktop decisions
+- browser-specific fallbacks when you cannot rely on feature detection
+
+Treat the result as a hint rather than a guarantee.
 
 ## Creating user agents
 
@@ -45,11 +51,11 @@ function isMobileRequest(ServerRequest $request): bool
 }
 ```
 
-`getUserAgent()` is a convenience method on Fyre’s `ServerRequest` implementation, not part of PSR-7’s `ServerRequestInterface`. If you type-hint PSR-7 interfaces, you can still obtain a `UserAgent` by reading the `User-Agent` header and calling `UserAgent::createFromString(...)`.
+If you are working with Fyre’s `ServerRequest`, `getUserAgent()` builds the object for you. Otherwise, you can read the `User-Agent` header and call `UserAgent::createFromString(...)`.
 
 ## Method guide
 
-`UserAgent` matching is heuristic and depends on the order of the built-in pattern maps. Identification runs lazily when you call the relevant accessors and is cached for subsequent calls.
+`UserAgent` matching is heuristic, so it is best suited to broad decisions rather than strict browser detection.
 
 ### Practical workflow
 
@@ -181,7 +187,6 @@ A few behaviors are worth keeping in mind:
 
 - When a robot match is found, browser matching is skipped (robot user agents are not treated as browsers).
 - Platform defaults to `Unknown Platform` when no platform match is found.
-- Match results are cached after the first call to a given check (for example, `getBrowser()` and `getVersion()` reuse the same browser detection result).
 
 ## Related
 

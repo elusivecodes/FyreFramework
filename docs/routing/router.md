@@ -1,11 +1,10 @@
 # Router
 
-`Fyre\Router\Router` connects routes, matches incoming requests to a destination, and generates URLs from named route aliases.
+Use `Fyre\Router\Router` to define routes, match requests, and generate URLs from route aliases.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [How routing works](#how-routing-works)
+- [Start here](#start-here)
 - [Defining routes](#defining-routes)
   - [Basic route (closure destination)](#basic-route-closure-destination)
   - [Controller route destination](#controller-route-destination)
@@ -27,25 +26,13 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
 Use `Router` when you want to:
 
 - define routes, placeholders, and groups in one place
-- match inbound requests and extract placeholder values into `routeArguments`
+- match incoming requests to a handler
 - generate URLs from aliases so paths can change safely
-
-## How routing works
-
-Routing is a match-and-dispatch workflow that runs before your final handler:
-
-- Routes can constrain matching by HTTP method, scheme, host, port, and path.
-- When a route matches, placeholder values are extracted into `routeArguments`.
-- The first matching route wins (routes are checked in the order you connected them).
-
-In a typical HTTP pipeline, router middleware calls `Router::parseRequest()`, which sets `relativePath`, `route`, and `routeArguments` request attributes (see [HTTP Middleware](../http/middleware.md)).
-
-If `App.baseUri` includes a path (for example `/subdir`), `Router::parseRequest()` strips that base path from the incoming request path before matching routes.
 
 ## Defining routes
 
@@ -127,7 +114,7 @@ The router selects a route type based on how you define the destination:
 - Redirect route (`Router::redirect()` or `connect(..., redirect: true)`) → `RedirectRoute`
 - Any other destination (string or array) → `ControllerRoute`
 
-When a destination is executed, it may return a `ResponseInterface` or a string. If it returns a string, it is wrapped into a response body.
+When a destination runs, it may return a `ResponseInterface` or a string. If it returns a string, it is wrapped into a response body.
 
 ## Route groups
 
@@ -210,11 +197,11 @@ $url = $router->url('posts.show', [
 
 ## Route attributes and discovery
 
-If you prefer controller methods to “just become routes”, you can use route discovery: define routing metadata with `#[Route]` attributes, then ask the router to discover and connect routes for one or more namespaces.
+If you prefer controller methods to become routes automatically, use route discovery: define routing metadata with `#[Route]` attributes, then ask the router to discover and connect routes for one or more namespaces.
 
 In addition to `#[Route(...)]`, you can use method attributes like `#[Get]`, `#[Post]`, `#[Put]`, `#[Patch]`, and `#[Delete]` to define the HTTP method constraint without explicitly passing a `methods` list.
 
-For the full discovery rules (conventions, overrides, hiding actions, caching), see [Route Discovery](route-discovery.md).
+For the full discovery rules, see [Route Discovery](route-discovery.md).
 
 ### Example controller using `#[Route]`
 
@@ -240,7 +227,7 @@ class PostsController
 
 ### Discovering routes with `Router::discoverRoutes()`
 
-`Router::discoverRoutes()` delegates to `RouteLocator::discover()`, then calls `connect()` for each discovered route definition (returned routes are sorted most-specific path first).
+Use `discoverRoutes()` when you want to register routes from controller attributes instead of writing them by hand.
 
 ```php
 $router->discoverRoutes(['Your\Controllers']);
@@ -356,7 +343,7 @@ $router->clear();
 
 #### **Load discovered routes** (`discoverRoutes()`)
 
-Discover and connect routes using `RouteLocator` (used by [Route Discovery](route-discovery.md)).
+Discover and connect routes from the provided controller namespaces.
 
 Arguments:
 - `$namespaces` (`string[]`): namespaces to scan.
@@ -433,7 +420,7 @@ $path = Router::normalizePath('posts/42/');
 
 ## Behavior notes
 
-⚠️ A few behaviors are worth keeping in mind:
+A few behaviors are worth keeping in mind:
 
 - Route matching is order-dependent: the first match wins.
 - Route matching uses normalized paths, but duplicate slashes inside the path are not collapsed.
@@ -441,6 +428,7 @@ $path = Router::normalizePath('posts/42/');
 - Optional placeholders (`{id?}`) make the entire `/{id}` segment optional during matching, and the extracted argument key is `id` (not `id?`).
 - `Router::url()` uses the base placeholder name for argument lookup (for example `['id' => 123]` for `{id?}`).
 - Host matching supports `*` wildcards (for example `*.example.com`).
+- If `App.baseUri` includes a path such as `/subdir`, the router removes that path before matching requests and adds it back when generating URLs.
 
 ## Related
 

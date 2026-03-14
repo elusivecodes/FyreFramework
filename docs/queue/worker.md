@@ -1,137 +1,120 @@
 # Queue Worker
 
-`Fyre\Queue\Worker` consumes messages from a queue handler and executes each job through the container. It’s designed to run as a long-lived process: it polls, sleeps when idle, and stops when it reaches configured limits or receives a stop signal.
+Use `Fyre\Queue\Worker` when you want a long-running process that consumes queued jobs.
+
+Most applications start workers through the built-in `queue:worker` console command rather than constructing `Worker` directly.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Running the worker](#running-the-worker)
-- [Where the worker fits](#where-the-worker-fits)
-- [Runtime loop](#runtime-loop)
-- [Job execution](#job-execution)
+- [Job outcomes](#job-outcomes)
 - [Lifecycle events](#lifecycle-events)
 - [Worker options](#worker-options)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-The worker is the consume side of the queue subsystem: it repeatedly pops messages from a handler, invokes the job method through the container, and emits lifecycle events so you can observe failures and retries.
+The usual worker flow is:
 
-For queue concepts and how messages are produced, see [Queue](index.md).
+1. Configure a queue handler and start pushing jobs.
+2. Run `queue:worker` for the handler config and queue name you want to process.
+3. Keep workers under a process supervisor so they restart on failure or after rotation.
+4. Use `maxJobs` or `maxRuntime` to rotate workers periodically.
+
+For queue setup and enqueueing, see [Queue](index.md).
 
 ## Running the worker
 
-The most common way to start a worker is the built-in `queue:worker` console command (see [Console Commands](../console/commands.md#queueworker)).
+The built-in way to start a worker is the `queue:worker` console command; see [Console Commands](../console/commands.md#queueworker).
 
-This command forks:
+The command accepts the main worker options:
 
-- The parent process prints the PID and exits immediately.
-- The child process builds a `Worker` and calls `run()`.
+- `config` - queue handler config key
+- `queue` - queue name to poll
+- `maxJobs` - maximum jobs before stopping
+- `maxRuntime` - maximum runtime in seconds before stopping
 
-`queue:worker` requires the `pcntl` extension and `pcntl_fork()`. In production, run workers under a process supervisor so they restart on failure.
+Examples:
 
-Options supported by `queue:worker` are forwarded to `Worker` as-is:
+```php
+$commandRunner->handle(['app', 'queue:worker']);
+$commandRunner->handle(['app', 'queue:worker', '--queue', 'emails', '--max-runtime', '3600']);
+```
 
-- `config` — queue handler config key
-- `queue` — queue name to poll
-- `maxJobs` — maximum jobs before stopping
-- `maxRuntime` — maximum runtime in seconds before stopping
-
-To customize polling delays (`rest`, `sleep`), build and run a `Worker` directly (see [Worker options](#worker-options)).
+`queue:worker` requires the `pcntl` extension and process forking support.
 
 Recommended production setup:
 
-- Run one worker process per logical queue when workloads have different performance or priority characteristics.
-- Set `maxRuntime` and/or `maxJobs` so a supervisor can rotate workers periodically (memory leaks, long-lived connections, and code deploys are easier to manage).
+- Run separate workers for different queue names when workloads have different priorities or runtimes.
+- Set `maxJobs` or `maxRuntime` so a supervisor can rotate workers cleanly.
+- Use more than one worker process for a queue when you need higher throughput.
 
-## Where the worker fits
+If you need custom polling delays, build and run `Worker` directly instead of going through the command.
 
-- The queue handler instance is selected via a queue config key (resolved by `QueueManager`).
-- The queue name (default `Queue::DEFAULT`) selects which logical queue inside that handler is polled.
-- Running multiple worker processes against the same handler + queue increases throughput by processing messages in parallel.
+## Job outcomes
 
-## Runtime loop
+Each worker job runs through the container, so job arguments can be passed by name and services can be resolved by type hint.
 
-`Worker::run()` is a polling loop:
-
-1. Check stop limits (`maxJobs`, `maxRuntime`).
-2. Pop the next message: `Queue::pop($queueName)`.
-3. If a message is available, process it and then rest (`usleep($rest)`).
-4. If no message is available, sleep longer (`usleep($sleep)`).
-
-Both `rest` and `sleep` are microseconds (the unit used by `usleep()`).
-
-## Job execution
-
-When a message is popped, the worker applies a small set of rules before it executes anything:
+The worker handles results like this:
 
 - Invalid messages are skipped and emit `Queue.invalid`.
-- Expired messages are dropped silently (no events).
-- Before executing a valid, non-expired job, the worker calls `Container::clearScoped()` to reset scoped instances for the next job. See [Container](../core/container.md).
+- Expired messages are dropped silently.
+- Returning `false` marks the job as failed and emits `Queue.failure`.
+- Throwing an exception marks the job as failed and emits `Queue.exception`.
+- Any other return value marks the job as successful and emits `Queue.success`.
 
-Execution uses the container to invoke the job method with the message arguments. Outcomes are treated as:
+Before each valid job runs, the worker clears scoped container services so each job gets a fresh scoped state; see [Container](../core/container.md).
 
-- Return value `false`: `Queue::fail()` is called and `Queue.failure` is emitted.
-- Any other return value: `Queue::complete()` is called and `Queue.success` is emitted.
-- Thrown exception: `Queue::fail()` is called and `Queue.exception` is emitted.
-
-There is no built-in per-job timeout. If jobs can block (network calls, slow queries), enforce timeouts in the job itself (HTTP client timeouts, DB statement timeouts) and rely on a supervisor to restart stuck workers.
+There is no built-in per-job timeout. If jobs call external systems, set timeouts in those clients and let your process supervisor restart stuck workers if needed.
 
 ## Lifecycle events
 
-The worker dispatches these lifecycle events through `EventManager`:
+The worker dispatches these events through the event system:
 
-- `Queue.start` — `message`
-- `Queue.success` — `message`
-- `Queue.failure` — `message`, `shouldRetry`
-- `Queue.exception` — `message`, `exception`, `shouldRetry`
-- `Queue.invalid` — `message`
+- `Queue.start` - `message`
+- `Queue.success` - `message`
+- `Queue.failure` - `message`, `shouldRetry`
+- `Queue.exception` - `message`, `exception`, `shouldRetry`
+- `Queue.invalid` - `message`
 
 `shouldRetry` is the boolean return value from `Queue::fail($message)`.
 
-When using `EventManager::on()`, listeners receive the `Event` instance as the first argument, followed by the event data values in the order listed above.
-
-Register listeners on the same `EventManager` instance that is passed to the `Worker`. For a broader overview of event concepts and listener patterns, see [Events](../events/index.md).
+When you register listeners with `EventManager::on()`, the `Event` object is passed first, followed by the values listed above.
 
 ```php
 use Fyre\Event\Event;
-use Fyre\Event\EventManager;
 use Fyre\Queue\Message;
 use Throwable;
-
-$eventManager->on('Queue.start', static function(Event $event, Message $message): void {
-    log_message('debug', 'Queue start: '.$message->getHash());
-});
 
 $eventManager->on('Queue.failure', static function(Event $event, Message $message, bool $shouldRetry): void {
     log_message('debug', 'Queue failure (retry='.(int) $shouldRetry.'): '.$message->getHash());
 });
 
 $eventManager->on('Queue.exception', static function(Event $event, Message $message, Throwable $exception, bool $shouldRetry): void {
-    log_message('debug', 'Queue exception (retry='.(int) $shouldRetry.'): '.$exception->getMessage());
+    log_message('error', 'Queue exception: '.$exception->getMessage());
 });
 ```
 
+For broader event-listener patterns, see [Events](../events/index.md).
+
 ## Worker options
 
-Options are supplied as the fourth argument to the `Worker` constructor:
+Pass worker options as the fourth argument when you construct `Worker` directly:
 
-- `config` (`string`) — queue handler config key used by `QueueManager` (default: `QueueManager::DEFAULT`)
-- `queue` (`string`) — queue name passed to `Queue::pop()` (default: `Queue::DEFAULT`)
-- `maxJobs` (`int`) — maximum number of processed jobs before stopping (default: `0`, unlimited)
-- `maxRuntime` (`int`) — maximum runtime in seconds before stopping (default: `0`, unlimited)
-- `rest` (`int`) — microseconds to sleep after processing a message (default: `10000`)
-- `sleep` (`int`) — microseconds to sleep when no message is available (default: `1000000`)
+- `config` (`string`) - queue handler config key (default: `default`)
+- `queue` (`string`) - queue name to poll (default: `default`)
+- `maxJobs` (`int`) - maximum number of jobs before stopping (default: `0`, unlimited)
+- `maxRuntime` (`int`) - maximum runtime in seconds before stopping (default: `0`, unlimited)
+- `rest` (`int`) - microseconds to sleep after processing a job (default: `10000`)
+- `sleep` (`int`) - microseconds to sleep when no job is available (default: `1000000`)
 
 ```php
-use Fyre\Queue\Queue;
-use Fyre\Queue\QueueManager;
 use Fyre\Queue\Worker;
 
 $worker = new Worker($container, $queueManager, $eventManager, [
-    'config' => QueueManager::DEFAULT,
-    'queue' => Queue::DEFAULT,
+    'queue' => 'emails',
     'maxJobs' => 100,
     'maxRuntime' => 3600,
     'rest' => 10000,
@@ -145,12 +128,10 @@ $worker->run();
 
 A few behaviors are worth keeping in mind:
 
-- `Worker::run()` is not re-entrant; a second call on the same instance returns immediately.
-- Signal handling uses `pcntl_async_signals()` and installs handlers for `SIGTERM` and `SIGQUIT` (the worker requires the `pcntl` extension).
-- Stop behavior is graceful: when a stop signal is received, the worker finishes the current message (if any), then exits the loop.
-- `maxJobs` counts only jobs that reach execution (success, failure, or exception). Invalid and expired messages do not increment the job counter.
-- Expired messages are dropped silently (no events).
-- Retries mean a job may run more than once. Prefer idempotent job design (for example, check a database flag, use upserts, or use external locks) so reprocessing is safe.
+- `Worker::run()` is not re-entrant, so calling it again on the same instance while it is already running does nothing.
+- Stop signals are handled gracefully: the worker finishes the current job and then exits the loop.
+- `maxJobs` counts only jobs that actually reach execution. Invalid and expired messages do not increment the counter.
+- Retries mean a job may run more than once, so design queue jobs to be idempotent.
 
 ## Related
 

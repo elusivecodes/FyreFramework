@@ -1,14 +1,13 @@
 # File System
 
-`File` (`Fyre\Utility\FileSystem\File`) and `Folder` (`Fyre\Utility\FileSystem\Folder`) are small object wrappers around common filesystem operations like reading, writing, copying, and directory management.
+Use `File` and `Folder` when you want a small object API for common filesystem operations like reading, writing, copying, moving, and directory management.
 
 For path-only operations (join/normalize/resolve, basename/dirname, etc), see [Paths](paths.md).
 
 
 ## Table of Contents
 
-- [Purpose](#purpose)
-- [Quick start](#quick-start)
+- [Start here](#start-here)
 - [Constants](#constants)
 - [Method guide](#method-guide)
   - [Folder](#folder)
@@ -16,13 +15,11 @@ For path-only operations (join/normalize/resolve, basename/dirname, etc), see [P
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use `File` and `Folder` when you want a small, fluent API for filesystem operations (existence checks, reading/writing, copying/moving, deleting). Both normalize the input path using `Path::resolve()` in the constructor.
+Both classes normalize the input path using `Path::resolve()` in the constructor.
 
-Path handling is platform-sensitive (separators, permissions, and case sensitivity). If you see differences between environments, review the [Paths behavior notes](paths.md#behavior-notes) first.
-
-## Quick start
+Path handling is platform-sensitive. If you see differences between environments, review the [Paths behavior notes](paths.md#behavior-notes) first.
 
 Creating instances (optionally creating the target on disk):
 

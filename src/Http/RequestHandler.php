@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Fyre\Http;
 
 use Fyre\Core\Container;
+use Fyre\Core\Traits\DebugTrait;
 use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -17,6 +18,8 @@ use Psr\Http\Server\RequestHandlerInterface;
  */
 class RequestHandler implements RequestHandlerInterface
 {
+    use DebugTrait;
+
     /**
      * Constructs a RequestHandler.
      *

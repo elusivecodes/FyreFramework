@@ -1,6 +1,6 @@
 # Helpers
 
-Helpers keep templates focused by providing reusable view-focused utilities, exposed through `$this->SomeHelperName`.
+Use helpers to keep templates focused by moving reusable view-side logic into objects such as `$this->Url` or `$this->Form`.
 
 For encapsulated “component-like” chunks that render with their own templates, see [Cells](cells.md).
 
@@ -8,12 +8,12 @@ Form helper usage is documented separately in [Forms (view helper)](forms.md).
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Using helpers in templates](#using-helpers-in-templates)
   - [Lazy-loading and explicit loading](#lazy-loading-and-explicit-loading)
-- [How helpers are resolved](#how-helpers-are-resolved)
+- [Loading helpers](#loading-helpers)
   - [Naming and namespaces](#naming-and-namespaces)
-  - [Resolution cache](#resolution-cache)
+  - [When to clear the registry](#when-to-clear-the-registry)
 - [Built-in helpers](#built-in-helpers)
   - [CSP helper](#csp-helper)
   - [Form helper](#form-helper)
@@ -31,9 +31,13 @@ Form helper usage is documented separately in [Forms (view helper)](forms.md).
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Helpers are per-view objects that you use from templates to generate markup, URLs, and other view-oriented output without cluttering template files with reusable logic.
+Use helpers when you want to:
+
+- generate markup or URLs from templates
+- keep repeated template code in one place
+- expose small view-side APIs without creating a full cell
 
 If you need encapsulated “component-like” chunks that render using their own templates, use [Cells](cells.md) instead.
 
@@ -45,9 +49,9 @@ Most examples on this page assume you are in a template, where `$this` is the cu
 
 ### Lazy-loading and explicit loading
 
-Helpers are lazy-loaded the first time you access them:
+Helpers are loaded the first time you access them:
 
-- `$this->Url` triggers `View::__get('Url')`, which loads and returns the helper instance.
+- Accessing `$this->Url` loads and returns that helper instance.
 - You can also load explicitly via `View::loadHelper()` (for example, when you want to ensure a helper is available before using it).
 
 Example: generating a link in a template:
@@ -59,19 +63,19 @@ echo $this->Url->link(
 );
 ```
 
-## How helpers are resolved
+## Loading helpers
 
-Helper lookup is handled by `HelperRegistry`.
+Helpers are loaded through `HelperRegistry`.
 
 ### Naming and namespaces
 
-When loading a helper name like `Url`, the registry searches configured namespaces (in the order they were added), then falls back to the built-in helpers namespace `Fyre\View\Helpers`.
+When loading a helper name like `Url`, the registry searches configured namespaces in order, then falls back to the built-in helpers namespace `Fyre\View\Helpers`.
 
 Within each namespace, it probes the class name pattern `{$namespace}{$name}Helper` and accepts the first match that is a subclass of `Fyre\View\Helper`.
 
-### Resolution cache
+### When to clear the registry
 
-Resolved helper lookups are cached, including misses. If you add namespaces at runtime (or add new helper classes) after a lookup has already happened, clear the registry so the helper can be discovered again (note that `HelperRegistry::clear()` also clears configured namespaces).
+If you add namespaces or helper classes while the application is already running, clear the registry before loading that helper again. `HelperRegistry::clear()` also clears configured namespaces, so register them again afterwards if needed.
 
 ## Built-in helpers
 
@@ -296,7 +300,6 @@ $url = $this->Url->to('user.view', ['id' => 123]);
 
 A few behaviors are worth keeping in mind:
 
-- `HelperRegistry::find()` caches misses, so once `find('Name')` stores a `null` result, registering a new namespace (or adding a new class) does not change the cached result. `HelperRegistry::clear()` drops the lookup cache, but it also clears configured namespaces.
 - Helper options apply only on first load: `View::loadHelper()` creates the helper once and reuses it, so later calls with different `$options` do not rebuild the helper.
 - `CspHelper::scriptNonce()` and `styleNonce()` reuse the same nonce for repeated calls on the current helper instance while mutating the shared CSP policies for the current response.
 - Helper name casing is not normalized. Prefer matching the class short name (`Url` → `UrlHelper`) to avoid case-sensitive autoloader issues.

@@ -1,15 +1,16 @@
 # HTTP Client
 
-`Fyre\Http\Client` provides outbound HTTP requests with convenient verb methods, an in-memory cookie jar, and opt-in redirect following. It delegates network I/O to a configurable handler and returns `Fyre\Http\Client\Response` instances.
+Use `Fyre\Http\Client` when your application needs to call external APIs, webhooks, or internal HTTP services.
+
+It gives you convenient verb methods, an in-memory cookie jar, optional redirect following, and a configurable transport handler.
 
 ## Table of Contents
 
-- [Purpose](#purpose)
+- [Start here](#start-here)
 - [Making requests](#making-requests)
   - [Sending JSON](#sending-json)
 - [Configuration](#configuration)
-- [Redirects](#redirects)
-- [Cookies](#cookies)
+- [Redirects and cookies](#redirects-and-cookies)
 - [Working with responses](#working-with-responses)
   - [Check status and read headers](#check-status-and-read-headers)
   - [Decode JSON responses](#decode-json-responses)
@@ -25,9 +26,13 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Purpose
+## Start here
 
-Use `Client` when application code needs to call external HTTP services (APIs, webhooks, internal services) using PSR-7 requests/responses and a PSR-18 client interface, while keeping a simple “call a URL and get a response” workflow.
+The usual workflow is:
+
+1. create a `Client`
+2. make requests with `get()`, `post()`, and the other verb methods
+3. inspect the returned `Client\Response`
 
 ## Making requests
 
@@ -50,6 +55,8 @@ $response = $client->get('/users', [
 
 $users = $response->getJson();
 ```
+
+Keep a single `Client` instance when you want cookies and default options to carry across multiple requests.
 
 ### Sending JSON
 
@@ -97,25 +104,19 @@ $client = new Client([
 ]);
 ```
 
-## Redirects
+## Redirects and cookies
 
-`Client::send()` (and the verb methods) can follow redirects when `maxRedirects` is greater than `0`.
+`Client::send()` and the verb methods can follow redirects when `maxRedirects` is greater than `0`.
 
-- Redirect detection uses `Response::isRedirect()`, which requires both a redirect status code and a non-empty `Location` header.
-- Redirect requests preserve the original method, headers, and body.
-- Relative `Location` values are resolved against the origin (scheme + host) of the previous request.
+The client also keeps an in-memory cookie jar:
 
-## Cookies
-
-The client maintains an in-memory cookie jar:
-
-- Cookies are stored on the `Client` instance and are not persisted across processes.
-- Any `Set-Cookie` headers received by `Client::send()` are parsed and stored after each request.
-- Matching cookies are automatically sent on subsequent `Client::send()` requests.
+- cookies received from responses are stored on the `Client` instance
+- matching cookies are sent on later requests from that same client instance
+- cookies are not persisted beyond the life of the PHP process
 
 ## Working with responses
 
-`Client\Response` extends Fyre’s PSR-7 response implementation and adds a few practical helpers for common client-side tasks.
+`Client\Response` gives you the usual response information plus a few convenience helpers for client-side tasks.
 
 ```php
 use Fyre\Http\Client;
@@ -125,7 +126,7 @@ $client = new Client();
 
 ### Check status and read headers
 
-Use `isOk()` when you want a simple “good enough to proceed” check (`200`-`399`), or read the raw status/header values via PSR-7:
+Use `isOk()` when you want a simple “good enough to proceed” check (`200`-`399`), or read the status and headers directly:
 
 ```php
 $response = $client->get('https://api.example.com/status');
@@ -160,7 +161,7 @@ $session = $response->getCookie('session');
 
 ## Handlers
 
-The HTTP client delegates network I/O to a `ClientHandler` implementation. The handler is configured via the `handler` option as either an instance or a class name.
+The HTTP client delegates network I/O to a handler. Configure it through the `handler` option as either an instance or a class name.
 
 ```php
 use Fyre\Http\Client;
@@ -191,9 +192,7 @@ Mock matching supports:
 
 ### Custom handlers
 
-To build a custom transport, extend `ClientHandler` and implement:
-
-- `send(RequestInterface $request, array $options = []): Response`
+To build a custom transport, extend `ClientHandler` and implement `send(RequestInterface $request, array $options = []): Response`.
 
 ## Testing
 
@@ -205,7 +204,7 @@ Mocks are global to the `Client` class (static), so ensure they’re cleared bet
 
 ## Method guide
 
-If you’re calling a service repeatedly, keep a single `Client` and reuse it so cookies and configuration persist.
+If you are calling a service repeatedly, keep a single `Client` and reuse it so cookies and configuration persist.
 
 ### Client
 
@@ -245,7 +244,7 @@ $response = $client->post('https://api.example.com/events', [
 ]);
 ```
 
-#### **Send a PSR-7 request with client conveniences** (`send()`)
+#### **Send a request with client conveniences** (`send()`)
 
 Sends a `RequestInterface` using the configured handler (or the mock handler when active). This is the method that applies redirect following (via `maxRedirects`) and the cookie jar.
 
@@ -265,7 +264,7 @@ $response = $client->send($request, [
 ]);
 ```
 
-#### **Send a PSR-7 request (PSR-18)** (`sendRequest()`)
+#### **Send a request directly** (`sendRequest()`)
 
 Implements `Psr\Http\Client\ClientInterface::sendRequest()` by delegating directly to the configured handler.
 
@@ -297,7 +296,7 @@ $client->addCookie(new Cookie('token', 'abc123'));
 
 ### Response
 
-`Client\Response` extends Fyre’s PSR-7 response implementation, so it includes useful PSR-7 methods like `getStatusCode()`, `getHeaderLine()`, and `getBody()`, in addition to the client-specific helpers below.
+`Client\Response` includes the usual response methods like `getStatusCode()`, `getHeaderLine()`, and `getBody()`, in addition to the helpers below.
 
 ```php
 $response = $client->get('https://api.example.com/status');
@@ -378,8 +377,8 @@ if ($response->isRedirect()) {
 
 A few behaviors are worth keeping in mind:
 
-- `Client::sendRequest()` intentionally bypasses `Client::send()` conveniences, so it does not follow redirects, it does not update or send cookies, it does not pass client options to the handler, and it does not use the mock handler.
-- When `auth.type` is set to `digest`, the client sends an initial request (via `sendRequest()`), and if it receives a `401`, it parses `WWW-Authenticate` and then sends the request again (via `send()`), which can result in two network calls.
+- `Client::sendRequest()` bypasses redirect following, cookie handling, mocks, and client options. Use `send()` or the verb methods for normal application code.
+- When `auth.type` is set to `digest`, the client may make an initial `401` challenge request before retrying with credentials.
 - When you pass array `$data` to non-`GET` requests, the request body encoding depends on the request `Content-Type`. If it does not start with `application/json`, the request is encoded as either `multipart/form-data` (when files/streams are present) or `application/x-www-form-urlencoded`, and `Content-Type` is set accordingly.
 - Query parameters are merged recursively when building the final URI (including when the URL already contains a query string).
 

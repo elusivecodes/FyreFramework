@@ -81,7 +81,7 @@ class EventManager implements EventDispatcherInterface, ListenerProviderInterfac
         $events = $this->loadEvents($listener);
 
         foreach ($events as $data) {
-            $this->on($data['name'], $listener->{$data['callback']}(...), $data['priority']);
+            $this->on($data['name'], $this->resolveListenerCallback($listener, $data['callback']), $data['priority']);
         }
 
         return $this;
@@ -272,7 +272,7 @@ class EventManager implements EventDispatcherInterface, ListenerProviderInterfac
         $events = $this->loadEvents($listener);
 
         foreach ($events as $data) {
-            $this->off($data['name'], $listener->{$data['callback']}(...));
+            $this->off($data['name'], $this->resolveListenerCallback($listener, $data['callback']));
         }
 
         return $this;
@@ -331,7 +331,7 @@ class EventManager implements EventDispatcherInterface, ListenerProviderInterfac
     protected static function findEvents(EventListenerInterface $listener): array
     {
         $reflection = new ReflectionClass($listener);
-        $methods = $reflection->getMethods(ReflectionMethod::IS_PUBLIC);
+        $methods = $reflection->getMethods(ReflectionMethod::IS_PUBLIC | ReflectionMethod::IS_PROTECTED);
 
         $events = [];
 
@@ -350,5 +350,17 @@ class EventManager implements EventDispatcherInterface, ListenerProviderInterfac
         }
 
         return $events;
+    }
+
+    /**
+     * Resolves a callback closure for a listener method.
+     *
+     * @param EventListenerInterface $listener The EventListener.
+     * @param string $method The method name.
+     * @return Closure The callback closure.
+     */
+    protected function resolveListenerCallback(EventListenerInterface $listener, string $method): Closure
+    {
+        return (new ReflectionMethod($listener, $method))->getClosure($listener);
     }
 }
