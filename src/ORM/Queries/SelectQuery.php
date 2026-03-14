@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Fyre\ORM\Queries;
 
+use ArrayObject;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\DB\ValueBinder;
 use Fyre\ORM\Entity;
@@ -87,6 +88,11 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
      * @var array<string, string>
      */
     protected array $joinPaths = [];
+
+    /**
+     * @var array<string, true>
+     */
+    protected array $buildJoinPaths = [];
 
     /**
      * @var array<string, Relationship>
@@ -758,11 +764,38 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
             }
 
             $data['conditions'] ??= [];
+            $path = $pathPrefix.'.'.$name;
+            $joinType = $data['type'] ?? $relationship->getJoinType();
+            $joinConditions = $data['conditions'];
+
+            if ($this->options['events'] && !isset($this->buildJoinPaths[$path])) {
+                $join = new ArrayObject([
+                    'type' => $joinType,
+                    'conditions' => $joinConditions,
+                ]);
+
+                $target->dispatchEvent('ORM.buildJoin', [
+                    'query' => $this,
+                    'relationship' => $relationship,
+                    'join' => $join,
+                    'mode' => 'contain',
+                    'path' => $path,
+                    'alias' => $name,
+                    'sourceAlias' => $alias,
+                    'options' => $this->options,
+                ]);
+
+                $joinType = $join['type'] ?? $joinType;
+                $joinConditions = (array) ($join['conditions'] ?? []);
+            }
+
+            $data['type'] = $joinType;
+            $data['conditions'] = $joinConditions;
 
             $joins = $relationship->buildJoins([
                 'alias' => $name,
                 'sourceAlias' => $alias,
-                'type' => $data['type'] ?? $relationship->getJoinType(),
+                'type' => $data['type'],
                 'conditions' => $data['conditions'],
             ]);
 
@@ -831,6 +864,13 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
         $contain = explode('.', $contain);
         $lastContain = array_key_last($contain);
 
+        $mode = match (true) {
+            $matching === true => 'matching',
+            $matching === false => 'notMatching',
+            $type === 'INNER' => 'innerJoinWith',
+            default => 'leftJoinWith',
+        };
+
         $model = $this->model;
         $sourceAlias = $this->alias;
         $path = $this->alias;
@@ -849,14 +889,39 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
             }
 
             $model = $relationship->getTarget();
+            $relationshipPath = $path.'.'.$alias;
+            $joinType = $type;
+            $joinConditions = $isLastContain ?
+                $conditions :
+                [];
+
+            if ($this->options['events']) {
+                $join = new ArrayObject([
+                    'type' => $joinType,
+                    'conditions' => $joinConditions,
+                ]);
+
+                $model->dispatchEvent('ORM.buildJoin', [
+                    'query' => $this,
+                    'relationship' => $relationship,
+                    'join' => $join,
+                    'mode' => $mode,
+                    'path' => $relationshipPath,
+                    'alias' => $alias,
+                    'sourceAlias' => $sourceAlias,
+                    'options' => $this->options,
+                ]);
+
+                $joinType = $join['type'] ?? $joinType;
+                $joinConditions = (array) ($join['conditions'] ?? []);
+                $this->buildJoinPaths[$relationshipPath] = true;
+            }
 
             $joins = $relationship->buildJoins([
                 'alias' => $alias,
                 'sourceAlias' => $sourceAlias,
-                'conditions' => $isLastContain ?
-                    $conditions :
-                    [],
-                'type' => $type,
+                'conditions' => $joinConditions,
+                'type' => $joinType,
             ]);
 
             foreach ($joins as $joinAlias => $join) {

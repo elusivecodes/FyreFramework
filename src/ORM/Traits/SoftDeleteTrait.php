@@ -3,10 +3,12 @@ declare(strict_types=1);
 
 namespace Fyre\ORM\Traits;
 
+use ArrayObject;
 use Fyre\Event\Event;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Events\BeforeDelete;
 use Fyre\ORM\Events\BeforeFind;
+use Fyre\ORM\Events\BuildJoin;
 use Fyre\ORM\Model;
 use Fyre\ORM\Queries\SelectQuery;
 use Fyre\ORM\Relationship;
@@ -140,6 +142,46 @@ trait SoftDeleteTrait
             ...$options,
             deleted: true
         );
+    }
+
+    /**
+     * Handles join building for soft deletes.
+     *
+     * Adds a `... IS NULL` join condition for the deleted field unless the `deleted`
+     * option is true.
+     *
+     * @param Event $event The Event.
+     * @param SelectQuery $query The query.
+     * @param Relationship $relationship The relationship.
+     * @param ArrayObject<string, mixed> $join The mutable join data.
+     * @param string $mode The join mode.
+     * @param string $path The join path.
+     * @param string $alias The join alias.
+     * @param string $sourceAlias The source alias.
+     * @param array<string, mixed> $options The find options.
+     */
+    #[BuildJoin]
+    public function handleBuildJoinSoftDelete(
+        Event $event,
+        SelectQuery $query,
+        Relationship $relationship,
+        ArrayObject $join,
+        string $mode,
+        string $path,
+        string $alias,
+        string $sourceAlias,
+        array $options = []
+    ): void {
+        $options['deleted'] ??= false;
+
+        if ($options['deleted']) {
+            return;
+        }
+
+        $conditions = (array) ($join['conditions'] ?? []);
+        $conditions[] = $this->aliasField($this->deletedField, $alias).' IS NULL';
+
+        $join['conditions'] = $conditions;
     }
 
     /**

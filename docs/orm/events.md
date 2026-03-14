@@ -104,6 +104,8 @@ All events below pass `Fyre\Event\Event` first, followed by the additional argum
 
 - `ORM.buildValidator` — fired when `Model::getValidator()` first builds the model validator.
   - Arguments: `Fyre\Form\Validator $validator`
+- `ORM.buildJoin` — fired when a relationship join is being built for join-strategy `contain()` loading or query helpers like `leftJoinWith()`, `innerJoinWith()`, and `matching()`; `$join` is mutable.
+  - Arguments: `Fyre\ORM\Queries\SelectQuery $query`, `Fyre\ORM\Relationship $relationship`, `ArrayObject $join`, `string $mode`, `string $path`, `string $alias`, `string $sourceAlias`, `array $options`
 
 ### Find events
 

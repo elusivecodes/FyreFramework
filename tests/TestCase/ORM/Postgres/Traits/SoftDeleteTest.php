@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\Before;
 use PHPUnit\Framework\TestCase;
 use Tests\TestCase\ORM\Postgres\PostgresConnectionTrait;
 
+use function substr_count;
+
 final class SoftDeleteTest extends TestCase
 {
     use PostgresConnectionTrait;
@@ -176,6 +178,129 @@ final class SoftDeleteTest extends TestCase
                 ->all()
                 ->map(static fn(Entity $item): int => $item->id)
                 ->toArray()
+        );
+    }
+
+    public function testInnerJoinWithFiltersSoftDeletedRelations(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $Posts = $this->modelRegistry->use('Posts');
+
+        $users = $Users->newEntities([
+            [
+                'name' => 'Test 1',
+                'posts' => [
+                    [
+                        'title' => 'Test 1',
+                        'content' => 'This is the content.',
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Test 2',
+                'posts' => [
+                    [
+                        'title' => 'Test 2',
+                        'content' => 'This is the content.',
+                    ],
+                ],
+            ],
+        ], associated: ['Posts']);
+
+        $this->assertTrue(
+            $Users->saveMany($users)
+        );
+
+        $this->assertTrue(
+            $Posts->delete($users[0]->posts[0])
+        );
+
+        $this->assertSame(
+            [2],
+            $Users->find()
+                ->innerJoinWith('Posts')
+                ->orderBy(['Users.id' => 'ASC'])
+                ->all()
+                ->map(static fn(Entity $user): int => $user->id)
+                ->toArray()
+        );
+
+        $this->assertSame(
+            [1, 2],
+            $Users->findWithDeleted()
+                ->innerJoinWith('Posts')
+                ->orderBy(['Users.id' => 'ASC'])
+                ->all()
+                ->map(static fn(Entity $user): int => $user->id)
+                ->toArray()
+        );
+    }
+
+    public function testJoinContainFiltersSoftDeletedRelations(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $Addresses = $this->modelRegistry->use('Addresses');
+
+        $users = $Users->newEntities([
+            [
+                'name' => 'Test 1',
+                'address' => [
+                    'suburb' => 'Test 1',
+                ],
+            ],
+            [
+                'name' => 'Test 2',
+                'address' => [
+                    'suburb' => 'Test 2',
+                ],
+            ],
+        ], associated: ['Addresses']);
+
+        $this->assertTrue(
+            $Users->saveMany($users)
+        );
+
+        $this->assertTrue(
+            $Addresses->delete($users[0]->address)
+        );
+
+        $this->assertSame(
+            [null, 2],
+            $Users->find()
+                ->contain('Addresses')
+                ->orderBy(['Users.id' => 'ASC'])
+                ->all()
+                ->map(static fn(Entity $user): int|null => $user->address?->id)
+                ->toArray()
+        );
+
+        $this->assertSame(
+            [1, 2],
+            $Users->findWithDeleted()
+                ->contain('Addresses')
+                ->orderBy(['Users.id' => 'ASC'])
+                ->all()
+                ->map(static fn(Entity $user): int|null => $user->address?->id)
+                ->toArray()
+        );
+    }
+
+    public function testJoinContainPathBuildJoinTriggeredOnce(): void
+    {
+        $sql = $this->modelRegistry->use('Users')
+            ->find()
+            ->contain([
+                'Addresses' => [
+                    'autoFields' => false,
+                ],
+            ])
+            ->innerJoinWith('Addresses')
+            ->disableAutoFields()
+            ->sql();
+
+        $this->assertSame(
+            1,
+            substr_count($sql, 'Addresses.deleted IS NULL')
         );
     }
 
