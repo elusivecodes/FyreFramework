@@ -279,4 +279,82 @@ trait JoinTestTrait
                 ->sql()
         );
     }
+
+    public function testJoinOverwriteClearsJoinPaths(): void
+    {
+        $this->assertSame(
+            'SELECT Posts.id AS Posts__id FROM posts AS Posts INNER JOIN comments AS Comments ON Comments.post_id = Posts.id INNER JOIN users AS Users ON Users.id = Posts.user_id',
+            $this->modelRegistry->use('Posts')
+                ->find()
+                ->innerJoinWith('Users')
+                ->join([
+                    'Comments' => [
+                        'table' => 'comments',
+                        'conditions' => [
+                            'Comments.post_id = Posts.id',
+                        ],
+                    ],
+                ], true)
+                ->join([
+                    'Users' => [
+                        'table' => 'users',
+                        'conditions' => [
+                            'Users.id = Posts.user_id',
+                        ],
+                    ],
+                ])
+                ->disableAutoFields()
+                ->sql()
+        );
+    }
+
+    public function testJoinOverwriteClearsMatching(): void
+    {
+        $this->assertSame(
+            'SELECT Posts.id AS Posts__id FROM posts AS Posts INNER JOIN comments AS Comments ON Comments.post_id = Posts.id',
+            $this->modelRegistry->use('Posts')
+                ->find()
+                ->matching('Users')
+                ->join([
+                    'Comments' => [
+                        'table' => 'comments',
+                        'conditions' => [
+                            'Comments.post_id = Posts.id',
+                        ],
+                    ],
+                ], true)
+                ->disableAutoFields()
+                ->sql()
+        );
+    }
+
+    public function testJoinResetRestoresJoinPaths(): void
+    {
+        $query = $this->modelRegistry->use('Posts')
+            ->find()
+            ->contain([
+                'Users' => [
+                    'autoFields' => false,
+                ],
+            ])
+            ->disableAutoFields();
+
+        $query->sql(reset: false);
+        $query->reset();
+
+        $this->assertSame(
+            'SELECT Posts.id AS Posts__id FROM posts AS Posts INNER JOIN users AS Users ON Users.id = Posts.user_id',
+            $query
+                ->contain([], true)
+                ->join([
+                    'Users' => [
+                        'table' => 'users',
+                        'conditions' => [
+                            'Users.id = Posts.user_id',
+                        ],
+                    ],
+                ])
+                ->sql()
+        );
+    }
 }

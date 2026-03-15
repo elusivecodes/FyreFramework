@@ -90,11 +90,6 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
     protected array $joinPaths = [];
 
     /**
-     * @var array<string, true>
-     */
-    protected array $buildJoinPaths = [];
-
-    /**
      * @var array<string, Relationship>
      */
     protected array $matching = [];
@@ -108,6 +103,11 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
      * @var array<mixed>|null
      */
     protected array|null $originalFields = null;
+
+    /**
+     * @var array<string, string>|null
+     */
+    protected array|null $originalJoinPaths = null;
 
     /**
      * @var array<array<string, mixed>>|null
@@ -417,20 +417,22 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
     {
         $joins = static::normalizeJoins($joins);
 
-        $invalidJoins = array_intersect_key($joins, $this->joinPaths);
-
-        if ($invalidJoins !== []) {
-            $joinAlias = array_key_first($invalidJoins);
-
-            throw new OrmException(sprintf(
-                'Join table alias `%s` is already used by the query.',
-                $joinAlias
-            ));
-        }
-
         if ($overwrite) {
             $this->joins = $joins;
+            $this->joinPaths = [];
+            $this->matching = [];
         } else {
+            $invalidJoins = array_intersect_key($joins, $this->joinPaths);
+
+            if ($invalidJoins !== []) {
+                $joinAlias = array_key_first($invalidJoins);
+
+                throw new OrmException(sprintf(
+                    'Join table alias `%s` is already used by the query.',
+                    $joinAlias
+                ));
+            }
+
             $this->joins = array_merge($this->joins, $joins);
         }
 
@@ -559,6 +561,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
 
         $this->originalFields = $this->fields;
         $this->originalJoins = $this->joins;
+        $this->originalJoinPaths = $this->joinPaths;
 
         $this->fields = [];
 
@@ -599,9 +602,11 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
         if ($this->prepared) {
             $this->fields = $this->originalFields ?? [];
             $this->joins = $this->originalJoins ?? [];
+            $this->joinPaths = $this->originalJoinPaths ?? [];
 
             $this->originalFields = null;
             $this->originalJoins = null;
+            $this->originalJoinPaths = null;
             $this->prepared = false;
         }
 
@@ -767,8 +772,26 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
             $path = $pathPrefix.'.'.$name;
             $joinType = $data['type'] ?? $relationship->getJoinType();
             $joinConditions = $data['conditions'];
+            $joins = $relationship->buildJoins([
+                'alias' => $name,
+                'sourceAlias' => $alias,
+                'type' => $joinType,
+                'conditions' => $joinConditions,
+            ]);
+            $joinPath = $pathPrefix;
+            $joinExists = true;
 
-            if ($this->options['events'] && !isset($this->buildJoinPaths[$path])) {
+            foreach ($joins as $joinAlias => $join) {
+                $joinPath .= '.'.$joinAlias;
+
+                if (($this->joinPaths[$joinAlias] ?? null) !== $joinPath) {
+                    $joinExists = false;
+
+                    break;
+                }
+            }
+
+            if ($this->options['events'] && !$joinExists) {
                 $join = new ArrayObject([
                     'type' => $joinType,
                     'conditions' => $joinConditions,
@@ -787,17 +810,16 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
 
                 $joinType = $join['type'] ?? $joinType;
                 $joinConditions = (array) ($join['conditions'] ?? []);
+                $joins = $relationship->buildJoins([
+                    'alias' => $name,
+                    'sourceAlias' => $alias,
+                    'type' => $joinType,
+                    'conditions' => $joinConditions,
+                ]);
             }
 
             $data['type'] = $joinType;
             $data['conditions'] = $joinConditions;
-
-            $joins = $relationship->buildJoins([
-                'alias' => $name,
-                'sourceAlias' => $alias,
-                'type' => $data['type'],
-                'conditions' => $data['conditions'],
-            ]);
 
             $lastJoin = array_key_last($joins);
             $path = $pathPrefix;
@@ -914,7 +936,6 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
 
                 $joinType = $join['type'] ?? $joinType;
                 $joinConditions = (array) ($join['conditions'] ?? []);
-                $this->buildJoinPaths[$relationshipPath] = true;
             }
 
             $joins = $relationship->buildJoins([
