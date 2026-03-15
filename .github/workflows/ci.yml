@@ -46,9 +46,6 @@ jobs:
   tests-core:
     name: Tests (core)
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
     env:
       TERM: xterm
     steps:
@@ -59,7 +56,7 @@ jobs:
         with:
           php-version: "8.5"
           extensions: intl, mbstring
-          coverage: xdebug
+          coverage: none
 
       - name: Install dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
@@ -67,25 +64,12 @@ jobs:
       - name: Configure PHPUnit
         run: cp phpunit.example.xml phpunit.xml
 
-      - name: Run tests with coverage
-        run: XDEBUG_MODE=coverage vendor/bin/phpunit --configuration phpunit.xml --testsuite core --coverage-clover coverage.xml
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          use_oidc: true
-          fail_ci_if_error: true
-          disable_search: true
-          files: ./coverage.xml
-          flags: core
-          name: core-php85
+      - name: Run tests
+        run: composer test:core
 
   tests-integration:
     name: Tests (${{ matrix.suite }})
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -113,7 +97,7 @@ jobs:
         with:
           php-version: "8.5"
           extensions: intl, mbstring, pdo_mysql, pdo_pgsql, pdo_sqlite, redis, memcached
-          coverage: xdebug
+          coverage: none
 
       - name: Install dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
@@ -150,8 +134,73 @@ jobs:
           echo "Service $service did not become ready in time." >&2
           exit 1
 
+      - name: Run tests
+        run: composer test:${{ matrix.suite }}
+
+      - name: Dump service logs (on failure)
+        if: failure() && matrix.service != ''
+        run: docker compose logs ${{ matrix.service }}
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    needs:
+      - tests-core
+      - tests-integration
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      TERM: xterm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          extensions: intl, mbstring, pdo_mysql, pdo_pgsql, pdo_sqlite, redis, memcached
+          coverage: xdebug
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Configure PHPUnit
+        run: cp phpunit.example.xml phpunit.xml
+
+      - name: Start services
+        run: docker compose up -d mysql mariadb postgres redis memcached mailpit
+
+      - name: Wait for services
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for service in mysql mariadb postgres redis memcached mailpit; do
+            if [[ "$service" == "memcached" ]]; then
+              sleep 2
+              continue
+            fi
+
+            container_id="$(docker compose ps -q "$service")"
+            for _ in {1..60}; do
+              status="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}running{{end}}' "$container_id")"
+              if [[ "$status" == "healthy" || "$status" == "running" ]]; then
+                break
+              fi
+              sleep 2
+            done
+
+            status="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}running{{end}}' "$container_id")"
+            if [[ "$status" != "healthy" && "$status" != "running" ]]; then
+              docker compose logs "$service"
+              echo "Service $service did not become ready in time." >&2
+              exit 1
+            fi
+          done
+
       - name: Run tests with coverage
-        run: XDEBUG_MODE=coverage vendor/bin/phpunit --configuration phpunit.xml --testsuite ${{ matrix.suite }} --coverage-clover coverage.xml
+        run: XDEBUG_MODE=coverage vendor/bin/phpunit --configuration phpunit.xml --coverage-clover coverage.xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -160,9 +209,8 @@ jobs:
           fail_ci_if_error: true
           disable_search: true
           files: ./coverage.xml
-          flags: ${{ matrix.suite }}
-          name: ${{ matrix.suite }}-php85
+          name: total-php85
 
       - name: Dump service logs (on failure)
-        if: failure() && matrix.service != ''
-        run: docker compose logs ${{ matrix.service }}
+        if: failure()
+        run: docker compose logs
