@@ -34,6 +34,8 @@ use function str_replace;
  *
  * Note: The query is auto-prepared before SQL generation to apply auto-fields and contain
  * joins. Calling {@see self::sql()} will prepare and (by default) reset the query state.
+ *
+ * @template TEntity of Entity
  */
 class SelectQuery extends \Fyre\DB\Queries\SelectQuery
 {
@@ -116,6 +118,9 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
 
     protected bool $prepared = false;
 
+    /**
+     * @var Result<TEntity>|null
+     */
     protected Result|null $result = null;
 
     /**
@@ -164,7 +169,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
      * Note: This executes the query if it has not already been executed and caches the
      * {@see Result} until the query is dirtied.
      *
-     * @return Result The results.
+     * @return Result<TEntity> The results.
      */
     public function all(): Result
     {
@@ -299,7 +304,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
      *
      * Note: When the result is not already loaded, this applies `LIMIT 1` to the query.
      *
-     * @return Entity|null The first result.
+     * @return TEntity|null The first result.
      */
     public function first(): Entity|null
     {
@@ -376,7 +381,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
      * Note: Results are cached on the query instance until the query is dirtied.
      * When events are enabled, this will trigger the `ORM.afterFind` event.
      *
-     * @return Result The query result.
+     * @return Result<TEntity> The query result.
      */
     public function getResult(): Result
     {
@@ -661,7 +666,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
      *
      * Note: This executes the query if it has not already been executed.
      *
-     * @return Entity[] The results.
+     * @return array<TEntity> The results.
      */
     public function toArray(): array
     {

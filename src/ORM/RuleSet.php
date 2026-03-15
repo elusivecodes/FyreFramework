@@ -41,7 +41,7 @@ class RuleSet
      * @param string $name The relationship name.
      * @param bool|null $allowNullableNulls Whether to allow null values.
      * @param string[]|null $targetFields The target fields.
-     * @param (Closure(SelectQuery): SelectQuery)|null $callback The query callback.
+     * @param (Closure(SelectQuery<Entity>): SelectQuery<Entity>)|null $callback The query callback.
      * @param string|null $message The validation message.
      * @return Closure The rule.
      */
@@ -155,7 +155,7 @@ class RuleSet
      *
      * @param string[] $fields The fields.
      * @param bool $allowMultipleNulls Whether to allow multiple null values.
-     * @param (Closure(SelectQuery): SelectQuery)|null $callback The query callback.
+     * @param (Closure(SelectQuery<Entity>): SelectQuery<Entity>)|null $callback The query callback.
      * @param string|null $message The validation message.
      * @return Closure The rule.
      */

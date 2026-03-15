@@ -50,7 +50,7 @@ class Identifier
     protected string $passwordField;
 
     /**
-     * @var (Closure(SelectQuery): SelectQuery)|null
+     * @var (Closure(SelectQuery<Entity>): SelectQuery<Entity>)|null
      */
     protected Closure|null $queryCallback;
 

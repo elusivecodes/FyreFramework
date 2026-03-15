@@ -266,6 +266,9 @@ class ManyToMany extends Relationship
 
     /**
      * {@inheritDoc}
+     *
+     * @param SelectQuery<Entity>|null $query The SelectQuery.
+     * @param (Closure(SelectQuery<Entity>): SelectQuery<Entity>)|null $callback The contain callback.
      */
     #[Override]
     public function loadRelated(

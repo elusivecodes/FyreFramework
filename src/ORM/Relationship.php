@@ -367,7 +367,7 @@ abstract class Relationship
      * relationship property is marked clean (`dirty=false`) after assignment.
      *
      * @param iterable<Entity> $entities The entities.
-     * @param SelectQuery|null $query The SelectQuery.
+     * @param SelectQuery<Entity>|null $query The SelectQuery.
      * @param array<mixed>|string|null $fields The SELECT fields.
      * @param array<mixed>|string|null $contain The contain relationships.
      * @param array<array<string, mixed>>|null $join The JOIN tables.
@@ -379,7 +379,7 @@ abstract class Relationship
      * @param int|null $offset The OFFSET clause.
      * @param string|null $epilog The epilog.
      * @param string|null $strategy The select strategy.
-     * @param (Closure(SelectQuery): SelectQuery)|null $callback The contain callback.
+     * @param (Closure(SelectQuery<Entity>): SelectQuery<Entity>)|null $callback The contain callback.
      * @param string $connectionType The connection type.
      * @param bool|null $autoFields Whether the query uses auto fields.
      * @param mixed ...$options The find options.
@@ -702,7 +702,7 @@ abstract class Relationship
     /**
      * Attaches the find related conditions to a query.
      *
-     * @param SelectQuery $newQuery The new SelectQuery.
+     * @param SelectQuery<Entity> $newQuery The new SelectQuery.
      * @param mixed[] $sourceValues The source values.
      */
     protected function findRelatedConditions(SelectQuery $newQuery, array $sourceValues): void
@@ -728,8 +728,8 @@ abstract class Relationship
     /**
      * Attaches the find related subquery to a query.
      *
-     * @param SelectQuery $newQuery The new SelectQuery.
-     * @param SelectQuery $query The SelectQuery.
+     * @param SelectQuery<Entity> $newQuery The new SelectQuery.
+     * @param SelectQuery<Entity> $query The SelectQuery.
      * @param bool $cte Whether to use CTE strategy.
      */
     protected function findRelatedSubquery(SelectQuery $newQuery, SelectQuery $query, bool $cte = false): void

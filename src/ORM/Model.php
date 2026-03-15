@@ -567,7 +567,7 @@ class Model implements EventListenerInterface
      * @param string|null $alias The alias.
      * @param bool|null $autoFields Whether the query uses auto fields.
      * @param mixed ...$options The find options.
-     * @return SelectQuery The new SelectQuery instance.
+     * @return SelectQuery<Entity> The new SelectQuery instance.
      */
     public function find(
         array|string|null $fields = null,
@@ -1409,7 +1409,7 @@ class Model implements EventListenerInterface
      * Creates a new SelectQuery.
      *
      * @param array<mixed> $options The options for the query.
-     * @return SelectQuery The new SelectQuery instance.
+     * @return SelectQuery<Entity> The new SelectQuery instance.
      */
     public function selectQuery(array $options = []): SelectQuery
     {
@@ -1525,7 +1525,7 @@ class Model implements EventListenerInterface
      * @param string|null $alias The alias.
      * @param bool|null $autoFields Whether the query uses auto fields.
      * @param mixed ...$options The find options.
-     * @return SelectQuery The new SelectQuery instance.
+     * @return SelectQuery<Entity> The new SelectQuery instance.
      */
     public function subquery(
         array|string|null $fields = null,

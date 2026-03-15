@@ -31,9 +31,11 @@ use function in_array;
  * When buffering is disabled, eager-loading can be performed incrementally while streaming
  * results.
  *
- * @mixin Collection<int, Entity>
+ * @template TEntity of Entity
  *
- * @implements IteratorAggregate<int, Entity>
+ * @mixin Collection<int, TEntity>
+ *
+ * @implements IteratorAggregate<int, TEntity>
  */
 class Result implements Countable, IteratorAggregate, JsonSerializable
 {
@@ -57,7 +59,7 @@ class Result implements Countable, IteratorAggregate, JsonSerializable
     protected array|null $aliasMap = null;
 
     /**
-     * @var Collection<int, Entity>
+     * @var Collection<int, TEntity>
      */
     protected Collection $collection;
 
@@ -71,7 +73,7 @@ class Result implements Countable, IteratorAggregate, JsonSerializable
      * loaded while streaming.
      *
      * @param ResultSet $result The ResultSet.
-     * @param SelectQuery $query The SelectQuery.
+     * @param SelectQuery<TEntity> $query The SelectQuery.
      * @param bool $buffer Whether to buffer the results.
      */
     public function __construct(
@@ -190,7 +192,7 @@ class Result implements Countable, IteratorAggregate, JsonSerializable
      * disabled this may advance the underlying result cursor.
      *
      * @param int $index The index.
-     * @return Entity|null The result.
+     * @return TEntity|null The result.
      */
     public function fetch(int $index): Entity|null
     {
@@ -219,7 +221,7 @@ class Result implements Countable, IteratorAggregate, JsonSerializable
     /**
      * Returns the collection Iterator.
      *
-     * @return Iterator<int, Entity> The collection Iterator.
+     * @return Iterator<int, TEntity> The collection Iterator.
      */
     #[Override]
     public function getIterator(): Iterator
@@ -253,7 +255,7 @@ class Result implements Countable, IteratorAggregate, JsonSerializable
      * Builds an entity from parsed data.
      *
      * @param array<string, mixed> $data The parsed data.
-     * @return Entity The Entity.
+     * @return TEntity The Entity.
      */
     protected function buildEntity(array $data): Entity
     {
@@ -264,7 +266,10 @@ class Result implements Countable, IteratorAggregate, JsonSerializable
                 ->newEntity($data['_matchingData'][$name] ?? [], ...static::ENTITY_OPTIONS);
         }
 
-        return $this->query->getModel()->newEntity($data, ...static::ENTITY_OPTIONS);
+        /** @var TEntity $entity */
+        $entity = $this->query->getModel()->newEntity($data, ...static::ENTITY_OPTIONS);
+
+        return $entity;
     }
 
     /**
@@ -397,7 +402,7 @@ class Result implements Countable, IteratorAggregate, JsonSerializable
      * @param Entity[] $entities The entities.
      * @param array<string, array<string, mixed>> $contain The contain relationships.
      * @param Model $model The Model.
-     * @param SelectQuery $query The Query.
+     * @param SelectQuery<Entity> $query The Query.
      * @param string $pathPrefix The path prefix.
      */
     protected static function loadContain(array $entities, array $contain, Model $model, SelectQuery $query, string $pathPrefix): void

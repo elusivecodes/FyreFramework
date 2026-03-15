@@ -50,7 +50,7 @@ trait SoftDeleteTrait
      * @param string|null $alias The alias.
      * @param bool|null $autoFields Whether the query uses auto fields.
      * @param mixed ...$options The find options.
-     * @return SelectQuery The query.
+     * @return SelectQuery<Entity> The query.
      */
     public function findOnlyDeleted(
         array|string|null $fields = null,
@@ -107,7 +107,7 @@ trait SoftDeleteTrait
      * @param string|null $alias The alias.
      * @param bool|null $autoFields Whether the query uses auto fields.
      * @param mixed ...$options The find options.
-     * @return SelectQuery The query.
+     * @return SelectQuery<Entity> The query.
      */
     public function findWithDeleted(
         array|string|null $fields = null,
@@ -151,7 +151,7 @@ trait SoftDeleteTrait
      * option is true.
      *
      * @param Event $event The Event.
-     * @param SelectQuery $query The query.
+     * @param SelectQuery<Entity> $query The query.
      * @param Relationship $relationship The relationship.
      * @param ArrayObject<string, mixed> $join The mutable join data.
      * @param string $mode The join mode.
@@ -191,7 +191,7 @@ trait SoftDeleteTrait
      * true.
      *
      * @param Event $event The Event.
-     * @param SelectQuery $query The query.
+     * @param SelectQuery<Entity> $query The query.
      * @param array<string, mixed> $options The find options.
      */
     #[BeforeFind]

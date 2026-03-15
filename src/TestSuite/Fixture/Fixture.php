@@ -104,7 +104,7 @@ abstract class Fixture
 
         $tables = [$model->getTable() => true];
 
-        $collect = function(Model $model, array $associated) use (&$collect, &$tables): void {
+        $collect = static function(Model $model, array $associated) use (&$collect, &$tables): void {
             foreach ($associated as $alias => $data) {
                 $relationship = $model->getRelationship($alias);
 

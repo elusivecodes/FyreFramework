@@ -748,7 +748,7 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
     public function listNested(string $order = 'desc', string $nestingKey = 'children'): static
     {
         return new static(function() use ($order, $nestingKey): Generator {
-            $getResults = function(array|Traversable $items, int $depth = 0) use ($order, $nestingKey, &$getResults): Generator {
+            $getResults = static function(array|Traversable $items, int $depth = 0) use ($order, $nestingKey, &$getResults): Generator {
                 foreach ($items as $item) {
                     if ($order === 'desc' || ($order === 'leaves' && $depth > 0)) {
                         yield $item;
