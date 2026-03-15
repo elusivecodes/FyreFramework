@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\Postgres\Model;
 
+use Fyre\Core\Config;
+use Fyre\DB\ConnectionManager;
+use Fyre\ORM\Model;
 use PHPUnit\Framework\TestCase;
 use Tests\TestCase\ORM\Postgres\PostgresConnectionTrait;
 
@@ -37,6 +40,50 @@ final class ModelTest extends TestCase
         $this->assertSame(
             $this->db,
             $this->modelRegistry->use('Test')->getConnection()
+        );
+    }
+
+    public function testHasRelationship(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $Items->hasOne('Alias', [
+            'classAlias' => 'Items',
+        ]);
+
+        $this->assertTrue(isset($Items->Alias));
+    }
+
+    public function testRemoveRelationship(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $Items->hasOne('Alias', [
+            'classAlias' => 'Items',
+        ]);
+
+        $this->assertSame(
+            $Items,
+            $Items->removeRelationship('Alias')
+        );
+
+        $this->assertFalse(isset($Items->Alias));
+    }
+
+    public function testSetConnection(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $connection = $this->container->use(ConnectionManager::class)
+            ->build($this->container->use(Config::class)->get('Database.default'));
+
+        $this->assertSame(
+            $Items,
+            $Items->setConnection($connection, Model::READ)
+        );
+
+        $this->assertSame(
+            $connection,
+            $Items->getConnection(Model::READ)
         );
     }
 }

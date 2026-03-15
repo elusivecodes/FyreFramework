@@ -8,6 +8,7 @@ use Fyre\ORM\Entity;
 use Fyre\ORM\Queries\DeleteQuery;
 use Fyre\ORM\Queries\InsertQuery;
 use Fyre\ORM\Queries\SelectQuery;
+use Fyre\ORM\Queries\UpdateBatchQuery;
 use Fyre\ORM\Queries\UpdateQuery;
 use Fyre\ORM\Queries\UpsertQuery;
 use PHPUnit\Framework\TestCase;
@@ -82,6 +83,49 @@ final class QueryTest extends TestCase
         $this->assertSame(
             [],
             $items->toArray()
+        );
+    }
+
+    public function testClearResult(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $item1 = $Items->newEntity([
+            'name' => 'Test 1',
+        ]);
+
+        $this->assertTrue(
+            $Items->save($item1)
+        );
+
+        $query = $Items->find();
+
+        $this->assertCount(
+            1,
+            $query->all()->toArray()
+        );
+
+        $item2 = $Items->newEntity([
+            'name' => 'Test 2',
+        ]);
+
+        $this->assertTrue(
+            $Items->save($item2)
+        );
+
+        $this->assertCount(
+            1,
+            $query->all()->toArray()
+        );
+
+        $this->assertSame(
+            $query,
+            $query->clearResult()
+        );
+
+        $this->assertCount(
+            2,
+            $query->all()->toArray()
         );
     }
 
@@ -192,6 +236,83 @@ final class QueryTest extends TestCase
         );
     }
 
+    public function testEnableAutoFields(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $item = $Items->newEntity([
+            'name' => 'Test 1',
+        ]);
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+
+        $query = $Items->find()
+            ->disableAutoFields();
+
+        $this->assertSame(
+            [
+                'id' => 1,
+            ],
+            $query->first()?->toArray()
+        );
+
+        $this->assertSame(
+            $query,
+            $query->enableAutoFields()
+        );
+
+        $this->assertSame(
+            [
+                'id' => 1,
+                'name' => 'Test 1',
+            ],
+            $query->first()?->toArray()
+        );
+    }
+
+    public function testEnableBuffering(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $items = $Items->newEntities([
+            [
+                'name' => 'Test 1',
+            ],
+            [
+                'name' => 'Test 2',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+
+        $query = $Items->find()
+            ->disableAutoFields()
+            ->disableBuffering();
+
+        $this->assertSame(
+            $query,
+            $query->enableBuffering()
+        );
+
+        $items = $query->all();
+
+        $this->assertSame(
+            [
+                [
+                    'id' => 1,
+                ],
+                [
+                    'id' => 2,
+                ],
+            ],
+            $items->map(static fn(Entity $item): array => $item->toArray())->toArray()
+        );
+    }
+
     public function testMacro(): void
     {
         $this->assertContains(
@@ -225,6 +346,43 @@ final class QueryTest extends TestCase
         $this->assertInstanceOf(
             SelectQuery::class,
             $this->modelRegistry->use('Items')->find()
+        );
+    }
+
+    public function testUpdateBatchQuery(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $query = $Items->updateBatchQuery();
+
+        $this->assertInstanceOf(
+            UpdateBatchQuery::class,
+            $query
+        );
+
+        $this->assertSame(
+            $Items,
+            $query->getModel()
+        );
+    }
+
+    public function testUpsertQuery(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $query = $Items->upsertQuery(['name']);
+
+        $this->assertInstanceOf(
+            UpsertQuery::class,
+            $query
+        );
+
+        $this->assertSame(
+            $Items,
+            $query->getModel()
+        );
+
+        $this->assertSame(
+            ['name'],
+            $query->getConflictKeys()
         );
     }
 }

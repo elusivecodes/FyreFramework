@@ -135,6 +135,24 @@ trait RelationshipTestTrait
         );
     }
 
+    public function testRelationshipModelProperty(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $Items->hasMany('Alias', [
+            'classAlias' => 'Items',
+        ]);
+
+        $Items->Alias->hasOne('Nested', [
+            'classAlias' => 'Items',
+        ]);
+
+        $this->assertSame(
+            $Items->Alias->getTarget()->getRelationship('Nested'),
+            $Items->Alias->Nested
+        );
+    }
+
     public function testRelationshipPropertyName(): void
     {
         $Items = $this->modelRegistry->use('Items');

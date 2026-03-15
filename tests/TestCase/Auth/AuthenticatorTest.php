@@ -3,10 +3,12 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Auth;
 
+use Fyre\Auth\Auth;
 use Fyre\Auth\Authenticator;
 use Fyre\Auth\Authenticators\CookieAuthenticator;
 use Fyre\Auth\Authenticators\SessionAuthenticator;
 use Fyre\Auth\Authenticators\TokenAuthenticator;
+use Fyre\Core\Config;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Http\ClientResponse;
@@ -14,7 +16,9 @@ use Fyre\Http\Cookie;
 use Fyre\Http\MiddlewareQueue;
 use Fyre\Http\RequestHandler;
 use Fyre\Http\ServerRequest;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
+use Tests\Mock\Authenticators\MockAuthenticator;
 
 use function class_uses;
 use function json_decode;
@@ -27,6 +31,55 @@ use const PASSWORD_DEFAULT;
 final class AuthenticatorTest extends TestCase
 {
     use ConnectionTrait;
+
+    public function testConstructAuthenticatorClassKey(): void
+    {
+        $this->container->use(Config::class)->set('Auth.authenticators', [
+            [
+                'className' => MockAuthenticator::class,
+            ],
+        ]);
+        $this->container->unset(Auth::class);
+
+        $auth = $this->container->use(Auth::class);
+
+        $this->assertInstanceOf(
+            MockAuthenticator::class,
+            $auth->authenticator(MockAuthenticator::class)
+        );
+    }
+
+    public function testConstructAuthenticatorKey(): void
+    {
+        $this->container->use(Config::class)->set('Auth.authenticators', [
+            'mock' => [
+                'className' => MockAuthenticator::class,
+            ],
+        ]);
+        $this->container->unset(Auth::class);
+
+        $auth = $this->container->use(Auth::class);
+
+        $this->assertInstanceOf(
+            MockAuthenticator::class,
+            $auth->authenticator('mock')
+        );
+    }
+
+    public function testConstructInvalidAuthenticator(): void
+    {
+        $this->container->use(Config::class)->set('Auth.authenticators', [
+            [
+                'className' => 'Invalid',
+            ],
+        ]);
+        $this->container->unset(Auth::class);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Authenticator `Invalid` must extend `Fyre\Auth\Authenticator`.');
+
+        $this->container->use(Auth::class);
+    }
 
     public function testCookieAuthenticator(): void
     {

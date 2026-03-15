@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Core;
 
+use Closure;
 use Exception;
 use Fyre\Core\Config;
 use Fyre\Core\Container;
@@ -23,6 +24,8 @@ use Fyre\Http\Exceptions\NotImplementedException;
 use Fyre\Http\Exceptions\ServiceUnavailableException;
 use Fyre\Http\Exceptions\UnauthorizedException;
 use Fyre\Http\ResponseEmitter;
+use Fyre\Log\Handlers\ArrayLogger;
+use Fyre\Log\LogManager;
 use Override;
 use PHPUnit\Framework\TestCase;
 use Throwable;
@@ -63,6 +66,32 @@ final class ErrorHandlerTest extends TestCase
         );
     }
 
+    public function testDestruct(): void
+    {
+        $this->errorHandler->register();
+        $this->errorHandler->__destruct();
+
+        $registered = Closure::bind(function(): bool {
+            return $this->registered;
+        }, $this->errorHandler, $this->errorHandler)();
+
+        $this->assertFalse($registered);
+    }
+
+    public function testEnableCli(): void
+    {
+        $this->assertSame(
+            $this->errorHandler,
+            $this->errorHandler->enableCli()
+        );
+
+        $cli = Closure::bind(function(): bool {
+            return $this->cli;
+        }, $this->errorHandler, $this->errorHandler)();
+
+        $this->assertTrue($cli);
+    }
+
     public function testEventBeforeRender(): void
     {
         $ran = false;
@@ -84,6 +113,22 @@ final class ErrorHandlerTest extends TestCase
         $this->assertSame(
             403,
             $response->getStatusCode()
+        );
+    }
+
+    public function testGetException(): void
+    {
+        $exception = new Exception('Error');
+
+        $this->assertNull(
+            $this->errorHandler->getException()
+        );
+
+        $this->errorHandler->render($exception);
+
+        $this->assertSame(
+            $exception,
+            $this->errorHandler->getException()
         );
     }
 
@@ -128,6 +173,45 @@ final class ErrorHandlerTest extends TestCase
         );
     }
 
+    public function testLogEnabled(): void
+    {
+        $container = new Container();
+        $container->singleton(Config::class);
+        $container->singleton(EventManager::class);
+        $container->singleton(LogManager::class);
+        $container->singleton(ResponseEmitter::class);
+        $container->use(Config::class)->set('Error', [
+            'log' => true,
+        ]);
+        $container->use(Config::class)->set('Log', [
+            'default' => [
+                'className' => ArrayLogger::class,
+            ],
+        ]);
+
+        $errorHandler = $container->use(ErrorHandler::class);
+        $errorHandler->disableCli();
+
+        $errorHandler->render(new Exception('Error'));
+
+        $logger = $container->use(LogManager::class)->use();
+
+        $this->assertInstanceOf(
+            ArrayLogger::class,
+            $logger
+        );
+
+        $this->assertCount(
+            1,
+            $logger->read()
+        );
+
+        $this->assertStringContainsString(
+            'Error',
+            $logger->read()[0]
+        );
+    }
+
     public function testMethodNotAllowed(): void
     {
         $response = $this->errorHandler->render(new MethodNotAllowedException());
@@ -168,6 +252,26 @@ final class ErrorHandlerTest extends TestCase
         );
     }
 
+    public function testRegister(): void
+    {
+        $this->errorHandler->register();
+        $this->errorHandler->register();
+
+        $registered = Closure::bind(function(): bool {
+            return $this->registered;
+        }, $this->errorHandler, $this->errorHandler)();
+
+        $this->assertTrue($registered);
+
+        $this->errorHandler->unregister();
+
+        $registered = Closure::bind(function(): bool {
+            return $this->registered;
+        }, $this->errorHandler, $this->errorHandler)();
+
+        $this->assertFalse($registered);
+    }
+
     public function testRenderer(): void
     {
         $ran = false;
@@ -191,6 +295,46 @@ final class ErrorHandlerTest extends TestCase
         $response = $this->errorHandler->render($exception);
 
         $this->assertTrue($ran);
+
+        $this->assertSame(
+            'Error',
+            $response->getBody()->getContents()
+        );
+    }
+
+    public function testRendererResponse(): void
+    {
+        $response = new ClientResponse([
+            'body' => 'Error',
+            'headers' => [
+                'X-Test' => 'test',
+            ],
+        ]);
+
+        $this->errorHandler->setRenderer(
+            fn(Throwable $exception): ClientResponse => $response
+        );
+
+        $response = $this->errorHandler->render(
+            new MethodNotAllowedException(headers: [
+                'Allow' => 'GET',
+            ])
+        );
+
+        $this->assertSame(
+            405,
+            $response->getStatusCode()
+        );
+
+        $this->assertSame(
+            'test',
+            $response->getHeaderLine('X-Test')
+        );
+
+        $this->assertSame(
+            'GET',
+            $response->getHeaderLine('Allow')
+        );
 
         $this->assertSame(
             'Error',

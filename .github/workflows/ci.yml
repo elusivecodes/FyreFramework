@@ -14,6 +14,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   static:
     name: Static checks
@@ -43,6 +46,9 @@ jobs:
   tests-core:
     name: Tests (core)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     env:
       TERM: xterm
     steps:
@@ -53,7 +59,7 @@ jobs:
         with:
           php-version: "8.5"
           extensions: intl, mbstring
-          coverage: none
+          coverage: xdebug
 
       - name: Install dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
@@ -61,17 +67,32 @@ jobs:
       - name: Configure PHPUnit
         run: cp phpunit.example.xml phpunit.xml
 
-      - name: Run tests
-        run: composer test:core
+      - name: Run tests with coverage
+        run: XDEBUG_MODE=coverage vendor/bin/phpunit --configuration phpunit.xml --testsuite core --coverage-clover coverage.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          use_oidc: true
+          fail_ci_if_error: true
+          disable_search: true
+          files: ./coverage.xml
+          flags: core
+          name: core-php85
 
   tests-integration:
     name: Tests (${{ matrix.suite }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
-        suite: [mariadb, mysql, postgres, redis, memcached, smtp]
+        suite: [sqlite, mariadb, mysql, postgres, redis, memcached, smtp]
         include:
+          - suite: sqlite
+            service: ""
           - suite: mariadb
             service: mariadb
           - suite: mysql
@@ -92,7 +113,7 @@ jobs:
         with:
           php-version: "8.5"
           extensions: intl, mbstring, pdo_mysql, pdo_pgsql, pdo_sqlite, redis, memcached
-          coverage: none
+          coverage: xdebug
 
       - name: Install dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
@@ -101,9 +122,11 @@ jobs:
         run: cp phpunit.example.xml phpunit.xml
 
       - name: Start service
+        if: matrix.service != ''
         run: docker compose up -d ${{ matrix.service }}
 
       - name: Wait for service
+        if: matrix.service != ''
         shell: bash
         run: |
           set -euo pipefail
@@ -127,9 +150,19 @@ jobs:
           echo "Service $service did not become ready in time." >&2
           exit 1
 
-      - name: Run tests
-        run: composer test:${{ matrix.suite }}
+      - name: Run tests with coverage
+        run: XDEBUG_MODE=coverage vendor/bin/phpunit --configuration phpunit.xml --testsuite ${{ matrix.suite }} --coverage-clover coverage.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          use_oidc: true
+          fail_ci_if_error: true
+          disable_search: true
+          files: ./coverage.xml
+          flags: ${{ matrix.suite }}
+          name: ${{ matrix.suite }}-php85
 
       - name: Dump service logs (on failure)
-        if: failure()
+        if: failure() && matrix.service != ''
         run: docker compose logs ${{ matrix.service }}

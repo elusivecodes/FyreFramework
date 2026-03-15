@@ -6,6 +6,7 @@ namespace Tests\TestCase\Utility\Promise;
 use Closure;
 use Exception;
 use Fyre\Utility\Promise\AsyncPromise;
+use Fyre\Utility\Promise\Exceptions\CancelledPromiseException;
 use Fyre\Utility\Promise\Promise;
 use Fyre\Utility\Promise\PromiseInterface;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
@@ -156,6 +157,56 @@ final class AsyncPromiseTest extends TestCase
 
         $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
             $reject(new Exception('test'));
+        });
+
+        Promise::await($promise);
+    }
+
+    #[RunInSeparateProcess]
+    public function testCancel(): void
+    {
+        $this->expectException(CancelledPromiseException::class);
+        $this->expectExceptionMessage('test');
+
+        $promise = new AsyncPromise(static function(Closure $resolve): void {
+            sleep(3);
+            $resolve(1);
+        });
+
+        $promise->cancel('test');
+
+        Promise::await($promise);
+    }
+
+    #[RunInSeparateProcess]
+    public function testCancelSettled(): void
+    {
+        $promise = new AsyncPromise(static function(Closure $resolve): void {
+            $resolve(1);
+        });
+
+        $promise->wait();
+        $promise->cancel();
+
+        $this->assertSame(
+            1,
+            Promise::await($promise)
+        );
+    }
+
+    #[RunInSeparateProcess]
+    public function testCancelTimeout(): void
+    {
+        Closure::bind(static function(): void {
+            self::$maxRunTime = 0;
+            self::$waitTime = 1;
+        }, null, AsyncPromise::class)();
+
+        $this->expectException(CancelledPromiseException::class);
+
+        $promise = new AsyncPromise(static function(Closure $resolve): void {
+            sleep(1);
+            $resolve(1);
         });
 
         Promise::await($promise);

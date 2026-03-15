@@ -26,7 +26,9 @@ use Override;
 use PHPUnit\Framework\TestCase;
 
 use function class_uses;
+use function fclose;
 use function file_put_contents;
+use function fopen;
 use function mkdir;
 use function rmdir;
 use function unlink;
@@ -36,6 +38,21 @@ use const ROOT;
 final class MakeTest extends TestCase
 {
     protected CommandRunner $commandRunner;
+
+    /**
+     * @var resource
+     */
+    protected $error;
+
+    /**
+     * @var resource
+     */
+    protected $input;
+
+    /**
+     * @var resource
+     */
+    protected $output;
 
     public function testDebug(): void
     {
@@ -447,7 +464,6 @@ final class MakeTest extends TestCase
         $container->singleton(Config::class);
         $container->singleton(Lang::class);
         $container->singleton(TemplateLocator::class);
-        $container->singleton(Console::class);
         $container->singleton(CommandRunner::class);
         $container->singleton(CellRegistry::class);
         $container->singleton(EntityLocator::class);
@@ -477,6 +493,15 @@ final class MakeTest extends TestCase
         $container->use(MigrationRunner::class)->addNamespace('Example\Migrations');
         $container->use(ModelRegistry::class)->addNamespace('Example\Models');
         $container->use(PolicyRegistry::class)->addNamespace('Example\Policies');
+
+        $this->input = fopen('php://memory', 'r+b');
+        $this->output = fopen('php://memory', 'r+b');
+        $this->error = fopen('php://memory', 'r+b');
+
+        $container->instance(
+            Console::class,
+            new Console($this->input, $this->output, $this->error)
+        );
 
         $this->commandRunner = $container->use(CommandRunner::class);
         $this->commandRunner
@@ -530,5 +555,9 @@ final class MakeTest extends TestCase
         @rmdir('tmp/templates/layouts');
         @rmdir('tmp/templates');
         @rmdir('tmp');
+
+        fclose($this->input);
+        fclose($this->output);
+        fclose($this->error);
     }
 }

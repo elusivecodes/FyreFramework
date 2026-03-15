@@ -3,7 +3,10 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Core;
 
+use Closure;
 use Fyre\Core\Container;
+use Fyre\Core\Exceptions\ContainerException;
+use Fyre\Core\Exceptions\ContainerNotFoundException;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Override;
@@ -126,6 +129,14 @@ final class ContainerTest extends TestCase
         );
     }
 
+    public function testBuildNotInstantiable(): void
+    {
+        $this->expectException(ContainerNotFoundException::class);
+        $this->expectExceptionMessage('Class `Closure` is not instantiable.');
+
+        $this->container->build(Closure::class);
+    }
+
     public function testBuildSharedDependency(): void
     {
         $this->container->singleton(InnerService::class);
@@ -240,6 +251,22 @@ final class ContainerTest extends TestCase
         );
     }
 
+    public function testCallInvalidMethod(): void
+    {
+        $this->expectException(ContainerException::class);
+        $this->expectExceptionMessage('Method name must be a string.');
+
+        $this->container->call([Service::class, 1]);
+    }
+
+    public function testCallInvalidTarget(): void
+    {
+        $this->expectException(ContainerException::class);
+        $this->expectExceptionMessage('Callable target must be a class-string or object.');
+
+        $this->container->call([1, 'value']);
+    }
+
     public function testCallInvokableArrayObject(): void
     {
         $result = $this->container->call([new InvokableClass()], ['a' => 1]);
@@ -308,6 +335,16 @@ final class ContainerTest extends TestCase
         );
     }
 
+    public function testGet(): void
+    {
+        $service = $this->container->get(Service::class);
+
+        $this->assertInstanceOf(
+            Service::class,
+            $service
+        );
+    }
+
     public function testGlobalInstance(): void
     {
         $container = Container::getInstance();
@@ -329,6 +366,48 @@ final class ContainerTest extends TestCase
         $this->assertSame(
             $container,
             Container::getInstance()
+        );
+    }
+
+    public function testHas(): void
+    {
+        $this->assertTrue(
+            $this->container->has(Service::class)
+        );
+    }
+
+    public function testHasAlias(): void
+    {
+        $this->container->bind('service', Service::class);
+
+        $this->assertTrue(
+            $this->container->has('service')
+        );
+    }
+
+    public function testHasBoundFactory(): void
+    {
+        $this->container->bind('service', static fn(): Service => new Service());
+
+        $this->assertTrue(
+            $this->container->has('service')
+        );
+    }
+
+    public function testHasCircularAlias(): void
+    {
+        $this->container->bind('service1', 'service2');
+        $this->container->bind('service2', 'service1');
+
+        $this->assertFalse(
+            $this->container->has('service1')
+        );
+    }
+
+    public function testHasInvalid(): void
+    {
+        $this->assertFalse(
+            $this->container->has('Invalid')
         );
     }
 

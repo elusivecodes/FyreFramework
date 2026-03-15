@@ -20,6 +20,16 @@ final class SessionTest extends TestCase
 {
     protected Session $session;
 
+    public function testClear(): void
+    {
+        $this->session->set('test', 'value');
+        $this->session->clear();
+
+        $this->assertFalse(
+            $this->session->has('test')
+        );
+    }
+
     public function testConsume(): void
     {
         $this->session->set('test', 'value');
@@ -44,6 +54,20 @@ final class SessionTest extends TestCase
         $this->assertContains(
             DebugTrait::class,
             class_uses(SessionHandler::class)
+        );
+    }
+
+    public function testDestroy(): void
+    {
+        $this->session->set('test', 'value');
+        $this->session->destroy();
+
+        $this->assertFalse(
+            $this->session->isStarted()
+        );
+
+        $this->assertNull(
+            $this->session->get('test')
         );
     }
 
@@ -78,6 +102,19 @@ final class SessionTest extends TestCase
     {
         $this->assertFalse(
             $this->session->isActive()
+        );
+    }
+
+    public function testIsStarted(): void
+    {
+        $this->assertTrue(
+            $this->session->isStarted()
+        );
+
+        $this->session->close();
+
+        $this->assertFalse(
+            $this->session->isStarted()
         );
     }
 
@@ -131,6 +168,21 @@ final class SessionTest extends TestCase
 
         $this->assertFalse(
             $this->session->has('test')
+        );
+    }
+
+    public function testStartReadOnly(): void
+    {
+        $this->session->close();
+
+        $this->assertFalse(
+            $this->session->isStarted()
+        );
+
+        $this->session->startReadOnly();
+
+        $this->assertFalse(
+            $this->session->isStarted()
         );
     }
 

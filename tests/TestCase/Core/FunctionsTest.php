@@ -12,22 +12,35 @@ use Fyre\DB\ConnectionManager;
 use Fyre\DB\TypeParser;
 use Fyre\DB\Types\DateTimeType;
 use Fyre\Http\ClientResponse;
+use Fyre\Http\Exceptions\BadRequestException;
+use Fyre\Http\Exceptions\ConflictException;
 use Fyre\Http\Exceptions\ForbiddenException;
 use Fyre\Http\Exceptions\GoneException;
 use Fyre\Http\Exceptions\InternalServerException;
+use Fyre\Http\Exceptions\MethodNotAllowedException;
+use Fyre\Http\Exceptions\NotAcceptableException;
 use Fyre\Http\Exceptions\NotFoundException;
+use Fyre\Http\Exceptions\NotImplementedException;
+use Fyre\Http\Exceptions\ServiceUnavailableException;
+use Fyre\Http\Exceptions\UnauthorizedException;
 use Fyre\Http\RedirectResponse;
 use Fyre\Http\ServerRequest;
 use Fyre\Http\Session\Session;
+use Fyre\Log\Handlers\ArrayLogger;
+use Fyre\Log\LogManager;
 use Fyre\Mail\Email;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Model;
+use Fyre\Queue\QueueManager;
 use Fyre\Security\Encryption\EncryptionManager;
 use Fyre\Utility\Collection;
 use Fyre\Utility\DateTime\DateTime;
 use Override;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
+use Tests\Mock\Jobs\MockJob;
+use Tests\Mock\Queue\TestQueue;
+use Throwable;
 
 use function __;
 use function abort;
@@ -77,6 +90,37 @@ final class FunctionsTest extends TestCase
         $this->expectExceptionMessage('Gone');
 
         abort(410);
+    }
+
+    public function testAbortCodes(): void
+    {
+        $cases = [
+            400 => BadRequestException::class,
+            401 => UnauthorizedException::class,
+            405 => MethodNotAllowedException::class,
+            406 => NotAcceptableException::class,
+            409 => ConflictException::class,
+            501 => NotImplementedException::class,
+            503 => ServiceUnavailableException::class,
+        ];
+
+        foreach ($cases as $code => $exceptionClass) {
+            try {
+                abort($code);
+
+                $this->fail('Expected exception was not thrown.');
+            } catch (Throwable $exception) {
+                $this->assertInstanceOf(
+                    $exceptionClass,
+                    $exception
+                );
+
+                $this->assertSame(
+                    $code,
+                    $exception->getCode()
+                );
+            }
+        }
     }
 
     public function testAbortMessage(): void
@@ -320,6 +364,29 @@ final class FunctionsTest extends TestCase
         $this->assertTrue(logged_in());
     }
 
+    public function testLogMessage(): void
+    {
+        config()->set('Log', [
+            'default' => [
+                'className' => ArrayLogger::class,
+            ],
+        ]);
+
+        log_message('error', 'This is a log message {id}', ['id' => 1]);
+
+        $logger = $this->app->use(LogManager::class)->use();
+
+        $this->assertInstanceOf(
+            ArrayLogger::class,
+            $logger
+        );
+
+        $this->assertSame(
+            ['[ERROR] This is a log message 1'],
+            $logger->read()
+        );
+    }
+
     public function testModel(): void
     {
         $model = model('Test');
@@ -340,6 +407,41 @@ final class FunctionsTest extends TestCase
         $this->assertInstanceOf(
             DateTime::class,
             now()
+        );
+    }
+
+    public function testQueue(): void
+    {
+        config()->set('Queue', [
+            'default' => [
+                'className' => TestQueue::class,
+            ],
+        ]);
+
+        TestQueue::resetMessages();
+
+        queue(MockJob::class, ['id' => 1], ['queue' => 'test']);
+
+        $messages = TestQueue::getMessages();
+
+        $this->assertCount(
+            1,
+            $messages
+        );
+
+        $this->assertSame(
+            MockJob::class,
+            $messages[0]->getConfig()['className']
+        );
+
+        $this->assertSame(
+            ['id' => 1],
+            $messages[0]->getConfig()['arguments']
+        );
+
+        $this->assertSame(
+            'test',
+            $messages[0]->getConfig()['queue']
         );
     }
 
@@ -486,5 +588,20 @@ final class FunctionsTest extends TestCase
 
         $access->define('fail', static fn(): bool => false);
         $access->define('test', static fn(Entity|null $user): bool => (bool) $user);
+
+        $this->app->use(Config::class)->set('Queue', [
+            'default' => [
+                'className' => TestQueue::class,
+            ],
+        ]);
+
+        $this->app->use(Config::class)->set('Log', [
+            'default' => [
+                'className' => ArrayLogger::class,
+            ],
+        ]);
+
+        $this->app->singleton(QueueManager::class);
+        $this->app->singleton(LogManager::class);
     }
 }

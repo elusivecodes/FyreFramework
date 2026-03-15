@@ -1,7 +1,10 @@
 # FyreFramework
 
 [![CI](https://github.com/elusivecodes/FyreFramework/actions/workflows/ci.yml/badge.svg)](https://github.com/elusivecodes/FyreFramework/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Codecov](https://codecov.io/github/elusivecodes/FyreFramework/branch/main/graph/badge.svg)](https://app.codecov.io/github/elusivecodes/FyreFramework)
+[![Packagist Downloads](https://img.shields.io/packagist/dt/fyre/framework.svg)](https://packagist.org/packages/fyre/framework)
+[![Packagist Version](https://img.shields.io/packagist/v/fyre/framework.svg)](https://packagist.org/packages/fyre/framework)
+[![GitHub License](https://img.shields.io/github/license/elusivecodes/FyreFramework.svg)](LICENSE)
 
 FyreFramework is a modular PHP framework package for HTTP apps, CLI tools, data access, views, caching, queues, and more.
 
