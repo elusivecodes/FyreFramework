@@ -32,14 +32,14 @@ final class ArrayTest extends TestCase
         'debug',
     ];
 
-    protected LogManager $log;
+    protected LogManager $logger;
 
     public function testAppends(): void
     {
-        $this->log->handle('debug', 'test1');
-        $this->log->handle('debug', 'test2');
+        $this->logger->handle('debug', 'test1');
+        $this->logger->handle('debug', 'test2');
 
-        $content = $this->log->use('default')->read();
+        $content = $this->logger->use('default')->read();
 
         $this->assertSame(
             '[DEBUG] test1',
@@ -51,68 +51,68 @@ final class ArrayTest extends TestCase
             $content[1] ?? ''
         );
 
-        $this->assertEmpty($this->log->use('scoped')->read());
-        $this->assertNotEmpty($this->log->use('all')->read());
+        $this->assertEmpty($this->logger->use('scoped')->read());
+        $this->assertNotEmpty($this->logger->use('all')->read());
     }
 
     public function testData(): void
     {
         foreach ($this->levels as $i => $level) {
-            $this->log->handle($level, '{0}', ['test']);
+            $this->logger->handle($level, '{0}', ['test']);
 
             $this->assertSame(
                 '['.strtoupper($level).'] test',
-                $this->log->use('default')->read()[$i] ?? ''
+                $this->logger->use('default')->read()[$i] ?? ''
             );
         }
 
-        $this->assertEmpty($this->log->use('scoped')->read());
-        $this->assertNotEmpty($this->log->use('all')->read());
+        $this->assertEmpty($this->logger->use('scoped')->read());
+        $this->assertNotEmpty($this->logger->use('all')->read());
     }
 
     public function testInterpolateGet(): void
     {
         foreach ($this->levels as $i => $level) {
-            $this->log->handle($level, '{get_vars}');
+            $this->logger->handle($level, '{get_vars}');
 
             $this->assertSame(
                 '['.strtoupper($level).'] '.json_encode($_GET, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
-                $this->log->use('default')->read()[$i] ?? ''
+                $this->logger->use('default')->read()[$i] ?? ''
             );
         }
 
-        $this->assertEmpty($this->log->use('scoped')->read());
-        $this->assertNotEmpty($this->log->use('all')->read());
+        $this->assertEmpty($this->logger->use('scoped')->read());
+        $this->assertNotEmpty($this->logger->use('all')->read());
     }
 
     public function testInterpolatePost(): void
     {
         foreach ($this->levels as $i => $level) {
-            $this->log->handle($level, '{post_vars}');
+            $this->logger->handle($level, '{post_vars}');
 
             $this->assertSame(
                 '['.strtoupper($level).'] '.json_encode($_POST, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
-                $this->log->use('default')->read()[$i] ?? ''
+                $this->logger->use('default')->read()[$i] ?? ''
             );
         }
 
-        $this->assertEmpty($this->log->use('scoped')->read());
-        $this->assertNotEmpty($this->log->use('all')->read());
+        $this->assertEmpty($this->logger->use('scoped')->read());
+        $this->assertNotEmpty($this->logger->use('all')->read());
     }
 
     public function testInterpolateServer(): void
     {
         foreach ($this->levels as $i => $level) {
-            $this->log->handle($level, '{server_vars}');
+            $this->logger->handle($level, '{server_vars}');
 
             $this->assertSame(
                 '['.strtoupper($level).'] '.json_encode($_SERVER, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
-                $this->log->use('default')->read()[$i] ?? ''
+                $this->logger->use('default')->read()[$i] ?? ''
             );
         }
 
-        $this->assertEmpty($this->log->use('scoped')->read());
-        $this->assertNotEmpty($this->log->use('all')->read());
+        $this->assertEmpty($this->logger->use('scoped')->read());
+        $this->assertNotEmpty($this->logger->use('all')->read());
     }
 
     public function testInvalidHandler(): void
@@ -120,12 +120,12 @@ final class ArrayTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Log handler `Invalid` must extend `Fyre\Log\Logger`.');
 
-        $this->log->clear();
-        $this->log->setConfig('invalid', [
+        $this->logger->clear();
+        $this->logger->setConfig('invalid', [
             'className' => 'Invalid',
         ]);
 
-        $this->log->handle('debug', 'test');
+        $this->logger->handle('debug', 'test');
     }
 
     public function testInvalidLevel(): void
@@ -133,45 +133,45 @@ final class ArrayTest extends TestCase
         $this->expectException(BadMethodCallException::class);
         $this->expectExceptionMessage('Log level `invalid` is not valid.');
 
-        $this->log->handle('invalid', 'test');
+        $this->logger->handle('invalid', 'test');
     }
 
     public function testLog(): void
     {
         foreach ($this->levels as $i => $level) {
-            $this->log->handle($level, 'test');
+            $this->logger->handle($level, 'test');
 
             $this->assertSame(
                 '['.strtoupper($level).'] test',
-                $this->log->use('default')->read()[$i] ?? ''
+                $this->logger->use('default')->read()[$i] ?? ''
             );
         }
 
-        $this->assertEmpty($this->log->use('scoped')->read());
-        $this->assertNotEmpty($this->log->use('all')->read());
+        $this->assertEmpty($this->logger->use('scoped')->read());
+        $this->assertNotEmpty($this->logger->use('all')->read());
     }
 
     public function testScope(): void
     {
-        $this->log->handle('error', 'test', scope: 'scoped');
+        $this->logger->handle('error', 'test', scope: 'scoped');
 
         $this->assertSame(
             '[ERROR] test',
-            $this->log->use('scoped')->read()[0] ?? ''
+            $this->logger->use('scoped')->read()[0] ?? ''
         );
     }
 
     public function testSkipped(): void
     {
         foreach ($this->levels as $level) {
-            $this->log->clear();
-            $this->log->setConfig('array', [
+            $this->logger->clear();
+            $this->logger->setConfig('array', [
                 'className' => ArrayLogger::class,
                 'levels' => array_diff($this->levels, [$level]),
             ]);
-            $this->log->handle($level, 'test');
+            $this->logger->handle($level, 'test');
 
-            $this->assertEmpty($this->log->use('array')->read());
+            $this->assertEmpty($this->logger->use('array')->read());
         }
     }
 
@@ -193,6 +193,6 @@ final class ArrayTest extends TestCase
                 'className' => ArrayLogger::class,
             ],
         ]);
-        $this->log = $container->use(LogManager::class);
+        $this->logger = $container->use(LogManager::class);
     }
 }

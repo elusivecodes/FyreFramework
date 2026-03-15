@@ -35,11 +35,13 @@ final class MemcachedTest extends TestCase
     use RememberTestTrait;
     use TagsTestTrait;
 
-    protected Cacher $cache;
+    protected CacheManager $cacheManager;
+
+    protected Cacher $cacher;
 
     public function testDebug(): void
     {
-        $data = $this->cache->__debugInfo();
+        $data = $this->cacher->__debugInfo();
 
         $this->assertSame(
             [
@@ -68,30 +70,29 @@ final class MemcachedTest extends TestCase
         $this->expectException(CacheException::class);
         $this->expectExceptionMessage('Memcache cache connection failed.');
 
-        new Container()
-            ->use(CacheManager::class)
-            ->build([
-                'className' => MemcachedCacher::class,
-                'port' => 1234,
-            ]);
+        $this->cacheManager->build([
+            'className' => MemcachedCacher::class,
+            'port' => 1234,
+        ]);
     }
 
     #[Override]
     protected function setUp(): void
     {
-        $this->cache = new Container()
-            ->use(CacheManager::class)
-            ->build([
-                'className' => MemcachedCacher::class,
-                'host' => getenv('MEMCACHED_HOST'),
-                'port' => getenv('MEMCACHED_PORT'),
-                'prefix' => 'prefix.',
-            ]);
+        $this->cacheManager = new Container()
+            ->use(CacheManager::class);
+
+        $this->cacher = $this->cacheManager->build([
+            'className' => MemcachedCacher::class,
+            'host' => getenv('MEMCACHED_HOST'),
+            'port' => getenv('MEMCACHED_PORT'),
+            'prefix' => 'prefix.',
+        ]);
     }
 
     #[Override]
     protected function tearDown(): void
     {
-        $this->cache->clear();
+        $this->cacher->clear();
     }
 }

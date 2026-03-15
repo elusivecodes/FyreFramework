@@ -20,13 +20,13 @@ use function rmdir;
 
 final class LogManagerTest extends TestCase
 {
-    protected LogManager $log;
+    protected LogManager $logManager;
 
     public function testBuild(): void
     {
         $this->assertInstanceOf(
             FileLogger::class,
-            $this->log->build([
+            $this->logManager->build([
                 'className' => FileLogger::class,
             ])
         );
@@ -37,7 +37,7 @@ final class LogManagerTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Log handler `Invalid` must extend `Fyre\Log\Logger`.');
 
-        $this->log->build([
+        $this->logManager->build([
             'className' => 'Invalid',
         ]);
     }
@@ -72,7 +72,7 @@ final class LogManagerTest extends TestCase
                     'suffix' => '',
                 ],
             ],
-            $this->log->getConfig()
+            $this->logManager->getConfig()
         );
     }
 
@@ -85,32 +85,32 @@ final class LogManagerTest extends TestCase
                 'path' => 'error',
                 'suffix' => '',
             ],
-            $this->log->getConfig('error')
+            $this->logManager->getConfig('error')
         );
     }
 
     public function testIsLoaded(): void
     {
-        $this->log->use();
+        $this->logManager->use();
 
         $this->assertTrue(
-            $this->log->isLoaded()
+            $this->logManager->isLoaded()
         );
     }
 
     public function testIsLoadedInvalid(): void
     {
         $this->assertFalse(
-            $this->log->isLoaded('test')
+            $this->logManager->isLoaded('test')
         );
     }
 
     public function testIsLoadedKey(): void
     {
-        $this->log->use('error');
+        $this->logManager->use('error');
 
         $this->assertTrue(
-            $this->log->isLoaded('error')
+            $this->logManager->isLoaded('error')
         );
     }
 
@@ -125,8 +125,8 @@ final class LogManagerTest extends TestCase
     public function testSetConfig(): void
     {
         $this->assertSame(
-            $this->log,
-            $this->log->setConfig('test', [
+            $this->logManager,
+            $this->logManager->setConfig('test', [
                 'className' => FileLogger::class,
                 'path' => 'log',
             ])
@@ -137,7 +137,7 @@ final class LogManagerTest extends TestCase
                 'className' => FileLogger::class,
                 'path' => 'log',
             ],
-            $this->log->getConfig('test')
+            $this->logManager->getConfig('test')
         );
     }
 
@@ -146,7 +146,7 @@ final class LogManagerTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Log config `default` already exists.');
 
-        $this->log->setConfig('default', [
+        $this->logManager->setConfig('default', [
             'className' => FileLogger::class,
             'path' => 'log',
         ]);
@@ -154,50 +154,50 @@ final class LogManagerTest extends TestCase
 
     public function testUnload(): void
     {
-        $this->log->use();
+        $this->logManager->use();
 
         $this->assertSame(
-            $this->log,
-            $this->log->unload()
+            $this->logManager,
+            $this->logManager->unload()
         );
 
         $this->assertFalse(
-            $this->log->isLoaded()
+            $this->logManager->isLoaded()
         );
         $this->assertFalse(
-            $this->log->hasConfig()
+            $this->logManager->hasConfig()
         );
     }
 
     public function testUnloadInvalid(): void
     {
         $this->assertSame(
-            $this->log,
-            $this->log->unload('test')
+            $this->logManager,
+            $this->logManager->unload('test')
         );
     }
 
     public function testUnloadKey(): void
     {
-        $this->log->use('error');
+        $this->logManager->use('error');
 
         $this->assertSame(
-            $this->log,
-            $this->log->unload('error')
+            $this->logManager,
+            $this->logManager->unload('error')
         );
 
         $this->assertFalse(
-            $this->log->isLoaded('error')
+            $this->logManager->isLoaded('error')
         );
         $this->assertFalse(
-            $this->log->hasConfig('error')
+            $this->logManager->hasConfig('error')
         );
     }
 
     public function testUse(): void
     {
-        $handler1 = $this->log->use();
-        $handler2 = $this->log->use();
+        $handler1 = $this->logManager->use();
+        $handler2 = $this->logManager->use();
 
         $this->assertSame($handler1, $handler2);
 
@@ -226,7 +226,7 @@ final class LogManagerTest extends TestCase
                 'suffix' => '',
             ],
         ]);
-        $this->log = $container->use(LogManager::class);
+        $this->logManager = $container->use(LogManager::class);
 
         @mkdir('log');
         @mkdir('error');

@@ -11,7 +11,7 @@ trait IncrementTestTrait
     {
         $this->assertSame(
             1,
-            $this->cache->increment('test')
+            $this->cacher->increment('test')
         );
     }
 
@@ -19,18 +19,18 @@ trait IncrementTestTrait
     {
         $this->assertSame(
             5,
-            $this->cache->increment('test', 5)
+            $this->cacher->increment('test', 5)
         );
     }
 
     public function testIncrementExisting(): void
     {
-        $this->cache->set('test', 5);
-        $this->cache->increment('test');
+        $this->cacher->set('test', 5);
+        $this->cacher->increment('test');
 
         $this->assertSame(
             6,
-            $this->cache->get('test')
+            $this->cacher->get('test')
         );
     }
 
@@ -39,25 +39,25 @@ trait IncrementTestTrait
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Cache key `test/` is not valid.');
 
-        $this->cache->increment('test/');
+        $this->cacher->increment('test/');
     }
 
     public function testIncrementInvalidType(): void
     {
-        $this->cache->set('test', 'abc');
+        $this->cacher->set('test', 'abc');
 
         $this->assertFalse(
-            $this->cache->decrement('test')
+            $this->cacher->decrement('test')
         );
     }
 
     public function testIncrementPersists(): void
     {
-        $this->cache->increment('test');
+        $this->cacher->increment('test');
 
         $this->assertSame(
             1,
-            $this->cache->get('test')
+            $this->cacher->get('test')
         );
     }
 }

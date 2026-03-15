@@ -22,7 +22,7 @@ use function unlink;
 
 trait MariaDbConnectionTrait
 {
-    protected Cacher $cache;
+    protected Cacher $cacher;
 
     protected Connection $db;
 
@@ -55,7 +55,7 @@ trait MariaDbConnectionTrait
         ]);
 
         $this->schema = $container->use(SchemaRegistry::class)->use($this->db);
-        $this->cache = $container->use(CacheManager::class)->use('_schema');
+        $this->cacher = $container->use(CacheManager::class)->use('_schema');
 
         $this->db->query('DROP TABLE IF EXISTS test_values');
         $this->db->query('DROP TABLE IF EXISTS test');

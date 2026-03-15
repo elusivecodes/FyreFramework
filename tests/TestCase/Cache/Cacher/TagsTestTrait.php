@@ -7,7 +7,7 @@ trait TagsTestTrait
 {
     public function testTaggedDelete(): void
     {
-        $usersCache = $this->cache->tags('users');
+        $usersCache = $this->cacher->tags('users');
 
         $usersCache->set('user.1', 'value');
 
@@ -22,7 +22,7 @@ trait TagsTestTrait
 
     public function testTaggedGetSet(): void
     {
-        $usersCache = $this->cache->tags('users');
+        $usersCache = $this->cacher->tags('users');
 
         $usersCache->set('user.1', 'value');
 
@@ -32,18 +32,18 @@ trait TagsTestTrait
         );
 
         $this->assertNull(
-            $this->cache->get('user.1')
+            $this->cacher->get('user.1')
         );
     }
 
     public function testTaggedInvalidateTag(): void
     {
-        $usersCache = $this->cache->tags('users');
+        $usersCache = $this->cacher->tags('users');
 
         $usersCache->set('user.1', 'value');
 
         $this->assertTrue(
-            $this->cache->invalidateTag('users')
+            $this->cacher->invalidateTag('users')
         );
 
         $this->assertNull(
@@ -53,12 +53,12 @@ trait TagsTestTrait
 
     public function testTaggedInvalidateTags(): void
     {
-        $activeUsersCache = $this->cache->tags(['users', 'active']);
+        $activeUsersCache = $this->cacher->tags(['users', 'active']);
 
         $activeUsersCache->set('user.1', 'value');
 
         $this->assertTrue(
-            $this->cache->invalidateTags(['users', 'active'])
+            $this->cacher->invalidateTags(['users', 'active'])
         );
 
         $this->assertNull(
@@ -68,7 +68,7 @@ trait TagsTestTrait
 
     public function testTaggedRemember(): void
     {
-        $usersCache = $this->cache->tags('users');
+        $usersCache = $this->cacher->tags('users');
 
         $test = 0;
 
@@ -98,8 +98,8 @@ trait TagsTestTrait
 
     public function testTaggedTagsMerges(): void
     {
-        $activeUsersCache1 = $this->cache->tags('users')->tags('active');
-        $activeUsersCache2 = $this->cache->tags(['active', 'users']);
+        $activeUsersCache1 = $this->cacher->tags('users')->tags('active');
+        $activeUsersCache2 = $this->cacher->tags(['active', 'users']);
 
         $activeUsersCache1->set('user.1', 'value');
 

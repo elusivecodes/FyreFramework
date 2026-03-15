@@ -7,19 +7,19 @@ trait EmptyTestTrait
 {
     public function testEmpty(): void
     {
-        $this->cache->set('test1', 'value');
-        $this->cache->set('test2', 'value');
+        $this->cacher->set('test1', 'value');
+        $this->cacher->set('test2', 'value');
 
         $this->assertTrue(
-            $this->cache->clear()
+            $this->cacher->clear()
         );
 
         $this->assertFalse(
-            $this->cache->has('test')
+            $this->cacher->has('test')
         );
 
         $this->assertFalse(
-            $this->cache->has('test2')
+            $this->cacher->has('test2')
         );
     }
 }

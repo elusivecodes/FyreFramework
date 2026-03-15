@@ -255,7 +255,7 @@ final class QueryTest extends TestCase
             [
                 'id' => 1,
             ],
-            $query->first()?->toArray()
+            $query->first()->toArray()
         );
 
         $this->assertSame(
@@ -268,7 +268,7 @@ final class QueryTest extends TestCase
                 'id' => 1,
                 'name' => 'Test 1',
             ],
-            $query->first()?->toArray()
+            $query->first()->toArray()
         );
     }
 

@@ -33,14 +33,14 @@ use function getenv;
 
 final class ConnectionManagerTest extends TestCase
 {
-    protected ConnectionManager $connection;
+    protected ConnectionManager $connectionManager;
 
     public function testBuildInvalidHandler(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Database connection `Invalid` must extend `Fyre\DB\Connection`.');
 
-        $this->connection->build([
+        $this->connectionManager->build([
             'className' => 'Invalid',
         ]);
     }
@@ -110,7 +110,7 @@ final class ConnectionManagerTest extends TestCase
                     'compress' => true,
                 ],
             ],
-            $this->connection->getConfig()
+            $this->connectionManager->getConfig()
         );
     }
 
@@ -128,32 +128,32 @@ final class ConnectionManagerTest extends TestCase
                 'charset' => 'utf8mb4',
                 'compress' => true,
             ],
-            $this->connection->getConfig('default')
+            $this->connectionManager->getConfig('default')
         );
     }
 
     public function testIsLoaded(): void
     {
-        $this->connection->use();
+        $this->connectionManager->use();
 
         $this->assertTrue(
-            $this->connection->isLoaded()
+            $this->connectionManager->isLoaded()
         );
     }
 
     public function testIsLoadedInvalid(): void
     {
         $this->assertFalse(
-            $this->connection->isLoaded('test')
+            $this->connectionManager->isLoaded('test')
         );
     }
 
     public function testIsLoadedKey(): void
     {
-        $this->connection->use('other');
+        $this->connectionManager->use('other');
 
         $this->assertTrue(
-            $this->connection->isLoaded('other')
+            $this->connectionManager->isLoaded('other')
         );
     }
 
@@ -198,8 +198,8 @@ final class ConnectionManagerTest extends TestCase
     public function testSetConfig(): void
     {
         $this->assertSame(
-            $this->connection,
-            $this->connection->setConfig('test', [
+            $this->connectionManager,
+            $this->connectionManager->setConfig('test', [
                 'className' => MysqlConnection::class,
             ])
         );
@@ -208,10 +208,10 @@ final class ConnectionManagerTest extends TestCase
             [
                 'className' => MysqlConnection::class,
             ],
-            $this->connection->getConfig('test')
+            $this->connectionManager->getConfig('test')
         );
 
-        $this->connection->unload('test');
+        $this->connectionManager->unload('test');
     }
 
     public function testSetConfigExists(): void
@@ -219,57 +219,57 @@ final class ConnectionManagerTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Database connection config `default` already exists.');
 
-        $this->connection->setConfig('default', [
+        $this->connectionManager->setConfig('default', [
             'className' => MysqlConnection::class,
         ]);
     }
 
     public function testUnload(): void
     {
-        $this->connection->use();
+        $this->connectionManager->use();
 
         $this->assertSame(
-            $this->connection,
-            $this->connection->unload()
+            $this->connectionManager,
+            $this->connectionManager->unload()
         );
 
         $this->assertFalse(
-            $this->connection->isLoaded()
+            $this->connectionManager->isLoaded()
         );
         $this->assertFalse(
-            $this->connection->hasConfig()
+            $this->connectionManager->hasConfig()
         );
     }
 
     public function testUnloadInvalid(): void
     {
         $this->assertSame(
-            $this->connection,
-            $this->connection->unload('test')
+            $this->connectionManager,
+            $this->connectionManager->unload('test')
         );
     }
 
     public function testUnloadKey(): void
     {
-        $this->connection->use('other');
+        $this->connectionManager->use('other');
 
         $this->assertSame(
-            $this->connection,
-            $this->connection->unload('other')
+            $this->connectionManager,
+            $this->connectionManager->unload('other')
         );
 
         $this->assertFalse(
-            $this->connection->isLoaded('other')
+            $this->connectionManager->isLoaded('other')
         );
         $this->assertFalse(
-            $this->connection->hasConfig('other')
+            $this->connectionManager->hasConfig('other')
         );
     }
 
     public function testUse(): void
     {
-        $handler1 = $this->connection->use();
-        $handler2 = $this->connection->use();
+        $handler1 = $this->connectionManager->use();
+        $handler2 = $this->connectionManager->use();
 
         $this->assertSame($handler1, $handler2);
 
@@ -312,9 +312,9 @@ final class ConnectionManagerTest extends TestCase
             ],
         ]);
 
-        $this->connection = $container->use(ConnectionManager::class);
+        $this->connectionManager = $container->use(ConnectionManager::class);
 
-        $db = $this->connection->use();
+        $db = $this->connectionManager->use();
 
         $db->query('DROP TABLE IF EXISTS test');
 
@@ -330,11 +330,11 @@ final class ConnectionManagerTest extends TestCase
     #[Override]
     protected function tearDown(): void
     {
-        if (!$this->connection->hasConfig()) {
+        if (!$this->connectionManager->hasConfig()) {
             return;
         }
 
-        $db = $this->connection->use();
+        $db = $this->connectionManager->use();
         $db->query('DROP TABLE IF EXISTS test');
     }
 }

@@ -35,35 +35,33 @@ final class RedisTest extends TestCase
     use RememberTestTrait;
     use TagsTestTrait;
 
-    protected Cacher $cache;
+    protected CacheManager $cacheManager;
+
+    protected Cacher $cacher;
 
     public function testClearWithoutPrefixAllowsFlushWhenEnabled(): void
     {
-        $cache = new Container()
-            ->use(CacheManager::class)
-            ->build([
-                'className' => RedisCacher::class,
-                'host' => getenv('REDIS_HOST'),
-                'password' => getenv('REDIS_PASSWORD'),
-                'database' => getenv('REDIS_DATABASE'),
-                'port' => getenv('REDIS_PORT'),
-                'flushDatabase' => true,
-            ]);
+        $cache = $this->cacheManager->build([
+            'className' => RedisCacher::class,
+            'host' => getenv('REDIS_HOST'),
+            'password' => getenv('REDIS_PASSWORD'),
+            'database' => getenv('REDIS_DATABASE'),
+            'port' => getenv('REDIS_PORT'),
+            'flushDatabase' => true,
+        ]);
 
         $this->assertTrue($cache->clear());
     }
 
     public function testClearWithoutPrefixThrows(): void
     {
-        $cache = new Container()
-            ->use(CacheManager::class)
-            ->build([
-                'className' => RedisCacher::class,
-                'host' => getenv('REDIS_HOST'),
-                'password' => getenv('REDIS_PASSWORD'),
-                'database' => getenv('REDIS_DATABASE'),
-                'port' => getenv('REDIS_PORT'),
-            ]);
+        $cache = $this->cacheManager->build([
+            'className' => RedisCacher::class,
+            'host' => getenv('REDIS_HOST'),
+            'password' => getenv('REDIS_PASSWORD'),
+            'database' => getenv('REDIS_DATABASE'),
+            'port' => getenv('REDIS_PORT'),
+        ]);
 
         $this->expectException(CacheException::class);
         $this->expectExceptionMessage('Redis cache clear requires a non-empty prefix or flushDatabase enabled.');
@@ -73,7 +71,7 @@ final class RedisTest extends TestCase
 
     public function testDebug(): void
     {
-        $data = $this->cache->__debugInfo();
+        $data = $this->cacher->__debugInfo();
 
         $this->assertSame(
             [
@@ -112,13 +110,11 @@ final class RedisTest extends TestCase
         $this->expectException(CacheException::class);
         $this->expectExceptionMessageMatches('/^Redis cache connection error: /');
 
-        new Container()
-            ->use(CacheManager::class)
-            ->build([
-                'className' => RedisCacher::class,
-                'host' => getenv('REDIS_HOST'),
-                'password' => 'invalid',
-            ]);
+        $this->cacheManager->build([
+            'className' => RedisCacher::class,
+            'host' => getenv('REDIS_HOST'),
+            'password' => 'invalid',
+        ]);
     }
 
     public function testInvalidConnection(): void
@@ -126,32 +122,31 @@ final class RedisTest extends TestCase
         $this->expectException(CacheException::class);
         $this->expectExceptionMessage('Redis cache connection error: Connection refused');
 
-        new Container()
-            ->use(CacheManager::class)
-            ->build([
-                'className' => RedisCacher::class,
-                'port' => 1234,
-            ]);
+        $this->cacheManager->build([
+            'className' => RedisCacher::class,
+            'port' => 1234,
+        ]);
     }
 
     #[Override]
     protected function setUp(): void
     {
-        $this->cache = new Container()
-            ->use(CacheManager::class)
-            ->build([
-                'className' => RedisCacher::class,
-                'host' => getenv('REDIS_HOST'),
-                'password' => getenv('REDIS_PASSWORD'),
-                'database' => getenv('REDIS_DATABASE'),
-                'port' => getenv('REDIS_PORT'),
-                'prefix' => 'prefix.',
-            ]);
+        $this->cacheManager = new Container()
+            ->use(CacheManager::class);
+
+        $this->cacher = $this->cacheManager->build([
+            'className' => RedisCacher::class,
+            'host' => getenv('REDIS_HOST'),
+            'password' => getenv('REDIS_PASSWORD'),
+            'database' => getenv('REDIS_DATABASE'),
+            'port' => getenv('REDIS_PORT'),
+            'prefix' => 'prefix.',
+        ]);
     }
 
     #[Override]
     protected function tearDown(): void
     {
-        $this->cache->clear();
+        $this->cacher->clear();
     }
 }

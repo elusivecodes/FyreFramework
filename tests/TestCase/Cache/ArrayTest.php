@@ -33,11 +33,11 @@ final class ArrayTest extends TestCase
     use RememberTestTrait;
     use TagsTestTrait;
 
-    protected Cacher $cache;
+    protected Cacher $cacher;
 
     public function testDebug(): void
     {
-        $data = $this->cache->__debugInfo();
+        $data = $this->cacher->__debugInfo();
 
         $this->assertSame(
             [
@@ -61,7 +61,7 @@ final class ArrayTest extends TestCase
     #[Override]
     protected function setUp(): void
     {
-        $this->cache = new Container()
+        $this->cacher = new Container()
             ->use(CacheManager::class)
             ->build([
                 'className' => ArrayCacher::class,
@@ -72,6 +72,6 @@ final class ArrayTest extends TestCase
     #[Override]
     protected function tearDown(): void
     {
-        $this->cache->delete('test');
+        $this->cacher->delete('test');
     }
 }

@@ -19,7 +19,7 @@ use function class_uses;
 
 final class EncryptionManagerTest extends TestCase
 {
-    protected EncryptionManager $encryption;
+    protected EncryptionManager $encryptionManager;
 
     public function testDebug(): void
     {
@@ -45,7 +45,7 @@ final class EncryptionManagerTest extends TestCase
                     'className' => OpenSSLEncrypter::class,
                 ],
             ],
-            $this->encryption->getConfig()
+            $this->encryptionManager->getConfig()
         );
     }
 
@@ -55,32 +55,32 @@ final class EncryptionManagerTest extends TestCase
             [
                 'className' => OpenSSLEncrypter::class,
             ],
-            $this->encryption->getConfig('openssl')
+            $this->encryptionManager->getConfig('openssl')
         );
     }
 
     public function testIsLoaded(): void
     {
-        $this->encryption->use();
+        $this->encryptionManager->use();
 
         $this->assertTrue(
-            $this->encryption->isLoaded()
+            $this->encryptionManager->isLoaded()
         );
     }
 
     public function testIsLoadedInvalid(): void
     {
         $this->assertFalse(
-            $this->encryption->isLoaded('test')
+            $this->encryptionManager->isLoaded('test')
         );
     }
 
     public function testIsLoadedKey(): void
     {
-        $this->encryption->use('openssl');
+        $this->encryptionManager->use('openssl');
 
         $this->assertTrue(
-            $this->encryption->isLoaded('openssl')
+            $this->encryptionManager->isLoaded('openssl')
         );
     }
 
@@ -95,8 +95,8 @@ final class EncryptionManagerTest extends TestCase
     public function testSetConfig(): void
     {
         $this->assertSame(
-            $this->encryption,
-            $this->encryption->setConfig('test', [
+            $this->encryptionManager,
+            $this->encryptionManager->setConfig('test', [
                 'className' => SodiumEncrypter::class,
             ])
         );
@@ -105,7 +105,7 @@ final class EncryptionManagerTest extends TestCase
             [
                 'className' => SodiumEncrypter::class,
             ],
-            $this->encryption->getConfig('test')
+            $this->encryptionManager->getConfig('test')
         );
     }
 
@@ -114,57 +114,57 @@ final class EncryptionManagerTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Encryption config `default` already exists.');
 
-        $this->encryption->setConfig('default', [
+        $this->encryptionManager->setConfig('default', [
             'className' => SodiumEncrypter::class,
         ]);
     }
 
     public function testUnload(): void
     {
-        $this->encryption->use();
+        $this->encryptionManager->use();
 
         $this->assertSame(
-            $this->encryption,
-            $this->encryption->unload()
+            $this->encryptionManager,
+            $this->encryptionManager->unload()
         );
 
         $this->assertFalse(
-            $this->encryption->isLoaded()
+            $this->encryptionManager->isLoaded()
         );
         $this->assertFalse(
-            $this->encryption->hasConfig()
+            $this->encryptionManager->hasConfig()
         );
     }
 
     public function testUnloadInvalid(): void
     {
         $this->assertSame(
-            $this->encryption,
-            $this->encryption->unload('test')
+            $this->encryptionManager,
+            $this->encryptionManager->unload('test')
         );
     }
 
     public function testUnloadKey(): void
     {
-        $this->encryption->use('openssl');
+        $this->encryptionManager->use('openssl');
 
         $this->assertSame(
-            $this->encryption,
-            $this->encryption->unload('openssl')
+            $this->encryptionManager,
+            $this->encryptionManager->unload('openssl')
         );
 
         $this->assertFalse(
-            $this->encryption->isLoaded('openssl')
+            $this->encryptionManager->isLoaded('openssl')
         );
         $this->assertFalse(
-            $this->encryption->hasConfig('openssl')
+            $this->encryptionManager->hasConfig('openssl')
         );
     }
 
     public function testUse(): void
     {
-        $handler1 = $this->encryption->use();
-        $handler2 = $this->encryption->use();
+        $handler1 = $this->encryptionManager->use();
+        $handler2 = $this->encryptionManager->use();
 
         $this->assertSame($handler1, $handler2);
 
@@ -187,6 +187,6 @@ final class EncryptionManagerTest extends TestCase
                 'className' => OpenSSLEncrypter::class,
             ],
         ]);
-        $this->encryption = $container->use(EncryptionManager::class);
+        $this->encryptionManager = $container->use(EncryptionManager::class);
     }
 }

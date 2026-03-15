@@ -37,12 +37,12 @@ final class FileTest extends TestCase
         'debug',
     ];
 
-    protected LogManager $log;
+    protected LogManager $logger;
 
     public function testAppends(): void
     {
-        $this->log->handle('debug', 'test1');
-        $this->log->handle('debug', 'test2');
+        $this->logger->handle('debug', 'test1');
+        $this->logger->handle('debug', 'test2');
 
         $content = file_get_contents('log/debug.log');
 
@@ -63,7 +63,7 @@ final class FileTest extends TestCase
     public function testData(): void
     {
         foreach ($this->levels as $level) {
-            $this->log->handle($level, '{0}', ['test']);
+            $this->logger->handle($level, '{0}', ['test']);
 
             $this->assertMatchesRegularExpression(
                 '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] test/',
@@ -78,7 +78,7 @@ final class FileTest extends TestCase
     public function testInterpolateGet(): void
     {
         foreach ($this->levels as $level) {
-            $this->log->handle($level, '{get_vars}');
+            $this->logger->handle($level, '{get_vars}');
 
             $this->assertMatchesRegularExpression(
                 '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] '.preg_quote(json_encode($_GET, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), '/').'/',
@@ -93,7 +93,7 @@ final class FileTest extends TestCase
     public function testInterpolatePost(): void
     {
         foreach ($this->levels as $level) {
-            $this->log->handle($level, '{post_vars}');
+            $this->logger->handle($level, '{post_vars}');
 
             $this->assertMatchesRegularExpression(
                 '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] '.preg_quote(json_encode($_POST, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), '/').'/',
@@ -108,7 +108,7 @@ final class FileTest extends TestCase
     public function testInterpolateServer(): void
     {
         foreach ($this->levels as $level) {
-            $this->log->handle($level, '{server_vars}');
+            $this->logger->handle($level, '{server_vars}');
 
             $this->assertMatchesRegularExpression(
                 '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] '.preg_quote(json_encode($_SERVER, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), '/').'/',
@@ -125,12 +125,12 @@ final class FileTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Log handler `Invalid` must extend `Fyre\Log\Logger`.');
 
-        $this->log->clear();
-        $this->log->setConfig('invalid', [
+        $this->logger->clear();
+        $this->logger->setConfig('invalid', [
             'className' => 'Invalid',
         ]);
 
-        $this->log->handle('debug', 'test');
+        $this->logger->handle('debug', 'test');
     }
 
     public function testInvalidLevel(): void
@@ -138,13 +138,13 @@ final class FileTest extends TestCase
         $this->expectException(BadMethodCallException::class);
         $this->expectExceptionMessage('Log level `invalid` is not valid.');
 
-        $this->log->handle('invalid', 'test');
+        $this->logger->handle('invalid', 'test');
     }
 
     public function testLog(): void
     {
         foreach ($this->levels as $level) {
-            $this->log->handle($level, 'test');
+            $this->logger->handle($level, 'test');
 
             $this->assertMatchesRegularExpression(
                 '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] test/',
@@ -158,7 +158,7 @@ final class FileTest extends TestCase
 
     public function testScope(): void
     {
-        $this->log->handle('error', 'test', scope: 'scoped');
+        $this->logger->handle('error', 'test', scope: 'scoped');
 
         $this->assertMatchesRegularExpression(
             '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[ERROR\] test/',
@@ -169,13 +169,13 @@ final class FileTest extends TestCase
     public function testSkipped(): void
     {
         foreach ($this->levels as $level) {
-            $this->log->clear();
-            $this->log->setConfig('file', [
+            $this->logger->clear();
+            $this->logger->setConfig('file', [
                 'className' => FileLogger::class,
                 'levels' => array_diff($this->levels, [$level]),
                 'path' => 'log',
             ]);
-            $this->log->handle($level, 'test');
+            $this->logger->handle($level, 'test');
 
             $this->assertFileDoesNotExist('log/'.$level.'.log');
         }
@@ -210,7 +210,7 @@ final class FileTest extends TestCase
                 'suffix' => '',
             ],
         ]);
-        $this->log = $container->use(LogManager::class);
+        $this->logger = $container->use(LogManager::class);
 
         @mkdir('log');
     }

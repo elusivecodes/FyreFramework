@@ -16,13 +16,13 @@ use function class_uses;
 
 final class MailManagerTest extends TestCase
 {
-    protected MailManager $mail;
+    protected MailManager $mailManager;
 
     public function testBuild(): void
     {
         $this->assertInstanceOf(
             SendmailMailer::class,
-            $this->mail->build([
+            $this->mailManager->build([
                 'className' => SendmailMailer::class,
             ])
         );
@@ -33,7 +33,7 @@ final class MailManagerTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Mailer `Invalid` must extend `Fyre\Mail\Mailer`.');
 
-        $this->mail->build([
+        $this->mailManager->build([
             'className' => 'Invalid',
         ]);
     }
@@ -57,7 +57,7 @@ final class MailManagerTest extends TestCase
                     'className' => SendmailMailer::class,
                 ],
             ],
-            $this->mail->getConfig()
+            $this->mailManager->getConfig()
         );
     }
 
@@ -67,40 +67,40 @@ final class MailManagerTest extends TestCase
             [
                 'className' => SendmailMailer::class,
             ],
-            $this->mail->getConfig('default')
+            $this->mailManager->getConfig('default')
         );
     }
 
     public function testIsLoaded(): void
     {
-        $this->mail->use();
+        $this->mailManager->use();
 
         $this->assertTrue(
-            $this->mail->isLoaded()
+            $this->mailManager->isLoaded()
         );
     }
 
     public function testIsLoadedInvalid(): void
     {
         $this->assertFalse(
-            $this->mail->isLoaded('test')
+            $this->mailManager->isLoaded('test')
         );
     }
 
     public function testIsLoadedKey(): void
     {
-        $this->mail->use('other');
+        $this->mailManager->use('other');
 
         $this->assertTrue(
-            $this->mail->isLoaded('other')
+            $this->mailManager->isLoaded('other')
         );
     }
 
     public function testSetConfig(): void
     {
         $this->assertSame(
-            $this->mail,
-            $this->mail->setConfig('test', [
+            $this->mailManager,
+            $this->mailManager->setConfig('test', [
                 'className' => SendmailMailer::class,
             ])
         );
@@ -109,7 +109,7 @@ final class MailManagerTest extends TestCase
             [
                 'className' => SendmailMailer::class,
             ],
-            $this->mail->getConfig('test')
+            $this->mailManager->getConfig('test')
         );
     }
 
@@ -118,57 +118,57 @@ final class MailManagerTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Mail config `default` already exists.');
 
-        $this->mail->setConfig('default', [
+        $this->mailManager->setConfig('default', [
             'className' => SendmailMailer::class,
         ]);
     }
 
     public function testUnload(): void
     {
-        $this->mail->use();
+        $this->mailManager->use();
 
         $this->assertSame(
-            $this->mail,
-            $this->mail->unload()
+            $this->mailManager,
+            $this->mailManager->unload()
         );
 
         $this->assertFalse(
-            $this->mail->isLoaded()
+            $this->mailManager->isLoaded()
         );
         $this->assertFalse(
-            $this->mail->hasConfig()
+            $this->mailManager->hasConfig()
         );
     }
 
     public function testUnloadInvalid(): void
     {
         $this->assertSame(
-            $this->mail,
-            $this->mail->unload('test')
+            $this->mailManager,
+            $this->mailManager->unload('test')
         );
     }
 
     public function testUnloadKey(): void
     {
-        $this->mail->use('other');
+        $this->mailManager->use('other');
 
         $this->assertSame(
-            $this->mail,
-            $this->mail->unload('other')
+            $this->mailManager,
+            $this->mailManager->unload('other')
         );
 
         $this->assertFalse(
-            $this->mail->isLoaded('other')
+            $this->mailManager->isLoaded('other')
         );
         $this->assertFalse(
-            $this->mail->hasConfig('other')
+            $this->mailManager->hasConfig('other')
         );
     }
 
     public function testUse(): void
     {
-        $handler1 = $this->mail->use();
-        $handler2 = $this->mail->use();
+        $handler1 = $this->mailManager->use();
+        $handler2 = $this->mailManager->use();
 
         $this->assertSame($handler1, $handler2);
 
@@ -191,6 +191,6 @@ final class MailManagerTest extends TestCase
                 'className' => SendmailMailer::class,
             ],
         ]);
-        $this->mail = $container->use(MailManager::class);
+        $this->mailManager = $container->use(MailManager::class);
     }
 }

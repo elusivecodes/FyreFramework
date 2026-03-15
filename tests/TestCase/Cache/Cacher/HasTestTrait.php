@@ -9,10 +9,10 @@ trait HasTestTrait
 {
     public function testHas(): void
     {
-        $this->cache->set('test', 1);
+        $this->cacher->set('test', 1);
 
         $this->assertTrue(
-            $this->cache->has('test')
+            $this->cacher->has('test')
         );
     }
 
@@ -21,13 +21,13 @@ trait HasTestTrait
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Cache key `test/` is not valid.');
 
-        $this->cache->has('test/');
+        $this->cacher->has('test/');
     }
 
     public function testHasMissing(): void
     {
         $this->assertFalse(
-            $this->cache->has('test')
+            $this->cacher->has('test')
         );
     }
 }

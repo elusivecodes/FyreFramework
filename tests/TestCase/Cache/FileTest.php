@@ -35,11 +35,11 @@ final class FileTest extends TestCase
     use RememberTestTrait;
     use TagsTestTrait;
 
-    protected Cacher $cache;
+    protected Cacher $cacher;
 
     public function testDebug(): void
     {
-        $data = $this->cache->__debugInfo();
+        $data = $this->cacher->__debugInfo();
 
         $this->assertSame(
             [
@@ -67,7 +67,7 @@ final class FileTest extends TestCase
     {
         @mkdir('cache');
 
-        $this->cache = new Container()
+        $this->cacher = new Container()
             ->use(CacheManager::class)
             ->build([
                 'className' => FileCacher::class,
@@ -79,7 +79,7 @@ final class FileTest extends TestCase
     #[Override]
     protected function tearDown(): void
     {
-        $this->cache->clear();
+        $this->cacher->clear();
         @rmdir('cache');
     }
 }

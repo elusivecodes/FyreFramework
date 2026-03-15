@@ -9,14 +9,14 @@ trait DeleteTestTrait
 {
     public function testDelete(): void
     {
-        $this->cache->set('test', 'value');
+        $this->cacher->set('test', 'value');
 
         $this->assertTrue(
-            $this->cache->delete('test')
+            $this->cacher->delete('test')
         );
 
         $this->assertFalse(
-            $this->cache->has('test')
+            $this->cacher->has('test')
         );
     }
 
@@ -25,31 +25,31 @@ trait DeleteTestTrait
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Cache key `test/` is not valid.');
 
-        $this->cache->delete('test/');
+        $this->cacher->delete('test/');
     }
 
     public function testDeleteMissing(): void
     {
         $this->assertFalse(
-            $this->cache->delete('missing')
+            $this->cacher->delete('missing')
         );
     }
 
     public function testDeleteMultiple(): void
     {
-        $this->cache->set('test1', 'value1');
-        $this->cache->set('test2', 'value2');
+        $this->cacher->set('test1', 'value1');
+        $this->cacher->set('test2', 'value2');
 
         $this->assertTrue(
-            $this->cache->deleteMultiple(['test1', 'test2'])
+            $this->cacher->deleteMultiple(['test1', 'test2'])
         );
 
         $this->assertFalse(
-            $this->cache->has('test1')
+            $this->cacher->has('test1')
         );
 
         $this->assertFalse(
-            $this->cache->has('test2')
+            $this->cacher->has('test2')
         );
     }
 }

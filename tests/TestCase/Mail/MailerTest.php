@@ -17,7 +17,7 @@ use function class_uses;
 
 final class MailerTest extends TestCase
 {
-    protected MailManager $mailer;
+    protected MailManager $mailManager;
 
     public function testDebug(): void
     {
@@ -31,7 +31,7 @@ final class MailerTest extends TestCase
     {
         $this->assertSame(
             'test',
-            $this->mailer->build([
+            $this->mailManager->build([
                 'client' => 'test',
                 'className' => SmtpMailer::class,
             ])->getClient()
@@ -43,7 +43,7 @@ final class MailerTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Mailer `` must extend `Fyre\Mail\Mailer`.');
 
-        $this->mailer->use('invalid');
+        $this->mailManager->use('invalid');
     }
 
     public function testMacro(): void
@@ -57,7 +57,7 @@ final class MailerTest extends TestCase
     #[Override]
     protected function setUp(): void
     {
-        $this->mailer = new Container()
+        $this->mailManager = new Container()
             ->use(MailManager::class);
     }
 }
