@@ -4,8 +4,6 @@ declare(strict_types=1);
 namespace Tests\TestCase\Http\Curl;
 
 use Closure;
-use Fyre\Http\Client\Exceptions\NetworkException;
-use Fyre\Http\Client\Exceptions\RequestException;
 use Fyre\Http\Client\Handlers\CurlHandler;
 use Fyre\Http\Client\Request;
 use PHPUnit\Framework\TestCase;
@@ -129,27 +127,5 @@ final class CurlHandlerTest extends TestCase
             'body',
             $response->getBody()->getContents()
         );
-    }
-
-    public function testSendNetworkException(): void
-    {
-        $this->expectException(NetworkException::class);
-
-        $request = new Request('http://127.0.0.1:1');
-
-        (new CurlHandler())->send($request, [
-            'timeout' => 1,
-        ]);
-    }
-
-    public function testSendRequestException(): void
-    {
-        $this->expectException(RequestException::class);
-
-        $request = new Request('foo://example.com');
-
-        (new CurlHandler())->send($request, [
-            'timeout' => 1,
-        ]);
     }
 }

@@ -175,26 +175,23 @@ final class ErrorHandlerTest extends TestCase
 
     public function testLogEnabled(): void
     {
-        $container = new Container();
-        $container->singleton(Config::class);
-        $container->singleton(EventManager::class);
-        $container->singleton(LogManager::class);
-        $container->singleton(ResponseEmitter::class);
-        $container->use(Config::class)->set('Error', [
-            'log' => true,
-        ]);
-        $container->use(Config::class)->set('Log', [
-            'default' => [
-                'className' => ArrayLogger::class,
-            ],
-        ]);
+        $this->container->singleton(LogManager::class);
+        $this->container->use(Config::class)
+            ->set('Error', [
+                'log' => true,
+            ])
+            ->set('Log', [
+                'default' => [
+                    'className' => ArrayLogger::class,
+                ],
+            ]);
 
-        $errorHandler = $container->use(ErrorHandler::class);
+        $errorHandler = $this->container->build(ErrorHandler::class);
         $errorHandler->disableCli();
 
         $errorHandler->render(new Exception('Error'));
 
-        $logger = $container->use(LogManager::class)->use();
+        $logger = $this->container->use(LogManager::class)->use();
 
         $this->assertInstanceOf(
             ArrayLogger::class,

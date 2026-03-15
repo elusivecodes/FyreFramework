@@ -39,9 +39,8 @@ final class AuthenticatorTest extends TestCase
                 'className' => MockAuthenticator::class,
             ],
         ]);
-        $this->container->unset(Auth::class);
 
-        $auth = $this->container->use(Auth::class);
+        $auth = $this->container->build(Auth::class);
 
         $this->assertInstanceOf(
             MockAuthenticator::class,
@@ -56,9 +55,8 @@ final class AuthenticatorTest extends TestCase
                 'className' => MockAuthenticator::class,
             ],
         ]);
-        $this->container->unset(Auth::class);
 
-        $auth = $this->container->use(Auth::class);
+        $auth = $this->container->build(Auth::class);
 
         $this->assertInstanceOf(
             MockAuthenticator::class,
@@ -73,12 +71,11 @@ final class AuthenticatorTest extends TestCase
                 'className' => 'Invalid',
             ],
         ]);
-        $this->container->unset(Auth::class);
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Authenticator `Invalid` must extend `Fyre\Auth\Authenticator`.');
 
-        $this->container->use(Auth::class);
+        $this->container->build(Auth::class);
     }
 
     public function testCookieAuthenticator(): void

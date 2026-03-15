@@ -9,16 +9,17 @@ use Fyre\Core\Lang;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\DB\TypeParser;
 use Fyre\Event\Event;
-use Fyre\Event\EventManager;
 use Fyre\Form\Form;
 use Fyre\Form\Rule;
-use Fyre\Form\Schema;
 use Fyre\Form\Validator;
 use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\Path;
 use Override;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Enums\State;
+use Tests\Mock\Forms\DateValidationForm;
+use Tests\Mock\Forms\IntegerValidationForm;
+use Tests\Mock\Forms\StateForm;
 use Tests\Mock\Forms\TestForm;
 
 use function class_uses;
@@ -29,19 +30,19 @@ final class FormTest extends TestCase
 {
     protected Container $container;
 
-    protected Form $form;
-
     public function testBuildValidatorEvent(): void
     {
-        $this->form->getEventManager()->on('Form.buildValidator', static function(Event $event, Validator $validator): void {
+        $form = $this->container->build(TestForm::class);
+
+        $form->getEventManager()->on('Form.buildValidator', static function(Event $event, Validator $validator): void {
             $validator->add('event', Rule::maxLength(4), name: 'maxLength');
         });
 
-        $validator = $this->form->getValidator();
+        $validator = $form->getValidator();
 
         $this->assertSame(
             $validator,
-            $this->form->getValidator()
+            $form->getValidator()
         );
 
         $this->assertCount(
@@ -60,8 +61,10 @@ final class FormTest extends TestCase
 
     public function testExecute(): void
     {
+        $form = $this->container->build(TestForm::class);
+
         $this->assertTrue(
-            $this->form->execute([
+            $form->execute([
                 'title' => 'This is a test',
                 'user_id' => '1',
                 'value' => '1.1',
@@ -70,7 +73,7 @@ final class FormTest extends TestCase
             ])
         );
 
-        $data = $this->form->getData();
+        $data = $form->getData();
 
         $this->assertInstanceOf(DateTime::class, $data['start']);
 
@@ -89,19 +92,21 @@ final class FormTest extends TestCase
 
         $this->assertSame(
             [],
-            $this->form->getErrors()
+            $form->getErrors()
         );
     }
 
     public function testExecuteFail(): void
     {
+        $form = $this->container->build(TestForm::class);
+
         $this->assertFalse(
-            $this->form->execute([])
+            $form->execute([])
         );
 
         $this->assertSame(
             [],
-            $this->form->getData()
+            $form->getData()
         );
 
         $this->assertSame(
@@ -116,28 +121,22 @@ final class FormTest extends TestCase
                     'The start is required.',
                 ],
             ],
-            $this->form->getErrors()
+            $form->getErrors()
         );
     }
 
     public function testExecuteNoValidation(): void
     {
+        $form = $this->container->build(TestForm::class);
+
         $this->assertTrue(
-            $this->form->execute([], false)
+            $form->execute([], false)
         );
     }
 
     public function testExecuteParsesInvalidEnumToNull(): void
     {
-        $form = new class ($this->container, $this->container->build(EventManager::class)) extends Form
-        {
-            public function buildSchema(Schema $schema): Schema
-            {
-                return $schema
-                    ->addField('status', ['type' => 'string'])
-                    ->setEnumClass('status', State::class);
-            }
-        };
+        $form = $this->container->build(StateForm::class);
 
         $this->assertTrue(
             $form->execute([
@@ -152,15 +151,7 @@ final class FormTest extends TestCase
 
     public function testExecuteParsesUnitEnum(): void
     {
-        $form = new class ($this->container, $this->container->build(EventManager::class)) extends Form
-        {
-            public function buildSchema(Schema $schema): Schema
-            {
-                return $schema
-                    ->addField('status', ['type' => 'string'])
-                    ->setEnumClass('status', State::class);
-            }
-        };
+        $form = $this->container->build(StateForm::class);
 
         $this->assertTrue(
             $form->execute([
@@ -176,20 +167,7 @@ final class FormTest extends TestCase
 
     public function testExecuteValidatesBeforeParsing(): void
     {
-        $form = new class ($this->container, $this->container->build(EventManager::class)) extends Form
-        {
-            public function buildSchema(Schema $schema): Schema
-            {
-                return $schema
-                    ->addField('start', ['type' => 'date']);
-            }
-
-            public function buildValidator(Validator $validator): Validator
-            {
-                return $validator
-                    ->add('start', Rule::exactLength(10));
-            }
-        };
+        $form = $this->container->build(DateValidationForm::class);
 
         $this->assertTrue(
             $form->execute([
@@ -205,20 +183,7 @@ final class FormTest extends TestCase
 
     public function testExecuteValidationFailureKeepsRawData(): void
     {
-        $form = new class ($this->container, $this->container->build(EventManager::class)) extends Form
-        {
-            public function buildSchema(Schema $schema): Schema
-            {
-                return $schema
-                    ->addField('user_id', ['type' => 'integer']);
-            }
-
-            public function buildValidator(Validator $validator): Validator
-            {
-                return $validator
-                    ->add('user_id', Rule::exactLength(2));
-            }
-        };
+        $form = $this->container->build(IntegerValidationForm::class);
 
         $this->assertFalse(
             $form->execute([
@@ -234,22 +199,26 @@ final class FormTest extends TestCase
 
     public function testSet(): void
     {
+        $form = $this->container->build(TestForm::class);
+
         $this->assertSame(
-            $this->form,
-            $this->form->set('title', 'This is a test')
+            $form,
+            $form->set('title', 'This is a test')
         );
 
         $this->assertSame(
             'This is a test',
-            $this->form->get('title')
+            $form->get('title')
         );
     }
 
     public function testSetData(): void
     {
+        $form = $this->container->build(TestForm::class);
+
         $this->assertSame(
-            $this->form,
-            $this->form->setData([
+            $form,
+            $form->setData([
                 'title' => 'This is a test',
                 'user_id' => '1',
                 'value' => '1.1',
@@ -266,14 +235,16 @@ final class FormTest extends TestCase
                 'start' => '2026-01-01',
                 'bool' => '1',
             ],
-            $this->form->getData()
+            $form->getData()
         );
     }
 
     public function testValidation(): void
     {
+        $form = $this->container->build(TestForm::class);
+
         $this->assertTrue(
-            $this->form->validate([
+            $form->validate([
                 'title' => 'This is a test',
                 'user_id' => '1',
                 'value' => '1.1',
@@ -282,17 +253,19 @@ final class FormTest extends TestCase
             ])
         );
 
-        $this->assertSame([], $this->form->getData());
-        $this->assertSame([], $this->form->getErrors());
+        $this->assertSame([], $form->getData());
+        $this->assertSame([], $form->getErrors());
     }
 
     public function testValidationFail(): void
     {
+        $form = $this->container->build(TestForm::class);
+
         $this->assertFalse(
-            $this->form->validate([])
+            $form->validate([])
         );
 
-        $this->assertSame([], $this->form->getData());
+        $this->assertSame([], $form->getData());
         $this->assertSame(
             [
                 'title' => [
@@ -305,7 +278,7 @@ final class FormTest extends TestCase
                     'The start is required.',
                 ],
             ],
-            $this->form->getErrors()
+            $form->getErrors()
         );
     }
 
@@ -321,7 +294,5 @@ final class FormTest extends TestCase
 
         $this->container->use(Lang::class)
             ->addPath(Path::join(ROOT, 'lang'));
-
-        $this->form = $this->container->build(TestForm::class);
     }
 }

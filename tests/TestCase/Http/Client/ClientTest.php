@@ -6,6 +6,8 @@ namespace Tests\TestCase\Http\Curl;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Http\Client;
+use Fyre\Http\Client\Exceptions\NetworkException;
+use Fyre\Http\Client\Exceptions\RequestException;
 use Fyre\Http\Client\Request;
 use Fyre\Http\Client\Response;
 use Fyre\Http\Cookie;
@@ -547,6 +549,24 @@ final class ClientTest extends TestCase
             ],
             $response->getJson()
         );
+    }
+
+    public function testSendNetworkException(): void
+    {
+        $this->expectException(NetworkException::class);
+
+        new Client()->get('http://127.0.0.1:1', options: [
+            'timeout' => 1,
+        ]);
+    }
+
+    public function testSendRequestException(): void
+    {
+        $this->expectException(RequestException::class);
+
+        new Client()->get('foo://example.com', options: [
+            'timeout' => 1,
+        ]);
     }
 
     public function testUpload(): void
