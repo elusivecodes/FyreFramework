@@ -37,7 +37,7 @@ final class HealthcheckTest extends TestCase
 
 ## Using fixtures
 
-`TestCase` can apply fixtures before each test and truncate them after by setting the `$fixtures` property:
+`TestCase` can apply fixtures before each test and clean them up after by setting the `$fixtures` property:
 
 ```php
 use Fyre\TestSuite\TestCase;
@@ -49,6 +49,8 @@ final class UsersTableTest extends TestCase
 ```
 
 For fixture definitions, discovery rules, and examples, see [Fixtures](fixtures.md).
+
+When cleanup runs, `TestCase` truncates the fixture tables plus any tables implied by the fixtures' configured associations, with foreign key checks temporarily disabled on the active database connection.
 
 ## Method guide
 
@@ -84,7 +86,7 @@ $this->skipUnless(PHP_VERSION_ID >= 80500, 'PHP 8.5+ is required for this test.'
 
 A few behaviors are worth keeping in mind:
 
-- When fixtures are enabled via `$fixtures`, `TestCase` applies and truncates fixtures with foreign key checks temporarily disabled on the active database connection.
+- When fixtures are enabled via `$fixtures`, `TestCase` applies fixtures before each test and truncates the fixture tables plus any tables implied by their configured associations after each test, with foreign key checks temporarily disabled on the active database connection.
 - `TestCase` uses the existing shared `Engine` instance from `Engine::getInstance()` and does not boot a fresh application by itself.
 - `TestCase` calls `$this->app->clearScoped()` in `setUp()`, so scoped services do not leak across tests.
 

@@ -2,7 +2,7 @@
 
 Use fixtures when you want repeatable database rows for tests.
 
-Fixtures are classes that define rows, resolve the target model, and can be loaded or truncated from tests. For automatic per-test fixture handling, see [`TestCase`](test-case.md).
+Fixtures are classes that define rows and resolve the target model. For automatic per-test fixture setup and cleanup, see [`TestCase`](test-case.md).
 
 ## Table of Contents
 
@@ -30,7 +30,7 @@ The usual fixture workflow is:
 1. Create a fixture class that extends `Fixture`.
 2. Register one or more fixture namespaces.
 3. Resolve fixtures by alias through `FixtureRegistry`.
-4. Run them before a test and truncate them after, or let [`TestCase`](test-case.md) do that for you.
+4. Run them before a test, or let [`TestCase`](test-case.md) handle setup and cleanup for you.
 
 ## Finding fixtures
 
@@ -64,8 +64,10 @@ Fixture classes extend `Fyre\TestSuite\Fixture\Fixture` and typically provide ro
 
 The base fixture class provides:
 - `data()` to return the dataset as an iterable
+- `associated()` to return the relationships that may be built from nested row data
 - `getClassAlias()` to determine the model alias for the fixture
 - `getModel()` to resolve the model instance (cached per fixture instance)
+- `getTables()` to return the fixture table plus tables implied by the configured associations
 
 ### Class alias resolution
 
@@ -81,7 +83,7 @@ To use a different model alias, set `protected string $classAlias` in the fixtur
 
 The fixture implementation creates entities with `guard: false` and `validate: false`, and saves them with `checkExists: false` and `checkRules: false`. If any row cannot be saved, `run()` throws a `RuntimeException`.
 
-`Fixture::truncate()` truncates the underlying table using the model connection.
+By default, fixtures do not build nested relationship data. To allow nested data, set `protected array|string|null $associated` on the fixture. Cleanup is typically handled by [`TestCase`](test-case.md), which truncates the fixture table and any tables implied by the fixture's configured associations.
 
 ## Examples
 
@@ -94,9 +96,14 @@ use Fyre\TestSuite\Fixture\Fixture;
 
 class ItemsFixture extends Fixture
 {
+    protected array|string|null $associated = 'Comments';
+
     protected iterable $data = [
         [
             'name' => 'Test 1',
+            'comments' => [
+                ['body' => 'First comment'],
+            ],
         ],
         [
             'name' => 'Test 2',
@@ -110,7 +117,6 @@ class ItemsFixture extends Fixture
 ```php
 $fixtureRegistry->addNamespace('App\Fixtures');
 
-$fixtureRegistry->use('Items')->truncate();
 $fixtureRegistry->use('Items')->run();
 ```
 
@@ -212,16 +218,6 @@ Arguments: (none)
 $fixtureRegistry->use('Items')->run();
 ```
 
-#### **Truncate the fixture table** (`truncate()`)
-
-Truncate the underlying table for the fixture’s model.
-
-Arguments: (none)
-
-```php
-$fixtureRegistry->use('Items')->truncate();
-```
-
 #### **Return fixture rows** (`data()`)
 
 Return the dataset used by `run()`. Most fixtures simply set the protected `$data` property.
@@ -238,6 +234,23 @@ final class ItemsFixture extends Fixture
     protected iterable $data = [
         ['name' => 'Test 1'],
     ];
+}
+```
+
+#### **Return fixture associations** (`associated()`)
+
+Return the relationships that `run()` may build from nested row data.
+
+Arguments: (none)
+
+```php
+namespace App\Fixtures;
+
+use Fyre\TestSuite\Fixture\Fixture;
+
+final class ItemsFixture extends Fixture
+{
+    protected array|string|null $associated = 'Comments';
 }
 ```
 
@@ -261,6 +274,16 @@ Arguments: (none)
 $model = $fixtureRegistry->use('Items')->getModel();
 ```
 
+#### **Return affected tables** (`getTables()`)
+
+Return the fixture table plus any tables implied by the fixture's configured associations.
+
+Arguments: (none)
+
+```php
+$tables = $fixtureRegistry->use('Items')->getTables();
+```
+
 ## Behavior notes
 
 A few behaviors are worth keeping in mind:
@@ -270,6 +293,9 @@ A few behaviors are worth keeping in mind:
 - `FixtureRegistry::clear()` resets both the cached fixtures *and* the configured namespaces.
 - `FixtureRegistry::use()` returns a shared instance per alias; call `unload()` to force a rebuild (including any constructor-injected dependencies).
 - `Fixture::run()` creates entities with `guard: false` and `validate: false`, and saves them with `checkExists: false` and `checkRules: false`; database constraints can still cause saves to fail (and will throw).
+- Fixtures default to `protected array|string|null $associated = []`, so nested relationship data is ignored unless you explicitly allow it.
+- `Fixture::getTables()` includes the fixture model table, associated target tables, and `ManyToMany` junction tables implied by the configured associations.
+- When fixtures are used through `TestCase`, cleanup truncates the fixture table plus any tables implied by the fixture's configured associations.
 
 ## Related
 

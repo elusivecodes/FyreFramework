@@ -20,6 +20,8 @@ use function getenv;
 
 trait MysqlConnectionTrait
 {
+    protected Fixture $associatedFixture;
+
     protected Connection $db;
 
     protected Fixture $fixture;
@@ -27,6 +29,8 @@ trait MysqlConnectionTrait
     protected FixtureRegistry $fixtureRegistry;
 
     protected ModelRegistry $modelRegistry;
+
+    protected Fixture $nestedFixture;
 
     #[Override]
     public static function setUpBeforeClass(): void
@@ -75,18 +79,30 @@ trait MysqlConnectionTrait
         $this->fixtureRegistry->addNamespace('Tests\Mock\Fixtures');
 
         $this->fixture = $this->fixtureRegistry->use('Items');
+        $this->associatedFixture = $this->fixtureRegistry->use('ItemsAssociated');
+        $this->nestedFixture = $this->fixtureRegistry->use('ItemsNested');
 
         $app->use(EntityLocator::class)->addNamespace('Tests\Mock\Entities');
 
         $this->db = $app->use(ConnectionManager::class)->use();
 
         $this->db->query('DROP TABLE IF EXISTS items');
+        $this->db->query('DROP TABLE IF EXISTS children');
 
         $this->db->query(<<<'EOT'
             CREATE TABLE items (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 name VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
+            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
+        EOT);
+
+        $this->db->query(<<<'EOT'
+            CREATE TABLE children (
+                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                item_id INT(10) UNSIGNED NULL DEFAULT NULL,
+                PRIMARY KEY (id),
+                CONSTRAINT fk_children_item FOREIGN KEY (item_id) REFERENCES items (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
         EOT);
 
@@ -98,6 +114,7 @@ trait MysqlConnectionTrait
     {
         parent::tearDown();
 
+        $this->db->query('DROP TABLE IF EXISTS children');
         $this->db->query('DROP TABLE IF EXISTS items');
     }
 }

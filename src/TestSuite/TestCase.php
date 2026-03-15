@@ -9,6 +9,7 @@ use Fyre\TestSuite\Fixture\FixtureRegistry;
 use Override;
 
 use function assert;
+use function in_array;
 
 /**
  * Base PHPUnit test case for the framework test suite.
@@ -81,11 +82,22 @@ class TestCase extends \PHPUnit\Framework\TestCase
     {
         $fixtureRegistry = $this->app->use(FixtureRegistry::class);
         $connection = $this->app->use(ConnectionManager::class)->use();
+        $tables = [];
+
+        foreach ($this->fixtures as $fixtureAlias) {
+            foreach ($fixtureRegistry->use($fixtureAlias)->getTables() as $table) {
+                if (in_array($table, $tables)) {
+                    continue;
+                }
+
+                $tables[] = $table;
+            }
+        }
 
         $connection->disableForeignKeys();
 
-        foreach ($this->fixtures as $fixture) {
-            $fixtureRegistry->use($fixture)->truncate();
+        foreach ($tables as $table) {
+            $connection->truncate($table);
         }
 
         $connection->enableForeignKeys();

@@ -34,4 +34,41 @@ class SetupFixturesTest extends TestCase
                 ->toArray()
         );
     }
+
+    public function testTeardownFixturesTruncatesAssociatedTables(): void
+    {
+        $this->teardownFixtures();
+        $this->fixtures = ['ItemsAssociated'];
+        $this->setupFixtures();
+
+        $this->assertSame(
+            1,
+            $this->modelRegistry->use('Items')
+                ->find()
+                ->count()
+        );
+
+        $this->assertSame(
+            1,
+            $this->modelRegistry->use('Children')
+                ->find()
+                ->count()
+        );
+
+        $this->teardownFixtures();
+
+        $this->assertSame(
+            0,
+            $this->modelRegistry->use('Items')
+                ->find()
+                ->count()
+        );
+
+        $this->assertSame(
+            0,
+            $this->modelRegistry->use('Children')
+                ->find()
+                ->count()
+        );
+    }
 }

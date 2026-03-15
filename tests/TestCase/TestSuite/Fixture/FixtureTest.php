@@ -14,6 +14,14 @@ class FixtureTest extends TestCase
 {
     use MysqlConnectionTrait;
 
+    public function testAssociated(): void
+    {
+        $this->assertSame(
+            'Children',
+            $this->associatedFixture->associated()
+        );
+    }
+
     public function testData(): void
     {
         $this->assertSame(
@@ -53,6 +61,19 @@ class FixtureTest extends TestCase
         );
     }
 
+    public function testGetTables(): void
+    {
+        $this->assertSame(
+            ['items'],
+            $this->nestedFixture->getTables()
+        );
+
+        $this->assertSame(
+            ['items', 'children'],
+            $this->associatedFixture->getTables()
+        );
+    }
+
     public function testRun(): void
     {
         $this->fixture->run();
@@ -76,14 +97,53 @@ class FixtureTest extends TestCase
         );
     }
 
-    public function testTruncate(): void
+    public function testRunAssociated(): void
     {
-        $this->fixture->run();
-        $this->fixture->truncate();
+        $this->associatedFixture->run();
+
+        $this->assertSame(
+            [
+                [
+                    'id' => 1,
+                    'name' => 'Test 1',
+                ],
+            ],
+            $this->associatedFixture->getModel()
+                ->find()
+                ->all()
+                ->map(static fn(Entity $item): array => $item->toArray())
+                ->toArray()
+        );
+
+        $this->assertSame(
+            [
+                [
+                    'id' => 1,
+                    'item_id' => 1,
+                ],
+            ],
+            $this->modelRegistry->use('Children')
+                ->find()
+                ->all()
+                ->map(static fn(Entity $child): array => $child->toArray())
+                ->toArray()
+        );
+    }
+
+    public function testRunIgnoresRelationsWithoutAssociated(): void
+    {
+        $this->nestedFixture->run();
+
+        $this->assertSame(
+            1,
+            $this->nestedFixture->getModel()
+                ->find()
+                ->count()
+        );
 
         $this->assertSame(
             0,
-            $this->fixture->getModel()
+            $this->modelRegistry->use('Children')
                 ->find()
                 ->count()
         );

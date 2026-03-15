@@ -6,9 +6,13 @@ namespace Fyre\TestSuite\Fixture;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\ORM\Model;
 use Fyre\ORM\ModelRegistry;
+use Fyre\ORM\Relationship;
+use Fyre\ORM\Relationships\ManyToMany;
 use ReflectionClass;
 use RuntimeException;
 
+use function array_keys;
+use function assert;
 use function preg_replace;
 use function sprintf;
 
@@ -21,6 +25,11 @@ use function sprintf;
 abstract class Fixture
 {
     use DebugTrait;
+
+    /**
+     * @var array<mixed>|string|null
+     */
+    protected array|string|null $associated = [];
 
     protected string $classAlias;
 
@@ -41,6 +50,16 @@ abstract class Fixture
     public function __construct(ModelRegistry $modelRegistry)
     {
         $this->modelRegistry = $modelRegistry;
+    }
+
+    /**
+     * Returns the fixture associations.
+     *
+     * @return array<mixed>|string|null The associated relationships.
+     */
+    public function associated(): array|string|null
+    {
+        return $this->associated;
     }
 
     /**
@@ -74,6 +93,40 @@ abstract class Fixture
     }
 
     /**
+     * Returns all tables implied by the fixture and its configured associations.
+     *
+     * @return string[] The table names.
+     */
+    public function getTables(): array
+    {
+        $model = $this->getModel();
+        $associated = Model::normalizeContain($this->associated() ?? [], $model, 'associated')['associated'];
+
+        $tables = [$model->getTable() => true];
+
+        $collect = function(Model $model, array $associated) use (&$collect, &$tables): void {
+            foreach ($associated as $alias => $data) {
+                $relationship = $model->getRelationship($alias);
+
+                assert($relationship instanceof Relationship);
+
+                if ($relationship instanceof ManyToMany) {
+                    $tables[$relationship->getJunction()->getTable()] = true;
+                }
+
+                $target = $relationship->getTarget();
+                $tables[$target->getTable()] = true;
+
+                $collect($target, $data['associated']);
+            }
+        };
+
+        $collect($model, $associated);
+
+        return array_keys($tables);
+    }
+
+    /**
      * Loads the fixture data.
      *
      * Note: Entities are created with `guard: false` and `validate: false`, and are saved
@@ -85,9 +138,10 @@ abstract class Fixture
     {
         $model = $this->getModel();
         $data = $this->data();
+        $associated = $this->associated();
 
         foreach ($data as $i => $row) {
-            $entity = $model->newEntity($row, guard: false, validate: false);
+            $entity = $model->newEntity($row, $associated, guard: false, validate: false);
 
             if (!$model->save($entity, checkExists: false, checkRules: false)) {
                 throw new RuntimeException(sprintf(
@@ -97,16 +151,5 @@ abstract class Fixture
                 ));
             }
         }
-    }
-
-    /**
-     * Truncates the fixture table.
-     *
-     * Note: This uses the model connection to truncate the underlying table.
-     */
-    public function truncate(): void
-    {
-        $model = $this->getModel();
-        $model->getTable() |> $model->getConnection()->truncate(...);
     }
 }

@@ -329,7 +329,7 @@ Reset command discovery state.
 
 ```php
 $commandRunner->clear();
-$commandRunner->addNamespace('App\\Commands');
+$commandRunner->addNamespace('App\Commands');
 ```
 
 ## Behavior notes
