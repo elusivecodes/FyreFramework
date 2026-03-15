@@ -32,6 +32,10 @@ class MakePolicyCommand extends Command
             'required' => true,
         ],
         'namespace' => [],
+        'force' => [
+            'as' => 'boolean',
+            'default' => false,
+        ],
     ];
 
     /**
@@ -57,9 +61,10 @@ class MakePolicyCommand extends Command
      *
      * @param string $name The policy name.
      * @param string|null $namespace The policy namespace.
+     * @param bool $force Whether to overwrite an existing file.
      * @return int|null The exit code.
      */
-    public function run(string $name, string|null $namespace = null): int|null
+    public function run(string $name, string|null $namespace = null, bool $force = false): int|null
     {
         $namespace ??= $this->policyRegistry->getNamespaces()[0] ?? 'App\Policies';
 
@@ -75,7 +80,7 @@ class MakePolicyCommand extends Command
 
         $fullPath = Path::join($path, $className.'.php');
 
-        if (file_exists($fullPath)) {
+        if (!$force && file_exists($fullPath)) {
             $this->io->error('Policy file already exists.');
 
             return static::CODE_ERROR;

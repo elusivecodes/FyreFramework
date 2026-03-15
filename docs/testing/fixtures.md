@@ -27,7 +27,7 @@ Fixtures are classes that define rows and resolve the target model. For automati
 
 The usual fixture workflow is:
 
-1. Create a fixture class that extends `Fixture`.
+1. Create a fixture class that extends `Fixture` or generate one with `make:fixture`.
 2. Register one or more fixture namespaces.
 3. Resolve fixtures by alias through `FixtureRegistry`.
 4. Run them before a test, or let [`TestCase`](test-case.md) handle setup and cleanup for you.

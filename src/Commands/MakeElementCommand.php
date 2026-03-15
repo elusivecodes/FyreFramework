@@ -33,6 +33,10 @@ class MakeElementCommand extends Command
             'required' => true,
         ],
         'path' => [],
+        'force' => [
+            'as' => 'boolean',
+            'default' => false,
+        ],
     ];
 
     /**
@@ -55,9 +59,10 @@ class MakeElementCommand extends Command
      *
      * @param string $template The template name.
      * @param string|null $path The template path.
+     * @param bool $force Whether to overwrite an existing file.
      * @return int|null The exit code.
      */
-    public function run(string $template, string|null $path = null): int|null
+    public function run(string $template, string|null $path = null, bool $force = false): int|null
     {
         $path ??= $this->templateLocator->getPaths()[0] ?? '';
 
@@ -71,7 +76,7 @@ class MakeElementCommand extends Command
 
         $fullPath = Path::join($path, TemplateLocator::ELEMENTS_FOLDER, $template.'.php');
 
-        if (file_exists($fullPath)) {
+        if (!$force && file_exists($fullPath)) {
             $this->io->error('Element file already exists.');
 
             return static::CODE_ERROR;

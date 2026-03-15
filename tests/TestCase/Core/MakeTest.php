@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\Core;
 
 use Fyre\Auth\PolicyRegistry;
+use Fyre\Console\Command;
 use Fyre\Console\CommandRunner;
 use Fyre\Console\Console;
 use Fyre\Core\Config;
@@ -15,6 +16,7 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\DB\Migration\MigrationRunner;
 use Fyre\ORM\EntityLocator;
 use Fyre\ORM\ModelRegistry;
+use Fyre\TestSuite\Fixture\FixtureRegistry;
 use Fyre\Utility\Inflector;
 use Fyre\Utility\Path;
 use Fyre\View\CellRegistry;
@@ -24,6 +26,7 @@ use Override;
 use PHPUnit\Framework\TestCase;
 
 use function class_uses;
+use function file_put_contents;
 use function mkdir;
 use function rmdir;
 use function unlink;
@@ -94,6 +97,40 @@ final class MakeTest extends TestCase
         );
     }
 
+    public function testMakeCommandsIncludeForceOption(): void
+    {
+        $commands = $this->commandRunner->all();
+
+        foreach ([
+            'make:cell',
+            'make:cell_template',
+            'make:command',
+            'make:config',
+            'make:controller',
+            'make:element',
+            'make:entity',
+            'make:fixture',
+            'make:form',
+            'make:helper',
+            'make:job',
+            'make:lang',
+            'make:layout',
+            'make:middleware',
+            'make:migration',
+            'make:model',
+            'make:policy',
+            'make:template',
+        ] as $alias) {
+            $this->assertSame(
+                [
+                    'as' => 'boolean',
+                    'default' => false,
+                ],
+                $commands[$alias]['options']['force']
+            );
+        }
+    }
+
     public function testMakeConfig(): void
     {
         $this->commandRunner->run('make:config', ['example']);
@@ -151,6 +188,23 @@ final class MakeTest extends TestCase
             Make::loadStub('entity', [
                 '{namespace}' => 'Example\Entities',
                 '{class}' => 'Example',
+            ]),
+            $filePath
+        );
+    }
+
+    public function testMakeFixture(): void
+    {
+        $this->commandRunner->run('make:fixture', ['Example']);
+
+        $filePath = 'tmp/Fixtures/ExampleFixture.php';
+
+        $this->assertFileExists($filePath);
+
+        $this->assertFileMatchesFormat(
+            Make::loadStub('fixture', [
+                '{namespace}' => 'Example\Fixtures',
+                '{class}' => 'ExampleFixture',
             ]),
             $filePath
         );
@@ -286,6 +340,41 @@ final class MakeTest extends TestCase
         );
     }
 
+    public function testMakeModelForce(): void
+    {
+        $filePath = 'tmp/Models/ExampleModel.php';
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('make:model', ['Example'])
+        );
+
+        file_put_contents($filePath, 'changed');
+
+        $this->assertSame(
+            Command::CODE_ERROR,
+            $this->commandRunner->run('make:model', ['Example'])
+        );
+
+        $this->assertStringEqualsFile($filePath, 'changed');
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('make:model', [
+                'Example',
+                'force' => true,
+            ])
+        );
+
+        $this->assertFileMatchesFormat(
+            Make::loadStub('model', [
+                '{namespace}' => 'Example\Models',
+                '{class}' => 'ExampleModel',
+            ]),
+            $filePath
+        );
+    }
+
     public function testMakePolicy(): void
     {
         $this->commandRunner->run('make:policy', ['Example']);
@@ -317,6 +406,38 @@ final class MakeTest extends TestCase
         );
     }
 
+    public function testMakeTemplateForce(): void
+    {
+        $filePath = 'tmp/templates/Example/index.php';
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('make:template', ['Example.index'])
+        );
+
+        file_put_contents($filePath, 'changed');
+
+        $this->assertSame(
+            Command::CODE_ERROR,
+            $this->commandRunner->run('make:template', ['Example.index'])
+        );
+
+        $this->assertStringEqualsFile($filePath, 'changed');
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('make:template', [
+                'Example.index',
+                'force' => true,
+            ])
+        );
+
+        $this->assertFileMatchesFormat(
+            Make::loadStub('template'),
+            $filePath
+        );
+    }
+
     #[Override]
     protected function setUp(): void
     {
@@ -330,6 +451,7 @@ final class MakeTest extends TestCase
         $container->singleton(CommandRunner::class);
         $container->singleton(CellRegistry::class);
         $container->singleton(EntityLocator::class);
+        $container->singleton(FixtureRegistry::class);
         $container->singleton(HelperRegistry::class);
         $container->singleton(MigrationRunner::class);
         $container->singleton(ModelRegistry::class);
@@ -350,6 +472,7 @@ final class MakeTest extends TestCase
 
         $container->use(CellRegistry::class)->addNamespace('Example\Cells');
         $container->use(EntityLocator::class)->addNamespace('Example\Entities');
+        $container->use(FixtureRegistry::class)->addNamespace('Example\Fixtures');
         $container->use(HelperRegistry::class)->addNamespace('Example\Helpers');
         $container->use(MigrationRunner::class)->addNamespace('Example\Migrations');
         $container->use(ModelRegistry::class)->addNamespace('Example\Models');
@@ -371,6 +494,7 @@ final class MakeTest extends TestCase
         @unlink('tmp/config/example.php');
         @unlink('tmp/Controllers/ExampleController.php');
         @unlink('tmp/Entities/Example.php');
+        @unlink('tmp/Fixtures/ExampleFixture.php');
         @unlink('tmp/Forms/ExampleForm.php');
         @unlink('tmp/Middleware/ExampleMiddleware.php');
         @unlink('tmp/Jobs/ExampleJob.php');
@@ -389,6 +513,7 @@ final class MakeTest extends TestCase
         @rmdir('tmp/config');
         @rmdir('tmp/Controllers');
         @rmdir('tmp/Entities');
+        @rmdir('tmp/Fixtures');
         @rmdir('tmp/Forms');
         @rmdir('tmp/Middleware');
         @rmdir('tmp/Jobs');

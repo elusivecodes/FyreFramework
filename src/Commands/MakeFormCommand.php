@@ -31,6 +31,10 @@ class MakeFormCommand extends Command
             'required' => true,
         ],
         'namespace' => [],
+        'force' => [
+            'as' => 'boolean',
+            'default' => false,
+        ],
     ];
 
     /**
@@ -53,9 +57,10 @@ class MakeFormCommand extends Command
      *
      * @param string $name The form name.
      * @param string|null $namespace The form namespace.
+     * @param bool $force Whether to overwrite an existing file.
      * @return int|null The exit code.
      */
-    public function run(string $name, string|null $namespace = null): int|null
+    public function run(string $name, string|null $namespace = null, bool $force = false): int|null
     {
         $namespace ??= 'App\Forms';
 
@@ -71,7 +76,7 @@ class MakeFormCommand extends Command
 
         $fullPath = Path::join($path, $className.'.php');
 
-        if (file_exists($fullPath)) {
+        if (!$force && file_exists($fullPath)) {
             $this->io->error('Form file already exists.');
 
             return static::CODE_ERROR;

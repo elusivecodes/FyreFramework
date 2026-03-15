@@ -36,6 +36,10 @@ class MakeCommandCommand extends Command
         'alias' => [],
         'description' => [],
         'namespace' => [],
+        'force' => [
+            'as' => 'boolean',
+            'default' => false,
+        ],
     ];
 
     /**
@@ -63,9 +67,10 @@ class MakeCommandCommand extends Command
      * @param string|null $alias The command alias.
      * @param string|null $description The command description.
      * @param string|null $namespace The command namespace.
+     * @param bool $force Whether to overwrite an existing file.
      * @return int|null The exit code.
      */
-    public function run(string $name, string|null $alias = null, string|null $description = null, string|null $namespace = null): int|null
+    public function run(string $name, string|null $alias = null, string|null $description = null, string|null $namespace = null, bool $force = false): int|null
     {
         $namespace ??= $this->commandRunner->getNamespaces()[0] ?? 'App\Commands';
 
@@ -81,7 +86,7 @@ class MakeCommandCommand extends Command
 
         $fullPath = Path::join($path, $className.'.php');
 
-        if (file_exists($fullPath)) {
+        if (!$force && file_exists($fullPath)) {
             $this->io->error('Command file already exists.');
 
             return static::CODE_ERROR;

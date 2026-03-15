@@ -33,6 +33,10 @@ class MakeConfigCommand extends Command
             'required' => true,
         ],
         'path' => [],
+        'force' => [
+            'as' => 'boolean',
+            'default' => false,
+        ],
     ];
 
     /**
@@ -55,9 +59,10 @@ class MakeConfigCommand extends Command
      *
      * @param string $file The file name.
      * @param string|null $path The file path.
+     * @param bool $force Whether to overwrite an existing file.
      * @return int|null The exit code.
      */
-    public function run(string $file, string|null $path = null): int|null
+    public function run(string $file, string|null $path = null, bool $force = false): int|null
     {
         $path ??= $this->config->getPaths()[0] ?? '';
 
@@ -71,7 +76,7 @@ class MakeConfigCommand extends Command
 
         $fullPath = Path::join($path, $file.'.php');
 
-        if (file_exists($fullPath)) {
+        if (!$force && file_exists($fullPath)) {
             $this->io->error('Config file already exists.');
 
             return static::CODE_ERROR;

@@ -33,6 +33,10 @@ class MakeMigrationCommand extends Command
         ],
         'version' => [],
         'namespace' => [],
+        'force' => [
+            'as' => 'boolean',
+            'default' => false,
+        ],
     ];
 
     /**
@@ -59,9 +63,10 @@ class MakeMigrationCommand extends Command
      * @param string $name The migration name.
      * @param string|null $version The migration version.
      * @param string|null $namespace The migration namespace.
+     * @param bool $force Whether to overwrite an existing file.
      * @return int|null The exit code.
      */
-    public function run(string $name, string|null $version = null, string|null $namespace = null): int|null
+    public function run(string $name, string|null $version = null, string|null $namespace = null, bool $force = false): int|null
     {
         $version ??= date('YmdHis');
         $namespace ??= $this->migrationRunner->getNamespaces()[0] ?? 'App\Migrations';
@@ -80,7 +85,7 @@ class MakeMigrationCommand extends Command
 
         $fullPath = Path::join($path, $className.'.php');
 
-        if (file_exists($fullPath)) {
+        if (!$force && file_exists($fullPath)) {
             $this->io->error('Migration file already exists.');
 
             return static::CODE_ERROR;

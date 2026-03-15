@@ -35,6 +35,10 @@ class MakeCellCommand extends Command
             'default' => 'display',
         ],
         'namespace' => [],
+        'force' => [
+            'as' => 'boolean',
+            'default' => false,
+        ],
     ];
 
     /**
@@ -61,9 +65,10 @@ class MakeCellCommand extends Command
      * @param string $name The cell name.
      * @param string $method The cell method.
      * @param string|null $namespace The cell namespace.
+     * @param bool $force Whether to overwrite an existing file.
      * @return int|null The exit code.
      */
-    public function run(string $name, string $method, string|null $namespace = null): int|null
+    public function run(string $name, string $method, string|null $namespace = null, bool $force = false): int|null
     {
         $namespace ??= $this->cellRegistry->getNamespaces()[0] ?? 'App\Cells';
 
@@ -79,7 +84,7 @@ class MakeCellCommand extends Command
 
         $fullPath = Path::join($path, $className.'.php');
 
-        if (file_exists($fullPath)) {
+        if (!$force && file_exists($fullPath)) {
             $this->io->error('Cell file already exists.');
 
             return static::CODE_ERROR;

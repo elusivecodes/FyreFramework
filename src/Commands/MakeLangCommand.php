@@ -34,6 +34,10 @@ class MakeLangCommand extends Command
         ],
         'language' => [],
         'path' => [],
+        'force' => [
+            'as' => 'boolean',
+            'default' => false,
+        ],
     ];
 
     /**
@@ -57,9 +61,10 @@ class MakeLangCommand extends Command
      * @param string $file The file name.
      * @param string|null $language The language.
      * @param string|null $path The file path.
+     * @param bool $force Whether to overwrite an existing file.
      * @return int|null The exit code.
      */
-    public function run(string $file, string|null $language = null, string|null $path = null): int|null
+    public function run(string $file, string|null $language = null, string|null $path = null, bool $force = false): int|null
     {
         $language ??= $this->lang->getDefaultLocale();
         $path ??= $this->lang->getPaths()[0] ?? '';
@@ -74,7 +79,7 @@ class MakeLangCommand extends Command
 
         $fullPath = Path::join($path, $language, $file.'.php');
 
-        if (file_exists($fullPath)) {
+        if (!$force && file_exists($fullPath)) {
             $this->io->error('Lang file already exists.');
 
             return static::CODE_ERROR;
