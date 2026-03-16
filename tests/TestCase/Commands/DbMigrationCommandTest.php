@@ -11,11 +11,13 @@ use Fyre\Core\Container;
 use Fyre\Core\Loader;
 use Fyre\DB\Connection;
 use Fyre\DB\ConnectionManager;
+use Fyre\DB\Forge\ForgeRegistry;
 use Fyre\DB\Handlers\Mysql\MysqlConnection;
 use Fyre\DB\Migration\MigrationRunner;
 use Fyre\DB\Schema\Schema;
 use Fyre\DB\Schema\SchemaRegistry;
 use Fyre\Event\EventManager;
+use Fyre\DB\TypeParser;
 use Fyre\Utility\Inflector;
 use Fyre\Utility\Path;
 use Override;
@@ -180,13 +182,15 @@ final class DbMigrationCommandTest extends TestCase
         $container->singleton(Config::class);
         $container->singleton(EventManager::class);
         $container->singleton(CommandRunner::class);
+        $container->singleton(TypeParser::class);
         $container->singleton(ConnectionManager::class);
+        $container->singleton(ForgeRegistry::class);
+        $container->singleton(MigrationRunner::class);
         $container->singleton(SchemaRegistry::class);
 
         $this->migrationRunner = $container->use(MigrationRunner::class);
-        $connectionManager = $container->use(ConnectionManager::class);
 
-        $this->db = $connectionManager->setConfig(ConnectionManager::DEFAULT, [
+        $this->db = $container->use(ConnectionManager::class)->setConfig(ConnectionManager::DEFAULT, [
             'className' => MysqlConnection::class,
             'host' => getenv('MYSQL_HOST'),
             'username' => getenv('MYSQL_USERNAME'),
