@@ -56,7 +56,7 @@ class TestQueue extends Queue
     #[Override]
     public function queues(): array
     {
-        return [];
+        return $this->config['queues'] ?? [];
     }
 
     #[Override]
@@ -65,6 +65,6 @@ class TestQueue extends Queue
     #[Override]
     public function stats(string $queue = self::DEFAULT): array
     {
-        return [];
+        return $this->config['stats'][$queue] ?? [];
     }
 }

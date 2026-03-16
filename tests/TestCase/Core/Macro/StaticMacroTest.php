@@ -8,7 +8,7 @@ use Override;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Core\Macro\MyClass;
 
-class StaticMacroTest extends TestCase
+final class StaticMacroTest extends TestCase
 {
     public function testHasMacroFalse(): void
     {

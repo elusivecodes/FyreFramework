@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Tests\TestCase\Core;
+namespace Tests\TestCase\Commands;
 
 use Fyre\Auth\PolicyRegistry;
 use Fyre\Console\Command;
@@ -35,7 +35,7 @@ use function unlink;
 
 use const ROOT;
 
-final class MakeTest extends TestCase
+final class MakeCommandTest extends TestCase
 {
     protected CommandRunner $commandRunner;
 

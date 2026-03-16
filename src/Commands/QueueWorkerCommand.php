@@ -75,7 +75,7 @@ class QueueWorkerCommand extends Command
      */
     public function run(string $config, string $queue, int $maxJobs, int $maxRuntime): int|null
     {
-        $pid = pcntl_fork();
+        $pid = $this->fork();
 
         if ($pid === -1) {
             throw new RuntimeException('Unable to fork process.');
@@ -84,7 +84,7 @@ class QueueWorkerCommand extends Command
         if ($pid) {
             $this->io->write(sprintf('Worker started on PID: %d', $pid), Console::CYAN);
         } else {
-            $worker = $this->container->build(Worker::class, [
+            $worker = $this->container->use(Worker::class, [
                 'options' => [
                     'config' => $config,
                     'queue' => $queue,
@@ -97,5 +97,15 @@ class QueueWorkerCommand extends Command
         }
 
         return static::CODE_SUCCESS;
+    }
+
+    /**
+     * Forks the current process.
+     *
+     * @return int The child PID, 0 in the child process, or -1 on failure.
+     */
+    protected function fork(): int
+    {
+        return pcntl_fork();
     }
 }

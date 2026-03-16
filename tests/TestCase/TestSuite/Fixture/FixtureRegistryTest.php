@@ -9,7 +9,7 @@ use Fyre\TestSuite\TestCase;
 
 use function class_uses;
 
-class FixtureRegistryTest extends TestCase
+final class FixtureRegistryTest extends TestCase
 {
     use MysqlConnectionTrait;
 

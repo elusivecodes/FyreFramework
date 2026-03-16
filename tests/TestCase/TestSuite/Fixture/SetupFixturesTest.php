@@ -6,7 +6,7 @@ namespace Tests\TestCase\TestSuite\Fixture;
 use Fyre\ORM\Entity;
 use Fyre\TestSuite\TestCase;
 
-class SetupFixturesTest extends TestCase
+final class SetupFixturesTest extends TestCase
 {
     use MysqlConnectionTrait;
 
