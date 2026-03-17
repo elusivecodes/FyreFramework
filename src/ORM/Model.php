@@ -1866,7 +1866,7 @@ class Model implements EventListenerInterface
      * Deletes a single Entity.
      *
      * @param Entity $entity The Entity.
-     * @param array<string, mixed> $options The options for deleting.
+     * @param array<mixed> $options The options for deleting.
      * @return bool Whether the delete was successful.
      */
     protected function performDelete(Entity $entity, array $options): bool
@@ -1906,7 +1906,7 @@ class Model implements EventListenerInterface
      * Saves a single Entity.
      *
      * @param Entity $entity The Entity.
-     * @param array<string, mixed> $options The options for saving.
+     * @param array<mixed> $options The options for saving.
      * @return bool Whether the save was successful.
      */
     protected function performSave(Entity $entity, array $options): bool
