@@ -21,8 +21,8 @@ It gives you convenient verb methods, an in-memory cookie jar, optional redirect
   - [Custom handlers](#custom-handlers)
 - [Testing](#testing)
 - [Method guide](#method-guide)
-  - [Client](#client)
-  - [Response](#response)
+  - [`Client`](#client)
+  - [`Response`](#response)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -206,7 +206,7 @@ Mocks are global to the `Client` class (static), so ensure they’re cleared bet
 
 If you are calling a service repeatedly, keep a single `Client` and reuse it so cookies and configuration persist.
 
-### Client
+### `Client`
 
 #### **Make a GET request** (`get()`)
 
@@ -294,7 +294,7 @@ use Fyre\Http\Cookie;
 $client->addCookie(new Cookie('token', 'abc123'));
 ```
 
-### Response
+### `Response`
 
 `Client\Response` includes the usual response methods like `getStatusCode()`, `getHeaderLine()`, and `getBody()`, in addition to the helpers below.
 

@@ -55,6 +55,21 @@ final class ArrayTest extends TestCase
         $this->assertNotEmpty($this->logger->use('all')->read());
     }
 
+    public function testClear(): void
+    {
+        $this->logger->handle('debug', 'test');
+
+        $this->logger->use('default')->clear();
+
+        $this->assertEmpty(
+            $this->logger->use('default')->read()
+        );
+
+        $this->assertNotEmpty(
+            $this->logger->use('all')->read()
+        );
+    }
+
     public function testData(): void
     {
         foreach ($this->levels as $i => $level) {

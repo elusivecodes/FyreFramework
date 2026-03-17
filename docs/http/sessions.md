@@ -22,7 +22,7 @@ It wraps PHP sessions and adds dot-notation access, flash and temporary values, 
   - [Memcached storage](#memcached-storage)
   - [Custom handlers](#custom-handlers)
 - [Method guide](#method-guide)
-  - [Session](#session)
+  - [`Session`](#session)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -230,7 +230,7 @@ You can also use the `session()` helper (see [Helpers](../core/helpers.md)):
 
 In HTTP requests, this is typically the same `Session` instance started by `SessionMiddleware`. The read/write forms start the session lazily (because they call `Session::get()` and `Session::set()` internally).
 
-### Session
+### `Session`
 
 #### **Start the session** (`start()`)
 

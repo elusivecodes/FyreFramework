@@ -10,8 +10,8 @@ For path-only operations (join/normalize/resolve, basename/dirname, etc), see [P
 - [Start here](#start-here)
 - [Constants](#constants)
 - [Method guide](#method-guide)
-  - [Folder](#folder)
-  - [File](#file)
+  - [`Folder`](#folder)
+  - [`File`](#file)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -82,7 +82,7 @@ $file->copy('tmp/cache/routes.backup.json', false);
 
 Examples below assume you already have a `$file` or `$folder` instance, depending on the method being demonstrated.
 
-### Folder
+### `Folder`
 
 #### **Check whether a folder exists** (`exists()`)
 
@@ -183,7 +183,7 @@ Returns the last path segment.
 $name = $folder->name();
 ```
 
-### File
+### `File`
 
 #### **Check whether a file exists** (`exists()`)
 

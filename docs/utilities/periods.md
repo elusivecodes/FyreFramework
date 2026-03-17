@@ -12,7 +12,7 @@ For single instants (time zones, localization, calendar-aware diffs), see [Date/
 - [Start here](#start-here)
 - [Choosing `Period` or `PeriodCollection`](#choosing-period-or-periodcollection)
 - [Method guide](#method-guide)
-  - [Period](#period)
+  - [`Period`](#period)
   - [`PeriodCollection`](#periodcollection)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
@@ -63,7 +63,7 @@ $gaps = $collection->gaps(); // PeriodCollection
 
 Examples below assume any referenced `DateTime`, `Period`, and `PeriodCollection` classes are already imported when needed.
 
-### Period
+### `Period`
 
 #### **Get the excluded boundary string** (`getBoundaries()`)
 

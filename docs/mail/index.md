@@ -20,7 +20,6 @@ Most applications configure a default mailer for production and a debug or test 
 - [Method guide](#method-guide)
   - [`MailManager`](#mailmanager)
   - [`Mailer`](#mailer)
-  - [`DebugMailer`](#debugmailer)
 - [Troubleshooting](#troubleshooting)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
@@ -133,6 +132,8 @@ Implemented by `DebugMailer`. Captures outbound messages in memory for inspectio
 
 - `getSentEmails(): array` returns captured messages as `['headers' => ..., 'body' => ...]` arrays.
 - `clear(): void` resets the captured message list.
+
+For test assertions, prefer [Email Testing](../testing/mail.md).
 
 ## Selecting a mailer
 
@@ -316,34 +317,6 @@ Returns the hostname used by handlers that need a client identifier (such as SMT
 
 ```php
 $client = $mailer->getClient();
-```
-
-### `DebugMailer`
-
-#### **Read captured messages** (`getSentEmails()`)
-
-Returns the captured messages stored by `DebugMailer`.
-
-```php
-use Fyre\Mail\Handlers\DebugMailer;
-$mailer = $mailers->use('debug');
-
-if ($mailer instanceof DebugMailer) {
-    $sent = $mailer->getSentEmails();
-}
-```
-
-#### **Clear captured messages** (`clear()`)
-
-Clears the captured message list stored by `DebugMailer`.
-
-```php
-use Fyre\Mail\Handlers\DebugMailer;
-$mailer = $mailers->use('debug');
-
-if ($mailer instanceof DebugMailer) {
-    $mailer->clear();
-}
 ```
 
 ## Troubleshooting

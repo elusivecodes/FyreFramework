@@ -18,7 +18,6 @@ use Tests\Mock\Listeners\MockListener;
 
 use function class_uses;
 use function file_exists;
-use function file_get_contents;
 use function getenv;
 use function mkdir;
 use function rmdir;
@@ -81,9 +80,9 @@ final class WorkerTest extends TestCase
             $this->queue->queues()
         );
 
-        $this->assertSame(
-            '1',
-            file_get_contents('tmp/job')
+        $this->assertStringEqualsFile(
+            'tmp/job',
+            '1'
         );
     }
 
@@ -144,9 +143,9 @@ final class WorkerTest extends TestCase
             $this->queue->queues()
         );
 
-        $this->assertSame(
-            '1',
-            file_get_contents('tmp/job')
+        $this->assertStringEqualsFile(
+            'tmp/job',
+            '1'
         );
     }
 
@@ -248,9 +247,9 @@ final class WorkerTest extends TestCase
             $this->queue->queues()
         );
 
-        $this->assertSame(
-            '1',
-            file_get_contents('tmp/job')
+        $this->assertStringEqualsFile(
+            'tmp/job',
+            '1'
         );
     }
 
@@ -295,9 +294,9 @@ final class WorkerTest extends TestCase
             $this->queue->queues()
         );
 
-        $this->assertSame(
-            '12',
-            file_get_contents('tmp/job')
+        $this->assertStringEqualsFile(
+            'tmp/job',
+            '12'
         );
     }
 

@@ -26,7 +26,6 @@ use Tests\Mock\Jobs\MockJob;
 use function assert;
 use function fclose;
 use function file_exists;
-use function file_get_contents;
 use function fopen;
 use function getenv;
 use function mkdir;
@@ -56,21 +55,19 @@ final class QueueWorkerCommandTest extends TestCase
      */
     protected $input;
 
-    protected Queue|null $otherQueue = null;
+    protected Queue $otherQueue;
 
     /**
      * @var resource
      */
     protected $output;
 
-    protected Queue|null $queue = null;
+    protected Queue $queue;
 
     protected QueueManager $queueManager;
 
     public function testQueueWorker(): void
     {
-        $this->queue = $this->queueManager->use();
-
         $this->queueManager->push(MockJob::class, ['test' => 1]);
         $this->queueManager->push(MockJob::class, ['test' => 2]);
 
@@ -99,9 +96,9 @@ final class QueueWorkerCommandTest extends TestCase
             file_exists('tmp/job')
         );
 
-        $this->assertSame(
-            '1',
-            file_get_contents('tmp/job')
+        $this->assertStringEqualsFile(
+            'tmp/job',
+            '1'
         );
 
         $this->assertSame(
@@ -175,9 +172,6 @@ final class QueueWorkerCommandTest extends TestCase
 
     public function testQueueWorkerQueue(): void
     {
-        $this->queue = $this->queueManager->use();
-        $this->otherQueue = $this->queueManager->use('other');
-
         $this->queueManager->push(MockJob::class, ['test' => 1]);
         $this->queueManager->push(MockJob::class, ['test' => 2], [
             'config' => 'other',
@@ -191,9 +185,9 @@ final class QueueWorkerCommandTest extends TestCase
             $command->run('other', 'test', 1, 5)
         );
 
-        $this->assertSame(
-            '2',
-            file_get_contents('tmp/job')
+        $this->assertStringEqualsFile(
+            'tmp/job',
+            '2'
         );
 
         $this->assertSame(
@@ -280,6 +274,8 @@ final class QueueWorkerCommandTest extends TestCase
         $this->commandRunner->addNamespace('Fyre\Commands');
 
         $this->queueManager = $this->container->use(QueueManager::class);
+        $this->queue = $this->queueManager->use();
+        $this->otherQueue = $this->queueManager->use('other');
 
         @mkdir('tmp');
     }
@@ -287,19 +283,15 @@ final class QueueWorkerCommandTest extends TestCase
     #[Override]
     protected function tearDown(): void
     {
-        if ($this->queue) {
-            $this->queue->clear();
-            $this->queue->clear('test');
-            $this->queue->reset();
-            $this->queue->reset('test');
-        }
+        $this->queue->clear();
+        $this->queue->clear('test');
+        $this->queue->reset();
+        $this->queue->reset('test');
 
-        if ($this->otherQueue) {
-            $this->otherQueue->clear();
-            $this->otherQueue->clear('test');
-            $this->otherQueue->reset();
-            $this->otherQueue->reset('test');
-        }
+        $this->otherQueue->clear();
+        $this->otherQueue->clear('test');
+        $this->otherQueue->reset();
+        $this->otherQueue->reset('test');
 
         @unlink('tmp/job');
         @rmdir('tmp');

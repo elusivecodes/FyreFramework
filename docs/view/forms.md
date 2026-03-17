@@ -22,11 +22,10 @@ It can use an ORM entity or a `Fyre\Form\Form` instance to supply default values
   - [How field types and attributes are chosen](#how-field-types-and-attributes-are-chosen)
 - [CSRF integration](#csrf-integration)
 - [Method guide](#method-guide)
-  - [`FormHelper`](#formhelper)
-  - [`Context`](#context)
-  - [`EntityContext`](#entitycontext)
-  - [`FormContext`](#formcontext)
-  - [`NullContext`](#nullcontext)
+  - [Form lifecycle](#form-lifecycle)
+  - [Field inputs](#field-inputs)
+  - [Choice controls](#choice-controls)
+  - [Labels and structure](#labels-and-structure)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -186,9 +185,11 @@ When CSRF protection has attached a `csrf` request attribute, `open()` automatic
 
 ## Method guide
 
-### `FormHelper`
+This section focuses on the `FormHelper` methods you are most likely to call directly in templates.
 
-Applies to `Fyre\View\Helpers\FormHelper` and is typically accessed as `$this->Form` from a template.
+Examples below assume `$this->Form` is a `Fyre\View\Helpers\FormHelper` instance.
+
+### Form lifecycle
 
 #### **Open a form** (`open()`)
 
@@ -229,6 +230,8 @@ This also clears the active form context and current `idPrefix`.
 ```php
 echo $this->Form->close();
 ```
+
+### Field inputs
 
 #### **Render an input by type** (`input()`)
 
@@ -308,6 +311,8 @@ echo $this->Form->hidden('id');
 echo $this->Form->file('avatar');
 ```
 
+### Choice controls
+
 #### **Render a checkbox** (`checkbox()`)
 
 Renders a checkbox input. When `$hiddenField` is true, a hidden field is emitted first so an unchecked checkbox still submits a value.
@@ -364,6 +369,8 @@ Arguments:
 echo $this->Form->selectMulti('tags');
 ```
 
+### Labels and structure
+
 #### **Render a label** (`label()`)
 
 Renders a `<label>` for a field. When no `$text` is provided, label text is derived from language key `Form.<field>` or the humanized field name.
@@ -414,115 +421,6 @@ Arguments:
 
 ```php
 echo $this->Form->legend('Details');
-```
-
-### `Context`
-
-Applies to `Fyre\View\Form\Context`, the base API a form context must provide.
-
-Examples below assume the relevant form context class is already imported.
-
-#### **Get the field type** (`getType()`)
-
-Returns a renderer name (a `FormHelper` method name) for a key.
-
-Arguments:
-- `$key` (`string`): field key.
-
-```php
-function chooseType(Context $context, string $key): string
-{
-    return $context->getType($key);
-}
-```
-
-#### **Get the field value** (`getValue()`)
-
-Returns a value for a key, used when no request data is available.
-
-Arguments:
-- `$key` (`string`): field key.
-
-```php
-function getFieldValue(Context $context, string $key): mixed
-{
-    return $context->getValue($key);
-}
-```
-
-#### **Read field metadata** (`isRequired()`, `getMin()`, `getMax()`, `getStep()`, `getMaxLength()`, `getOptionValues()`, `getDefaultValue()`)
-
-Optional context hooks that let a context provide UI-friendly metadata.
-
-Arguments:
-- `$key` (`string`): field key.
-
-```php
-function getConstraints(Context $context, string $key): array
-{
-    return [
-        'required' => $context->isRequired($key),
-        'min' => $context->getMin($key),
-        'max' => $context->getMax($key),
-        'step' => $context->getStep($key),
-        'maxlength' => $context->getMaxLength($key),
-        'options' => $context->getOptionValues($key),
-        'enumClass' => $context->getEnumClass($key),
-        'default' => $context->getDefaultValue($key),
-    ];
-}
-```
-
-### `EntityContext`
-
-Applies to `Fyre\View\Form\EntityContext`, the context used when `open()` is called with an ORM entity.
-
-#### **Read entity-backed values and metadata** (`getValue()`, `getType()`, `isRequired()`, `getMin()`, `getMax()`, `getStep()`, `getMaxLength()`, `getOptionValues()`, `getDefaultValue()`)
-
-Provides values and metadata derived from an ORM entity plus its associated model schema and validator.
-
-Arguments:
-- `$key` (`string`): field key (supports dot notation).
-
-```php
-function readValue(EntityContext $context, string $key): mixed
-{
-    return $context->getValue($key);
-}
-```
-
-### `FormContext`
-
-Applies to `Fyre\View\Form\FormContext`, the context used when `open()` is called with a `Fyre\Form\Form`.
-
-#### **Read form-backed values and metadata** (`getValue()`, `getType()`, `isRequired()`, `getMin()`, `getMax()`, `getStep()`, `getMaxLength()`, `getDefaultValue()`)
-
-Provides values and metadata derived from a `Form` instance, its schema, and its validator.
-
-Arguments:
-- `$key` (`string`): field key.
-
-```php
-function readFormValue(FormContext $context, string $key): mixed
-{
-    return $context->getValue($key);
-}
-```
-
-### `NullContext`
-
-Applies to `Fyre\View\Form\NullContext`, the context used when `open()` is called with no item.
-
-#### **Read null context values and options** (`getValue()`, `getOptionValues()`)
-
-Returns `null` for values and options, and leaves all constraints unset.
-
-Arguments:
-- `$key` (`string`): field key.
-
-```php
-$context = new NullContext();
-echo $context->getValue('anything');
 ```
 
 ## Behavior notes

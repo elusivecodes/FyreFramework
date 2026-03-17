@@ -21,9 +21,6 @@ Most applications configure one or more handlers, then write messages through `L
   - [Escape interpolation placeholders](#escape-interpolation-placeholders)
 - [Method guide](#method-guide)
   - [`LogManager`](#logmanager)
-  - [`Logger`](#logger)
-  - [`FileLogger`](#filelogger)
-  - [`ArrayLogger`](#arraylogger)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -161,6 +158,8 @@ In most applications, prefer a writable application folder like `tmp/logs` over 
 
 `ArrayLogger` stores formatted messages in memory for later inspection. This is primarily useful for tests and assertions.
 
+For most test assertions, prefer [Log Testing](../testing/logging.md).
+
 ## Writing log messages
 Handlers are PSR-3 loggers, so you can call `$logger->info()`, `$logger->error()`, etc.
 
@@ -202,7 +201,7 @@ $logs->handle('info', 'Literal placeholder: \{id}');
 
 This section focuses on the methods you’re most likely to use directly when configuring handlers and writing messages.
 
-Examples below assume `$logs` is a `LogManager` instance and `$logger` is a `Logger` instance.
+Examples below assume `$logs` is a `LogManager` instance.
 
 ### `LogManager`
 
@@ -270,45 +269,6 @@ Arguments:
 ```php
 $all = $logs->getConfig();
 $default = $logs->getConfig('default');
-```
-
-### `Logger`
-
-#### **Check whether a handler can handle a message** (`canHandle()`)
-
-Returns whether a handler matches the configured level and scope filters.
-
-Arguments:
-- `$level` (`string`): the log level to check.
-- `$scope` (`array|string|null`): the scope(s) to check (defaults to `null`).
-
-```php
-if ($logs->use()->canHandle('debug', 'queries')) {
-    $logs->use()->debug('Query logging is enabled');
-}
-```
-
-### `ArrayLogger`
-
-#### **Read buffered messages** (`read()`)
-
-Return the buffered log content.
-
-`ArrayLogger` stores formatted messages in memory without the date prefix that `FileLogger` includes by default.
-
-```php
-$logger = new ArrayLogger();
-$logger->info('Queued job {id}', ['id' => 42]);
-
-$messages = $logger->read();
-```
-
-#### **Clear buffered messages** (`clear()`)
-
-Clear the buffered log content.
-
-```php
-$logger->clear();
 ```
 
 ## Behavior notes
