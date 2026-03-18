@@ -40,8 +40,22 @@ class SendmailMailer extends Mailer
         unset($headers['To']);
         unset($headers['Subject']);
 
-        if (!mail($to, $subject, $body, $headers)) {
+        if (!$this->sendMail($to, $subject, $body, $headers)) {
             throw ErrorException::forLastError(__FILE__, __LINE__ - 1) ?? new RuntimeException();
         }
+    }
+
+    /**
+     * Sends the final message via PHP's mail transport.
+     *
+     * @param string $to The recipient header.
+     * @param string $subject The subject header.
+     * @param string $body The rendered message body.
+     * @param array<string, int|string|string[]> $headers The remaining headers.
+     * @return bool Whether the mail was accepted by PHP.
+     */
+    protected function sendMail(string $to, string $subject, string $body, array $headers): bool
+    {
+        return mail($to, $subject, $body, $headers);
     }
 }

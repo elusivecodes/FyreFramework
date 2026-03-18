@@ -10,6 +10,9 @@ use Fyre\ORM\ModelRegistry;
 use Fyre\ORM\Relationship;
 use Fyre\ORM\Result;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use Tests\Mock\Models\ORM\ItemsModel;
+use Tests\Mock\Models\ORM\UsersModel;
 use Tests\TestCase\ORM\Mysql\MysqlConnectionTrait;
 
 use function class_uses;
@@ -17,6 +20,69 @@ use function class_uses;
 final class ModelRegistryTest extends TestCase
 {
     use MysqlConnectionTrait;
+
+    public function testBuild(): void
+    {
+        $model = $this->modelRegistry->build('Items');
+
+        $this->assertInstanceOf(
+            ItemsModel::class,
+            $model
+        );
+
+        $this->assertSame(
+            'Items',
+            $model->getAlias()
+        );
+
+        $this->assertFalse(
+            $this->modelRegistry->isLoaded('Items')
+        );
+    }
+
+    public function testBuildDefault(): void
+    {
+        $model = $this->modelRegistry->build('Invalid');
+
+        $this->assertInstanceOf(
+            Model::class,
+            $model
+        );
+
+        $this->assertSame(
+            'Invalid',
+            $model->getClassAlias()
+        );
+    }
+
+    public function testClear(): void
+    {
+        $this->modelRegistry->use('Items');
+
+        $this->modelRegistry->clear();
+
+        $this->assertSame(
+            [],
+            $this->modelRegistry->getNamespaces()
+        );
+
+        $this->assertFalse(
+            $this->modelRegistry->isLoaded('Items')
+        );
+    }
+
+    public function testCreateDefaultModel(): void
+    {
+        $this->assertSame(
+            $this->modelRegistry,
+            $this->modelRegistry->setDefaultModelClass(UsersModel::class)
+        );
+
+        $this->assertInstanceOf(
+            UsersModel::class,
+            $this->modelRegistry->createDefaultModel()
+        );
+    }
 
     public function testDebug(): void
     {
@@ -41,6 +107,14 @@ final class ModelRegistryTest extends TestCase
         );
     }
 
+    public function testGetDefaultModelClass(): void
+    {
+        $this->assertSame(
+            Model::class,
+            $this->modelRegistry->getDefaultModelClass()
+        );
+    }
+
     public function testGetNamespaces(): void
     {
         $this->assertSame(
@@ -62,6 +136,22 @@ final class ModelRegistryTest extends TestCase
     {
         $this->assertFalse(
             $this->modelRegistry->hasNamespace('Tests\Invalid\Model')
+        );
+    }
+
+    public function testIsLoaded(): void
+    {
+        $this->modelRegistry->use('Items');
+
+        $this->assertTrue(
+            $this->modelRegistry->isLoaded('Items')
+        );
+    }
+
+    public function testIsLoadedInvalid(): void
+    {
+        $this->assertFalse(
+            $this->modelRegistry->isLoaded('Invalid')
         );
     }
 
@@ -90,6 +180,102 @@ final class ModelRegistryTest extends TestCase
         $this->assertSame(
             $this->modelRegistry,
             $this->modelRegistry->removeNamespace('Tests\Invalid\Model')
+        );
+    }
+
+    public function testSetDefaultModelClass(): void
+    {
+        $this->modelRegistry->setDefaultModelClass(UsersModel::class);
+
+        $this->assertSame(
+            UsersModel::class,
+            $this->modelRegistry->getDefaultModelClass()
+        );
+    }
+
+    public function testUnload(): void
+    {
+        $this->modelRegistry->use('Items');
+
+        $this->assertSame(
+            $this->modelRegistry,
+            $this->modelRegistry->unload('Items')
+        );
+
+        $this->assertFalse(
+            $this->modelRegistry->isLoaded('Items')
+        );
+    }
+
+    public function testUnloadInvalid(): void
+    {
+        $this->assertSame(
+            $this->modelRegistry,
+            $this->modelRegistry->unload('Invalid')
+        );
+    }
+
+    public function testUse(): void
+    {
+        $model = $this->modelRegistry->use('Items');
+
+        $this->assertInstanceOf(
+            ItemsModel::class,
+            $model
+        );
+
+        $this->assertTrue(
+            $this->modelRegistry->isLoaded('Items')
+        );
+    }
+
+    public function testUseClassAlias(): void
+    {
+        $model = $this->modelRegistry->use('Members', 'Users');
+
+        $this->assertInstanceOf(
+            UsersModel::class,
+            $model
+        );
+
+        $this->assertSame(
+            'Members',
+            $model->getAlias()
+        );
+
+        $this->assertSame(
+            'Users',
+            $model->getClassAlias()
+        );
+    }
+
+    public function testUseInvalidClassAlias(): void
+    {
+        $this->modelRegistry->use('Members', 'Users');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Model alias `Members` is already used by another class.');
+
+        $this->modelRegistry->use('Members', 'Items');
+    }
+
+    public function testUseShared(): void
+    {
+        $this->assertSame(
+            $this->modelRegistry->use('Items'),
+            $this->modelRegistry->use('Items')
+        );
+    }
+
+    public function testUseUnloadRebuilds(): void
+    {
+        $model = $this->modelRegistry->use('Items');
+
+        $this->modelRegistry->unload('Items');
+
+        $this->assertNotSame(
+            $model,
+            $this->modelRegistry->use('Items')
         );
     }
 }
