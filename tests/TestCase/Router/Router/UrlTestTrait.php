@@ -7,6 +7,9 @@ use Fyre\Core\Config;
 use Fyre\Router\Exceptions\RouterException;
 use Fyre\Router\Router;
 use Tests\Mock\Controllers\HomeController;
+use Tests\Mock\Entities\Item;
+use Tests\Mock\Enums\State;
+use Tests\Mock\Enums\Status;
 
 trait UrlTestTrait
 {
@@ -34,6 +37,35 @@ trait UrlTestTrait
                 'a' => 'test',
                 'b' => 'a',
                 'c' => 2,
+            ])
+        );
+    }
+
+    public function testUrlBackedEnumArgument(): void
+    {
+        $router = $this->container->use(Router::class);
+
+        $router->connect('status/{status}', HomeController::class, as: 'status');
+
+        $this->assertSame(
+            '/status/draft',
+            $router->url('status', [
+                'status' => Status::Draft,
+            ])
+        );
+    }
+
+    public function testUrlEntityBackedEnumArgument(): void
+    {
+        $router = $this->container->use(Router::class);
+        $item = new Item(['status' => Status::Draft], 'Items');
+
+        $router->connect('items/{item:status}', HomeController::class, as: 'items.view');
+
+        $this->assertSame(
+            '/items/draft',
+            $router->url('items.view', [
+                'item' => $item,
             ])
         );
     }
@@ -192,6 +224,20 @@ trait UrlTestTrait
             $router->url('alternate', [
                 'a' => 1,
                 '?' => ['test' => 2],
+            ])
+        );
+    }
+
+    public function testUrlUnitEnumArgument(): void
+    {
+        $router = $this->container->use(Router::class);
+
+        $router->connect('state/{state}', HomeController::class, as: 'state');
+
+        $this->assertSame(
+            '/state/Draft',
+            $router->url('state', [
+                'state' => State::Draft,
             ])
         );
     }

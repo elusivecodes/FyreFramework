@@ -5,7 +5,7 @@ namespace Tests\TestCase\Http\Uri;
 
 use Fyre\Http\Uri;
 
-trait UriAttributesSetTestTrait
+trait UriAttributesWithTestTrait
 {
     public function testWithAuthority(): void
     {

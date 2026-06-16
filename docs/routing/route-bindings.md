@@ -1,6 +1,6 @@
 # Route Bindings
 
-Use route bindings when you want route placeholders to resolve to ORM entities before your controller action or closure runs.
+Use route bindings when you want route placeholders to resolve to typed values before your controller action or closure runs.
 
 ## Table of Contents
 
@@ -9,6 +9,7 @@ Use route bindings when you want route placeholders to resolve to ORM entities b
 - [Defining bindable routes](#defining-bindable-routes)
   - [Connecting routes with router methods](#connecting-routes-with-router-methods)
   - [Connecting routes with route attributes](#connecting-routes-with-route-attributes)
+- [Enum bindings](#enum-bindings)
 - [Binding by field](#binding-by-field)
 - [Nested bindings](#nested-bindings)
   - [Example](#example)
@@ -17,9 +18,10 @@ Use route bindings when you want route placeholders to resolve to ORM entities b
 
 ## Start here
 
-Route bindings are for handlers that want typed entities (for example `Post $post`) while keeping routes readable (for example `posts/{post}`):
+Route bindings are for handlers that want typed values (for example `Post $post` or `Status $status`) while keeping routes readable (for example `posts/{post}`):
 
 - bind placeholder values to ORM entities before the handler runs
+- parse placeholder values into enum cases before the handler runs
 - keep binding logic centralized in middleware (instead of repeated lookups in handlers)
 - support nested resource patterns (parent → child) with scoped binding
 
@@ -49,7 +51,7 @@ If you use route bindings, placeholders should be compatible with PHP parameter 
 A route parameter is eligible for binding when:
 
 - the route placeholder name matches the handler parameter name, and
-- the handler parameter is typed as a subclass of `Fyre\ORM\Entity`
+- the handler parameter is typed as a subclass of `Fyre\ORM\Entity`, or a supported PHP enum
 
 Bindings work with controller actions and closure routes.
 
@@ -107,6 +109,48 @@ class PostsController
 
 To learn how attributes become registered routes, see [Route Discovery](route-discovery.md).
 
+## Enum bindings
+
+String-backed enums are resolved from their backing value:
+
+```php
+enum Status: string
+{
+    case Draft = 'draft';
+    case Published = 'published';
+}
+```
+
+```php
+$router->get(
+    'posts/status/{status}',
+    static function(Status $status): string {
+        return $status->value;
+    }
+);
+```
+
+Unit enums are resolved from the case name:
+
+```php
+enum State
+{
+    case Draft;
+    case Published;
+}
+```
+
+```php
+$router->get(
+    'posts/state/{state}',
+    static function(State $state): string {
+        return $state->name;
+    }
+);
+```
+
+If the placeholder value does not match a supported enum case, bindings throw `NotFoundException`. Int-backed enum route binding is not supported yet.
+
 ## Binding by field
 
 Use `{name:field}` to bind using a specific field instead of the model’s default route key:
@@ -151,7 +195,7 @@ A few behaviors are worth keeping in mind:
 - Binding only runs when a route matched and `routeArguments` is not empty.
 - Only parameters with a single named type are considered for binding; union and intersection types are ignored.
 - Optional placeholders like `{post?}` are present as `null` when the segment is missing; use a nullable entity parameter (for example `Post|null`) to allow that case.
-- If an optional placeholder is missing and the parameter is a non-nullable entity type (for example `Post $post`), bindings will throw `NotFoundException`.
+- If an optional placeholder is missing and the parameter is a non-nullable bindable type (for example `Post $post` or `Status $status`), bindings will throw `NotFoundException`.
 - Placeholder names must match handler parameter names exactly; placeholders like `{post-id}` produce an argument key of `post-id` and cannot bind to a PHP parameter name like `$postId`.
 - For nested binding, parameter order matters: the “parent” for a binding is the last successfully resolved entity parameter.
 

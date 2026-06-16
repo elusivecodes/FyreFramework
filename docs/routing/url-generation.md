@@ -108,8 +108,9 @@ A few behaviors are worth keeping in mind:
 - `Router::url()` throws `Fyre\Router\Exceptions\RouterException` when the alias does not exist.
 - `Router::url()` throws `Fyre\Router\Exceptions\RouterException` when a required placeholder value is missing from `$arguments`.
 - `Router::url()` throws `Fyre\Router\Exceptions\RouterException` when a placeholder value does not match the route’s pattern (or the default single-segment pattern).
-- Placeholder values are cast to strings before validation.
+- Placeholder values are normalized and cast to strings before validation.
 - If a placeholder value is a `Fyre\ORM\Entity`, the router uses the model route key field; `{name:field}` uses `field` as an override when extracting the value from the entity.
+- If a placeholder value is a PHP enum case, the router uses the backing value for backed enums and the case name for unit enums. The same normalization applies when an entity route field contains an enum case.
 - Optional placeholders like `{id?}` use the base placeholder name for argument lookup (for example `['id' => 123]`).
 - If a routed request is available, `Router::url()` returns a path-only URL when the scheme, host, and port match the current request, and a full URL when they differ.
 - If no routed request is available, `Router::url()` defaults to returning a full URL unless `full: false` is provided.

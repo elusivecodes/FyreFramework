@@ -18,7 +18,7 @@ use function unserialize;
 final class DateTimeTest extends TestCase
 {
     use AttributesGetTestTrait;
-    use AttributesSetTestTrait;
+    use AttributesWithTestTrait;
     use ComparisonsTestTrait;
     use CreateTestTrait;
     use DiffTestTrait;

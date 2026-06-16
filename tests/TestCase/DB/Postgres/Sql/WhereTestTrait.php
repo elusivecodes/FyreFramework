@@ -7,6 +7,8 @@ use Fyre\DB\Connection;
 use Fyre\DB\Queries\SelectQuery;
 use Fyre\DB\QueryLiteral;
 use Fyre\Utility\DateTime\DateTime;
+use Tests\Mock\Enums\State;
+use Tests\Mock\Enums\Status;
 
 trait WhereTestTrait
 {
@@ -100,6 +102,20 @@ trait WhereTestTrait
                 ->from('test')
                 ->where([
                     'value' => DateTime::createFromArray([2020, 1, 1]),
+                ])
+                ->sql()
+        );
+    }
+
+    public function testWhereEnum(): void
+    {
+        $this->assertSame(
+            'SELECT * FROM test WHERE status = \'draft\' AND state = \'Published\'',
+            $this->db->select()
+                ->from('test')
+                ->where([
+                    'status' => Status::Draft,
+                    'state' => State::Published,
                 ])
                 ->sql()
         );

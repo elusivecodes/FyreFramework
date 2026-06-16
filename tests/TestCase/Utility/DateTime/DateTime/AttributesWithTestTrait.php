@@ -5,7 +5,7 @@ namespace Tests\TestCase\Utility\DateTime\DateTime;
 
 use Fyre\Utility\DateTime\DateTime;
 
-trait AttributesSetTestTrait
+trait AttributesWithTestTrait
 {
     public function testWithDate(): void
     {

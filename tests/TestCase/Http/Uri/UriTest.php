@@ -13,7 +13,7 @@ use function class_uses;
 final class UriTest extends TestCase
 {
     use UriAttributesGetTestTrait;
-    use UriAttributesSetTestTrait;
+    use UriAttributesWithTestTrait;
     use UriQueryTestTrait;
     use UriRelativeTestTrait;
 

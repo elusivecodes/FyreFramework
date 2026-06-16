@@ -9,12 +9,14 @@ use Fyre\Http\Exceptions\NotFoundException;
 use Fyre\ORM\Entity;
 use Fyre\ORM\EntityLocator;
 use Fyre\ORM\ModelRegistry;
+use Fyre\Utility\EnumHelper;
 use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use ReflectionNamedType;
+use UnitEnum;
 
 use function array_key_exists;
 use function is_subclass_of;
@@ -44,7 +46,8 @@ class SubstituteBindingsMiddleware implements MiddlewareInterface
      *
      * Note: Route arguments are substituted based on the route destination signature.
      * Parameters typed as {@see Entity} are resolved via model route bindings and replace
-     * the original scalar argument value.
+     * the original scalar argument value. Parameters typed as enums are parsed from the
+     * route argument value.
      *
      * @throws NotFoundException If a route parameter cannot be resolved.
      */
@@ -83,31 +86,39 @@ class SubstituteBindingsMiddleware implements MiddlewareInterface
 
             $typeName = $type->getName();
 
-            if (!is_subclass_of($typeName, Entity::class)) {
+            if ($arguments[$name] === null) {
+                if (!$type->allowsNull()) {
+                    throw new NotFoundException();
+                }
+
+                if (is_subclass_of($typeName, Entity::class)) {
+                    $parent = null;
+                }
+
                 continue;
             }
 
-            if ($arguments[$name] === null && $type->allowsNull()) {
-                $parent = null;
-
-                continue;
-            }
-
-            if ($arguments[$name] !== null) {
+            if (is_subclass_of($typeName, Entity::class)) {
                 $Model = $this->entityLocator->findAlias($typeName) |> $this->modelRegistry->use(...);
                 $field = $fields[$name] ?? $Model->getRouteKey();
 
                 $entity = $Model->resolveRouteBinding($arguments[$name], $field, $parent);
-            } else {
-                $entity = null;
-            }
 
-            if (!$entity) {
-                throw new NotFoundException();
-            }
+                if (!$entity) {
+                    throw new NotFoundException();
+                }
 
-            $parent = $entity;
-            $arguments[$name] = $entity;
+                $parent = $entity;
+                $arguments[$name] = $entity;
+            } else if (is_subclass_of($typeName, UnitEnum::class)) {
+                $enum = EnumHelper::parseValue($typeName, $arguments[$name]);
+
+                if (!$enum) {
+                    throw new NotFoundException();
+                }
+
+                $arguments[$name] = $enum;
+            }
         }
 
         return $request->withAttribute('routeArguments', $arguments) |> $handler->handle(...);

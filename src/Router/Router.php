@@ -17,8 +17,10 @@ use Fyre\Router\Exceptions\RouterException;
 use Fyre\Router\Routes\ClosureRoute;
 use Fyre\Router\Routes\ControllerRoute;
 use Fyre\Router\Routes\RedirectRoute;
+use Fyre\Utility\EnumHelper;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
+use UnitEnum;
 
 use function array_map;
 use function array_merge;
@@ -27,7 +29,6 @@ use function array_unique;
 use function explode;
 use function getservbyname;
 use function implode;
-use function is_object;
 use function preg_match;
 use function preg_replace_callback;
 use function sprintf;
@@ -639,11 +640,15 @@ class Router
                 return '';
             }
 
-            if (is_object($value) && $value instanceof Entity) {
+            if ($value instanceof Entity) {
                 $Model = ((string) $value->getSource()) |> $this->modelRegistry->use(...);
                 $field ??= $Model->getRouteKey();
 
                 $value = $value->get($field);
+            }
+
+            if ($value instanceof UnitEnum) {
+                $value = EnumHelper::normalizeValue($value);
             }
 
             $value = (string) $value;

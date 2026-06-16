@@ -13,7 +13,9 @@ use Fyre\DB\Queries\UpdateBatchQuery;
 use Fyre\DB\Queries\UpdateQuery;
 use Fyre\DB\Queries\UpsertQuery;
 use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\EnumHelper;
 use InvalidArgumentException;
+use UnitEnum;
 
 use function array_filter;
 use function array_first;
@@ -913,6 +915,10 @@ abstract class QueryGenerator
 
         if ($value instanceof QueryLiteral) {
             return (string) $value;
+        }
+
+        if ($value instanceof UnitEnum) {
+            $value = EnumHelper::normalizeValue($value);
         }
 
         if ($value instanceof DateTime) {
