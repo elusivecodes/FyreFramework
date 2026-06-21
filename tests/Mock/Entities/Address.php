@@ -8,7 +8,7 @@ use Fyre\Utility\DateTime\DateTime;
 
 /**
  * @property int|null $id
- * @property int $user_id
+ * @property int|null $user_id
  * @property string|null $address_1
  * @property string|null $address_2
  * @property string|null $suburb

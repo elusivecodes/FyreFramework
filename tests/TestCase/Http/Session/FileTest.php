@@ -103,7 +103,11 @@ final class FileTest extends TestCase
         ]);
 
         $this->session = $container->use(Session::class);
-        $this->handler = $this->session->getHandler();
+        $handler = $this->session->getHandler();
+
+        $this->assertInstanceOf(FileSessionHandler::class, $handler);
+
+        $this->handler = $handler;
 
         $this->session->start();
 

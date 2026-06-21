@@ -80,7 +80,11 @@ final class MemcachedTest extends TestCase
         ]);
 
         $this->session = $container->use(Session::class);
-        $this->handler = $this->session->getHandler();
+        $handler = $this->session->getHandler();
+
+        $this->assertInstanceOf(MemcachedSessionHandler::class, $handler);
+
+        $this->handler = $handler;
 
         $this->session->start();
 

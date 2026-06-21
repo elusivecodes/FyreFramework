@@ -131,7 +131,11 @@ final class SqliteTest extends TestCase
         EOT);
 
         $this->session = $container->use(Session::class);
-        $this->handler = $this->session->getHandler();
+        $handler = $this->session->getHandler();
+
+        $this->assertInstanceOf(DatabaseSessionHandler::class, $handler);
+
+        $this->handler = $handler;
 
         $this->session->start();
 

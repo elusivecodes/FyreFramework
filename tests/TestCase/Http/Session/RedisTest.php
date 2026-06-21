@@ -82,7 +82,11 @@ final class RedisTest extends TestCase
         ]);
 
         $this->session = $container->use(Session::class);
-        $this->handler = $this->session->getHandler();
+        $handler = $this->session->getHandler();
+
+        $this->assertInstanceOf(RedisSessionHandler::class, $handler);
+
+        $this->handler = $handler;
 
         $this->session->start();
 
