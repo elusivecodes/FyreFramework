@@ -16,7 +16,6 @@ trait RandomIntTestTrait
 
         for ($i = 0; $i < 1000; $i++) {
             $value = Math::randomInt(10);
-            $this->assertIsInt($value);
             $this->assertGreaterThanOrEqual(
                 0,
                 $value
@@ -42,7 +41,6 @@ trait RandomIntTestTrait
 
         for ($i = 0; $i < 1000; $i++) {
             $value = Math::randomInt(-50, -10);
-            $this->assertIsInt($value);
             $this->assertGreaterThanOrEqual(
                 -50,
                 $value
@@ -68,7 +66,6 @@ trait RandomIntTestTrait
 
         for ($i = 0; $i < 1000; $i++) {
             $value = Math::randomInt(10, 50);
-            $this->assertIsInt($value);
             $this->assertGreaterThanOrEqual(
                 10,
                 $value

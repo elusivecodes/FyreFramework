@@ -17,8 +17,11 @@ trait FindKeyTestTrait
 
     public function testFindKeyWithoutMatch(): void
     {
+        /** @var int[] $values */
+        $values = [1, 2, 3, 4, 5];
+
         $this->assertNull(
-            Arr::findKey([1, 2, 3, 4, 5], static fn(int $value): bool => $value > 5)
+            Arr::findKey($values, static fn(int $value): bool => $value > 5)
         );
     }
 }

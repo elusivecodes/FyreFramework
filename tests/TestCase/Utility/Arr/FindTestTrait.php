@@ -9,9 +9,12 @@ trait FindTestTrait
 {
     public function testFindWithDefault(): void
     {
+        /** @var int[] $values */
+        $values = [1, 2, 3, 4, 5];
+
         $this->assertSame(
             6,
-            Arr::find([1, 2, 3, 4, 5], static fn(int $value): bool => $value > 5, 6),
+            Arr::find($values, static fn(int $value): bool => $value > 5, 6),
         );
     }
 
@@ -25,8 +28,11 @@ trait FindTestTrait
 
     public function testFindWithoutMatch(): void
     {
+        /** @var int[] $values */
+        $values = [1, 2, 3, 4, 5];
+
         $this->assertNull(
-            Arr::find([1, 2, 3, 4, 5], static fn(int $value): bool => $value > 5)
+            Arr::find($values, static fn(int $value): bool => $value > 5)
         );
     }
 }

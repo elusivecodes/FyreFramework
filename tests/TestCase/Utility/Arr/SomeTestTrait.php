@@ -29,9 +29,12 @@ trait SomeTestTrait
 
     public function testSomeFalse(): void
     {
+        /** @var int[] $values */
+        $values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
         $this->assertFalse(
             Arr::some(
-                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                $values,
                 static fn(int $value, int $key): bool => $value === 11
             )
         );

@@ -17,8 +17,11 @@ trait FindLastKeyTestTrait
 
     public function testFindLastKeyWithoutMatch(): void
     {
+        /** @var int[] $values */
+        $values = [1, 2, 3, 4, 5];
+
         $this->assertNull(
-            Arr::findLastKey([1, 2, 3, 4, 5], static fn(int $value): bool => $value < 1)
+            Arr::findLastKey($values, static fn(int $value): bool => $value < 1)
         );
     }
 }

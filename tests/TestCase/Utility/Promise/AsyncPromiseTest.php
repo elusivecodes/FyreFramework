@@ -103,13 +103,17 @@ final class AsyncPromiseTest extends TestCase
             $reject(new Exception('test2'));
         });
 
+        $called = false;
+
         Promise::any([$promise1, $promise2])
             ->then(function(): void {
                 $this->fail();
             })
-            ->catch(function(): void {
-                $this->assertTrue(true);
+            ->catch(static function() use (&$called): void {
+                $called = true;
             });
+
+        $this->assertTrue($called);
     }
 
     #[RunInSeparateProcess]
@@ -219,11 +223,15 @@ final class AsyncPromiseTest extends TestCase
             $reject();
         });
 
-        $promise->catch(function(): void {
-            $this->assertTrue(true);
+        $called = false;
+
+        $promise->catch(static function() use (&$called): void {
+            $called = true;
         });
 
         $promise->wait();
+
+        $this->assertTrue($called);
     }
 
     #[RunInSeparateProcess]
@@ -401,11 +409,15 @@ final class AsyncPromiseTest extends TestCase
             $resolve();
         });
 
-        $promise->then(function(): void {
-            $this->assertTrue(true);
+        $called = false;
+
+        $promise->then(static function() use (&$called): void {
+            $called = true;
         });
 
         $promise->wait();
+
+        $this->assertTrue($called);
     }
 
     #[RunInSeparateProcess]
@@ -446,9 +458,13 @@ final class AsyncPromiseTest extends TestCase
 
         $promise->wait();
 
-        $promise->finally(function(): void {
-            $this->assertTrue(true);
+        $called = false;
+
+        $promise->finally(static function() use (&$called): void {
+            $called = true;
         });
+
+        $this->assertTrue($called);
     }
 
     #[RunInSeparateProcess]
@@ -460,8 +476,12 @@ final class AsyncPromiseTest extends TestCase
 
         $promise->wait();
 
-        $promise->then(function(): void {
-            $this->assertTrue(true);
+        $called = false;
+
+        $promise->then(static function() use (&$called): void {
+            $called = true;
         });
+
+        $this->assertTrue($called);
     }
 }

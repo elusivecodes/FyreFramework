@@ -20,11 +20,15 @@ final class PromiseTest extends TestCase
 {
     public function testCatch(): void
     {
+        $called = false;
+
         new Promise(static function(Closure $resolve, Closure $reject): void {
             $reject();
-        })->catch(function(): void {
-            $this->assertTrue(true);
+        })->catch(static function() use (&$called): void {
+            $called = true;
         });
+
+        $this->assertTrue($called);
     }
 
     public function testCatchCatch(): void
@@ -66,11 +70,15 @@ final class PromiseTest extends TestCase
 
     public function testCatchFinally(): void
     {
+        $called = false;
+
         Promise::reject()
             ->catch(static function(): void {})
-            ->finally(function(): void {
-                $this->assertTrue(true);
+            ->finally(static function() use (&$called): void {
+                $called = true;
             });
+
+        $this->assertTrue($called);
     }
 
     public function testCatchReason(): void
@@ -166,11 +174,15 @@ final class PromiseTest extends TestCase
 
     public function testThen(): void
     {
+        $called = false;
+
         new Promise(static function(Closure $resolve): void {
             $resolve();
-        })->then(function(): void {
-            $this->assertTrue(true);
+        })->then(static function() use (&$called): void {
+            $called = true;
         });
+
+        $this->assertTrue($called);
     }
 
     public function testThenCatch(): void
@@ -223,11 +235,15 @@ final class PromiseTest extends TestCase
 
     public function testThenFinally(): void
     {
+        $called = false;
+
         Promise::resolve()
             ->then(static function(): void {})
-            ->finally(function(): void {
-                $this->assertTrue(true);
+            ->finally(static function() use (&$called): void {
+                $called = true;
             });
+
+        $this->assertTrue($called);
     }
 
     public function testThenResolve(): void

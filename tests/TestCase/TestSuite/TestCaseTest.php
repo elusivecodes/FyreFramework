@@ -21,14 +21,16 @@ final class TestCaseTest extends TestCase
 
     public function testSkipIfFalse(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $this->skipIf(false);
-        $this->assertTrue(true);
     }
 
     public function testSkipUnless(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $this->skipUnless(true);
-        $this->assertTrue(true);
     }
 
     public function testSkipUnlessFalse(): void

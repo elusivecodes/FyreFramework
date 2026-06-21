@@ -9,9 +9,12 @@ trait FindLastTestTrait
 {
     public function testFindLastWithDefault(): void
     {
+        /** @var int[] $values */
+        $values = [1, 2, 3, 4, 5];
+
         $this->assertSame(
             0,
-            Arr::findLast([1, 2, 3, 4, 5], static fn(int $value): bool => $value < 1, 0),
+            Arr::findLast($values, static fn(int $value): bool => $value < 1, 0),
         );
     }
 
@@ -25,8 +28,11 @@ trait FindLastTestTrait
 
     public function testFindLastWithoutMatch(): void
     {
+        /** @var int[] $values */
+        $values = [1, 2, 3, 4, 5];
+
         $this->assertNull(
-            Arr::findLast([1, 2, 3, 4, 5], static fn(int $value): bool => $value < 1)
+            Arr::findLast($values, static fn(int $value): bool => $value < 1)
         );
     }
 }

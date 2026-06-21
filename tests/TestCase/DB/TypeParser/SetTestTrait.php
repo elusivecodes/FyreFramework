@@ -62,8 +62,6 @@ trait SetTestTrait
 
     public function testSetToDatabaseInvalid(): void
     {
-        $obj = new stdClass();
-
         $this->assertNull(
             $this->type->use('set')->toDatabase(new stdClass())
         );

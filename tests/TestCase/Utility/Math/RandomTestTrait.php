@@ -16,7 +16,6 @@ trait RandomTestTrait
 
         for ($i = 0; $i < 1000; $i++) {
             $value = Math::random();
-            $this->assertIsFloat($value);
             $this->assertGreaterThanOrEqual(
                 0,
                 $value
@@ -42,7 +41,6 @@ trait RandomTestTrait
 
         for ($i = 0; $i < 1000; $i++) {
             $value = Math::random(-50, -10);
-            $this->assertIsFloat($value);
             $this->assertGreaterThanOrEqual(
                 -50,
                 $value
@@ -68,7 +66,6 @@ trait RandomTestTrait
 
         for ($i = 0; $i < 1000; $i++) {
             $value = Math::random(10, 50);
-            $this->assertIsFloat($value);
             $this->assertGreaterThanOrEqual(
                 10,
                 $value
@@ -95,7 +92,6 @@ trait RandomTestTrait
 
         for ($i = 0; $i < 1000; $i++) {
             $value = Math::random(10);
-            $this->assertIsFloat($value);
             $this->assertGreaterThanOrEqual(
                 0,
                 $value

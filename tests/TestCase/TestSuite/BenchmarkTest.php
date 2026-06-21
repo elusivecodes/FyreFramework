@@ -33,7 +33,6 @@ final class BenchmarkTest extends TestCase
 
         $tests = $this->benchmark->all();
 
-        $this->assertIsArray($tests);
         $this->assertCount(2, $tests);
         $this->assertArrayHasKey('test1', $tests);
         $this->assertArrayHasKey('test2', $tests);

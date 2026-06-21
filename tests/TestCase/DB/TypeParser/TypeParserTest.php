@@ -41,6 +41,7 @@ final class TypeParserTest extends TestCase
     use FloatTestTrait;
     use IntegerTestTrait;
     use JsonTestTrait;
+    use SetTestTrait;
     use StringTestTrait;
     use TextTestTrait;
     use TimeTestTrait;

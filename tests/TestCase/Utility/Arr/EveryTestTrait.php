@@ -9,9 +9,12 @@ trait EveryTestTrait
 {
     public function testEvery(): void
     {
+        /** @var int[] $values */
+        $values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
         $this->assertTrue(
             Arr::every(
-                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                $values,
                 static fn(int $value, int $key): bool => $value <= 10
             )
         );
