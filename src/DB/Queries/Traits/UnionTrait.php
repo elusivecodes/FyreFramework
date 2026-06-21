@@ -5,10 +5,13 @@ namespace Fyre\DB\Queries\Traits;
 
 use Closure;
 use Fyre\DB\Queries\SelectQuery;
+use Fyre\DB\Query;
 use Fyre\DB\QueryLiteral;
 
 /**
  * Adds UNION / UNION ALL support to queries.
+ *
+ * @phpstan-require-extends Query
  */
 trait UnionTrait
 {

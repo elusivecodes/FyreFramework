@@ -23,6 +23,8 @@ use function implode;
  *
  * Note: Rule checks short-circuit when possible (e.g. empty field lists, not-dirty fields),
  * and query-based rules disable ORM events when checking constraints.
+ *
+ * @template TModel of Model = Model
  */
 class RuleSet
 {
@@ -41,7 +43,7 @@ class RuleSet
      * @param string $name The relationship name.
      * @param bool|null $allowNullableNulls Whether to allow null values.
      * @param string[]|null $targetFields The target fields.
-     * @param (Closure(SelectQuery<Entity>): SelectQuery<Entity>)|null $callback The query callback.
+     * @param (Closure(SelectQuery): SelectQuery)|null $callback The query callback.
      * @param string|null $message The validation message.
      * @return Closure The rule.
      */
@@ -155,7 +157,7 @@ class RuleSet
      *
      * @param string[] $fields The fields.
      * @param bool $allowMultipleNulls Whether to allow multiple null values.
-     * @param (Closure(SelectQuery<Entity>): SelectQuery<Entity>)|null $callback The query callback.
+     * @param (Closure(SelectQuery): SelectQuery)|null $callback The query callback.
      * @param string|null $message The validation message.
      * @return Closure The rule.
      */
@@ -231,7 +233,7 @@ class RuleSet
      * Constructs a RuleSet.
      *
      * @param Container $container The Container.
-     * @param Model $model The Model.
+     * @param TModel $model The Model.
      */
     public function __construct(
         protected Container $container,
@@ -255,6 +257,9 @@ class RuleSet
      * Validates an entity.
      *
      * @param Entity $entity The Entity.
+     *
+     * @phpstan-param template-type<TModel, Model, 'TEntity'> $entity The Entity.
+     *
      * @return bool Whether the validation was successful.
      */
     public function validate(Entity $entity): bool

@@ -6,6 +6,10 @@ namespace Tests\Mock\Core\Macro;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Core\Traits\StaticMacroTrait;
 
+/**
+ * @method string testMacro()
+ * @method static string testMacro()
+ */
 class MyClass
 {
     use MacroTrait;

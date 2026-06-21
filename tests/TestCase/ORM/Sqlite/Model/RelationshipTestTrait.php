@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\Sqlite\Model;
 
+use Fyre\ORM\Relationships\HasMany;
+
 trait RelationshipTestTrait
 {
     public function testRelationshipAliasModel(): void
@@ -180,14 +182,18 @@ trait RelationshipTestTrait
             'classAlias' => 'Items',
         ]);
 
+        $relationship = $Items->Alias;
+
+        $this->assertInstanceOf(HasMany::class, $relationship);
+
         $this->assertSame(
-            $Items->Alias,
-            $Items->Alias->setSort('Alias.sort')
+            $relationship,
+            $relationship->setSort('Alias.sort')
         );
 
         $this->assertSame(
             'Alias.sort',
-            $Items->Alias->getSort()
+            $relationship->getSort()
         );
     }
 

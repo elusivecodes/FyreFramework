@@ -22,7 +22,7 @@ trait CallbacksHasOneTestTrait
 
         $this->assertSame(
             1,
-            $user->address->test
+            $user->address->get('test')
         );
     }
 
@@ -47,7 +47,7 @@ trait CallbacksHasOneTestTrait
 
         $this->assertSame(
             1,
-            $users[1]->address->test
+            $users[1]->address->get('test')
         );
     }
 

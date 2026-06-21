@@ -15,6 +15,7 @@ use Fyre\View\View;
 use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
+use Tests\Mock\Helpers\TestHelper;
 
 use function class_uses;
 
@@ -36,19 +37,33 @@ final class HelperTest extends TestCase
             'value' => 1,
         ]);
 
+        $helper = $this->view->__get('Test');
+
+        $this->assertInstanceOf(
+            TestHelper::class,
+            $helper
+        );
+
         $this->assertSame(
             [
                 'value' => 1,
             ],
-            $this->view->Test->getConfig()
+            $helper->getConfig()
         );
     }
 
     public function testGetView(): void
     {
+        $helper = $this->view->__get('Test');
+
+        $this->assertInstanceOf(
+            TestHelper::class,
+            $helper
+        );
+
         $this->assertInstanceOf(
             View::class,
-            $this->view->Test->getView()
+            $helper->getView()
         );
     }
 

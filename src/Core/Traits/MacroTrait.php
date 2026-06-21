@@ -45,6 +45,8 @@ trait MacroTrait
      *
      * @param string $name The macro name.
      * @param callable $macro The macro callback.
+     *
+     * @param-closure-this static $macro
      */
     public static function macro(string $name, callable $macro): void
     {

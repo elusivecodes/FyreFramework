@@ -4,10 +4,9 @@ declare(strict_types=1);
 namespace Tests\TestCase\DB\Forge\Postgres;
 
 use Fyre\Core\Container;
-use Fyre\DB\Connection;
 use Fyre\DB\ConnectionManager;
-use Fyre\DB\Forge\Forge;
 use Fyre\DB\Forge\ForgeRegistry;
+use Fyre\DB\Forge\Handlers\Postgres\PostgresForge;
 use Fyre\DB\Forge\QueryGenerator;
 use Fyre\DB\Handlers\Postgres\PostgresConnection;
 use Fyre\DB\Schema\Schema;
@@ -19,9 +18,9 @@ use function getenv;
 
 trait PostgresConnectionTrait
 {
-    protected Connection $db;
+    protected PostgresConnection $db;
 
-    protected Forge $forge;
+    protected PostgresForge $forge;
 
     protected QueryGenerator $generator;
 
@@ -34,7 +33,7 @@ trait PostgresConnectionTrait
         $container->singleton(TypeParser::class);
         $container->singleton(SchemaRegistry::class);
 
-        $this->db = $container->use(ConnectionManager::class)->build([
+        $db = $container->use(ConnectionManager::class)->build([
             'className' => PostgresConnection::class,
             'host' => getenv('POSTGRES_HOST'),
             'username' => getenv('POSTGRES_USERNAME'),
@@ -45,8 +44,16 @@ trait PostgresConnectionTrait
             'persist' => true,
         ]);
 
+        $this->assertInstanceOf(PostgresConnection::class, $db);
+
+        $this->db = $db;
         $this->schema = $container->use(SchemaRegistry::class)->use($this->db);
-        $this->forge = $container->use(ForgeRegistry::class)->use($this->db);
+
+        $forge = $container->use(ForgeRegistry::class)->use($this->db);
+
+        $this->assertInstanceOf(PostgresForge::class, $forge);
+
+        $this->forge = $forge;
         $this->generator = $this->forge->generator();
     }
 

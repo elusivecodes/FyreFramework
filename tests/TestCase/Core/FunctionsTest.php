@@ -550,7 +550,7 @@ final class FunctionsTest extends TestCase
             $user
         );
 
-        $this->assertSame(1, $user->id);
+        $this->assertSame(1, $user->get('id'));
     }
 
     public function testView(): void

@@ -30,9 +30,18 @@ use function sprintf;
  *
  * Uses a junction model to link source and target entities. When loading, join row data is
  * attached to each target entity under `_joinData`.
+ *
+ * @template TSource of Model = Model
+ * @template TTarget of Model = Model
+ * @template TJunction of Model = Model
+ *
+ * @extends Relationship<TSource, TTarget>
  */
 class ManyToMany extends Relationship
 {
+    /**
+     * @var TJunction|null
+     */
     protected Model|null $junction = null;
 
     protected string $saveStrategy = 'replace';
@@ -42,10 +51,16 @@ class ManyToMany extends Relationship
      */
     protected array|string|null $sort = null;
 
+    /**
+     * @var HasMany<TSource, TJunction>|null
+     */
     protected HasMany|null $sourceRelationship = null;
 
     protected string $targetForeignKey;
 
+    /**
+     * @var BelongsTo<TJunction, TTarget>|null
+     */
     protected BelongsTo|null $targetRelationship = null;
 
     protected string $through;
@@ -178,10 +193,13 @@ class ManyToMany extends Relationship
     /**
      * Returns the junction Model.
      *
-     * @return Model The Model instance for the junction.
+     * @return TJunction The Model instance for the junction.
      */
     public function getJunction(): Model
     {
+        /**
+         * @var TJunction
+         */
         return $this->junction ??= $this->modelRegistry->use($this->through);
     }
 
@@ -208,7 +226,7 @@ class ManyToMany extends Relationship
     /**
      * Returns the source relationship.
      *
-     * @return HasMany The HasMany instance.
+     * @return HasMany<TSource, TJunction> The HasMany instance.
      */
     public function getSourceRelationship(): HasMany
     {
@@ -236,7 +254,7 @@ class ManyToMany extends Relationship
     /**
      * Returns the target relationship.
      *
-     * @return BelongsTo The BelongsTo instance.
+     * @return BelongsTo<TJunction, TTarget> The BelongsTo instance.
      */
     public function getTargetRelationship(): BelongsTo
     {
@@ -267,8 +285,8 @@ class ManyToMany extends Relationship
     /**
      * {@inheritDoc}
      *
-     * @param SelectQuery<Entity>|null $query The SelectQuery.
-     * @param (Closure(SelectQuery<Entity>): SelectQuery<Entity>)|null $callback The contain callback.
+     * @param SelectQuery<template-type<TSource, Model, 'TEntity'>>|null $query The SelectQuery.
+     * @param (Closure(SelectQuery<template-type<TJunction, Model, 'TEntity'>>): SelectQuery<template-type<TJunction, Model, 'TEntity'>>)|null $callback The contain callback.
      */
     #[Override]
     public function loadRelated(
@@ -486,7 +504,7 @@ class ManyToMany extends Relationship
     /**
      * Sets the junction Model.
      *
-     * @param Model $junction The Model representing the junction table.
+     * @param TJunction $junction The Model representing the junction table.
      * @return static The ManyToMany instance.
      */
     public function setJunction(Model $junction): static

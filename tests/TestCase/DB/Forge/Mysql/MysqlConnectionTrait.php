@@ -4,10 +4,9 @@ declare(strict_types=1);
 namespace Tests\TestCase\DB\Forge\Mysql;
 
 use Fyre\Core\Container;
-use Fyre\DB\Connection;
 use Fyre\DB\ConnectionManager;
-use Fyre\DB\Forge\Forge;
 use Fyre\DB\Forge\ForgeRegistry;
+use Fyre\DB\Forge\Handlers\Mysql\MysqlForge;
 use Fyre\DB\Forge\QueryGenerator;
 use Fyre\DB\Handlers\Mysql\MysqlConnection;
 use Fyre\DB\Schema\Schema;
@@ -19,9 +18,9 @@ use function getenv;
 
 trait MysqlConnectionTrait
 {
-    protected Connection $db;
+    protected MysqlConnection $db;
 
-    protected Forge $forge;
+    protected MysqlForge $forge;
 
     protected QueryGenerator $generator;
 
@@ -34,7 +33,7 @@ trait MysqlConnectionTrait
         $container->singleton(TypeParser::class);
         $container->singleton(SchemaRegistry::class);
 
-        $this->db = $container->use(ConnectionManager::class)->build([
+        $db = $container->use(ConnectionManager::class)->build([
             'className' => MysqlConnection::class,
             'host' => getenv('MYSQL_HOST'),
             'username' => getenv('MYSQL_USERNAME'),
@@ -47,8 +46,16 @@ trait MysqlConnectionTrait
             'persist' => true,
         ]);
 
+        $this->assertInstanceOf(MysqlConnection::class, $db);
+
+        $this->db = $db;
         $this->schema = $container->use(SchemaRegistry::class)->use($this->db);
-        $this->forge = $container->use(ForgeRegistry::class)->use($this->db);
+
+        $forge = $container->use(ForgeRegistry::class)->use($this->db);
+
+        $this->assertInstanceOf(MysqlForge::class, $forge);
+
+        $this->forge = $forge;
         $this->generator = $this->forge->generator();
     }
 

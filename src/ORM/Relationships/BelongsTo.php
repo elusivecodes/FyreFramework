@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Fyre\ORM\Relationships;
 
 use Fyre\ORM\Entity;
+use Fyre\ORM\Model;
 use Fyre\ORM\Relationship;
 use Override;
 use Traversable;
@@ -13,6 +14,11 @@ use Traversable;
  *
  * The source model stores the foreign key, and the target model provides the binding key
  * (defaults to the first primary key column).
+ *
+ * @template TSource of Model = Model
+ * @template TTarget of Model = Model
+ *
+ * @extends Relationship<TSource, TTarget>
  */
 class BelongsTo extends Relationship
 {

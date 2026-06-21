@@ -3,6 +3,11 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Cache\Cacher;
 
+use Fyre\Cache\Cacher;
+
+/**
+ * @property Cacher $cacher
+ */
 trait TagsTestTrait
 {
     public function testTaggedDelete(): void

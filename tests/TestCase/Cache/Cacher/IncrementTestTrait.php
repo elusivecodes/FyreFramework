@@ -3,8 +3,12 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Cache\Cacher;
 
+use Fyre\Cache\Cacher;
 use Fyre\Cache\Exceptions\InvalidArgumentException;
 
+/**
+ * @property Cacher $cacher
+ */
 trait IncrementTestTrait
 {
     public function testIncrement(): void

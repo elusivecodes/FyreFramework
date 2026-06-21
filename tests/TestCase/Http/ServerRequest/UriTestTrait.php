@@ -17,9 +17,16 @@ trait UriTestTrait
             ],
         ]);
 
+        $uri = $request->getUri();
+
+        $this->assertInstanceOf(
+            Uri::class,
+            $uri
+        );
+
         $this->assertSame(
             'https://test.com',
-            $request->getUri()->getUri()
+            $uri->getUri()
         );
     }
 

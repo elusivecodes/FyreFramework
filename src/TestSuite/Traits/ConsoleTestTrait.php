@@ -12,6 +12,7 @@ use Fyre\TestSuite\Constraint\Console\ContentsEmpty;
 use Fyre\TestSuite\Constraint\Console\ContentsNotContains;
 use Fyre\TestSuite\Constraint\Console\ContentsRegExp;
 use Fyre\TestSuite\Constraint\Console\ExitCode;
+use Fyre\TestSuite\TestCase;
 use PHPUnit\Framework\Attributes\After;
 use PHPUnit\Framework\Attributes\Before;
 
@@ -34,6 +35,8 @@ use const PHP_EOL;
  *
  * Provides helpers for running console commands via {@see CommandRunner} and asserting on
  * captured stdout/stderr and exit codes.
+ *
+ * @phpstan-require-extends TestCase
  */
 trait ConsoleTestTrait
 {

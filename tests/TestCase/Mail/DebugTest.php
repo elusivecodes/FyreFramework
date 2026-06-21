@@ -6,7 +6,6 @@ namespace Tests\TestCase\Mail;
 use Fyre\Core\Container;
 use Fyre\Mail\Email;
 use Fyre\Mail\Handlers\DebugMailer;
-use Fyre\Mail\Mailer;
 use Fyre\Mail\MailManager;
 use Override;
 use PHPUnit\Framework\TestCase;
@@ -15,7 +14,7 @@ use function file_get_contents;
 
 final class DebugTest extends TestCase
 {
-    protected Mailer $mailer;
+    protected DebugMailer $mailer;
 
     public function testDebug(): void
     {
@@ -300,10 +299,17 @@ final class DebugTest extends TestCase
     #[Override]
     protected function setUp(): void
     {
-        $this->mailer = new Container()
+        $mailer = new Container()
             ->use(MailManager::class)
             ->build([
                 'className' => DebugMailer::class,
             ]);
+
+        $this->assertInstanceOf(
+            DebugMailer::class,
+            $mailer
+        );
+
+        $this->mailer = $mailer;
     }
 }

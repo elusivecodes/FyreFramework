@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\Mock\Http\Middleware;
 
+use Fyre\Http\ClientResponse;
 use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -10,6 +11,7 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 use function array_map;
+use function assert;
 
 class RouteArgsMiddleware implements MiddlewareInterface
 {
@@ -22,6 +24,10 @@ class RouteArgsMiddleware implements MiddlewareInterface
             $args
         );
 
-        return $handler->handle($request)->withJson($args);
+        $response = $handler->handle($request);
+
+        assert($response instanceof ClientResponse);
+
+        return $response->withJson($args);
     }
 }

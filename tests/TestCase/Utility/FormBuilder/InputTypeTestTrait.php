@@ -87,7 +87,7 @@ trait InputTypeTestTrait
         $this->expectException(BadMethodCallException::class);
         $this->expectExceptionMessage('Input type `invalid` is not valid.');
 
-        $this->form->invalid();
+        $this->form->__call('invalid', []);
     }
 
     public function testInputTypeMonth(): void

@@ -28,6 +28,10 @@ use function in_array;
  * Soft-deleted records are not removed from the database; instead the configured deleted
  * field is set to the current timestamp. Default find operations automatically filter out
  * deleted rows unless the `deleted` option is set.
+ *
+ * @template TEntity of Entity = Entity
+ *
+ * @phpstan-require-extends Model<TEntity>
  */
 trait SoftDeleteTrait
 {
@@ -50,7 +54,7 @@ trait SoftDeleteTrait
      * @param string|null $alias The alias.
      * @param bool|null $autoFields Whether the query uses auto fields.
      * @param mixed ...$options The find options.
-     * @return SelectQuery<Entity> The query.
+     * @return SelectQuery<TEntity> The query.
      */
     public function findOnlyDeleted(
         array|string|null $fields = null,
@@ -107,7 +111,7 @@ trait SoftDeleteTrait
      * @param string|null $alias The alias.
      * @param bool|null $autoFields Whether the query uses auto fields.
      * @param mixed ...$options The find options.
-     * @return SelectQuery<Entity> The query.
+     * @return SelectQuery<TEntity> The query.
      */
     public function findWithDeleted(
         array|string|null $fields = null,
@@ -151,7 +155,7 @@ trait SoftDeleteTrait
      * option is true.
      *
      * @param Event $event The Event.
-     * @param SelectQuery<Entity> $query The query.
+     * @param SelectQuery $query The query.
      * @param Relationship $relationship The relationship.
      * @param ArrayObject<string, mixed> $join The mutable join data.
      * @param string $mode The join mode.
@@ -191,7 +195,7 @@ trait SoftDeleteTrait
      * true.
      *
      * @param Event $event The Event.
-     * @param SelectQuery<Entity> $query The query.
+     * @param SelectQuery<TEntity> $query The query.
      * @param array<string, mixed> $options The find options.
      */
     #[BeforeFind]
@@ -216,7 +220,7 @@ trait SoftDeleteTrait
      * has-one/has-many relationships that also use {@see SoftDeleteTrait} are unlinked.
      *
      * @param Event $event The Event.
-     * @param Entity $entity The entity.
+     * @param TEntity $entity The entity.
      * @param array<string, mixed> $options The options for deleting.
      */
     #[BeforeDelete]
@@ -268,7 +272,7 @@ trait SoftDeleteTrait
     /**
      * Deletes an Entity (permanently).
      *
-     * @param Entity $entity The Entity.
+     * @param TEntity $entity The Entity.
      * @param bool $cascade Whether to delete related children.
      * @param bool $events Whether to trigger events.
      * @param mixed ...$options The delete options.
@@ -292,7 +296,7 @@ trait SoftDeleteTrait
     /**
      * Deletes multiple entities (permanently).
      *
-     * @param iterable<Entity> $entities The entities.
+     * @param iterable<TEntity> $entities The entities.
      * @param bool $cascade Whether to delete related children.
      * @param bool $events Whether to trigger events.
      * @param mixed ...$options The delete options.
@@ -316,7 +320,7 @@ trait SoftDeleteTrait
     /**
      * Restores an Entity.
      *
-     * @param Entity $entity The Entity.
+     * @param TEntity $entity The Entity.
      * @param bool $saveRelated Whether to save related entities.
      * @param bool $checkRules Whether to check model RuleSet.
      * @param bool $checkExists Whether to check if the entity exists.
@@ -354,7 +358,7 @@ trait SoftDeleteTrait
      * Note: When restoring dependents, this runs in a transaction and restores dependent
      * records on has-one/has-many relationships that also use {@see SoftDeleteTrait}.
      *
-     * @param iterable<Entity> $entities The entities.
+     * @param iterable<TEntity> $entities The entities.
      * @param bool $saveRelated Whether to save related entities.
      * @param bool $checkRules Whether to check model RuleSet.
      * @param bool $checkExists Whether to check if the entity exists.

@@ -3,8 +3,12 @@ declare(strict_types=1);
 
 namespace Fyre\DB\Queries\Traits;
 
+use Fyre\DB\Query;
+
 /**
  * Adds support for appending raw SQL after the main query (e.g. `RETURNING`).
+ *
+ * @phpstan-require-extends Query
  */
 trait EpilogTrait
 {

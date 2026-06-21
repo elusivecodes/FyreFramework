@@ -30,7 +30,7 @@ trait CallbacksHasManyTestTrait
 
         $this->assertSame(
             1,
-            $user->posts[1]->test
+            $user->posts[1]->get('test')
         );
     }
 
@@ -69,7 +69,7 @@ trait CallbacksHasManyTestTrait
 
         $this->assertSame(
             1,
-            $users[1]->posts[1]->test
+            $users[1]->posts[1]->get('test')
         );
     }
 

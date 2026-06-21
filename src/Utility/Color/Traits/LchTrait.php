@@ -3,10 +3,13 @@ declare(strict_types=1);
 
 namespace Fyre\Utility\Color\Traits;
 
+use Fyre\Utility\Color\Color;
 use Override;
 
 /**
  * Provides LCH channel accessors.
+ *
+ * @phpstan-require-extends Color
  */
 trait LchTrait
 {

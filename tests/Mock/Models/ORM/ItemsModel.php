@@ -7,10 +7,20 @@ use Fyre\Form\Rule;
 use Fyre\Form\Validator;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Model;
+use Fyre\ORM\Relationship;
+use Fyre\ORM\Relationships\ManyToMany as ManyToManyRelationship;
 use Fyre\ORM\RuleSet;
 use Override;
-use Tests\Mock\Models\ORM\Traits\TestTrait;
+use Tests\Mock\Entities\Item;
+use Tests\Mock\Models\Traits\TestTrait;
 
+/**
+ * @extends Model<Item>
+ *
+ * @property Relationship<static, ItemsModel> $Alias
+ * @property ManyToManyRelationship<static, ItemsModel> $ChildItems
+ * @property Relationship<static, ItemsModel> $Nested
+ */
 class ItemsModel extends Model
 {
     use TestTrait;

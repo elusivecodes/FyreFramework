@@ -8,10 +8,17 @@ use Fyre\Form\Validator;
 use Fyre\ORM\Attributes\BelongsTo;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Model;
+use Fyre\ORM\Relationships\BelongsTo as BelongsToRelationship;
 use Fyre\ORM\RuleSet;
 use Override;
-use Tests\Mock\Models\ORM\Traits\TestTrait;
+use Tests\Mock\Entities\Address;
+use Tests\Mock\Models\Traits\TestTrait;
 
+/**
+ * @extends Model<Address>
+ *
+ * @property BelongsToRelationship<static,UsersModel> $Users
+ */
 #[BelongsTo('Users')]
 class AddressesModel extends Model
 {

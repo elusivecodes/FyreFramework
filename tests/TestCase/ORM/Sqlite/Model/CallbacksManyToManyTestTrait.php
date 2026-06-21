@@ -30,7 +30,7 @@ trait CallbacksManyToManyTestTrait
 
         $this->assertSame(
             1,
-            $post->tags[1]->test
+            $post->tags[1]->get('test')
         );
     }
 
@@ -69,7 +69,7 @@ trait CallbacksManyToManyTestTrait
 
         $this->assertSame(
             1,
-            $posts[1]->tags[1]->test
+            $posts[1]->tags[1]->get('test')
         );
     }
 

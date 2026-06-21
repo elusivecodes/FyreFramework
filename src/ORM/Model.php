@@ -66,6 +66,8 @@ use const ARRAY_FILTER_USE_KEY;
 
 /**
  * Represents an ORM model and provides persistence/query helpers.
+ *
+ * @template TEntity of Entity = Entity
  */
 class Model implements EventListenerInterface
 {
@@ -109,6 +111,9 @@ class Model implements EventListenerInterface
 
     protected string|null $routeKey = null;
 
+    /**
+     * @var RuleSet<static>
+     */
     protected RuleSet $rules;
 
     protected string $table;
@@ -369,8 +374,8 @@ class Model implements EventListenerInterface
     /**
      * Builds the model RuleSet.
      *
-     * @param RuleSet $rules The RuleSet.
-     * @return RuleSet The RuleSet instance.
+     * @param RuleSet<static> $rules The RuleSet.
+     * @return RuleSet<static> The RuleSet instance.
      */
     public function buildRules(RuleSet $rules): RuleSet
     {
@@ -391,7 +396,7 @@ class Model implements EventListenerInterface
     /**
      * Deletes an Entity.
      *
-     * @param Entity $entity The Entity.
+     * @param TEntity $entity The Entity.
      * @param bool $cascade Whether to delete related children.
      * @param bool $events Whether to trigger events.
      * @param mixed ...$options The delete options.
@@ -453,7 +458,7 @@ class Model implements EventListenerInterface
     /**
      * Deletes multiple entities.
      *
-     * @param iterable<Entity> $entities The entities.
+     * @param iterable<TEntity> $entities The entities.
      * @param bool $cascade Whether to delete related children.
      * @param bool $events Whether to trigger events.
      * @param mixed ...$options The delete options.
@@ -567,7 +572,7 @@ class Model implements EventListenerInterface
      * @param string|null $alias The alias.
      * @param bool|null $autoFields Whether the query uses auto fields.
      * @param mixed ...$options The find options.
-     * @return SelectQuery<Entity> The new SelectQuery instance.
+     * @return SelectQuery<TEntity> The new SelectQuery instance.
      */
     public function find(
         array|string|null $fields = null,
@@ -621,7 +626,7 @@ class Model implements EventListenerInterface
      * @param string|null $alias The alias.
      * @param bool|null $autoFields Whether the query uses auto fields.
      * @param mixed ...$options The find options.
-     * @return Entity|null The Entity instance.
+     * @return TEntity|null The Entity instance.
      */
     public function get(
         array|int|string $primaryValues,
@@ -794,7 +799,7 @@ class Model implements EventListenerInterface
     /**
      * Returns the model RuleSet.
      *
-     * @return RuleSet The RuleSet instance.
+     * @return RuleSet<static> The RuleSet instance.
      */
     public function getRules(): RuleSet
     {
@@ -906,9 +911,9 @@ class Model implements EventListenerInterface
     /**
      * Loads contained data into an Entity.
      *
-     * @param Entity $entity The Entity.
+     * @param TEntity $entity The Entity.
      * @param array<mixed> $contain The relationships to contain.
-     * @return Entity|null The Entity instance.
+     * @return TEntity|null The Entity instance.
      */
     public function loadInto(Entity $entity, array $contain): Entity|null
     {
@@ -958,7 +963,7 @@ class Model implements EventListenerInterface
     /**
      * Builds a new empty Entity.
      *
-     * @return Entity The new Entity instance.
+     * @return TEntity The new Entity instance.
      */
     public function newEmptyEntity(): Entity
     {
@@ -979,7 +984,7 @@ class Model implements EventListenerInterface
      * @param bool $clean Whether to clean the entity.
      * @param bool|null $new Whether the entity is new.
      * @param mixed ...$options The Entity options.
-     * @return Entity[] The new Entity instances.
+     * @return TEntity[] The new Entity instances.
      */
     public function newEntities(
         array $data,
@@ -1026,7 +1031,7 @@ class Model implements EventListenerInterface
      * @param bool $clean Whether to clean the entity.
      * @param bool|null $new Whether the entity is new.
      * @param mixed ...$options The Entity options.
-     * @return Entity The new Entity instance.
+     * @return TEntity The new Entity instance.
      */
     public function newEntity(
         array $data,
@@ -1089,7 +1094,7 @@ class Model implements EventListenerInterface
     /**
      * Updates multiple Entity instances using data.
      *
-     * @param iterable<Entity> $entities The entities.
+     * @param iterable<TEntity> $entities The entities.
      * @param array<array<string, mixed>> $data The data.
      * @param array<mixed>|string|null $associated The associated relationships.
      * @param array<string, bool>|null $accessible The accessible fields.
@@ -1141,7 +1146,7 @@ class Model implements EventListenerInterface
     /**
      * Updates an Entity using data.
      *
-     * @param Entity $entity The Entity.
+     * @param TEntity $entity The Entity.
      * @param array<string, mixed> $data The data.
      * @param array<mixed>|string|null $associated The associated relationships.
      * @param array<string, bool>|null $accessible The accessible fields.
@@ -1201,7 +1206,7 @@ class Model implements EventListenerInterface
      * @param int|string $value The value.
      * @param string $field The field.
      * @param Entity|null $parent The parent Entity.
-     * @return Entity|null The Entity instance.
+     * @return TEntity|null The Entity instance.
      */
     public function resolveRouteBinding(int|string $value, string $field, Entity|null $parent = null): Entity|null
     {
@@ -1237,7 +1242,7 @@ class Model implements EventListenerInterface
     /**
      * Saves an Entity.
      *
-     * @param Entity $entity The Entity.
+     * @param TEntity $entity The Entity.
      * @param bool $saveRelated Whether to save related entities.
      * @param bool $checkRules Whether to check model RuleSet.
      * @param bool $checkExists Whether to check if the entity exists.
@@ -1308,7 +1313,7 @@ class Model implements EventListenerInterface
     /**
      * Saves multiple entities.
      *
-     * @param iterable<Entity> $entities The entities.
+     * @param iterable<TEntity> $entities The entities.
      * @param bool $saveRelated Whether to save related entities.
      * @param bool $checkRules Whether to check model RuleSet.
      * @param bool $checkExists Whether to check if the entity exists.
@@ -1409,10 +1414,13 @@ class Model implements EventListenerInterface
      * Creates a new SelectQuery.
      *
      * @param array<mixed> $options The options for the query.
-     * @return SelectQuery<Entity> The new SelectQuery instance.
+     * @return SelectQuery<TEntity> The new SelectQuery instance.
      */
     public function selectQuery(array $options = []): SelectQuery
     {
+        /**
+         * @var SelectQuery<TEntity>
+         */
         return new SelectQuery($this, $options);
     }
 
@@ -1472,7 +1480,7 @@ class Model implements EventListenerInterface
     /**
      * Sets the model RuleSet.
      *
-     * @param RuleSet $rules The RuleSet.
+     * @param RuleSet<static> $rules The RuleSet.
      * @return static The Model instance.
      */
     public function setRules(RuleSet $rules): static
@@ -1525,7 +1533,7 @@ class Model implements EventListenerInterface
      * @param string|null $alias The alias.
      * @param bool|null $autoFields Whether the query uses auto fields.
      * @param mixed ...$options The find options.
-     * @return SelectQuery<Entity> The new SelectQuery instance.
+     * @return SelectQuery<TEntity> The new SelectQuery instance.
      */
     public function subquery(
         array|string|null $fields = null,
@@ -1635,7 +1643,7 @@ class Model implements EventListenerInterface
     /**
      * Determines whether entities already exist, and marks them not new.
      *
-     * @param Entity[] $entities The entities.
+     * @param TEntity[] $entities The entities.
      */
     protected function checkExists(array $entities): void
     {
@@ -1692,12 +1700,15 @@ class Model implements EventListenerInterface
     /**
      * Creates an Entity.
      *
-     * @return Entity The Entity instance.
+     * @return TEntity The Entity instance.
      */
     protected function createEntity(): Entity
     {
         $alias = $this->getClassAlias();
 
+        /**
+         * @var class-string<TEntity> $className
+         */
         $className = $this->entityLocator->find($alias);
 
         $entity = $this->container->build($className);
@@ -1708,7 +1719,7 @@ class Model implements EventListenerInterface
     /**
      * Deletes child entities.
      *
-     * @param Entity[] $entities The entities.
+     * @param TEntity[] $entities The entities.
      * @param array<string, mixed> $options The delete options.
      * @return bool Whether the delete was successful.
      */
@@ -1730,7 +1741,7 @@ class Model implements EventListenerInterface
     /**
      * Injects an Entity with data.
      *
-     * @param Entity $entity The Entity.
+     * @param TEntity $entity The Entity.
      * @param array<string, mixed> $data The data.
      * @param array<mixed> $options The Entity options.
      */
@@ -1865,7 +1876,7 @@ class Model implements EventListenerInterface
     /**
      * Deletes a single Entity.
      *
-     * @param Entity $entity The Entity.
+     * @param TEntity $entity The Entity.
      * @param array<mixed> $options The options for deleting.
      * @return bool Whether the delete was successful.
      */
@@ -1905,7 +1916,7 @@ class Model implements EventListenerInterface
     /**
      * Saves a single Entity.
      *
-     * @param Entity $entity The Entity.
+     * @param TEntity $entity The Entity.
      * @param array<mixed> $options The options for saving.
      * @return bool Whether the save was successful.
      */
@@ -2003,7 +2014,7 @@ class Model implements EventListenerInterface
     /**
      * Saves child entities for an entity.
      *
-     * @param Entity $entity The Entity.
+     * @param TEntity $entity The Entity.
      * @param array<string, mixed> $options The save options.
      * @return bool Whether the save was successful.
      */
@@ -2027,7 +2038,7 @@ class Model implements EventListenerInterface
     /**
      * Saves parent entities for an entity.
      *
-     * @param Entity $entity The Entity.
+     * @param TEntity $entity The Entity.
      * @param array<string, mixed> $options The save options.
      * @return bool Whether the save was successful.
      */

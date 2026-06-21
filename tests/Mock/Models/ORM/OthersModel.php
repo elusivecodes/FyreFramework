@@ -9,14 +9,18 @@ use Fyre\ORM\Events\BeforeFind;
 use Fyre\ORM\Model;
 use Fyre\ORM\Queries\SelectQuery;
 use Fyre\ORM\Result;
+use Tests\Mock\Entities\Other;
 
+/**
+ * @extends Model<Other>
+ */
 class OthersModel extends Model
 {
     #[AfterFind]
     public function afterFind(Event $event, Result $result): void
     {
         foreach ($result as $item) {
-            $item->test = 'Test';
+            $item->set('test', 'Test');
         }
     }
 

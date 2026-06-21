@@ -3,11 +3,14 @@ declare(strict_types=1);
 
 namespace Tests\Mock\Http\Middleware;
 
+use Fyre\Http\ClientResponse;
 use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+
+use function assert;
 
 class ArgsMiddleware implements MiddlewareInterface
 {
@@ -24,6 +27,10 @@ class ArgsMiddleware implements MiddlewareInterface
     #[Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler, string ...$args): ResponseInterface
     {
-        return $handler->handle($request)->withJson($args);
+        $response = $handler->handle($request);
+
+        assert($response instanceof ClientResponse);
+
+        return $response->withJson($args);
     }
 }

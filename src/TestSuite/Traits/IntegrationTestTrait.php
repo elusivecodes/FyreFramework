@@ -31,6 +31,7 @@ use Fyre\TestSuite\Constraint\Session\FlashMessageEquals;
 use Fyre\TestSuite\Constraint\Session\SessionEquals;
 use Fyre\TestSuite\Constraint\Session\SessionHasKey;
 use Fyre\TestSuite\Constraint\Session\SessionNotHasKey;
+use Fyre\TestSuite\TestCase;
 use PHPUnit\Framework\Attributes\After;
 
 use function array_replace_recursive;
@@ -41,6 +42,8 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Test case helpers for integration tests.
+ *
+ * @phpstan-require-extends TestCase
  */
 trait IntegrationTestTrait
 {

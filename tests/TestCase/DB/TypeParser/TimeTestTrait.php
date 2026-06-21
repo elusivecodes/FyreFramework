@@ -32,7 +32,7 @@ trait TimeTestTrait
 
     public function testTimeFromDatabaseServerTimeZone(): void
     {
-        $timeParser = $this->type->use('time');
+        $timeParser = $this->dateTimeType('time');
 
         $timeParser->setServerTimeZone('Australia/Brisbane');
 
@@ -52,7 +52,7 @@ trait TimeTestTrait
 
     public function testTimeFromDatabaseUserTimeZone(): void
     {
-        $timeParser = $this->type->use('time');
+        $timeParser = $this->dateTimeType('time');
 
         $timeParser->setUserTimeZone('Australia/Brisbane');
 
@@ -96,7 +96,7 @@ trait TimeTestTrait
 
     public function testTimeParseLocaleFormat(): void
     {
-        $timeParser = $this->type->use('time');
+        $timeParser = $this->dateTimeType('time');
 
         $this->assertSame(
             $timeParser,
@@ -111,7 +111,7 @@ trait TimeTestTrait
 
     public function testTimeParseLocaleFormatFallback(): void
     {
-        $timeParser = $this->type->use('time');
+        $timeParser = $this->dateTimeType('time');
 
         $this->assertSame(
             $timeParser,
@@ -151,7 +151,7 @@ trait TimeTestTrait
 
     public function testTimeParseUserTimeZone(): void
     {
-        $timeParser = $this->type->use('time');
+        $timeParser = $this->dateTimeType('time');
 
         $timeParser->setUserTimeZone('Australia/Brisbane');
         $timeParser->setLocaleFormat('HH:mm:ss');
@@ -164,7 +164,7 @@ trait TimeTestTrait
 
     public function testTimeSetLocaleFormat(): void
     {
-        $timeParser = $this->type->use('time');
+        $timeParser = $this->dateTimeType('time');
 
         $this->assertSame(
             $timeParser,
@@ -179,7 +179,7 @@ trait TimeTestTrait
 
     public function testTimeSetServerTimeZone(): void
     {
-        $timeParser = $this->type->use('time');
+        $timeParser = $this->dateTimeType('time');
 
         $this->assertSame(
             $timeParser,
@@ -194,7 +194,7 @@ trait TimeTestTrait
 
     public function testTimeSetUserTimeZone(): void
     {
-        $timeParser = $this->type->use('time');
+        $timeParser = $this->dateTimeType('time');
 
         $this->assertSame(
             $timeParser,
@@ -226,7 +226,7 @@ trait TimeTestTrait
 
     public function testTimeToDatabaseServerTimeZone(): void
     {
-        $timeParser = $this->type->use('time');
+        $timeParser = $this->dateTimeType('time');
 
         $timeParser->setServerTimeZone('Australia/Brisbane');
 

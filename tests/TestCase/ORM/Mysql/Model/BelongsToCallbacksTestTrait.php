@@ -22,7 +22,7 @@ trait BelongsToCallbacksTestTrait
 
         $this->assertSame(
             1,
-            $address->user->test
+            $address->user->get('test')
         );
     }
 
@@ -47,7 +47,7 @@ trait BelongsToCallbacksTestTrait
 
         $this->assertSame(
             1,
-            $addresses[1]->user->test
+            $addresses[1]->user->get('test')
         );
     }
 

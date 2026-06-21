@@ -70,7 +70,7 @@ trait CallbacksTestTrait
 
         $this->assertSame(
             'Test',
-            $other->test
+            $other->get('test')
         );
     }
 
@@ -84,7 +84,7 @@ trait CallbacksTestTrait
 
         $this->assertSame(
             1,
-            $item->test
+            $item->get('test')
         );
     }
 
@@ -103,12 +103,12 @@ trait CallbacksTestTrait
 
         $this->assertSame(
             1,
-            $items[0]->test
+            $items[0]->get('test')
         );
 
         $this->assertSame(
             1,
-            $items[1]->test
+            $items[1]->get('test')
         );
     }
 

@@ -41,6 +41,7 @@ final class MacroTest extends TestCase
 
         $obj = new MyClass();
         $obj->value = 'This is a string';
+
         $this->assertSame('This is a string', $obj->testMacro());
     }
 

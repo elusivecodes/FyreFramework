@@ -46,6 +46,11 @@ final class IdentifierTest extends TestCase
     {
         $authUser = $this->identifier->identify('test@test.com');
 
+        $this->assertInstanceOf(
+            User::class,
+            $authUser
+        );
+
         $authUser->password = password_hash('test', PASSWORD_ARGON2I);
 
         $this->identifier->getModel()->save($authUser);
@@ -58,6 +63,11 @@ final class IdentifierTest extends TestCase
         );
 
         $authUser = $this->identifier->identify('test@test.com');
+
+        $this->assertInstanceOf(
+            User::class,
+            $authUser
+        );
 
         $this->assertFalse(
             password_needs_rehash($authUser->password, PASSWORD_DEFAULT)

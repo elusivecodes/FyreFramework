@@ -57,6 +57,8 @@ use const PHP_INT_MAX;
  *
  * Note: Hue values are wrapped to 0–360 and alpha values are clamped to 0–1.
  * Other channels preserve extended values to avoid conversion clipping.
+ *
+ * @phpstan-consistent-constructor
  */
 abstract class Color implements Stringable
 {
@@ -257,11 +259,11 @@ abstract class Color implements Stringable
      * @param float $green The green value. (0, 1)
      * @param float $blue The blue value. (0, 1)
      * @param float $alpha The alpha value. (0, 1)
-     * @return self The new Color instance.
+     * @return static The new Color instance.
      */
-    public static function createFromA98Rgb(float $red = 0, float $green = 0, float $blue = 0, float $alpha = 1): self
+    public static function createFromA98Rgb(float $red = 0, float $green = 0, float $blue = 0, float $alpha = 1): static
     {
-        return new A98Rgb($red, $green, $blue, $alpha)->to(static::COLOR_SPACE);
+        return new A98Rgb($red, $green, $blue, $alpha) |> static::toStaticColor(...);
     }
 
     /**
@@ -271,11 +273,11 @@ abstract class Color implements Stringable
      * @param float $green The green value. (0, 1)
      * @param float $blue The blue value. (0, 1)
      * @param float $alpha The alpha value. (0, 1)
-     * @return self The new Color instance.
+     * @return static The new Color instance.
      */
-    public static function createFromDisplayP3(float $red = 0, float $green = 0, float $blue = 0, float $alpha = 1): self
+    public static function createFromDisplayP3(float $red = 0, float $green = 0, float $blue = 0, float $alpha = 1): static
     {
-        return new DisplayP3($red, $green, $blue, $alpha)->to(static::COLOR_SPACE);
+        return new DisplayP3($red, $green, $blue, $alpha) |> static::toStaticColor(...);
     }
 
     /**
@@ -285,11 +287,11 @@ abstract class Color implements Stringable
      * @param float $green The green value. (0, 1)
      * @param float $blue The blue value. (0, 1)
      * @param float $alpha The alpha value. (0, 1)
-     * @return self The new Color instance.
+     * @return static The new Color instance.
      */
-    public static function createFromDisplayP3Linear(float $red = 0, float $green = 0, float $blue = 0, float $alpha = 1): self
+    public static function createFromDisplayP3Linear(float $red = 0, float $green = 0, float $blue = 0, float $alpha = 1): static
     {
-        return new DisplayP3Linear($red, $green, $blue, $alpha)->to(static::COLOR_SPACE);
+        return new DisplayP3Linear($red, $green, $blue, $alpha) |> static::toStaticColor(...);
     }
 
     /**
@@ -299,11 +301,11 @@ abstract class Color implements Stringable
      * @param float $saturation The saturation value. (0, 100)
      * @param float $lightness The lightness value. (0, 100)
      * @param float $alpha The alpha value. (0, 1)
-     * @return self The new Color instance.
+     * @return static The new Color instance.
      */
-    public static function createFromHsl(float $hue = 0, float $saturation = 0, float $lightness = 0, float $alpha = 1): self
+    public static function createFromHsl(float $hue = 0, float $saturation = 0, float $lightness = 0, float $alpha = 1): static
     {
-        return new Hsl($hue, $saturation, $lightness, $alpha)->to(static::COLOR_SPACE);
+        return new Hsl($hue, $saturation, $lightness, $alpha) |> static::toStaticColor(...);
     }
 
     /**
@@ -313,11 +315,11 @@ abstract class Color implements Stringable
      * @param float $whiteness The whiteness value. (0, 100)
      * @param float $blackness The blackness value. (0, 100)
      * @param float $alpha The alpha value. (0, 1)
-     * @return self The new Color instance.
+     * @return static The new Color instance.
      */
-    public static function createFromHwb(float $hue = 0, float $whiteness = 0, float $blackness = 0, float $alpha = 1): self
+    public static function createFromHwb(float $hue = 0, float $whiteness = 0, float $blackness = 0, float $alpha = 1): static
     {
-        return new Hwb($hue, $whiteness, $blackness, $alpha)->to(static::COLOR_SPACE);
+        return new Hwb($hue, $whiteness, $blackness, $alpha) |> static::toStaticColor(...);
     }
 
     /**
@@ -327,11 +329,11 @@ abstract class Color implements Stringable
      * @param float $a The a value. (-128, 127)
      * @param float $b The b value. (-128, 127)
      * @param float $alpha The alpha value. (0, 1)
-     * @return self The new Color instance.
+     * @return static The new Color instance.
      */
-    public static function createFromLab(float $lightness = 0, float $a = 0, float $b = 0, float $alpha = 1): self
+    public static function createFromLab(float $lightness = 0, float $a = 0, float $b = 0, float $alpha = 1): static
     {
-        return new Lab($lightness, $a, $b, $alpha)->to(static::COLOR_SPACE);
+        return new Lab($lightness, $a, $b, $alpha) |> static::toStaticColor(...);
     }
 
     /**
@@ -341,11 +343,11 @@ abstract class Color implements Stringable
      * @param float $chroma The chroma value. (0, 230)
      * @param float $hue The hue value. (0, 360)
      * @param float $alpha The alpha value. (0, 1)
-     * @return self The new Color instance.
+     * @return static The new Color instance.
      */
-    public static function createFromLch(float $lightness = 0, float $chroma = 0, float $hue = 0, float $alpha = 1): self
+    public static function createFromLch(float $lightness = 0, float $chroma = 0, float $hue = 0, float $alpha = 1): static
     {
-        return new Lch($lightness, $chroma, $hue, $alpha)->to(static::COLOR_SPACE);
+        return new Lch($lightness, $chroma, $hue, $alpha) |> static::toStaticColor(...);
     }
 
     /**
@@ -355,11 +357,11 @@ abstract class Color implements Stringable
      * @param float $a The a value. (-0.4, 0.4)
      * @param float $b The b value. (-0.4, 0.4)
      * @param float $alpha The alpha value. (0, 1)
-     * @return self The new Color instance.
+     * @return static The new Color instance.
      */
-    public static function createFromOkLab(float $lightness = 0, float $a = 0, float $b = 0, float $alpha = 1): self
+    public static function createFromOkLab(float $lightness = 0, float $a = 0, float $b = 0, float $alpha = 1): static
     {
-        return new OkLab($lightness, $a, $b, $alpha)->to(static::COLOR_SPACE);
+        return new OkLab($lightness, $a, $b, $alpha) |> static::toStaticColor(...);
     }
 
     /**
@@ -369,11 +371,11 @@ abstract class Color implements Stringable
      * @param float $chroma The chroma value. (0, 0.4)
      * @param float $hue The hue value. (0, 360)
      * @param float $alpha The alpha value. (0, 1)
-     * @return self The new Color instance.
+     * @return static The new Color instance.
      */
-    public static function createFromOkLch(float $lightness = 0, float $chroma = 0, float $hue = 0, float $alpha = 1): self
+    public static function createFromOkLch(float $lightness = 0, float $chroma = 0, float $hue = 0, float $alpha = 1): static
     {
-        return new OkLch($lightness, $chroma, $hue, $alpha)->to(static::COLOR_SPACE);
+        return new OkLch($lightness, $chroma, $hue, $alpha) |> static::toStaticColor(...);
     }
 
     /**
@@ -383,11 +385,11 @@ abstract class Color implements Stringable
      * @param float $green The green value. (0, 1)
      * @param float $blue The blue value. (0, 1)
      * @param float $alpha The alpha value. (0, 1)
-     * @return self The new Color instance.
+     * @return static The new Color instance.
      */
-    public static function createFromProPhotoRgb(float $red = 0, float $green = 0, float $blue = 0, float $alpha = 1): self
+    public static function createFromProPhotoRgb(float $red = 0, float $green = 0, float $blue = 0, float $alpha = 1): static
     {
-        return new ProPhotoRgb($red, $green, $blue, $alpha)->to(static::COLOR_SPACE);
+        return new ProPhotoRgb($red, $green, $blue, $alpha) |> static::toStaticColor(...);
     }
 
     /**
@@ -397,11 +399,11 @@ abstract class Color implements Stringable
      * @param float $green The green value. (0, 1)
      * @param float $blue The blue value. (0, 1)
      * @param float $alpha The alpha value. (0, 1)
-     * @return self The new Color instance.
+     * @return static The new Color instance.
      */
-    public static function createFromRec2020(float $red = 0, float $green = 0, float $blue = 0, float $alpha = 1): self
+    public static function createFromRec2020(float $red = 0, float $green = 0, float $blue = 0, float $alpha = 1): static
     {
-        return new Rec2020($red, $green, $blue, $alpha)->to(static::COLOR_SPACE);
+        return new Rec2020($red, $green, $blue, $alpha) |> static::toStaticColor(...);
     }
 
     /**
@@ -411,11 +413,11 @@ abstract class Color implements Stringable
      * @param float $green The green value. (0, 255)
      * @param float $blue The blue value. (0, 255)
      * @param float $alpha The alpha value. (0, 1)
-     * @return self The new Color instance.
+     * @return static The new Color instance.
      */
-    public static function createFromRgb(float $red = 0, float $green = 0, float $blue = 0, float $alpha = 1): self
+    public static function createFromRgb(float $red = 0, float $green = 0, float $blue = 0, float $alpha = 1): static
     {
-        return new Rgb($red, $green, $blue, $alpha)->to(static::COLOR_SPACE);
+        return new Rgb($red, $green, $blue, $alpha) |> static::toStaticColor(...);
     }
 
     /**
@@ -425,11 +427,11 @@ abstract class Color implements Stringable
      * @param float $green The green value. (0, 1)
      * @param float $blue The blue value. (0, 1)
      * @param float $alpha The alpha value. (0, 1)
-     * @return self The new Color instance.
+     * @return static The new Color instance.
      */
-    public static function createFromSrgb(float $red = 0, float $green = 0, float $blue = 0, float $alpha = 1): self
+    public static function createFromSrgb(float $red = 0, float $green = 0, float $blue = 0, float $alpha = 1): static
     {
-        return new Srgb($red, $green, $blue, $alpha)->to(static::COLOR_SPACE);
+        return new Srgb($red, $green, $blue, $alpha) |> static::toStaticColor(...);
     }
 
     /**
@@ -439,18 +441,18 @@ abstract class Color implements Stringable
      * @param float $green The green value. (0, 1)
      * @param float $blue The blue value. (0, 1)
      * @param float $alpha The alpha value. (0, 1)
-     * @return self The new Color instance.
+     * @return static The new Color instance.
      */
-    public static function createFromSrgbLinear(float $red = 0, float $green = 0, float $blue = 0, float $alpha = 1): self
+    public static function createFromSrgbLinear(float $red = 0, float $green = 0, float $blue = 0, float $alpha = 1): static
     {
-        return new SrgbLinear($red, $green, $blue, $alpha)->to(static::COLOR_SPACE);
+        return new SrgbLinear($red, $green, $blue, $alpha) |> static::toStaticColor(...);
     }
 
     /**
      * Creates a Color from a CSS color string.
      *
      * @param string $string The CSS color string.
-     * @return self The new Color instance.
+     * @return static The new Color instance.
      *
      * Supported formats include named colors, hex colors, functional notations, and `color()` values.
      * Whitespace and case are normalized before parsing.
@@ -470,7 +472,7 @@ abstract class Color implements Stringable
      *
      * @throws InvalidArgumentException If the CSS color string is not valid.
      */
-    public static function createFromString(string $string): self
+    public static function createFromString(string $string): static
     {
         $string = trim((string) preg_replace('/\s+/', ' ', $string)) |> strtolower(...);
 
@@ -496,7 +498,7 @@ abstract class Color implements Stringable
                 strlen($hex) > 6 ?
                     (substr($hex, 6, 2) |> hexdec(...)) / 255 :
                     1,
-            )->to(static::COLOR_SPACE);
+            ) |> static::toStaticColor(...);
         }
         if (preg_match('/^(rgb|rgba|hsl|hsla|hwb|lab|lch|oklab|oklch)\((.+)\)$/', $string, $match)) {
             $space = $match[1];
@@ -610,11 +612,11 @@ abstract class Color implements Stringable
      * @param float $y The y value. (0, 1)
      * @param float $z The z value. (0, 1)
      * @param float $alpha The alpha value. (0, 1)
-     * @return self The new Color instance.
+     * @return static The new Color instance.
      */
-    public static function createFromXyzD50(float $x = 0, float $y = 0, float $z = 0, float $alpha = 1): self
+    public static function createFromXyzD50(float $x = 0, float $y = 0, float $z = 0, float $alpha = 1): static
     {
-        return new XyzD50($x, $y, $z, $alpha)->to(static::COLOR_SPACE);
+        return new XyzD50($x, $y, $z, $alpha) |> static::toStaticColor(...);
     }
 
     /**
@@ -624,11 +626,11 @@ abstract class Color implements Stringable
      * @param float $y The y value. (0, 1)
      * @param float $z The z value. (0, 1)
      * @param float $alpha The alpha value. (0, 1)
-     * @return self The new Color instance.
+     * @return static The new Color instance.
      */
-    public static function createFromXyzD65(float $x = 0, float $y = 0, float $z = 0, float $alpha = 1): self
+    public static function createFromXyzD65(float $x = 0, float $y = 0, float $z = 0, float $alpha = 1): static
     {
-        return new XyzD65($x, $y, $z, $alpha)->to(static::COLOR_SPACE);
+        return new XyzD65($x, $y, $z, $alpha) |> static::toStaticColor(...);
     }
 
     /**
@@ -674,11 +676,11 @@ abstract class Color implements Stringable
      * Fits this color to the target gamut by reducing OKLCH chroma.
      *
      * @param string $space The target gamut space.
-     * @return self The fitted Color in the current color space.
+     * @return static The fitted Color in the current color space.
      *
      * @throws InvalidArgumentException If the color space is not supported for gamut fitting.
      */
-    public function fitGamut(string $space = 'srgb'): self
+    public function fitGamut(string $space = 'srgb'): static
     {
         if (!isset(static::FIT_GAMUT_RANGES[$space])) {
             throw new InvalidArgumentException(sprintf(
@@ -720,7 +722,7 @@ abstract class Color implements Stringable
             }
         }
 
-        return $best->to(static::COLOR_SPACE);
+        return $best |> static::toStaticColor(...);
     }
 
     /**
@@ -1138,5 +1140,19 @@ abstract class Color implements Stringable
         }
 
         return (float) $value;
+    }
+
+    /**
+     * Converts a Color to the late-bound color space.
+     *
+     * @param Color $color The Color.
+     * @return static The Color in the late-bound color space.
+     */
+    protected static function toStaticColor(Color $color): static
+    {
+        $color = $color->to(static::COLOR_SPACE);
+
+        /** @var static $color */
+        return $color;
     }
 }

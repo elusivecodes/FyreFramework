@@ -5,6 +5,7 @@ namespace Fyre\ORM\Relationships;
 
 use Fyre\DB\QueryGenerator;
 use Fyre\ORM\Entity;
+use Fyre\ORM\Model;
 use Fyre\ORM\ModelRegistry;
 use Fyre\ORM\Relationship;
 use Fyre\Utility\Inflector;
@@ -20,6 +21,11 @@ use function sprintf;
  * Defines a has-many relationship.
  *
  * The target model stores the foreign key and multiple related entities are expected.
+ *
+ * @template TSource of Model = Model
+ * @template TTarget of Model = Model
+ *
+ * @extends Relationship<TSource, TTarget>
  */
 class HasMany extends Relationship
 {
@@ -177,6 +183,9 @@ class HasMany extends Relationship
      * Note: Only existing (non-new) related entities contribute to the exclusion list.
      *
      * @param Entity[] $relations The related entities.
+     *
+     * @phpstan-param template-type<TTarget, Model, 'TEntity'>[] $relations The related entities.
+     *
      * @return array<string, mixed> The exclusion conditions.
      */
     protected function excludeConditions(array $relations): array

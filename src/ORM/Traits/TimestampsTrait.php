@@ -6,6 +6,7 @@ namespace Fyre\ORM\Traits;
 use Fyre\Event\Event;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Events\BeforeSave;
+use Fyre\ORM\Model;
 use Fyre\Utility\DateTime\DateTime;
 
 /**
@@ -13,6 +14,10 @@ use Fyre\Utility\DateTime\DateTime;
  *
  * When saving, this sets the configured created field on new entities, and always updates
  * the configured modified field when those columns exist in the schema.
+ *
+ * @template TEntity of Entity = Entity
+ *
+ * @phpstan-require-extends Model<TEntity>
  */
 trait TimestampsTrait
 {
@@ -24,7 +29,7 @@ trait TimestampsTrait
      * Updates the timestamps on the entity.
      *
      * @param Event $event The Event.
-     * @param Entity $entity The entity.
+     * @param TEntity $entity The entity.
      */
     #[BeforeSave]
     public function handleTimestamps(Event $event, Entity $entity): void

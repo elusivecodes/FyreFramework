@@ -5,6 +5,7 @@ namespace Tests\TestCase\ORM\Entity;
 
 use Fyre\ORM\Entity;
 use Fyre\Utility\DateTime\DateTime;
+use Tests\Mock\Entities\MagicEntity;
 
 use function json_encode;
 
@@ -82,7 +83,7 @@ trait MagicTestTrait
 
     public function testMagicGet(): void
     {
-        $entity = new Entity();
+        $entity = new MagicEntity();
 
         $entity->set('test', 2);
 
@@ -94,7 +95,7 @@ trait MagicTestTrait
 
     public function testMagicIsset(): void
     {
-        $entity = new Entity([
+        $entity = new MagicEntity([
             'test' => 2,
         ]);
 
@@ -105,7 +106,7 @@ trait MagicTestTrait
 
     public function testMagicIssetEmpty(): void
     {
-        $entity = new Entity([
+        $entity = new MagicEntity([
             'test' => '',
         ]);
 
@@ -116,10 +117,10 @@ trait MagicTestTrait
 
     public function testMagicIssetInvalid(): void
     {
-        $entity = new Entity();
+        $entity = new MagicEntity();
 
         $this->assertFalse(
-            isset($entity->invalid)
+            isset($entity->missing)
         );
     }
 
@@ -179,7 +180,7 @@ trait MagicTestTrait
 
     public function testMagicSet(): void
     {
-        $entity = new Entity();
+        $entity = new MagicEntity();
 
         $entity->test = 2;
 
@@ -245,7 +246,7 @@ trait MagicTestTrait
 
     public function testMagicUnset(): void
     {
-        $entity = new Entity([
+        $entity = new MagicEntity([
             'test' => 2,
         ]);
 

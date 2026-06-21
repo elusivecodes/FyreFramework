@@ -10,10 +10,21 @@ use Fyre\ORM\Attributes\HasMany;
 use Fyre\ORM\Attributes\ManyToMany;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Model;
+use Fyre\ORM\Relationships\BelongsTo as BelongsToRelationship;
+use Fyre\ORM\Relationships\HasMany as HasManyRelationship;
+use Fyre\ORM\Relationships\ManyToMany as ManyToManyRelationship;
 use Fyre\ORM\RuleSet;
 use Override;
-use Tests\Mock\Models\ORM\Traits\TestTrait;
+use Tests\Mock\Entities\Post;
+use Tests\Mock\Models\Traits\TestTrait;
 
+/**
+ * @extends Model<Post>
+ *
+ * @property BelongsToRelationship<static, UsersModel> $Users
+ * @property HasManyRelationship<static, CommentsModel> $Comments
+ * @property ManyToManyRelationship<static, TagsModel> $Tags
+ */
 #[BelongsTo('Users')]
 #[HasMany('Comments', [
     'saveStrategy' => 'replace',

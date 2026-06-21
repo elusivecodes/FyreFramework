@@ -3,10 +3,14 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Cache\Cacher;
 
+use Fyre\Cache\Cacher;
 use Fyre\Cache\Exceptions\CacheException;
 
 use function sleep;
 
+/**
+ * @property Cacher $cacher
+ */
 trait GetSetTestTrait
 {
     public function testGetDefault(): void

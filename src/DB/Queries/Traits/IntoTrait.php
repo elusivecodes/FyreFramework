@@ -3,8 +3,12 @@ declare(strict_types=1);
 
 namespace Fyre\DB\Queries\Traits;
 
+use Fyre\DB\Query;
+
 /**
  * Adds INSERT INTO clause support to queries.
+ *
+ * @phpstan-require-extends Query
  */
 trait IntoTrait
 {

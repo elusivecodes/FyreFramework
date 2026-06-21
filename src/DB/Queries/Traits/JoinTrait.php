@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Fyre\DB\Queries\Traits;
 
+use Fyre\DB\Query;
 use InvalidArgumentException;
 
 use function array_merge;
@@ -12,6 +13,8 @@ use function sprintf;
 
 /**
  * Adds JOIN clause support to queries.
+ *
+ * @phpstan-require-extends Query
  */
 trait JoinTrait
 {

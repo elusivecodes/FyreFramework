@@ -19,6 +19,7 @@ use Fyre\Http\ServerRequest;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Authenticators\MockAuthenticator;
+use Tests\Mock\Entities\User;
 
 use function class_uses;
 use function json_decode;
@@ -90,6 +91,11 @@ final class AuthenticatorTest extends TestCase
         $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
 
         $authUser = $this->identifier->identify('test@test.com');
+
+        $this->assertInstanceOf(
+            User::class,
+            $authUser
+        );
 
         $tokenHash = password_hash('test@test.com'.$authUser->password, PASSWORD_DEFAULT);
         $auth = json_encode(['test@test.com', $tokenHash]);
@@ -166,6 +172,11 @@ final class AuthenticatorTest extends TestCase
         $this->assertTrue($this->auth->isLoggedIn());
 
         $authUser = $this->auth->user();
+
+        $this->assertInstanceOf(
+            User::class,
+            $authUser
+        );
 
         [$cookieString] = $response->getHeader('Set-Cookie');
 

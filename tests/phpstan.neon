@@ -1,7 +1,7 @@
 includes:
     - phpstan-baseline.neon
 parameters:
-    level: 1
+    level: 2
     treatPhpDocTypesAsCertain: false
     bootstrapFiles:
         - bootstrap.php
@@ -13,3 +13,34 @@ parameters:
         - autoload.php
         - bootstrap.php
         - server.php
+
+services:
+    -
+        class: Fyre\TestSuite\PhpStan\Extensions\ModelRegistryUseReturnTypeExtension
+        arguments:
+            modelNamespaces:
+                - Tests\Mock\Models\ORM
+            modelNamespacesOverrides:
+                -
+                    classes:
+                        - Tests\TestCase\Auth\AccessTest
+                        - Tests\TestCase\Auth\AuthMiddlewareTest
+                        - Tests\TestCase\Auth\AuthTest
+                        - Tests\TestCase\Auth\AuthenticatorTest
+                        - Tests\TestCase\Auth\IdentifierTest
+                        - Tests\TestCase\Auth\PolicyTest
+                        - Tests\TestCase\Router\RouteModelParamsTest
+                        - Tests\TestCase\TestSuite\Fixture\FixtureTest
+                        - Tests\TestCase\TestSuite\Fixture\SetupFixturesTest
+                    modelNamespaces:
+                        - Tests\Mock\Models
+                -
+                    classes:
+                        - Tests\TestCase\ORM\MariaDb\Traits\SoftDeleteTest
+                        - Tests\TestCase\ORM\Mysql\Traits\SoftDeleteTest
+                        - Tests\TestCase\ORM\Postgres\Traits\SoftDeleteTest
+                        - Tests\TestCase\ORM\Sqlite\Traits\SoftDeleteTest
+                    modelNamespaces:
+                        - Tests\Mock\Models\ORM\SoftDelete
+        tags:
+            - phpstan.broker.dynamicMethodReturnTypeExtension

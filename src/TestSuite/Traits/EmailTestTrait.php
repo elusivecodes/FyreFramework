@@ -13,6 +13,7 @@ use Fyre\TestSuite\Constraint\Email\MailSentWith;
 use Fyre\TestSuite\Constraint\Email\MailSubjectContains;
 use Fyre\TestSuite\Constraint\Email\NoMailSent;
 use Fyre\TestSuite\Mail\Handlers\TestMailer;
+use Fyre\TestSuite\TestCase;
 use PHPUnit\Framework\Attributes\After;
 use PHPUnit\Framework\Attributes\Before;
 
@@ -21,6 +22,8 @@ use PHPUnit\Framework\Attributes\Before;
  *
  * These helpers configure the mailer(s) to use a test handler and provide assertion
  * wrappers around sent-message constraints.
+ *
+ * @phpstan-require-extends TestCase
  */
 trait EmailTestTrait
 {

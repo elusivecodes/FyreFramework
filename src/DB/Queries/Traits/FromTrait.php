@@ -3,8 +3,12 @@ declare(strict_types=1);
 
 namespace Fyre\DB\Queries\Traits;
 
+use Fyre\DB\Query;
+
 /**
  * Adds FROM clause support to queries.
+ *
+ * @phpstan-require-extends Query
  */
 trait FromTrait
 {

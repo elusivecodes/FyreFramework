@@ -8,6 +8,11 @@ use Fyre\ORM\Entity;
 use function floor;
 use function number_format;
 
+/**
+ * @property string $decimal
+ * @property float $number
+ * @property float $integer
+ */
 class MockEntity extends Entity
 {
     protected function _getDecimal($value): string

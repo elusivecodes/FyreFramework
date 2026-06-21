@@ -8,9 +8,17 @@ use Fyre\Form\Validator;
 use Fyre\ORM\Attributes\BelongsTo;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Model;
+use Fyre\ORM\Relationships\BelongsTo as BelongsToRelationship;
 use Fyre\ORM\RuleSet;
 use Override;
+use Tests\Mock\Entities\Comment;
 
+/**
+ * @extends Model<Comment>
+ *
+ * @property BelongsToRelationship<static, PostsModel> $Posts
+ * @property BelongsToRelationship<static, UsersModel> $Users
+ */
 #[BelongsTo('Posts')]
 #[BelongsTo('Users')]
 class CommentsModel extends Model

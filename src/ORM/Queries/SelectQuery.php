@@ -35,7 +35,7 @@ use function str_replace;
  * Note: The query is auto-prepared before SQL generation to apply auto-fields and contain
  * joins. Calling {@see self::sql()} will prepare and (by default) reset the query state.
  *
- * @template TEntity of Entity
+ * @template TEntity of Entity = Entity
  */
 class SelectQuery extends \Fyre\DB\Queries\SelectQuery
 {

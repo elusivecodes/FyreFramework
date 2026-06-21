@@ -8,10 +8,17 @@ use Fyre\Form\Validator;
 use Fyre\ORM\Attributes\ManyToMany;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Model;
+use Fyre\ORM\Relationships\ManyToMany as ManyToManyRelationship;
 use Fyre\ORM\RuleSet;
 use Override;
-use Tests\Mock\Models\ORM\Traits\TestTrait;
+use Tests\Mock\Entities\Tag;
+use Tests\Mock\Models\Traits\TestTrait;
 
+/**
+ * @extends Model<Tag>
+ *
+ * @property ManyToManyRelationship<static, PostsModel> $Posts
+ */
 #[ManyToMany('Posts')]
 class TagsModel extends Model
 {

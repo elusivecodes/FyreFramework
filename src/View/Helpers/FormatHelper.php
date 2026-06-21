@@ -9,6 +9,8 @@ use Fyre\View\View;
 
 /**
  * Formats values for views.
+ *
+ * @mixin Formatter
  */
 class FormatHelper extends Helper
 {

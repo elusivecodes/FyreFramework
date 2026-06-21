@@ -8,12 +8,15 @@ use Fyre\Log\LogManager;
 use Fyre\TestSuite\Constraint\Log\LogIsEmpty;
 use Fyre\TestSuite\Constraint\Log\LogMessage;
 use Fyre\TestSuite\Constraint\Log\LogMessageContains;
+use Fyre\TestSuite\TestCase;
 
 use function array_merge;
 use function is_int;
 
 /**
  * Test case helpers for log assertions.
+ *
+ * @phpstan-require-extends TestCase
  */
 trait LogTestTrait
 {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Fyre\ORM\Relationships;
 
 use Fyre\ORM\Entity;
+use Fyre\ORM\Model;
 use Fyre\ORM\Relationship;
 use Override;
 
@@ -11,6 +12,11 @@ use Override;
  * Defines a has-one relationship.
  *
  * The target model stores the foreign key, and the source model provides the binding key.
+ *
+ * @template TSource of Model = Model
+ * @template TTarget of Model = Model
+ *
+ * @extends Relationship<TSource, TTarget>
  */
 class HasOne extends Relationship
 {

@@ -5,7 +5,6 @@ namespace Tests\TestCase\DB\MariaDb;
 
 use Fyre\Core\Config;
 use Fyre\Core\Container;
-use Fyre\DB\Connection;
 use Fyre\DB\ConnectionManager;
 use Fyre\DB\Handlers\Mysql\MysqlConnection;
 use Fyre\DB\TypeParser;
@@ -23,7 +22,7 @@ trait MariaDbConnectionTrait
 {
     protected ConnectionManager $connection;
 
-    protected Connection $db;
+    protected MysqlConnection $db;
 
     protected function insert(): void
     {
@@ -78,7 +77,11 @@ trait MariaDbConnectionTrait
 
         $this->connection = $container->use(ConnectionManager::class);
 
-        $this->db = $this->connection->use();
+        $db = $this->connection->use();
+
+        $this->assertInstanceOf(MysqlConnection::class, $db);
+
+        $this->db = $db;
 
         $this->db->query('DROP TABLE IF EXISTS test');
 

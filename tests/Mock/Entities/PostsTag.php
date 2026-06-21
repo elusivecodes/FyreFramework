@@ -7,7 +7,8 @@ use Fyre\ORM\Entity;
 
 /**
  * @property int|null $id
- * @property string $name
- * @property Child[]|null $children
+ * @property int $post_id
+ * @property int $tag_id
+ * @property int|null $value
  */
-class Item extends Entity {}
+class PostsTag extends Entity {}

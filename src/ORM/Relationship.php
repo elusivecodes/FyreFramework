@@ -24,7 +24,10 @@ use function sprintf;
  * Note: Relationships infer foreign/binding keys from model metadata when not explicitly
  * configured, and support multiple loading strategies (`select`, `subquery`, `cte`).
  *
- * @mixin Model
+ * @template TSource of Model = Model
+ * @template TTarget of Model = Model
+ *
+ * @mixin TTarget
  */
 abstract class Relationship
 {
@@ -47,10 +50,16 @@ abstract class Relationship
 
     protected string $propertyName;
 
+    /**
+     * @var TSource
+     */
     protected Model $source;
 
     protected string $strategy = 'select';
 
+    /**
+     * @var TTarget
+     */
     protected Model $target;
 
     /**
@@ -173,7 +182,7 @@ abstract class Relationship
     /**
      * Finds related data for entities.
      *
-     * @param iterable<Entity> $entities The entities.
+     * @param iterable<template-type<TSource, Model, 'TEntity'>> $entities The entities.
      * @param array<mixed>|string|null $fields The SELECT fields.
      * @param array<mixed>|string|null $contain The contain relationships.
      * @param array<array<string, mixed>>|null $join The JOIN tables.
@@ -188,7 +197,7 @@ abstract class Relationship
      * @param string|null $alias The alias.
      * @param bool|null $autoFields Whether the query uses auto fields.
      * @param mixed ...$options The find options.
-     * @return Collection<int, Entity> The related entities.
+     * @return Collection<int, template-type<TTarget, Model, 'TEntity'>> The related entities.
      */
     public function findRelated(
         array|Traversable $entities,
@@ -303,7 +312,7 @@ abstract class Relationship
     /**
      * Returns the source Model.
      *
-     * @return Model The Model instance for the source.
+     * @return TSource The Model instance for the source.
      */
     public function getSource(): Model
     {
@@ -323,10 +332,13 @@ abstract class Relationship
     /**
      * Returns the target Model.
      *
-     * @return Model The Model instance for the target.
+     * @return TTarget The Model instance for the target.
      */
     public function getTarget(): Model
     {
+        /**
+         * @var TTarget
+         */
         return $this->target ??= $this->modelRegistry->use($this->name, $this->classAlias);
     }
 
@@ -366,8 +378,8 @@ abstract class Relationship
      * Note: Related entities are loaded in bulk and then assigned onto each entity. The
      * relationship property is marked clean (`dirty=false`) after assignment.
      *
-     * @param iterable<Entity> $entities The entities.
-     * @param SelectQuery<Entity>|null $query The SelectQuery.
+     * @param iterable<template-type<TSource, Model, 'TEntity'>> $entities The entities.
+     * @param SelectQuery<template-type<TTarget, Model, 'TEntity'>>|null $query The SelectQuery.
      * @param array<mixed>|string|null $fields The SELECT fields.
      * @param array<mixed>|string|null $contain The contain relationships.
      * @param array<array<string, mixed>>|null $join The JOIN tables.
@@ -379,7 +391,7 @@ abstract class Relationship
      * @param int|null $offset The OFFSET clause.
      * @param string|null $epilog The epilog.
      * @param string|null $strategy The select strategy.
-     * @param (Closure(SelectQuery<Entity>): SelectQuery<Entity>)|null $callback The contain callback.
+     * @param (Closure(SelectQuery<template-type<TTarget, Model, 'TEntity'>>): SelectQuery<template-type<TTarget, Model, 'TEntity'>>)|null $callback The contain callback.
      * @param string $connectionType The connection type.
      * @param bool|null $autoFields Whether the query uses auto fields.
      * @param mixed ...$options The find options.
@@ -511,10 +523,12 @@ abstract class Relationship
      * @param Entity $entity The entity.
      * @param bool $saveRelated Whether to save related entities.
      * @param bool $checkRules Whether to check model RuleSet.
-     * @param bool $checkExists Whether to check if the entity exists.
      * @param bool $events Whether to trigger events.
      * @param bool $clean Whether to clean the entity.
      * @param mixed ...$options The save options.
+     *
+     * @phpstan-param template-type<TSource, Model, 'TEntity'> $entity The entity.
+     *
      * @return bool Whether the save was successful.
      */
     abstract public function saveRelated(
@@ -608,7 +622,7 @@ abstract class Relationship
     /**
      * Sets the source Model.
      *
-     * @param Model $source The Model representing the source.
+     * @param TSource $source The Model representing the source.
      * @return static The Relationship instance.
      */
     public function setSource(Model $source): static
@@ -643,7 +657,7 @@ abstract class Relationship
     /**
      * Sets the target Model.
      *
-     * @param Model $target The Model representing the target.
+     * @param TTarget $target The Model representing the target.
      * @return static The Relationship instance.
      */
     public function setTarget(Model $target): static
@@ -656,7 +670,7 @@ abstract class Relationship
     /**
      * Removes related data from entities.
      *
-     * @param iterable<Entity> $entities The entities.
+     * @param iterable<template-type<TSource, Model, 'TEntity'>> $entities The entities.
      * @param bool $cascade Whether to delete related children.
      * @param bool $events Whether to trigger events.
      * @param array<mixed> $conditions The WHERE conditions.
@@ -702,7 +716,7 @@ abstract class Relationship
     /**
      * Attaches the find related conditions to a query.
      *
-     * @param SelectQuery<Entity> $newQuery The new SelectQuery.
+     * @param SelectQuery<template-type<TTarget, Model, 'TEntity'>> $newQuery The new SelectQuery.
      * @param mixed[] $sourceValues The source values.
      */
     protected function findRelatedConditions(SelectQuery $newQuery, array $sourceValues): void
@@ -728,8 +742,8 @@ abstract class Relationship
     /**
      * Attaches the find related subquery to a query.
      *
-     * @param SelectQuery<Entity> $newQuery The new SelectQuery.
-     * @param SelectQuery<Entity> $query The SelectQuery.
+     * @param SelectQuery<template-type<TTarget, Model, 'TEntity'>> $newQuery The new SelectQuery.
+     * @param SelectQuery<template-type<TTarget, Model, 'TEntity'>> $query The SelectQuery.
      * @param bool $cte Whether to use CTE strategy.
      */
     protected function findRelatedSubquery(SelectQuery $newQuery, SelectQuery $query, bool $cte = false): void
@@ -814,7 +828,7 @@ abstract class Relationship
     /**
      * Returns the related key values.
      *
-     * @param iterable<Entity> $entities The entities.
+     * @param iterable<template-type<TSource, Model, 'TEntity'>> $entities The entities.
      * @return mixed[] The related key values.
      */
     protected function getRelatedKeyValues(array|Traversable $entities): array

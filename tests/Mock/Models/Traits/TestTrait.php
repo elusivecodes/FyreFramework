@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Tests\Mock\Models\ORM\Traits;
+namespace Tests\Mock\Models\Traits;
 
 use ArrayObject;
 use Fyre\Event\Event;
@@ -17,10 +17,14 @@ use Fyre\ORM\Events\BeforeParse;
 use Fyre\ORM\Events\BeforeRules;
 use Fyre\ORM\Events\BeforeSave;
 use Fyre\ORM\Events\BuildValidator;
+use Fyre\ORM\Model;
 
 use function is_string;
 use function trim;
 
+/**
+ * @phpstan-require-extends Model
+ */
 trait TestTrait
 {
     protected string $testField = 'name';
@@ -39,7 +43,7 @@ trait TestTrait
     public function afterParse(Event $event, Entity $entity): void
     {
         if ($entity->get($this->testField) === 'afterParse') {
-            $entity->test = 1;
+            $entity->set('test', 1);
         }
     }
 
