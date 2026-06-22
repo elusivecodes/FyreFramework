@@ -7,6 +7,7 @@ use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Http\ServerRequest;
 use Fyre\Security\ContentSecurityPolicy;
+use Fyre\Security\Policy;
 use Fyre\View\CellRegistry;
 use Fyre\View\HelperRegistry;
 use Fyre\View\TemplateLocator;
@@ -28,6 +29,11 @@ final class CSPTest extends TestCase
 
         $policy = $this->csp->getPolicy(ContentSecurityPolicy::DEFAULT);
 
+        $this->assertInstanceOf(
+            Policy::class,
+            $policy
+        );
+
         $this->assertMatchesRegularExpression(
             '/^[a-f0-9]{40}$/',
             $nonce
@@ -48,6 +54,11 @@ final class CSPTest extends TestCase
 
         $policy = $this->csp->getPolicy(ContentSecurityPolicy::DEFAULT);
 
+        $this->assertInstanceOf(
+            Policy::class,
+            $policy
+        );
+
         $this->assertSame($first, $second);
         $this->assertSame(
             'script-src \'nonce-'.$first.'\';',
@@ -62,6 +73,11 @@ final class CSPTest extends TestCase
         $nonce = $this->view->Csp->styleNonce();
 
         $policy = $this->csp->getPolicy(ContentSecurityPolicy::DEFAULT);
+
+        $this->assertInstanceOf(
+            Policy::class,
+            $policy
+        );
 
         $this->assertMatchesRegularExpression(
             '/^[a-f0-9]{40}$/',
@@ -82,6 +98,11 @@ final class CSPTest extends TestCase
         $second = $this->view->Csp->styleNonce();
 
         $policy = $this->csp->getPolicy(ContentSecurityPolicy::DEFAULT);
+
+        $this->assertInstanceOf(
+            Policy::class,
+            $policy
+        );
 
         $this->assertSame($first, $second);
         $this->assertSame(

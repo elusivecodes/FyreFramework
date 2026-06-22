@@ -7,6 +7,7 @@ use Fyre\ORM\Entity;
 use Fyre\ORM\Exceptions\OrmException;
 use Tests\Mock\Entities\Address;
 use Tests\Mock\Entities\Tag;
+use Tests\Mock\Entities\User;
 
 trait MatchingTestTrait
 {
@@ -72,6 +73,11 @@ trait MatchingTestTrait
             ->first();
 
         $this->assertInstanceOf(
+            User::class,
+            $user
+        );
+
+        $this->assertInstanceOf(
             Tag::class,
             $user->_matchingData['Tags']
         );
@@ -133,6 +139,11 @@ trait MatchingTestTrait
                 'Tags.tag' => 'test4',
             ])
             ->first();
+
+        $this->assertInstanceOf(
+            User::class,
+            $user
+        );
 
         $this->assertInstanceOf(
             Address::class,
@@ -242,7 +253,7 @@ trait MatchingTestTrait
                     'Tags.tag' => 'test4',
                 ])
                 ->all()
-                ->map(static fn(Entity $item): int => $item->id)
+                ->map(static fn(Entity $item): int|null => $item->id)
                 ->toArray()
         );
     }

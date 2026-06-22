@@ -103,10 +103,14 @@ final class ConnectionTest extends TestCase
             $this->db->disableForeignKeys()
         );
 
+        $row = $this->db->query('PRAGMA foreign_keys')
+            ->first();
+
+        $this->assertIsArray($row);
+
         $this->assertSame(
             0,
-            $this->db->query('PRAGMA foreign_keys')
-                ->first()['foreign_keys']
+            $row['foreign_keys']
         );
 
         $this->assertSame(
@@ -114,10 +118,14 @@ final class ConnectionTest extends TestCase
             $this->db->enableForeignKeys()
         );
 
+        $row = $this->db->query('PRAGMA foreign_keys')
+            ->first();
+
+        $this->assertIsArray($row);
+
         $this->assertSame(
             1,
-            $this->db->query('PRAGMA foreign_keys')
-                ->first()['foreign_keys']
+            $row['foreign_keys']
         );
     }
 

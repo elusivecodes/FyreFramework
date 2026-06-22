@@ -148,16 +148,6 @@ trait BelongsToTestTrait
             'Users',
         ]);
 
-        $this->assertSame(
-            1,
-            $address->id
-        );
-
-        $this->assertSame(
-            1,
-            $address->user->id
-        );
-
         $this->assertInstanceOf(
             Address::class,
             $address
@@ -166,6 +156,16 @@ trait BelongsToTestTrait
         $this->assertInstanceOf(
             User::class,
             $address->user
+        );
+
+        $this->assertSame(
+            1,
+            $address->id
+        );
+
+        $this->assertSame(
+            1,
+            $address->user->id
         );
 
         $this->assertFalse(
@@ -219,16 +219,21 @@ trait BelongsToTestTrait
 
         $address = $Addresses->get(1);
 
-        $user = $Addresses->Users->findRelated([$address])->first();
-
-        $this->assertSame(
-            1,
-            $user->id
+        $this->assertInstanceOf(
+            Address::class,
+            $address
         );
+
+        $user = $Addresses->Users->findRelated([$address])->first();
 
         $this->assertInstanceOf(
             User::class,
             $user
+        );
+
+        $this->assertSame(
+            1,
+            $user->id
         );
     }
 
@@ -330,7 +335,7 @@ trait BelongsToTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Address $address): int => $address->id,
+                static fn(Address $address): int|null => $address->id,
                 $addresses
             )
         );
@@ -338,7 +343,7 @@ trait BelongsToTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Address $address): int => $address->user->id,
+                static fn(Address $address): int|null => $address->user->id,
                 $addresses
             )
         );
@@ -346,7 +351,7 @@ trait BelongsToTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Address $address): int => $address->user_id,
+                static fn(Address $address): int|null => $address->user_id,
                 $addresses
             )
         );
@@ -417,16 +422,6 @@ trait BelongsToTestTrait
             ],
         ]);
 
-        $this->assertSame(
-            1,
-            $address->id
-        );
-
-        $this->assertSame(
-            1,
-            $address->user->id
-        );
-
         $this->assertInstanceOf(
             Address::class,
             $address
@@ -435,6 +430,16 @@ trait BelongsToTestTrait
         $this->assertInstanceOf(
             User::class,
             $address->user
+        );
+
+        $this->assertSame(
+            1,
+            $address->id
+        );
+
+        $this->assertSame(
+            1,
+            $address->user->id
         );
 
         $this->assertFalse(
@@ -468,6 +473,11 @@ trait BelongsToTestTrait
             ],
         ]);
 
+        $this->assertInstanceOf(
+            Address::class,
+            $address
+        );
+
         $this->assertSame(
             1,
             $address->id
@@ -475,11 +485,6 @@ trait BelongsToTestTrait
 
         $this->assertNull(
             $address->user
-        );
-
-        $this->assertInstanceOf(
-            Address::class,
-            $address
         );
 
         $this->assertFalse(
@@ -540,6 +545,16 @@ trait BelongsToTestTrait
         $address = $Addresses->get(1, contain: [
             'Users',
         ]);
+
+        $this->assertInstanceOf(
+            Address::class,
+            $address
+        );
+
+        $this->assertInstanceOf(
+            User::class,
+            $address->user
+        );
 
         $this->assertSame(
             'Test 2',

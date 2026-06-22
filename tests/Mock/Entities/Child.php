@@ -10,6 +10,6 @@ use Fyre\ORM\Entity;
  * @property int|null $context_id
  * @property int|null $item_id
  * @property string|null $value
- * @property Item|null $item
+ * @property Item $item
  */
 class Child extends Entity {}

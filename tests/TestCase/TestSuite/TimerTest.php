@@ -58,6 +58,7 @@ final class TimerTest extends TestCase
 
         $timer = $this->timer->get('test');
 
+        $this->assertIsArray($timer);
         $this->assertArrayHasKey('start', $timer);
         $this->assertArrayHasKey('end', $timer);
         $this->assertArrayHasKey('duration', $timer);
@@ -154,6 +155,7 @@ final class TimerTest extends TestCase
 
         $timer = $this->timer->get('test');
 
+        $this->assertIsArray($timer);
         $this->assertArrayHasKey('start', $timer);
         $this->assertArrayHasKey('end', $timer);
         $this->assertArrayHasKey('duration', $timer);

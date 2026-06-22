@@ -244,6 +244,11 @@ trait ManyToManyTestTrait
             'Tags',
         ]);
 
+        $this->assertInstanceOf(
+            Post::class,
+            $post
+        );
+
         $this->assertSame(
             1,
             $post->id
@@ -252,7 +257,7 @@ trait ManyToManyTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Tag $tag): int => $tag->id,
+                static fn(Tag $tag): int|null => $tag->id,
                 $post->tags
             )
         );
@@ -260,7 +265,7 @@ trait ManyToManyTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Tag $tag): int => $tag->_joinData->id,
+                static fn(Tag $tag): int|null => $tag->_joinData->id,
                 $post->tags
             )
         );
@@ -339,6 +344,11 @@ trait ManyToManyTestTrait
             ],
         ]);
 
+        $this->assertInstanceOf(
+            Post::class,
+            $post
+        );
+
         $this->assertSame(
             1,
             $post->id
@@ -347,7 +357,7 @@ trait ManyToManyTestTrait
         $this->assertSame(
             [2],
             array_map(
-                static fn(Tag $tag): int => $tag->id,
+                static fn(Tag $tag): int|null => $tag->id,
                 $post->tags
             )
         );
@@ -355,7 +365,7 @@ trait ManyToManyTestTrait
         $this->assertSame(
             [2],
             array_map(
-                static fn(Tag $tag): int => $tag->_joinData->id,
+                static fn(Tag $tag): int|null => $tag->_joinData->id,
                 $post->tags
             )
         );
@@ -411,12 +421,17 @@ trait ManyToManyTestTrait
 
         $post = $Posts->get(1);
 
+        $this->assertInstanceOf(
+            Post::class,
+            $post
+        );
+
         $tags = $Posts->Tags->findRelated([$post])->toArray();
 
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Tag $tag): int => $tag->id,
+                static fn(Tag $tag): int|null => $tag->id,
                 $tags
             )
         );
@@ -424,7 +439,7 @@ trait ManyToManyTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Tag $tag): int => $tag->_joinData->id,
+                static fn(Tag $tag): int|null => $tag->_joinData->id,
                 $tags
             )
         );
@@ -492,7 +507,7 @@ trait ManyToManyTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Tag $tag): int => $tag->id,
+                static fn(Tag $tag): int|null => $tag->id,
                 $post->tags
             )
         );
@@ -562,7 +577,7 @@ trait ManyToManyTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Post $post): int => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $posts
             )
         );
@@ -574,7 +589,7 @@ trait ManyToManyTestTrait
             ],
             array_map(
                 static fn(Post $post): array => array_map(
-                    static fn(Tag $tag): int => $tag->id,
+                    static fn(Tag $tag): int|null => $tag->id,
                     $post->tags
                 ),
                 $posts
@@ -662,6 +677,11 @@ trait ManyToManyTestTrait
             'Tags',
         ]);
 
+        $this->assertInstanceOf(
+            Post::class,
+            $post
+        );
+
         $this->assertSame(
             1,
             $post->id
@@ -670,7 +690,7 @@ trait ManyToManyTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Tag $tag): int => $tag->id,
+                static fn(Tag $tag): int|null => $tag->id,
                 $post->tags
             )
         );
@@ -678,7 +698,7 @@ trait ManyToManyTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Tag $tag): int => $tag->_joinData->id,
+                static fn(Tag $tag): int|null => $tag->_joinData->id,
                 $post->tags
             )
         );
@@ -686,7 +706,7 @@ trait ManyToManyTestTrait
         $this->assertSame(
             [11, 22],
             array_map(
-                static fn(Tag $tag): int => $tag->_joinData->value,
+                static fn(Tag $tag): int|null => $tag->_joinData->value,
                 $post->tags
             )
         );
@@ -1014,6 +1034,11 @@ trait ManyToManyTestTrait
             'Tags',
         ]);
 
+        $this->assertInstanceOf(
+            Post::class,
+            $post
+        );
+
         $this->assertSame(
             1,
             $post->id
@@ -1022,7 +1047,7 @@ trait ManyToManyTestTrait
         $this->assertSame(
             [2, 1],
             array_map(
-                static fn(Tag $tag): int => $tag->id,
+                static fn(Tag $tag): int|null => $tag->id,
                 $post->tags
             )
         );
@@ -1030,7 +1055,7 @@ trait ManyToManyTestTrait
         $this->assertSame(
             [2, 1],
             array_map(
-                static fn(Tag $tag): int => $tag->_joinData->id,
+                static fn(Tag $tag): int|null => $tag->_joinData->id,
                 $post->tags
             )
         );
@@ -1109,6 +1134,11 @@ trait ManyToManyTestTrait
             ],
         ]);
 
+        $this->assertInstanceOf(
+            Post::class,
+            $post
+        );
+
         $this->assertSame(
             1,
             $post->id
@@ -1117,7 +1147,7 @@ trait ManyToManyTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Tag $tag): int => $tag->id,
+                static fn(Tag $tag): int|null => $tag->id,
                 $post->tags
             )
         );
@@ -1125,7 +1155,7 @@ trait ManyToManyTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Tag $tag): int => $tag->_joinData->id,
+                static fn(Tag $tag): int|null => $tag->_joinData->id,
                 $post->tags
             )
         );
@@ -1204,6 +1234,11 @@ trait ManyToManyTestTrait
             ],
         ]);
 
+        $this->assertInstanceOf(
+            Post::class,
+            $post
+        );
+
         $this->assertSame(
             1,
             $post->id
@@ -1212,7 +1247,7 @@ trait ManyToManyTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Tag $tag): int => $tag->id,
+                static fn(Tag $tag): int|null => $tag->id,
                 $post->tags
             )
         );
@@ -1220,7 +1255,7 @@ trait ManyToManyTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Tag $tag): int => $tag->_joinData->id,
+                static fn(Tag $tag): int|null => $tag->_joinData->id,
                 $post->tags
             )
         );

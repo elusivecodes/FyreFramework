@@ -14,9 +14,9 @@ use Fyre\Utility\DateTime\DateTime;
  * @property string|null $token
  * @property string|null $name
  * @property DateTime|null $deleted
- * @property Address|null $address
- * @property Comment[]|null $comments
+ * @property Address $address
+ * @property Comment[] $comments
  * @property array<string, Entity> $_matchingData
- * @property Post[]|null $posts
+ * @property Post[] $posts
  */
 class User extends Entity {}

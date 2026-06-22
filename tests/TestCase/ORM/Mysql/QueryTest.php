@@ -251,11 +251,18 @@ final class QueryTest extends TestCase
         $query = $Items->find()
             ->disableAutoFields();
 
+        $result = $query->first();
+
+        $this->assertInstanceOf(
+            Item::class,
+            $result
+        );
+
         $this->assertSame(
             [
                 'id' => 1,
             ],
-            $query->first()->toArray()
+            $result->toArray()
         );
 
         $this->assertSame(
@@ -263,12 +270,19 @@ final class QueryTest extends TestCase
             $query->enableAutoFields()
         );
 
+        $result = $query->first();
+
+        $this->assertInstanceOf(
+            Item::class,
+            $result
+        );
+
         $this->assertSame(
             [
                 'id' => 1,
                 'name' => 'Test 1',
             ],
-            $query->first()->toArray()
+            $result->toArray()
         );
     }
 

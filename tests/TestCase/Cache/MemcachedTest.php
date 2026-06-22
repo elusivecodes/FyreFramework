@@ -72,7 +72,7 @@ final class MemcachedTest extends TestCase
 
         $this->cacheManager->build([
             'className' => MemcachedCacher::class,
-            'port' => 1234,
+            'port' => 1,
         ]);
     }
 

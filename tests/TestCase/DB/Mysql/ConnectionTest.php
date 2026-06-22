@@ -137,11 +137,15 @@ final class ConnectionTest extends TestCase
             $this->db->disableForeignKeys()
         );
 
+        $row = $this->db->select('@@foreign_key_checks')
+            ->execute()
+            ->first();
+
+        $this->assertIsArray($row);
+
         $this->assertSame(
             0,
-            $this->db->select('@@foreign_key_checks')
-                ->execute()
-                ->first()['@@foreign_key_checks']
+            $row['@@foreign_key_checks']
         );
 
         $this->assertSame(
@@ -149,11 +153,15 @@ final class ConnectionTest extends TestCase
             $this->db->enableForeignKeys()
         );
 
+        $row = $this->db->select('@@foreign_key_checks')
+            ->execute()
+            ->first();
+
+        $this->assertIsArray($row);
+
         $this->assertSame(
             1,
-            $this->db->select('@@foreign_key_checks')
-                ->execute()
-                ->first()['@@foreign_key_checks']
+            $row['@@foreign_key_checks']
         );
     }
 

@@ -8,6 +8,7 @@ use Countable;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Iterator;
+use OutOfBoundsException;
 use Override;
 
 use function array_filter;
@@ -15,6 +16,7 @@ use function array_slice;
 use function array_values;
 use function assert;
 use function count;
+use function sprintf;
 use function usort;
 
 use const ARRAY_FILTER_USE_BOTH;
@@ -190,12 +192,21 @@ class PeriodCollection implements ArrayAccess, Countable, Iterator
      * Returns the Period at an index.
      *
      * @param int $index The index.
-     * @return Period|null The period at the given index, or null if it is not set.
+     * @return Period The period at the given index.
+     *
+     * @throws OutOfBoundsException if the index is not set.
      */
     #[Override]
-    public function offsetGet(mixed $index): Period|null
+    public function offsetGet(mixed $index): Period
     {
-        return $this->periods[$index] ?? null;
+        if (!isset($this->periods[$index])) {
+            throw new OutOfBoundsException(sprintf(
+                'Period index `%s` does not exist.',
+                $index
+            ));
+        }
+
+        return $this->periods[$index];
     }
 
     /**

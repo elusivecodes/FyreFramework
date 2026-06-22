@@ -7,6 +7,7 @@ use Fyre\ORM\Exceptions\OrmException;
 use Tests\Mock\Entities\Comment;
 use Tests\Mock\Entities\Post;
 use Tests\Mock\Entities\Tag;
+use Tests\Mock\Entities\User;
 
 use function array_map;
 
@@ -68,6 +69,11 @@ trait ContainTestTrait
                 ],
             ],
             autoFields: false,
+        );
+
+        $this->assertInstanceOf(
+            User::class,
+            $user
         );
 
         $this->assertSame(
@@ -194,6 +200,11 @@ trait ContainTestTrait
             ],
         ]);
 
+        $this->assertInstanceOf(
+            User::class,
+            $user
+        );
+
         $this->assertSame(
             1,
             $user->id
@@ -202,7 +213,7 @@ trait ContainTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Post $post): int => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $user->posts
             )
         );
@@ -219,7 +230,7 @@ trait ContainTestTrait
             ],
             array_map(
                 static fn(Post $post): array => array_map(
-                    static fn(Tag $tag): int => $tag->id,
+                    static fn(Tag $tag): int|null => $tag->id,
                     $post->tags
                 ),
                 $user->posts
@@ -233,7 +244,7 @@ trait ContainTestTrait
             ],
             array_map(
                 static fn(Post $post): array => array_map(
-                    static fn(Comment $comment): int => $comment->id,
+                    static fn(Comment $comment): int|null => $comment->id,
                     $post->comments
                 ),
                 $user->posts
@@ -247,7 +258,7 @@ trait ContainTestTrait
             ],
             array_map(
                 static fn(Post $post): array => array_map(
-                    static fn(Comment $comment): int => $comment->user->id,
+                    static fn(Comment $comment): int|null => $comment->user->id,
                     $post->comments
                 ),
                 $user->posts
@@ -285,10 +296,15 @@ trait ContainTestTrait
             ],
         ]);
 
+        $this->assertInstanceOf(
+            User::class,
+            $user
+        );
+
         $this->assertSame(
             [2, 1],
             array_map(
-                static fn(Post $post): int => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $user->posts
             )
         );
@@ -361,7 +377,7 @@ trait ContainTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Post $post): int => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $user->posts
             )
         );
@@ -369,7 +385,7 @@ trait ContainTestTrait
         $this->assertSame(
             [1, 1],
             array_map(
-                static fn(Post $post): int => $post->user_id,
+                static fn(Post $post): int|null => $post->user_id,
                 $user->posts
             )
         );
@@ -386,7 +402,7 @@ trait ContainTestTrait
             ],
             array_map(
                 static fn(Post $post): array => array_map(
-                    static fn(Tag $tag): int => $tag->id,
+                    static fn(Tag $tag): int|null => $tag->id,
                     $post->tags
                 ),
                 $user->posts
@@ -452,6 +468,11 @@ trait ContainTestTrait
                 ],
             ])
             ->first();
+
+        $this->assertInstanceOf(
+            User::class,
+            $user
+        );
 
         $this->assertSame(
             1,
@@ -522,6 +543,11 @@ trait ContainTestTrait
                 ],
             ], true)
             ->first();
+
+        $this->assertInstanceOf(
+            User::class,
+            $user
+        );
 
         $this->assertSame(
             1,

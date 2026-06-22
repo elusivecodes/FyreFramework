@@ -5,6 +5,7 @@ namespace Tests\TestCase\ORM\Postgres\Model;
 
 use Tests\Mock\Entities\Post;
 use Tests\Mock\Entities\Tag;
+use Tests\Mock\Entities\User;
 
 use function array_map;
 
@@ -56,6 +57,11 @@ trait LoadIntoTestTrait
 
         $user = $Users->get(1);
 
+        $this->assertInstanceOf(
+            User::class,
+            $user
+        );
+
         $Users->loadInto($user, [
             'Addresses',
             'Posts' => [
@@ -66,7 +72,7 @@ trait LoadIntoTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Post $post): int => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $user->posts
             )
         );
@@ -74,7 +80,7 @@ trait LoadIntoTestTrait
         $this->assertSame(
             [1, 1],
             array_map(
-                static fn(Post $post): int => $post->user_id,
+                static fn(Post $post): int|null => $post->user_id,
                 $user->posts
             )
         );
@@ -91,7 +97,7 @@ trait LoadIntoTestTrait
             ],
             array_map(
                 static fn(Post $post): array => array_map(
-                    static fn(Tag $tag): int => $tag->id,
+                    static fn(Tag $tag): int|null => $tag->id,
                     $post->tags
                 ),
                 $user->posts
@@ -123,6 +129,11 @@ trait LoadIntoTestTrait
 
         $user = $Users->get(1);
 
+        $this->assertInstanceOf(
+            User::class,
+            $user
+        );
+
         $Users->loadInto($user, [
             'Posts',
         ]);
@@ -130,7 +141,7 @@ trait LoadIntoTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Post $post): int => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $user->posts
             )
         );

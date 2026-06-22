@@ -135,6 +135,11 @@ final class ResultTest extends TestCase
             $item
         );
 
+        $this->assertInstanceOf(
+            Item::class,
+            $item
+        );
+
         $this->assertSame(
             'Items',
             $item->getSource()
@@ -262,6 +267,11 @@ final class ResultTest extends TestCase
             ->getResult()
             ->first();
 
+        $this->assertInstanceOf(
+            Item::class,
+            $item
+        );
+
         $this->assertSame(
             Status::Draft,
             $item->name
@@ -279,6 +289,11 @@ final class ResultTest extends TestCase
             ->getResult()
             ->first();
 
+        $this->assertInstanceOf(
+            Item::class,
+            $item
+        );
+
         $this->assertNull(
             $item->name
         );
@@ -294,6 +309,11 @@ final class ResultTest extends TestCase
         $item = $Items->find()
             ->getResult()
             ->first();
+
+        $this->assertInstanceOf(
+            Item::class,
+            $item
+        );
 
         $this->assertNull(
             $item->name
@@ -311,6 +331,11 @@ final class ResultTest extends TestCase
             ->getResult()
             ->first();
 
+        $this->assertInstanceOf(
+            Item::class,
+            $item
+        );
+
         $this->assertNull(
             $item->name
         );
@@ -326,6 +351,11 @@ final class ResultTest extends TestCase
         $item = $Items->find()
             ->getResult()
             ->first();
+
+        $this->assertInstanceOf(
+            Item::class,
+            $item
+        );
 
         $this->assertSame(
             State::Draft,

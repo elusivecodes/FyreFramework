@@ -52,10 +52,16 @@ trait CookieTestTrait
     {
         $response1 = new ClientResponse();
         $response2 = $response1->withCookie('test', 'value');
+        $cookie = $response2->getCookie('test');
+
+        $this->assertInstanceOf(
+            Cookie::class,
+            $cookie
+        );
 
         $this->assertSame(
             'value',
-            $response2->getCookie('test')->getValue()
+            $cookie->getValue()
         );
     }
 
@@ -63,9 +69,15 @@ trait CookieTestTrait
     {
         $response1 = new ClientResponse();
         $response2 = $response1->withCookie('test', 'value', time() + 60);
+        $cookie = $response2->getCookie('test');
+
+        $this->assertInstanceOf(
+            Cookie::class,
+            $cookie
+        );
 
         $this->assertFalse(
-            $response2->getCookie('test')->isExpired()
+            $cookie->isExpired()
         );
     }
 
@@ -73,10 +85,16 @@ trait CookieTestTrait
     {
         $response1 = new ClientResponse();
         $response2 = $response1->withCookie('test', 'value', domain: 'test.com');
+        $cookie = $response2->getCookie('test');
+
+        $this->assertInstanceOf(
+            Cookie::class,
+            $cookie
+        );
 
         $this->assertSame(
             'test.com',
-            $response2->getCookie('test')->getDomain()
+            $cookie->getDomain()
         );
     }
 
@@ -84,13 +102,19 @@ trait CookieTestTrait
     {
         $response1 = new ClientResponse();
         $response2 = $response1->withExpiredCookie('test');
+        $cookie = $response2->getCookie('test');
 
         $this->assertNull(
             $response1->getCookie('test')
         );
 
+        $this->assertInstanceOf(
+            Cookie::class,
+            $cookie
+        );
+
         $this->assertTrue(
-            $response2->getCookie('test')->isExpired()
+            $cookie->isExpired()
         );
     }
 }

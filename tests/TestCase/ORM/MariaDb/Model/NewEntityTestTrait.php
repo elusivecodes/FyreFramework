@@ -732,7 +732,7 @@ trait NewEntityTestTrait
         $this->assertSame(
             [11, 22],
             array_map(
-                static fn(Tag $tag): int => $tag->_joinData->value,
+                static fn(Tag $tag): int|null => $tag->_joinData->value,
                 $post->tags
             )
         );
@@ -835,7 +835,7 @@ trait NewEntityTestTrait
         $this->assertSame(
             [11, 22],
             array_map(
-                static fn(Tag $tag): int => $tag->_joinData->value,
+                static fn(Tag $tag): int|null => $tag->_joinData->value,
                 $post->tags
             )
         );

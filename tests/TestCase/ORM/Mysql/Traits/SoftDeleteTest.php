@@ -7,6 +7,7 @@ use Fyre\ORM\Entity;
 use Fyre\Utility\DateTime\DateTime;
 use PHPUnit\Framework\Attributes\Before;
 use PHPUnit\Framework\TestCase;
+use Tests\Mock\Entities\Address;
 use Tests\TestCase\ORM\Mysql\MysqlConnectionTrait;
 
 use function substr_count;
@@ -140,7 +141,7 @@ final class SoftDeleteTest extends TestCase
             [1],
             $Users->findOnlyDeleted()
                 ->all()
-                ->map(static fn(Entity $item): int => $item->id)
+                ->map(static fn(Entity $item): int|null => $item->id)
                 ->toArray()
         );
     }
@@ -176,7 +177,7 @@ final class SoftDeleteTest extends TestCase
             $Users->findWithDeleted()
                 ->orderBy(['id' => 'ASC'])
                 ->all()
-                ->map(static fn(Entity $item): int => $item->id)
+                ->map(static fn(Entity $item): int|null => $item->id)
                 ->toArray()
         );
     }
@@ -221,7 +222,7 @@ final class SoftDeleteTest extends TestCase
                 ->innerJoinWith('Posts')
                 ->orderBy(['Users.id' => 'ASC'])
                 ->all()
-                ->map(static fn(Entity $user): int => $user->id)
+                ->map(static fn(Entity $user): int|null => $user->id)
                 ->toArray()
         );
 
@@ -231,7 +232,7 @@ final class SoftDeleteTest extends TestCase
                 ->innerJoinWith('Posts')
                 ->orderBy(['Users.id' => 'ASC'])
                 ->all()
-                ->map(static fn(Entity $user): int => $user->id)
+                ->map(static fn(Entity $user): int|null => $user->id)
                 ->toArray()
         );
     }
@@ -270,7 +271,11 @@ final class SoftDeleteTest extends TestCase
                 ->contain('Addresses')
                 ->orderBy(['Users.id' => 'ASC'])
                 ->all()
-                ->map(static fn(Entity $user): int|null => $user->address?->id)
+                ->map(static function(Entity $user): int|null {
+                    $address = $user->get('address');
+
+                    return $address instanceof Address ? $address->id : null;
+                })
                 ->toArray()
         );
 
@@ -280,7 +285,11 @@ final class SoftDeleteTest extends TestCase
                 ->contain('Addresses')
                 ->orderBy(['Users.id' => 'ASC'])
                 ->all()
-                ->map(static fn(Entity $user): int|null => $user->address?->id)
+                ->map(static function(Entity $user): int|null {
+                    $address = $user->get('address');
+
+                    return $address instanceof Address ? $address->id : null;
+                })
                 ->toArray()
         );
     }
@@ -329,7 +338,7 @@ final class SoftDeleteTest extends TestCase
             [2],
             $Users->find(deleted: true)
                 ->all()
-                ->map(static fn(Entity $item): int => $item->id)
+                ->map(static fn(Entity $item): int|null => $item->id)
                 ->toArray()
         );
     }
@@ -410,7 +419,7 @@ final class SoftDeleteTest extends TestCase
             $Users->find()
                 ->orderBy(['id' => 'ASC'])
                 ->all()
-                ->map(static fn(Entity $item): int => $item->id)
+                ->map(static fn(Entity $item): int|null => $item->id)
                 ->toArray()
         );
     }
@@ -460,7 +469,7 @@ final class SoftDeleteTest extends TestCase
             $Users->find()
                 ->orderBy(['id' => 'ASC'])
                 ->all()
-                ->map(static fn(Entity $item): int => $item->id)
+                ->map(static fn(Entity $item): int|null => $item->id)
                 ->toArray()
         );
     }

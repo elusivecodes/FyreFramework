@@ -14,6 +14,6 @@ use Fyre\Utility\DateTime\DateTime;
  * @property string|null $suburb
  * @property string|null $state
  * @property DateTime|null $deleted
- * @property User|null $user
+ * @property User $user
  */
 class Address extends Entity {}

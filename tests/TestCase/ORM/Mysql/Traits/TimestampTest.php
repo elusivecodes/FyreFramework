@@ -5,6 +5,7 @@ namespace Tests\TestCase\ORM\Mysql\Traits;
 
 use Fyre\Utility\DateTime\DateTime;
 use PHPUnit\Framework\TestCase;
+use Tests\Mock\Entities\Timestamp;
 use Tests\TestCase\ORM\Mysql\MysqlConnectionTrait;
 
 use function sleep;
@@ -24,6 +25,11 @@ final class TimestampTest extends TestCase
         );
 
         $timestamp = $Timestamps->find()->first();
+
+        $this->assertInstanceOf(
+            Timestamp::class,
+            $timestamp
+        );
 
         $this->assertInstanceOf(
             DateTime::class,
@@ -48,6 +54,16 @@ final class TimestampTest extends TestCase
 
         $timestamp = $Timestamps->find()->first();
 
+        $this->assertInstanceOf(
+            Timestamp::class,
+            $timestamp
+        );
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $timestamp->modified
+        );
+
         $originalModified = $timestamp->modified->toIsoString();
 
         $timestamp->setDirty('created', true);
@@ -59,6 +75,16 @@ final class TimestampTest extends TestCase
         );
 
         $timestamp = $Timestamps->find()->first();
+
+        $this->assertInstanceOf(
+            Timestamp::class,
+            $timestamp
+        );
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $timestamp->modified
+        );
 
         $this->assertNotSame(
             $originalModified,

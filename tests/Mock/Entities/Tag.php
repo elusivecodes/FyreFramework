@@ -8,6 +8,6 @@ use Fyre\ORM\Entity;
 /**
  * @property int|null $id
  * @property string|null $tag
- * @property PostsTag|null $_joinData
+ * @property PostsTag $_joinData
  */
 class Tag extends Entity {}

@@ -12,7 +12,7 @@ use Fyre\Utility\DateTime\DateTime;
  * @property int|null $post_id
  * @property string|null $comment
  * @property DateTime|null $deleted
- * @property User|null $user
- * @property Post|null $post
+ * @property User $user
+ * @property Post $post
  */
 class Comment extends Entity {}

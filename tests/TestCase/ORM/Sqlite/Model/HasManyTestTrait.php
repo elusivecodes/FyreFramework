@@ -31,7 +31,7 @@ trait HasManyTestTrait
             $Users->save($user)
         );
 
-        $user->posts = null;
+        $user->set('posts', null);
 
         $Users->patchEntity($user, [
             'posts' => [
@@ -49,7 +49,7 @@ trait HasManyTestTrait
         $this->assertSame(
             [1, 1],
             array_map(
-                static fn(Post $post): int => $post->user_id,
+                static fn(Post $post): int|null => $post->user_id,
                 $this->modelRegistry->use('Posts')
                     ->find()
                     ->toArray()
@@ -88,8 +88,8 @@ trait HasManyTestTrait
             $Users->saveMany($users)
         );
 
-        $users[0]->posts = null;
-        $users[1]->posts = null;
+        $users[0]->set('posts', null);
+        $users[1]->set('posts', null);
 
         $Users->patchEntities($users, [
             [
@@ -118,7 +118,7 @@ trait HasManyTestTrait
         $this->assertSame(
             [1, 2, 1, 2],
             array_map(
-                static fn(Post $post): int => $post->user_id,
+                static fn(Post $post): int|null => $post->user_id,
                 $this->modelRegistry->use('Posts')
                     ->find()
                     ->toArray()
@@ -334,19 +334,6 @@ trait HasManyTestTrait
             'Posts',
         ]);
 
-        $this->assertSame(
-            1,
-            $user->id
-        );
-
-        $this->assertSame(
-            [1, 2],
-            array_map(
-                static fn(Post $post): int => $post->id,
-                $user->posts
-            )
-        );
-
         $this->assertInstanceOf(
             User::class,
             $user
@@ -360,6 +347,19 @@ trait HasManyTestTrait
         $this->assertInstanceOf(
             Post::class,
             $user->posts[1]
+        );
+
+        $this->assertSame(
+            1,
+            $user->id
+        );
+
+        $this->assertSame(
+            [1, 2],
+            array_map(
+                static fn(Post $post): int|null => $post->id,
+                $user->posts
+            )
         );
 
         $this->assertFalse(
@@ -403,19 +403,6 @@ trait HasManyTestTrait
             ],
         ]);
 
-        $this->assertSame(
-            1,
-            $user->id
-        );
-
-        $this->assertSame(
-            [2],
-            array_map(
-                static fn(Post $post): int => $post->id,
-                $user->posts
-            )
-        );
-
         $this->assertInstanceOf(
             User::class,
             $user
@@ -424,6 +411,19 @@ trait HasManyTestTrait
         $this->assertInstanceOf(
             Post::class,
             $user->posts[0]
+        );
+
+        $this->assertSame(
+            1,
+            $user->id
+        );
+
+        $this->assertSame(
+            [2],
+            array_map(
+                static fn(Post $post): int|null => $post->id,
+                $user->posts
+            )
         );
 
         $this->assertFalse(
@@ -459,12 +459,17 @@ trait HasManyTestTrait
 
         $user = $Users->get(1);
 
+        $this->assertInstanceOf(
+            User::class,
+            $user
+        );
+
         $posts = $Users->Posts->findRelated([$user])->toArray();
 
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Post $post): int => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $posts
             )
         );
@@ -522,7 +527,7 @@ trait HasManyTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Post $post): int => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $user->posts
             )
         );
@@ -530,7 +535,7 @@ trait HasManyTestTrait
         $this->assertSame(
             [1, 1],
             array_map(
-                static fn(Post $post): int => $post->user_id,
+                static fn(Post $post): int|null => $post->user_id,
                 $user->posts
             )
         );
@@ -600,7 +605,7 @@ trait HasManyTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(User $user): int => $user->id,
+                static fn(User $user): int|null => $user->id,
                 $users
             )
         );
@@ -612,7 +617,7 @@ trait HasManyTestTrait
             ],
             array_map(
                 static fn(User $user): array => array_map(
-                    static fn(Post $post): int => $post->id,
+                    static fn(Post $post): int|null => $post->id,
                     $user->posts
                 ),
                 $users
@@ -626,7 +631,7 @@ trait HasManyTestTrait
             ],
             array_map(
                 static fn(User $user): array => array_map(
-                    static fn(Post $post): int => $post->user_id,
+                    static fn(Post $post): int|null => $post->user_id,
                     $user->posts
                 ),
                 $users
@@ -1020,19 +1025,6 @@ trait HasManyTestTrait
             'Posts',
         ]);
 
-        $this->assertSame(
-            1,
-            $user->id
-        );
-
-        $this->assertSame(
-            [2, 1],
-            array_map(
-                static fn(Post $post): int => $post->id,
-                $user->posts
-            )
-        );
-
         $this->assertInstanceOf(
             User::class,
             $user
@@ -1046,6 +1038,19 @@ trait HasManyTestTrait
         $this->assertInstanceOf(
             Post::class,
             $user->posts[1]
+        );
+
+        $this->assertSame(
+            1,
+            $user->id
+        );
+
+        $this->assertSame(
+            [2, 1],
+            array_map(
+                static fn(Post $post): int|null => $post->id,
+                $user->posts
+            )
         );
 
         $this->assertFalse(
@@ -1089,19 +1094,6 @@ trait HasManyTestTrait
             ],
         ]);
 
-        $this->assertSame(
-            1,
-            $user->id
-        );
-
-        $this->assertSame(
-            [1, 2],
-            array_map(
-                static fn(Post $post): int => $post->id,
-                $user->posts
-            )
-        );
-
         $this->assertInstanceOf(
             User::class,
             $user
@@ -1115,6 +1107,19 @@ trait HasManyTestTrait
         $this->assertInstanceOf(
             Post::class,
             $user->posts[1]
+        );
+
+        $this->assertSame(
+            1,
+            $user->id
+        );
+
+        $this->assertSame(
+            [1, 2],
+            array_map(
+                static fn(Post $post): int|null => $post->id,
+                $user->posts
+            )
         );
 
         $this->assertFalse(
@@ -1158,19 +1163,6 @@ trait HasManyTestTrait
             ],
         ]);
 
-        $this->assertSame(
-            1,
-            $user->id
-        );
-
-        $this->assertSame(
-            [1, 2],
-            array_map(
-                static fn(Post $post): int => $post->id,
-                $user->posts
-            )
-        );
-
         $this->assertInstanceOf(
             User::class,
             $user
@@ -1184,6 +1176,19 @@ trait HasManyTestTrait
         $this->assertInstanceOf(
             Post::class,
             $user->posts[1]
+        );
+
+        $this->assertSame(
+            1,
+            $user->id
+        );
+
+        $this->assertSame(
+            [1, 2],
+            array_map(
+                static fn(Post $post): int|null => $post->id,
+                $user->posts
+            )
         );
 
         $this->assertFalse(
@@ -1253,6 +1258,21 @@ trait HasManyTestTrait
             'Posts',
         ]);
 
+        $this->assertInstanceOf(
+            User::class,
+            $user
+        );
+
+        $this->assertInstanceOf(
+            Post::class,
+            $user->posts[0]
+        );
+
+        $this->assertInstanceOf(
+            Post::class,
+            $user->posts[1]
+        );
+
         $this->assertSame(
             'Test 2',
             $user->name
@@ -1261,7 +1281,7 @@ trait HasManyTestTrait
         $this->assertSame(
             ['Test 3', 'Test 4'],
             array_map(
-                static fn(Post $post): string => $post->title,
+                static fn(Post $post): string|null => $post->title,
                 $user->posts
             )
         );
@@ -1368,7 +1388,7 @@ trait HasManyTestTrait
         $this->assertSame(
             ['Test 3', 'Test 4'],
             array_map(
-                static fn(User $user): string => $user->name,
+                static fn(User $user): string|null => $user->name,
                 $users
             )
         );
@@ -1380,7 +1400,7 @@ trait HasManyTestTrait
             ],
             array_map(
                 static fn(User $user): array => array_map(
-                    static fn(Post $post): string => $post->title,
+                    static fn(Post $post): string|null => $post->title,
                     $user->posts
                 ),
                 $users

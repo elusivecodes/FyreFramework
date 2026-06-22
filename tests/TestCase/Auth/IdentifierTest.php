@@ -69,8 +69,12 @@ final class IdentifierTest extends TestCase
             $authUser
         );
 
+        $password = $authUser->password;
+
+        $this->assertIsString($password);
+
         $this->assertFalse(
-            password_needs_rehash($authUser->password, PASSWORD_DEFAULT)
+            password_needs_rehash($password, PASSWORD_DEFAULT)
         );
     }
 

@@ -30,6 +30,11 @@ trait BoundariesTestTrait
 
         $period3 = $collection->boundaries();
 
+        $this->assertInstanceOf(
+            Period::class,
+            $period3
+        );
+
         $this->assertSame(
             '2022-01-01T00:00:00.000+00:00',
             $period3->start()->toIsoString()
@@ -48,6 +53,11 @@ trait BoundariesTestTrait
         $collection = new PeriodCollection($period1, $period2);
 
         $period3 = $collection->boundaries();
+
+        $this->assertInstanceOf(
+            Period::class,
+            $period3
+        );
 
         $this->assertSame(
             '2022-01-01T00:00:00.000+00:00',
@@ -76,6 +86,11 @@ trait BoundariesTestTrait
 
         $period3 = $collection->boundaries();
 
+        $this->assertInstanceOf(
+            Period::class,
+            $period3
+        );
+
         $this->assertSame(
             '2022-01-01T00:00:00.000+00:00',
             $period3->start()->toIsoString()
@@ -94,6 +109,11 @@ trait BoundariesTestTrait
         $collection = new PeriodCollection($period1, $period2);
 
         $period3 = $collection->boundaries();
+
+        $this->assertInstanceOf(
+            Period::class,
+            $period3
+        );
 
         $this->assertSame(
             '2022-01-01T00:00:00.000+00:00',

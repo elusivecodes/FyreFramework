@@ -27,10 +27,16 @@ trait DateTimeTimeZoneTestTrait
         $dateParser = $this->dateTimeType('datetime-timezone');
 
         $dateParser->setServerTimeZone('Australia/Brisbane');
+        $date = $dateParser->fromDatabase('2021-12-31 22:59:11.12345+10');
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $date
+        );
 
         $this->assertSame(
             '2021-12-31T12:59:11.123+00:00',
-            $dateParser->fromDatabase('2021-12-31 22:59:11.12345+10')->toISOString()
+            $date->toISOString()
         );
     }
 
@@ -47,10 +53,16 @@ trait DateTimeTimeZoneTestTrait
         $dateParser = $this->dateTimeType('datetime-timezone');
 
         $dateParser->setUserTimeZone('Australia/Brisbane');
+        $date = $dateParser->fromDatabase('2021-12-31 22:59:11.12345+10');
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $date
+        );
 
         $this->assertSame(
             'Australia/Brisbane',
-            $dateParser->fromDatabase('2021-12-31 22:59:11.12345+10')->getTimeZone()
+            $date->getTimeZone()
         );
     }
 
@@ -95,9 +107,16 @@ trait DateTimeTimeZoneTestTrait
             $dateParser->setLocaleFormat('eee MMM dd yyyy HH:mm:ss.SSS')
         );
 
+        $date = $dateParser->parse('Sat Jan 01 2022 11:59:00.123+10');
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $date
+        );
+
         $this->assertSame(
             '2022-01-01T11:59:00.000+00:00',
-            $dateParser->parse('Sat Jan 01 2022 11:59:00.123+10')->toISOString()
+            $date->toISOString()
         );
     }
 
@@ -110,9 +129,16 @@ trait DateTimeTimeZoneTestTrait
             $dateParser->setLocaleFormat('eee MMM dd yyyy HH:mm:ss.SSS')
         );
 
+        $date = $dateParser->parse('2022-01-01T21:59:00.000+10');
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $date
+        );
+
         $this->assertSame(
             '2022-01-01T11:59:00.000+00:00',
-            $dateParser->parse('2022-01-01T21:59:00.000+10')->toISOString()
+            $date->toISOString()
         );
     }
 
@@ -147,10 +173,16 @@ trait DateTimeTimeZoneTestTrait
 
         $dateParser->setUserTimeZone('Australia/Brisbane');
         $dateParser->setLocaleFormat('eee MMM dd yyyy HH:mm:ss.SSS');
+        $date = $dateParser->parse('Sat Jan 01 2022 00:00:00.12345+10');
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $date
+        );
 
         $this->assertSame(
             '2021-12-31T14:00:00.000+00:00',
-            $dateParser->parse('Sat Jan 01 2022 00:00:00.12345+10')->toISOString()
+            $date->toISOString()
         );
     }
 

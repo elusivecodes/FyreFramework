@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\MariaDb\Model;
 
+use Tests\Mock\Entities\Other;
+
 trait CallbacksTestTrait
 {
     public function testAfterDelete(): void
@@ -67,6 +69,11 @@ trait CallbacksTestTrait
         );
 
         $other = $Others->find()->first();
+
+        $this->assertInstanceOf(
+            Other::class,
+            $other
+        );
 
         $this->assertSame(
             'Test',

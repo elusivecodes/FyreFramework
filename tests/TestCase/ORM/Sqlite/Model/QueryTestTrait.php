@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace Tests\TestCase\ORM\Sqlite\Model;
 
 use Tests\Mock\Entities\Item;
+use Tests\Mock\Entities\Post;
+use Tests\Mock\Entities\User;
 
 use function array_map;
 use function range;
@@ -96,6 +98,11 @@ trait QueryTestTrait
         );
 
         $item = $Items->get(1, autoFields: false);
+
+        $this->assertInstanceOf(
+            Item::class,
+            $item
+        );
 
         $this->assertSame(
             [
@@ -202,6 +209,11 @@ trait QueryTestTrait
 
         $item = $Items->get(2);
 
+        $this->assertInstanceOf(
+            Item::class,
+            $item
+        );
+
         $this->assertSame(
             2,
             $item->id
@@ -261,7 +273,7 @@ trait QueryTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(Item $item): int => $item->id,
+                static fn(Item $item): int|null => $item->id,
                 $items
             )
         );
@@ -304,7 +316,7 @@ trait QueryTestTrait
         $this->assertSame(
             range(1, 1000),
             array_map(
-                static fn(Item $item): int => $item->id,
+                static fn(Item $item): int|null => $item->id,
                 $items
             )
         );
@@ -328,6 +340,11 @@ trait QueryTestTrait
         );
 
         $item = $Items->resolveRouteBinding(2, 'id');
+
+        $this->assertInstanceOf(
+            Item::class,
+            $item
+        );
 
         $this->assertSame(
             2,
@@ -366,7 +383,18 @@ trait QueryTestTrait
         );
 
         $user = $Users->resolveRouteBinding(1, 'id');
+
+        $this->assertInstanceOf(
+            User::class,
+            $user
+        );
+
         $item = $Posts->resolveRouteBinding(2, 'id', $user);
+
+        $this->assertInstanceOf(
+            Post::class,
+            $item
+        );
 
         $this->assertSame(
             2,
@@ -436,6 +464,11 @@ trait QueryTestTrait
         );
 
         $item = $Items->get(1);
+
+        $this->assertInstanceOf(
+            Item::class,
+            $item
+        );
 
         $this->assertSame(
             [

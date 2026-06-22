@@ -148,16 +148,6 @@ trait HasOneTestTrait
             'Addresses',
         ]);
 
-        $this->assertSame(
-            1,
-            $user->id
-        );
-
-        $this->assertSame(
-            1,
-            $user->address->id
-        );
-
         $this->assertInstanceOf(
             User::class,
             $user
@@ -166,6 +156,16 @@ trait HasOneTestTrait
         $this->assertInstanceOf(
             Address::class,
             $user->address
+        );
+
+        $this->assertSame(
+            1,
+            $user->id
+        );
+
+        $this->assertSame(
+            1,
+            $user->address->id
         );
 
         $this->assertFalse(
@@ -219,16 +219,21 @@ trait HasOneTestTrait
 
         $user = $Users->get(1);
 
-        $address = $Users->Addresses->findRelated([$user])->first();
-
-        $this->assertSame(
-            1,
-            $address->id
+        $this->assertInstanceOf(
+            User::class,
+            $user
         );
+
+        $address = $Users->Addresses->findRelated([$user])->first();
 
         $this->assertInstanceOf(
             Address::class,
             $address
+        );
+
+        $this->assertSame(
+            1,
+            $address->id
         );
     }
 
@@ -334,7 +339,7 @@ trait HasOneTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(User $user): int => $user->id,
+                static fn(User $user): int|null => $user->id,
                 $users
             )
         );
@@ -342,7 +347,7 @@ trait HasOneTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(User $user): int => $user->address->id,
+                static fn(User $user): int|null => $user->address->id,
                 $users
             )
         );
@@ -350,7 +355,7 @@ trait HasOneTestTrait
         $this->assertSame(
             [1, 2],
             array_map(
-                static fn(User $user): int => $user->address->user_id,
+                static fn(User $user): int|null => $user->address->user_id,
                 $users
             )
         );
@@ -421,16 +426,6 @@ trait HasOneTestTrait
             ],
         ]);
 
-        $this->assertSame(
-            1,
-            $user->id
-        );
-
-        $this->assertSame(
-            1,
-            $user->address->id
-        );
-
         $this->assertInstanceOf(
             User::class,
             $user
@@ -439,6 +434,16 @@ trait HasOneTestTrait
         $this->assertInstanceOf(
             Address::class,
             $user->address
+        );
+
+        $this->assertSame(
+            1,
+            $user->id
+        );
+
+        $this->assertSame(
+            1,
+            $user->address->id
         );
 
         $this->assertFalse(
@@ -472,6 +477,11 @@ trait HasOneTestTrait
             ],
         ]);
 
+        $this->assertInstanceOf(
+            User::class,
+            $user
+        );
+
         $this->assertSame(
             1,
             $user->id
@@ -479,11 +489,6 @@ trait HasOneTestTrait
 
         $this->assertNull(
             $user->address
-        );
-
-        $this->assertInstanceOf(
-            User::class,
-            $user
         );
 
         $this->assertFalse(
@@ -548,6 +553,16 @@ trait HasOneTestTrait
         $user = $Users->get(1, contain: [
             'Addresses',
         ]);
+
+        $this->assertInstanceOf(
+            User::class,
+            $user
+        );
+
+        $this->assertInstanceOf(
+            Address::class,
+            $user->address
+        );
 
         $this->assertSame(
             'Test 2',

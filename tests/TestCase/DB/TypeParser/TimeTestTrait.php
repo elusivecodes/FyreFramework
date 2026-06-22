@@ -35,10 +35,16 @@ trait TimeTestTrait
         $timeParser = $this->dateTimeType('time');
 
         $timeParser->setServerTimeZone('Australia/Brisbane');
+        $date = $timeParser->fromDatabase('22:59:11');
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $date
+        );
 
         $this->assertSame(
             'Australia/Brisbane',
-            $timeParser->fromDatabase('22:59:11')->getTimeZone()
+            $date->getTimeZone()
         );
     }
 
@@ -55,10 +61,16 @@ trait TimeTestTrait
         $timeParser = $this->dateTimeType('time');
 
         $timeParser->setUserTimeZone('Australia/Brisbane');
+        $date = $timeParser->fromDatabase('22:59:11');
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $date
+        );
 
         $this->assertSame(
             'Australia/Brisbane',
-            $timeParser->fromDatabase('22:59:11')->getTimeZone()
+            $date->getTimeZone()
         );
     }
 
@@ -103,9 +115,16 @@ trait TimeTestTrait
             $timeParser->setLocaleFormat('HH:mm:ss')
         );
 
+        $date = $timeParser->parse('11:59:00');
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $date
+        );
+
         $this->assertSame(
             '11:59:00',
-            $timeParser->parse('11:59:00')->format('HH:mm:ss')
+            $date->format('HH:mm:ss')
         );
     }
 
@@ -118,9 +137,16 @@ trait TimeTestTrait
             $timeParser->setLocaleFormat('hh:mm:ss aa')
         );
 
+        $date = $timeParser->parse('11:59:00');
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $date
+        );
+
         $this->assertSame(
             '11:59:00',
-            $timeParser->parse('11:59:00')->format('HH:mm:ss')
+            $date->format('HH:mm:ss')
         );
     }
 
@@ -155,10 +181,16 @@ trait TimeTestTrait
 
         $timeParser->setUserTimeZone('Australia/Brisbane');
         $timeParser->setLocaleFormat('HH:mm:ss');
+        $date = $timeParser->parse('00:00:00');
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $date
+        );
 
         $this->assertSame(
             'Australia/Brisbane',
-            $timeParser->parse('00:00:00')->getTimeZone()
+            $date->getTimeZone()
         );
     }
 

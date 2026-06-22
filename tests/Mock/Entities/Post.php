@@ -12,8 +12,8 @@ use Fyre\Utility\DateTime\DateTime;
  * @property string|null $title
  * @property string|null $content
  * @property DateTime|null $deleted
- * @property User|null $user
- * @property Comment[]|null $comments
- * @property Tag[]|null $tags
+ * @property User $user
+ * @property Comment[] $comments
+ * @property Tag[] $tags
  */
 class Post extends Entity {}

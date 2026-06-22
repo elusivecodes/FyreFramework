@@ -8,6 +8,6 @@ use Fyre\ORM\Entity;
 /**
  * @property int|null $id
  * @property string $name
- * @property Child[]|null $children
+ * @property Child[] $children
  */
 class Item extends Entity {}

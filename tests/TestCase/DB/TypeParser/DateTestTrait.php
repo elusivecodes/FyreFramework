@@ -27,10 +27,16 @@ trait DateTestTrait
         $dateParser = $this->dateTimeType('date');
 
         $dateParser->setServerTimeZone('Australia/Brisbane');
+        $date = $dateParser->fromDatabase('2021-12-31');
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $date
+        );
 
         $this->assertSame(
             '2021-12-30T14:00:00.000+00:00',
-            $dateParser->fromDatabase('2021-12-31')->toISOString()
+            $date->toISOString()
         );
     }
 
@@ -47,10 +53,16 @@ trait DateTestTrait
         $dateParser = $this->dateTimeType('date');
 
         $dateParser->setUserTimeZone('Australia/Brisbane');
+        $date = $dateParser->fromDatabase('2021-12-31');
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $date
+        );
 
         $this->assertSame(
             'Australia/Brisbane',
-            $dateParser->fromDatabase('2021-12-31')->getTimeZone()
+            $date->getTimeZone()
         );
     }
 
@@ -95,9 +107,16 @@ trait DateTestTrait
             $dateParser->setLocaleFormat('eee MMM dd yyyy')
         );
 
+        $date = $dateParser->parse('Sat Jan 01 2022');
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $date
+        );
+
         $this->assertSame(
             '2022-01-01T00:00:00.000+00:00',
-            $dateParser->parse('Sat Jan 01 2022')->toISOString()
+            $date->toISOString()
         );
     }
 
@@ -110,9 +129,16 @@ trait DateTestTrait
             $dateParser->setLocaleFormat('eee MMM dd yyyy')
         );
 
+        $date = $dateParser->parse('2022-01-01');
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $date
+        );
+
         $this->assertSame(
             '2022-01-01T00:00:00.000+00:00',
-            $dateParser->parse('2022-01-01')->toISOString()
+            $date->toISOString()
         );
     }
 
@@ -147,10 +173,16 @@ trait DateTestTrait
 
         $dateParser->setUserTimeZone('Australia/Brisbane');
         $dateParser->setLocaleFormat('eee MMM dd yyyy');
+        $date = $dateParser->parse('Sat Jan 01 2022');
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $date
+        );
 
         $this->assertSame(
             '2021-12-31T14:00:00.000+00:00',
-            $dateParser->parse('Sat Jan 01 2022')->toISOString()
+            $date->toISOString()
         );
     }
 

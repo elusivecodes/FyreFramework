@@ -20,6 +20,7 @@ use Fyre\DB\Schema\SchemaRegistry;
 use Fyre\DB\TypeParser;
 use Fyre\Http\MiddlewareRegistry;
 use Fyre\Http\Session\Session;
+use Fyre\ORM\Entity;
 use Fyre\ORM\EntityLocator;
 use Fyre\ORM\ModelRegistry;
 use Fyre\Router\Router;
@@ -54,6 +55,11 @@ trait ConnectionTrait
             ->find()
             ->where(['Users.id' => 1])
             ->first();
+
+        $this->assertInstanceOf(
+            Entity::class,
+            $authUser
+        );
 
         $this->auth->login($authUser);
     }

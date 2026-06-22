@@ -26,6 +26,11 @@ trait OverlapTestTrait
         $period2 = new Period('2022-01-10', '2022-01-20');
         $period3 = $period1->overlap($period2);
 
+        $this->assertInstanceOf(
+            Period::class,
+            $period3
+        );
+
         $this->assertSame(
             '2022-01-10T00:00:00.000+00:00',
             $period3->start()->toIsoString()
@@ -50,6 +55,11 @@ trait OverlapTestTrait
         $period1 = new Period('2022-01-01', '2022-01-15', excludeBoundaries: 'end');
         $period2 = new Period('2022-01-10', '2022-01-20');
         $period3 = $period1->overlap($period2);
+
+        $this->assertInstanceOf(
+            Period::class,
+            $period3
+        );
 
         $this->assertSame(
             '2022-01-10T00:00:00.000+00:00',
@@ -76,6 +86,11 @@ trait OverlapTestTrait
         $period2 = new Period('2022-01-10', '2022-01-15');
         $period3 = $period1->overlap($period2);
 
+        $this->assertInstanceOf(
+            Period::class,
+            $period3
+        );
+
         $this->assertSame(
             '2022-01-10T00:00:00.000+00:00',
             $period3->start()->toIsoString()
@@ -100,6 +115,11 @@ trait OverlapTestTrait
         $period1 = new Period('2022-01-01', '2022-01-20');
         $period2 = new Period('2022-01-10', '2022-01-15', excludeBoundaries: 'end');
         $period3 = $period1->overlap($period2);
+
+        $this->assertInstanceOf(
+            Period::class,
+            $period3
+        );
 
         $this->assertSame(
             '2022-01-10T00:00:00.000+00:00',
@@ -147,6 +167,11 @@ trait OverlapTestTrait
         $period2 = new Period('2022-01-10', '2022-01-20');
         $period3 = $period1->overlap($period2);
 
+        $this->assertInstanceOf(
+            Period::class,
+            $period3
+        );
+
         $this->assertSame(
             '2022-01-10T00:00:00.000+00:00',
             $period3->start()->toIsoString()
@@ -171,6 +196,11 @@ trait OverlapTestTrait
         $period1 = new Period('2022-01-01', '2022-01-15');
         $period2 = new Period('2022-01-10', '2022-01-20', excludeBoundaries: 'start');
         $period3 = $period1->overlap($period2);
+
+        $this->assertInstanceOf(
+            Period::class,
+            $period3
+        );
 
         $this->assertSame(
             '2022-01-10T00:00:00.000+00:00',
@@ -197,6 +227,11 @@ trait OverlapTestTrait
         $period2 = new Period('2022-01-01', '2022-01-20');
         $period3 = $period1->overlap($period2);
 
+        $this->assertInstanceOf(
+            Period::class,
+            $period3
+        );
+
         $this->assertSame(
             '2022-01-10T00:00:00.000+00:00',
             $period3->start()->toIsoString()
@@ -221,6 +256,11 @@ trait OverlapTestTrait
         $period1 = new Period('2022-01-10', '2022-01-15', excludeBoundaries: 'start');
         $period2 = new Period('2022-01-01', '2022-01-20');
         $period3 = $period1->overlap($period2);
+
+        $this->assertInstanceOf(
+            Period::class,
+            $period3
+        );
 
         $this->assertSame(
             '2022-01-10T00:00:00.000+00:00',
