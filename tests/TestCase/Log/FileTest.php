@@ -27,6 +27,9 @@ use const JSON_UNESCAPED_UNICODE;
 
 final class FileTest extends TestCase
 {
+    /**
+     * @var string[]
+     */
     protected array $levels = [
         'emergency',
         'alert',

@@ -70,6 +70,9 @@ final class LoggerTest extends TestCase
         };
         $jsonSerializable = new class () implements JsonSerializable
         {
+            /**
+             * @return array<string, int>
+             */
             #[Override]
             public function jsonSerialize(): array
             {
@@ -78,6 +81,9 @@ final class LoggerTest extends TestCase
         };
         $arrayable = new class ()
         {
+            /**
+             * @return array<string, int>
+             */
             public function toArray(): array
             {
                 return ['test' => 4];
@@ -85,6 +91,9 @@ final class LoggerTest extends TestCase
         };
         $debuggable = new class ()
         {
+            /**
+             * @return array<string, int>
+             */
             public function __debugInfo(): array
             {
                 return ['test' => 5];

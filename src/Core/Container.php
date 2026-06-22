@@ -96,7 +96,7 @@ class Container implements ContainerInterface
      */
     public static function getInstance(): Container
     {
-        return static::$instance ??= new static();
+        return static::$instance ??= new self();
     }
 
     /**

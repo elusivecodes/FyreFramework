@@ -58,6 +58,8 @@ use function file_exists;
 
 /**
  * Configures core services and application bindings.
+ *
+ * @phpstan-consistent-constructor
  */
 class Engine extends Container
 {

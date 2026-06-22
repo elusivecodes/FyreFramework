@@ -8,6 +8,9 @@ use Fyre\Core\Container;
 use Fyre\Core\ContextualAttribute;
 use Override;
 
+/**
+ * @extends ContextualAttribute<Item>
+ */
 #[Attribute(Attribute::TARGET_PARAMETER)]
 class ItemContext extends ContextualAttribute
 {

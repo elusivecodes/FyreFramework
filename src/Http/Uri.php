@@ -27,6 +27,8 @@ use const ARRAY_FILTER_USE_KEY;
 /**
  * Provides a PSR-7 {@see UriInterface} implementation that wraps an RFC 3986 URI object and
  * adds convenience helpers for query parameters and path segments.
+ *
+ * @phpstan-consistent-constructor
  */
 class Uri implements Stringable, UriInterface
 {

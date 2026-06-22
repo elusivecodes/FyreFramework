@@ -15,9 +15,9 @@ use function number_format;
  */
 class MockEntity extends Entity
 {
-    protected function _getDecimal($value): string
+    protected function _getDecimal(float $value): string
     {
-        return number_format($value ?? 0, 2);
+        return number_format($value, 2);
     }
 
     protected function _getNumber(): float
@@ -25,7 +25,7 @@ class MockEntity extends Entity
         return $this->get('integer');
     }
 
-    protected function _setInteger($value): float
+    protected function _setInteger(float $value): float
     {
         return floor($value);
     }

@@ -21,6 +21,8 @@ use function strtolower;
  * Represents a date period with configurable boundaries.
  *
  * @implements Iterator<int, DateTime>
+ *
+ * @phpstan-consistent-constructor
  */
 class Period implements Countable, Iterator
 {

@@ -13,6 +13,8 @@ use function preg_quote;
 /**
  * Provides simple identification of browser, platform, robot, and mobile device from a user
  * agent string. Matching is heuristic and depends on the order of the built-in pattern maps.
+ *
+ * @phpstan-consistent-constructor
  */
 class UserAgent implements Stringable
 {

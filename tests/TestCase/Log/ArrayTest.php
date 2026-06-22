@@ -21,6 +21,9 @@ use const JSON_UNESCAPED_UNICODE;
 
 final class ArrayTest extends TestCase
 {
+    /**
+     * @var string[]
+     */
     protected array $levels = [
         'emergency',
         'alert',

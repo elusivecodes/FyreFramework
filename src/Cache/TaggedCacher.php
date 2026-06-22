@@ -20,6 +20,8 @@ use function sort;
 
 /**
  * Provides a tagged cache wrapper.
+ *
+ * @phpstan-consistent-constructor
  */
 class TaggedCacher
 {

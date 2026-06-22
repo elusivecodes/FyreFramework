@@ -25,6 +25,8 @@ use function urldecode;
 
 /**
  * Represents a cookie and can parse/format `Set-Cookie` header values.
+ *
+ * @phpstan-consistent-constructor
  */
 class Cookie
 {

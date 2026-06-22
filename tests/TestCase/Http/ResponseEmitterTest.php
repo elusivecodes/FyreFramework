@@ -18,8 +18,14 @@ use function ob_start;
 
 final class ResponseEmitterTest extends TestCase
 {
+    /**
+     * @var array<string, mixed>[]
+     */
     protected static array $cookies = [];
 
+    /**
+     * @var string[]
+     */
     protected static array $headers = [];
 
     protected ResponseEmitter $emitter;

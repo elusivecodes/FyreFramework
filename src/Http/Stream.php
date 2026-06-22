@@ -25,6 +25,7 @@ use function get_resource_type;
 use function is_resource;
 use function preg_match;
 use function rewind;
+use function sprintf;
 use function stream_get_contents;
 use function stream_get_meta_data;
 
@@ -32,6 +33,8 @@ use const SEEK_SET;
 
 /**
  * Provides a PSR-7 {@see StreamInterface} implementation backed by a PHP stream resource.
+ *
+ * @phpstan-consistent-constructor
  */
 class Stream implements StreamInterface, Stringable
 {
@@ -52,6 +55,13 @@ class Stream implements StreamInterface, Stringable
     {
         $resource = fopen($filePath, $mode);
 
+        if ($resource === false) {
+            throw new RuntimeException(sprintf(
+                'File `%s` could not be opened.',
+                $filePath
+            ));
+        }
+
         return new static($resource);
     }
 
@@ -67,10 +77,12 @@ class Stream implements StreamInterface, Stringable
     {
         $resource = fopen('php://temp', 'r+');
 
-        if (is_resource($resource)) {
-            fwrite($resource, $content);
-            rewind($resource);
+        if ($resource === false) {
+            throw new RuntimeException('Temp stream could not be opened.');
         }
+
+        fwrite($resource, $content);
+        rewind($resource);
 
         return new static($resource);
     }

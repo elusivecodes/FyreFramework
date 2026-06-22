@@ -77,6 +77,9 @@ trait TestTrait
         }
     }
 
+    /**
+     * @param ArrayObject<string, mixed> $data
+     */
     #[BeforeParse]
     public function beforeParse(Event $event, ArrayObject $data): void
     {

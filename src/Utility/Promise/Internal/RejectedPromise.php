@@ -16,6 +16,8 @@ use Throwable;
  * RejectedPromise is destroyed.
  *
  * A rejection is considered handled if an onRejected callback is attached via catch/then/finally.
+ *
+ * @phpstan-consistent-constructor
  */
 class RejectedPromise implements PromiseInterface
 {

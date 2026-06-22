@@ -26,7 +26,7 @@ final class MiddlewareRegistryTest extends TestCase
         );
     }
 
-    public function testMapClassString()
+    public function testMapClassString(): void
     {
         $this->middlewareRegistry->map('mock', MockMiddleware::class);
 
@@ -36,7 +36,7 @@ final class MiddlewareRegistryTest extends TestCase
         );
     }
 
-    public function testMapClassStringArguments()
+    public function testMapClassStringArguments(): void
     {
         $this->middlewareRegistry->map('mock', ArgsMiddleware::class, [
             'a' => 1,
@@ -56,7 +56,7 @@ final class MiddlewareRegistryTest extends TestCase
         );
     }
 
-    public function testMapClosure()
+    public function testMapClosure(): void
     {
         $this->middlewareRegistry->map('mock', static fn(): MiddlewareInterface => new MockMiddleware());
 
@@ -66,7 +66,7 @@ final class MiddlewareRegistryTest extends TestCase
         );
     }
 
-    public function testMapClosureArgs()
+    public function testMapClosureArgs(): void
     {
         $this->middlewareRegistry->map('mock', static fn(int $a, int $b): MiddlewareInterface => new ArgsMiddleware($a, $b), [
             'a' => 1,
@@ -86,7 +86,7 @@ final class MiddlewareRegistryTest extends TestCase
         );
     }
 
-    public function testUseClassString()
+    public function testUseClassString(): void
     {
         $this->assertInstanceOf(
             MockMiddleware::class,

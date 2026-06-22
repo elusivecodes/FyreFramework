@@ -170,7 +170,7 @@ class Loader
     /**
      * Returns the class map.
      *
-     * @return array<class-string, string> The class map.
+     * @return array<string, string> The class map.
      */
     public function getClassMap(): array
     {
@@ -355,7 +355,7 @@ class Loader
     /**
      * Attempts to load a class.
      *
-     * @param class-string $className The class name.
+     * @param string $className The class name.
      * @return bool Whether the class was loaded.
      */
     protected function loadClass(string $className): bool
@@ -391,7 +391,7 @@ class Loader
     /**
      * Attempts to load a class from the class map.
      *
-     * @param class-string $className The class name.
+     * @param string $className The class name.
      * @return bool Whether the class was loaded.
      */
     protected function loadClassFromMap(string $className): bool

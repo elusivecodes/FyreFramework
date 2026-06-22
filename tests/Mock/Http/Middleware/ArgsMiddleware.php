@@ -19,6 +19,9 @@ class ArgsMiddleware implements MiddlewareInterface
         protected int|null $b = null
     ) {}
 
+    /**
+     * @return array<int|null>
+     */
     public function getArgs(): array
     {
         return [$this->a, $this->b];

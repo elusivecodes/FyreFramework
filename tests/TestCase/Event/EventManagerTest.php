@@ -279,7 +279,7 @@ final class EventManagerTest extends TestCase
 
         $this->assertSame(
             $this->eventManager,
-            $this->eventManager->off('test', static function() use (&$i): void {})
+            $this->eventManager->off('test', static function(): void {})
         );
 
         $this->eventManager->trigger('test');

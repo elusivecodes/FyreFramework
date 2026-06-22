@@ -32,12 +32,12 @@ use function floor;
 use function implode;
 use function in_array;
 use function is_array;
+use function is_callable;
 use function is_int;
 use function is_object;
 use function iterator_count;
 use function iterator_to_array;
 use function json_encode;
-use function method_exists;
 use function property_exists;
 use function shuffle;
 use function str_repeat;
@@ -60,6 +60,8 @@ use const SORT_STRING;
  * @template TValue
  *
  * @implements IteratorAggregate<TKey, TValue>
+ *
+ * @phpstan-consistent-constructor
  */
 class Collection implements Countable, IteratorAggregate, JsonSerializable, Stringable
 {
@@ -419,7 +421,9 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
      * @template TResult
      *
      * @param array-key[]|(Closure(TValue, TKey): TResult)|string $valuePath The key path of the value.
-     * @return static<int, TResult> The new Collection instance with extracted values.
+     * @return static<int, mixed> The new Collection instance with extracted values.
+     *
+     * @phpstan-return ($valuePath is Closure ? static<int, TResult> : static<int, mixed>)
      */
     public function extract(array|Closure|string $valuePath): static
     {
@@ -685,7 +689,7 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
                 return $item->jsonSerialize();
             }
 
-            if (is_object($item) && method_exists($item, 'toArray')) {
+            if (is_callable([$item, 'toArray'])) {
                 return $item->toArray();
             }
 

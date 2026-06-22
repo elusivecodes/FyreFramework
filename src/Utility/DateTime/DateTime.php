@@ -32,6 +32,8 @@ use const STR_PAD_LEFT;
 
 /**
  * Represents an immutable date and time with locale-aware formatting.
+ *
+ * @phpstan-consistent-constructor
  */
 class DateTime implements JsonSerializable, Stringable
 {

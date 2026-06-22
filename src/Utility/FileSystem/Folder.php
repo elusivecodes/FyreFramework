@@ -30,6 +30,8 @@ use function unlink;
 
 /**
  * Provides folder utilities.
+ *
+ * @phpstan-consistent-constructor
  */
 class Folder
 {

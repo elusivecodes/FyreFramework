@@ -40,9 +40,11 @@ trait ExtractTestTrait
             ],
         ]);
 
+        $extracted = $collection->extract('value');
+
         $this->assertSame(
             [2, 4, 3, 4, 1, 5, 3],
-            $collection->extract('value')->toArray()
+            $extracted->toArray()
         );
     }
 
@@ -79,9 +81,11 @@ trait ExtractTestTrait
             ],
         ]);
 
+        $extracted = $collection->extract(static fn(array $item, int $key): int => $item['value']);
+
         $this->assertSame(
             [2, 4, 3, 4, 1, 5, 3],
-            $collection->extract(static fn(array $item, int $key): int => $item['value'])->toArray()
+            $extracted->toArray()
         );
     }
 
@@ -132,9 +136,11 @@ trait ExtractTestTrait
             ],
         ]);
 
+        $extracted = $collection->extract('data.value');
+
         $this->assertSame(
             [2, 4, 3, 4, 1, 5, 3],
-            $collection->extract('data.value')->toArray()
+            $extracted->toArray()
         );
     }
 }

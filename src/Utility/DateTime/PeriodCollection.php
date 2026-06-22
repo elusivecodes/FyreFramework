@@ -24,6 +24,8 @@ use const ARRAY_FILTER_USE_BOTH;
  *
  * @implements ArrayAccess<int, Period>
  * @implements Iterator<int, Period>
+ *
+ * @phpstan-consistent-constructor
  */
 class PeriodCollection implements ArrayAccess, Countable, Iterator
 {

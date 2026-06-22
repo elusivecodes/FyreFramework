@@ -18,6 +18,8 @@ use const FILEINFO_MIME;
 /**
  * Builds a {@see ClientResponse} suitable for file downloads by setting the body to a file
  * stream and populating common headers such as `Content-Disposition` and `Content-Length`.
+ *
+ * @phpstan-consistent-constructor
  */
 class DownloadResponse extends ClientResponse
 {

@@ -118,7 +118,7 @@ final class RequestHandlerTest extends TestCase
         );
     }
 
-    public function testRunMapClosureWithArgs()
+    public function testRunMapClosureWithArgs(): void
     {
         $this->middlewareRegistry->map('mock', static fn(): MiddlewareInterface => new ArgsMiddleware());
 
@@ -141,7 +141,7 @@ final class RequestHandlerTest extends TestCase
         );
     }
 
-    public function testRunMapWithArgs()
+    public function testRunMapWithArgs(): void
     {
         $this->middlewareRegistry->map('mock', ArgsMiddleware::class);
 
