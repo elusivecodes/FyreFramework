@@ -116,7 +116,7 @@ final class DbMigrationCommandTest extends TestCase
             Command::CODE_SUCCESS,
             $this->commandRunner->run('db:rollback', [
                 'db' => ConnectionManager::DEFAULT,
-                'batches' => 1,
+                'batches' => '1',
             ])
         );
 
@@ -149,7 +149,7 @@ final class DbMigrationCommandTest extends TestCase
             Command::CODE_SUCCESS,
             $this->commandRunner->run('db:rollback', [
                 'db' => ConnectionManager::DEFAULT,
-                'steps' => 2,
+                'steps' => '2',
             ])
         );
 

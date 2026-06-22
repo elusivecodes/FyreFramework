@@ -57,13 +57,24 @@ class ForgeRegistry
      * Maps a Connection class to a Forge handler.
      *
      * @param class-string<Connection> $connectionClass The Connection class.
-     * @param class-string<Forge> $forgeClass The Forge class.
+     * @param class-string $forgeClass The Forge class.
+     *
+     * @throws InvalidArgumentException If the forge class is not valid.
      */
     public function map(string $connectionClass, string $forgeClass): void
     {
+        if (!is_subclass_of($forgeClass, Forge::class)) {
+            throw new InvalidArgumentException(sprintf(
+                'Database forge `%s` must extend `%s`.',
+                $forgeClass,
+                Forge::class
+            ));
+        }
+
         /** @var class-string<Connection> $connectionClass */
         $connectionClass = ltrim($connectionClass, '\\');
 
+        /** @var class-string<Forge> $forgeClass */
         $this->handlers[$connectionClass] = $forgeClass;
     }
 
@@ -102,15 +113,7 @@ class ForgeRegistry
             }
         }
 
-        $forgeClass = (string) $this->handlers[$connectionKey];
-
-        if (!is_subclass_of($forgeClass, Forge::class)) {
-            throw new InvalidArgumentException(sprintf(
-                'Database forge `%s` must extend `%s`.',
-                $forgeClass,
-                Forge::class
-            ));
-        }
+        $forgeClass = $this->handlers[$connectionKey];
 
         return $this->container->build($forgeClass, ['connection' => $connection]);
     }

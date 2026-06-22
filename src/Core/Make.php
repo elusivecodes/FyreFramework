@@ -71,7 +71,6 @@ class Make
     {
         $namespace = static::normalizeSeparators($namespace) |> Loader::normalizeNamespace(...);
 
-        /** @var class-string */
         $className = static::normalizeSeparators($className);
         $className = Loader::normalizeClass($className);
 

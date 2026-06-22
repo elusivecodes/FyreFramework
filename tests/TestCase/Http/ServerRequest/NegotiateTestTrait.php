@@ -29,6 +29,7 @@ trait NegotiateTestTrait
 
         $request = new ServerRequest($this->config, $this->type);
 
+        // @phpstan-ignore argument.type
         $request->negotiate('invalid', []);
     }
 

@@ -99,6 +99,7 @@ final class PeriodTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Exclude boundaries `invalid` is not valid.');
 
+        // @phpstan-ignore argument.type
         new Period('2022-01-01', '2022-01-10', excludeBoundaries: 'invalid');
     }
 
@@ -107,6 +108,7 @@ final class PeriodTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Granularity `invalid` is not valid.');
 
+        // @phpstan-ignore argument.type
         new Period('2022-01-01', '2022-01-10', 'invalid');
     }
 

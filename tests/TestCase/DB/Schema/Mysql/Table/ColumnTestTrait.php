@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\DB\Schema\Mysql\Table;
 
 use Fyre\DB\QueryLiteral;
+use Fyre\DB\Schema\Column;
 use Fyre\DB\Schema\Handlers\Mysql\MysqlColumn;
 use Fyre\Utility\Collection;
 use InvalidArgumentException;
@@ -300,7 +301,7 @@ trait ColumnTestTrait
                 ],
             ],
             $columns->map(
-                static fn(MysqlColumn $column): array => $column->toArray()
+                static fn(Column $column): array => $column->toArray()
             )->toArray()
         );
     }

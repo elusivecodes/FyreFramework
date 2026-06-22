@@ -121,12 +121,10 @@ final class ForgeRegistryTest extends TestCase
 
     public function testUseInvalidForge(): void
     {
-        $this->forgeRegistry->map(SqliteConnection::class, self::class);
-
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Database forge `Tests\TestCase\DB\Forge\ForgeRegistryTest` must extend `Fyre\DB\Forge\Forge`.');
 
-        $this->forgeRegistry->use($this->connection);
+        $this->forgeRegistry->map(SqliteConnection::class, self::class);
     }
 
     public function testUseMissingForge(): void

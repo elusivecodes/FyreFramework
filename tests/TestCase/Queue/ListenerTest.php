@@ -302,6 +302,7 @@ final class ListenerTest extends TestCase
 
     public function testListenerInvalid(): void
     {
+        // @phpstan-ignore argument.type
         $this->queueManager->push('Invalid', ['test' => 1]);
 
         $this->assertSame(

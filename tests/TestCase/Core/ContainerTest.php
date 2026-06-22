@@ -256,6 +256,7 @@ final class ContainerTest extends TestCase
         $this->expectException(ContainerException::class);
         $this->expectExceptionMessage('Method name must be a string.');
 
+        // @phpstan-ignore argument.type
         $this->container->call([Service::class, 1]);
     }
 
@@ -264,6 +265,7 @@ final class ContainerTest extends TestCase
         $this->expectException(ContainerException::class);
         $this->expectExceptionMessage('Callable target must be a class-string or object.');
 
+        // @phpstan-ignore argument.type
         $this->container->call([1, 'value']);
     }
 

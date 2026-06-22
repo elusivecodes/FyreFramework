@@ -38,7 +38,7 @@ class Loader
     use MacroTrait;
 
     /**
-     * @var array<class-string, string>
+     * @var array<string, string>
      */
     protected array $classMap = [];
 
@@ -55,8 +55,8 @@ class Loader
     /**
      * Normalizes a class name.
      *
-     * @param class-string $className The class name.
-     * @return class-string The normalized class name.
+     * @param string $className The class name.
+     * @return string The normalized class name.
      */
     public static function normalizeClass(string $className): string
     {
@@ -77,7 +77,7 @@ class Loader
     /**
      * Adds a class map.
      *
-     * @param array<class-string, string> $classMap The class map.
+     * @param array<string, string> $classMap The class map.
      * @return static The Loader instance.
      */
     public function addClassMap(array $classMap): static
@@ -307,7 +307,7 @@ class Loader
     /**
      * Removes a class name.
      *
-     * @param class-string $className The class name.
+     * @param string $className The class name.
      * @return static The Loader instance.
      */
     public function removeClass(string $className): static

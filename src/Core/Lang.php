@@ -99,7 +99,7 @@ class Lang
      * If the key contains no dot, the full file array is returned (if available).
      *
      * @param string $key The language key.
-     * @param array<string, mixed> $data The data used for formatting.
+     * @param array<array-key, mixed> $data The data used for formatting.
      * @return array<string, mixed>|string|null The formatted language string.
      */
     public function get(string $key, array $data = []): array|string|null

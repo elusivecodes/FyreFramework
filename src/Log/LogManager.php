@@ -127,7 +127,7 @@ class LogManager
      *
      * @param string $level The log level.
      * @param string $message The log message.
-     * @param array<string, mixed> $data Additional data to interpolate.
+     * @param array<array-key, mixed> $data Additional data to interpolate.
      * @param string|string[]|null $scope The log scope(s).
      *
      * @throws BadMethodCallException If the log level is not valid.

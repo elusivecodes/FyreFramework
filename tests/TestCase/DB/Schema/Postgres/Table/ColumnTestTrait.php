@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\DB\Schema\Postgres\Table;
 
 use Fyre\DB\QueryLiteral;
+use Fyre\DB\Schema\Column;
 use Fyre\DB\Schema\Handlers\Postgres\PostgresColumn;
 use Fyre\Utility\Collection;
 use InvalidArgumentException;
@@ -235,7 +236,7 @@ trait ColumnTestTrait
                 ],
             ],
             $columns->map(
-                static fn(PostgresColumn $column): array => $column->toArray()
+                static fn(Column $column): array => $column->toArray()
             )->toArray()
         );
     }

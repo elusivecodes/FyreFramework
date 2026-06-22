@@ -38,8 +38,12 @@ use const FILTER_VALIDATE_IP;
  * message), or a string to provide a custom failure message.
  *
  * Rules can be configured to skip validation when a field is empty and/or not set.
+ * Callbacks are invoked by the container with named context arguments, so callbacks may
+ * declare only the values and services they need.
  *
- * @phpstan-type RuleCallback Closure(mixed ...$args): (bool|string)
+ * @phpstan-consistent-constructor
+ *
+ * @phpstan-type RuleCallback Closure
  */
 class Rule
 {

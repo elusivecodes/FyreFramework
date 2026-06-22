@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Forge\Sqlite\Table;
 
+use Fyre\DB\Forge\Column;
 use Fyre\DB\Forge\ForeignKey;
-use Fyre\DB\Forge\Handlers\Sqlite\SqliteColumn;
 use Fyre\DB\Forge\Index;
 use Fyre\DB\Types\IntegerType;
 use Fyre\DB\Types\StringType;
@@ -124,7 +124,7 @@ final class TableTest extends TestCase
                 ],
             ],
             array_map(
-                static fn(SqliteColumn $column): array => $column->toArray(),
+                static fn(Column $column): array => $column->toArray(),
                 $table->columns()
             )
         );

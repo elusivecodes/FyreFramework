@@ -676,7 +676,7 @@ abstract class Connection
     /**
      * Creates an UpdateQuery.
      *
-     * @param string|string[]|null $table The table.
+     * @param array<mixed>|string|null $table The table.
      * @return UpdateQuery The new UpdateQuery instance.
      */
     public function update(array|string|null $table = null): UpdateQuery

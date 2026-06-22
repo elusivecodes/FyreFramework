@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Forge\Postgres\Table;
 
+use Fyre\DB\Forge\Column;
 use Fyre\DB\Forge\ForeignKey;
-use Fyre\DB\Forge\Handlers\Postgres\PostgresColumn;
-use Fyre\DB\Forge\Handlers\Postgres\PostgresIndex;
+use Fyre\DB\Forge\Index;
 use Fyre\DB\Types\IntegerType;
 use Fyre\DB\Types\StringType;
 use PHPUnit\Framework\TestCase;
@@ -125,7 +125,7 @@ final class TableTest extends TestCase
                 ],
             ],
             array_map(
-                static fn(PostgresColumn $column): array => $column->toArray(),
+                static fn(Column $column): array => $column->toArray(),
                 $table->columns()
             )
         );
@@ -356,7 +356,7 @@ final class TableTest extends TestCase
                 ],
             ],
             array_map(
-                static fn(PostgresIndex $index): array => $index->toArray(),
+                static fn(Index $index): array => $index->toArray(),
                 $table->indexes()
             )
         );

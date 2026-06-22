@@ -57,13 +57,24 @@ class SchemaRegistry
      * Maps a Connection class to a Schema handler.
      *
      * @param class-string<Connection> $connectionClass The Connection class.
-     * @param class-string<Schema> $schemaClass The Schema class.
+     * @param class-string $schemaClass The Schema class.
+     *
+     * @throws InvalidArgumentException If the schema class is not valid.
      */
     public function map(string $connectionClass, string $schemaClass): void
     {
+        if (!is_subclass_of($schemaClass, Schema::class)) {
+            throw new InvalidArgumentException(sprintf(
+                'Database schema `%s` must extend `%s`.',
+                $schemaClass,
+                Schema::class
+            ));
+        }
+
         /** @var class-string<Connection> $connectionClass */
         $connectionClass = ltrim($connectionClass, '\\');
 
+        /** @var class-string<Schema> $schemaClass */
         $this->handlers[$connectionClass] = $schemaClass;
     }
 
@@ -102,15 +113,7 @@ class SchemaRegistry
             }
         }
 
-        $schemaClass = (string) $this->handlers[$connectionKey];
-
-        if (!is_subclass_of($schemaClass, Schema::class)) {
-            throw new InvalidArgumentException(sprintf(
-                'Database schema `%s` must extend `%s`.',
-                $schemaClass,
-                Schema::class
-            ));
-        }
+        $schemaClass = $this->handlers[$connectionKey];
 
         return $this->container->build($schemaClass, ['connection' => $connection]);
     }

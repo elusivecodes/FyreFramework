@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\DB\Schema\Postgres;
 
 use Fyre\DB\Schema\Handlers\Postgres\PostgresTable;
+use Fyre\DB\Schema\Table;
 use Fyre\Utility\Collection;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
@@ -96,7 +97,7 @@ final class SchemaTest extends TestCase
                 ],
             ],
             $tables->map(
-                static fn(PostgresTable $table): array => $table->toArray()
+                static fn(Table $table): array => $table->toArray()
             )->toArray()
         );
     }

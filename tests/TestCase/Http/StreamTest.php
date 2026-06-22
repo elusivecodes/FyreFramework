@@ -26,6 +26,7 @@ final class StreamTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Invalid stream resource.');
 
+        // @phpstan-ignore argument.type
         new Stream(123);
     }
 

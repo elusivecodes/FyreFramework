@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\Sqlite\Model;
 
+use Fyre\ORM\Model;
+use Fyre\ORM\Relationship;
 use Fyre\ORM\Relationships\HasMany;
 
 trait RelationshipTestTrait
@@ -205,15 +207,17 @@ trait RelationshipTestTrait
         $Items->hasMany('Alias', [
             'className' => 'Items',
         ]);
+        /** @var Relationship<Model, Model> $relationship */
+        $relationship = $Items->Alias;
 
         $this->assertSame(
-            $Items->Alias,
-            $Items->Alias->setSource($Others)
+            $relationship,
+            $relationship->setSource($Others)
         );
 
         $this->assertSame(
             $Others,
-            $Items->Alias->getSource()
+            $relationship->getSource()
         );
     }
 
@@ -244,15 +248,17 @@ trait RelationshipTestTrait
         $Items->hasMany('Alias', [
             'className' => 'Items',
         ]);
+        /** @var Relationship<Model, Model> $relationship */
+        $relationship = $Items->Alias;
 
         $this->assertSame(
-            $Items->Alias,
-            $Items->Alias->setTarget($Others)
+            $relationship,
+            $relationship->setTarget($Others)
         );
 
         $this->assertSame(
             $Others,
-            $Items->Alias->getTarget()
+            $relationship->getTarget()
         );
     }
 
