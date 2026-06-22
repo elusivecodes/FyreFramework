@@ -689,8 +689,14 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
                 return $item->jsonSerialize();
             }
 
-            if (is_callable([$item, 'toArray'])) {
-                return $item->toArray();
+            if (!is_object($item)) {
+                return $item;
+            }
+
+            $toArray = [$item, 'toArray'];
+
+            if (is_callable($toArray)) {
+                return $toArray();
             }
 
             return $item;

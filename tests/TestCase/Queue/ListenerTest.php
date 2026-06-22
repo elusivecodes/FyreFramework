@@ -70,7 +70,7 @@ final class ListenerTest extends TestCase
             $this->queue->stats()
         );
 
-        $data = file_get_contents('tmp/exception') |> unserialize(...);
+        $data = unserialize(file_get_contents('tmp/exception') ?: '');
         $message = $data['message'];
         $exception = $data['exception'];
 
@@ -140,7 +140,7 @@ final class ListenerTest extends TestCase
             $this->queue->stats()
         );
 
-        $data = file_get_contents('tmp/exception') |> unserialize(...);
+        $data = unserialize(file_get_contents('tmp/exception') ?: '');
         $message = $data['message'];
         $exception = $data['exception'];
 
@@ -211,7 +211,7 @@ final class ListenerTest extends TestCase
             $this->queue->stats()
         );
 
-        $message = file_get_contents('tmp/failure') |> unserialize(...);
+        $message = unserialize(file_get_contents('tmp/failure') ?: '');
 
         $this->assertInstanceOf(
             Message::class,
@@ -274,7 +274,7 @@ final class ListenerTest extends TestCase
             $this->queue->stats()
         );
 
-        $message = file_get_contents('tmp/failure') |> unserialize(...);
+        $message = unserialize(file_get_contents('tmp/failure') ?: '');
 
         $this->assertInstanceOf(
             Message::class,
@@ -336,7 +336,7 @@ final class ListenerTest extends TestCase
             $this->queue->stats()
         );
 
-        $message = file_get_contents('tmp/invalid') |> unserialize(...);
+        $message = unserialize(file_get_contents('tmp/invalid') ?: '');
 
         $this->assertInstanceOf(
             Message::class,
@@ -397,7 +397,7 @@ final class ListenerTest extends TestCase
             $this->queue->stats()
         );
 
-        $message = file_get_contents('tmp/start') |> unserialize(...);
+        $message = unserialize(file_get_contents('tmp/start') ?: '');
 
         $this->assertInstanceOf(
             Message::class,
@@ -422,7 +422,7 @@ final class ListenerTest extends TestCase
             $message->getConfig()
         );
 
-        $message = file_get_contents('tmp/success') |> unserialize(...);
+        $message = unserialize(file_get_contents('tmp/success') ?: '');
 
         $this->assertInstanceOf(
             Message::class,

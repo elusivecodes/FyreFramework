@@ -141,7 +141,7 @@ trait CallbacksBelongsToTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Address $address): null => $address->id,
+                static fn(Address $address): int|null => $address->id,
                 $addresses
             )
         );
@@ -149,7 +149,7 @@ trait CallbacksBelongsToTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Address $address): null => $address->user->id,
+                static fn(Address $address): int|null => $address->user->id,
                 $addresses
             )
         );
@@ -237,7 +237,7 @@ trait CallbacksBelongsToTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Address $address): null => $address->id,
+                static fn(Address $address): int|null => $address->id,
                 $addresses
             )
         );
@@ -245,7 +245,7 @@ trait CallbacksBelongsToTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Address $address): null => $address->user->id,
+                static fn(Address $address): int|null => $address->user->id,
                 $addresses
             )
         );
@@ -401,7 +401,7 @@ trait CallbacksBelongsToTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Address $address): null => $address->id,
+                static fn(Address $address): int|null => $address->id,
                 $addresses
             )
         );
@@ -409,7 +409,7 @@ trait CallbacksBelongsToTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Address $address): null => $address->user->id,
+                static fn(Address $address): int|null => $address->user->id,
                 $addresses
             )
         );
@@ -497,7 +497,7 @@ trait CallbacksBelongsToTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Address $address): null => $address->id,
+                static fn(Address $address): int|null => $address->id,
                 $addresses
             )
         );
@@ -505,7 +505,7 @@ trait CallbacksBelongsToTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Address $address): null => $address->user->id,
+                static fn(Address $address): int|null => $address->user->id,
                 $addresses
             )
         );

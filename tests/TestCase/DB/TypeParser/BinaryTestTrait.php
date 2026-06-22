@@ -32,6 +32,8 @@ trait BinaryTestTrait
     public function testBinaryFromDatabaseResource(): void
     {
         $handle1 = fopen('data:text/plain;base64,'.base64_encode('test'), 'rb');
+        $this->assertIsResource($handle1);
+
         $handle2 = $this->type->use('binary')->fromDatabase($handle1);
 
         $this->assertSame(
@@ -60,6 +62,8 @@ trait BinaryTestTrait
     public function testBinaryParseResource(): void
     {
         $handle1 = fopen('data:text/plain;base64,'.base64_encode('test'), 'rb');
+        $this->assertIsResource($handle1);
+
         $handle2 = $this->type->use('binary')->parse($handle1);
 
         $this->assertSame(
@@ -88,6 +92,8 @@ trait BinaryTestTrait
     public function testBinaryToDatabaseResource(): void
     {
         $handle1 = fopen('data:text/plain;base64,'.base64_encode('test'), 'rb');
+        $this->assertIsResource($handle1);
+
         $handle2 = $this->type->use('binary')->parse($handle1);
 
         $this->assertSame(

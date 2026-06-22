@@ -7,7 +7,6 @@ use Fyre\Router\Router;
 use Tests\Mock\Controllers\TestController;
 
 /** @var Router $router */
-
 $router->get('test', TestController::class, as: 'test');
 $router->get('test/{id}', TestController::class, as: 'test2');
 

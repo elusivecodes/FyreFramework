@@ -261,9 +261,17 @@ final class QueueWorkerCommandTest extends TestCase
             ],
         ]);
 
-        $this->input = fopen('php://memory', 'r+b');
-        $this->output = fopen('php://memory', 'r+b');
-        $this->error = fopen('php://memory', 'r+b');
+        $input = fopen('php://memory', 'r+b');
+        $output = fopen('php://memory', 'r+b');
+        $error = fopen('php://memory', 'r+b');
+
+        $this->assertIsResource($input);
+        $this->assertIsResource($output);
+        $this->assertIsResource($error);
+
+        $this->input = $input;
+        $this->output = $output;
+        $this->error = $error;
 
         $this->console = $this->container->instance(
             Console::class,

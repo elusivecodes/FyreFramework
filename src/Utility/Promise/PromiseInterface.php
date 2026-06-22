@@ -17,7 +17,7 @@ interface PromiseInterface
      * Note: If the callback returns a PromiseInterface, it is awaited before the
      * promise chain continues.
      *
-     * @param Closure(Throwable|null): mixed $onRejected The rejected callback.
+     * @param Closure(Throwable): mixed $onRejected The rejected callback.
      * @return PromiseInterface The new Promise instance.
      */
     public function catch(Closure $onRejected): PromiseInterface;
@@ -40,7 +40,7 @@ interface PromiseInterface
      * is invoked if the Promise is rejected.
      *
      * @param Closure $onFulfilled The fulfilled callback.
-     * @param Closure(Throwable|null): mixed $onRejected The rejected callback.
+     * @param Closure(Throwable): mixed $onRejected The rejected callback.
      * @return PromiseInterface The new Promise instance.
      */
     public function then(Closure|null $onFulfilled, Closure|null $onRejected = null): PromiseInterface;

@@ -14,7 +14,7 @@ final class DownloadResponseTest extends TestCase
 {
     public function testCreateFromString(): void
     {
-        $data = file_get_contents('tests/assets/test.txt');
+        $data = file_get_contents('tests/assets/test.txt') ?: '';
 
         $response = DownloadResponse::createFromString($data, 'file.txt');
 

@@ -102,7 +102,7 @@ trait CallbacksHasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $user->posts
             )
         );
@@ -110,7 +110,7 @@ trait CallbacksHasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->user_id,
+                static fn(Post $post): int|null => $post->user_id,
                 $user->posts
             )
         );
@@ -166,7 +166,7 @@ trait CallbacksHasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(User $user): null => $user->id,
+                static fn(User $user): int|null => $user->id,
                 $users
             )
         );
@@ -178,7 +178,7 @@ trait CallbacksHasManyTestTrait
             ],
             array_map(
                 static fn(User $user): array => array_map(
-                    static fn(Post $post): null => $post->id,
+                    static fn(Post $post): int|null => $post->id,
                     $user->posts
                 ),
                 $users
@@ -192,7 +192,7 @@ trait CallbacksHasManyTestTrait
             ],
             array_map(
                 static fn(User $user): array => array_map(
-                    static fn(Post $post): null => $post->user_id,
+                    static fn(Post $post): int|null => $post->user_id,
                     $user->posts
                 ),
                 $users
@@ -239,7 +239,7 @@ trait CallbacksHasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $user->posts
             )
         );
@@ -247,7 +247,7 @@ trait CallbacksHasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->user_id,
+                static fn(Post $post): int|null => $post->user_id,
                 $user->posts
             )
         );
@@ -303,7 +303,7 @@ trait CallbacksHasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(User $user): null => $user->id,
+                static fn(User $user): int|null => $user->id,
                 $users
             )
         );
@@ -315,7 +315,7 @@ trait CallbacksHasManyTestTrait
             ],
             array_map(
                 static fn(User $user): array => array_map(
-                    static fn(Post $post): null => $post->id,
+                    static fn(Post $post): int|null => $post->id,
                     $user->posts
                 ),
                 $users
@@ -329,7 +329,7 @@ trait CallbacksHasManyTestTrait
             ],
             array_map(
                 static fn(User $user): array => array_map(
-                    static fn(Post $post): null => $post->user_id,
+                    static fn(Post $post): int|null => $post->user_id,
                     $user->posts
                 ),
                 $users
@@ -459,7 +459,7 @@ trait CallbacksHasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $user->posts
             )
         );
@@ -467,7 +467,7 @@ trait CallbacksHasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->user_id,
+                static fn(Post $post): int|null => $post->user_id,
                 $user->posts
             )
         );
@@ -524,7 +524,7 @@ trait CallbacksHasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(User $user): null => $user->id,
+                static fn(User $user): int|null => $user->id,
                 $users
             )
         );
@@ -536,7 +536,7 @@ trait CallbacksHasManyTestTrait
             ],
             array_map(
                 static fn(User $user): array => array_map(
-                    static fn(Post $post): null => $post->id,
+                    static fn(Post $post): int|null => $post->id,
                     $user->posts
                 ),
                 $users
@@ -550,7 +550,7 @@ trait CallbacksHasManyTestTrait
             ],
             array_map(
                 static fn(User $user): array => array_map(
-                    static fn(Post $post): null => $post->user_id,
+                    static fn(Post $post): int|null => $post->user_id,
                     $user->posts
                 ),
                 $users
@@ -597,7 +597,7 @@ trait CallbacksHasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $user->posts
             )
         );
@@ -605,7 +605,7 @@ trait CallbacksHasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->user_id,
+                static fn(Post $post): int|null => $post->user_id,
                 $user->posts
             )
         );
@@ -661,7 +661,7 @@ trait CallbacksHasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(User $user): null => $user->id,
+                static fn(User $user): int|null => $user->id,
                 $users
             )
         );
@@ -673,7 +673,7 @@ trait CallbacksHasManyTestTrait
             ],
             array_map(
                 static fn(User $user): array => array_map(
-                    static fn(Post $post): null => $post->id,
+                    static fn(Post $post): int|null => $post->id,
                     $user->posts
                 ),
                 $users
@@ -687,7 +687,7 @@ trait CallbacksHasManyTestTrait
             ],
             array_map(
                 static fn(User $user): array => array_map(
-                    static fn(Post $post): null => $post->user_id,
+                    static fn(Post $post): int|null => $post->user_id,
                     $user->posts
                 ),
                 $users
@@ -734,7 +734,7 @@ trait CallbacksHasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $user->posts
             )
         );
@@ -742,7 +742,7 @@ trait CallbacksHasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->user_id,
+                static fn(Post $post): int|null => $post->user_id,
                 $user->posts
             )
         );
@@ -820,7 +820,7 @@ trait CallbacksHasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $user->posts
             )
         );
@@ -828,7 +828,7 @@ trait CallbacksHasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->user_id,
+                static fn(Post $post): int|null => $post->user_id,
                 $user->posts
             )
         );
@@ -873,7 +873,7 @@ trait CallbacksHasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $user->posts
             )
         );
@@ -881,7 +881,7 @@ trait CallbacksHasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->user_id,
+                static fn(Post $post): int|null => $post->user_id,
                 $user->posts
             )
         );

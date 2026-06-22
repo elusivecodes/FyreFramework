@@ -261,7 +261,7 @@ trait HasManyTestTrait
         $this->assertSame(
             [null, null, null, null],
             array_map(
-                static fn(Post $post): null => $post->user_id,
+                static fn(Post $post): int|null => $post->user_id,
                 $this->modelRegistry->use('Posts')
                     ->find()
                     ->toArray()
@@ -300,7 +300,7 @@ trait HasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->user_id,
+                static fn(Post $post): int|null => $post->user_id,
                 $this->modelRegistry->use('Posts')
                     ->find()
                     ->toArray()
@@ -941,7 +941,7 @@ trait HasManyTestTrait
         $this->assertSame(
             [null, null, null, null],
             array_map(
-                static fn(Post $post): null => $post->user_id,
+                static fn(Post $post): int|null => $post->user_id,
                 $this->modelRegistry->use('Posts')
                     ->find()
                     ->toArray()
@@ -982,7 +982,7 @@ trait HasManyTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->user_id,
+                static fn(Post $post): int|null => $post->user_id,
                 $this->modelRegistry->use('Posts')
                     ->find()
                     ->toArray()

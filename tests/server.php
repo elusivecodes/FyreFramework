@@ -58,7 +58,7 @@ switch ($_SERVER['SCRIPT_NAME']) {
         echo $_SERVER['HTTP_ACCEPT'] ?? '';
         break;
     case '/json':
-        $input = file_get_contents('php://input');
+        $input = file_get_contents('php://input') ?: '';
         $data = json_decode($input, true);
 
         header('Content-Type: application/json');

@@ -138,7 +138,7 @@ trait ManyToManyCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Tag $tag): null => $tag->id,
+                static fn(Tag $tag): int|null => $tag->id,
                 $post->tags
             )
         );
@@ -199,7 +199,7 @@ trait ManyToManyCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $posts
             )
         );
@@ -211,7 +211,7 @@ trait ManyToManyCallbacksTestTrait
             ],
             array_map(
                 static fn(Post $post): array => array_map(
-                    static fn(Tag $tag): null => $tag->id,
+                    static fn(Tag $tag): int|null => $tag->id,
                     $post->tags
                 ),
                 $posts
@@ -263,7 +263,7 @@ trait ManyToManyCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Tag $tag): null => $tag->id,
+                static fn(Tag $tag): int|null => $tag->id,
                 $post->tags
             )
         );
@@ -324,7 +324,7 @@ trait ManyToManyCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $posts
             )
         );
@@ -336,7 +336,7 @@ trait ManyToManyCallbacksTestTrait
             ],
             array_map(
                 static fn(Post $post): array => array_map(
-                    static fn(Tag $tag): null => $tag->id,
+                    static fn(Tag $tag): int|null => $tag->id,
                     $post->tags
                 ),
                 $posts
@@ -487,7 +487,7 @@ trait ManyToManyCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Tag $tag): null => $tag->id,
+                static fn(Tag $tag): int|null => $tag->id,
                 $post->tags
             )
         );
@@ -548,7 +548,7 @@ trait ManyToManyCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $posts
             )
         );
@@ -560,7 +560,7 @@ trait ManyToManyCallbacksTestTrait
             ],
             array_map(
                 static fn(Post $post): array => array_map(
-                    static fn(Tag $tag): null => $tag->id,
+                    static fn(Tag $tag): int|null => $tag->id,
                     $post->tags
                 ),
                 $posts
@@ -612,7 +612,7 @@ trait ManyToManyCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Tag $tag): null => $tag->id,
+                static fn(Tag $tag): int|null => $tag->id,
                 $post->tags
             )
         );
@@ -673,7 +673,7 @@ trait ManyToManyCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Post $post): null => $post->id,
+                static fn(Post $post): int|null => $post->id,
                 $posts
             )
         );
@@ -685,7 +685,7 @@ trait ManyToManyCallbacksTestTrait
             ],
             array_map(
                 static fn(Post $post): array => array_map(
-                    static fn(Tag $tag): null => $tag->id,
+                    static fn(Tag $tag): int|null => $tag->id,
                     $post->tags
                 ),
                 $posts
@@ -737,7 +737,7 @@ trait ManyToManyCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Tag $tag): null => $tag->id,
+                static fn(Tag $tag): int|null => $tag->id,
                 $post->tags
             )
         );
@@ -825,7 +825,7 @@ trait ManyToManyCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Tag $tag): null => $tag->id,
+                static fn(Tag $tag): int|null => $tag->id,
                 $post->tags
             )
         );
@@ -875,7 +875,7 @@ trait ManyToManyCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(Tag $tag): null => $tag->id,
+                static fn(Tag $tag): int|null => $tag->id,
                 $post->tags
             )
         );

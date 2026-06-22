@@ -141,7 +141,7 @@ trait HasOneCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(User $user): null => $user->id,
+                static fn(User $user): int|null => $user->id,
                 $users
             )
         );
@@ -149,7 +149,7 @@ trait HasOneCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(User $user): null => $user->address->id,
+                static fn(User $user): int|null => $user->address->id,
                 $users
             )
         );
@@ -237,7 +237,7 @@ trait HasOneCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(User $user): null => $user->id,
+                static fn(User $user): int|null => $user->id,
                 $users
             )
         );
@@ -245,7 +245,7 @@ trait HasOneCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(User $user): null => $user->address->id,
+                static fn(User $user): int|null => $user->address->id,
                 $users
             )
         );
@@ -401,7 +401,7 @@ trait HasOneCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(User $user): null => $user->id,
+                static fn(User $user): int|null => $user->id,
                 $users
             )
         );
@@ -409,7 +409,7 @@ trait HasOneCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(User $user): null => $user->address->id,
+                static fn(User $user): int|null => $user->address->id,
                 $users
             )
         );
@@ -497,7 +497,7 @@ trait HasOneCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(User $user): null => $user->id,
+                static fn(User $user): int|null => $user->id,
                 $users
             )
         );
@@ -505,7 +505,7 @@ trait HasOneCallbacksTestTrait
         $this->assertSame(
             [null, null],
             array_map(
-                static fn(User $user): null => $user->address->id,
+                static fn(User $user): int|null => $user->address->id,
                 $users
             )
         );

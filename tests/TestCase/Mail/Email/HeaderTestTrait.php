@@ -90,10 +90,13 @@ trait HeaderTestTrait
     public function testHeaderDate(): void
     {
         $headers = $this->email->getFullHeaders();
+        $date = $headers['Date'];
+
+        $this->assertIsString($date);
 
         $this->assertInstanceOf(
             DateTime::class,
-            DateTime::createFromFormat(DATE_RFC2822, $headers['Date'])
+            DateTime::createFromFormat(DATE_RFC2822, $date)
         );
     }
 
@@ -127,10 +130,13 @@ trait HeaderTestTrait
     public function testHeaderMessageId(): void
     {
         $headers = $this->email->getFullHeaders();
+        $messageId = $headers['Message-ID'];
+
+        $this->assertIsString($messageId);
 
         $this->assertMatchesRegularExpression(
             '/<[a-z0-9]{42}@.*>/',
-            $headers['Message-ID']
+            $messageId
         );
     }
 

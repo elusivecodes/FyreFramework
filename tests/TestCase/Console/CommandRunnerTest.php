@@ -433,8 +433,14 @@ final class CommandRunnerTest extends TestCase
     #[Override]
     protected function setUp(): void
     {
-        $this->input = fopen('php://memory', 'r+b');
-        $this->output = fopen('php://memory', 'r+b');
+        $input = fopen('php://memory', 'r+b');
+        $output = fopen('php://memory', 'r+b');
+
+        $this->assertIsResource($input);
+        $this->assertIsResource($output);
+
+        $this->input = $input;
+        $this->output = $output;
 
         $console = new Console($this->input, $this->output, $this->output);
 

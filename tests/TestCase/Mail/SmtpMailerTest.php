@@ -13,7 +13,6 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 use function array_shift;
-use function assert;
 use function base64_encode;
 use function fopen;
 use function str_contains;
@@ -44,7 +43,7 @@ final class SmtpMailerTest extends TestCase
 
         Closure::bind(function(): void {
             $this->authenticate();
-        }, $this->mailer, $this->mailer)();
+        }, $this->mailer, SmtpMailer::class)();
 
         $this->assertSame(
             [
@@ -63,9 +62,12 @@ final class SmtpMailerTest extends TestCase
         ];
 
         Closure::bind(function(): void {
-            $this->socket = fopen('php://temp', 'r+');
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            $this->socket = $socket;
             $this->authenticate();
-        }, $this->mailer, $this->mailer)();
+        }, $this->mailer, SmtpMailer::class)();
 
         $this->assertSame(
             [
@@ -85,9 +87,12 @@ final class SmtpMailerTest extends TestCase
         ];
 
         Closure::bind(function(): void {
-            $this->socket = fopen('php://temp', 'r+');
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            $this->socket = $socket;
             $this->authenticate();
-        }, $this->mailer, $this->mailer)();
+        }, $this->mailer, SmtpMailer::class)();
     }
 
     public function testDestruct(): void
@@ -97,9 +102,12 @@ final class SmtpMailerTest extends TestCase
         ];
 
         Closure::bind(function(): void {
-            $this->socket = fopen('php://temp', 'r+');
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            $this->socket = $socket;
             $this->__destruct();
-        }, $this->mailer, $this->mailer)();
+        }, $this->mailer, SmtpMailer::class)();
 
         $this->assertSame(
             [
@@ -111,12 +119,13 @@ final class SmtpMailerTest extends TestCase
         $this->assertNull(
             Closure::bind(function() {
                 return $this->socket;
-            }, $this->mailer, $this->mailer)()
+            }, $this->mailer, SmtpMailer::class)()
         );
     }
 
     public function testEndKeepAlive(): void
     {
+        /** @var SmtpMailer&Stub $mailer */
         $mailer = $this->getStubBuilder(SmtpMailer::class)
             ->setConstructorArgs([$this->container, [
                 'host' => 'smtp.example.com',
@@ -126,8 +135,6 @@ final class SmtpMailerTest extends TestCase
             ]])
             ->onlyMethods(['getData', 'sendData'])
             ->getStub();
-
-        assert($mailer instanceof Stub);
 
         $sent = [];
         $replies = [
@@ -145,9 +152,12 @@ final class SmtpMailerTest extends TestCase
             });
 
         Closure::bind(function(): void {
-            $this->socket = fopen('php://temp', 'r+');
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            $this->socket = $socket;
             $this->end();
-        }, $mailer, $mailer)();
+        }, $mailer, SmtpMailer::class)();
 
         $this->assertSame(
             [
@@ -158,11 +168,12 @@ final class SmtpMailerTest extends TestCase
 
         Closure::bind(function(): void {
             $this->socket = null;
-        }, $mailer, $mailer)();
+        }, $mailer, SmtpMailer::class)();
     }
 
     public function testSend(): void
     {
+        /** @var SmtpMailer&Stub $mailer */
         $mailer = $this->getStubBuilder(SmtpMailer::class)
             ->setConstructorArgs([$this->container, [
                 'host' => 'smtp.example.com',
@@ -172,8 +183,6 @@ final class SmtpMailerTest extends TestCase
             ]])
             ->onlyMethods(['getData', 'sendData'])
             ->getStub();
-
-        assert($mailer instanceof Stub);
 
         $sent = [];
         $replies = [
@@ -195,8 +204,11 @@ final class SmtpMailerTest extends TestCase
             });
 
         Closure::bind(function(): void {
-            $this->socket = fopen('php://temp', 'r+');
-        }, $mailer, $mailer)();
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            $this->socket = $socket;
+        }, $mailer, SmtpMailer::class)();
 
         $email = $mailer->email()
             ->setFrom('from@example.com')
@@ -237,11 +249,12 @@ final class SmtpMailerTest extends TestCase
 
         Closure::bind(function(): void {
             $this->socket = null;
-        }, $mailer, $mailer)();
+        }, $mailer, SmtpMailer::class)();
     }
 
     public function testSendCommandHelloAuth(): void
     {
+        /** @var SmtpMailer&Stub $mailer */
         $mailer = $this->getStubBuilder(SmtpMailer::class)
             ->setConstructorArgs([$this->container, [
                 'host' => 'smtp.example.com',
@@ -252,8 +265,6 @@ final class SmtpMailerTest extends TestCase
             ]])
             ->onlyMethods(['getData', 'sendData'])
             ->getStub();
-
-        assert($mailer instanceof Stub);
 
         $sent = [];
         $replies = [
@@ -271,9 +282,12 @@ final class SmtpMailerTest extends TestCase
             });
 
         Closure::bind(function(): void {
-            $this->socket = fopen('php://temp', 'r+');
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            $this->socket = $socket;
             $this->sendCommand('hello');
-        }, $mailer, $mailer)();
+        }, $mailer, SmtpMailer::class)();
 
         $this->assertSame(
             [
@@ -284,7 +298,7 @@ final class SmtpMailerTest extends TestCase
 
         Closure::bind(function(): void {
             $this->socket = null;
-        }, $mailer, $mailer)();
+        }, $mailer, SmtpMailer::class)();
     }
 
     public function testSendCommandInvalidCommand(): void
@@ -293,9 +307,12 @@ final class SmtpMailerTest extends TestCase
         $this->expectExceptionMessage('SMTP command `invalid` is not valid.');
 
         Closure::bind(function(): void {
-            $this->socket = fopen('php://temp', 'r+');
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            $this->socket = $socket;
             $this->sendCommand('invalid');
-        }, $this->mailer, $this->mailer)();
+        }, $this->mailer, SmtpMailer::class)();
     }
 
     public function testSendCommandInvalidReply(): void
@@ -308,13 +325,17 @@ final class SmtpMailerTest extends TestCase
         ];
 
         Closure::bind(function(): void {
-            $this->socket = fopen('php://temp', 'r+');
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            $this->socket = $socket;
             $this->sendCommand('data');
-        }, $this->mailer, $this->mailer)();
+        }, $this->mailer, SmtpMailer::class)();
     }
 
     public function testSendCommandRecipientWithDsn(): void
     {
+        /** @var SmtpMailer&Stub $mailer */
         $mailer = $this->getStubBuilder(SmtpMailer::class)
             ->setConstructorArgs([$this->container, [
                 'host' => 'smtp.example.com',
@@ -324,8 +345,6 @@ final class SmtpMailerTest extends TestCase
             ]])
             ->onlyMethods(['getData', 'sendData'])
             ->getStub();
-
-        assert($mailer instanceof Stub);
 
         $sent = [];
         $replies = [
@@ -343,9 +362,12 @@ final class SmtpMailerTest extends TestCase
             });
 
         Closure::bind(function(): void {
-            $this->socket = fopen('php://temp', 'r+');
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            $this->socket = $socket;
             $this->sendCommand('to', 'to@example.com');
-        }, $mailer, $mailer)();
+        }, $mailer, SmtpMailer::class)();
 
         $this->assertSame(
             [
@@ -356,20 +378,23 @@ final class SmtpMailerTest extends TestCase
 
         Closure::bind(function(): void {
             $this->socket = null;
-        }, $mailer, $mailer)();
+        }, $mailer, SmtpMailer::class)();
     }
 
     public function testWakeup(): void
     {
         Closure::bind(function(): void {
-            $this->socket = fopen('php://temp', 'r+');
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            $this->socket = $socket;
             $this->__wakeup();
-        }, $this->mailer, $this->mailer)();
+        }, $this->mailer, SmtpMailer::class)();
 
         $this->assertNull(
             Closure::bind(function() {
                 return $this->socket;
-            }, $this->mailer, $this->mailer)()
+            }, $this->mailer, SmtpMailer::class)()
         );
     }
 
@@ -379,7 +404,8 @@ final class SmtpMailerTest extends TestCase
         $this->container = new Container();
         $this->container->singleton(Config::class);
 
-        $this->mailer = $this->getStubBuilder(SmtpMailer::class)
+        /** @var SmtpMailer&Stub $mailer */
+        $mailer = $this->getStubBuilder(SmtpMailer::class)
             ->setConstructorArgs([$this->container, [
                 'host' => 'smtp.example.com',
                 'username' => 'user',
@@ -388,14 +414,14 @@ final class SmtpMailerTest extends TestCase
             ->onlyMethods(['getData', 'sendData'])
             ->getStub();
 
-        assert($this->mailer instanceof Stub);
+        $this->mailer = $mailer;
 
-        $this->mailer->method('getData')
+        $mailer->method('getData')
             ->willReturnCallback(function(): string {
                 return array_shift($this->replies) ?? '';
             });
 
-        $this->mailer->method('sendData')
+        $mailer->method('sendData')
             ->willReturnCallback(function(string $data): void {
                 $this->sent[] = $data;
             });
@@ -406,6 +432,6 @@ final class SmtpMailerTest extends TestCase
     {
         Closure::bind(function(): void {
             $this->socket = null;
-        }, $this->mailer, $this->mailer)();
+        }, $this->mailer, SmtpMailer::class)();
     }
 }

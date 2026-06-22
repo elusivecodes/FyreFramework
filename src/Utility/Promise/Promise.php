@@ -77,7 +77,7 @@ class Promise implements PromiseInterface
                         static function(mixed $value = null) use ($i, &$values): void {
                             $values[$i] = $value;
                         },
-                        static function(Throwable|null $reason = null) use (&$rejected, $reject): void {
+                        static function(Throwable $reason) use (&$rejected, $reject): void {
                             $rejected = true;
                             $reject($reason);
                         }
@@ -170,8 +170,8 @@ class Promise implements PromiseInterface
             static function(mixed $value) use (&$result): void {
                 $result = $value;
             },
-            static function(Throwable|null $e): void {
-                throw $e ?? new RuntimeException();
+            static function(Throwable $e): void {
+                throw $e;
             }
         );
 
@@ -289,7 +289,7 @@ class Promise implements PromiseInterface
         return $this->then(
             static fn(mixed $value): PromiseInterface => Promise::resolve($onFinally())
                 ->then(static fn(): mixed => $value),
-            static fn(Throwable|null $reason): PromiseInterface => Promise::resolve($onFinally())
+            static fn(Throwable $reason): PromiseInterface => Promise::resolve($onFinally())
                 ->then(static fn(): RejectedPromise => static::reject($reason))
         );
     }

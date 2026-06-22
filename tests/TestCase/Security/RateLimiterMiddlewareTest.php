@@ -747,7 +747,7 @@ final class RateLimiterMiddlewareTest extends TestCase
     #[Override]
     protected function tearDown(): void
     {
-        $files = glob('cache/ratelimiter_*');
+        $files = glob('cache/ratelimiter_*') ?: [];
 
         foreach ($files as $file) {
             @unlink($file);
