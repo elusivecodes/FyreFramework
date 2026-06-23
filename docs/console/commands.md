@@ -154,6 +154,7 @@ Common generators:
 - `make:config` - generate a config file
 - `make:controller` - generate a controller class
 - `make:entity` - generate an entity class
+- `make:enum` - generate an enum class
 - `make:fixture` - generate a fixture class
 - `make:form` - generate a form class
 - `make:helper` - generate a helper class
@@ -173,9 +174,13 @@ Examples:
 
 ```php
 $commandRunner->handle(['app', 'make:controller', 'Posts']);
+$commandRunner->handle(['app', 'make:enum', 'Status', '--cases=Draft:draft,Published:published']);
+$commandRunner->handle(['app', 'make:enum', 'State', '--cases=Draft,Published']);
 $commandRunner->handle(['app', 'make:migration', 'CreatePosts']);
 $commandRunner->handle(['app', 'make:template', 'admin.posts.index']);
 ```
+
+`make:enum` defaults to `App\Enums`. The `--cases` option accepts comma-separated case names for unit enums, or `Case:value` pairs for string-backed enums.
 
 ## Writing custom commands
 

@@ -43,6 +43,7 @@ final class MakeCommandTest extends TestCase
     use MakeControllerTestTrait;
     use MakeElementTestTrait;
     use MakeEntityTestTrait;
+    use MakeEnumTestTrait;
     use MakeFixtureTestTrait;
     use MakeFormTestTrait;
     use MakeHelperTestTrait;
@@ -156,6 +157,8 @@ final class MakeCommandTest extends TestCase
         @unlink('tmp/Commands/ExampleCommand.php');
         @unlink('tmp/config/example.php');
         @unlink('tmp/Controllers/ExampleController.php');
+        @unlink('tmp/Enums/State.php');
+        @unlink('tmp/Enums/Status.php');
         @unlink('tmp/Entities/Example.php');
         @unlink('tmp/Fixtures/ExampleFixture.php');
         @unlink('tmp/Forms/ExampleForm.php');
@@ -174,6 +177,7 @@ final class MakeCommandTest extends TestCase
         @rmdir('tmp/Commands');
         @rmdir('tmp/config');
         @rmdir('tmp/Controllers');
+        @rmdir('tmp/Enums');
         @rmdir('tmp/Entities');
         @rmdir('tmp/Fixtures');
         @rmdir('tmp/Forms');

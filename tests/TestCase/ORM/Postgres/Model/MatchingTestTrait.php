@@ -77,7 +77,6 @@ trait MatchingTestTrait
             $user
         );
 
-
         $this->assertInstanceOf(
             Tag::class,
             $user->_matchingData['Tags']
@@ -144,7 +143,6 @@ trait MatchingTestTrait
             User::class,
             $user
         );
-
 
         $this->assertInstanceOf(
             Address::class,
