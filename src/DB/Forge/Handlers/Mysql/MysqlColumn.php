@@ -138,7 +138,6 @@ class MysqlColumn extends Column
                 $this->type = 'float';
                 break;
             case IntegerType::class:
-                $this->unsigned ??= false;
                 $this->precision ??= 11;
 
                 if ($this->precision <= 4) {

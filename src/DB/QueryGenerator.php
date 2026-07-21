@@ -17,6 +17,7 @@ use Fyre\Utility\EnumHelper;
 use InvalidArgumentException;
 use UnitEnum;
 
+use function array_diff_key;
 use function array_filter;
 use function array_first;
 use function array_key_exists;
@@ -239,8 +240,8 @@ abstract class QueryGenerator
         }
 
         $sql .= $this->buildGroupBy($query->getGroupBy());
-        $sql .= $this->buildOrderBy($query->getOrderBy());
         $sql .= $this->buildHaving($query->getHaving(), $binder);
+        $sql .= $this->buildOrderBy($query->getOrderBy());
         $sql .= $this->buildLimit($query->getLimit(), $query->getOffset());
         $sql .= $this->buildEpilog($query->getEpilog());
 
@@ -464,11 +465,24 @@ abstract class QueryGenerator
      */
     protected function buildInsert(array $tables, array $values, ValueBinder|null $binder = null): string
     {
-        $columns = array_keys($values[0] ?? []);
+        $firstRow = $values[0] ?? [];
+        $columns = array_keys($firstRow);
+
+        foreach ($values as $row) {
+            if (
+                count($row) !== count($firstRow) ||
+                array_diff_key($row, $firstRow) !== []
+            ) {
+                throw new InvalidArgumentException('All rows must contain the same columns.');
+            }
+        }
 
         $values = array_map(
-            function(array $values) use ($binder): string {
-                $values = array_map(fn(mixed $value): string => $this->parseExpression($value, $binder), $values);
+            function(array $values) use ($binder, $columns): string {
+                $values = array_map(
+                    fn(string $column): string => $this->parseExpression($values[$column], $binder),
+                    $columns
+                );
 
                 return '('.implode(', ', $values).')';
             },

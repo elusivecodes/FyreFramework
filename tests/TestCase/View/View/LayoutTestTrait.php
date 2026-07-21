@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace Tests\TestCase\View\View;
 
 use Fyre\Event\Event;
-use Fyre\Utility\Path;
 
+use function realpath;
 use function str_replace;
 
 use const PHP_EOL;
@@ -27,7 +27,7 @@ trait LayoutTestTrait
             $ran = true;
 
             $this->assertSame(
-                Path::normalize('./tests/templates/layouts/test.php'),
+                realpath('tests/templates/layouts/test.php'),
                 $filePath
             );
 
@@ -56,7 +56,7 @@ trait LayoutTestTrait
             $ran = true;
 
             $this->assertSame(
-                Path::normalize('./tests/templates/layouts/test.php'),
+                realpath('tests/templates/layouts/test.php'),
                 $filePath
             );
         });

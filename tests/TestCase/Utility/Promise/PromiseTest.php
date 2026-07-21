@@ -10,10 +10,12 @@ use Fyre\Core\Traits\MacroTrait;
 use Fyre\Core\Traits\StaticMacroTrait;
 use Fyre\Utility\Promise\Promise;
 use Fyre\Utility\Promise\PromiseInterface;
+use LogicException;
 use PHPUnit\Framework\TestCase;
 use Throwable;
 
 use function array_diff;
+use function assert;
 use function class_uses;
 
 final class PromiseTest extends TestCase
@@ -185,6 +187,28 @@ final class PromiseTest extends TestCase
         $this->assertTrue($called);
     }
 
+    public function testThenAssimilatesSettledPromise(): void
+    {
+        $resolve = null;
+        $promise = new Promise(static function(Closure $resolver) use (&$resolve): void {
+            $resolve = $resolver;
+        });
+
+        $value = null;
+        $promise
+            ->then(static fn(): PromiseInterface => new Promise(static function(Closure $resolve): void {
+                $resolve(1);
+            }))
+            ->then(static function(int $result) use (&$value): void {
+                $value = $result;
+            });
+
+        assert($resolve instanceof Closure);
+        $resolve();
+
+        $this->assertSame(1, $value);
+    }
+
     public function testThenCatch(): void
     {
         Promise::reject(new Exception('test'))
@@ -244,6 +268,34 @@ final class PromiseTest extends TestCase
             });
 
         $this->assertTrue($called);
+    }
+
+    public function testThenRejectsSelfResolution(): void
+    {
+        $resolve = null;
+        $promise = new Promise(static function(Closure $resolver) use (&$resolve): void {
+            $resolve = $resolver;
+        });
+
+        $next = null;
+        $next = $promise->then(static function() use (&$next): PromiseInterface {
+            if (!$next instanceof PromiseInterface) {
+                throw new LogicException('Chained promise was not initialized.');
+            }
+
+            return $next;
+        });
+
+        $reason = null;
+        $next->catch(static function(Throwable $error) use (&$reason): void {
+            $reason = $error;
+        });
+
+        assert($resolve instanceof Closure);
+        $resolve();
+
+        $this->assertInstanceOf(LogicException::class, $reason);
+        $this->assertSame('Cannot resolve a promise with itself.', $reason->getMessage());
     }
 
     public function testThenResolve(): void

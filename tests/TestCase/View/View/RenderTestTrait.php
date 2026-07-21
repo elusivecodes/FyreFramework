@@ -4,8 +4,9 @@ declare(strict_types=1);
 namespace Tests\TestCase\View\View;
 
 use Fyre\Event\Event;
-use Fyre\Utility\Path;
 use InvalidArgumentException;
+
+use function realpath;
 
 trait RenderTestTrait
 {
@@ -16,7 +17,7 @@ trait RenderTestTrait
             $ran = true;
 
             $this->assertSame(
-                Path::normalize('./tests/templates/test/template.php'),
+                realpath('tests/templates/test/template.php'),
                 $filePath
             );
 
@@ -41,7 +42,7 @@ trait RenderTestTrait
             $ran = true;
 
             $this->assertSame(
-                Path::normalize('./tests/templates/test/template.php'),
+                realpath('tests/templates/test/template.php'),
                 $filePath
             );
         });

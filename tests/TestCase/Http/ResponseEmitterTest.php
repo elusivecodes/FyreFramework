@@ -8,10 +8,8 @@ use Fyre\Http\ClientResponse;
 use Fyre\Http\Cookie;
 use Fyre\Http\ResponseEmitter;
 use Override;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
-use function assert;
 use function class_uses;
 use function ob_get_clean;
 use function ob_start;
@@ -192,8 +190,6 @@ final class ResponseEmitterTest extends TestCase
         $this->emitter = $this->getStubBuilder(ResponseEmitter::class)
             ->onlyMethods(['setHeader', 'setCookie'])
             ->getStub();
-
-        assert($this->emitter instanceof Stub);
 
         $this->emitter
             ->method('setHeader')

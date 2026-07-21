@@ -10,6 +10,7 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\NamespacesTrait;
 use Fyre\DB\Connection;
 use Fyre\DB\ConnectionManager;
+use Fyre\DB\Exceptions\DbException;
 use Fyre\DB\Forge\Forge;
 use Fyre\DB\Forge\ForgeRegistry;
 use ReflectionClass;
@@ -20,6 +21,7 @@ use function in_array;
 use function is_subclass_of;
 use function ksort;
 use function method_exists;
+use function sprintf;
 use function substr;
 
 use const SORT_NATURAL;
@@ -67,6 +69,22 @@ class MigrationRunner
         $this->connection = null;
         $this->history = null;
         $this->migrations = null;
+    }
+
+    /**
+     * Forgets a migration without running its rollback implementation.
+     *
+     * This operation only removes the migration from history. It is intended for explicitly
+     * repairing history when the migration implementation is no longer available.
+     *
+     * @param string $migrationName The migration name.
+     * @return static The MigrationRunner instance.
+     */
+    public function forget(string $migrationName): static
+    {
+        $this->getHistory()->delete($migrationName);
+
+        return $this;
     }
 
     /**
@@ -160,6 +178,8 @@ class MigrationRunner
      * @param int|null $batches The number of batches to rollback.
      * @param int|null $steps The number of steps to rollback.
      * @return static The MigrationRunner instance.
+     *
+     * @throws DbException If a recorded migration implementation cannot be found.
      */
     public function rollback(int|null $batches = 1, int|null $steps = null): static
     {
@@ -183,12 +203,17 @@ class MigrationRunner
             $migrationName = $data['migration'];
             $lastBatch = $data['batch'];
 
-            if (isset($migrations[$migrationName])) {
-                $migration = $this->container->build($migrations[$migrationName], ['forge' => $this->getForge()]);
+            if (!isset($migrations[$migrationName])) {
+                throw new DbException(sprintf(
+                    'Migration implementation `%s` could not be found.',
+                    $migrationName
+                ));
+            }
 
-                if (method_exists($migration, 'down')) {
-                    $this->container->call([$migration, 'down']);
-                }
+            $migration = $this->container->build($migrations[$migrationName], ['forge' => $this->getForge()]);
+
+            if (method_exists($migration, 'down')) {
+                $this->container->call([$migration, 'down']);
             }
 
             $history->delete($migrationName);

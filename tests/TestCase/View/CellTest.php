@@ -10,7 +10,6 @@ use Fyre\Core\Traits\MacroTrait;
 use Fyre\Event\Event;
 use Fyre\Event\EventManager;
 use Fyre\Http\ServerRequest;
-use Fyre\Utility\Path;
 use Fyre\View\Cell;
 use Fyre\View\CellRegistry;
 use Fyre\View\HelperRegistry;
@@ -23,6 +22,7 @@ use RuntimeException;
 use Tests\Mock\Cells\ExampleCell;
 
 use function class_uses;
+use function realpath;
 
 final class CellTest extends TestCase
 {
@@ -121,7 +121,7 @@ final class CellTest extends TestCase
             $ran = true;
 
             $this->assertSame(
-                Path::normalize('./tests/templates/cells/Example/test.php'),
+                realpath('tests/templates/cells/Example/test.php'),
                 $filePath
             );
 
@@ -163,7 +163,7 @@ final class CellTest extends TestCase
             $ran = true;
 
             $this->assertSame(
-                Path::normalize('./tests/templates/cells/Example/test.php'),
+                realpath('tests/templates/cells/Example/test.php'),
                 $filePath
             );
         });

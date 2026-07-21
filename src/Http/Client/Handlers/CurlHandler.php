@@ -207,16 +207,20 @@ class CurlHandler extends ClientHandler
         foreach ($headers as $header) {
             if (strpos($header, 'HTTP') === 0) {
                 if (preg_match('/^HTTP\/([12](?:\.[01])?) (\d+)(?: (.*))?$/', $header, $matches)) {
-                    $response = $response
+                    $protocolVersion = $matches[1] === '2' ? '2.0' : $matches[1];
+
+                    // Discard headers from an informational/proxy response when the next
+                    // response block begins.
+                    $response = new Response()
                         ->withStatus((int) $matches[2], $matches[3] ?? '')
-                        ->withProtocolVersion($matches[1]);
+                        ->withProtocolVersion($protocolVersion);
                 }
             } else if (str_contains($header, ':')) {
                 [$name, $value] = explode(':', $header, 2);
                 $name = trim($name);
                 $value = trim($value);
 
-                $response = $response->withHeader($name, $value);
+                $response = $response->withAddedHeader($name, $value);
             }
         }
 

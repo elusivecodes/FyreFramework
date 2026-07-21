@@ -24,6 +24,7 @@ use function array_map;
 use function array_merge;
 use function array_pop;
 use function array_search;
+use function array_shift;
 use function array_slice;
 use function array_values;
 use function assert;
@@ -33,6 +34,7 @@ use function implode;
 use function in_array;
 use function is_array;
 use function is_callable;
+use function is_int;
 use function is_object;
 use function is_string;
 use function method_exists;
@@ -518,12 +520,29 @@ class Container implements ContainerInterface
     protected function resolveDependencies(array $parameters, array $arguments): array
     {
         $dependencies = [];
+        $positionalArguments = [];
+
+        foreach ($arguments as $key => $argument) {
+            if (!is_int($key)) {
+                continue;
+            }
+
+            $positionalArguments[] = $argument;
+            unset($arguments[$key]);
+        }
+
         foreach ($parameters as $parameter) {
             $paramName = $parameter->getName();
 
             if (array_key_exists($paramName, $arguments)) {
                 $dependencies[] = $arguments[$paramName];
                 unset($arguments[$paramName]);
+
+                continue;
+            }
+
+            if ($positionalArguments !== []) {
+                $dependencies[] = array_shift($positionalArguments);
 
                 continue;
             }
@@ -604,7 +623,7 @@ class Container implements ContainerInterface
             }
         }
 
-        $arguments = array_values($arguments);
+        $arguments = array_merge($positionalArguments, array_values($arguments));
 
         return array_merge($dependencies, $arguments);
     }

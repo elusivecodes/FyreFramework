@@ -5,6 +5,8 @@ namespace Tests\TestCase\DB\Sqlite\Query;
 
 use Fyre\DB\Exceptions\DbException;
 
+use function array_reverse;
+
 trait InsertTestTrait
 {
     public function testInsert(): void
@@ -96,6 +98,38 @@ trait InsertTestTrait
         $this->assertSame(
             2,
             $this->db->affectedRows()
+        );
+    }
+
+    public function testInsertBatchColumnOrderPropertyCases(): void
+    {
+        $rows = [];
+        $expected = [];
+
+        for ($id = 10; $id < 26; $id++) {
+            $row = [
+                'id' => $id,
+                'name' => 'Test '.$id,
+            ];
+
+            $rows[] = ($id % 2) === 0 ?
+                $row :
+                array_reverse($row, true);
+            $expected[] = $row;
+        }
+
+        $this->db->insert()
+            ->into('test')
+            ->values($rows)
+            ->execute();
+
+        $this->assertSame(
+            $expected,
+            $this->db->select()
+                ->from('test')
+                ->orderBy('id ASC')
+                ->execute()
+                ->all()
         );
     }
 

@@ -137,6 +137,16 @@ final class ContainerTest extends TestCase
         $this->container->build(Closure::class);
     }
 
+    public function testBuildPositionalArguments(): void
+    {
+        $argumentService = $this->container->build(ArgumentService::class, [4, 5, 6]);
+
+        $this->assertSame(
+            [4, 5, 6],
+            $argumentService->getArguments()
+        );
+    }
+
     public function testBuildSharedDependency(): void
     {
         $this->container->singleton(InnerService::class);
@@ -305,6 +315,21 @@ final class ContainerTest extends TestCase
 
         $this->assertSame(
             1,
+            $result
+        );
+    }
+
+    public function testCallPositionalArgumentsBeforeAutowiringAndDefaults(): void
+    {
+        $providedContainer = new Container(false);
+
+        $result = $this->container->call(
+            static fn(Container $container, int $a = 1, int $b = 2): array => [$container, $a, $b],
+            [$providedContainer, 4, 'b' => 5]
+        );
+
+        $this->assertSame(
+            [$providedContainer, 4, 5],
             $result
         );
     }

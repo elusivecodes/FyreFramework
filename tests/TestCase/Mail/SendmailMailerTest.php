@@ -11,8 +11,6 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
-use function assert;
-
 final class SendmailMailerTest extends TestCase
 {
     protected Container $container;
@@ -133,7 +131,5 @@ final class SendmailMailerTest extends TestCase
             ->setConstructorArgs([$this->container, []])
             ->onlyMethods(['sendMail'])
             ->getStub();
-
-        assert($this->mailer instanceof Stub);
     }
 }

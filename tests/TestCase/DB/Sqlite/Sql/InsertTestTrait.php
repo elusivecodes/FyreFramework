@@ -7,6 +7,7 @@ use Fyre\DB\Connection;
 use Fyre\DB\Queries\SelectQuery;
 use Fyre\DB\QueryLiteral;
 use Fyre\Utility\DateTime\DateTime;
+use InvalidArgumentException;
 
 trait InsertTestTrait
 {
@@ -58,6 +59,26 @@ trait InsertTestTrait
         );
     }
 
+    public function testInsertColumnOrder(): void
+    {
+        $this->assertSame(
+            'INSERT INTO test (name, value) VALUES (\'Test 1\', 1), (\'Test 2\', 2)',
+            $this->db->insert()
+                ->into('test')
+                ->values([
+                    [
+                        'name' => 'Test 1',
+                        'value' => 1,
+                    ],
+                    [
+                        'value' => 2,
+                        'name' => 'Test 2',
+                    ],
+                ])
+                ->sql()
+        );
+    }
+
     public function testInsertDateTime(): void
     {
         $this->assertSame(
@@ -72,6 +93,25 @@ trait InsertTestTrait
                 ])
                 ->sql()
         );
+    }
+
+    public function testInsertExtraColumn(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('All rows must contain the same columns.');
+
+        $this->db->insert()
+            ->into('test')
+            ->values([
+                [
+                    'name' => 'Test 1',
+                ],
+                [
+                    'name' => 'Test 2',
+                    'value' => 2,
+                ],
+            ])
+            ->sql();
     }
 
     public function testInsertLiteral(): void
@@ -118,6 +158,25 @@ trait InsertTestTrait
                 ])
                 ->sql()
         );
+    }
+
+    public function testInsertMissingColumn(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('All rows must contain the same columns.');
+
+        $this->db->insert()
+            ->into('test')
+            ->values([
+                [
+                    'name' => 'Test 1',
+                    'value' => 1,
+                ],
+                [
+                    'name' => 'Test 2',
+                ],
+            ])
+            ->sql();
     }
 
     public function testInsertOverwrite(): void

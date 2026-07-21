@@ -304,21 +304,24 @@ class Promise implements PromiseInterface
             return $this->result->then($onFulfilled, $onRejected);
         }
 
-        return new Promise(
-            function(Closure $resolve, Closure $reject) use ($onFulfilled, $onRejected): void {
-                $this->handlers[] = static function(PromiseInterface $promise) use ($resolve, $reject, $onFulfilled, $onRejected): void {
+        $next = null;
+        $next = new Promise(
+            function(Closure $resolve, Closure $reject) use (&$next, $onFulfilled, $onRejected): void {
+                $this->handlers[] = static function(PromiseInterface $promise) use (&$next, $resolve, $reject, $onFulfilled, $onRejected): void {
                     $promise = $promise->then($onFulfilled, $onRejected);
 
-                    if ($promise instanceof Promise && $promise->result) {
-                        $promise->handlers[] = static function(PromiseInterface $promise) use ($resolve, $reject): void {
-                            $promise->then($resolve, $reject);
-                        };
-                    } else {
-                        $promise->then($resolve, $reject);
+                    if ($promise === $next) {
+                        $reject(new LogicException('Cannot resolve a promise with itself.'));
+
+                        return;
                     }
+
+                    $promise->then($resolve, $reject);
                 };
             }
         );
+
+        return $next;
     }
 
     /**

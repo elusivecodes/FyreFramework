@@ -102,6 +102,50 @@ final class RouteTest extends TestCase
         );
     }
 
+    public function testCheckPathPlaceholderBindingConstraintAndOptionalMarker(): void
+    {
+        $route = $this->container->build(ControllerRoute::class, [
+            'destination' => [TestController::class, 'test'],
+            'path' => 'test/{item:id?}',
+            'placeholders' => [
+                'item' => '\\d+',
+            ],
+        ]);
+
+        $this->assertSame(
+            ['item' => 'id'],
+            $route->getBindingFields()
+        );
+
+        $matchingRequest = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REQUEST_URI' => '/test/123',
+                ],
+            ],
+        ]);
+
+        $optionalRequest = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REQUEST_URI' => '/test',
+                ],
+            ],
+        ]);
+
+        $invalidRequest = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REQUEST_URI' => '/test/value',
+                ],
+            ],
+        ]);
+
+        $this->assertInstanceOf(ServerRequest::class, $route->parseRequest($matchingRequest));
+        $this->assertInstanceOf(ServerRequest::class, $route->parseRequest($optionalRequest));
+        $this->assertNull($route->parseRequest($invalidRequest));
+    }
+
     public function testGetPath(): void
     {
         $route = $this->container->build(ControllerRoute::class, [

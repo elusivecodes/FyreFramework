@@ -90,6 +90,53 @@ trait UpsertTestTrait
         );
     }
 
+    public function testUpsertBatchColumnOrder(): void
+    {
+        $this->db->insert()
+            ->into('test')
+            ->values([
+                [
+                    'id' => 10,
+                    'name' => 'Old',
+                ],
+            ])
+            ->execute();
+
+        $this->db->upsert(['id'])
+            ->into('test')
+            ->values([
+                [
+                    'id' => 10,
+                    'name' => 'Updated',
+                ],
+                [
+                    'name' => 'New',
+                    'id' => 20,
+                ],
+            ], [
+                'id',
+            ])
+            ->execute();
+
+        $this->assertSame(
+            [
+                [
+                    'id' => 10,
+                    'name' => 'Updated',
+                ],
+                [
+                    'id' => 20,
+                    'name' => 'New',
+                ],
+            ],
+            $this->db->select()
+                ->from('test')
+                ->orderBy('id ASC')
+                ->execute()
+                ->all()
+        );
+    }
+
     public function testUpsertMultipleTables(): void
     {
         $this->expectException(DbException::class);

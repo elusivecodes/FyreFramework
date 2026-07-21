@@ -389,7 +389,7 @@ class Router
         if ($this->baseUri) {
             $basePath = $this->baseUri->getPath() |> static::normalizePath(...);
 
-            if ($basePath !== '/' && str_starts_with($path, $basePath)) {
+            if ($basePath !== '/' && ($path === $basePath || str_starts_with($path, $basePath.'/'))) {
                 $path = substr($path, strlen($basePath)) |> static::normalizePath(...);
             }
         }

@@ -120,7 +120,9 @@ final class RedisTest extends TestCase
     public function testInvalidConnection(): void
     {
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('Redis cache connection error: (Connection refused|Connection timed out)');
+        $this->expectExceptionMessageMatches(
+            '/^Redis cache connection error: (?:Connection refused|Connection timed out)$/'
+        );
 
         $this->cacheManager->build([
             'className' => RedisCacher::class,

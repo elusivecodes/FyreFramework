@@ -26,6 +26,25 @@ class PostgresQueryGenerator extends QueryGenerator
      * {@inheritDoc}
      */
     #[Override]
+    protected function buildLimit(int|null $limit, int $offset): string
+    {
+        $query = '';
+
+        if ($limit) {
+            $query .= ' LIMIT '.$limit;
+        }
+
+        if ($offset) {
+            $query .= ' OFFSET '.$offset;
+        }
+
+        return $query;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
     protected function buildOnConflict(array $conflictKeys, array $values, array $excludeUpdateKeys): string
     {
         $excludeUpdateKeys = array_merge($conflictKeys, $excludeUpdateKeys) |> array_unique(...);

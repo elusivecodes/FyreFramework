@@ -96,8 +96,8 @@ final class CurlHandlerTest extends TestCase
 
     public function testBuildResponseWithMultipleStatusLines(): void
     {
-        $contents = "HTTP/1.1 100 Continue\r\n\r\nHTTP/2.0 201 Created\r\nX-Test: value\r\n\r\nbody";
-        $headerSize = strlen("HTTP/1.1 100 Continue\r\n\r\nHTTP/2.0 201 Created\r\nX-Test: value\r\n\r\n");
+        $contents = "HTTP/1.1 100 Continue\r\nX-Interim: discard\r\n\r\nHTTP/2 201 Created\r\nX-Test: value\r\nSet-Cookie: first=1\r\nSet-Cookie: second=2\r\n\r\nbody";
+        $headerSize = strlen("HTTP/1.1 100 Continue\r\nX-Interim: discard\r\n\r\nHTTP/2 201 Created\r\nX-Test: value\r\nSet-Cookie: first=1\r\nSet-Cookie: second=2\r\n\r\n");
 
         $response = Closure::bind(static function() use ($contents, $headerSize) {
             return CurlHandler::buildResponse($contents, $headerSize);
@@ -122,6 +122,9 @@ final class CurlHandlerTest extends TestCase
             'value',
             $response->getHeaderLine('X-Test')
         );
+
+        $this->assertFalse($response->hasHeader('X-Interim'));
+        $this->assertSame(['first=1', 'second=2'], $response->getHeader('Set-Cookie'));
 
         $this->assertSame(
             'body',

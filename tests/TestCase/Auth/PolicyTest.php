@@ -13,8 +13,6 @@ final class PolicyTest extends TestCase
 
     public function testPolicyCreateAlias(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $this->login();
 
         $this->access->authorize('create', 'Posts');
@@ -31,8 +29,6 @@ final class PolicyTest extends TestCase
 
     public function testPolicyCreateClassName(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $this->login();
 
         $this->access->authorize('create', PostsModel::class);
@@ -49,8 +45,6 @@ final class PolicyTest extends TestCase
 
     public function testPolicyCreateModel(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $this->login();
 
         $Posts = $this->modelRegistry->use('Posts');
@@ -71,8 +65,6 @@ final class PolicyTest extends TestCase
 
     public function testPolicyUpdateAlias(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $this->login();
 
         $this->access->authorize('update', 'Posts', 1);
@@ -89,8 +81,6 @@ final class PolicyTest extends TestCase
 
     public function testPolicyUpdateClassName(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $this->login();
 
         $this->access->authorize('update', PostsModel::class, 1);
@@ -106,8 +96,6 @@ final class PolicyTest extends TestCase
 
     public function testPolicyUpdateEntity(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $this->login();
 
         $Posts = $this->modelRegistry->use('Posts');
@@ -132,8 +120,6 @@ final class PolicyTest extends TestCase
 
     public function testPolicyUpdateModel(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $this->login();
 
         $Posts = $this->modelRegistry->use('Posts');

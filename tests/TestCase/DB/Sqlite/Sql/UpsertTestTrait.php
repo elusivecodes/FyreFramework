@@ -59,6 +59,28 @@ trait UpsertTestTrait
         );
     }
 
+    public function testUpsertColumnOrder(): void
+    {
+        $this->assertSame(
+            'INSERT INTO test (id, name, value) VALUES (1, \'Test 1\', 1), (2, \'Test 2\', 2) ON CONFLICT (id) DO UPDATE SET name = excluded.name, value = excluded.value',
+            $this->db->upsert(['id'])
+                ->into('test')
+                ->values([
+                    [
+                        'id' => 1,
+                        'name' => 'Test 1',
+                        'value' => 1,
+                    ],
+                    [
+                        'value' => 2,
+                        'name' => 'Test 2',
+                        'id' => 2,
+                    ],
+                ])
+                ->sql()
+        );
+    }
+
     public function testUpsertExcludeUpdate(): void
     {
         $this->assertSame(

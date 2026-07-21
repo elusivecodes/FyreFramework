@@ -115,7 +115,7 @@ trait QueryTestTrait
     public function testFindOptionSql(): void
     {
         $this->assertSame(
-            'SELECT Items.id AS "Items__id", CONCAT(Items.name, " ", Items2.name) AS "title" FROM items AS Items LEFT JOIN items AS Items2 ON Items2.id = Items.id WHERE Items.id = 1 GROUP BY Items.id ORDER BY Items.name DESC HAVING title = \'Test Test\' LIMIT 1 FOR UPDATE',
+            'SELECT Items.id AS "Items__id", CONCAT(Items.name, " ", Items2.name) AS "title" FROM items AS Items LEFT JOIN items AS Items2 ON Items2.id = Items.id WHERE Items.id = 1 GROUP BY Items.id HAVING title = \'Test Test\' ORDER BY Items.name DESC LIMIT 1 FOR UPDATE',
             $this->modelRegistry->use('Items')->find(
                 fields: [
                     'title' => 'CONCAT(Items.name, " ", Items2.name)',

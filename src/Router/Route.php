@@ -87,16 +87,7 @@ abstract class Route
         $this->bindingFields = [];
 
         foreach ($placeholders as $placeholder) {
-            $name = $placeholder[1];
-            $field = null;
-
-            if (str_ends_with($name, '?')) {
-                $name = substr($name, 0, -1);
-            }
-
-            if (str_contains($name, ':')) {
-                [$name, $field] = explode(':', $name, 2);
-            }
+            [$name, $field] = static::parsePlaceholder($placeholder[1]);
 
             $this->bindingFields[$name] = $field;
         }
@@ -364,16 +355,10 @@ abstract class Route
         $path = (string) preg_replace_callback(
             '/\/\{([^\}]+)\}/',
             function(array $match): string {
-                $placeholder = $match[1];
+                [$name, , $optional] = static::parsePlaceholder($match[1]);
 
-                $optional = false;
-                if (str_ends_with($placeholder, '?')) {
-                    $placeholder = substr($placeholder, 0, -1);
-                    $optional = true;
-                }
-
-                if (isset($this->placeholders[$placeholder])) {
-                    $pattern = $this->placeholders[$placeholder];
+                if (isset($this->placeholders[$name])) {
+                    $pattern = $this->placeholders[$name];
                 } else {
                     $pattern = '[^/]+';
                 }
@@ -395,4 +380,28 @@ abstract class Route
      * @return ResponseInterface|string The Response or string response.
      */
     abstract protected function process(ServerRequestInterface $request): ResponseInterface|string;
+
+    /**
+     * Parses a route placeholder.
+     *
+     * @param string $placeholder The placeholder definition.
+     * @return array{0: string, 1: string|null, 2: bool} The name, binding field and optional flag.
+     */
+    protected static function parsePlaceholder(string $placeholder): array
+    {
+        $optional = str_ends_with($placeholder, '?');
+
+        if ($optional) {
+            $placeholder = substr($placeholder, 0, -1);
+        }
+
+        if (str_contains($placeholder, ':')) {
+            [$name, $field] = explode(':', $placeholder, 2);
+        } else {
+            $name = $placeholder;
+            $field = null;
+        }
+
+        return [$name, $field, $optional];
+    }
 }

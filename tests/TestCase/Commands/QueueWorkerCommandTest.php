@@ -18,12 +18,10 @@ use Fyre\Queue\QueueManager;
 use Fyre\Utility\Inflector;
 use Fyre\Utility\Path;
 use Override;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Tests\Mock\Jobs\MockJob;
 
-use function assert;
 use function fclose;
 use function file_exists;
 use function fopen;
@@ -219,8 +217,6 @@ final class QueueWorkerCommandTest extends TestCase
             ->setConstructorArgs([$this->console, $this->container])
             ->onlyMethods(['fork'])
             ->getStub();
-
-        assert($command instanceof Stub);
 
         $command->method('fork')
             ->willReturn($pid);

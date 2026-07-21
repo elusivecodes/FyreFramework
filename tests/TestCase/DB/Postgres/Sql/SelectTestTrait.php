@@ -162,7 +162,7 @@ trait SelectTestTrait
     public function testSelectFull(): void
     {
         $this->assertSame(
-            'SELECT DISTINCT test.id, test.name FROM test INNER JOIN test2 ON test2.id = test.id WHERE test.name = \'test\' GROUP BY test.id ORDER BY test.id ASC HAVING value = 1 LIMIT 10, 20 FOR UPDATE',
+            'SELECT DISTINCT test.id, test.name FROM test INNER JOIN test2 ON test2.id = test.id WHERE test.name = \'test\' GROUP BY test.id HAVING value = 1 ORDER BY test.id ASC LIMIT 20 OFFSET 10 FOR UPDATE',
             $this->db->select([
                 'test.id',
                 'test.name',
@@ -258,7 +258,7 @@ trait SelectTestTrait
     public function testSelectLimitWithOffset(): void
     {
         $this->assertSame(
-            'SELECT * FROM test LIMIT 10, 20',
+            'SELECT * FROM test LIMIT 20 OFFSET 10',
             $this->db->select()
                 ->from('test')
                 ->limit(20, 10)
@@ -307,10 +307,21 @@ trait SelectTestTrait
     public function testSelectOffset(): void
     {
         $this->assertSame(
-            'SELECT * FROM test LIMIT 10, 20',
+            'SELECT * FROM test LIMIT 20 OFFSET 10',
             $this->db->select()
                 ->from('test')
                 ->limit(20)
+                ->offset(10)
+                ->sql()
+        );
+    }
+
+    public function testSelectOffsetWithoutLimit(): void
+    {
+        $this->assertSame(
+            'SELECT * FROM test OFFSET 10',
+            $this->db->select()
+                ->from('test')
                 ->offset(10)
                 ->sql()
         );
