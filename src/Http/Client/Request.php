@@ -6,7 +6,6 @@ namespace Fyre\Http\Client;
 use finfo;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Http\Client\Exceptions\RequestException;
-use Fyre\Http\Cookie;
 use Fyre\Http\Request as HttpRequest;
 use Fyre\Http\Stream;
 use Fyre\Utility\Str;
@@ -28,7 +27,6 @@ use function json_encode;
 use function md5;
 use function preg_match_all;
 use function random_bytes;
-use function rawurlencode;
 use function sprintf;
 use function str_ends_with;
 use function str_replace;
@@ -42,8 +40,8 @@ use const PREG_SET_ORDER;
 use const PREG_UNMATCHED_AS_NULL;
 
 /**
- * Extends {@see HttpRequest} with helpers for client-side authentication, cookie
- * headers, and request body encoding.
+ * Extends {@see HttpRequest} with helpers for client-side authentication and request body
+ * encoding.
  */
 class Request extends HttpRequest
 {
@@ -171,25 +169,6 @@ class Request extends HttpRequest
         }
 
         return $this->withHeader('Authorization', 'Digest '.implode(', ', $parts));
-    }
-
-    /**
-     * Returns the new Request instance with updated cookies.
-     *
-     * @param Cookie[] $cookies The Cookies.
-     * @return static The new Request instance with the updated cookies.
-     */
-    public function withCookies(array $cookies): static
-    {
-        $values = [];
-
-        foreach ($cookies as $cookie) {
-            $values[] = ($cookie->getName() |> rawurlencode(...)).
-                '='.
-                ($cookie->getValue() |> rawurlencode(...));
-        }
-
-        return $this->withHeader('Cookie', implode(';', $values));
     }
 
     /**

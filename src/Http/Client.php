@@ -7,6 +7,7 @@ use Closure;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Http\Client\ClientHandler;
+use Fyre\Http\Client\CookieJar;
 use Fyre\Http\Client\Exceptions\NetworkException;
 use Fyre\Http\Client\Exceptions\RequestException;
 use Fyre\Http\Client\Handlers\CurlHandler;
@@ -23,15 +24,9 @@ use Psr\Http\Message\ResponseInterface;
 use function array_intersect_key;
 use function array_merge_recursive;
 use function array_replace_recursive;
-use function implode;
 use function is_string;
 use function parse_str;
-use function rawurlencode;
 use function sprintf;
-use function str_ends_with;
-use function str_starts_with;
-use function strlen;
-use function substr;
 
 /**
  * Provides convenience methods for common HTTP verbs, optional automatic cookie handling,
@@ -72,10 +67,7 @@ class Client implements ClientInterface
      */
     protected array $config = [];
 
-    /**
-     * @var array<string, Cookie>
-     */
-    protected array $cookies = [];
+    protected CookieJar $cookieJar;
 
     protected ClientHandler $handler;
 
@@ -111,6 +103,7 @@ class Client implements ClientInterface
     public function __construct(array $options = [])
     {
         $this->config = array_replace_recursive(static::$defaults, $options);
+        $this->cookieJar = new CookieJar();
 
         $handler = $this->config['handler'];
 
@@ -137,7 +130,7 @@ class Client implements ClientInterface
      */
     public function addCookie(Cookie $cookie): static
     {
-        $this->cookies[$cookie->getId()] = $cookie;
+        $this->cookieJar->add($cookie);
 
         return $this;
     }
@@ -292,15 +285,7 @@ class Client implements ClientInterface
 
             $uri = $request->getUri();
 
-            $cookies = $response->getHeader('Set-Cookie');
-
-            foreach ($cookies as $value) {
-                $cookie = Cookie::createFromHeaderString($value, [
-                    'domain' => $uri->getHost(),
-                    'path' => $uri->getPath() ?: '/',
-                ]);
-                $this->cookies[$cookie->getId()] = $cookie;
-            }
+            $this->cookieJar->storeResponse($uri, $response);
 
             if (!$response->isRedirect() || $redirects-- <= 0) {
                 break;
@@ -324,16 +309,10 @@ class Client implements ClientInterface
                     $request = $request->withoutHeader($header);
                 }
             } else {
-                $cookies = static::getMatchingCookies($redirectUri, $this->cookies);
+                $cookieHeader = $this->cookieJar->getHeader($redirectUri);
 
-                if ($cookies !== []) {
-                    $values = [];
-
-                    foreach ($cookies as $cookie) {
-                        $values[] = rawurlencode($cookie->getName()).'='.rawurlencode($cookie->getValue());
-                    }
-
-                    $request = $request->withHeader('Cookie', implode(';', $values));
+                if ($cookieHeader !== '') {
+                    $request = $request->withHeader('Cookie', $cookieHeader);
                 }
             }
         }
@@ -445,10 +424,10 @@ class Client implements ClientInterface
             }
         }
 
-        $cookies = static::getMatchingCookies($uri, $this->cookies);
+        $cookieHeader = $this->cookieJar->getHeader($uri);
 
-        if ($cookies !== []) {
-            $request = $request->withCookies($cookies);
+        if ($cookieHeader !== '') {
+            $request = $request->withHeader('Cookie', $cookieHeader);
         }
 
         if ($data !== []) {
@@ -489,60 +468,5 @@ class Client implements ClientInterface
 
         return $uri->resolveRelativeUri($url)
             ->withQueryParams($query);
-    }
-
-    /**
-     * Returns cookies matching a URI.
-     *
-     * @param Uri $uri The Uri.
-     * @param array<string, Cookie> $cookies The cookies.
-     * @return Cookie[] The matching cookies.
-     */
-    protected static function getMatchingCookies(Uri $uri, array $cookies): array
-    {
-        if ($cookies === []) {
-            return [];
-        }
-
-        $matching = [];
-
-        foreach ($cookies as $cookie) {
-            if ($cookie->isExpired()) {
-                continue;
-            }
-
-            if ($uri->getScheme() === 'http' && $cookie->isSecure()) {
-                continue;
-            }
-
-            $host = $uri->getHost();
-            $domain = $cookie->getDomain();
-            $cookiePath = $cookie->getPath() ?: '/';
-            $requestPath = $uri->getPath() ?: '/';
-
-            if ($domain) {
-                if (str_starts_with($domain, '.')) {
-                    $domain = substr($domain, 1);
-                    if ($host !== $domain && !str_ends_with($host, '.'.$domain)) {
-                        continue;
-                    }
-                } else if ($host !== $domain) {
-                    continue;
-                }
-            }
-
-            if ($cookiePath !== '/' && str_starts_with($requestPath, $cookiePath)) {
-                $next = $requestPath[strlen($cookiePath)] ?? '';
-                if ($next !== '' && $next !== '/') {
-                    continue;
-                }
-            } else if ($cookiePath !== '/') {
-                continue;
-            }
-
-            $matching[] = $cookie;
-        }
-
-        return $matching;
     }
 }
