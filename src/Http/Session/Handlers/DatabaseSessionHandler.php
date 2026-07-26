@@ -64,6 +64,10 @@ class DatabaseSessionHandler extends SessionHandler
     #[Override]
     public function destroy(string $sessionId): bool
     {
+        if (!static::isValidSessionId($sessionId)) {
+            return false;
+        }
+
         $this->db->delete()
             ->from($this->table)
             ->where([
@@ -119,6 +123,10 @@ class DatabaseSessionHandler extends SessionHandler
     #[Override]
     public function read(string $sessionId): false|string
     {
+        if (!static::isValidSessionId($sessionId)) {
+            return false;
+        }
+
         $result = $this->db
             ->select([
                 'data',
@@ -145,9 +153,63 @@ class DatabaseSessionHandler extends SessionHandler
      * {@inheritDoc}
      */
     #[Override]
+    public function updateTimestamp(string $sessionId, string $data): bool
+    {
+        if (!$this->validateId($sessionId)) {
+            return false;
+        }
+
+        $now = DateTime::now();
+
+        $this->db->update($this->table)
+            ->set([
+                'modified' => $this->schemaTable->column('modified')
+                    ->type()
+                    ->toDatabase($now),
+            ])
+            ->where([
+                'id' => $sessionId,
+            ])
+            ->execute();
+
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function validateId(string $sessionId): bool
+    {
+        if (!static::isValidSessionId($sessionId)) {
+            return false;
+        }
+
+        $maxLife = DateTime::now()->subSeconds((int) $this->config['expires']);
+        $result = $this->db
+            ->select([
+                'id',
+            ])
+            ->from($this->table)
+            ->where([
+                'id' => $sessionId,
+                'modified >=' => $this->schemaTable->column('modified')
+                    ->type()
+                    ->toDatabase($maxLife),
+            ])
+            ->execute()
+            ->first();
+
+        return $result !== null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
     public function write(string $sessionId, string $data): bool
     {
-        if (!$sessionId) {
+        if (!static::isValidSessionId($sessionId)) {
             return false;
         }
 

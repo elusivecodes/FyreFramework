@@ -6,15 +6,17 @@ namespace Fyre\Http\Session;
 use Fyre\Core\Traits\DebugTrait;
 use Override;
 use SessionHandlerInterface;
+use SessionUpdateTimestampHandlerInterface;
 
 use function array_replace_recursive;
+use function preg_match;
 
 /**
  * Provides a base class for custom {@see SessionHandlerInterface} implementations.
  *
  * Supplies default configuration and a prefixed session key helper for {@see Session}.
  */
-abstract class SessionHandler implements SessionHandlerInterface
+abstract class SessionHandler implements SessionHandlerInterface, SessionUpdateTimestampHandlerInterface
 {
     use DebugTrait;
 
@@ -93,6 +95,25 @@ abstract class SessionHandler implements SessionHandlerInterface
     abstract public function read(string $sessionId): false|string;
 
     /**
+     * Refreshes the expiry of an existing session without rewriting its data.
+     *
+     * @param string $sessionId The session ID.
+     * @param string $data The session data.
+     * @return bool Whether the timestamp was updated.
+     */
+    #[Override]
+    abstract public function updateTimestamp(string $sessionId, string $data): bool;
+
+    /**
+     * Checks whether a session ID exists in the backing store.
+     *
+     * @param string $sessionId The session ID.
+     * @return bool Whether the session ID is valid.
+     */
+    #[Override]
+    abstract public function validateId(string $sessionId): bool;
+
+    /**
      * Writes the session data.
      *
      * @param string $sessionId The session ID.
@@ -113,5 +134,16 @@ abstract class SessionHandler implements SessionHandlerInterface
     protected function prepareKey(string $sessionId): string
     {
         return $this->config['prefix'].$sessionId;
+    }
+
+    /**
+     * Checks whether a session ID contains only supported characters.
+     *
+     * @param string $sessionId The session ID.
+     * @return bool Whether the session ID is valid.
+     */
+    protected static function isValidSessionId(string $sessionId): bool
+    {
+        return (bool) preg_match('/^[A-Za-z0-9,-]+$/D', $sessionId);
     }
 }

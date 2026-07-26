@@ -97,6 +97,62 @@ final class SqliteTest extends TestCase
         );
     }
 
+    public function testUpdateTimestamp(): void
+    {
+        $id = $this->session->id();
+
+        $this->assertTrue(
+            $this->handler->write($id, 'data')
+        );
+
+        $this->assertTrue(
+            $this->handler->updateTimestamp($id, 'ignored')
+        );
+
+        $this->assertSame(
+            'data',
+            $this->handler->read($id)
+        );
+
+        $this->assertFalse(
+            $this->handler->updateTimestamp('missing', 'ignored')
+        );
+    }
+
+    public function testValidateId(): void
+    {
+        $id = $this->session->id();
+
+        $this->assertFalse(
+            $this->handler->validateId($id)
+        );
+
+        $this->assertTrue(
+            $this->handler->write($id, 'data')
+        );
+
+        $this->assertTrue(
+            $this->handler->validateId($id)
+        );
+
+        $this->db->update('sessions')
+            ->set([
+                'modified' => '2000-01-01 00:00:00',
+            ])
+            ->where([
+                'id' => $id,
+            ])
+            ->execute();
+
+        $this->assertFalse(
+            $this->handler->validateId($id)
+        );
+
+        $this->assertFalse(
+            $this->handler->validateId('../outside')
+        );
+    }
+
     #[Override]
     protected function setUp(): void
     {

@@ -5,12 +5,11 @@ namespace Tests\Mock\Http\Session\Handlers;
 
 use Fyre\Http\Session\SessionHandler;
 use Override;
-use SessionHandlerInterface;
 
 /**
  * MockSessionHandler
  */
-class MockSessionHandler extends SessionHandler implements SessionHandlerInterface
+class MockSessionHandler extends SessionHandler
 {
     #[Override]
     public function close(): bool
@@ -40,6 +39,18 @@ class MockSessionHandler extends SessionHandler implements SessionHandlerInterfa
     public function read(string $sessionId): false|string
     {
         return '';
+    }
+
+    #[Override]
+    public function updateTimestamp(string $sessionId, string $data): bool
+    {
+        return true;
+    }
+
+    #[Override]
+    public function validateId(string $sessionId): bool
+    {
+        return static::isValidSessionId($sessionId);
     }
 
     #[Override]

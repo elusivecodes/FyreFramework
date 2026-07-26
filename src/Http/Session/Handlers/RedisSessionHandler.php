@@ -56,6 +56,10 @@ class RedisSessionHandler extends SessionHandler
     #[Override]
     public function destroy(string $sessionId): bool
     {
+        if (!static::isValidSessionId($sessionId)) {
+            return false;
+        }
+
         $this->prepareKey($sessionId) |> $this->connection->del(...);
 
         return true;
@@ -132,7 +136,41 @@ class RedisSessionHandler extends SessionHandler
     #[Override]
     public function read(string $sessionId): false|string
     {
+        if (!static::isValidSessionId($sessionId)) {
+            return false;
+        }
+
         return (string) ($this->prepareKey($sessionId) |> $this->connection->get(...));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function updateTimestamp(string $sessionId, string $data): bool
+    {
+        if (!static::isValidSessionId($sessionId)) {
+            return false;
+        }
+
+        $key = $this->prepareKey($sessionId);
+
+        return $this->connection->expire($key, $this->config['expires']) === true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function validateId(string $sessionId): bool
+    {
+        if (!static::isValidSessionId($sessionId)) {
+            return false;
+        }
+
+        $key = $this->prepareKey($sessionId);
+
+        return $this->connection->exists($key) > 0;
     }
 
     /**
@@ -141,7 +179,7 @@ class RedisSessionHandler extends SessionHandler
     #[Override]
     public function write(string $sessionId, string $data): bool
     {
-        if (!$sessionId) {
+        if (!static::isValidSessionId($sessionId)) {
             return false;
         }
 

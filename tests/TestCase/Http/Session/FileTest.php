@@ -10,9 +10,16 @@ use Fyre\Http\Session\Session;
 use Override;
 use PHPUnit\Framework\TestCase;
 
+use function clearstatcache;
+use function filemtime;
 use function glob;
 use function mkdir;
 use function rmdir;
+use function session_id;
+use function session_start;
+use function session_write_close;
+use function time;
+use function touch;
 
 final class FileTest extends TestCase
 {
@@ -62,6 +69,30 @@ final class FileTest extends TestCase
         );
     }
 
+    public function testStrictModeRejectsUnknownSessionId(): void
+    {
+        $suppliedId = 'attacker-selected';
+        session_id($suppliedId);
+
+        $this->assertTrue(
+            session_start(['use_cookies' => false])
+        );
+
+        $generatedId = (string) session_id();
+
+        $this->assertNotSame($suppliedId, $generatedId);
+
+        $this->assertTrue(
+            session_write_close()
+        );
+
+        $this->assertTrue(
+            $this->handler->destroy($generatedId)
+        );
+
+        session_id('cli');
+    }
+
     public function testUpdate(): void
     {
         $id = $this->session->id();
@@ -87,6 +118,72 @@ final class FileTest extends TestCase
         $this->assertSame(
             'data2',
             $this->handler->read($id)
+        );
+    }
+
+    public function testUpdateTimestamp(): void
+    {
+        $id = $this->session->id();
+
+        $this->assertTrue(
+            $this->handler->write($id, 'data')
+        );
+
+        $oldTime = time() - 10;
+
+        $this->assertTrue(
+            touch('sessions/'.$id, $oldTime)
+        );
+
+        $this->assertTrue(
+            $this->handler->updateTimestamp($id, 'ignored')
+        );
+
+        clearstatcache(true, 'sessions/'.$id);
+
+        $this->assertGreaterThan(
+            $oldTime,
+            filemtime('sessions/'.$id)
+        );
+
+        $this->assertSame(
+            'data',
+            $this->handler->read($id)
+        );
+
+        $this->assertFalse(
+            $this->handler->updateTimestamp('missing', 'ignored')
+        );
+    }
+
+    public function testValidateId(): void
+    {
+        $id = $this->session->id();
+
+        $this->assertFalse(
+            $this->handler->validateId($id)
+        );
+
+        $this->assertTrue(
+            $this->handler->write($id, 'data')
+        );
+
+        $this->assertTrue(
+            $this->handler->validateId($id)
+        );
+
+        $this->assertTrue(
+            touch('sessions/'.$id, time() - 86400)
+        );
+
+        clearstatcache(true, 'sessions/'.$id);
+
+        $this->assertFalse(
+            $this->handler->validateId($id)
+        );
+
+        $this->assertFalse(
+            $this->handler->validateId('../outside')
         );
     }
 

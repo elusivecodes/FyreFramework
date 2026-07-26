@@ -46,6 +46,10 @@ class MemcachedSessionHandler extends SessionHandler
     #[Override]
     public function destroy(string $sessionId): bool
     {
+        if (!static::isValidSessionId($sessionId)) {
+            return false;
+        }
+
         $this->prepareKey($sessionId) |> $this->connection->delete(...);
 
         return true;
@@ -101,6 +105,10 @@ class MemcachedSessionHandler extends SessionHandler
     #[Override]
     public function read(string $sessionId): false|string
     {
+        if (!static::isValidSessionId($sessionId)) {
+            return false;
+        }
+
         $value = $this->prepareKey($sessionId) |> $this->connection->get(...);
 
         if ($this->connection->getResultCode() === Memcached::RES_NOTFOUND) {
@@ -114,9 +122,39 @@ class MemcachedSessionHandler extends SessionHandler
      * {@inheritDoc}
      */
     #[Override]
+    public function updateTimestamp(string $sessionId, string $data): bool
+    {
+        if (!static::isValidSessionId($sessionId)) {
+            return false;
+        }
+
+        $key = $this->prepareKey($sessionId);
+
+        return $this->connection->touch($key, $this->config['expires']);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function validateId(string $sessionId): bool
+    {
+        if (!static::isValidSessionId($sessionId)) {
+            return false;
+        }
+
+        $this->prepareKey($sessionId) |> $this->connection->get(...);
+
+        return $this->connection->getResultCode() === Memcached::RES_SUCCESS;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
     public function write(string $sessionId, string $data): bool
     {
-        if (!$sessionId) {
+        if (!static::isValidSessionId($sessionId)) {
             return false;
         }
 

@@ -133,7 +133,7 @@ By default, Fyre stores session data under the configured save path. You can swi
 
 Handlers are configured under `Session.handler`:
 
-- `className` (`class-string<SessionHandlerInterface>`): the handler class to build and register.
+- `className` (`class-string<SessionHandlerInterface&SessionUpdateTimestampHandlerInterface>`): the handler class to build and register.
 - `expires` (`int`): handler expiration in seconds. Defaults to `Session.expires`.
 - `prefix` (`string`): optional storage key prefix for handlers that support it.
 
@@ -214,7 +214,7 @@ Common options:
 
 ### Custom handlers
 
-If you build a custom handler, extending the framework's `SessionHandler` base class gives you default config merging and a helper for prefixed storage keys.
+If you build a custom handler, extend the framework's `SessionHandler` base class. Custom handlers must implement `validateId()` so PHP strict mode can reject unknown IDs, and `updateTimestamp()` so unchanged sessions can refresh their expiry without rewriting their data.
 
 ## Method guide
 

@@ -12,6 +12,7 @@ use Fyre\Http\Session\Handlers\FileSessionHandler;
 use Fyre\Utility\Arr;
 use InvalidArgumentException;
 use SessionHandlerInterface;
+use SessionUpdateTimestampHandlerInterface;
 
 use function array_replace_recursive;
 use function array_splice;
@@ -98,12 +99,14 @@ class Session
         if (
             !isset($options['className']) ||
             !is_string($options['className']) ||
-            !is_subclass_of($options['className'], SessionHandlerInterface::class)
+            !is_subclass_of($options['className'], SessionHandlerInterface::class) ||
+            !is_subclass_of($options['className'], SessionUpdateTimestampHandlerInterface::class)
         ) {
             throw new InvalidArgumentException(sprintf(
-                'Session handler `%s` must implement `%s`.',
+                'Session handler `%s` must implement `%s` and `%s`.',
                 $options['className'] ?? '',
-                SessionHandlerInterface::class
+                SessionHandlerInterface::class,
+                SessionUpdateTimestampHandlerInterface::class
             ));
         }
 
