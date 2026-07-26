@@ -70,13 +70,13 @@ trait SqliteConnectionTrait
 
         $this->db->query('DROP TABLE IF EXISTS test');
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE test (
                 id INTEGER NOT NULL,
                 name VARCHAR(255) NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         @mkdir('log');
     }

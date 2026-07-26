@@ -128,7 +128,7 @@ final class PostgresTest extends TestCase
 
         $this->db->query('DROP TABLE IF EXISTS sessions');
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE sessions (
                 id VARCHAR(40) NOT NULL,
                 data BYTEA NULL DEFAULT NULL,
@@ -136,7 +136,7 @@ final class PostgresTest extends TestCase
                 modified TIMESTAMP NOT NULL DEFAULT LOCALTIMESTAMP(0),
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $this->session = $container->use(Session::class);
         $handler = $this->session->getHandler();

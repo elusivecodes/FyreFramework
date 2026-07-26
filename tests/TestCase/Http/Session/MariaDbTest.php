@@ -130,7 +130,7 @@ final class MariaDbTest extends TestCase
 
         $this->db->query('DROP TABLE IF EXISTS sessions');
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE sessions (
                 id VARCHAR(40) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
                 data BLOB NULL DEFAULT NULL,
@@ -138,7 +138,7 @@ final class MariaDbTest extends TestCase
                 modified DATETIME NOT NULL DEFAULT current_timestamp(),
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->session = $container->use(Session::class);
         $handler = $this->session->getHandler();

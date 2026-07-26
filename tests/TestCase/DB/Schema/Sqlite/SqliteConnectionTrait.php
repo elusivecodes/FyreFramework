@@ -50,7 +50,7 @@ trait SqliteConnectionTrait
         $this->db->query('DROP TABLE IF EXISTS test_values');
         $this->db->query('DROP TABLE IF EXISTS test');
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE test (
                 id UNSIGNED INTEGER NOT NULL,
                 name VARCHAR(255) NULL DEFAULT NULL,
@@ -62,14 +62,14 @@ trait SqliteConnectionTrait
                 modified DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id)
             )
-        EOT);
-        $this->db->query(<<<'EOT'
+        SQL);
+        $this->db->query(<<<'SQL'
             CREATE INDEX name_value ON test (name, value)
-        EOT);
-        $this->db->query(<<<'EOT'
+        SQL);
+        $this->db->query(<<<'SQL'
             CREATE UNIQUE INDEX name ON test (name)
-        EOT);
-        $this->db->query(<<<'EOT'
+        SQL);
+        $this->db->query(<<<'SQL'
             CREATE TABLE test_values (
                 id UNSIGNED INTEGER NOT NULL,
                 test_id UNSIGNED INTEGER NOT NULL DEFAULT '0',
@@ -77,13 +77,13 @@ trait SqliteConnectionTrait
                 PRIMARY KEY (id),
                 FOREIGN KEY (test_id) REFERENCES test (id) ON UPDATE CASCADE ON DELETE CASCADE
             )
-        EOT);
-        $this->db->query(<<<'EOT'
+        SQL);
+        $this->db->query(<<<'SQL'
             CREATE INDEX test_values_test_id ON test_values (test_id)
-        EOT);
-        $this->db->query(<<<'EOT'
+        SQL);
+        $this->db->query(<<<'SQL'
             CREATE INDEX value ON test_values (value)
-        EOT);
+        SQL);
 
         @mkdir('tmp');
     }

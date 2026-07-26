@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Migration\MariaDb;
 
+use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Loader;
 use Fyre\DB\Connection;
@@ -34,27 +35,30 @@ trait MariaDbConnectionTrait
     {
         $container = new Container();
         $container->singleton(Loader::class);
+        $container->singleton(Config::class);
         $container->singleton(TypeParser::class);
         $container->singleton(ConnectionManager::class);
         $container->singleton(SchemaRegistry::class);
         $container->singleton(ForgeRegistry::class);
+        $container->use(Config::class)->set('Database', [
+            'default' => [
+                'className' => MysqlConnection::class,
+                'host' => getenv('MARIADB_HOST'),
+                'username' => getenv('MARIADB_USERNAME'),
+                'password' => getenv('MARIADB_PASSWORD'),
+                'database' => getenv('MARIADB_DATABASE'),
+                'port' => getenv('MARIADB_PORT'),
+                'collation' => 'utf8mb4_unicode_ci',
+                'charset' => 'utf8mb4',
+                'compress' => true,
+            ],
+        ]);
 
         $this->typeParser = $container->use(TypeParser::class);
         $this->forgeRegistry = $container->use(ForgeRegistry::class);
         $this->migrationRunner = $container->use(MigrationRunner::class);
 
-        $this->db = $container->use(ConnectionManager::class)->setConfig(ConnectionManager::DEFAULT, [
-            'className' => MysqlConnection::class,
-            'host' => getenv('MARIADB_HOST'),
-            'username' => getenv('MARIADB_USERNAME'),
-            'password' => getenv('MARIADB_PASSWORD'),
-            'database' => getenv('MARIADB_DATABASE'),
-            'port' => getenv('MARIADB_PORT'),
-            'collation' => 'utf8mb4_unicode_ci',
-            'charset' => 'utf8mb4',
-            'compress' => true,
-        ])->use();
-
+        $this->db = $container->use(ConnectionManager::class)->use();
         $this->schema = $container->use(SchemaRegistry::class)->use($this->db);
 
         $container->use(Loader::class)->addNamespaces([

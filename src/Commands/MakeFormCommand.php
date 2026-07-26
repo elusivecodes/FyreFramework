@@ -6,10 +6,9 @@ namespace Fyre\Commands;
 use Fyre\Console\Command;
 use Fyre\Console\Console;
 use Fyre\Core\Make;
+use Fyre\Core\Make\GeneratedFile;
 use Fyre\Utility\Path;
 use Override;
-
-use function file_exists;
 
 /**
  * Implements the make form console command.
@@ -66,6 +65,11 @@ class MakeFormCommand extends Command
 
         [$namespace, $className] = Make::parseNamespaceClass($namespace, $name.'Form');
 
+        $contents = Make::loadStub('form', [
+            '{namespace}' => $namespace,
+            '{class}' => $className,
+        ]);
+
         $path = $this->make->findPath($namespace);
 
         if (!$path) {
@@ -74,20 +78,18 @@ class MakeFormCommand extends Command
             return static::CODE_ERROR;
         }
 
-        $fullPath = Path::join($path, $className.'.php');
+        $generatedFile = new GeneratedFile(
+            Path::join($path, $className.'.php'),
+            $contents
+        );
 
-        if (!$force && file_exists($fullPath)) {
+        if (!$generatedFile->isValid($force)) {
             $this->io->error('Form file already exists.');
 
             return static::CODE_ERROR;
         }
 
-        $contents = Make::loadStub('form', [
-            '{namespace}' => $namespace,
-            '{class}' => $className,
-        ]);
-
-        if (!Make::saveFile($fullPath, $contents)) {
+        if (!$generatedFile->save()) {
             $this->io->error('Form file could not be written.');
 
             return static::CODE_ERROR;

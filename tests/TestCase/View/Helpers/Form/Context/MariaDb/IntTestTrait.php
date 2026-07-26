@@ -9,13 +9,13 @@ trait IntTestTrait
 {
     public function testIntBetweenValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value INT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::between(100, 1000));
 
@@ -31,13 +31,13 @@ trait IntTestTrait
 
     public function testIntEntityValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value INT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEntity([
             'value' => 999,
@@ -53,13 +53,13 @@ trait IntTestTrait
 
     public function testIntGreaterThanOrEqualsValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value INT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::greaterThanOrEquals(100));
 
@@ -75,13 +75,13 @@ trait IntTestTrait
 
     public function testIntGreaterThanValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value INT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::greaterThan(100));
 
@@ -97,13 +97,13 @@ trait IntTestTrait
 
     public function testIntLessThanOrEqualsValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value INT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::lessThanOrEquals(1000));
 
@@ -119,13 +119,13 @@ trait IntTestTrait
 
     public function testIntLessThanValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value INT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::lessThan(1000));
 
@@ -141,13 +141,13 @@ trait IntTestTrait
 
     public function testIntMinMaxSchema(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value INT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 
@@ -161,13 +161,13 @@ trait IntTestTrait
 
     public function testIntRequiredValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value INT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::required());
 
@@ -183,13 +183,13 @@ trait IntTestTrait
 
     public function testIntSchemaDefaultValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value INT NOT NULL DEFAULT 999,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 
@@ -203,13 +203,13 @@ trait IntTestTrait
 
     public function testIntUnsignedMinMaxSchema(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value INT UNSIGNED NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 

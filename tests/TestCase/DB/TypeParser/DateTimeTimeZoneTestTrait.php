@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\TypeParser;
 
+use Fyre\DB\Types\DateTimeType;
 use Fyre\Utility\DateTime\DateTime;
 
 trait DateTimeTimeZoneTestTrait
@@ -24,7 +25,9 @@ trait DateTimeTimeZoneTestTrait
 
     public function testDateTimeTimeZoneFromDatabaseServerTimeZone(): void
     {
-        $dateParser = $this->dateTimeType('datetime-timezone');
+        $dateParser = $this->type->use('datetime-timezone');
+
+        $this->assertInstanceOf(DateTimeType::class, $dateParser);
 
         $dateParser->setServerTimeZone('Australia/Brisbane');
         $date = $dateParser->fromDatabase('2021-12-31 22:59:11.12345+10');
@@ -50,7 +53,9 @@ trait DateTimeTimeZoneTestTrait
 
     public function testDateTimeTimeZoneFromDatabaseUserTimeZone(): void
     {
-        $dateParser = $this->dateTimeType('datetime-timezone');
+        $dateParser = $this->type->use('datetime-timezone');
+
+        $this->assertInstanceOf(DateTimeType::class, $dateParser);
 
         $dateParser->setUserTimeZone('Australia/Brisbane');
         $date = $dateParser->fromDatabase('2021-12-31 22:59:11.12345+10');
@@ -100,7 +105,9 @@ trait DateTimeTimeZoneTestTrait
 
     public function testDateTimeTimeZoneParseLocaleFormat(): void
     {
-        $dateParser = $this->dateTimeType('datetime-timezone');
+        $dateParser = $this->type->use('datetime-timezone');
+
+        $this->assertInstanceOf(DateTimeType::class, $dateParser);
 
         $this->assertSame(
             $dateParser,
@@ -122,7 +129,9 @@ trait DateTimeTimeZoneTestTrait
 
     public function testDateTimeTimeZoneParseLocaleFormatFallback(): void
     {
-        $dateParser = $this->dateTimeType('datetime-timezone');
+        $dateParser = $this->type->use('datetime-timezone');
+
+        $this->assertInstanceOf(DateTimeType::class, $dateParser);
 
         $this->assertSame(
             $dateParser,
@@ -169,7 +178,9 @@ trait DateTimeTimeZoneTestTrait
 
     public function testDateTimeTimeZoneParseUserTimeZone(): void
     {
-        $dateParser = $this->dateTimeType('datetime-timezone');
+        $dateParser = $this->type->use('datetime-timezone');
+
+        $this->assertInstanceOf(DateTimeType::class, $dateParser);
 
         $dateParser->setUserTimeZone('Australia/Brisbane');
         $dateParser->setLocaleFormat('eee MMM dd yyyy HH:mm:ss.SSS');
@@ -188,7 +199,9 @@ trait DateTimeTimeZoneTestTrait
 
     public function testDateTimeTimeZoneSetLocaleFormat(): void
     {
-        $dateParser = $this->dateTimeType('datetime-timezone');
+        $dateParser = $this->type->use('datetime-timezone');
+
+        $this->assertInstanceOf(DateTimeType::class, $dateParser);
 
         $this->assertSame(
             $dateParser,
@@ -203,7 +216,9 @@ trait DateTimeTimeZoneTestTrait
 
     public function testDateTimeTimeZoneSetServerTimeZone(): void
     {
-        $dateParser = $this->dateTimeType('datetime-timezone');
+        $dateParser = $this->type->use('datetime-timezone');
+
+        $this->assertInstanceOf(DateTimeType::class, $dateParser);
 
         $this->assertSame(
             $dateParser,
@@ -218,7 +233,9 @@ trait DateTimeTimeZoneTestTrait
 
     public function testDateTimeTimeZoneSetUserTimeZone(): void
     {
-        $dateParser = $this->dateTimeType('datetime-timezone');
+        $dateParser = $this->type->use('datetime-timezone');
+
+        $this->assertInstanceOf(DateTimeType::class, $dateParser);
 
         $this->assertSame(
             $dateParser,
@@ -250,7 +267,9 @@ trait DateTimeTimeZoneTestTrait
 
     public function testDateTimeTimeZoneToDatabaseServerTimeZone(): void
     {
-        $dateParser = $this->dateTimeType('datetime-timezone');
+        $dateParser = $this->type->use('datetime-timezone');
+
+        $this->assertInstanceOf(DateTimeType::class, $dateParser);
 
         $dateParser->setServerTimeZone('Australia/Brisbane');
 

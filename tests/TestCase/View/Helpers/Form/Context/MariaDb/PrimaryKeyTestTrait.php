@@ -7,12 +7,12 @@ trait PrimaryKeyTestTrait
 {
     public function testPrimaryKey(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 
@@ -26,12 +26,12 @@ trait PrimaryKeyTestTrait
 
     public function testPrimaryKeyValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEntity([
             'id' => 1,

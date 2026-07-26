@@ -9,13 +9,13 @@ trait EnumClassTestTrait
 {
     public function testEnumClassFieldOptions(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value VARCHAR(255) NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $this->model->getSchema()->setEnumClass('value', Status::class);
 
@@ -31,13 +31,13 @@ trait EnumClassTestTrait
 
     public function testEnumClassFieldSelectedValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value VARCHAR(255) NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $this->model->getSchema()->setEnumClass('value', Status::class);
 

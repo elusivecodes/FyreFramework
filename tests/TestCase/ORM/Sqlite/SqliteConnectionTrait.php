@@ -74,50 +74,50 @@ trait SqliteConnectionTrait
         $this->db->query('DROP TABLE IF EXISTS tags');
         $this->db->query('DROP TABLE IF EXISTS posts_tags');
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE items (
                 id INTEGER NOT NULL,
                 name VARCHAR(255) NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contains (
                 id INTEGER NOT NULL,
                 item_id INTEGER NOT NULL,
                 contained_item_id INTEGER NOT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE others (
                 id INTEGER NOT NULL,
                 value INTEGER NOT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE timestamps (
                 id INTEGER NOT NULL,
                 created DATETIME NOT NULL,
                 modified DATETIME NOT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE users (
                 id INTEGER NOT NULL,
                 name VARCHAR(255) NULL DEFAULT NULL,
                 deleted DATETIME NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE addresses (
                 id INTEGER NOT NULL,
                 user_id INTEGER NOT NULL,
@@ -128,9 +128,9 @@ trait SqliteConnectionTrait
                 deleted DATETIME NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE posts (
                 id INTEGER NOT NULL,
                 user_id INTEGER NULL DEFAULT NULL,
@@ -139,9 +139,9 @@ trait SqliteConnectionTrait
                 deleted DATETIME NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE comments (
                 id INTEGER NOT NULL,
                 user_id INTEGER NULL DEFAULT NULL,
@@ -150,17 +150,17 @@ trait SqliteConnectionTrait
                 deleted DATETIME NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE tags (
                 id INTEGER NOT NULL,
                 tag VARCHAR(255) NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE posts_tags (
                 id INTEGER NOT NULL,
                 post_id INTEGER NOT NULL,
@@ -168,7 +168,7 @@ trait SqliteConnectionTrait
                 value INTEGER NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
     }
 
     #[Override]

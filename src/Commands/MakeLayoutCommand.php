@@ -6,6 +6,7 @@ namespace Fyre\Commands;
 use Fyre\Console\Command;
 use Fyre\Console\Console;
 use Fyre\Core\Make;
+use Fyre\Core\Make\GeneratedFile;
 use Fyre\Utility\Path;
 use Fyre\View\TemplateLocator;
 use Override;
@@ -75,16 +76,16 @@ class MakeLayoutCommand extends Command
         $template = Make::normalizePath($template);
 
         $fullPath = Path::join($path, TemplateLocator::LAYOUTS_FOLDER, $template.'.php');
+        $contents = Make::loadStub('layout');
+        $generatedFile = new GeneratedFile($fullPath, $contents);
 
-        if (!$force && file_exists($fullPath)) {
+        if (!$generatedFile->isValid($force)) {
             $this->io->error('Layout file already exists.');
 
             return static::CODE_ERROR;
         }
 
-        $contents = Make::loadStub('layout');
-
-        if (!Make::saveFile($fullPath, $contents)) {
+        if (!$generatedFile->save()) {
             $this->io->error('Layout file could not be written.');
 
             return static::CODE_ERROR;

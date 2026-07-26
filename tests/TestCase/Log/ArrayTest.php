@@ -42,7 +42,9 @@ final class ArrayTest extends TestCase
         $this->logManager->handle('debug', 'test1');
         $this->logManager->handle('debug', 'test2');
 
-        $logger = $this->arrayLogger('default');
+        $logger = $this->logManager->use('default');
+
+        $this->assertInstanceOf(ArrayLogger::class, $logger);
 
         $content = $logger->read();
 
@@ -56,16 +58,26 @@ final class ArrayTest extends TestCase
             $content[1] ?? ''
         );
 
-        $this->assertEmpty($this->arrayLogger('scoped')->read());
-        $this->assertNotEmpty($this->arrayLogger('all')->read());
+        $scopedLogger = $this->logManager->use('scoped');
+
+        $this->assertInstanceOf(ArrayLogger::class, $scopedLogger);
+        $this->assertEmpty($scopedLogger->read());
+
+        $allLogger = $this->logManager->use('all');
+
+        $this->assertInstanceOf(ArrayLogger::class, $allLogger);
+        $this->assertNotEmpty($allLogger->read());
     }
 
     public function testClear(): void
     {
         $this->logManager->handle('debug', 'test');
 
-        $logger1 = $this->arrayLogger('default');
-        $logger2 = $this->arrayLogger('all');
+        $logger1 = $this->logManager->use('default');
+        $logger2 = $this->logManager->use('all');
+
+        $this->assertInstanceOf(ArrayLogger::class, $logger1);
+        $this->assertInstanceOf(ArrayLogger::class, $logger2);
 
         $logger1->clear();
 
@@ -80,9 +92,13 @@ final class ArrayTest extends TestCase
 
     public function testData(): void
     {
-        $logger1 = $this->arrayLogger('default');
-        $logger2 = $this->arrayLogger('scoped');
-        $logger3 = $this->arrayLogger('all');
+        $logger1 = $this->logManager->use('default');
+        $logger2 = $this->logManager->use('scoped');
+        $logger3 = $this->logManager->use('all');
+
+        $this->assertInstanceOf(ArrayLogger::class, $logger1);
+        $this->assertInstanceOf(ArrayLogger::class, $logger2);
+        $this->assertInstanceOf(ArrayLogger::class, $logger3);
 
         foreach ($this->levels as $i => $level) {
             $this->logManager->handle($level, '{0}', ['test']);
@@ -99,9 +115,13 @@ final class ArrayTest extends TestCase
 
     public function testInterpolateGet(): void
     {
-        $logger1 = $this->arrayLogger('default');
-        $logger2 = $this->arrayLogger('scoped');
-        $logger3 = $this->arrayLogger('all');
+        $logger1 = $this->logManager->use('default');
+        $logger2 = $this->logManager->use('scoped');
+        $logger3 = $this->logManager->use('all');
+
+        $this->assertInstanceOf(ArrayLogger::class, $logger1);
+        $this->assertInstanceOf(ArrayLogger::class, $logger2);
+        $this->assertInstanceOf(ArrayLogger::class, $logger3);
 
         foreach ($this->levels as $i => $level) {
             $this->logManager->handle($level, '{get_vars}');
@@ -118,9 +138,13 @@ final class ArrayTest extends TestCase
 
     public function testInterpolatePost(): void
     {
-        $logger1 = $this->arrayLogger('default');
-        $logger2 = $this->arrayLogger('scoped');
-        $logger3 = $this->arrayLogger('all');
+        $logger1 = $this->logManager->use('default');
+        $logger2 = $this->logManager->use('scoped');
+        $logger3 = $this->logManager->use('all');
+
+        $this->assertInstanceOf(ArrayLogger::class, $logger1);
+        $this->assertInstanceOf(ArrayLogger::class, $logger2);
+        $this->assertInstanceOf(ArrayLogger::class, $logger3);
 
         foreach ($this->levels as $i => $level) {
             $this->logManager->handle($level, '{post_vars}');
@@ -137,9 +161,13 @@ final class ArrayTest extends TestCase
 
     public function testInterpolateServer(): void
     {
-        $logger1 = $this->arrayLogger('default');
-        $logger2 = $this->arrayLogger('scoped');
-        $logger3 = $this->arrayLogger('all');
+        $logger1 = $this->logManager->use('default');
+        $logger2 = $this->logManager->use('scoped');
+        $logger3 = $this->logManager->use('all');
+
+        $this->assertInstanceOf(ArrayLogger::class, $logger1);
+        $this->assertInstanceOf(ArrayLogger::class, $logger2);
+        $this->assertInstanceOf(ArrayLogger::class, $logger3);
 
         foreach ($this->levels as $i => $level) {
             $this->logManager->handle($level, '{server_vars}');
@@ -177,9 +205,13 @@ final class ArrayTest extends TestCase
 
     public function testLog(): void
     {
-        $logger1 = $this->arrayLogger('default');
-        $logger2 = $this->arrayLogger('scoped');
-        $logger3 = $this->arrayLogger('all');
+        $logger1 = $this->logManager->use('default');
+        $logger2 = $this->logManager->use('scoped');
+        $logger3 = $this->logManager->use('all');
+
+        $this->assertInstanceOf(ArrayLogger::class, $logger1);
+        $this->assertInstanceOf(ArrayLogger::class, $logger2);
+        $this->assertInstanceOf(ArrayLogger::class, $logger3);
 
         foreach ($this->levels as $i => $level) {
             $this->logManager->handle($level, 'test');
@@ -198,9 +230,13 @@ final class ArrayTest extends TestCase
     {
         $this->logManager->handle('error', 'test', scope: 'scoped');
 
+        $logger = $this->logManager->use('scoped');
+
+        $this->assertInstanceOf(ArrayLogger::class, $logger);
+
         $this->assertSame(
             '[ERROR] test',
-            $this->arrayLogger('scoped')->read()[0] ?? ''
+            $logger->read()[0] ?? ''
         );
     }
 
@@ -214,20 +250,11 @@ final class ArrayTest extends TestCase
             ]);
             $this->logManager->handle($level, 'test');
 
-            $this->assertEmpty($this->arrayLogger('array')->read());
+            $logger = $this->logManager->use('array');
+
+            $this->assertInstanceOf(ArrayLogger::class, $logger);
+            $this->assertEmpty($logger->read());
         }
-    }
-
-    protected function arrayLogger(string $name): ArrayLogger
-    {
-        $logger = $this->logManager->use($name);
-
-        $this->assertInstanceOf(
-            ArrayLogger::class,
-            $logger
-        );
-
-        return $logger;
     }
 
     #[Override]

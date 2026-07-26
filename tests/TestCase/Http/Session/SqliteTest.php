@@ -120,7 +120,7 @@ final class SqliteTest extends TestCase
 
         $this->db->query('DROP TABLE IF EXISTS sessions');
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE sessions (
                 id VARCHAR(40) NOT NULL,
                 data BLOB NULL DEFAULT NULL,
@@ -128,7 +128,7 @@ final class SqliteTest extends TestCase
                 modified DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $this->session = $container->use(Session::class);
         $handler = $this->session->getHandler();

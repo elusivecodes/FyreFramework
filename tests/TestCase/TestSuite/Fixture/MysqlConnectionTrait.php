@@ -89,22 +89,22 @@ trait MysqlConnectionTrait
         $this->db->query('DROP TABLE IF EXISTS items');
         $this->db->query('DROP TABLE IF EXISTS children');
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE items (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 name VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE children (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 item_id INT(10) UNSIGNED NULL DEFAULT NULL,
                 PRIMARY KEY (id),
                 CONSTRAINT fk_children_item FOREIGN KEY (item_id) REFERENCES items (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         parent::setUp();
     }

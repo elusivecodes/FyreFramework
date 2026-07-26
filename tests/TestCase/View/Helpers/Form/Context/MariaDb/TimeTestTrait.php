@@ -10,13 +10,13 @@ trait TimeTestTrait
 {
     public function testTimeEntityValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value TIME NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEntity([
             'value' => DateTime::createFromArray([2022, 1, 1, 12, 30]),
@@ -32,13 +32,13 @@ trait TimeTestTrait
 
     public function testTimeRequiredValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value TIME NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::required());
 
@@ -54,13 +54,13 @@ trait TimeTestTrait
 
     public function testTimeSchema(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value TIME NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 
@@ -74,13 +74,13 @@ trait TimeTestTrait
 
     public function testTimeSchemaDefaultValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value TIME NOT NULL DEFAULT '12:30:00',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 

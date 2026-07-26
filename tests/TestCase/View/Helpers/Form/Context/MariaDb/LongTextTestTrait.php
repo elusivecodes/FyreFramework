@@ -9,13 +9,13 @@ trait LongTextTestTrait
 {
     public function testLongTextEntityValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEntity([
             'value' => 'Test',
@@ -31,13 +31,13 @@ trait LongTextTestTrait
 
     public function testLongTextMaxLengthSchema(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 
@@ -51,13 +51,13 @@ trait LongTextTestTrait
 
     public function testLongTextMaxLengthValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::maxLength(1000));
 
@@ -73,13 +73,13 @@ trait LongTextTestTrait
 
     public function testLongTextRequiredValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::required());
 
@@ -95,13 +95,13 @@ trait LongTextTestTrait
 
     public function testLongTextSchemaDefaultValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value LONGTEXT NOT NULL DEFAULT 'Test' COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 

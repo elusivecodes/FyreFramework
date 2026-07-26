@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\TypeParser;
 
+use Fyre\DB\Types\DateTimeType;
 use Fyre\Utility\DateTime\DateTime;
 
 trait DateTimeFractionalTestTrait
@@ -24,7 +25,9 @@ trait DateTimeFractionalTestTrait
 
     public function testDateTimeFractionalFromDatabaseServerTimeZone(): void
     {
-        $dateParser = $this->dateTimeType('datetime-fractional');
+        $dateParser = $this->type->use('datetime-fractional');
+
+        $this->assertInstanceOf(DateTimeType::class, $dateParser);
 
         $dateParser->setServerTimeZone('Australia/Brisbane');
         $date = $dateParser->fromDatabase('2021-12-31 22:59:11.12345');
@@ -50,7 +53,9 @@ trait DateTimeFractionalTestTrait
 
     public function testDateTimeFractionalFromDatabaseUserTimeZone(): void
     {
-        $dateParser = $this->dateTimeType('datetime-fractional');
+        $dateParser = $this->type->use('datetime-fractional');
+
+        $this->assertInstanceOf(DateTimeType::class, $dateParser);
 
         $dateParser->setUserTimeZone('Australia/Brisbane');
         $date = $dateParser->fromDatabase('2021-12-31 22:59:11.12345');
@@ -100,7 +105,9 @@ trait DateTimeFractionalTestTrait
 
     public function testDateTimeFractionalParseLocaleFormat(): void
     {
-        $dateParser = $this->dateTimeType('datetime-fractional');
+        $dateParser = $this->type->use('datetime-fractional');
+
+        $this->assertInstanceOf(DateTimeType::class, $dateParser);
 
         $this->assertSame(
             $dateParser,
@@ -122,7 +129,9 @@ trait DateTimeFractionalTestTrait
 
     public function testDateTimeFractionalParseLocaleFormatFallback(): void
     {
-        $dateParser = $this->dateTimeType('datetime-fractional');
+        $dateParser = $this->type->use('datetime-fractional');
+
+        $this->assertInstanceOf(DateTimeType::class, $dateParser);
 
         $this->assertSame(
             $dateParser,
@@ -169,7 +178,9 @@ trait DateTimeFractionalTestTrait
 
     public function testDateTimeFractionalParseUserTimeZone(): void
     {
-        $dateParser = $this->dateTimeType('datetime-fractional');
+        $dateParser = $this->type->use('datetime-fractional');
+
+        $this->assertInstanceOf(DateTimeType::class, $dateParser);
 
         $dateParser->setUserTimeZone('Australia/Brisbane');
         $dateParser->setLocaleFormat('eee MMM dd yyyy HH:mm:ss.SSS');
@@ -188,7 +199,9 @@ trait DateTimeFractionalTestTrait
 
     public function testDateTimeFractionalSetLocaleFormat(): void
     {
-        $dateParser = $this->dateTimeType('datetime-fractional');
+        $dateParser = $this->type->use('datetime-fractional');
+
+        $this->assertInstanceOf(DateTimeType::class, $dateParser);
 
         $this->assertSame(
             $dateParser,
@@ -203,7 +216,9 @@ trait DateTimeFractionalTestTrait
 
     public function testDateTimeFractionalSetServerTimeZone(): void
     {
-        $dateParser = $this->dateTimeType('datetime-fractional');
+        $dateParser = $this->type->use('datetime-fractional');
+
+        $this->assertInstanceOf(DateTimeType::class, $dateParser);
 
         $this->assertSame(
             $dateParser,
@@ -218,7 +233,9 @@ trait DateTimeFractionalTestTrait
 
     public function testDateTimeFractionalSetUserTimeZone(): void
     {
-        $dateParser = $this->dateTimeType('datetime-fractional');
+        $dateParser = $this->type->use('datetime-fractional');
+
+        $this->assertInstanceOf(DateTimeType::class, $dateParser);
 
         $this->assertSame(
             $dateParser,
@@ -250,7 +267,9 @@ trait DateTimeFractionalTestTrait
 
     public function testDateTimeFractionalToDatabaseServerTimeZone(): void
     {
-        $dateParser = $this->dateTimeType('datetime-fractional');
+        $dateParser = $this->type->use('datetime-fractional');
+
+        $this->assertInstanceOf(DateTimeType::class, $dateParser);
 
         $dateParser->setServerTimeZone('Australia/Brisbane');
 

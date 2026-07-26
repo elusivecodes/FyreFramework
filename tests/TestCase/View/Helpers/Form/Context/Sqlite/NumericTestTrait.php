@@ -9,13 +9,13 @@ trait NumericTestTrait
 {
     public function testNumericBetweenValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value NUMERIC(10,2) NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::between(100, 1000));
 
@@ -31,13 +31,13 @@ trait NumericTestTrait
 
     public function testNumericEntityValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value NUMERIC(10,2) NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $entity = $this->model->newEntity([
             'value' => 100.99,
@@ -53,13 +53,13 @@ trait NumericTestTrait
 
     public function testNumericGreaterThanOrEqualsValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value NUMERIC(10,2) NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::greaterThanOrEquals(100));
 
@@ -75,13 +75,13 @@ trait NumericTestTrait
 
     public function testNumericGreaterThanValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value NUMERIC(10,2) NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::greaterThan(100));
 
@@ -97,13 +97,13 @@ trait NumericTestTrait
 
     public function testNumericLessThanOrEqualsValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value NUMERIC(10,2) NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::lessThanOrEquals(1000));
 
@@ -119,13 +119,13 @@ trait NumericTestTrait
 
     public function testNumericLessThanValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value NUMERIC(10,2) NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::lessThan(1000));
 
@@ -141,13 +141,13 @@ trait NumericTestTrait
 
     public function testNumericMinMaxSchema(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value NUMERIC(10,2) NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 
@@ -161,13 +161,13 @@ trait NumericTestTrait
 
     public function testNumericRequiredValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value NUMERIC(10,2) NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::required());
 
@@ -183,13 +183,13 @@ trait NumericTestTrait
 
     public function testNumericSchemaDefaultValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value NUMERIC(10,2) NOT NULL DEFAULT 100.99,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 
@@ -203,13 +203,13 @@ trait NumericTestTrait
 
     public function testNumericUnsignedMinMaxSchema(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value UNSIGNED NUMERIC(10,2) NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 

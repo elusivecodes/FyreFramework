@@ -9,13 +9,13 @@ trait TextTestTrait
 {
     public function testTextEntityValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value TEXT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $entity = $this->model->newEntity([
             'value' => 'Test',
@@ -31,13 +31,13 @@ trait TextTestTrait
 
     public function testTextMaxLengthSchema(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value TEXT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 
@@ -51,13 +51,13 @@ trait TextTestTrait
 
     public function testTextMaxLengthValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value TEXT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::maxLength(1000));
 
@@ -73,13 +73,13 @@ trait TextTestTrait
 
     public function testTextRequiredValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value TEXT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::required());
 
@@ -95,13 +95,13 @@ trait TextTestTrait
 
     public function testTextSchemaDefaultValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value TEXT NOT NULL DEFAULT 'Test',
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 

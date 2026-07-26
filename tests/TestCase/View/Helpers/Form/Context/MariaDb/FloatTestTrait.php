@@ -9,13 +9,13 @@ trait FloatTestTrait
 {
     public function testFloatBetweenValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value FLOAT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::between(100, 1000));
 
@@ -31,13 +31,13 @@ trait FloatTestTrait
 
     public function testFloatEntityValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value FLOAT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEntity([
             'value' => 100.123,
@@ -53,13 +53,13 @@ trait FloatTestTrait
 
     public function testFloatGreaterThanOrEqualsValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value FLOAT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::greaterThanOrEquals(100));
 
@@ -75,13 +75,13 @@ trait FloatTestTrait
 
     public function testFloatGreaterThanValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value FLOAT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::greaterThan(100));
 
@@ -97,13 +97,13 @@ trait FloatTestTrait
 
     public function testFloatLessThanOrEqualsValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value FLOAT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::lessThanOrEquals(1000));
 
@@ -119,13 +119,13 @@ trait FloatTestTrait
 
     public function testFloatLessThanValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value FLOAT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::lessThan(1000));
 
@@ -141,13 +141,13 @@ trait FloatTestTrait
 
     public function testFloatMinMaxSchema(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value FLOAT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 
@@ -161,13 +161,13 @@ trait FloatTestTrait
 
     public function testFloatRequiredValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value FLOAT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::required());
 
@@ -183,13 +183,13 @@ trait FloatTestTrait
 
     public function testFloatSchemaDefaultValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value FLOAT NOT NULL DEFAULT 100.123,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 
@@ -203,13 +203,13 @@ trait FloatTestTrait
 
     public function testFloatUnsignedMinMaxSchema(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value FLOAT UNSIGNED NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 

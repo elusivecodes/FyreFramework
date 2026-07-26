@@ -9,13 +9,13 @@ trait MediumIntTestTrait
 {
     public function testMediumIntBetweenValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value MEDIUMINT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::between(100, 1000));
 
@@ -31,13 +31,13 @@ trait MediumIntTestTrait
 
     public function testMediumIntEntityValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value MEDIUMINT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEntity([
             'value' => 999,
@@ -53,13 +53,13 @@ trait MediumIntTestTrait
 
     public function testMediumIntGreaterThanOrEqualsValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value MEDIUMINT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::greaterThanOrEquals(100));
 
@@ -75,13 +75,13 @@ trait MediumIntTestTrait
 
     public function testMediumIntGreaterThanValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value MEDIUMINT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::greaterThan(100));
 
@@ -97,13 +97,13 @@ trait MediumIntTestTrait
 
     public function testMediumIntLessThanOrEqualsValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value MEDIUMINT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::lessThanOrEquals(1000));
 
@@ -119,13 +119,13 @@ trait MediumIntTestTrait
 
     public function testMediumIntLessThanValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value MEDIUMINT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::lessThan(1000));
 
@@ -141,13 +141,13 @@ trait MediumIntTestTrait
 
     public function testMediumIntMinMaxSchema(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value MEDIUMINT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 
@@ -161,13 +161,13 @@ trait MediumIntTestTrait
 
     public function testMediumIntRequiredValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value MEDIUMINT NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::required());
 
@@ -183,13 +183,13 @@ trait MediumIntTestTrait
 
     public function testMediumIntSchemaDefaultValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value MEDIUMINT NOT NULL DEFAULT 999,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 
@@ -203,13 +203,13 @@ trait MediumIntTestTrait
 
     public function testMediumIntUnsignedMinMaxSchema(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value MEDIUMINT UNSIGNED NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 

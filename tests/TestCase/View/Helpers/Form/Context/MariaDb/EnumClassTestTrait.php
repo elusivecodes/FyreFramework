@@ -9,13 +9,13 @@ trait EnumClassTestTrait
 {
     public function testEnumClassFieldOptions(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->model->getSchema()->setEnumClass('value', Status::class);
 
@@ -31,13 +31,13 @@ trait EnumClassTestTrait
 
     public function testEnumClassFieldSelectedValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->model->getSchema()->setEnumClass('value', Status::class);
 

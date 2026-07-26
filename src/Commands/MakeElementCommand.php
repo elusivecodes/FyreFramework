@@ -6,6 +6,7 @@ namespace Fyre\Commands;
 use Fyre\Console\Command;
 use Fyre\Console\Console;
 use Fyre\Core\Make;
+use Fyre\Core\Make\GeneratedFile;
 use Fyre\Utility\Path;
 use Fyre\View\TemplateLocator;
 use Override;
@@ -75,16 +76,16 @@ class MakeElementCommand extends Command
         $template = Make::normalizePath($template);
 
         $fullPath = Path::join($path, TemplateLocator::ELEMENTS_FOLDER, $template.'.php');
+        $contents = Make::loadStub('element');
+        $generatedFile = new GeneratedFile($fullPath, $contents);
 
-        if (!$force && file_exists($fullPath)) {
+        if (!$generatedFile->isValid($force)) {
             $this->io->error('Element file already exists.');
 
             return static::CODE_ERROR;
         }
 
-        $contents = Make::loadStub('element');
-
-        if (!Make::saveFile($fullPath, $contents)) {
+        if (!$generatedFile->save()) {
             $this->io->error('Element file could not be written.');
 
             return static::CODE_ERROR;

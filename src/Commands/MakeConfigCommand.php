@@ -7,6 +7,7 @@ use Fyre\Console\Command;
 use Fyre\Console\Console;
 use Fyre\Core\Config;
 use Fyre\Core\Make;
+use Fyre\Core\Make\GeneratedFile;
 use Fyre\Utility\Path;
 use Override;
 
@@ -75,16 +76,16 @@ class MakeConfigCommand extends Command
         $file = Make::normalizePath($file);
 
         $fullPath = Path::join($path, $file.'.php');
+        $contents = Make::loadStub('config');
+        $generatedFile = new GeneratedFile($fullPath, $contents);
 
-        if (!$force && file_exists($fullPath)) {
+        if (!$generatedFile->isValid($force)) {
             $this->io->error('Config file already exists.');
 
             return static::CODE_ERROR;
         }
 
-        $contents = Make::loadStub('config');
-
-        if (!Make::saveFile($fullPath, $contents)) {
+        if (!$generatedFile->save()) {
             $this->io->error('Config file could not be written.');
 
             return static::CODE_ERROR;

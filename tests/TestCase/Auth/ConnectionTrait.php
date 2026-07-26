@@ -122,16 +122,16 @@ trait ConnectionTrait
         $this->db->query('DROP TABLE IF EXISTS posts');
         $this->db->query('DROP TABLE IF EXISTS users');
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE posts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 user_id INT(10) UNSIGNED NOT NULL,
                 content VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE users (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 username VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_unicode_ci',
@@ -140,7 +140,7 @@ trait ConnectionTrait
                 token VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb3_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $_SESSION = [];
 

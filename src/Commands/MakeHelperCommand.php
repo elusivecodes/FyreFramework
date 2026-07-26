@@ -6,11 +6,10 @@ namespace Fyre\Commands;
 use Fyre\Console\Command;
 use Fyre\Console\Console;
 use Fyre\Core\Make;
+use Fyre\Core\Make\GeneratedFile;
 use Fyre\Utility\Path;
 use Fyre\View\HelperRegistry;
 use Override;
-
-use function file_exists;
 
 /**
  * Implements the make helper console command.
@@ -70,6 +69,11 @@ class MakeHelperCommand extends Command
 
         [$namespace, $className] = Make::parseNamespaceClass($namespace, $name.'Helper');
 
+        $contents = Make::loadStub('helper', [
+            '{namespace}' => $namespace,
+            '{class}' => $className,
+        ]);
+
         $path = $this->make->findPath($namespace);
 
         if (!$path) {
@@ -78,20 +82,18 @@ class MakeHelperCommand extends Command
             return static::CODE_ERROR;
         }
 
-        $fullPath = Path::join($path, $className.'.php');
+        $generatedFile = new GeneratedFile(
+            Path::join($path, $className.'.php'),
+            $contents
+        );
 
-        if (!$force && file_exists($fullPath)) {
+        if (!$generatedFile->isValid($force)) {
             $this->io->error('Helper file already exists.');
 
             return static::CODE_ERROR;
         }
 
-        $contents = Make::loadStub('helper', [
-            '{namespace}' => $namespace,
-            '{class}' => $className,
-        ]);
-
-        if (!Make::saveFile($fullPath, $contents)) {
+        if (!$generatedFile->save()) {
             $this->io->error('Helper file could not be written.');
 
             return static::CODE_ERROR;

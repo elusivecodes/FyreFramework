@@ -7,21 +7,21 @@ trait RelationshipTestTrait
 {
     public function testBelongsTo(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 parent_id INT(10) UNSIGNED NOT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE parents (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value TEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->model->belongsTo('Parents');
 
@@ -41,21 +41,21 @@ trait RelationshipTestTrait
 
     public function testBelongsToForeignKey(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 parent_id INT(10) UNSIGNED NOT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE parents (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value TEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->model->belongsTo('Parents');
 
@@ -71,21 +71,21 @@ trait RelationshipTestTrait
 
     public function testHasMany(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE children (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 context_id INT(10) UNSIGNED NOT NULL,
                 value TEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->model->hasMany('Children');
 
@@ -107,21 +107,21 @@ trait RelationshipTestTrait
 
     public function testHasOne(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE children (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 context_id INT(10) UNSIGNED NOT NULL,
                 value TEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->model->hasOne('Children');
 
@@ -141,29 +141,29 @@ trait RelationshipTestTrait
 
     public function testManyToMany(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts_children (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 context_id INT(10) UNSIGNED NOT NULL,
                 child_id INT(10) UNSIGNED NOT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE children (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value TEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $this->model->manyToMany('Children');
 

@@ -60,7 +60,7 @@ trait MariaDbConnectionTrait
         $this->db->query('DROP TABLE IF EXISTS test_values');
         $this->db->query('DROP TABLE IF EXISTS test');
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE test (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 name VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
@@ -76,8 +76,8 @@ trait MariaDbConnectionTrait
                 UNIQUE INDEX name (name),
                 INDEX name_value (name, value)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
-        $this->db->query(<<<'EOT'
+        SQL);
+        $this->db->query(<<<'SQL'
             CREATE TABLE test_values (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 test_id INT(10) UNSIGNED NOT NULL DEFAULT '0',
@@ -87,7 +87,7 @@ trait MariaDbConnectionTrait
                 INDEX value (value),
                 CONSTRAINT test_values_test_id FOREIGN KEY (test_id) REFERENCES test.test (id) ON UPDATE CASCADE ON DELETE CASCADE
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         @mkdir('tmp');
     }

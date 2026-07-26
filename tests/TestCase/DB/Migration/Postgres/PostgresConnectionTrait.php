@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Migration\Postgres;
 
+use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Loader;
 use Fyre\DB\Connection;
@@ -34,25 +35,28 @@ trait PostgresConnectionTrait
     {
         $container = new Container();
         $container->singleton(Loader::class);
+        $container->singleton(Config::class);
         $container->singleton(TypeParser::class);
         $container->singleton(ConnectionManager::class);
         $container->singleton(SchemaRegistry::class);
         $container->singleton(ForgeRegistry::class);
+        $container->use(Config::class)->set('Database', [
+            'default' => [
+                'className' => PostgresConnection::class,
+                'host' => getenv('POSTGRES_HOST'),
+                'username' => getenv('POSTGRES_USERNAME'),
+                'password' => getenv('POSTGRES_PASSWORD'),
+                'database' => getenv('POSTGRES_DATABASE'),
+                'port' => getenv('POSTGRES_PORT'),
+                'charset' => 'utf8',
+            ],
+        ]);
 
         $this->typeParser = $container->use(TypeParser::class);
         $this->forgeRegistry = $container->use(ForgeRegistry::class);
         $this->migrationRunner = $container->use(MigrationRunner::class);
 
-        $this->db = $container->use(ConnectionManager::class)->setConfig(ConnectionManager::DEFAULT, [
-            'className' => PostgresConnection::class,
-            'host' => getenv('POSTGRES_HOST'),
-            'username' => getenv('POSTGRES_USERNAME'),
-            'password' => getenv('POSTGRES_PASSWORD'),
-            'database' => getenv('POSTGRES_DATABASE'),
-            'port' => getenv('POSTGRES_PORT'),
-            'charset' => 'utf8',
-        ])->use();
-
+        $this->db = $container->use(ConnectionManager::class)->use();
         $this->schema = $container->use(SchemaRegistry::class)->use($this->db);
 
         $container->use(Loader::class)->addNamespaces([

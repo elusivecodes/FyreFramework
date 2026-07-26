@@ -3,9 +3,10 @@ declare(strict_types=1);
 
 namespace {namespace};
 
-use Fyre\ORM\Entity;
+{uses}
 
+{docblock}
 class {class} extends Entity
 {
-    //
+{body}
 }

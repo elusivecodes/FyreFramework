@@ -374,22 +374,22 @@ final class RouteModelParamsTest extends TestCase
         $this->db->query('DROP TABLE IF EXISTS items');
         $this->db->query('DROP TABLE IF EXISTS children');
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE items (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 name VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE children (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 item_id INT(10) UNSIGNED NOT NULL,
                 value INT(10) UNSIGNED NOT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
         $Items = $this->modelRegistry->use('Items');
         $Children = $this->modelRegistry->use('Children');

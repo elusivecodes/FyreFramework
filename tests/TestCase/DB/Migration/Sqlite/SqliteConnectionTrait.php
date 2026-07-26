@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Migration\Sqlite;
 
+use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Loader;
 use Fyre\DB\Connection;
@@ -32,19 +33,22 @@ trait SqliteConnectionTrait
     {
         $container = new Container();
         $container->singleton(Loader::class);
+        $container->singleton(Config::class);
         $container->singleton(TypeParser::class);
         $container->singleton(ConnectionManager::class);
         $container->singleton(SchemaRegistry::class);
         $container->singleton(ForgeRegistry::class);
+        $container->use(Config::class)->set('Database', [
+            'default' => [
+                'className' => SqliteConnection::class,
+            ],
+        ]);
 
         $this->typeParser = $container->use(TypeParser::class);
         $this->forgeRegistry = $container->use(ForgeRegistry::class);
         $this->migrationRunner = $container->use(MigrationRunner::class);
 
-        $this->db = $container->use(ConnectionManager::class)->setConfig(ConnectionManager::DEFAULT, [
-            'className' => SqliteConnection::class,
-        ])->use();
-
+        $this->db = $container->use(ConnectionManager::class)->use();
         $this->schema = $container->use(SchemaRegistry::class)->use($this->db);
 
         $container->use(Loader::class)->addNamespaces([

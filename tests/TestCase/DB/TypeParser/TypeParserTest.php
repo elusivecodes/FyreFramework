@@ -136,15 +136,6 @@ final class TypeParserTest extends TestCase
         );
     }
 
-    protected function dateTimeType(string $name): DateTimeType
-    {
-        $type = $this->type->use($name);
-
-        $this->assertInstanceOf(DateTimeType::class, $type);
-
-        return $type;
-    }
-
     #[Override]
     public static function setUpBeforeClass(): void
     {

@@ -9,13 +9,13 @@ trait BooleanTestTrait
 {
     public function testBooleanEntityValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTNEGER NOT NULL,
                 value BOOLEAN NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $entity = $this->model->newEntity([
             'value' => true,
@@ -31,13 +31,13 @@ trait BooleanTestTrait
 
     public function testBooleanRequiredValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTNEGER NOT NULL,
                 value BOOLEAN NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::required());
 
@@ -53,13 +53,13 @@ trait BooleanTestTrait
 
     public function testBooleanSchema(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTNEGER NOT NULL,
                 value BOOLEAN NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 
@@ -73,13 +73,13 @@ trait BooleanTestTrait
 
     public function testBooleanSchemaDefaultValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTNEGER NOT NULL,
                 value BOOLEAN NOT NULL DEFAULT 1,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 

@@ -9,13 +9,13 @@ trait BlobTestTrait
 {
     public function testBlobRequiredValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value BLOB NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::required());
 

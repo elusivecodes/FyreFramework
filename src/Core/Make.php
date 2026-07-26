@@ -10,17 +10,12 @@ use function array_keys;
 use function array_pop;
 use function array_unshift;
 use function array_values;
-use function dirname;
 use function explode;
 use function file_get_contents;
-use function file_put_contents;
 use function implode;
-use function is_dir;
-use function mkdir;
 use function preg_replace;
 use function str_replace;
 
-use const LOCK_EX;
 use const PHP_EOL;
 
 /**
@@ -83,24 +78,6 @@ class Make
         $namespace = implode('\\', $namespaceSegments);
 
         return [$namespace, $className];
-    }
-
-    /**
-     * Saves a new file.
-     *
-     * @param string $fullPath The file path.
-     * @param string $contents The file contents.
-     * @return bool Whether the file was written.
-     */
-    public static function saveFile(string $fullPath, string $contents): bool
-    {
-        $path = dirname($fullPath);
-
-        if (!is_dir($path) && !mkdir($path, 0755, true)) {
-            return false;
-        }
-
-        return file_put_contents($fullPath, $contents, LOCK_EX) !== false;
     }
 
     /**

@@ -7,10 +7,10 @@ use Fyre\Console\Command;
 use Fyre\Console\CommandRunner;
 use Fyre\Console\Console;
 use Fyre\Core\Make;
+use Fyre\Core\Make\GeneratedFile;
 use Fyre\Utility\Path;
 use Override;
 
-use function file_exists;
 use function preg_replace;
 use function strtolower;
 
@@ -76,24 +76,8 @@ class MakeCommandCommand extends Command
 
         [$namespace, $className] = Make::parseNamespaceClass($namespace, $name.'Command');
 
-        $path = $this->make->findPath($namespace);
-
-        if (!$path) {
-            $this->io->error('Namespace path not found.');
-
-            return static::CODE_ERROR;
-        }
-
-        $fullPath = Path::join($path, $className.'.php');
-
-        if (!$force && file_exists($fullPath)) {
-            $this->io->error('Command file already exists.');
-
-            return static::CODE_ERROR;
-        }
-
         $command = (string) preg_replace('/Command$/', '', $className);
-        $alias ??= strtolower((string) preg_replace('/(?<!^)([A-Z]+)/', '_$1', $command));
+        $alias ??= ((string) preg_replace('/(?<!^)([A-Z]+)/', '_$1', $command)) |> strtolower(...);
 
         $contents = Make::loadStub('command', [
             '{namespace}' => $namespace,
@@ -102,7 +86,26 @@ class MakeCommandCommand extends Command
             '{description}' => $description ?? '',
         ]);
 
-        if (!Make::saveFile($fullPath, $contents)) {
+        $path = $this->make->findPath($namespace);
+
+        if (!$path) {
+            $this->io->error('Namespace path not found.');
+
+            return static::CODE_ERROR;
+        }
+
+        $generatedFile = new GeneratedFile(
+            Path::join($path, $className.'.php'),
+            $contents
+        );
+
+        if (!$generatedFile->isValid($force)) {
+            $this->io->error('Command file already exists.');
+
+            return static::CODE_ERROR;
+        }
+
+        if (!$generatedFile->save()) {
             $this->io->error('Command file could not be written.');
 
             return static::CODE_ERROR;

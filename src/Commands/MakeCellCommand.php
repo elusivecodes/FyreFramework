@@ -6,11 +6,10 @@ namespace Fyre\Commands;
 use Fyre\Console\Command;
 use Fyre\Console\Console;
 use Fyre\Core\Make;
+use Fyre\Core\Make\GeneratedFile;
 use Fyre\Utility\Path;
 use Fyre\View\CellRegistry;
 use Override;
-
-use function file_exists;
 
 /**
  * Implements the make cell console command.
@@ -74,6 +73,12 @@ class MakeCellCommand extends Command
 
         [$namespace, $className] = Make::parseNamespaceClass($namespace, $name.'Cell');
 
+        $contents = Make::loadStub('cell', [
+            '{namespace}' => $namespace,
+            '{class}' => $className,
+            '{method}' => $method,
+        ]);
+
         $path = $this->make->findPath($namespace);
 
         if (!$path) {
@@ -82,21 +87,18 @@ class MakeCellCommand extends Command
             return static::CODE_ERROR;
         }
 
-        $fullPath = Path::join($path, $className.'.php');
+        $generatedFile = new GeneratedFile(
+            Path::join($path, $className.'.php'),
+            $contents
+        );
 
-        if (!$force && file_exists($fullPath)) {
+        if (!$generatedFile->isValid($force)) {
             $this->io->error('Cell file already exists.');
 
             return static::CODE_ERROR;
         }
 
-        $contents = Make::loadStub('cell', [
-            '{namespace}' => $namespace,
-            '{class}' => $className,
-            '{method}' => $method,
-        ]);
-
-        if (!Make::saveFile($fullPath, $contents)) {
+        if (!$generatedFile->save()) {
             $this->io->error('Cell file could not be written.');
 
             return static::CODE_ERROR;

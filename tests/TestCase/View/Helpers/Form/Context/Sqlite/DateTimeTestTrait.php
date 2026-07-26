@@ -10,13 +10,13 @@ trait DateTimeTestTrait
 {
     public function testDatetimeEntityValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value DATETIME NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $entity = $this->model->newEntity([
             'value' => DateTime::createFromArray([2022, 1, 1]),
@@ -32,13 +32,13 @@ trait DateTimeTestTrait
 
     public function testDatetimeRequiredValidation(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value DATETIME NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $this->validator->add('value', Rule::required());
 
@@ -54,13 +54,13 @@ trait DateTimeTestTrait
 
     public function testDatetimeSchema(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value DATETIME NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 
@@ -74,13 +74,13 @@ trait DateTimeTestTrait
 
     public function testDatetimeSchemaDefaultValue(): void
     {
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
                 value DATETIME NOT NULL DEFAULT '2022-01-01 00:00:00',
                 PRIMARY KEY (id)
             )
-        EOT);
+        SQL);
 
         $entity = $this->model->newEmptyEntity();
 

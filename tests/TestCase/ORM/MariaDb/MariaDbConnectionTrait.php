@@ -84,50 +84,50 @@ trait MariaDbConnectionTrait
         $this->db->query('DROP TABLE IF EXISTS tags');
         $this->db->query('DROP TABLE IF EXISTS posts_tags');
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE items (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 name VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE contains (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 item_id INT(10) UNSIGNED NOT NULL,
                 contained_item_id INT(10) UNSIGNED NOT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE others (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value INT(10) UNSIGNED NOT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE timestamps (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 created DATETIME NOT NULL,
                 modified DATETIME NOT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE users (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 name VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
                 deleted DATETIME NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE addresses (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 user_id INT(10) UNSIGNED NOT NULL,
@@ -138,9 +138,9 @@ trait MariaDbConnectionTrait
                 deleted DATETIME NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE posts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 user_id INT(10) UNSIGNED NULL DEFAULT NULL,
@@ -149,9 +149,9 @@ trait MariaDbConnectionTrait
                 deleted DATETIME NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE comments (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 user_id INT(10) UNSIGNED NULL DEFAULT NULL,
@@ -160,17 +160,17 @@ trait MariaDbConnectionTrait
                 deleted DATETIME NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE tags (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 tag VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
 
-        $this->db->query(<<<'EOT'
+        $this->db->query(<<<'SQL'
             CREATE TABLE posts_tags (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 post_id INT(10) UNSIGNED NOT NULL,
@@ -178,7 +178,7 @@ trait MariaDbConnectionTrait
                 value INT(10) UNSIGNED NULL DEFAULT NULL,
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        EOT);
+        SQL);
     }
 
     #[Override]

@@ -187,21 +187,23 @@ final class DbMigrationCommandTest extends TestCase
         $container->singleton(ForgeRegistry::class);
         $container->singleton(MigrationRunner::class);
         $container->singleton(SchemaRegistry::class);
+        $container->use(Config::class)->set('Database', [
+            'default' => [
+                'className' => MysqlConnection::class,
+                'host' => getenv('MYSQL_HOST'),
+                'username' => getenv('MYSQL_USERNAME'),
+                'password' => getenv('MYSQL_PASSWORD'),
+                'database' => getenv('MYSQL_DATABASE'),
+                'port' => getenv('MYSQL_PORT'),
+                'collation' => 'utf8mb4_unicode_ci',
+                'charset' => 'utf8mb4',
+                'compress' => true,
+            ],
+        ]);
 
         $this->migrationRunner = $container->use(MigrationRunner::class);
 
-        $this->db = $container->use(ConnectionManager::class)->setConfig(ConnectionManager::DEFAULT, [
-            'className' => MysqlConnection::class,
-            'host' => getenv('MYSQL_HOST'),
-            'username' => getenv('MYSQL_USERNAME'),
-            'password' => getenv('MYSQL_PASSWORD'),
-            'database' => getenv('MYSQL_DATABASE'),
-            'port' => getenv('MYSQL_PORT'),
-            'collation' => 'utf8mb4_unicode_ci',
-            'charset' => 'utf8mb4',
-            'compress' => true,
-        ])->use();
-
+        $this->db = $container->use(ConnectionManager::class)->use();
         $this->schema = $container->use(SchemaRegistry::class)->use($this->db);
 
         $container->use(Loader::class)->addNamespaces([

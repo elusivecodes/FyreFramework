@@ -6,6 +6,7 @@ namespace Fyre\Commands;
 use Fyre\Console\Command;
 use Fyre\Console\Console;
 use Fyre\Core\Make;
+use Fyre\Core\Make\GeneratedFile;
 use Fyre\Utility\Path;
 use Fyre\View\TemplateLocator;
 use Override;
@@ -75,16 +76,16 @@ class MakeTemplateCommand extends Command
         $template = Make::normalizePath($template);
 
         $fullPath = Path::join($path, $template.'.php');
+        $contents = Make::loadStub('template');
+        $generatedFile = new GeneratedFile($fullPath, $contents);
 
-        if (!$force && file_exists($fullPath)) {
+        if (!$generatedFile->isValid($force)) {
             $this->io->error('Template file already exists.');
 
             return static::CODE_ERROR;
         }
 
-        $contents = Make::loadStub('template');
-
-        if (!Make::saveFile($fullPath, $contents)) {
+        if (!$generatedFile->save()) {
             $this->io->error('Template file could not be written.');
 
             return static::CODE_ERROR;
