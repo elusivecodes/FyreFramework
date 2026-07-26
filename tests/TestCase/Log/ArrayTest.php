@@ -61,12 +61,18 @@ final class ArrayTest extends TestCase
         $scopedLogger = $this->logManager->use('scoped');
 
         $this->assertInstanceOf(ArrayLogger::class, $scopedLogger);
-        $this->assertEmpty($scopedLogger->read());
+
+        $this->assertEmpty(
+            $scopedLogger->read()
+        );
 
         $allLogger = $this->logManager->use('all');
 
         $this->assertInstanceOf(ArrayLogger::class, $allLogger);
-        $this->assertNotEmpty($allLogger->read());
+
+        $this->assertNotEmpty(
+            $allLogger->read()
+        );
     }
 
     public function testClear(): void
@@ -253,7 +259,10 @@ final class ArrayTest extends TestCase
             $logger = $this->logManager->use('array');
 
             $this->assertInstanceOf(ArrayLogger::class, $logger);
-            $this->assertEmpty($logger->read());
+
+            $this->assertEmpty(
+                $logger->read()
+            );
         }
     }
 

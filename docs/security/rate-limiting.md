@@ -51,13 +51,13 @@ An identifier is the “key space” used to track usage. It is configured on th
 
 When `identifier` is a list, the identifier is assembled by concatenating these sources (with `_`) in the order provided.
 
-If your app runs behind a reverse proxy, be careful with IP-based identification. By default, the built-in `ip` identifier uses `REMOTE_ADDR`. When `trustProxy` is enabled, it can use a configured forwarded IP header (by default `X-Forwarded-For`), optionally restricted by `trustedProxies`. Header names are matched case-insensitively. For custom trust rules, you can still use an `identifier` callback.
+If your app runs behind a reverse proxy, be careful with IP-based identification. By default, the built-in `ip` identifier uses `REMOTE_ADDR`. When `App.trustProxy` is enabled with no trusted proxy list, the rightmost forwarded address is used. A non-empty `App.trustedProxies` list restricts resolution to explicitly trusted proxy hops. Header names are matched case-insensitively. For custom trust rules, you can still use an `identifier` callback.
 
 ### Supported identifier sources
 
 The base `RateLimiter` supports three identifier source strings:
 
-- `ip` — uses `REMOTE_ADDR` by default. When `trustProxy` is enabled, it uses the first value from the configured forwarded IP header when the immediate remote address is trusted.
+- `ip` — uses `REMOTE_ADDR` by default and resolves the configured forwarded IP chain according to the application proxy policy
 - `route` — uses `Controller::action` when the request has a `route` attribute that is a `ControllerRoute`, and always includes the client IP
 - `user` — uses `user_{id}` when the request has a `user` attribute with an `id` property, otherwise falls back to the client IP
 
@@ -69,11 +69,12 @@ The limiter is configured with three core values:
 - `window` — time window in seconds (default: `60`)
 - `cost` — budget cost of the request (default: `1`)
 
-For proxy-aware IP identification, two additional options are available:
+Proxy trust uses the application configuration shared with `ServerRequest`:
 
-- `trustProxy` — whether forwarded IP headers should be considered (default: `false`)
-- `trustedProxies` — list of immediate proxy IPs that are allowed to supply forwarded IP headers (default: `[]`; when empty and `trustProxy` is enabled, any proxy is trusted)
-- `ipHeader` — forwarded IP header name or ordered list of names to check (default: `X-Forwarded-For`; the first non-empty match is used, and names are matched case-insensitively)
+- `App.trustProxy` — whether forwarded IP headers should be considered (default: `false`)
+- `App.trustedProxies` — proxy IPs allowed to supply forwarded headers (default: `[]`; an empty list accepts the rightmost forwarded address)
+
+The limiter-specific `ipHeader` option selects the forwarded IP header name or ordered list of names to check (default: `X-Forwarded-For`; the first non-empty match is used, and names are matched case-insensitively).
 
 Cost can be configured as either a fixed integer or a callback. When it’s a callback, the `RateLimiter` computes cost by calling it through the container with the current request.
 
@@ -215,7 +216,7 @@ A few behaviors are worth keeping in mind:
 - Inline middleware arguments are strings; when an override is provided, `RateLimiterMiddleware` casts it with `(int)`, so `'0'` is applied as `0` rather than treated as “no override”.
 - The built-in strategies assume `limit` and `window` are positive integers; non-numeric values (cast to `0`) or explicit `0` configured via options can lead to invalid results.
 - The `route` identifier always includes the client IP; it does not group all clients together for the same controller action.
-- The `ip` identifier uses `REMOTE_ADDR` by default. When `trustProxy` is enabled and the immediate proxy is trusted, it uses the first value from the first matching `ipHeader`.
+- The `ip` identifier uses `REMOTE_ADDR` by default. With proxy trust enabled, an empty trusted list accepts the rightmost forwarded address; otherwise the chain is walked right-to-left through explicitly trusted addresses.
 - If the configured cache does not include the `ratelimiter` config key, `RateLimiter` registers one automatically using `FileCacher` with a `ratelimiter:` prefix.
 - Rate limiting relies on cache persistence; when `CacheManager` is disabled (by default when `App.debug` is enabled), it uses a do-nothing cache handler and will not throttle across requests.
 

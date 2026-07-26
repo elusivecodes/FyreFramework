@@ -114,7 +114,7 @@ This is a quick map of which services consume which config namespaces (not exhau
 ### App-level keys
 
 - [Routing](../routing/index.md) — `App.baseUri` (**critical** for routing when hosting under a path).
-- [HTTP](../http/index.md) — `App.defaultLocale`, `App.supportedLocales` (read by `Fyre\Http\ServerRequest`).
+- [HTTP](../http/index.md) — `App.defaultLocale`, `App.supportedLocales`, `App.trustProxy`, and `App.trustedProxies` (read by `Fyre\Http\ServerRequest` and `Fyre\Security\RateLimiter`).
 - [Language (Lang)](lang.md) — `App.defaultLocale`.
 - [Formatter](../utilities/formatter.md) — `App.defaultLocale`, `App.defaultCurrency`.
 - [Cache](../cache/index.md) — `App.debug` (caching is disabled by default when `App.debug` is enabled).

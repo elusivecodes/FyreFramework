@@ -295,7 +295,11 @@ final class PromiseTest extends TestCase
         $resolve();
 
         $this->assertInstanceOf(LogicException::class, $reason);
-        $this->assertSame('Cannot resolve a promise with itself.', $reason->getMessage());
+
+        $this->assertSame(
+            'Cannot resolve a promise with itself.',
+            $reason->getMessage()
+        );
     }
 
     public function testThenResolve(): void

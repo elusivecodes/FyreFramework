@@ -54,7 +54,10 @@ final class ModelSourceBuilderEnumTest extends TestCase
         $column = $this->createStub(Column::class);
         $column->method('getComment')->willReturn('[enum PublicationStatus] Draft');
 
-        $this->assertSame([], $builder->inferEnums([$column], 'Post'));
+        $this->assertSame(
+            [],
+            $builder->inferEnums([$column], 'Post')
+        );
     }
 
     public function testInferInvalidComment(): void
@@ -63,6 +66,9 @@ final class ModelSourceBuilderEnumTest extends TestCase
         $column = $this->createStub(Column::class);
         $column->method('getComment')->willReturn('Not an enum');
 
-        $this->assertSame([], $builder->inferEnums([$column], 'Post'));
+        $this->assertSame(
+            [],
+            $builder->inferEnums([$column], 'Post')
+        );
     }
 }

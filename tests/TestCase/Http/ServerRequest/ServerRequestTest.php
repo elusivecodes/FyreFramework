@@ -74,8 +74,13 @@ final class ServerRequestTest extends TestCase
 
     public function testIsSecureFrontEndHttps(): void
     {
+        $this->config
+            ->set('App.trustProxy', true)
+            ->set('App.trustedProxies', ['127.0.0.1']);
+
         $request = new ServerRequest($this->config, $this->type, [
             'server' => [
+                'REMOTE_ADDR' => '127.0.0.1',
                 'HTTP_FRONT_END_HTTPS' => 'ON',
             ],
         ]);

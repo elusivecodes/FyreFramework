@@ -6,6 +6,7 @@ namespace Fyre\Security;
 use Closure;
 use Fyre\Cache\CacheManager;
 use Fyre\Cache\Handlers\FileCacher;
+use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Router\Routes\ControllerRoute;
@@ -14,7 +15,9 @@ use Psr\Http\Message\ServerRequestInterface;
 
 use function array_map;
 use function array_replace_recursive;
+use function array_reverse;
 use function explode;
+use function filter_var;
 use function hash;
 use function implode;
 use function in_array;
@@ -22,6 +25,8 @@ use function str_replace;
 use function str_starts_with;
 use function strtoupper;
 use function trim;
+
+use const FILTER_VALIDATE_IP;
 
 /**
  * Provides shared rate limiting helpers and configuration.
@@ -46,8 +51,6 @@ abstract class RateLimiter
         'message' => 'Rate limit exceeded',
         'identifier' => ['ip'],
         'ipHeader' => 'X-Forwarded-For',
-        'trustProxy' => false,
-        'trustedProxies' => [],
         'skipCheck' => null,
     ];
 
@@ -85,11 +88,13 @@ abstract class RateLimiter
      *
      * @param Container $container The Container.
      * @param CacheManager $cacheManager The CacheManager.
+     * @param Config $config The Config.
      * @param array<string, mixed> $options The RateLimiter options.
      */
     public function __construct(
         protected Container $container,
         protected CacheManager $cacheManager,
+        Config $config,
         array $options = []
     ) {
         $options = array_replace_recursive(static::$defaults, $options);
@@ -112,8 +117,8 @@ abstract class RateLimiter
             },
             (array) $options['ipHeader']
         );
-        $this->trustProxy = (bool) $options['trustProxy'];
-        $this->trustedProxies = (array) $options['trustedProxies'];
+        $this->trustProxy = $config->get('App.trustProxy', false);
+        $this->trustedProxies = $config->get('App.trustedProxies', []);
         $this->skipCheck = $options['skipCheck'];
 
         if (!$this->cacheManager->hasConfig($this->cacheConfig)) {
@@ -244,9 +249,8 @@ abstract class RateLimiter
     /**
      * Returns the IP identifier.
      *
-     * Note: Uses `REMOTE_ADDR` by default. When `trustProxy` is enabled, the first value from
-     * the configured forwarded IP header is used only when the immediate remote address is
-     * trusted.
+     * Note: Uses `REMOTE_ADDR` by default. When proxy trust is enabled, the configured
+     * forwarded IP header is resolved from right to left using the trusted proxy list.
      *
      * @param ServerRequestInterface $request The ServerRequest.
      * @return string The IP identifier.
@@ -256,13 +260,12 @@ abstract class RateLimiter
         $params = $request->getServerParams();
         $remoteAddr = $params['REMOTE_ADDR'] ?? 'unknown';
 
-        if (!$this->trustProxy) {
-            return $remoteAddr;
-        }
-
         if (
-            $this->trustedProxies !== [] &&
-            !in_array($remoteAddr, $this->trustedProxies, true)
+            !$this->trustProxy ||
+            (
+                $this->trustedProxies !== [] &&
+                !in_array($remoteAddr, $this->trustedProxies, true)
+            )
         ) {
             return $remoteAddr;
         }
@@ -272,7 +275,25 @@ abstract class RateLimiter
                 continue;
             }
 
-            return explode(',', $params[$header])[0] |> trim(...);
+            $clientIp = $remoteAddr;
+            $forwardedIps = explode(',', $params[$header])
+                |> array_reverse(...);
+
+            foreach ($forwardedIps as $forwardedIp) {
+                $forwardedIp = trim($forwardedIp);
+
+                if (!filter_var($forwardedIp, FILTER_VALIDATE_IP)) {
+                    return $clientIp;
+                }
+
+                $clientIp = $forwardedIp;
+
+                if (!in_array($clientIp, $this->trustedProxies, true)) {
+                    break;
+                }
+            }
+
+            return $clientIp;
         }
 
         return $remoteAddr;

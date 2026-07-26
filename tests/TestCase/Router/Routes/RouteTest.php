@@ -141,9 +141,19 @@ final class RouteTest extends TestCase
             ],
         ]);
 
-        $this->assertInstanceOf(ServerRequest::class, $route->parseRequest($matchingRequest));
-        $this->assertInstanceOf(ServerRequest::class, $route->parseRequest($optionalRequest));
-        $this->assertNull($route->parseRequest($invalidRequest));
+        $this->assertInstanceOf(
+            ServerRequest::class,
+            $route->parseRequest($matchingRequest)
+        );
+
+        $this->assertInstanceOf(
+            ServerRequest::class,
+            $route->parseRequest($optionalRequest)
+        );
+
+        $this->assertNull(
+            $route->parseRequest($invalidRequest)
+        );
     }
 
     public function testGetPath(): void

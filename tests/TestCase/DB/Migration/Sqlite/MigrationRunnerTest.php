@@ -29,7 +29,9 @@ final class MigrationRunnerTest extends TestCase
         );
 
         $this->schema->clear();
-        $this->assertTrue($this->schema->hasTable('test3'));
+        $this->assertTrue(
+            $this->schema->hasTable('test3')
+        );
     }
 
     public function testRollbackRetainsMissingMigrationHistory(): void
@@ -58,6 +60,8 @@ final class MigrationRunnerTest extends TestCase
         );
 
         $this->schema->clear();
-        $this->assertTrue($this->schema->hasTable('test3'));
+        $this->assertTrue(
+            $this->schema->hasTable('test3')
+        );
     }
 }

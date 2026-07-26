@@ -409,6 +409,11 @@ final class MakeModelTest extends TestCase
 
     public function testMakeModelRelationshipImportCollision(): void
     {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            'Import name `AuthorsModel` collides between `First\Models\AuthorsModel` and `Second\Models\AuthorsModel`.'
+        );
+
         $builder = $this->container->use(ModelSourceBuilder::class);
         $relationships = [
             [
@@ -432,11 +437,6 @@ final class MakeModelTest extends TestCase
                 'options' => [],
             ],
         ];
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage(
-            'Import name `AuthorsModel` collides between `First\Models\AuthorsModel` and `Second\Models\AuthorsModel`.'
-        );
 
         $builder->build(
             namespace: 'Example\Models',
@@ -672,9 +672,18 @@ final class MakeModelTest extends TestCase
 
         $model = $this->container->use(ModelRegistry::class)->use('BlogPost');
 
-        $this->assertSame('posts', $model->getTable());
-        $this->assertTrue($model->hasRelationship('Users'));
-        $this->assertTrue($model->hasRelationship('Tags'));
+        $this->assertSame(
+            'posts',
+            $model->getTable()
+        );
+
+        $this->assertTrue(
+            $model->hasRelationship('Users')
+        );
+
+        $this->assertTrue(
+            $model->hasRelationship('Tags')
+        );
 
         $this->assertSame(
             Command::CODE_SUCCESS,

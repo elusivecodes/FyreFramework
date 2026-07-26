@@ -87,7 +87,7 @@ Uploaded files are exposed as `UploadedFile` objects (from `$_FILES`) and can be
 For common environment-derived checks:
 
 - `getClientIp()` returns `REMOTE_ADDR` by default and can use `X-Forwarded-For` when proxy trust is enabled
-- `isSecure()` checks HTTPS indicators (including proxy headers)
+- `isSecure()` checks native HTTPS indicators and trusted proxy headers
 - `isAjax()` checks `X-Requested-With: XMLHttpRequest`
 - `isCli()` checks whether the runtime is `cli`
 
@@ -96,12 +96,15 @@ $clientIp = $request->getClientIp();
 $secure = $request->isSecure();
 ```
 
-If the application runs behind a trusted reverse proxy, you can enable proxy trust on the request and restrict which proxies may supply `X-Forwarded-For`:
+If the application runs behind a trusted reverse proxy, enable proxy trust and list the proxies that may supply forwarded headers in the application config:
 
 ```php
-$request = $request
-    ->trustProxy()
-    ->setTrustedProxies(['127.0.0.1']);
+return [
+    'App' => [
+        'trustProxy' => true,
+        'trustedProxies' => ['127.0.0.1'],
+    ],
+];
 ```
 
 ## Locale and negotiation
@@ -355,32 +358,10 @@ $request = $request->withoutAttribute('request_id');
 
 Returns the client IP address for the request.
 
-By default, this uses `REMOTE_ADDR`. When proxy trust is enabled with `trustProxy()`, it uses the first value from `X-Forwarded-For` only when the immediate remote address is trusted.
+By default, this uses `REMOTE_ADDR`. When proxy trust is enabled with no trusted proxy list, it uses the validated rightmost value from `X-Forwarded-For`. When proxies are listed, it walks the header right-to-left and returns the first untrusted address. Resolution stops at malformed addresses.
 
 ```php
 $ip = $request->getClientIp();
-```
-
-#### **Enable or disable proxy trust** (`trustProxy()`)
-
-Returns a new request instance that either trusts or ignores proxy-forwarded headers when resolving the client IP.
-
-Arguments:
-- `$trustProxy` (`bool`): whether to trust proxy-forwarded headers. Defaults to `true`.
-
-```php
-$request = $request->trustProxy();
-```
-
-#### **Set trusted proxies** (`setTrustedProxies()`)
-
-Returns a new request instance with the list of immediate proxy IPs that are allowed to supply `X-Forwarded-For`.
-
-Arguments:
-- `$trustedProxies` (`string[]`): the trusted proxy IPs.
-
-```php
-$request = $request->setTrustedProxies(['127.0.0.1']);
 ```
 
 #### **Get trusted proxies** (`getTrustedProxies()`)
@@ -393,7 +374,7 @@ $trustedProxies = $request->getTrustedProxies();
 
 #### **Check HTTPS** (`isSecure()`)
 
-Checks the `HTTPS` server parameter and common proxy headers (`X-Forwarded-Proto`, `Front-End-Https`).
+Checks the `HTTPS` server parameter and common proxy headers (`X-Forwarded-Proto`, `Front-End-Https`). When a trusted proxy list is configured, the immediate remote address must be present in it.
 
 ```php
 $secure = $request->isSecure();
@@ -450,7 +431,7 @@ A few practical details are worth keeping in mind:
 - `getParsedBody()` always returns an array, but it can throw `RuntimeException` when JSON parsing fails for `application/json` requests.
 - `getParsedBody()` treats `application/x-www-form-urlencoded` bodies specially only for `PUT`, `PATCH`, and `DELETE` requests; other cases fall back to `$_POST`.
 - `withUploadedFiles()` expects `UploadedFile` instances (and nested arrays of them) and throws when other values are provided.
-- `getClientIp()` uses `REMOTE_ADDR` by default. It only consults `X-Forwarded-For` after `trustProxy()` is enabled, and `setTrustedProxies()` can restrict which proxies are allowed to supply it.
+- `getClientIp()` uses `REMOTE_ADDR` by default. Proxy trust with an empty trusted list accepts the rightmost forwarded address; a non-empty list restricts forwarding to explicitly trusted proxy hops.
 - `negotiate('content', $supported, strictMatch: true)` returns an empty string when no acceptable match is found.
 
 ## Related

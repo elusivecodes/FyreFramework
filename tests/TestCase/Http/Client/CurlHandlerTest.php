@@ -123,8 +123,14 @@ final class CurlHandlerTest extends TestCase
             $response->getHeaderLine('X-Test')
         );
 
-        $this->assertFalse($response->hasHeader('X-Interim'));
-        $this->assertSame(['first=1', 'second=2'], $response->getHeader('Set-Cookie'));
+        $this->assertFalse(
+            $response->hasHeader('X-Interim')
+        );
+
+        $this->assertSame(
+            ['first=1', 'second=2'],
+            $response->getHeader('Set-Cookie')
+        );
 
         $this->assertSame(
             'body',

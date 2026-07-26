@@ -590,9 +590,20 @@ final class ClientTest extends TestCase
             'maxRedirects' => 1,
         ]);
 
-        $this->assertSame('private=value', $requests[0]->getHeaderLine('Cookie'));
-        $this->assertSame('https://example.com/private/next', (string) $requests[1]->getUri());
-        $this->assertSame('', $requests[1]->getHeaderLine('Cookie'));
+        $this->assertSame(
+            'private=value',
+            $requests[0]->getHeaderLine('Cookie')
+        );
+
+        $this->assertSame(
+            'https://example.com/private/next',
+            (string) $requests[1]->getUri()
+        );
+
+        $this->assertSame(
+            '',
+            $requests[1]->getHeaderLine('Cookie')
+        );
     }
 
     public function testRedirectStripsCrossOriginCredentials(): void
@@ -629,11 +640,30 @@ final class ClientTest extends TestCase
             ],
         ]);
 
-        $this->assertSame('source=value', $requests[0]->getHeaderLine('Cookie'));
-        $this->assertSame('', $requests[1]->getHeaderLine('Authorization'));
-        $this->assertSame('', $requests[1]->getHeaderLine('Proxy-Authorization'));
-        $this->assertSame('', $requests[1]->getHeaderLine('Referer'));
-        $this->assertSame('', $requests[1]->getHeaderLine('Cookie'));
+        $this->assertSame(
+            'source=value',
+            $requests[0]->getHeaderLine('Cookie')
+        );
+
+        $this->assertSame(
+            '',
+            $requests[1]->getHeaderLine('Authorization')
+        );
+
+        $this->assertSame(
+            '',
+            $requests[1]->getHeaderLine('Proxy-Authorization')
+        );
+
+        $this->assertSame(
+            '',
+            $requests[1]->getHeaderLine('Referer')
+        );
+
+        $this->assertSame(
+            '',
+            $requests[1]->getHeaderLine('Cookie')
+        );
     }
 
     public function testSendNetworkException(): void

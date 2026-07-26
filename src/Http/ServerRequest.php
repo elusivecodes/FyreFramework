@@ -13,9 +13,12 @@ use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 
 use function array_key_exists;
+use function array_key_last;
 use function array_map;
 use function array_merge;
+use function array_reverse;
 use function explode;
+use function filter_var;
 use function getenv;
 use function in_array;
 use function is_array;
@@ -30,8 +33,10 @@ use function str_replace;
 use function str_starts_with;
 use function strtolower;
 use function substr;
+use function trim;
 use function ucwords;
 
+use const FILTER_VALIDATE_IP;
 use const JSON_ERROR_NONE;
 use const PHP_SAPI;
 use const PHP_URL_PATH;
@@ -110,6 +115,8 @@ class ServerRequest extends Request implements ServerRequestInterface
     ) {
         $this->defaultLocale = $config->get('App.defaultLocale') ?? locale_get_default();
         $this->supportedLocales = $config->get('App.supportedLocales', []);
+        $this->trustProxy = $config->get('App.trustProxy', false);
+        $this->trustedProxies = $config->get('App.trustedProxies', []);
 
         $this->server = $options['server'] ?? null;
         $this->cookies = $options['cookies'] ?? null;
@@ -205,8 +212,8 @@ class ServerRequest extends Request implements ServerRequestInterface
     /**
      * Returns the client IP address.
      *
-     * Note: Uses `REMOTE_ADDR` by default. When proxy trust is enabled, the first value from
-     * `X-Forwarded-For` is used only when the immediate remote address is trusted.
+     * Note: Uses `REMOTE_ADDR` by default. When proxy trust is enabled, `X-Forwarded-For`
+     * is resolved from right to left using the configured trusted proxy list.
      *
      * @return string The client IP address.
      */
@@ -214,13 +221,12 @@ class ServerRequest extends Request implements ServerRequestInterface
     {
         $remoteAddr = $this->getServer('REMOTE_ADDR') ?? '';
 
-        if (!$this->trustProxy) {
-            return $remoteAddr;
-        }
-
         if (
-            $this->trustedProxies !== [] &&
-            !in_array($remoteAddr, $this->trustedProxies, true)
+            !$this->trustProxy ||
+            (
+                $this->trustedProxies !== [] &&
+                !in_array($remoteAddr, $this->trustedProxies, true)
+            )
         ) {
             return $remoteAddr;
         }
@@ -231,7 +237,25 @@ class ServerRequest extends Request implements ServerRequestInterface
             return $remoteAddr;
         }
 
-        return explode(',', $forwardedFor)[0] |> trim(...) ?: $remoteAddr;
+        $clientIp = $remoteAddr;
+        $forwardedIps = explode(',', $forwardedFor)
+            |> array_reverse(...);
+
+        foreach ($forwardedIps as $forwardedIp) {
+            $forwardedIp = trim($forwardedIp);
+
+            if (!filter_var($forwardedIp, FILTER_VALIDATE_IP)) {
+                return $clientIp;
+            }
+
+            $clientIp = $forwardedIp;
+
+            if (!in_array($clientIp, $this->trustedProxies, true)) {
+                break;
+            }
+        }
+
+        return $clientIp;
     }
 
     /**
@@ -509,7 +533,7 @@ class ServerRequest extends Request implements ServerRequestInterface
     /**
      * Checks whether the request is using HTTPS.
      *
-     * Checks the `HTTPS` server param and common proxy headers (`X-Forwarded-Proto` and
+     * Checks the `HTTPS` server param and trusted proxy headers (`X-Forwarded-Proto` and
      * `Front-End-Https`).
      *
      * @return bool Whether the request is using HTTPS.
@@ -522,10 +546,29 @@ class ServerRequest extends Request implements ServerRequestInterface
             return true;
         }
 
+        $remoteAddr = $this->getServer('REMOTE_ADDR') ?? '';
+
+        if (
+            !$this->trustProxy ||
+            (
+                $this->trustedProxies !== [] &&
+                !in_array($remoteAddr, $this->trustedProxies, true)
+            )
+        ) {
+            return false;
+        }
+
         $xForwardedProto = $this->getHeaderLine('X-Forwarded-Proto');
 
-        if ($xForwardedProto && strtolower($xForwardedProto) === 'https') {
-            return true;
+        if ($xForwardedProto) {
+            $forwardedProtocols = explode(',', $xForwardedProto);
+            $forwardedProtocol = $forwardedProtocols[array_key_last($forwardedProtocols)]
+                |> trim(...)
+                |> strtolower(...);
+
+            if ($forwardedProtocol === 'https') {
+                return true;
+            }
         }
 
         $frontEndHttps = $this->getHeaderLine('Front-End-Https');
@@ -578,36 +621,6 @@ class ServerRequest extends Request implements ServerRequestInterface
             ['application/json', 'text/html'],
             true
         ) === 'application/json';
-    }
-
-    /**
-     * Returns the new ServerRequest instance with updated trusted proxies.
-     *
-     * @param string[] $trustedProxies The trusted proxy IPs.
-     * @return static The new ServerRequest instance.
-     */
-    public function setTrustedProxies(array $trustedProxies): static
-    {
-        $temp = clone $this;
-
-        $temp->trustedProxies = $trustedProxies;
-
-        return $temp;
-    }
-
-    /**
-     * Returns the new ServerRequest instance with proxy trust enabled or disabled.
-     *
-     * @param bool $trustProxy Whether proxy headers should be trusted.
-     * @return static The new ServerRequest instance.
-     */
-    public function trustProxy(bool $trustProxy = true): static
-    {
-        $temp = clone $this;
-
-        $temp->trustProxy = $trustProxy;
-
-        return $temp;
     }
 
     /**

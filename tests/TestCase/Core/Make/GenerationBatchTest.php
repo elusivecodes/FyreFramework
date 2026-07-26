@@ -21,10 +21,10 @@ final class GenerationBatchTest extends TestCase
 
     public function testDuplicateDestination(): void
     {
-        $batch = new GenerationBatch(new GeneratedFile('example.php', 'first'));
-
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Generated file destination collision: `example.php`.');
+
+        $batch = new GenerationBatch(new GeneratedFile('example.php', 'first'));
 
         $batch->addFile(new GeneratedFile('example.php', 'second'));
     }

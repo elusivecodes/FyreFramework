@@ -204,17 +204,21 @@ final class MakeEntityTest extends TestCase
             Command::CODE_SUCCESS,
             $this->commandRunner->run('make:entity', ['Example'])
         );
-        $this->assertSame($model, $modelRegistry->use('Example'));
+
+        $this->assertSame(
+            $model,
+            $modelRegistry->use('Example')
+        );
     }
 
     public function testMakeEntityRelationshipImportCollision(): void
     {
-        $builder = $this->container->use(EntitySourceBuilder::class);
-
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage(
             'Import name `Author` collides between `First\Entities\Author` and `Second\Entities\Author`.'
         );
+
+        $builder = $this->container->use(EntitySourceBuilder::class);
 
         $builder->build('Example\Entities', 'Post', [], [
             [
