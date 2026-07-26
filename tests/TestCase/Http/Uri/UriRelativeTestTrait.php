@@ -34,7 +34,7 @@ trait UriRelativeTestTrait
         );
 
         $this->assertSame(
-            'http://domain.com/path/new',
+            'http://domain.com/new',
             $uri2->getUri()
         );
     }
@@ -50,7 +50,7 @@ trait UriRelativeTestTrait
         );
 
         $this->assertSame(
-            'http://domain.com/path/deep',
+            'http://domain.com/deep',
             $uri2->getUri()
         );
     }
@@ -162,7 +162,7 @@ trait UriRelativeTestTrait
         );
 
         $this->assertSame(
-            '//test.com',
+            'http://test.com',
             $uri2->getUri()
         );
     }

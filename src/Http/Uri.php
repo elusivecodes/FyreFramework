@@ -17,7 +17,6 @@ use function getservbyname;
 use function http_build_query;
 use function in_array;
 use function parse_str;
-use function rtrim;
 use function str_starts_with;
 use function substr;
 use function trim;
@@ -245,24 +244,11 @@ class Uri implements Stringable, UriInterface
     /**
      * Returns the new Uri instance with a resolved relative URI.
      *
-     * Note: When `$uri` does not start with `/`, it is resolved relative to the current path
-     * (with the path treated as a directory).
-     *
      * @param string $uri The URI string.
      * @return static The new Uri instance with the resolved relative URI.
      */
     public function resolveRelativeUri(string $uri): static
     {
-        $temp = new static($uri);
-
-        if ($temp->getHost()) {
-            return $temp;
-        }
-
-        if (!str_starts_with($uri, '/')) {
-            $uri = rtrim($this->getPath(), '/').'/'.$uri;
-        }
-
         $temp = clone $this;
 
         $temp->uri = $temp->uri->resolve($uri);

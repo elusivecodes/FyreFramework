@@ -23,8 +23,10 @@ use Psr\Http\Message\ResponseInterface;
 use function array_intersect_key;
 use function array_merge_recursive;
 use function array_replace_recursive;
+use function implode;
 use function is_string;
 use function parse_str;
+use function rawurlencode;
 use function sprintf;
 use function str_ends_with;
 use function str_starts_with;
@@ -266,8 +268,8 @@ class Client implements ClientInterface
      * Sends a Request using the configured handler.
      *
      * When `maxRedirects` is greater than 0 this method will follow redirects and re-issue
-     * the request with the resolved `Location` URI. The HTTP method, headers, and body are
-     * preserved across redirects.
+     * the request with the resolved `Location` URI. The HTTP method and body are preserved,
+     * while origin-bound headers are removed when the origin changes.
      *
      * This method also collects `Set-Cookie` headers from responses and stores them in the
      * client cookie jar for subsequent requests.
@@ -306,10 +308,34 @@ class Client implements ClientInterface
 
             $location = $response->getHeaderLine('Location');
             $redirectUri = static::buildUri($location, options: [
-                'baseUrl' => (string) $uri->withPath('/')->withQuery(''),
+                'baseUrl' => (string) $uri->withQuery(''),
             ]);
 
-            $request = $request->withUri($redirectUri);
+            $crossOrigin = $uri->getScheme() !== $redirectUri->getScheme() ||
+                $uri->getHost() !== $redirectUri->getHost() ||
+                $uri->getPort() !== $redirectUri->getPort();
+
+            $request = $request
+                ->withUri($redirectUri)
+                ->withoutHeader('Cookie');
+
+            if ($crossOrigin) {
+                foreach (['Authorization', 'Proxy-Authorization', 'Referer'] as $header) {
+                    $request = $request->withoutHeader($header);
+                }
+            } else {
+                $cookies = static::getMatchingCookies($redirectUri, $this->cookies);
+
+                if ($cookies !== []) {
+                    $values = [];
+
+                    foreach ($cookies as $cookie) {
+                        $values[] = rawurlencode($cookie->getName()).'='.rawurlencode($cookie->getValue());
+                    }
+
+                    $request = $request->withHeader('Cookie', implode(';', $values));
+                }
+            }
         }
 
         return $response;

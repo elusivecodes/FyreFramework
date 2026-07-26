@@ -6,15 +6,19 @@ namespace Tests\TestCase\Http\Curl;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Http\Client;
+use Fyre\Http\Client\ClientHandler;
 use Fyre\Http\Client\Exceptions\NetworkException;
 use Fyre\Http\Client\Exceptions\RequestException;
 use Fyre\Http\Client\Request;
 use Fyre\Http\Client\Response;
 use Fyre\Http\Cookie;
+use Fyre\Http\Request as HttpRequest;
 use Override;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 
 use function class_uses;
+use function count;
 use function exec;
 use function fopen;
 use function sleep;
@@ -549,6 +553,87 @@ final class ClientTest extends TestCase
             ],
             $response->getJson()
         );
+    }
+
+    public function testRedirectRebuildsCookies(): void
+    {
+        $requests = [];
+        $handler = $this->createStub(ClientHandler::class);
+        $handler->method('send')->willReturnCallback(
+            static function(RequestInterface $request) use (&$requests): Response {
+                $requests[] = $request;
+
+                return count($requests) === 1 ?
+                    new Response([
+                        'statusCode' => 302,
+                        'headers' => [
+                            'Location' => 'next',
+                        ],
+                    ]) :
+                    new Response();
+            }
+        );
+
+        $client = new Client([
+            'handler' => $handler,
+        ]);
+        $client->addCookie(new Cookie('private', 'value', [
+            'domain' => 'example.com',
+            'path' => '/private/start',
+        ]));
+        $request = new HttpRequest('https://example.com/private/start', [
+            'headers' => [
+                'Cookie' => 'private=value',
+            ],
+        ]);
+        $client->send($request, [
+            'maxRedirects' => 1,
+        ]);
+
+        $this->assertSame('private=value', $requests[0]->getHeaderLine('Cookie'));
+        $this->assertSame('https://example.com/private/next', (string) $requests[1]->getUri());
+        $this->assertSame('', $requests[1]->getHeaderLine('Cookie'));
+    }
+
+    public function testRedirectStripsCrossOriginCredentials(): void
+    {
+        $requests = [];
+        $handler = $this->createStub(ClientHandler::class);
+        $handler->method('send')->willReturnCallback(
+            static function(RequestInterface $request) use (&$requests): Response {
+                $requests[] = $request;
+
+                return count($requests) === 1 ?
+                    new Response([
+                        'statusCode' => 302,
+                        'headers' => [
+                            'Location' => 'https://other.com/target',
+                        ],
+                    ]) :
+                    new Response();
+            }
+        );
+
+        $client = new Client([
+            'handler' => $handler,
+        ]);
+        $client->addCookie(new Cookie('source', 'value', [
+            'domain' => 'example.com',
+        ]));
+        $client->get('https://example.com/start', options: [
+            'maxRedirects' => 1,
+            'headers' => [
+                'Authorization' => 'Bearer secret',
+                'Proxy-Authorization' => 'Basic secret',
+                'Referer' => 'https://example.com/private',
+            ],
+        ]);
+
+        $this->assertSame('source=value', $requests[0]->getHeaderLine('Cookie'));
+        $this->assertSame('', $requests[1]->getHeaderLine('Authorization'));
+        $this->assertSame('', $requests[1]->getHeaderLine('Proxy-Authorization'));
+        $this->assertSame('', $requests[1]->getHeaderLine('Referer'));
+        $this->assertSame('', $requests[1]->getHeaderLine('Cookie'));
     }
 
     public function testSendNetworkException(): void
