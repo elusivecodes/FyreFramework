@@ -68,11 +68,13 @@ class TestCase extends \PHPUnit\Framework\TestCase
 
         $connection->disableForeignKeys();
 
-        foreach ($this->fixtures as $fixture) {
-            $fixtureRegistry->use($fixture)->run();
+        try {
+            foreach ($this->fixtures as $fixture) {
+                $fixtureRegistry->use($fixture)->run();
+            }
+        } finally {
+            $connection->enableForeignKeys();
         }
-
-        $connection->enableForeignKeys();
     }
 
     /**
@@ -96,11 +98,13 @@ class TestCase extends \PHPUnit\Framework\TestCase
 
         $connection->disableForeignKeys();
 
-        foreach ($tables as $table) {
-            $connection->truncate($table);
+        try {
+            foreach ($tables as $table) {
+                $connection->truncate($table);
+            }
+        } finally {
+            $connection->enableForeignKeys();
         }
-
-        $connection->enableForeignKeys();
     }
 
     /**
