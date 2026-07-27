@@ -20,13 +20,17 @@ use Override;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UriInterface;
+use Throwable;
 
 use function array_intersect_key;
 use function array_merge_recursive;
 use function array_replace_recursive;
+use function in_array;
 use function is_string;
 use function parse_str;
 use function sprintf;
+use function trim;
 
 /**
  * Provides convenience methods for common HTTP verbs, optional automatic cookie handling,
@@ -261,8 +265,8 @@ class Client implements ClientInterface
      * Sends a Request using the configured handler.
      *
      * When `maxRedirects` is greater than 0 this method will follow redirects and re-issue
-     * the request with the resolved `Location` URI. The HTTP method and body are preserved,
-     * while origin-bound headers are removed when the origin changes.
+     * the request with the resolved `Location` URI. Redirect methods follow browser-compatible
+     * status semantics, while origin-bound headers are removed when the origin changes.
      *
      * This method also collects `Set-Cookie` headers from responses and stores them in the
      * client cookie jar for subsequent requests.
@@ -277,43 +281,58 @@ class Client implements ClientInterface
     public function send(RequestInterface $request, array $options = []): Response
     {
         $redirects = (int) ($options['maxRedirects'] ?? 0);
+        $visited = [];
 
         $handler = static::$mockHandler ?? $this->handler;
 
         while (true) {
+            $visitKey = $request->getMethod().' '.(string) $request->getUri()->withFragment('');
+
+            if (isset($visited[$visitKey])) {
+                throw new RequestException('Redirect loop detected.', $request);
+            }
+
+            $visited[$visitKey] = true;
+
             $response = $handler->send($request, $options);
 
             $uri = $request->getUri();
 
             $this->cookieJar->storeResponse($uri, $response);
 
-            if (!$response->isRedirect() || $redirects-- <= 0) {
+            if (!$response->isRedirect() || $redirects <= 0) {
                 break;
             }
 
-            $location = $response->getHeaderLine('Location');
-            $redirectUri = static::buildUri($location, options: [
-                'baseUrl' => (string) $uri->withQuery(''),
-            ]);
+            $redirects--;
 
-            $crossOrigin = $uri->getScheme() !== $redirectUri->getScheme() ||
-                $uri->getHost() !== $redirectUri->getHost() ||
-                $uri->getPort() !== $redirectUri->getPort();
+            $redirectUri = static::buildRedirectUri(
+                $uri,
+                $response->getHeaderLine('Location'),
+                $request
+            );
+            $request = static::buildRedirectRequest(
+                $request,
+                $redirectUri,
+                $response->getStatusCode()
+            );
 
-            $request = $request
-                ->withUri($redirectUri)
-                ->withoutHeader('Cookie');
+            unset($options['body'], $options['headers'], $options['method']);
 
-            if ($crossOrigin) {
+            if (static::isCrossOrigin($uri, $redirectUri)) {
                 foreach (['Authorization', 'Proxy-Authorization', 'Referer'] as $header) {
                     $request = $request->withoutHeader($header);
                 }
-            } else {
-                $cookieHeader = $this->cookieJar->getHeader($redirectUri);
 
-                if ($cookieHeader !== '') {
-                    $request = $request->withHeader('Cookie', $cookieHeader);
-                }
+                unset($options['auth'], $options['ssl']);
+            }
+
+            $cookieHeader = $this->cookieJar->getHeader($redirectUri);
+
+            if ($cookieHeader !== '') {
+                $request = $request->withHeader('Cookie', $cookieHeader);
+            } else {
+                $request = $request->withoutHeader('Cookie');
             }
         }
 
@@ -438,6 +457,112 @@ class Client implements ClientInterface
     }
 
     /**
+     * Builds a redirect Request.
+     *
+     * @param RequestInterface $request The current Request.
+     * @param UriInterface $uri The redirect URI.
+     * @param int $statusCode The redirect status code.
+     * @return RequestInterface The redirect Request.
+     *
+     * @throws RequestException If the request body cannot be replayed.
+     */
+    protected static function buildRedirectRequest(
+        RequestInterface $request,
+        UriInterface $uri,
+        int $statusCode
+    ): RequestInterface {
+        $method = $request->getMethod();
+        $switchToGet = ($statusCode === 303 && $method !== 'HEAD') ||
+            (in_array($statusCode, [301, 302], true) && $method === 'POST');
+
+        $target = $uri->getPath() ?: '/';
+
+        if ($uri->getQuery() !== '') {
+            $target .= '?'.$uri->getQuery();
+        }
+
+        $request = $request
+            ->withUri($uri)
+            ->withRequestTarget($target);
+
+        if ($switchToGet) {
+            $request = $request
+                ->withMethod('GET')
+                ->withBody(Stream::createFromString(''));
+
+            foreach (['Content-Encoding', 'Content-Length', 'Content-Type', 'Transfer-Encoding'] as $header) {
+                $request = $request->withoutHeader($header);
+            }
+
+            return $request;
+        }
+
+        $body = $request->getBody();
+
+        if ($body->getSize() === 0) {
+            return $request;
+        }
+
+        try {
+            $body->rewind();
+        } catch (Throwable $e) {
+            throw new RequestException(
+                'Request body cannot be replayed after redirect.',
+                $request,
+                previous: $e
+            );
+        }
+
+        return $request;
+    }
+
+    /**
+     * Builds and validates a redirect URI.
+     *
+     * @param UriInterface $baseUri The current request URI.
+     * @param string $location The redirect Location.
+     * @param RequestInterface $request The current Request.
+     * @return Uri The redirect URI.
+     *
+     * @throws RequestException If the redirect Location is not valid.
+     */
+    protected static function buildRedirectUri(
+        UriInterface $baseUri,
+        string $location,
+        RequestInterface $request
+    ): Uri {
+        $location = trim($location);
+
+        if ($location === '') {
+            throw new RequestException('Redirect location is not valid.', $request);
+        }
+
+        try {
+            $uri = new Uri((string) $baseUri);
+            $uri = $uri
+                ->withQuery('')
+                ->resolveRelativeUri($location)
+                ->withFragment('');
+        } catch (Throwable $e) {
+            throw new RequestException(
+                'Redirect location is not valid.',
+                $request,
+                previous: $e
+            );
+        }
+
+        if (
+            !in_array($uri->getScheme(), ['http', 'https'], true) ||
+            $uri->getHost() === '' ||
+            $uri->getUserInfo() !== ''
+        ) {
+            throw new RequestException('Redirect location is not valid.', $request);
+        }
+
+        return $uri;
+    }
+
+    /**
      * Builds a URI.
      *
      * If `baseUrl` is provided and `$url` is relative, the URL is resolved against `baseUrl`.
@@ -468,5 +593,19 @@ class Client implements ClientInterface
 
         return $uri->resolveRelativeUri($url)
             ->withQueryParams($query);
+    }
+
+    /**
+     * Checks whether two URIs have different origins.
+     *
+     * @param UriInterface $source The source URI.
+     * @param UriInterface $target The target URI.
+     * @return bool Whether the URIs have different origins.
+     */
+    protected static function isCrossOrigin(UriInterface $source, UriInterface $target): bool
+    {
+        return $source->getScheme() !== $target->getScheme() ||
+            $source->getHost() !== $target->getHost() ||
+            $source->getPort() !== $target->getPort();
     }
 }

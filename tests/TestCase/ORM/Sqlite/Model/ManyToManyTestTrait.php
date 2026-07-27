@@ -1001,6 +1001,11 @@ trait ManyToManyTestTrait
             'Tags',
         ]);
 
+        $this->assertInstanceOf(
+            Post::class,
+            $post
+        );
+
         $tag = $post->tags[0];
         $joinId = $tag->_joinData->id;
         $tag->_joinData->value = 33;

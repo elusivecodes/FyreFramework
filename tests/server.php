@@ -90,6 +90,48 @@ switch ($_SERVER['SCRIPT_NAME']) {
     case '/redirect':
         header('Location: /get?value=1', true, 302);
         break;
+    case '/redirect-cross-origin':
+        if (($_COOKIE['source'] ?? '') !== 'value') {
+            header('HTTP/1.1 400 Bad Request');
+            break;
+        }
+
+        header('Location: http://127.0.0.1:8888/redirect-target', true, 302);
+        break;
+    case '/redirect-invalid':
+        header('Location: mailto:test@example.com', true, 302);
+        break;
+    case '/redirect-loop-a':
+        header('Location: /redirect-loop-b', true, 302);
+        break;
+    case '/redirect-loop-b':
+        header('Location: /redirect-loop-a', true, 302);
+        break;
+    case '/redirect-method':
+        header('Location: /redirect-target?value=1', true, (int) ($_GET['status'] ?? 302));
+        break;
+    case '/redirect-private/start':
+        if (($_COOKIE['private'] ?? '') !== 'value') {
+            header('HTTP/1.1 400 Bad Request');
+            break;
+        }
+
+        header('Location: next', true, 302);
+        break;
+    case '/redirect-private/next':
+    case '/redirect-target':
+        header('Content-Type: application/json');
+        echo json_encode([
+            'method' => $_SERVER['REQUEST_METHOD'],
+            'body' => file_get_contents('php://input') ?: '',
+            'contentType' => $_SERVER['CONTENT_TYPE'] ?? '',
+            'requestUri' => $_SERVER['REQUEST_URI'],
+            'authorization' => $_SERVER['HTTP_AUTHORIZATION'] ?? '',
+            'proxyAuthorization' => $_SERVER['HTTP_PROXY_AUTHORIZATION'] ?? '',
+            'referer' => $_SERVER['HTTP_REFERER'] ?? '',
+            'cookies' => $_COOKIE,
+        ]);
+        break;
     case '/set-cookie':
         setcookie('test', 'value', [
             'path' => '/',

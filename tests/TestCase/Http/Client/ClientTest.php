@@ -6,19 +6,15 @@ namespace Tests\TestCase\Http\Curl;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Http\Client;
-use Fyre\Http\Client\ClientHandler;
 use Fyre\Http\Client\Exceptions\NetworkException;
 use Fyre\Http\Client\Exceptions\RequestException;
 use Fyre\Http\Client\Request;
 use Fyre\Http\Client\Response;
 use Fyre\Http\Cookie;
-use Fyre\Http\Request as HttpRequest;
 use Override;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\RequestInterface;
 
 use function class_uses;
-use function count;
 use function exec;
 use function fopen;
 use function sleep;
@@ -555,114 +551,141 @@ final class ClientTest extends TestCase
         );
     }
 
+    public function testRedirectInvalidLocation(): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Redirect location is not valid.');
+
+        new Client()->get('http://localhost:8888/redirect-invalid', options: [
+            'maxRedirects' => 1,
+        ]);
+    }
+
+    public function testRedirectLoop(): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Redirect loop detected.');
+
+        new Client()->get('http://localhost:8888/redirect-loop-a', options: [
+            'maxRedirects' => 3,
+        ]);
+    }
+
+    public function testRedirectMethodSemantics(): void
+    {
+        $cases = [
+            [301, 'POST', 'GET', ''],
+            [302, 'POST', 'GET', ''],
+            [303, 'PUT', 'GET', ''],
+            [307, 'POST', 'POST', 'value'],
+            [308, 'POST', 'POST', 'value'],
+        ];
+
+        foreach ($cases as [$statusCode, $method, $expectedMethod, $expectedBody]) {
+            $response = new Client()->send(new Request(
+                'http://localhost:8888/redirect-method?status='.$statusCode,
+                [
+                    'method' => $method,
+                    'body' => 'value',
+                    'headers' => [
+                        'Content-Length' => '5',
+                        'Content-Type' => 'text/plain',
+                    ],
+                ]
+            ), [
+                'maxRedirects' => 1,
+            ]);
+
+            $data = $response->getJson();
+
+            $this->assertSame(
+                $expectedMethod,
+                $data['method']
+            );
+
+            $this->assertSame(
+                $expectedBody,
+                $data['body']
+            );
+
+            $this->assertSame(
+                '/redirect-target?value=1',
+                $data['requestUri']
+            );
+
+            $this->assertSame(
+                $expectedBody === '' ? '' : 'text/plain',
+                $data['contentType']
+            );
+        }
+    }
+
     public function testRedirectRebuildsCookies(): void
     {
-        $requests = [];
-        $handler = $this->createStub(ClientHandler::class);
-        $handler->method('send')->willReturnCallback(
-            static function(RequestInterface $request) use (&$requests): Response {
-                $requests[] = $request;
-
-                return count($requests) === 1 ?
-                    new Response([
-                        'statusCode' => 302,
-                        'headers' => [
-                            'Location' => 'next',
-                        ],
-                    ]) :
-                    new Response();
-            }
-        );
-
-        $client = new Client([
-            'handler' => $handler,
-        ]);
+        $client = new Client();
         $client->addCookie(new Cookie('private', 'value', [
-            'domain' => 'example.com',
-            'path' => '/private/start',
+            'domain' => 'localhost',
+            'path' => '/redirect-private/start',
         ]));
-        $request = new HttpRequest('https://example.com/private/start', [
-            'headers' => [
-                'Cookie' => 'private=value',
-            ],
-        ]);
-        $client->send($request, [
+
+        $response = $client->get('http://localhost:8888/redirect-private/start', options: [
             'maxRedirects' => 1,
         ]);
 
+        $data = $response->getJson();
+
         $this->assertSame(
-            'private=value',
-            $requests[0]->getHeaderLine('Cookie')
+            '/redirect-private/next',
+            $data['requestUri']
         );
 
         $this->assertSame(
-            'https://example.com/private/next',
-            (string) $requests[1]->getUri()
-        );
-
-        $this->assertSame(
-            '',
-            $requests[1]->getHeaderLine('Cookie')
+            [],
+            $data['cookies']
         );
     }
 
     public function testRedirectStripsCrossOriginCredentials(): void
     {
-        $requests = [];
-        $handler = $this->createStub(ClientHandler::class);
-        $handler->method('send')->willReturnCallback(
-            static function(RequestInterface $request) use (&$requests): Response {
-                $requests[] = $request;
-
-                return count($requests) === 1 ?
-                    new Response([
-                        'statusCode' => 302,
-                        'headers' => [
-                            'Location' => 'https://other.com/target',
-                        ],
-                    ]) :
-                    new Response();
-            }
-        );
-
-        $client = new Client([
-            'handler' => $handler,
-        ]);
+        $client = new Client();
         $client->addCookie(new Cookie('source', 'value', [
-            'domain' => 'example.com',
+            'domain' => 'localhost',
         ]));
-        $client->get('https://example.com/start', options: [
+        $client->addCookie(new Cookie('target', 'value', [
+            'domain' => '127.0.0.1',
+        ]));
+
+        $response = $client->get('http://localhost:8888/redirect-cross-origin', options: [
             'maxRedirects' => 1,
             'headers' => [
                 'Authorization' => 'Bearer secret',
                 'Proxy-Authorization' => 'Basic secret',
-                'Referer' => 'https://example.com/private',
+                'Referer' => 'http://localhost:8888/private',
             ],
         ]);
 
+        $data = $response->getJson();
+
         $this->assertSame(
-            'source=value',
-            $requests[0]->getHeaderLine('Cookie')
+            '',
+            $data['authorization']
         );
 
         $this->assertSame(
             '',
-            $requests[1]->getHeaderLine('Authorization')
+            $data['proxyAuthorization']
         );
 
         $this->assertSame(
             '',
-            $requests[1]->getHeaderLine('Proxy-Authorization')
+            $data['referer']
         );
 
         $this->assertSame(
-            '',
-            $requests[1]->getHeaderLine('Referer')
-        );
-
-        $this->assertSame(
-            '',
-            $requests[1]->getHeaderLine('Cookie')
+            [
+                'target' => 'value',
+            ],
+            $data['cookies']
         );
     }
 
