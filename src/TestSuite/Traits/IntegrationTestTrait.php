@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Fyre\TestSuite\Traits;
 
 use Fyre\Http\ClientResponse;
+use Fyre\Http\MiddlewareQueue;
 use Fyre\Http\RequestHandler;
 use Fyre\Http\ServerRequest;
 use Fyre\Http\Uri;
@@ -736,6 +737,8 @@ trait IntegrationTestTrait
         } else {
             $options['data'] = $data;
         }
+
+        $this->app->use(MiddlewareQueue::class)->rewind();
 
         $routeHandler = $this->app->build(RouteHandler::class);
         $handler = $this->app->build(RequestHandler::class, [

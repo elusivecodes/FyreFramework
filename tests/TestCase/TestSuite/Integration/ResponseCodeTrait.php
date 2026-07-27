@@ -7,6 +7,17 @@ use PHPUnit\Framework\AssertionFailedError;
 
 trait ResponseCodeTrait
 {
+    public function testMultipleRequests(): void
+    {
+        $this->get('/response');
+
+        $this->assertResponseCode(200);
+
+        $this->get('/response');
+
+        $this->assertResponseCode(200);
+    }
+
     public function testResponseCode(): void
     {
         $this->get('/response');
