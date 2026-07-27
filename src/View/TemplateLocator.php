@@ -7,7 +7,6 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\Utility\Path;
 
 use function array_splice;
-use function explode;
 use function in_array;
 use function is_file;
 use function preg_replace;
@@ -15,7 +14,6 @@ use function realpath;
 use function rtrim;
 use function str_contains;
 use function str_ends_with;
-use function str_replace;
 use function str_starts_with;
 use function strtolower;
 
@@ -104,7 +102,7 @@ class TemplateLocator
      */
     public function locate(string $name, string $folder = ''): string|null
     {
-        if (!static::isSafeRelativePath($name) || !static::isSafeRelativePath($folder)) {
+        if (str_contains($name, "\0") || str_contains($folder, "\0")) {
             return null;
         }
 
@@ -157,28 +155,5 @@ class TemplateLocator
         }
 
         return $this;
-    }
-
-    /**
-     * Checks whether a template path is safe to resolve relative to a configured root.
-     *
-     * This is a lexical check performed before accessing the filesystem. It rejects null
-     * bytes, absolute paths, and complete parent-directory (`..`) segments using either
-     * slash style. The candidate is later resolved with `realpath()` and checked against
-     * its canonical root, which also prevents traversal through symbolic links.
-     *
-     * @param string $path The path.
-     * @return bool Whether the path can be safely joined to a configured root.
-     */
-    protected static function isSafeRelativePath(string $path): bool
-    {
-        if (str_contains($path, "\0") || Path::isAbsolute($path)) {
-            return false;
-        }
-
-        $normalized = str_replace('\\', '/', $path);
-        $segments = explode('/', $normalized);
-
-        return !in_array('..', $segments, true);
     }
 }

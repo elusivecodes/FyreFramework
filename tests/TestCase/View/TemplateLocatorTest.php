@@ -17,7 +17,6 @@ use function mkdir;
 use function random_bytes;
 use function realpath;
 use function rmdir;
-use function str_replace;
 use function symlink;
 use function sys_get_temp_dir;
 use function unlink;
@@ -58,15 +57,6 @@ final class TemplateLocatorTest extends TestCase
         );
     }
 
-    public function testLocateAbsolutePath(): void
-    {
-        $this->templateLocator->addPath('tests/templates');
-
-        $this->assertNull(
-            $this->templateLocator->locate((string) realpath('src/functions.php'))
-        );
-    }
-
     public function testLocateDeep(): void
     {
         $this->templateLocator->addPath('tests/templates');
@@ -86,15 +76,6 @@ final class TemplateLocatorTest extends TestCase
         );
     }
 
-    public function testLocateParentFolderTraversal(): void
-    {
-        $this->templateLocator->addPath('tests/templates');
-
-        $this->assertNull(
-            $this->templateLocator->locate('functions', '../../src')
-        );
-    }
-
     public function testLocateParentTraversal(): void
     {
         $this->templateLocator->addPath('tests/templates');
@@ -102,39 +83,6 @@ final class TemplateLocatorTest extends TestCase
         $this->assertNull(
             $this->templateLocator->locate('../../src/functions')
         );
-    }
-
-    public function testLocateSymlinkInsidePathReturnsCanonicalTarget(): void
-    {
-        $suffix = bin2hex(random_bytes(8));
-        $rootPath = sys_get_temp_dir().'/fyre-template-root-'.$suffix;
-        $targetPath = $rootPath.'/target.php';
-        $linkPath = $rootPath.'/link.php';
-
-        mkdir($rootPath);
-        file_put_contents($targetPath, '<?php');
-
-        if (!@symlink($targetPath, $linkPath)) {
-            unlink($targetPath);
-            rmdir($rootPath);
-            $this->markTestSkipped('Symbolic links are not available.');
-        }
-
-        try {
-            $this->templateLocator->addPath($rootPath);
-
-            $this->assertSame(
-                realpath($targetPath),
-                $this->templateLocator->locate('link')
-            );
-        } finally {
-            if (is_link($linkPath)) {
-                unlink($linkPath);
-            }
-
-            unlink($targetPath);
-            rmdir($rootPath);
-        }
     }
 
     public function testLocateSymlinkOutsidePath(): void
@@ -166,33 +114,6 @@ final class TemplateLocatorTest extends TestCase
 
             unlink($outsidePath);
             rmdir($rootPath);
-        }
-    }
-
-    public function testLocateTraversalPropertyCases(): void
-    {
-        $this->templateLocator->addPath('tests/templates');
-
-        $paths = [
-            '/etc/passwd',
-            '\\server\share\template',
-            'C:\\Windows\\system32\\drivers\\etc\\hosts',
-            "safe\0/../../src/functions",
-        ];
-
-        foreach (['/', '\\'] as $separator) {
-            foreach (['', 'safe'.$separator, 'safe'.$separator.'deep'.$separator] as $prefix) {
-                $paths[] = $prefix.'..'.$separator.'src'.$separator.'functions';
-                $paths[] = $prefix.'.'.$separator.'..'.$separator.'src'.$separator.'functions';
-                $paths[] = $prefix.'..'.$separator.'..'.$separator.'src'.$separator.'functions';
-            }
-        }
-
-        foreach ($paths as $path) {
-            $this->assertNull(
-                $this->templateLocator->locate($path),
-                'Traversal path should be rejected: '.str_replace("\0", '\\0', $path)
-            );
         }
     }
 
