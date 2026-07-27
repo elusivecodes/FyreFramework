@@ -18,6 +18,7 @@ use Traversable;
 
 use function array_filter;
 use function array_merge;
+use function array_values;
 use function assert;
 use function implode;
 use function in_array;
@@ -428,43 +429,24 @@ class ManyToMany extends Relationship
         $relations = array_filter(
             $relations,
             static fn(mixed $relation): bool => $relation && $relation instanceof Entity
-        );
-
-        if ($this->saveStrategy === 'replace') {
-            if (!$this->getSourceRelationship()->unlinkAll(
-                [$entity],
-                ...$options,
-                events: $events
-            )) {
-                return false;
-            }
-        }
+        ) |> array_values(...);
 
         if ($relations === []) {
+            if (
+                $this->saveStrategy === 'replace' &&
+                !$this->getSourceRelationship()->unlinkAll(
+                    [$entity],
+                    ...$options,
+                    events: $events
+                )
+            ) {
+                return false;
+            }
+
             return true;
         }
 
-        $target = $this->getTarget();
-
-        if (!$target->saveMany(
-            $relations,
-            $saveRelated,
-            $checkRules,
-            $checkExists,
-            $events,
-            $clean,
-            ...$options
-        )) {
-            return false;
-        }
-
         $junction = $this->getJunction();
-        $foreignKey = $this->getForeignKey();
-        $targetRelationship = $this->getTargetRelationship();
-        $targetBindingKey = $targetRelationship->getBindingKey();
-        $targetForeignKey = $targetRelationship->getForeignKey();
-        $bindingValue = $this->getBindingKey() |> $entity->get(...);
-
         $joinEntities = [];
         foreach ($relations as $relation) {
             $joinData = $relation->get('_joinData') ?? [];
@@ -477,13 +459,46 @@ class ManyToMany extends Relationship
                 $joinEntity = $junction->newEmptyEntity();
             }
 
+            $joinEntities[] = $joinEntity;
+        }
+
+        if (
+            $this->saveStrategy === 'replace' &&
+            !$this->getSourceRelationship()->unlinkAll(
+                [$entity],
+                ...$options,
+                events: $events,
+                conditions: static::excludeConditions($junction, $joinEntities)
+            )
+        ) {
+            return false;
+        }
+
+        if (!$this->getTarget()->saveMany(
+            $relations,
+            $saveRelated,
+            $checkRules,
+            $checkExists,
+            $events,
+            $clean,
+            ...$options
+        )) {
+            return false;
+        }
+
+        $foreignKey = $this->getForeignKey();
+        $targetRelationship = $this->getTargetRelationship();
+        $targetBindingKey = $targetRelationship->getBindingKey();
+        $targetForeignKey = $targetRelationship->getForeignKey();
+        $bindingValue = $this->getBindingKey() |> $entity->get(...);
+
+        foreach ($relations as $i => $relation) {
+            $joinEntity = $joinEntities[$i];
             $targetBindingValue = $relation->get($targetBindingKey);
 
             $joinEntity->set($foreignKey, $bindingValue, temporary: true);
             $joinEntity->set($targetForeignKey, $targetBindingValue, temporary: true);
             $relation->set('_joinData', $joinEntity, temporary: true);
-
-            $joinEntities[] = $joinEntity;
         }
 
         if (!$junction->saveMany(
@@ -518,7 +533,7 @@ class ManyToMany extends Relationship
      * Sets the save strategy.
      *
      * - `append`: Keep existing links and add new ones.
-     * - `replace`: Unlink existing links before creating new ones.
+     * - `replace`: Remove existing links not present in the incoming relation set.
      *
      * @param string $saveStrategy The save strategy.
      * @return static The ManyToMany instance.

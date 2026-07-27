@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Fyre\ORM\Relationships;
 
-use Fyre\DB\QueryGenerator;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Model;
 use Fyre\ORM\ModelRegistry;
@@ -13,7 +12,6 @@ use InvalidArgumentException;
 use Override;
 
 use function array_filter;
-use function array_map;
 use function in_array;
 use function sprintf;
 
@@ -118,7 +116,7 @@ class HasMany extends Relationship
                 [$entity],
                 ...$options,
                 events: $events,
-                conditions: $this->excludeConditions($children)
+                conditions: static::excludeConditions($this->getTarget(), $children)
             )) {
                 return false;
             }
@@ -175,48 +173,5 @@ class HasMany extends Relationship
         $this->sort = $sort;
 
         return $this;
-    }
-
-    /**
-     * Builds exclusion conditions for related entities.
-     *
-     * Note: Only existing (non-new) related entities contribute to the exclusion list.
-     *
-     * @param Entity[] $relations The related entities.
-     *
-     * @phpstan-param template-type<TTarget, Model, 'TEntity'>[] $relations The related entities.
-     *
-     * @return array<string, mixed> The exclusion conditions.
-     */
-    protected function excludeConditions(array $relations): array
-    {
-        if ($relations === []) {
-            return [];
-        }
-
-        $target = $this->getTarget();
-        $targetKeys = $target->getPrimaryKey();
-        $preserveValues = [];
-
-        foreach ($relations as $relation) {
-            if ($relation->isNew()) {
-                continue;
-            }
-
-            $preserveValues[] = $relation->extract($targetKeys);
-        }
-
-        if ($preserveValues === []) {
-            return [];
-        }
-
-        $targetKeys = array_map(
-            $target->aliasField(...),
-            $targetKeys
-        );
-
-        return [
-            'not' => QueryGenerator::normalizeConditions($targetKeys, $preserveValues),
-        ];
     }
 }

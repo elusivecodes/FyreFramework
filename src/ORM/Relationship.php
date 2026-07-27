@@ -5,13 +5,16 @@ namespace Fyre\ORM;
 
 use Closure;
 use Fyre\Core\Traits\DebugTrait;
+use Fyre\DB\QueryGenerator;
 use Fyre\ORM\Queries\SelectQuery;
 use Fyre\Utility\Collection;
 use Fyre\Utility\Inflector;
 use InvalidArgumentException;
 use Traversable;
 
+use function array_all;
 use function array_first;
+use function array_map;
 use function array_merge;
 use function count;
 use function in_array;
@@ -880,5 +883,45 @@ abstract class Relationship
         }
 
         return $this->inflector->underscore($alias);
+    }
+
+    /**
+     * Builds exclusion conditions for existing entities.
+     *
+     * Note: Only entities with complete primary keys contribute to the exclusion list.
+     *
+     * @param Model $model The Model.
+     * @param Entity[] $entities The entities.
+     * @return array<string, mixed> The exclusion conditions.
+     */
+    protected static function excludeConditions(Model $model, array $entities): array
+    {
+        $primaryKeys = $model->getPrimaryKey();
+        $preserveValues = [];
+
+        if ($primaryKeys === []) {
+            return [];
+        }
+
+        foreach ($entities as $entity) {
+            if ($entity->isNew() || !array_all($primaryKeys, $entity->hasValue(...))) {
+                continue;
+            }
+
+            $preserveValues[] = $entity->extract($primaryKeys);
+        }
+
+        if ($preserveValues === []) {
+            return [];
+        }
+
+        $primaryKeys = array_map(
+            $model->aliasField(...),
+            $primaryKeys
+        );
+
+        return [
+            'not' => QueryGenerator::normalizeConditions($primaryKeys, $preserveValues),
+        ];
     }
 }

@@ -969,6 +969,57 @@ trait ManyToManyTestTrait
         );
     }
 
+    public function testManyToManyReplacePreservesExistingLinks(): void
+    {
+        $Posts = $this->modelRegistry->use('Posts');
+
+        $post = $Posts->newEntity([
+            'user_id' => 1,
+            'title' => 'Test',
+            'content' => 'This is the content.',
+            'tags' => [
+                [
+                    'tag' => 'test1',
+                    '_joinData' => [
+                        'value' => 11,
+                    ],
+                ],
+                [
+                    'tag' => 'test2',
+                    '_joinData' => [
+                        'value' => 22,
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Posts->save($post)
+        );
+
+        $post = $Posts->get(1, contain: [
+            'Tags',
+        ]);
+
+        $tag = $post->tags[0];
+        $joinId = $tag->_joinData->id;
+        $tag->_joinData->value = 33;
+        $post->tags = [$tag];
+
+        $this->assertTrue(
+            $Posts->save($post)
+        );
+
+        $this->assertSame(
+            [[$joinId, 1, 1, 33]],
+            $this->modelRegistry->use('PostsTags')
+                ->find()
+                ->all()
+                ->map(static fn(Entity $item): array => [$item->id, $item->post_id, $item->tag_id, $item->value])
+                ->toArray()
+        );
+    }
+
     public function testManyToManySelfSql(): void
     {
         $Items = $this->modelRegistry->use('Items');
