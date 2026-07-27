@@ -359,6 +359,7 @@ final class RateLimiterMiddlewareTest extends TestCase
     public function testIpIdentifierIgnoresForwardedHeaderByDefault(): void
     {
         $this->expectException(TooManyRequestsException::class);
+        $this->expectExceptionMessage('Rate limit exceeded');
 
         $middleware = $this->container->build(RateLimiterMiddleware::class, [
             'options' => [
@@ -404,6 +405,7 @@ final class RateLimiterMiddlewareTest extends TestCase
     public function testIpIdentifierIgnoresForwardedHeaderForUntrustedProxy(): void
     {
         $this->expectException(TooManyRequestsException::class);
+        $this->expectExceptionMessage('Rate limit exceeded');
 
         $this->container->use(Config::class)
             ->set('App.trustProxy', true)

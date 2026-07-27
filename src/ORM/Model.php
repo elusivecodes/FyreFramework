@@ -35,6 +35,8 @@ use ReflectionAttribute;
 use ReflectionClass;
 use Traversable;
 
+use function array_all;
+use function array_any;
 use function array_diff_assoc;
 use function array_filter;
 use function array_find;
@@ -645,11 +647,10 @@ class Model implements EventListenerInterface
         bool|null $autoFields = null,
         mixed ...$options
     ): Entity|null {
-        $primaryKeys = array_map(
-            $this->aliasField(...),
-            $this->getPrimaryKey()
+        $primaryConditions = $this->primaryConditions(
+            (array) $primaryValues,
+            alias: true
         );
-        $primaryConditions = QueryGenerator::combineConditions($primaryKeys, (array) $primaryValues);
 
         return $this->find(
             $fields,
@@ -1649,10 +1650,15 @@ class Model implements EventListenerInterface
     {
         $primaryKeys = $this->getPrimaryKey();
 
+        if ($primaryKeys === []) {
+            return;
+        }
+
         $entities = array_filter(
-            array_values($entities),
-            static fn(Entity $entity): bool => $entity->isNew() && $entity->extractDirty($primaryKeys) !== []
-        );
+            $entities,
+            static fn(Entity $entity): bool => $entity->isNew() &&
+                array_all($primaryKeys, $entity->hasValue(...))
+        ) |> array_values(...);
 
         if ($entities === []) {
             return;
@@ -1663,14 +1669,14 @@ class Model implements EventListenerInterface
             $entities
         );
 
-        $primaryKeys = array_map(
+        $aliasedPrimaryKeys = array_map(
             $this->aliasField(...),
             $primaryKeys
         );
 
         $matchedValues = $this->find(
-            fields: $primaryKeys,
-            conditions: QueryGenerator::normalizeConditions($primaryKeys, $values),
+            fields: $aliasedPrimaryKeys,
+            conditions: QueryGenerator::normalizeConditions($aliasedPrimaryKeys, $values),
             events: false,
         )
             ->getResult()
@@ -1686,13 +1692,12 @@ class Model implements EventListenerInterface
         }
 
         foreach ($values as $i => $data) {
-            foreach ($matchedValues as $other) {
-                if (array_diff_assoc($data, $other) === []) {
-                    continue;
-                }
-
+            if (array_any(
+                $matchedValues,
+                static fn(array $matchedValue): bool => count($data) === count($matchedValue) &&
+                    array_diff_assoc($data, $matchedValue) === []
+            )) {
                 $entities[$i]->setNew(false);
-                break;
             }
         }
     }
@@ -1882,6 +1887,10 @@ class Model implements EventListenerInterface
      */
     protected function performDelete(Entity $entity, array $options): bool
     {
+        $conditions = $this->getPrimaryKey()
+            |> $entity->extract(...)
+            |> $this->primaryConditions(...);
+
         if ($options['events']) {
             $event = $this->dispatchEvent('ORM.beforeDelete', ['entity' => $entity, 'options' => $options]);
 
@@ -1889,10 +1898,6 @@ class Model implements EventListenerInterface
                 return (bool) $event->getResult();
             }
         }
-
-        $primaryKeys = $this->getPrimaryKey();
-        $primaryValues = $entity->extract($primaryKeys);
-        $conditions = QueryGenerator::combineConditions($primaryKeys, $primaryValues);
 
         if (!$this->deleteAll($conditions)) {
             return false;
@@ -1922,6 +1927,12 @@ class Model implements EventListenerInterface
      */
     protected function performSave(Entity $entity, array $options): bool
     {
+        $conditions = $entity->isNew() ?
+            null :
+            $this->getPrimaryKey()
+                |> $entity->extract(...)
+                |> $this->primaryConditions(...);
+
         if ($options['checkRules']) {
             if ($options['events']) {
                 $event = $this->dispatchEvent('ORM.beforeRules', ['entity' => $entity, 'options' => $options]);
@@ -1991,8 +2002,7 @@ class Model implements EventListenerInterface
                 $entity->set($primaryKey, $value, temporary: true);
             }
         } else if ($data !== []) {
-            $primaryValues = $entity->extract($primaryKeys);
-            $conditions = QueryGenerator::combineConditions($primaryKeys, $primaryValues);
+            assert($conditions !== null);
             $this->updateAll($data, $conditions);
         }
 
@@ -2009,6 +2019,44 @@ class Model implements EventListenerInterface
         }
 
         return true;
+    }
+
+    /**
+     * Builds conditions from primary key values.
+     *
+     * @param array<mixed> $primaryValues The primary key values.
+     * @param bool $alias Whether to alias the primary key fields.
+     * @return array<mixed> The primary key conditions.
+     *
+     * @throws OrmException If primary key values are null or missing.
+     */
+    protected function primaryConditions(array $primaryValues, bool $alias = false): array
+    {
+        $primaryKeys = $this->getPrimaryKey();
+        $primaryValues = array_values($primaryValues);
+
+        if (
+            $primaryKeys === [] ||
+            count($primaryValues) !== count($primaryKeys) ||
+            array_any(
+                $primaryValues,
+                static fn(mixed $value): bool => $value === null || $value === '' || $value === []
+            )
+        ) {
+            throw new OrmException(sprintf(
+                'Primary key values for model `%s` must not be null or missing.',
+                $this->getAlias()
+            ));
+        }
+
+        if ($alias) {
+            $primaryKeys = array_map(
+                $this->aliasField(...),
+                $primaryKeys
+            );
+        }
+
+        return QueryGenerator::combineConditions($primaryKeys, $primaryValues);
     }
 
     /**

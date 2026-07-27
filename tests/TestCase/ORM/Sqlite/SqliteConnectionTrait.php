@@ -64,6 +64,7 @@ trait SqliteConnectionTrait
         $this->db = $this->container->use(ConnectionManager::class)->use();
 
         $this->db->query('DROP TABLE IF EXISTS contains');
+        $this->db->query('DROP TABLE IF EXISTS composite_items');
         $this->db->query('DROP TABLE IF EXISTS items');
         $this->db->query('DROP TABLE IF EXISTS others');
         $this->db->query('DROP TABLE IF EXISTS timestamps');
@@ -79,6 +80,15 @@ trait SqliteConnectionTrait
                 id INTEGER NOT NULL,
                 name VARCHAR(255) NULL DEFAULT NULL,
                 PRIMARY KEY (id)
+            )
+        SQL);
+
+        $this->db->query(<<<'SQL'
+            CREATE TABLE composite_items (
+                tenant_id INTEGER NOT NULL,
+                id INTEGER NOT NULL,
+                name VARCHAR(255) NULL DEFAULT NULL,
+                PRIMARY KEY (tenant_id, id)
             )
         SQL);
 
@@ -175,6 +185,7 @@ trait SqliteConnectionTrait
     protected function tearDown(): void
     {
         $this->db->query('DROP TABLE IF EXISTS contains');
+        $this->db->query('DROP TABLE IF EXISTS composite_items');
         $this->db->query('DROP TABLE IF EXISTS items');
         $this->db->query('DROP TABLE IF EXISTS others');
         $this->db->query('DROP TABLE IF EXISTS timestamps');

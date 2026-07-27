@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\MariaDb\Model;
 
+use Fyre\ORM\Entity;
+use Fyre\ORM\Exceptions\OrmException;
 use Tests\Mock\Entities\Item;
 use Tests\Mock\Entities\Post;
 use Tests\Mock\Entities\User;
@@ -32,6 +34,19 @@ trait QueryTestTrait
             0,
             $Items->find()->count()
         );
+    }
+
+    public function testDeleteIncompleteCompositePrimaryKey(): void
+    {
+        $this->expectException(OrmException::class);
+        $this->expectExceptionMessage('Primary key values for model `CompositeItems` must not be null or missing.');
+
+        $CompositeItems = $this->modelRegistry->use('CompositeItems');
+        $item = $CompositeItems->newEntity([
+            'tenant_id' => 1,
+        ], validate: false, new: false);
+
+        $CompositeItems->delete($item);
     }
 
     public function testDeleteMany(): void
@@ -220,6 +235,14 @@ trait QueryTestTrait
         );
     }
 
+    public function testGetIncompleteCompositePrimaryKey(): void
+    {
+        $this->expectException(OrmException::class);
+        $this->expectExceptionMessage('Primary key values for model `CompositeItems` must not be null or missing.');
+
+        $this->modelRegistry->use('CompositeItems')->get([1]);
+    }
+
     public function testGetInvalid(): void
     {
         $this->assertNull(
@@ -318,6 +341,58 @@ trait QueryTestTrait
             array_map(
                 static fn(Item $item): int|null => $item->id,
                 $items
+            )
+        );
+    }
+
+    public function testInsertManyChecksExactCompositePrimaryKeys(): void
+    {
+        $CompositeItems = $this->modelRegistry->use('CompositeItems');
+
+        $CompositeItems->insertQuery()
+            ->values([[
+                'tenant_id' => 1,
+                'id' => 1,
+                'name' => 'Existing',
+            ]])
+            ->execute();
+
+        $items = $CompositeItems->newEntities([
+            [
+                'tenant_id' => 1,
+                'id' => 1,
+                'name' => 'Updated',
+            ],
+            [
+                'tenant_id' => 1,
+                'id' => 2,
+                'name' => 'New',
+            ],
+        ], validate: false);
+
+        $this->assertTrue(
+            $CompositeItems->saveMany($items)
+        );
+
+        $this->assertSame(
+            [
+                [
+                    'tenant_id' => 1,
+                    'id' => 1,
+                    'name' => 'Updated',
+                ],
+                [
+                    'tenant_id' => 1,
+                    'id' => 2,
+                    'name' => 'New',
+                ],
+            ],
+            array_map(
+                static fn(Entity $item): array => $item->toArray(),
+                $CompositeItems->find(orderBy: [
+                    'tenant_id' => 'ASC',
+                    'id' => 'ASC',
+                ])->toArray()
             )
         );
     }
@@ -477,6 +552,20 @@ trait QueryTestTrait
             ],
             $item->toArray()
         );
+    }
+
+    public function testUpdateIncompleteCompositePrimaryKey(): void
+    {
+        $this->expectException(OrmException::class);
+        $this->expectExceptionMessage('Primary key values for model `CompositeItems` must not be null or missing.');
+
+        $CompositeItems = $this->modelRegistry->use('CompositeItems');
+        $item = $CompositeItems->newEntity([
+            'tenant_id' => 1,
+            'name' => 'Updated',
+        ], validate: false, new: false);
+
+        $CompositeItems->save($item);
     }
 
     public function testUpdateMany(): void

@@ -65,6 +65,7 @@ trait BaseUriTestTrait
     public function testRouteBaseUriRequiresSegmentBoundary(): void
     {
         $this->expectException(NotFoundException::class);
+        $this->expectExceptionMessage('No route found for the path `/deeper/test`.');
 
         $this->container->use(Config::class)->set('App.baseUri', 'https://test.com/deep/');
 

@@ -158,6 +158,7 @@ final class AsyncPromiseTest extends TestCase
     public function testAwaitRejection(): void
     {
         $this->expectException(Exception::class);
+        $this->expectExceptionMessage('test');
 
         $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
             $reject(new Exception('test'));
@@ -207,6 +208,7 @@ final class AsyncPromiseTest extends TestCase
         }, null, AsyncPromise::class)();
 
         $this->expectException(CancelledPromiseException::class);
+        $this->expectExceptionMessage('Promise was cancelled.');
 
         $promise = new AsyncPromise(static function(Closure $resolve): void {
             sleep(1);
@@ -441,6 +443,7 @@ final class AsyncPromiseTest extends TestCase
     public function testUncaughtException(): void
     {
         $this->expectException(Exception::class);
+        $this->expectExceptionMessage('test');
 
         $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
             $reject(new Exception('test'));

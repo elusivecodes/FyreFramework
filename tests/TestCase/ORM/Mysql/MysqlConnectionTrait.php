@@ -74,6 +74,7 @@ trait MysqlConnectionTrait
         $this->db = $this->container->use(ConnectionManager::class)->use();
 
         $this->db->query('DROP TABLE IF EXISTS contains');
+        $this->db->query('DROP TABLE IF EXISTS composite_items');
         $this->db->query('DROP TABLE IF EXISTS items');
         $this->db->query('DROP TABLE IF EXISTS others');
         $this->db->query('DROP TABLE IF EXISTS timestamps');
@@ -89,6 +90,15 @@ trait MysqlConnectionTrait
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 name VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
+            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
+        SQL);
+
+        $this->db->query(<<<'SQL'
+            CREATE TABLE composite_items (
+                tenant_id INT(10) UNSIGNED NOT NULL,
+                id INT(10) UNSIGNED NOT NULL,
+                name VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+                PRIMARY KEY (tenant_id, id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
         SQL);
 
@@ -185,6 +195,7 @@ trait MysqlConnectionTrait
     protected function tearDown(): void
     {
         $this->db->query('DROP TABLE IF EXISTS contains');
+        $this->db->query('DROP TABLE IF EXISTS composite_items');
         $this->db->query('DROP TABLE IF EXISTS items');
         $this->db->query('DROP TABLE IF EXISTS others');
         $this->db->query('DROP TABLE IF EXISTS timestamps');
