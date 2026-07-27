@@ -38,7 +38,6 @@ use function unlink;
 use function unserialize;
 
 use const LOCK_EX;
-use const LOCK_UN;
 
 /**
  * Caches values on the filesystem.
@@ -197,7 +196,6 @@ class FileCacher extends Cacher
         $contents = @stream_get_contents($handle);
 
         if ($contents === false) {
-            @flock($handle, LOCK_UN);
             @fclose($handle);
 
             return false;
@@ -213,7 +211,6 @@ class FileCacher extends Cacher
         }
 
         if (!is_numeric($data['data'])) {
-            @flock($handle, LOCK_UN);
             @fclose($handle);
 
             return false;
@@ -231,7 +228,6 @@ class FileCacher extends Cacher
         @ftruncate($handle, 0);
         @rewind($handle);
         @fwrite($handle, serialize($data));
-        @flock($handle, LOCK_UN);
         @fclose($handle);
 
         return $data['data'];

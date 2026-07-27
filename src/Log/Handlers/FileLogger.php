@@ -28,7 +28,6 @@ use function sprintf;
 use function time;
 
 use const LOCK_EX;
-use const LOCK_UN;
 use const PHP_EOL;
 use const PHP_SAPI;
 
@@ -119,7 +118,6 @@ class FileLogger extends Logger
         $message = $this->format($level, $message);
 
         @fwrite($handle, $message.PHP_EOL);
-        @flock($handle, LOCK_UN);
         @fclose($handle);
     }
 }

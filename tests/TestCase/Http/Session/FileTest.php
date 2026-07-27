@@ -11,7 +11,10 @@ use Override;
 use PHPUnit\Framework\TestCase;
 
 use function clearstatcache;
+use function fclose;
 use function filemtime;
+use function flock;
+use function fopen;
 use function glob;
 use function mkdir;
 use function rmdir;
@@ -20,6 +23,10 @@ use function session_start;
 use function session_write_close;
 use function time;
 use function touch;
+
+use const LOCK_EX;
+use const LOCK_NB;
+use const LOCK_UN;
 
 final class FileTest extends TestCase
 {
@@ -66,6 +73,56 @@ final class FileTest extends TestCase
         $this->assertSame(
             'data',
             $this->handler->read($id)
+        );
+    }
+
+    public function testReadLockIsRetainedUntilClose(): void
+    {
+        $id = $this->session->id();
+
+        $this->assertTrue(
+            $this->handler->write($id, 'data1')
+        );
+
+        $this->assertTrue(
+            $this->handler->close()
+        );
+
+        $this->assertSame(
+            'data1',
+            $this->handler->read($id)
+        );
+
+        $handle = fopen('sessions/'.$id, 'c+b');
+
+        $this->assertIsResource($handle);
+
+        $this->assertFalse(
+            flock($handle, LOCK_EX | LOCK_NB)
+        );
+
+        $this->assertTrue(
+            $this->handler->write($id, 'data2')
+        );
+
+        $this->assertFalse(
+            flock($handle, LOCK_EX | LOCK_NB)
+        );
+
+        $this->assertTrue(
+            $this->handler->close()
+        );
+
+        $this->assertTrue(
+            flock($handle, LOCK_EX | LOCK_NB)
+        );
+
+        $this->assertTrue(
+            flock($handle, LOCK_UN)
+        );
+
+        $this->assertTrue(
+            fclose($handle)
         );
     }
 
