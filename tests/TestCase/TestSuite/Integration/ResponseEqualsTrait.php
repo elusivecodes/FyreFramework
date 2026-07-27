@@ -7,6 +7,15 @@ use PHPUnit\Framework\AssertionFailedError;
 
 trait ResponseEqualsTrait
 {
+    public function testResponseAssertionsUseFullBody(): void
+    {
+        $this->get('/response');
+
+        $this->assertResponseContains('a test');
+        $this->assertResponseEquals('This is a test response');
+        $this->assertResponseNotEmpty();
+    }
+
     public function testResponseEquals(): void
     {
         $this->get('/response');

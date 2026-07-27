@@ -40,6 +40,6 @@ class BodyEmpty extends Constraint
     #[Override]
     protected function matches(mixed $other): bool
     {
-        return $other->getBody()->getContents() === '';
+        return (string) $other->getBody() === '';
     }
 }

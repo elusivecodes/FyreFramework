@@ -68,7 +68,7 @@ class BodyContains extends Constraint
     #[Override]
     protected function matches(mixed $other): bool
     {
-        $contents = $other->getBody()->getContents();
+        $contents = (string) $other->getBody();
         $haystack = self::normalizeLineEndings($contents);
 
         if ($this->ignoreCase) {

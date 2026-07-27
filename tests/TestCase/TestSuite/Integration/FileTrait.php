@@ -12,6 +12,7 @@ trait FileTrait
         $this->get('/download');
 
         $this->assertFileResponse('tests/assets/test.jpg');
+        $this->assertFileResponse('tests/assets/test.jpg');
     }
 
     public function testFileResponseFail(): void

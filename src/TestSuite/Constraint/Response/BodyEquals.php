@@ -58,7 +58,7 @@ class BodyEquals extends Constraint
     #[Override]
     protected function matches(mixed $other): bool
     {
-        $contents = $other->getBody()->getContents();
+        $contents = (string) $other->getBody();
 
         return self::normalizeLineEndings($contents) === $this->string;
     }

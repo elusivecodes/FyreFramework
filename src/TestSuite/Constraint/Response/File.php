@@ -55,6 +55,6 @@ class File extends Constraint
     protected function matches(mixed $other): bool
     {
         return $other instanceof DownloadResponse &&
-            $other->getBody()->getContents() === file_get_contents($this->value);
+            (string) $other->getBody() === file_get_contents($this->value);
     }
 }
