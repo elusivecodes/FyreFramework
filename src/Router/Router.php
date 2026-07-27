@@ -655,7 +655,7 @@ class Router
 
             $pattern = $placeholders[$name] ?? '([^/]+)';
 
-            if (!preg_match('`^'.$pattern.'$`u', $value)) {
+            if (!preg_match('`^'.$pattern.'\z`u', $value)) {
                 throw new RouterException(sprintf(
                     'Route parameter `%s` is not valid.',
                     $name

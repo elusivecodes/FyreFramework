@@ -184,6 +184,27 @@ trait UrlTestTrait
         ]);
     }
 
+    public function testUrlInvalidArgumentLineFeed(): void
+    {
+        $this->expectException(RouterException::class);
+        $this->expectExceptionMessage('Route parameter `a` is not valid.');
+
+        $router = $this->container->use(Router::class);
+
+        $router->connect(
+            'home/alternate/{a}',
+            [HomeController::class, 'altMethod'],
+            placeholders: [
+                'a' => '\d+',
+            ],
+            as: 'alternate'
+        );
+
+        $router->url('alternate', [
+            'a' => "123\n",
+        ]);
+    }
+
     public function testUrlMissingArgument(): void
     {
         $this->expectException(RouterException::class);

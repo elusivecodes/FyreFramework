@@ -284,7 +284,7 @@ class Message implements MessageInterface
      */
     protected static function filterHeaderName(string $name): string
     {
-        if (!preg_match('/^[!#$%&\'*+\-.^_`|~0-9A-Za-z]+$/', $name)) {
+        if (!preg_match('/^[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\z/', $name)) {
             throw new InvalidArgumentException(sprintf(
                 'Header name `%s` is not valid.',
                 $name

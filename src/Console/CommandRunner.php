@@ -293,7 +293,7 @@ class CommandRunner
 
             foreach ($folders as $folder) {
                 $directory = new DirectoryIterator($folder);
-                $iterator = new RegexIterator($directory, '/^\w+Command\.php$/');
+                $iterator = new RegexIterator($directory, '/^\w+Command\.php\z/');
 
                 foreach ($iterator as $item) {
                     if ($item->isDir()) {
@@ -354,14 +354,14 @@ class CommandRunner
 
         $key = null;
         foreach ($argv as $arg) {
-            if (preg_match('/^--?([^\s=]+)=(.*)$/', $arg, $match)) {
+            if (preg_match('/^--?([^\s=]+)=(.*)\z/', $arg, $match)) {
                 if ($key !== null) {
                     $arguments[$key] = true;
                 }
 
                 $arguments[$this->inflector->variable($match[1])] = $match[2];
                 $key = null;
-            } else if (preg_match('/^--?([^\s]+)$/', $arg, $match)) {
+            } else if (preg_match('/^--?([^\s]+)\z/', $arg, $match)) {
                 if ($key !== null) {
                     $arguments[$key] = true;
                 }

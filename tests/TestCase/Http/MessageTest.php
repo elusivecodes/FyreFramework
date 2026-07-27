@@ -319,6 +319,15 @@ final class MessageTest extends TestCase
         );
     }
 
+    public function testWithHeaderInvalidNameLineFeed(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $message = new Message();
+
+        $message->withHeader("test\n", 'value');
+    }
+
     public function testWithHeaderInvalidValue(): void
     {
         $this->expectException(InvalidArgumentException::class);

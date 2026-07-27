@@ -339,7 +339,7 @@ abstract class Route
      */
     protected function getHostRegExp(): string
     {
-        return '`^'.str_replace('\*', '.*', preg_quote($this->host ?? '', '`').'$`');
+        return '`^'.str_replace('\*', '.*', preg_quote($this->host ?? '', '`').'\z`');
     }
 
     /**
@@ -370,7 +370,7 @@ abstract class Route
             Router::normalizePath($this->path)
         );
 
-        return '`^'.$path.'$`u';
+        return '`^'.$path.'\z`u';
     }
 
     /**

@@ -144,6 +144,6 @@ abstract class SessionHandler implements SessionHandlerInterface, SessionUpdateT
      */
     protected static function isValidSessionId(string $sessionId): bool
     {
-        return (bool) preg_match('/^[A-Za-z0-9,-]+$/D', $sessionId);
+        return preg_match('/^[A-Za-z0-9,-]+\z/', $sessionId) === 1;
     }
 }

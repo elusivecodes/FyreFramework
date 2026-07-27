@@ -185,6 +185,10 @@ final class FileTest extends TestCase
         $this->assertFalse(
             $this->handler->validateId('../outside')
         );
+
+        $this->assertFalse(
+            $this->handler->write("valid\n", 'data')
+        );
     }
 
     #[Override]

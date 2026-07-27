@@ -102,6 +102,22 @@ final class RouteTest extends TestCase
         );
     }
 
+    public function testCheckPathInvalidLineFeed(): void
+    {
+        $route = $this->container->build(ControllerRoute::class, [
+            'destination' => [TestController::class, 'test'],
+            'path' => 'test/{a}',
+        ]);
+
+        $request = $this->container
+            ->build(ServerRequest::class)
+            ->withAttribute('relativePath', "test/a\n");
+
+        $this->assertNull(
+            $route->parseRequest($request)
+        );
+    }
+
     public function testCheckPathPlaceholderBindingConstraintAndOptionalMarker(): void
     {
         $route = $this->container->build(ControllerRoute::class, [

@@ -153,7 +153,7 @@ class RouteLocator
 
             $directory = new RecursiveDirectoryIterator($folder, RecursiveDirectoryIterator::SKIP_DOTS);
             $iterator = new RecursiveIteratorIterator($directory, RecursiveIteratorIterator::SELF_FIRST);
-            $iterator = new RegexIterator($iterator, '/\.php$/');
+            $iterator = new RegexIterator($iterator, '/\.php\z/');
 
             foreach ($iterator as $item) {
                 if ($item->isDir()) {
