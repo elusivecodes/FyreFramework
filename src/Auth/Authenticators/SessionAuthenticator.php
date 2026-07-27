@@ -8,7 +8,6 @@ use Fyre\Auth\Authenticator;
 use Fyre\Http\Session\Session;
 use Fyre\ORM\Entity;
 use Override;
-use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
@@ -66,20 +65,18 @@ class SessionAuthenticator extends Authenticator
     /**
      * {@inheritDoc}
      *
-     * Note: The session key is persisted lazily when a user is present and the key is not already set.
+     * Stores the user identifier and refreshes the session when the identity changes.
      */
     #[Override]
-    public function beforeResponse(ResponseInterface $response, Entity|null $user = null): ResponseInterface
+    public function login(Entity $user, bool $rememberMe = false): void
     {
-        if ($user && !$this->session->has($this->config['sessionKey'])) {
-            $this->session->refresh();
+        $sessionKey = $this->config['sessionKey'];
+        $id = $user->get($this->config['sessionField']);
 
-            $id = $user->get($this->config['sessionField']);
-
-            $this->session->set($this->config['sessionKey'], $id);
+        if ($this->session->get($sessionKey) !== $id) {
+            $this->session->refresh(true);
+            $this->session->set($sessionKey, $id);
         }
-
-        return $response;
     }
 
     /**

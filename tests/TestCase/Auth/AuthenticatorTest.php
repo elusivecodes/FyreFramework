@@ -322,7 +322,14 @@ final class AuthenticatorTest extends TestCase
 
         $request = $this->container->build(ServerRequest::class);
 
+        $this->session->set('auth', 2);
+
         $this->auth->attempt('test@test.com', 'test');
+
+        $this->assertSame(
+            1,
+            $this->session->get('auth')
+        );
 
         $response = $handler->handle($request);
 
