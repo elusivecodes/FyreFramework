@@ -7,18 +7,31 @@ use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
 
+use function array_filter;
+use function array_key_first;
+use function count;
 use function implode;
 use function in_array;
 use function str_ends_with;
 use function str_starts_with;
+use function strlen;
 use function strrchr;
 use function substr;
+use function usort;
 
 /**
  * Stores Cookies and builds Cookie headers for client requests.
  */
 class CookieJar
 {
+    protected const MAX_COOKIE_HEADER_SIZE = 16384;
+
+    protected const MAX_COOKIE_SIZE = 4096;
+
+    protected const MAX_COOKIES = 3000;
+
+    protected const MAX_COOKIES_PER_DOMAIN = 180;
+
     /**
      * @var array<string, Cookie>
      */
@@ -37,6 +50,41 @@ class CookieJar
             unset($this->cookies[$id]);
 
             return;
+        }
+
+        $this->removeExpired();
+
+        if ($cookie->toHeaderString() |> strlen(...) > static::MAX_COOKIE_SIZE) {
+            return;
+        }
+
+        if (isset($this->cookies[$id])) {
+            unset($this->cookies[$id]);
+            $this->cookies[$id] = $cookie;
+
+            return;
+        }
+
+        $domain = $cookie->getDomain();
+        $domainCookies = array_filter(
+            $this->cookies,
+            static fn(Cookie $cookie): bool => $cookie->getDomain() === $domain
+        );
+
+        if (count($domainCookies) >= static::MAX_COOKIES_PER_DOMAIN) {
+            $oldestId = array_key_first($domainCookies);
+
+            if ($oldestId !== null) {
+                unset($this->cookies[$oldestId]);
+            }
+        }
+
+        if (count($this->cookies) >= static::MAX_COOKIES) {
+            $oldestId = array_key_first($this->cookies);
+
+            if ($oldestId !== null) {
+                unset($this->cookies[$oldestId]);
+            }
         }
 
         $this->cookies[$id] = $cookie;
@@ -62,8 +110,8 @@ class CookieJar
             return '';
         }
 
-        $requestPath = $uri->getPath() ?: '/';
-        $values = [];
+        $requestPath = $uri->getPath();
+        $cookies = [];
 
         foreach ($this->cookies as $cookie) {
             if ($cookie->isExpired()) {
@@ -74,19 +122,42 @@ class CookieJar
                 continue;
             }
 
-            $cookiePath = $cookie->getPath() ?: '/';
-
             if (
                 !static::domainMatches($cookie, $host) ||
-                !static::pathMatches($requestPath, $cookiePath)
+                !static::pathMatches($requestPath, $cookie->getPath())
             ) {
                 continue;
             }
 
-            $values[] = $cookie->getName().'='.$cookie->getValue();
+            $cookies[] = $cookie;
         }
 
-        return implode(';', $values);
+        usort(
+            $cookies,
+            static function(Cookie $a, Cookie $b): int {
+                $aPath = $a->getPath() ?: '/';
+                $bPath = $b->getPath() ?: '/';
+
+                return strlen($bPath) <=> strlen($aPath);
+            }
+        );
+
+        $length = 0;
+        $values = [];
+
+        foreach ($cookies as $cookie) {
+            $value = $cookie->getName().'='.$cookie->getValue();
+            $nextLength = $length + ($values === [] ? 0 : 2) + strlen($value);
+
+            if ($nextLength > static::MAX_COOKIE_HEADER_SIZE) {
+                continue;
+            }
+
+            $values[] = $value;
+            $length = $nextLength;
+        }
+
+        return implode('; ', $values);
     }
 
     /**
@@ -117,12 +188,50 @@ class CookieJar
             if (
                 !$cookie->isDomainValid() ||
                 ($cookie->isSecure() && $scheme !== 'https') ||
-                !static::domainMatches($cookie, $host)
+                !static::domainMatches($cookie, $host) ||
+                ($scheme !== 'https' && $this->overlapsSecureCookie($cookie))
             ) {
                 continue;
             }
 
             $this->add($cookie);
+        }
+    }
+
+    /**
+     * Checks whether a Cookie overlaps a stored Secure Cookie.
+     *
+     * @param Cookie $cookie The Cookie.
+     * @return bool Whether the Cookie overlaps a stored Secure Cookie.
+     */
+    protected function overlapsSecureCookie(Cookie $cookie): bool
+    {
+        foreach ($this->cookies as $existing) {
+            if (
+                !$existing->isSecure() ||
+                $existing->isExpired() ||
+                $existing->getName() !== $cookie->getName() ||
+                !static::domainsOverlap($existing, $cookie) ||
+                !static::pathsOverlap($existing->getPath(), $cookie->getPath())
+            ) {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Removes expired Cookies.
+     */
+    protected function removeExpired(): void
+    {
+        foreach ($this->cookies as $id => $cookie) {
+            if ($cookie->isExpired()) {
+                unset($this->cookies[$id]);
+            }
         }
     }
 
@@ -164,6 +273,19 @@ class CookieJar
     }
 
     /**
+     * Checks whether two Cookie domains overlap.
+     *
+     * @param Cookie $first The first Cookie.
+     * @param Cookie $second The second Cookie.
+     * @return bool Whether the Cookie domains overlap.
+     */
+    protected static function domainsOverlap(Cookie $first, Cookie $second): bool
+    {
+        return static::domainMatches($first, $second->getDomain()) ||
+            static::domainMatches($second, $first->getDomain());
+    }
+
+    /**
      * Normalizes a URI host for Cookie domain matching.
      *
      * @param string $host The URI host.
@@ -191,6 +313,9 @@ class CookieJar
      */
     protected static function pathMatches(string $requestPath, string $cookiePath): bool
     {
+        $requestPath = $requestPath ?: '/';
+        $cookiePath = $cookiePath ?: '/';
+
         if ($requestPath === $cookiePath) {
             return true;
         }
@@ -200,5 +325,18 @@ class CookieJar
         }
 
         return str_starts_with($requestPath, $cookiePath);
+    }
+
+    /**
+     * Checks whether two Cookie paths overlap.
+     *
+     * @param string $first The first Cookie path.
+     * @param string $second The second Cookie path.
+     * @return bool Whether the Cookie paths overlap.
+     */
+    protected static function pathsOverlap(string $first, string $second): bool
+    {
+        return static::pathMatches($first, $second) ||
+            static::pathMatches($second, $first);
     }
 }

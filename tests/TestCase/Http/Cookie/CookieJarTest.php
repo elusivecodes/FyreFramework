@@ -9,6 +9,9 @@ use Fyre\Http\Cookie\CookieJar;
 use Fyre\Http\Uri;
 use PHPUnit\Framework\TestCase;
 
+use function explode;
+use function str_repeat;
+use function strlen;
 use function time;
 
 final class CookieJarTest extends TestCase
@@ -41,6 +44,87 @@ final class CookieJarTest extends TestCase
             '',
             $cookieJar->getHeader($uri)
         );
+    }
+
+    public function testAddMaximumCookies(): void
+    {
+        $cookieJar = new CookieJar();
+
+        for ($i = 0; $i < 3000; $i++) {
+            $cookie = new Cookie('test', 'value', [
+                'domain' => 'example'.$i.'.com',
+            ]);
+
+            $cookieJar->add($cookie);
+        }
+
+        $updatedCookie = new Cookie('test', 'updated', [
+            'domain' => 'example0.com',
+        ]);
+        $newCookie = new Cookie('test', 'value', [
+            'domain' => 'example3000.com',
+        ]);
+
+        $cookieJar->add($updatedCookie);
+        $cookieJar->add($newCookie);
+
+        $firstUri = new Uri('https://example0.com');
+
+        $this->assertSame(
+            'test=updated',
+            $cookieJar->getHeader($firstUri)
+        );
+
+        $secondUri = new Uri('https://example1.com');
+
+        $this->assertSame(
+            '',
+            $cookieJar->getHeader($secondUri)
+        );
+
+        $lastUri = new Uri('https://example3000.com');
+
+        $this->assertSame(
+            'test=value',
+            $cookieJar->getHeader($lastUri)
+        );
+    }
+
+    public function testAddMaximumCookieSize(): void
+    {
+        $cookie = new Cookie('test', str_repeat('a', 4096), [
+            'domain' => 'example.com',
+        ]);
+
+        $cookieJar = new CookieJar();
+        $cookieJar->add($cookie);
+
+        $uri = new Uri('https://example.com');
+
+        $this->assertSame(
+            '',
+            $cookieJar->getHeader($uri)
+        );
+    }
+
+    public function testAddMaximumCookiesPerDomain(): void
+    {
+        $cookieJar = new CookieJar();
+
+        for ($i = 0; $i <= 180; $i++) {
+            $cookie = new Cookie('test'.$i, 'value', [
+                'domain' => 'example.com',
+            ]);
+
+            $cookieJar->add($cookie);
+        }
+
+        $uri = new Uri('https://example.com');
+        $header = $cookieJar->getHeader($uri);
+
+        $this->assertStringNotContainsString('test0=value', $header);
+        $this->assertStringContainsString('test1=value', $header);
+        $this->assertStringContainsString('test180=value', $header);
     }
 
     public function testGetHeader(): void
@@ -92,6 +176,40 @@ final class CookieJarTest extends TestCase
         );
     }
 
+    public function testGetHeaderMaximumSize(): void
+    {
+        $cookieJar = new CookieJar();
+
+        for ($i = 0; $i < 4; $i++) {
+            $cookie = new Cookie('test'.$i, str_repeat('a', 4000), [
+                'domain' => 'example.com',
+            ]);
+
+            $cookieJar->add($cookie);
+        }
+
+        $pathCookie = new Cookie('path', str_repeat('a', 4000), [
+            'domain' => 'example.com',
+            'path' => '/path',
+        ]);
+
+        $cookieJar->add($pathCookie);
+
+        $uri = new Uri('https://example.com/path');
+        $header = $cookieJar->getHeader($uri);
+
+        $this->assertCount(
+            4,
+            explode('; ', $header)
+        );
+        $this->assertLessThanOrEqual(
+            16384,
+            strlen($header)
+        );
+        $this->assertStringStartsWith('path=', $header);
+        $this->assertStringNotContainsString('test3=', $header);
+    }
+
     public function testGetHeaderPath(): void
     {
         $cookie = new Cookie('test', 'value', [
@@ -113,6 +231,28 @@ final class CookieJarTest extends TestCase
         $this->assertSame(
             '',
             $cookieJar->getHeader($otherUri)
+        );
+    }
+
+    public function testGetHeaderPathOrder(): void
+    {
+        $rootCookie = new Cookie('root', 'value', [
+            'domain' => 'example.com',
+        ]);
+        $pathCookie = new Cookie('path', 'value', [
+            'domain' => 'example.com',
+            'path' => '/path',
+        ]);
+
+        $cookieJar = new CookieJar();
+        $cookieJar->add($rootCookie);
+        $cookieJar->add($pathCookie);
+
+        $uri = new Uri('https://example.com/path/page');
+
+        $this->assertSame(
+            'path=value; root=value',
+            $cookieJar->getHeader($uri)
         );
     }
 
@@ -353,6 +493,110 @@ final class CookieJarTest extends TestCase
         $this->assertSame(
             '',
             $cookieJar->getHeader($uri)
+        );
+    }
+
+    public function testStoreResponseSecureCookieAllowsOtherPath(): void
+    {
+        $secureUri = new Uri('https://example.com/secure');
+        $secureResponse = new Response([
+            'headers' => [
+                'Set-Cookie' => 'test=secure; Path=/secure; Secure',
+            ],
+        ]);
+        $insecureUri = new Uri('http://example.com/other');
+        $insecureResponse = new Response([
+            'headers' => [
+                'Set-Cookie' => 'test=insecure; Path=/other',
+            ],
+        ]);
+
+        $cookieJar = new CookieJar();
+        $cookieJar->storeResponse($secureUri, $secureResponse);
+        $cookieJar->storeResponse($insecureUri, $insecureResponse);
+
+        $this->assertSame(
+            'test=secure',
+            $cookieJar->getHeader($secureUri)
+        );
+        $this->assertSame(
+            'test=insecure',
+            $cookieJar->getHeader(new Uri('https://example.com/other'))
+        );
+    }
+
+    public function testStoreResponseSecureCookieInsecureDelete(): void
+    {
+        $secureUri = new Uri('https://example.com');
+        $secureResponse = new Response([
+            'headers' => [
+                'Set-Cookie' => 'test=secure; Secure',
+            ],
+        ]);
+        $insecureUri = new Uri('http://example.com');
+        $insecureResponse = new Response([
+            'headers' => [
+                'Set-Cookie' => 'test=; Max-Age=0',
+            ],
+        ]);
+
+        $cookieJar = new CookieJar();
+        $cookieJar->storeResponse($secureUri, $secureResponse);
+        $cookieJar->storeResponse($insecureUri, $insecureResponse);
+
+        $this->assertSame(
+            'test=secure',
+            $cookieJar->getHeader($secureUri)
+        );
+    }
+
+    public function testStoreResponseSecureCookieInsecureOverwrite(): void
+    {
+        $secureUri = new Uri('https://example.com');
+        $secureResponse = new Response([
+            'headers' => [
+                'Set-Cookie' => 'test=secure; Secure',
+            ],
+        ]);
+        $insecureUri = new Uri('http://example.com');
+        $insecureResponse = new Response([
+            'headers' => [
+                'Set-Cookie' => 'test=insecure',
+            ],
+        ]);
+
+        $cookieJar = new CookieJar();
+        $cookieJar->storeResponse($secureUri, $secureResponse);
+        $cookieJar->storeResponse($insecureUri, $insecureResponse);
+
+        $this->assertSame(
+            'test=secure',
+            $cookieJar->getHeader($secureUri)
+        );
+    }
+
+    public function testStoreResponseSecureCookieSubdomainOverwrite(): void
+    {
+        $secureUri = new Uri('https://example.com');
+        $secureResponse = new Response([
+            'headers' => [
+                'Set-Cookie' => 'test=secure; Domain=example.com; Secure',
+            ],
+        ]);
+        $insecureUri = new Uri('http://sub.example.com');
+        $insecureResponse = new Response([
+            'headers' => [
+                'Set-Cookie' => 'test=insecure',
+            ],
+        ]);
+
+        $cookieJar = new CookieJar();
+        $cookieJar->storeResponse($secureUri, $secureResponse);
+        $cookieJar->storeResponse($insecureUri, $insecureResponse);
+
+        $this->assertSame(
+            'test=secure',
+            $cookieJar->getHeader(new Uri('https://sub.example.com'))
         );
     }
 }
