@@ -14,26 +14,6 @@ final class MigrationRunnerTest extends TestCase
 {
     use SqliteConnectionTrait;
 
-    public function testForgetRemovesHistoryWithoutRollingBack(): void
-    {
-        $this->migrationRunner->migrate();
-
-        $this->assertSame(
-            $this->migrationRunner,
-            $this->migrationRunner->forget('3_Test3')
-        );
-
-        $this->assertSame(
-            ['2_Test2', '1_Test1'],
-            array_column($this->migrationRunner->getHistory()->all(), 'migration')
-        );
-
-        $this->schema->clear();
-        $this->assertTrue(
-            $this->schema->hasTable('test3')
-        );
-    }
-
     public function testRollbackRetainsMissingMigrationHistory(): void
     {
         $this->migrationRunner->migrate();

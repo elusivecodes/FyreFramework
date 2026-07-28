@@ -9,6 +9,7 @@ use Fyre\TestSuite\Constraint\Log\LogIsEmpty;
 use Fyre\TestSuite\Constraint\Log\LogMessage;
 use Fyre\TestSuite\Constraint\Log\LogMessageContains;
 use Fyre\TestSuite\TestCase;
+use PHPUnit\Framework\Attributes\After;
 
 use function array_merge;
 use function is_int;
@@ -20,6 +21,11 @@ use function is_int;
  */
 trait LogTestTrait
 {
+    /**
+     * @var array<string, array<string, mixed>>
+     */
+    protected array $logConfigs = [];
+
     protected LogManager $logManager;
 
     /**
@@ -103,6 +109,7 @@ trait LogTestTrait
     protected function setupLogs(array $logHandlers = []): void
     {
         $this->logManager = $this->app->use(LogManager::class);
+        $this->logConfigs = $this->logManager->getConfig() ?? [];
         $this->logManager->clear();
 
         foreach ($logHandlers as $level => $config) {
@@ -115,6 +122,19 @@ trait LogTestTrait
             $config['levels'] ??= $level;
 
             $this->logManager->setConfig('test-'.$level, $config);
+        }
+    }
+
+    /**
+     * Tear down log handlers.
+     */
+    #[After]
+    protected function tearDownLogs(): void
+    {
+        $this->logManager->clear();
+
+        foreach ($this->logConfigs as $key => $config) {
+            $this->logManager->setConfig($key, $config);
         }
     }
 }

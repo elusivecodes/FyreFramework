@@ -27,6 +27,11 @@ use PHPUnit\Framework\Attributes\Before;
  */
 trait EmailTestTrait
 {
+    /**
+     * @var array<string, array<string, mixed>>
+     */
+    protected array $mailConfigs = [];
+
     protected MailManager $mailManager;
 
     /**
@@ -423,26 +428,32 @@ trait EmailTestTrait
     }
 
     /**
-     * Clear messages.
-     */
-    #[After]
-    protected function clearMessages(): void
-    {
-        TestMailer::clearMessages();
-    }
-
-    /**
      * Set up mail handlers.
      */
     #[Before(-1)]
     protected function setupMailHandlers(): void
     {
         $this->mailManager = $this->app->use(MailManager::class);
-        $configs = $this->mailManager->getConfig();
+        $this->mailConfigs = $this->mailManager->getConfig() ?? [];
         $this->mailManager->clear();
 
-        foreach ($configs as $key => $config) {
+        foreach ($this->mailConfigs as $key => $config) {
             $config['className'] = TestMailer::class;
+            $this->mailManager->setConfig($key, $config);
+        }
+    }
+
+    /**
+     * Tear down mail handlers.
+     */
+    #[After]
+    protected function tearDownMailHandlers(): void
+    {
+        TestMailer::clearMessages();
+
+        $this->mailManager->clear();
+
+        foreach ($this->mailConfigs as $key => $config) {
             $this->mailManager->setConfig($key, $config);
         }
     }

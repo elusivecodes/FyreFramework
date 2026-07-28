@@ -43,6 +43,6 @@ class TestMailer extends Mailer
     #[Override]
     public function send(Email $email): void
     {
-        static::$messages[] = $email;
+        static::$messages[] = clone $email;
     }
 }

@@ -52,6 +52,8 @@ trait ConsoleTestTrait
      */
     protected $input;
 
+    protected Console $originalConsole;
+
     /**
      * @var resource
      */
@@ -253,6 +255,8 @@ trait ConsoleTestTrait
     #[Before(-1)]
     protected function setUpConsole(): void
     {
+        $this->originalConsole = $this->app->use(Console::class);
+
         $this->input = fopen('php://memory', 'r+b');
         $this->output = fopen('php://memory', 'r+b');
         $this->error = fopen('php://memory', 'r+b');
@@ -270,6 +274,8 @@ trait ConsoleTestTrait
     #[After]
     protected function tearDownConsole(): void
     {
+        $this->app->instance(Console::class, $this->originalConsole);
+
         fclose($this->input);
         fclose($this->output);
         fclose($this->error);

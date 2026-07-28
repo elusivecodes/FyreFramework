@@ -72,22 +72,6 @@ class MigrationRunner
     }
 
     /**
-     * Forgets a migration without running its rollback implementation.
-     *
-     * This operation only removes the migration from history. It is intended for explicitly
-     * repairing history when the migration implementation is no longer available.
-     *
-     * @param string $migrationName The migration name.
-     * @return static The MigrationRunner instance.
-     */
-    public function forget(string $migrationName): static
-    {
-        $this->getHistory()->delete($migrationName);
-
-        return $this;
-    }
-
-    /**
      * Returns the Connection.
      *
      * @return Connection The Connection instance.
