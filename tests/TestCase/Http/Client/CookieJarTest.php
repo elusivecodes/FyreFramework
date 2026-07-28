@@ -13,64 +13,93 @@ final class CookieJarTest extends TestCase
 {
     public function testGetHeader(): void
     {
-        $cookieJar = new CookieJar();
-        $cookieJar->add(new Cookie('matching', 'value', [
+        $matchingCookie = new Cookie('matching', 'value', [
             'domain' => 'example.com',
             'path' => '/path',
-        ]));
-        $cookieJar->add(new Cookie('domain', 'value', [
+        ]);
+        $domainCookie = new Cookie('domain', 'value', [
             'domain' => 'other.com',
-        ]));
-        $cookieJar->add(new Cookie('path', 'value', [
+        ]);
+        $pathCookie = new Cookie('path', 'value', [
             'domain' => 'example.com',
             'path' => '/other',
-        ]));
+        ]);
+
+        $cookieJar = new CookieJar();
+        $cookieJar->add($matchingCookie);
+        $cookieJar->add($domainCookie);
+        $cookieJar->add($pathCookie);
+
+        $uri = new Uri('https://example.com/path/test');
 
         $this->assertSame(
             'matching=value',
-            $cookieJar->getHeader(new Uri('https://example.com/path/test'))
+            $cookieJar->getHeader($uri)
+        );
+    }
+
+    public function testGetHeaderPreservesOpaqueValues(): void
+    {
+        $cookie = new Cookie('test', 'a+b%2Bc=');
+
+        $cookieJar = new CookieJar();
+        $cookieJar->add($cookie);
+
+        $uri = new Uri('https://example.com');
+
+        $this->assertSame(
+            'test=a+b%2Bc=',
+            $cookieJar->getHeader($uri)
         );
     }
 
     public function testGetHeaderSecure(): void
     {
-        $cookieJar = new CookieJar();
-        $cookieJar->add(new Cookie('secure', 'value', [
+        $cookie = new Cookie('secure', 'value', [
             'domain' => 'example.com',
             'secure' => true,
-        ]));
+        ]);
+
+        $cookieJar = new CookieJar();
+        $cookieJar->add($cookie);
+
+        $httpUri = new Uri('http://example.com');
 
         $this->assertSame(
             '',
-            $cookieJar->getHeader(new Uri('http://example.com'))
+            $cookieJar->getHeader($httpUri)
         );
+
+        $httpsUri = new Uri('https://example.com');
 
         $this->assertSame(
             'secure=value',
-            $cookieJar->getHeader(new Uri('https://example.com'))
+            $cookieJar->getHeader($httpsUri)
         );
     }
 
     public function testStoreResponse(): void
     {
+        $uri = new Uri('https://example.com/path');
+        $response = new Response([
+            'headers' => [
+                'Set-Cookie' => 'test=value',
+            ],
+        ]);
+
         $cookieJar = new CookieJar();
-        $cookieJar->storeResponse(
-            new Uri('https://example.com/path'),
-            new Response([
-                'headers' => [
-                    'Set-Cookie' => 'test=value',
-                ],
-            ])
-        );
+        $cookieJar->storeResponse($uri, $response);
 
         $this->assertSame(
             'test=value',
-            $cookieJar->getHeader(new Uri('https://example.com/path'))
+            $cookieJar->getHeader($uri)
         );
+
+        $otherUri = new Uri('https://other.com/path');
 
         $this->assertSame(
             '',
-            $cookieJar->getHeader(new Uri('https://other.com/path'))
+            $cookieJar->getHeader($otherUri)
         );
     }
 }

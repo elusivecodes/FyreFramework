@@ -6,22 +6,32 @@ namespace Fyre\Http;
 use Fyre\Core\Traits\DebugTrait;
 use InvalidArgumentException;
 
-use function array_map;
 use function array_replace;
 use function array_shift;
 use function explode;
+use function filter_var;
 use function gmdate;
+use function idn_to_ascii;
 use function implode;
 use function in_array;
-use function rawurlencode;
+use function ltrim;
+use function min;
+use function preg_match;
+use function rtrim;
 use function sprintf;
 use function str_contains;
-use function str_replace;
+use function str_ends_with;
+use function str_starts_with;
 use function strtolower;
 use function strtotime;
+use function substr;
 use function time;
 use function trim;
-use function urldecode;
+
+use const FILTER_VALIDATE_IP;
+use const IDNA_DEFAULT;
+use const IDNA_USE_STD3_RULES;
+use const INTL_IDNA_VARIANT_UTS46;
 
 /**
  * Represents a cookie and can parse/format `Set-Cookie` header values.
@@ -32,8 +42,6 @@ class Cookie
 {
     use DebugTrait;
 
-    protected const RESERVED_CHARS = ['=', ',', ';', ' ', "\t", "\r", "\n", "\v", "\f"];
-
     /**
      * @var array<string, mixed>
      */
@@ -41,6 +49,7 @@ class Cookie
         'expires' => null,
         'path' => '/',
         'domain' => '',
+        'hostOnly' => false,
         'secure' => false,
         'httpOnly' => false,
         'sameSite' => 'lax',
@@ -48,7 +57,11 @@ class Cookie
 
     protected string $domain;
 
+    protected bool $domainValid;
+
     protected int|null $expires;
+
+    protected bool $hostOnly;
 
     protected bool $httpOnly;
 
@@ -67,8 +80,7 @@ class Cookie
      * Parses a `Set-Cookie` header value and applies any provided default options.
      * Header attributes are parsed case-insensitively.
      *
-     * Note: `Max-Age` takes precedence over `Expires`. If `Expires` cannot be parsed,
-     * `strtotime()` may return `false` (which becomes `0` after casting to int).
+     * Note: `Max-Age` takes precedence over `Expires`.
      *
      * @param string $string The `Set-Cookie` header value.
      * @param array<string, mixed> $options The default cookie options to apply.
@@ -77,19 +89,33 @@ class Cookie
     public static function createFromHeaderString(string $string, array $options = []): static
     {
         $parts = explode(';', $string);
+        $hasDomainAttribute = false;
+        $defaultPath = (string) ($options['path'] ?? '/');
 
         $nameValue = array_shift($parts);
         $nameValue = explode('=', $nameValue, 2);
 
-        $name = array_shift($nameValue) |> trim(...) |> urldecode(...);
-        $value = (array_shift($nameValue) ?? '') |> trim(...) |> urldecode(...);
+        $name = array_shift($nameValue) |> trim(...);
+        $value = (array_shift($nameValue) ?? '') |> trim(...);
+
+        if (
+            $value !== '"' &&
+            str_starts_with($value, '"') &&
+            str_ends_with($value, '"')
+        ) {
+            $value = substr($value, 1, -1);
+        }
+
+        $expires = null;
+        $maxAge = null;
 
         foreach ($parts as $part) {
             if (str_contains($part, '=')) {
-                [$key, $val] = explode('=', $part, 2);
+                [$key, $attributeValue] = explode('=', $part, 2);
+                $attributeValue = trim($attributeValue);
             } else {
                 $key = $part;
-                $val = true;
+                $attributeValue = null;
             }
 
             $key = trim($key) |> strtolower(...);
@@ -99,16 +125,43 @@ class Cookie
                 default => $key
             };
 
-            $options[$key] = $val;
+            if ($key === 'expires') {
+                $expires = $attributeValue;
+
+                continue;
+            }
+
+            if ($key === 'max-age') {
+                $maxAge = $attributeValue;
+
+                continue;
+            }
+
+            if ($key === 'domain') {
+                $hasDomainAttribute = true;
+            }
+
+            $options[$key] = $attributeValue ?? true;
         }
 
-        if (isset($options['max-age'])) {
-            $options['expires'] = time() + (int) $options['max-age'];
-        } else if (isset($options['expires'])) {
-            $options['expires'] = (int) strtotime((string) $options['expires']);
+        if ($expires !== null) {
+            $timestamp = strtotime($expires);
+
+            if ($timestamp !== false) {
+                $options['expires'] = $timestamp;
+            }
         }
 
-        unset($options['max-age']);
+        if ($maxAge !== null && preg_match('/^-?\d+\z/', $maxAge) === 1) {
+            $maxAge = (int) $maxAge;
+            $options['expires'] = min(PHP_INT_MAX, $maxAge + time());
+        }
+
+        $options['hostOnly'] = !$hasDomainAttribute;
+
+        if (!isset($options['path']) || !str_starts_with((string) $options['path'], '/')) {
+            $options['path'] = $defaultPath;
+        }
 
         return new static($name, $value, $options);
     }
@@ -120,7 +173,7 @@ class Cookie
      * @param string $value The cookie value.
      * @param array<string, mixed> $options The options for the cookie.
      *
-     * @throws InvalidArgumentException If the same site option is not valid.
+     * @throws InvalidArgumentException If the name, value, or same site option is not valid.
      */
     public function __construct(
         protected string $name,
@@ -129,9 +182,18 @@ class Cookie
     ) {
         $options = array_replace(static::$defaults, $options);
 
+        if ($this->name === '' || preg_match('/^[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\z/', $this->name) !== 1) {
+            throw new InvalidArgumentException('Cookie name is not valid.');
+        }
+
+        if (preg_match('/^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*\z/', $this->value) !== 1) {
+            throw new InvalidArgumentException('Cookie value is not valid.');
+        }
+
         $this->expires = $options['expires'];
         $this->path = $options['path'];
-        $this->domain = $options['domain'];
+        [$this->domain, $this->domainValid] = static::normalizeDomain($options['domain']);
+        $this->hostOnly = $options['hostOnly'];
         $this->secure = $options['secure'];
         $this->httpOnly = $options['httpOnly'];
 
@@ -180,13 +242,13 @@ class Cookie
     /**
      * Returns the unique cookie identifier.
      *
-     * The identifier is based on the cookie name, domain, and path.
+     * The identifier is based on the cookie name, domain, path, and host-only state.
      *
      * @return string The unique cookie identifier.
      */
     public function getId(): string
     {
-        return implode(',', [$this->name, $this->domain, $this->path]);
+        return implode(',', [$this->name, $this->domain, $this->path, (int) $this->hostOnly]);
     }
 
     /**
@@ -230,13 +292,33 @@ class Cookie
     }
 
     /**
+     * Checks whether the cookie domain could be canonicalized.
+     *
+     * @return bool Whether the cookie domain is valid.
+     */
+    public function isDomainValid(): bool
+    {
+        return $this->domainValid;
+    }
+
+    /**
      * Checks whether the cookie has expired.
      *
      * @return bool Whether the cookie has expired.
      */
     public function isExpired(): bool
     {
-        return $this->expires !== null && $this->expires < time();
+        return $this->expires !== null && $this->expires <= time();
+    }
+
+    /**
+     * Checks whether the cookie is scoped to the exact host that created it.
+     *
+     * @return bool Whether the cookie is host-only.
+     */
+    public function isHostOnly(): bool
+    {
+        return $this->hostOnly;
     }
 
     /**
@@ -269,12 +351,7 @@ class Cookie
      */
     public function toHeaderString(): string
     {
-        $result = '';
-
-        $replacements = array_map(rawurlencode(...), static::RESERVED_CHARS);
-        $result = str_replace(static::RESERVED_CHARS, $replacements, $this->name);
-        $result .= '=';
-        $result .= rawurlencode($this->value);
+        $result = $this->name.'='.$this->value;
 
         if ($this->expires !== null) {
             $result .= '; expires='.gmdate('D, d M Y H:i:s T', $this->expires);
@@ -301,5 +378,39 @@ class Cookie
         }
 
         return $result;
+    }
+
+    /**
+     * Normalizes a cookie domain for matching and storage.
+     *
+     * @param string $domain The cookie domain.
+     * @return array{string, bool} The normalized domain and whether it is valid.
+     */
+    protected static function normalizeDomain(string $domain): array
+    {
+        $domain = trim($domain) |> strtolower(...);
+        $domain = ltrim($domain, '.');
+
+        if ($domain === '') {
+            return ['', true];
+        }
+
+        if (str_ends_with($domain, '.')) {
+            return [rtrim($domain, '.'), false];
+        }
+
+        $ipAddress = str_starts_with($domain, '[') && str_ends_with($domain, ']') ?
+            substr($domain, 1, -1) :
+            $domain;
+
+        if (filter_var($ipAddress, FILTER_VALIDATE_IP) !== false) {
+            return [$domain, true];
+        }
+
+        $ascii = idn_to_ascii($domain, IDNA_DEFAULT | IDNA_USE_STD3_RULES, INTL_IDNA_VARIANT_UTS46);
+
+        return $ascii === false ?
+            [$domain, false] :
+            [$ascii, true];
     }
 }

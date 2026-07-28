@@ -8,7 +8,6 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
 
 use function implode;
-use function rawurlencode;
 use function str_ends_with;
 use function str_starts_with;
 use function strlen;
@@ -78,9 +77,7 @@ class CookieJar
                 continue;
             }
 
-            $values[] = ($cookie->getName() |> rawurlencode(...)).
-                '='.
-                ($cookie->getValue() |> rawurlencode(...));
+            $values[] = $cookie->getName().'='.$cookie->getValue();
         }
 
         return implode(';', $values);

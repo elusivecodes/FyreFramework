@@ -5,6 +5,7 @@ namespace Tests\TestCase\Http;
 
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Http\Cookie;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 use function class_uses;
@@ -55,33 +56,133 @@ final class CookieTest extends TestCase
         );
     }
 
-    public function testCreateFromHeaderStringEncodedName(): void
+    public function testCreateFromHeaderStringExpiresDefault(): void
     {
-        $cookie = Cookie::createFromHeaderString('test%3D1=value; path=/; samesite=lax');
+        $expires = time() + 3600;
+        $cookie = Cookie::createFromHeaderString('test=value', [
+            'expires' => $expires,
+        ]);
 
         $this->assertSame(
-            'test=1',
-            $cookie->getName()
+            $expires,
+            $cookie->getExpires()
         );
     }
 
-    public function testCreateFromHeaderStringEncodedValue(): void
+    public function testCreateFromHeaderStringInvalidExpires(): void
     {
-        $cookie = Cookie::createFromHeaderString('test=value%3D1; path=/; samesite=lax');
+        $expires = time() + 3600;
+        $cookie = Cookie::createFromHeaderString('test=value; expires=invalid', [
+            'expires' => $expires,
+        ]);
 
         $this->assertSame(
-            'value=1',
-            $cookie->getValue()
+            $expires,
+            $cookie->getExpires()
+        );
+    }
+
+    public function testCreateFromHeaderStringInvalidMaxAge(): void
+    {
+        $cookie = Cookie::createFromHeaderString('test=value; max-age=invalid; expires=Sat, 20 Nov 2286 17:46:39 GMT');
+
+        $this->assertSame(
+            9999999999,
+            $cookie->getExpires()
         );
     }
 
     public function testCreateFromHeaderStringMaxAge(): void
     {
-        $cookie = Cookie::createFromHeaderString('test=value; max-age=100; path=/; samesite=lax');
+        $cookie = Cookie::createFromHeaderString('test=value; max-age=100; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; samesite=lax');
 
         $this->assertGreaterThan(
             time() + 50,
             $cookie->getExpires()
+        );
+    }
+
+    public function testCreateFromHeaderStringMaxAgeExpired(): void
+    {
+        $cookie = Cookie::createFromHeaderString('test=value; max-age=0');
+
+        $this->assertTrue(
+            $cookie->isExpired()
+        );
+    }
+
+    public function testCreateFromHeaderStringMaxAgeOverflow(): void
+    {
+        $cookie = Cookie::createFromHeaderString('test=value; max-age=999999999999999999999999999999999999');
+
+        $this->assertSame(
+            PHP_INT_MAX,
+            $cookie->getExpires()
+        );
+    }
+
+    public function testCreateFromHeaderStringPreservesEncodedName(): void
+    {
+        $cookie = Cookie::createFromHeaderString('test%3D1=value; path=/; samesite=lax');
+
+        $this->assertSame(
+            'test%3D1',
+            $cookie->getName()
+        );
+    }
+
+    public function testCreateFromHeaderStringPreservesEncodedValue(): void
+    {
+        $cookie = Cookie::createFromHeaderString('test=value%3D1; path=/; samesite=lax');
+
+        $this->assertSame(
+            'value%3D1',
+            $cookie->getValue()
+        );
+    }
+
+    public function testCreateFromHeaderStringPreservesPlusCharacters(): void
+    {
+        $cookie = Cookie::createFromHeaderString('test=a+b%2Bc; path=/');
+
+        $this->assertSame(
+            'a+b%2Bc',
+            $cookie->getValue()
+        );
+
+        $this->assertSame(
+            'test=a+b%2Bc; path=/; samesite=lax',
+            $cookie->toHeaderString()
+        );
+    }
+
+    public function testCreateFromHeaderStringRejectsInvalidDomain(): void
+    {
+        $cookie = Cookie::createFromHeaderString('test=value; domain=bad_domain.example');
+
+        $this->assertFalse(
+            $cookie->isDomainValid()
+        );
+    }
+
+    public function testCreateFromHeaderStringTracksDomainScope(): void
+    {
+        $hostOnly = Cookie::createFromHeaderString('test=value', [
+            'domain' => 'example.com',
+        ]);
+        $domain = Cookie::createFromHeaderString('test=value; Domain=.EXAMPLE.COM');
+
+        $this->assertTrue(
+            $hostOnly->isHostOnly()
+        );
+
+        $this->assertFalse(
+            $domain->isHostOnly()
+        );
+
+        $this->assertSame(
+            'example.com',
+            $domain->getDomain()
         );
     }
 
@@ -147,8 +248,24 @@ final class CookieTest extends TestCase
         ]);
 
         $this->assertSame(
-            'test,test.com,/test',
+            'test,test.com,/test,0',
             $cookie->getId()
+        );
+    }
+
+    public function testGetIdIncludesHostOnly(): void
+    {
+        $domain = new Cookie('test', 'value', [
+            'domain' => 'test.com',
+        ]);
+        $hostOnly = new Cookie('test', 'value', [
+            'domain' => 'test.com',
+            'hostOnly' => true,
+        ]);
+
+        $this->assertNotSame(
+            $domain->getId(),
+            $hostOnly->getId()
         );
     }
 
@@ -216,6 +333,44 @@ final class CookieTest extends TestCase
         );
     }
 
+    public function testInvalidName(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Cookie name is not valid.');
+
+        new Cookie('test=1', 'value');
+    }
+
+    public function testInvalidValue(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Cookie value is not valid.');
+
+        new Cookie('test', 'invalid value');
+    }
+
+    public function testIsDomainValidInvalidColon(): void
+    {
+        $cookie = new Cookie('test', 'value', [
+            'domain' => 'bad:domain',
+        ]);
+
+        $this->assertFalse(
+            $cookie->isDomainValid()
+        );
+    }
+
+    public function testIsDomainValidIpv6(): void
+    {
+        $cookie = new Cookie('test', 'value', [
+            'domain' => '[::1]',
+        ]);
+
+        $this->assertTrue(
+            $cookie->isDomainValid()
+        );
+    }
+
     public function testIsExpired(): void
     {
         $cookie = new Cookie('test', 'value', [
@@ -230,7 +385,7 @@ final class CookieTest extends TestCase
     public function testIsExpiredExpired(): void
     {
         $cookie = new Cookie('test', 'value', [
-            'expires' => time() - 3600,
+            'expires' => time(),
         ]);
 
         $this->assertTrue(
@@ -246,6 +401,26 @@ final class CookieTest extends TestCase
 
         $this->assertFalse(
             $cookie->isExpired()
+        );
+    }
+
+    public function testIsHostOnly(): void
+    {
+        $cookie = new Cookie('test', 'value', [
+            'hostOnly' => true,
+        ]);
+
+        $this->assertTrue(
+            $cookie->isHostOnly()
+        );
+    }
+
+    public function testIsHostOnlyDefault(): void
+    {
+        $cookie = new Cookie('test', 'value');
+
+        $this->assertFalse(
+            $cookie->isHostOnly()
         );
     }
 
@@ -311,22 +486,12 @@ final class CookieTest extends TestCase
         );
     }
 
-    public function testToHeaderStringEncodedName(): void
-    {
-        $cookie = new Cookie('test=1', 'value');
-
-        $this->assertSame(
-            'test%3D1=value; path=/; samesite=lax',
-            $cookie->toHeaderString()
-        );
-    }
-
-    public function testToHeaderStringEncodedValue(): void
+    public function testToHeaderStringPreservesOpaqueValue(): void
     {
         $cookie = new Cookie('test', 'value=1');
 
         $this->assertSame(
-            'test=value%3D1; path=/; samesite=lax',
+            'test=value=1; path=/; samesite=lax',
             $cookie->toHeaderString()
         );
     }
