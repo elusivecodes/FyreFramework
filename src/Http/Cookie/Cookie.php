@@ -152,7 +152,7 @@ class Cookie
             }
         }
 
-        if ($maxAge !== null && preg_match('/^-?\d+\z/', $maxAge) === 1) {
+        if ($maxAge !== null && preg_match('/^-?\d+\z/', $maxAge)) {
             $maxAge = (int) $maxAge;
             $options['expires'] = min(PHP_INT_MAX, $maxAge + time());
         }
@@ -216,11 +216,11 @@ class Cookie
     ) {
         $options = array_replace(static::$defaults, $options);
 
-        if ($this->name === '' || preg_match('/^[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\z/', $this->name) !== 1) {
+        if ($this->name === '' || !preg_match('/^[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\z/', $this->name)) {
             throw new InvalidArgumentException('Cookie name is not valid.');
         }
 
-        if (preg_match('/^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*\z/', $this->value) !== 1) {
+        if (!preg_match('/^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*\z/', $this->value)) {
             throw new InvalidArgumentException('Cookie value is not valid.');
         }
 

@@ -98,7 +98,7 @@ abstract class Path
     {
         return $path !== '' && (
             $path[0] === DIRECTORY_SEPARATOR ||
-            preg_match('/^[A-Za-z]:[\\\\\\/]/', $path) === 1
+            preg_match('/^[A-Za-z]:[\\\\\\/]/', $path)
         );
     }
 

@@ -429,6 +429,6 @@ class Inflector
      */
     protected function isUncountable(string $string): bool
     {
-        return preg_match('/^('.implode('|', $this->uncountable).')$/i', $string) !== 0;
+        return preg_match('/^('.implode('|', $this->uncountable).')$/i', $string) === 1;
     }
 }

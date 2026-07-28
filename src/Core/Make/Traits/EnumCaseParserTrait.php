@@ -52,7 +52,7 @@ trait EnumCaseParserTrait
             $segments = explode(':', $definition, 2);
             $name = trim($segments[0]);
 
-            if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $name) !== 1) {
+            if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $name)) {
                 throw new InvalidArgumentException('Invalid enum case.');
             }
 
