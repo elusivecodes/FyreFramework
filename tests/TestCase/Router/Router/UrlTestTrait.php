@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\Router\Router;
 
 use Fyre\Core\Config;
+use Fyre\Http\ServerRequest;
 use Fyre\Router\Exceptions\RouterException;
 use Fyre\Router\Router;
 use Tests\Mock\Controllers\HomeController;
@@ -150,6 +151,28 @@ trait UrlTestTrait
         $this->assertSame(
             '/alternate',
             $router->url('home.deep.alt')
+        );
+    }
+
+    public function testUrlHostCaseInsensitive(): void
+    {
+        $router = $this->container->use(Router::class);
+        $router->connect('home', HomeController::class, as: 'home');
+
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'HTTP_HOST' => 'test.com',
+                    'REQUEST_URI' => '/home',
+                ],
+            ],
+        ]);
+
+        $router->parseRequest($request);
+
+        $this->assertSame(
+            '/home',
+            $router->url('home', host: 'TEST.COM')
         );
     }
 

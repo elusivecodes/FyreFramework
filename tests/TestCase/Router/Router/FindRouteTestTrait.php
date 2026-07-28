@@ -229,7 +229,7 @@ trait FindRouteTestTrait
     {
         $router = $this->container->use(Router::class);
 
-        $router->get('home', HomeController::class, host: 'test.com');
+        $router->get('home', HomeController::class, host: 'TEST.COM');
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
@@ -255,6 +255,11 @@ trait FindRouteTestTrait
         $this->assertSame(
             'index',
             $route->getAction()
+        );
+
+        $this->assertSame(
+            'test.com',
+            $route->getHost()
         );
     }
 

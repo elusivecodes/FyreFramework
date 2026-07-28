@@ -605,6 +605,12 @@ class Router
 
         $route = $this->routeAliases[$name];
 
+        if ($host !== null) {
+            $host = new Uri()
+                ->withHost($host)
+                ->getHost();
+        }
+
         $scheme ??= $route->getScheme();
         $host ??= $route->getHost();
         $port ??= $route->getPort();

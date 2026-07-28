@@ -185,6 +185,23 @@ final class RouteTest extends TestCase
         );
     }
 
+    public function testSetHost(): void
+    {
+        $route = $this->container->build(ControllerRoute::class, [
+            'destination' => [TestController::class, 'test'],
+        ]);
+
+        $this->assertSame(
+            $route,
+            $route->setHost('TEST.COM')
+        );
+
+        $this->assertSame(
+            'test.com',
+            $route->getHost()
+        );
+    }
+
     #[Override]
     protected function setUp(): void
     {

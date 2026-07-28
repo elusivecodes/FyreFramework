@@ -7,6 +7,7 @@ use Closure;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Http\ClientResponse;
+use Fyre\Http\Uri;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -66,7 +67,11 @@ abstract class Route
         protected array|null $methods = null,
         protected array $middleware = [],
         protected array $placeholders = []
-    ) {}
+    ) {
+        if ($this->host !== null) {
+            $this->setHost($this->host);
+        }
+    }
 
     /**
      * Returns the route binding fields.
@@ -259,7 +264,9 @@ abstract class Route
      */
     public function setHost(string $host): static
     {
-        $this->host = $host;
+        $this->host = new Uri()
+            ->withHost($host)
+            ->getHost();
 
         return $this;
     }
