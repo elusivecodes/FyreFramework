@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Fyre\Http;
+namespace Fyre\Http\Cookie;
 
 use Fyre\Core\Traits\DebugTrait;
 use InvalidArgumentException;

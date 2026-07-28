@@ -8,7 +8,7 @@ use Closure;
 use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
-use Fyre\Http\Cookie;
+use Fyre\Http\Cookie\Cookie;
 use Fyre\Security\Exceptions\CsrfTokenException;
 use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;

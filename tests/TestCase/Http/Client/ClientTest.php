@@ -10,7 +10,7 @@ use Fyre\Http\Client\Exceptions\NetworkException;
 use Fyre\Http\Client\Exceptions\RequestException;
 use Fyre\Http\Client\Request;
 use Fyre\Http\Client\Response;
-use Fyre\Http\Cookie;
+use Fyre\Http\Cookie\Cookie;
 use Override;
 use PHPUnit\Framework\TestCase;
 

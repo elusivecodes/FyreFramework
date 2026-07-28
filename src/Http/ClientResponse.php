@@ -5,6 +5,7 @@ namespace Fyre\Http;
 
 use DateTimeInterface;
 use Fyre\Core\Traits\MacroTrait;
+use Fyre\Http\Cookie\Cookie;
 use Fyre\Utility\DateTime\DateTime;
 use SimpleXMLElement;
 

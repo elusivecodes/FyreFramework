@@ -12,7 +12,7 @@ use Fyre\Core\Config;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Http\ClientResponse;
-use Fyre\Http\Cookie;
+use Fyre\Http\Cookie\Cookie;
 use Fyre\Http\MiddlewareQueue;
 use Fyre\Http\RequestHandler;
 use Fyre\Http\ServerRequest;
@@ -26,6 +26,8 @@ use function json_decode;
 use function json_encode;
 use function password_hash;
 use function password_verify;
+use function rawurldecode;
+use function rawurlencode;
 
 use const PASSWORD_DEFAULT;
 
@@ -98,7 +100,7 @@ final class AuthenticatorTest extends TestCase
         );
 
         $tokenHash = password_hash('test@test.com'.$authUser->password, PASSWORD_DEFAULT);
-        $auth = json_encode(['test@test.com', $tokenHash]);
+        $auth = (string) json_encode(['test@test.com', $tokenHash]) |> rawurlencode(...);
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
@@ -187,7 +189,8 @@ final class AuthenticatorTest extends TestCase
             $cookie->getName()
         );
 
-        $data = json_decode($cookie->getValue(), true);
+        $value = rawurldecode($cookie->getValue());
+        $data = json_decode($value, true);
 
         $this->assertCount(2, $data);
 

@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace Tests\TestCase\Http\Client;
+namespace Tests\TestCase\Http\Cookie;
 
-use Fyre\Http\Client\CookieJar;
 use Fyre\Http\Client\Response;
-use Fyre\Http\Cookie;
+use Fyre\Http\Cookie\Cookie;
+use Fyre\Http\Cookie\CookieJar;
 use Fyre\Http\Uri;
 use PHPUnit\Framework\TestCase;
 

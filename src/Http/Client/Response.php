@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Fyre\Http\Client;
 
 use Fyre\Core\Traits\MacroTrait;
-use Fyre\Http\Cookie;
+use Fyre\Http\Cookie\Cookie;
 use Fyre\Http\Response as HttpResponse;
 use RuntimeException;
 

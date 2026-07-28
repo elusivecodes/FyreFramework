@@ -289,7 +289,7 @@ Arguments:
 - `$cookie` (`Cookie`): the cookie to add.
 
 ```php
-use Fyre\Http\Cookie;
+use Fyre\Http\Cookie\Cookie;
 
 $client->addCookie(new Cookie('token', 'abc123'));
 ```

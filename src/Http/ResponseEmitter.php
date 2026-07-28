@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Fyre\Http;
 
 use Fyre\Core\Traits\DebugTrait;
+use Fyre\Http\Cookie\Cookie;
 use Psr\Http\Message\ResponseInterface;
 
 use function array_values;

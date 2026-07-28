@@ -5,7 +5,7 @@ namespace Fyre\Auth\Authenticators;
 
 use Fyre\Auth\Authenticator;
 use Fyre\Core\Attributes\SensitivePropertyArray;
-use Fyre\Http\Cookie;
+use Fyre\Http\Cookie\Cookie;
 use Fyre\ORM\Entity;
 use Override;
 use Psr\Http\Message\ResponseInterface;
@@ -17,6 +17,8 @@ use function json_decode;
 use function json_encode;
 use function password_hash;
 use function password_verify;
+use function rawurldecode;
+use function rawurlencode;
 use function time;
 
 use const PASSWORD_DEFAULT;
@@ -64,7 +66,7 @@ class CookieAuthenticator extends Authenticator
             return null;
         }
 
-        $data = json_decode($cookie, true);
+        $data = json_decode(rawurldecode($cookie), true);
 
         if (!$data || count($data) !== 2) {
             $this->logout();
@@ -117,7 +119,7 @@ class CookieAuthenticator extends Authenticator
             $token = $this->createToken($user);
             $tokenHash = password_hash($token, PASSWORD_DEFAULT);
 
-            $value = (string) json_encode([$identifier, $tokenHash]);
+            $value = (string) json_encode([$identifier, $tokenHash]) |> rawurlencode(...);
 
             $cookieOptions = $this->config['cookieOptions'];
 

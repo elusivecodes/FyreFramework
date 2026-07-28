@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\Http\ClientResponse;
 
 use Fyre\Http\ClientResponse;
-use Fyre\Http\Cookie;
+use Fyre\Http\Cookie\Cookie;
 
 use function time;
 

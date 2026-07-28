@@ -7,7 +7,7 @@ use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Http\ClientResponse;
-use Fyre\Http\Cookie;
+use Fyre\Http\Cookie\Cookie;
 use Fyre\Http\MiddlewareQueue;
 use Fyre\Http\RequestHandler;
 use Fyre\Http\ServerRequest;

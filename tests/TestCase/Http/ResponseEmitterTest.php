@@ -5,7 +5,7 @@ namespace Tests\TestCase\Http;
 
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Http\ClientResponse;
-use Fyre\Http\Cookie;
+use Fyre\Http\Cookie\Cookie;
 use Fyre\Http\ResponseEmitter;
 use Override;
 use PHPUnit\Framework\TestCase;

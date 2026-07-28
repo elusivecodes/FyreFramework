@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace Tests\TestCase\Http;
+namespace Tests\TestCase\Http\Cookie;
 
 use Fyre\Core\Traits\DebugTrait;
-use Fyre\Http\Cookie;
+use Fyre\Http\Cookie\Cookie;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

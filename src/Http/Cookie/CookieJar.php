@@ -1,9 +1,8 @@
 <?php
 declare(strict_types=1);
 
-namespace Fyre\Http\Client;
+namespace Fyre\Http\Cookie;
 
-use Fyre\Http\Cookie;
 use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
