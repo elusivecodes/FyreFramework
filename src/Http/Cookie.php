@@ -167,6 +167,40 @@ class Cookie
     }
 
     /**
+     * Normalizes a cookie domain for matching and storage.
+     *
+     * @param string $domain The cookie domain.
+     * @return array{string, bool} The normalized domain and whether it is valid.
+     */
+    public static function normalizeDomain(string $domain): array
+    {
+        $domain = trim($domain) |> strtolower(...);
+        $domain = ltrim($domain, '.');
+
+        if ($domain === '') {
+            return ['', true];
+        }
+
+        if (str_ends_with($domain, '.')) {
+            return [rtrim($domain, '.'), false];
+        }
+
+        $ipAddress = str_starts_with($domain, '[') && str_ends_with($domain, ']') ?
+            substr($domain, 1, -1) :
+            $domain;
+
+        if (filter_var($ipAddress, FILTER_VALIDATE_IP) !== false) {
+            return [$domain, true];
+        }
+
+        $ascii = idn_to_ascii($domain, IDNA_DEFAULT | IDNA_USE_STD3_RULES, INTL_IDNA_VARIANT_UTS46);
+
+        return $ascii === false ?
+            [$domain, false] :
+            [$ascii, true];
+    }
+
+    /**
      * Constructs a Cookie.
      *
      * @param string $name The cookie name.
@@ -378,39 +412,5 @@ class Cookie
         }
 
         return $result;
-    }
-
-    /**
-     * Normalizes a cookie domain for matching and storage.
-     *
-     * @param string $domain The cookie domain.
-     * @return array{string, bool} The normalized domain and whether it is valid.
-     */
-    protected static function normalizeDomain(string $domain): array
-    {
-        $domain = trim($domain) |> strtolower(...);
-        $domain = ltrim($domain, '.');
-
-        if ($domain === '') {
-            return ['', true];
-        }
-
-        if (str_ends_with($domain, '.')) {
-            return [rtrim($domain, '.'), false];
-        }
-
-        $ipAddress = str_starts_with($domain, '[') && str_ends_with($domain, ']') ?
-            substr($domain, 1, -1) :
-            $domain;
-
-        if (filter_var($ipAddress, FILTER_VALIDATE_IP) !== false) {
-            return [$domain, true];
-        }
-
-        $ascii = idn_to_ascii($domain, IDNA_DEFAULT | IDNA_USE_STD3_RULES, INTL_IDNA_VARIANT_UTS46);
-
-        return $ascii === false ?
-            [$domain, false] :
-            [$ascii, true];
     }
 }
