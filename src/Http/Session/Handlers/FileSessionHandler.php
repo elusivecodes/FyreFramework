@@ -25,6 +25,7 @@ use function touch;
 use function unlink;
 
 use const LOCK_EX;
+use const LOCK_SH;
 
 /**
  * Stores each session as a file under the configured save path. Files are named using the
@@ -32,36 +33,8 @@ use const LOCK_EX;
  */
 class FileSessionHandler extends SessionHandler
 {
-    /**
-     * @var resource|null
-     */
-    protected mixed $handle = null;
-
-    protected string|null $lockedPath = null;
-
     #[SensitiveProperty]
     protected string $path;
-
-    /**
-     * {@inheritDoc}
-     */
-    #[Override]
-    public function close(): bool
-    {
-        if (!is_resource($this->handle)) {
-            $this->handle = null;
-            $this->lockedPath = null;
-
-            return true;
-        }
-
-        $handle = $this->handle;
-
-        $this->handle = null;
-        $this->lockedPath = null;
-
-        return @fclose($handle);
-    }
 
     /**
      * {@inheritDoc}
@@ -75,10 +48,6 @@ class FileSessionHandler extends SessionHandler
 
         $key = $this->prepareKey($sessionId);
         $filePath = Path::join($this->path, $key);
-
-        if ($this->lockedPath === $filePath && !$this->close()) {
-            return false;
-        }
 
         @unlink($filePath);
 
@@ -120,10 +89,6 @@ class FileSessionHandler extends SessionHandler
     #[Override]
     public function open(string $path, string $name): bool
     {
-        if (!$this->close()) {
-            return false;
-        }
-
         $this->path = $path;
 
         if (!is_dir($path) && !mkdir($path, 0777, true)) {
@@ -148,24 +113,25 @@ class FileSessionHandler extends SessionHandler
         $key = $this->prepareKey($sessionId);
         $filePath = Path::join($this->path, $key);
 
-        $handle = $this->lockFile($filePath);
+        $handle = @fopen($filePath, 'rb');
 
-        if (
-            !is_resource($handle) ||
-            !@rewind($handle)
-        ) {
-            $this->close();
+        if (!is_resource($handle)) {
+            return '';
+        }
+
+        if (!@flock($handle, LOCK_SH)) {
+            @fclose($handle);
 
             return false;
         }
 
         $data = @stream_get_contents($handle);
 
-        if ($data === false) {
-            $this->close();
-        }
+        @fclose($handle);
 
-        return $data;
+        return $data === false ?
+            false :
+            $data;
     }
 
     /**
@@ -204,7 +170,7 @@ class FileSessionHandler extends SessionHandler
     /**
      * {@inheritDoc}
      *
-     * The lock acquired during read is retained until the session is closed.
+     * Writes are locked with `LOCK_EX` to prevent concurrent file writes.
      */
     #[Override]
     public function write(string $sessionId, string $data): bool
@@ -216,53 +182,26 @@ class FileSessionHandler extends SessionHandler
         $key = $this->prepareKey($sessionId);
         $filePath = Path::join($this->path, $key);
 
-        $handle = $this->lockFile($filePath);
-
-        if (
-            !is_resource($handle) ||
-            !@rewind($handle) ||
-            !@ftruncate($handle, 0)
-        ) {
-            return false;
-        }
-
-        return @fwrite($handle, $data) !== false;
-    }
-
-    /**
-     * Locks a session file.
-     *
-     * @param string $filePath The file path.
-     * @return false|resource The file handle, or false if the file could not be locked.
-     */
-    protected function lockFile(string $filePath): mixed
-    {
-        if (
-            $this->lockedPath === $filePath &&
-            is_resource($this->handle)
-        ) {
-            return $this->handle;
-        }
-
-        if (!$this->close()) {
-            return false;
-        }
-
         $handle = @fopen($filePath, 'c+b');
 
         if (!is_resource($handle)) {
             return false;
         }
 
-        if (!@flock($handle, LOCK_EX)) {
+        if (
+            !@flock($handle, LOCK_EX) ||
+            !@rewind($handle) ||
+            !@ftruncate($handle, 0)
+        ) {
             @fclose($handle);
 
             return false;
         }
 
-        $this->handle = $handle;
-        $this->lockedPath = $filePath;
+        $result = @fwrite($handle, $data) !== false;
 
-        return $handle;
+        @fclose($handle);
+
+        return $result;
     }
 }
