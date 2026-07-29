@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Fyre\DB\Queries\Traits;
 
 use Fyre\DB\Query;
+use InvalidArgumentException;
 
 /**
  * Adds LIMIT/OFFSET clause support to queries.
@@ -42,9 +43,19 @@ trait LimitOffsetTrait
      * @param int|null $limit The limit.
      * @param int|null $offset The offset.
      * @return static The Query instance.
+     *
+     * @throws InvalidArgumentException If the limit or offset is not valid.
      */
     public function limit(int|null $limit = null, int|null $offset = null): static
     {
+        if ($limit !== null && $limit < 0) {
+            throw new InvalidArgumentException('Query limit must not be negative.');
+        }
+
+        if ($offset !== null && $offset < 0) {
+            throw new InvalidArgumentException('Query offset must not be negative.');
+        }
+
         $this->limit = $limit;
 
         if ($offset !== null) {
@@ -61,9 +72,15 @@ trait LimitOffsetTrait
      *
      * @param int $offset The offset.
      * @return static The Query instance.
+     *
+     * @throws InvalidArgumentException If the offset is not valid.
      */
     public function offset(int $offset = 0): static
     {
+        if ($offset < 0) {
+            throw new InvalidArgumentException('Query offset must not be negative.');
+        }
+
         $this->offset = $offset;
 
         $this->dirty();

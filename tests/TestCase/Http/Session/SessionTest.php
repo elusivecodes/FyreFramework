@@ -8,8 +8,10 @@ use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
+use Fyre\Http\Session\Handlers\FileSessionHandler;
 use Fyre\Http\Session\Session;
 use Fyre\Http\Session\SessionHandler;
+use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
 
@@ -96,6 +98,44 @@ final class SessionTest extends TestCase
             'cli',
             $this->session->id()
         );
+    }
+
+    public function testInvalidCookieExpiration(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Session cookie option `expires` must not be negative.');
+
+        $config = new Config();
+        $config->set('Session', [
+            'cookie' => [
+                'expires' => -1,
+            ],
+        ]);
+
+        new Session(new Container(), $config);
+    }
+
+    public function testInvalidExpiration(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Session option `expires` must be greater than 0.');
+
+        $config = new Config();
+        $config->set('Session', [
+            'expires' => 0,
+        ]);
+
+        new Session(new Container(), $config);
+    }
+
+    public function testInvalidHandlerExpiration(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Session handler option `expires` must be greater than 0.');
+
+        new FileSessionHandler($this->session, [
+            'expires' => 0,
+        ]);
     }
 
     public function testIsActive(): void

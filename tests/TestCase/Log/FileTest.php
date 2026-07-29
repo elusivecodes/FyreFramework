@@ -178,6 +178,16 @@ final class FileTest extends TestCase
         $this->logger->handle('invalid', 'test');
     }
 
+    public function testInvalidMaxSize(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('File logger option `maxSize` must be greater than 0.');
+
+        new FileLogger([
+            'maxSize' => 0,
+        ]);
+    }
+
     public function testLog(): void
     {
         foreach ($this->levels as $level) {

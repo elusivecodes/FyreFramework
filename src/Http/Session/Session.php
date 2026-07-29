@@ -94,6 +94,14 @@ class Session
         $this->config = array_replace_recursive(static::$defaults, $config->get('Session', []));
         $this->config['expires'] ??= (int) ini_get('session.gc_maxlifetime');
 
+        if ($this->config['expires'] <= 0) {
+            throw new InvalidArgumentException('Session option `expires` must be greater than 0.');
+        }
+
+        if ($this->config['cookie']['expires'] < 0) {
+            throw new InvalidArgumentException('Session cookie option `expires` must not be negative.');
+        }
+
         $options = $this->config['handler'] ?? [];
 
         if (

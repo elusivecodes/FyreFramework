@@ -5,6 +5,7 @@ namespace Fyre\DB;
 
 use Closure;
 use Fyre\Core\Traits\DebugTrait;
+use InvalidArgumentException;
 use PDOException;
 use Throwable;
 
@@ -35,12 +36,22 @@ class ConnectionRetry
      * @param Connection $connection The Connection.
      * @param int $reconnectDelay The number of milliseconds to wait before reconnecting.
      * @param int $maxRetries The maximum number of retries.
+     *
+     * @throws InvalidArgumentException If a connection retry option is not valid.
      */
     public function __construct(
         protected Connection $connection,
         protected int $reconnectDelay = 100,
         protected int $maxRetries = 1
-    ) {}
+    ) {
+        if ($this->reconnectDelay < 0) {
+            throw new InvalidArgumentException('Connection retry option `reconnectDelay` must not be negative.');
+        }
+
+        if ($this->maxRetries < 0) {
+            throw new InvalidArgumentException('Connection retry option `maxRetries` must not be negative.');
+        }
+    }
 
     /**
      * Returns the number of retry attempts.

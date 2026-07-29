@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Sqlite\Query;
 
+use InvalidArgumentException;
+
 trait GetTestTrait
 {
     public function testGetData(): void
@@ -119,6 +121,24 @@ trait GetTestTrait
         );
     }
 
+    public function testGetLimitInvalid(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Query limit must not be negative.');
+
+        $this->db->select()
+            ->limit(-1);
+    }
+
+    public function testGetLimitOffsetInvalid(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Query offset must not be negative.');
+
+        $this->db->select()
+            ->limit(1, -1);
+    }
+
     public function testGetOffset(): void
     {
         $this->assertSame(
@@ -127,6 +147,15 @@ trait GetTestTrait
                 ->offset(1)
                 ->getOffset()
         );
+    }
+
+    public function testGetOffsetInvalid(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Query offset must not be negative.');
+
+        $this->db->select()
+            ->offset(-1);
     }
 
     public function testGetOrderBy(): void

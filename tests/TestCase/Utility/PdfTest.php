@@ -8,6 +8,7 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Core\Traits\StaticMacroTrait;
 use Fyre\Utility\Pdf;
+use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -46,6 +47,14 @@ final class PdfTest extends TestCase
             5000,
             Pdf::getTimeout()
         );
+    }
+
+    public function testInvalidTimeout(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('PDF timeout must not be negative.');
+
+        Pdf::setTimeout(-1);
     }
 
     public function testMacro(): void

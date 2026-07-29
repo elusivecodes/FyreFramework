@@ -11,6 +11,7 @@ use Fyre\Queue\Handlers\RedisQueue;
 use Fyre\Queue\Queue;
 use Fyre\Queue\QueueManager;
 use Fyre\Queue\Worker;
+use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Jobs\MockJob;
@@ -38,6 +39,54 @@ final class WorkerTest extends TestCase
             DebugTrait::class,
             class_uses(Worker::class)
         );
+    }
+
+    public function testInvalidMaxJobs(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Worker option `maxJobs` must not be negative.');
+
+        $this->container->build(Worker::class, [
+            'options' => [
+                'maxJobs' => -1,
+            ],
+        ]);
+    }
+
+    public function testInvalidMaxRuntime(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Worker option `maxRuntime` must not be negative.');
+
+        $this->container->build(Worker::class, [
+            'options' => [
+                'maxRuntime' => -1,
+            ],
+        ]);
+    }
+
+    public function testInvalidRest(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Worker option `rest` must not be negative.');
+
+        $this->container->build(Worker::class, [
+            'options' => [
+                'rest' => -1,
+            ],
+        ]);
+    }
+
+    public function testInvalidSleep(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Worker option `sleep` must not be negative.');
+
+        $this->container->build(Worker::class, [
+            'options' => [
+                'sleep' => -1,
+            ],
+        ]);
     }
 
     public function testWorkerJob(): void

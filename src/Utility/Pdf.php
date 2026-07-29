@@ -95,9 +95,15 @@ class Pdf
      * Sets the timeout in milliseconds.
      *
      * @param int $timeout The timeout in milliseconds.
+     *
+     * @throws InvalidArgumentException If the timeout is not valid.
      */
     public static function setTimeout(int $timeout): void
     {
+        if ($timeout < 0) {
+            throw new InvalidArgumentException('PDF timeout must not be negative.');
+        }
+
         static::$timeout = $timeout;
     }
 

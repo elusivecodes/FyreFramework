@@ -7,6 +7,7 @@ use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Event\EventManager;
 use Fyre\Event\Traits\EventDispatcherTrait;
+use InvalidArgumentException;
 use Throwable;
 
 use function array_replace;
@@ -60,6 +61,8 @@ class Worker
      * @param QueueManager $queueManager The QueueManager.
      * @param EventManager $eventManager The EventManager.
      * @param array<string, mixed> $options The worker options.
+     *
+     * @throws InvalidArgumentException If a worker option is not valid.
      */
     public function __construct(
         protected Container $container,
@@ -71,6 +74,22 @@ class Worker
         $this->eventManager = $eventManager;
 
         $this->config = array_replace(static::$defaults, $options);
+
+        if ($this->config['maxJobs'] < 0) {
+            throw new InvalidArgumentException('Worker option `maxJobs` must not be negative.');
+        }
+
+        if ($this->config['maxRuntime'] < 0) {
+            throw new InvalidArgumentException('Worker option `maxRuntime` must not be negative.');
+        }
+
+        if ($this->config['rest'] < 0) {
+            throw new InvalidArgumentException('Worker option `rest` must not be negative.');
+        }
+
+        if ($this->config['sleep'] < 0) {
+            throw new InvalidArgumentException('Worker option `sleep` must not be negative.');
+        }
 
         $this->queue = $queueManager->use($this->config['config']);
     }

@@ -5,6 +5,7 @@ namespace Fyre\Security\Encryption\Handlers;
 
 use Fyre\Security\Encryption\Encrypter;
 use Fyre\Security\Encryption\Exceptions\EncryptionException;
+use InvalidArgumentException;
 use Override;
 
 use function assert;
@@ -38,6 +39,22 @@ class SodiumEncrypter extends Encrypter
     protected static array $defaults = [
         'blockSize' => 16,
     ];
+
+    /**
+     * Constructs a SodiumEncrypter.
+     *
+     * @param array<string, mixed> $options The Encrypter options.
+     *
+     * @throws InvalidArgumentException If a Sodium encrypter option is not valid.
+     */
+    public function __construct(array $options = [])
+    {
+        parent::__construct($options);
+
+        if ($this->config['blockSize'] <= 0) {
+            throw new InvalidArgumentException('Sodium encrypter option `blockSize` must be greater than 0.');
+        }
+    }
 
     /**
      * {@inheritDoc}

@@ -7,6 +7,7 @@ use Fyre\Core\Attributes\SensitiveProperty;
 use Fyre\Core\Attributes\SensitivePropertyArray;
 use Fyre\Log\Logger;
 use Fyre\Utility\Path;
+use InvalidArgumentException;
 use Override;
 use RuntimeException;
 use Stringable;
@@ -60,10 +61,16 @@ class FileLogger extends Logger
      * Constructs a FileLogger.
      *
      * @param array<string, mixed> $options The Logger options.
+     *
+     * @throws InvalidArgumentException If a file logger option is not valid.
      */
     public function __construct(array $options = [])
     {
         parent::__construct($options);
+
+        if ($this->config['maxSize'] <= 0) {
+            throw new InvalidArgumentException('File logger option `maxSize` must be greater than 0.');
+        }
 
         if (PHP_SAPI === 'cli') {
             $this->config['suffix'] ??= '-cli';

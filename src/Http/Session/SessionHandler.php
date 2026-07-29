@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Fyre\Http\Session;
 
 use Fyre\Core\Traits\DebugTrait;
+use InvalidArgumentException;
 use Override;
 use SessionHandlerInterface;
 use SessionUpdateTimestampHandlerInterface;
@@ -38,12 +39,18 @@ abstract class SessionHandler implements SessionHandlerInterface, SessionUpdateT
      *
      * @param Session $session The Session.
      * @param array<string, mixed> $options The options for the handler.
+     *
+     * @throws InvalidArgumentException If a session handler option is not valid.
      */
     public function __construct(
         protected Session $session,
         array $options = []
     ) {
         $this->config = array_replace_recursive(self::$defaults, static::$defaults, $options);
+
+        if ($this->config['expires'] <= 0) {
+            throw new InvalidArgumentException('Session handler option `expires` must be greater than 0.');
+        }
     }
 
     /**

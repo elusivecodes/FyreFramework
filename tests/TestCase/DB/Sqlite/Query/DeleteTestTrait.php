@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\DB\Sqlite\Query;
 
 use Fyre\DB\Exceptions\DbException;
+use InvalidArgumentException;
 
 trait DeleteTestTrait
 {
@@ -56,6 +57,15 @@ trait DeleteTestTrait
             2,
             $this->db->affectedRows()
         );
+    }
+
+    public function testDeleteInvalidLimit(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Query limit must not be negative.');
+
+        $this->db->delete()
+            ->limit(-1);
     }
 
     public function testDeleteVirtualTables(): void

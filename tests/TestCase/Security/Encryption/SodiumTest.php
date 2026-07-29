@@ -6,6 +6,7 @@ namespace Tests\TestCase\Security\Encryption;
 use Fyre\Core\Container;
 use Fyre\Security\Encryption\EncryptionManager;
 use Fyre\Security\Encryption\Handlers\SodiumEncrypter;
+use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
 
@@ -25,6 +26,16 @@ final class SodiumTest extends TestCase
             SODIUM_CRYPTO_SECRETBOX_KEYBYTES,
             strlen($key)
         );
+    }
+
+    public function testInvalidBlockSize(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Sodium encrypter option `blockSize` must be greater than 0.');
+
+        new SodiumEncrypter([
+            'blockSize' => 0,
+        ]);
     }
 
     #[Override]

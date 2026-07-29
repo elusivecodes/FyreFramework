@@ -11,6 +11,7 @@ use Fyre\Http\Client\Exceptions\RequestException;
 use Fyre\Http\Client\Request;
 use Fyre\Http\Client\Response;
 use Fyre\Http\Cookie\Cookie;
+use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
 
@@ -299,6 +300,46 @@ final class ClientTest extends TestCase
             '',
             $response->getBody()->getContents()
         );
+    }
+
+    public function testInvalidMaxRedirects(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Client option `maxRedirects` must not be negative.');
+
+        new Client([
+            'maxRedirects' => -1,
+        ]);
+    }
+
+    public function testInvalidRequestMaxRedirects(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Client option `maxRedirects` must not be negative.');
+
+        new Client()->send(new Request('https://example.com'), [
+            'maxRedirects' => -1,
+        ]);
+    }
+
+    public function testInvalidRequestTimeout(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Client option `timeout` must not be negative.');
+
+        new Client()->send(new Request('https://example.com'), [
+            'timeout' => -1,
+        ]);
+    }
+
+    public function testInvalidTimeout(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Client option `timeout` must not be negative.');
+
+        new Client([
+            'timeout' => -1,
+        ]);
     }
 
     public function testJsonData(): void

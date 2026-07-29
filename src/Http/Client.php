@@ -103,11 +103,20 @@ class Client implements ClientInterface
      *
      * @param array<string, mixed> $options The Client options.
      *
-     * @throws InvalidArgumentException If the handler is invalid.
+     * @throws InvalidArgumentException If the handler or Client options are not valid.
      */
     public function __construct(array $options = [])
     {
         $this->config = array_replace_recursive(static::$defaults, $options);
+
+        if ($this->config['timeout'] < 0) {
+            throw new InvalidArgumentException('Client option `timeout` must not be negative.');
+        }
+
+        if ($this->config['maxRedirects'] < 0) {
+            throw new InvalidArgumentException('Client option `maxRedirects` must not be negative.');
+        }
+
         $this->cookieJar = new CookieJar();
 
         $handler = $this->config['handler'];
@@ -276,11 +285,20 @@ class Client implements ClientInterface
      * @param array<string, mixed> $options The options.
      * @return Response The Response instance.
      *
+     * @throws InvalidArgumentException If the Client options are not valid.
      * @throws NetworkException If a network error occurs.
      * @throws RequestException If a request error occurs.
      */
     public function send(RequestInterface $request, array $options = []): Response
     {
+        if (isset($options['timeout']) && $options['timeout'] < 0) {
+            throw new InvalidArgumentException('Client option `timeout` must not be negative.');
+        }
+
+        if (isset($options['maxRedirects']) && $options['maxRedirects'] < 0) {
+            throw new InvalidArgumentException('Client option `maxRedirects` must not be negative.');
+        }
+
         $redirects = (int) ($options['maxRedirects'] ?? 0);
         $visited = [];
 
