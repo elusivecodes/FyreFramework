@@ -10,6 +10,7 @@ use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Router\Routes\ControllerRoute;
+use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -338,5 +339,37 @@ abstract class RateLimiter
         }
 
         return $this->getIpIdentifier($request);
+    }
+
+    /**
+     * Resolves and validates the rate limit parameters.
+     *
+     * @param ServerRequestInterface $request The ServerRequest.
+     * @param int|null $limit The request limit.
+     * @param int|null $window The time window in seconds.
+     * @param int|null $cost The request cost.
+     * @return array{int, int, int} The limit, window and cost.
+     *
+     * @throws InvalidArgumentException If a rate limit parameter is not valid.
+     */
+    protected function resolveParameters(ServerRequestInterface $request, int|null $limit, int|null $window, int|null $cost): array
+    {
+        $limit ??= $this->limit;
+        $window ??= $this->window;
+        $cost ??= $this->getCost($request);
+
+        if ($limit < 1) {
+            throw new InvalidArgumentException('Rate limiter limit must be greater than 0.');
+        }
+
+        if ($window < 1) {
+            throw new InvalidArgumentException('Rate limiter window must be greater than 0.');
+        }
+
+        if ($cost < 0) {
+            throw new InvalidArgumentException('Rate limiter cost must not be negative.');
+        }
+
+        return [$limit, $window, $cost];
     }
 }

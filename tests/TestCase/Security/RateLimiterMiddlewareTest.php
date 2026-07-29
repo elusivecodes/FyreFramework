@@ -16,6 +16,8 @@ use Fyre\Http\ServerRequest;
 use Fyre\Router\Routes\ControllerRoute;
 use Fyre\Security\Middleware\RateLimiterMiddleware;
 use Fyre\Security\RateLimiter;
+use Fyre\Security\RateLimiter\FixedWindowRateLimiter;
+use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
@@ -354,6 +356,47 @@ final class RateLimiterMiddlewareTest extends TestCase
             204,
             $response->getStatusCode()
         );
+    }
+
+    public function testInvalidCost(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Rate limiter cost must not be negative.');
+
+        $limiter = $this->container->build(FixedWindowRateLimiter::class, [
+            'options' => [
+                'cost' => static fn(): int => -1,
+            ],
+        ]);
+        $request = $this->container->build(ServerRequest::class);
+
+        $limiter->checkLimit($request);
+    }
+
+    public function testInvalidLimit(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Rate limiter limit must be greater than 0.');
+
+        $limiter = $this->container->build(FixedWindowRateLimiter::class, [
+            'options' => [
+                'limit' => 0,
+            ],
+        ]);
+        $request = $this->container->build(ServerRequest::class);
+
+        $limiter->checkLimit($request);
+    }
+
+    public function testInvalidWindow(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Rate limiter window must be greater than 0.');
+
+        $limiter = $this->container->build(FixedWindowRateLimiter::class);
+        $request = $this->container->build(ServerRequest::class);
+
+        $limiter->checkLimit($request, null, 0);
     }
 
     public function testIpIdentifierIgnoresForwardedHeaderByDefault(): void

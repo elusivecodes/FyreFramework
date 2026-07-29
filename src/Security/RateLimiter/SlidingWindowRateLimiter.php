@@ -27,9 +27,7 @@ class SlidingWindowRateLimiter extends RateLimiter
     {
         $now = time();
 
-        $limit ??= $this->limit;
-        $window ??= $this->window;
-        $cost ??= $this->getCost($request);
+        [$limit, $window, $cost] = $this->resolveParameters($request, $limit, $window, $cost);
 
         $identifier = $this->getIdentifier($request);
         $key = $this->generateKey($identifier);
