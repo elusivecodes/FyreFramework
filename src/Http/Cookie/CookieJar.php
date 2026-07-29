@@ -11,6 +11,7 @@ use Psr\Http\Message\UriInterface;
 use function array_filter;
 use function array_key_first;
 use function count;
+use function filter_var;
 use function implode;
 use function in_array;
 use function str_ends_with;
@@ -18,7 +19,10 @@ use function str_starts_with;
 use function strlen;
 use function strrchr;
 use function substr;
+use function trim;
 use function usort;
+
+use const FILTER_VALIDATE_IP;
 
 /**
  * Stores Cookies and builds Cookie headers for client requests.
@@ -178,7 +182,11 @@ class CookieJar
             return;
         }
 
-        foreach ($response->getHeader('Set-Cookie') as $value) {
+        $isSecureOrigin = $scheme === 'https';
+
+        $cookieHeaders = $response->getHeader('Set-Cookie');
+
+        foreach ($cookieHeaders as $value) {
             try {
                 $cookie = Cookie::createFromHeaderString($value, [
                     'domain' => $host,
@@ -188,11 +196,43 @@ class CookieJar
                 continue;
             }
 
+            if (!$cookie->isDomainValid()) {
+                continue;
+            }
+
+            $isSecureCookie = $cookie->isSecure();
+
+            if (!$isSecureOrigin && $isSecureCookie) {
+                continue;
+            }
+
+            $name = $cookie->getName();
+
             if (
-                !$cookie->isDomainValid() ||
-                ($cookie->isSecure() && $scheme !== 'https') ||
-                !static::domainMatches($cookie, $host) ||
-                ($scheme !== 'https' && $this->overlapsSecureCookie($cookie))
+                str_starts_with($name, '__Secure-') &&
+                !$isSecureCookie
+            ) {
+                continue;
+            }
+
+            if (
+                str_starts_with($name, '__Host-') &&
+                (
+                    !$isSecureCookie ||
+                    !$cookie->isHostOnly() ||
+                    $cookie->getPath() !== '/'
+                )
+            ) {
+                continue;
+            }
+
+            if (!static::domainMatches($cookie, $host)) {
+                continue;
+            }
+
+            if (
+                !$isSecureOrigin &&
+                $this->overlapsSecureCookie($cookie)
             ) {
                 continue;
             }
@@ -268,7 +308,10 @@ class CookieJar
             return true;
         }
 
-        if ($cookie->isHostOnly()) {
+        if (
+            $cookie->isHostOnly() ||
+            filter_var(trim($host, '[]'), FILTER_VALIDATE_IP) !== false
+        ) {
             return false;
         }
 

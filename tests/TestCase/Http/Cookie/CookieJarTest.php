@@ -434,6 +434,29 @@ final class CookieJarTest extends TestCase
         );
     }
 
+    public function testStoreResponseHostPrefix(): void
+    {
+        $uri = new Uri('https://example.com');
+        $response = new Response([
+            'headers' => [
+                'Set-Cookie' => [
+                    '__Host-valid=value; Secure; Path=/',
+                    '__Host-domain=value; Secure; Path=/; Domain=example.com',
+                    '__Host-path=value; Secure; Path=/path',
+                    '__Host-secure=value; Path=/',
+                ],
+            ],
+        ]);
+
+        $cookieJar = new CookieJar();
+        $cookieJar->storeResponse($uri, $response);
+
+        $this->assertSame(
+            '__Host-valid=value',
+            $cookieJar->getHeader($uri)
+        );
+    }
+
     public function testStoreResponseInvalidDomain(): void
     {
         $uri = new Uri('https://example.com');
@@ -458,6 +481,42 @@ final class CookieJarTest extends TestCase
         $response = new Response([
             'headers' => [
                 'Set-Cookie' => 'invalid name=value',
+            ],
+        ]);
+
+        $cookieJar = new CookieJar();
+        $cookieJar->storeResponse($uri, $response);
+
+        $this->assertSame(
+            '',
+            $cookieJar->getHeader($uri)
+        );
+    }
+
+    public function testStoreResponseIpDomain(): void
+    {
+        $uri = new Uri('https://127.0.0.1');
+        $response = new Response([
+            'headers' => [
+                'Set-Cookie' => 'test=value; Domain=127.0.0.1',
+            ],
+        ]);
+
+        $cookieJar = new CookieJar();
+        $cookieJar->storeResponse($uri, $response);
+
+        $this->assertSame(
+            'test=value',
+            $cookieJar->getHeader($uri)
+        );
+    }
+
+    public function testStoreResponseIpSuffixDomain(): void
+    {
+        $uri = new Uri('https://127.0.0.1');
+        $response = new Response([
+            'headers' => [
+                'Set-Cookie' => 'test=value; Domain=0.0.1',
             ],
         ]);
 
@@ -607,6 +666,27 @@ final class CookieJarTest extends TestCase
         $this->assertSame(
             'test=secure',
             $cookieJar->getHeader(new Uri('https://sub.example.com'))
+        );
+    }
+
+    public function testStoreResponseSecurePrefix(): void
+    {
+        $uri = new Uri('https://example.com');
+        $response = new Response([
+            'headers' => [
+                'Set-Cookie' => [
+                    '__Secure-valid=value; Secure',
+                    '__Secure-invalid=value',
+                ],
+            ],
+        ]);
+
+        $cookieJar = new CookieJar();
+        $cookieJar->storeResponse($uri, $response);
+
+        $this->assertSame(
+            '__Secure-valid=value',
+            $cookieJar->getHeader($uri)
         );
     }
 }
