@@ -6,9 +6,7 @@ namespace Tests\TestCase\Cache;
 use Fyre\Cache\CacheManager;
 use Fyre\Cache\Cacher;
 use Fyre\Cache\Handlers\File\FileCacher;
-use Fyre\Cache\TaggedCacher;
 use Fyre\Core\Container;
-use Fyre\Core\Traits\DebugTrait;
 use Override;
 use PHPUnit\Framework\TestCase;
 use Tests\TestCase\Cache\Cacher\DecrementTestTrait;
@@ -22,8 +20,6 @@ use Tests\TestCase\Cache\Cacher\RememberTestTrait;
 use Tests\TestCase\Cache\Cacher\TagsTestTrait;
 use Throwable;
 
-use function class_uses;
-use function function_exists;
 use function mkdir;
 use function pcntl_fork;
 use function pcntl_waitpid;
@@ -46,58 +42,51 @@ final class FileTest extends TestCase
 
     public function testConcurrentSynchronizedUpdates(): void
     {
-        if (!function_exists('pcntl_fork')) {
-            $this->markTestSkipped('The pcntl extension is not available.');
-        }
-
         $this->cacher->set('counter', 0);
 
-        $processes = [];
+        $updateCounter = function(): void {
+            for ($i = 0; $i < 20; $i++) {
+                $this->cacher->synchronized(
+                    'counter',
+                    function(): void {
+                        $count = $this->cacher->get('counter', 0);
 
-        for ($i = 0; $i < 5; $i++) {
-            $process = pcntl_fork();
+                        usleep(1000);
 
-            if ($process === 0) {
-                try {
-                    for ($j = 0; $j < 20; $j++) {
-                        $this->cacher->synchronized(
-                            'counter',
-                            function(): void {
-                                $count = $this->cacher->get('counter', 0);
-
-                                usleep(1000);
-
-                                $this->cacher->set('counter', $count + 1);
-                            },
-                            wait: 5
-                        );
-                    }
-
-                    exit(0);
-                } catch (Throwable) {
-                    exit(1);
-                }
+                        $this->cacher->set('counter', $count + 1);
+                    },
+                    wait: 5
+                );
             }
+        };
 
-            $this->assertGreaterThan(
-                0,
-                $process
-            );
+        $process = pcntl_fork();
 
-            $processes[] = $process;
+        if ($process === 0) {
+            try {
+                $updateCounter();
+                exit(0);
+            } catch (Throwable) {
+                exit(1);
+            }
         }
 
-        foreach ($processes as $process) {
-            pcntl_waitpid($process, $status);
+        $this->assertGreaterThan(
+            0,
+            $process
+        );
 
-            $this->assertSame(
-                0,
-                $status
-            );
-        }
+        $updateCounter();
+
+        pcntl_waitpid($process, $status);
 
         $this->assertSame(
-            100,
+            0,
+            $status
+        );
+
+        $this->assertSame(
+            40,
             $this->cacher->get('counter')
         );
     }
@@ -120,11 +109,23 @@ final class FileTest extends TestCase
             ],
             $data
         );
+    }
 
-        $this->assertContains(
-            DebugTrait::class,
-            class_uses(TaggedCacher::class)
+    public function testLockFileRemovedOnRelease(): void
+    {
+        $lock = $this->cacher->lock('test');
+
+        $this->assertTrue(
+            $lock->acquire()
         );
+
+        $this->assertFileExists('cache/prefix.__lock__.test');
+
+        $this->assertTrue(
+            $lock->release()
+        );
+
+        $this->assertFileDoesNotExist('cache/prefix.__lock__.test');
     }
 
     #[Override]

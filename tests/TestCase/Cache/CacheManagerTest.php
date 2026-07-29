@@ -8,6 +8,8 @@ use Fyre\Cache\Cacher;
 use Fyre\Cache\Exceptions\InvalidArgumentException;
 use Fyre\Cache\Handlers\File\FileCacher;
 use Fyre\Cache\Handlers\Null\NullCacher;
+use Fyre\Cache\Lock;
+use Fyre\Cache\TaggedCacher;
 use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
@@ -67,6 +69,16 @@ final class CacheManagerTest extends TestCase
         $this->assertContains(
             DebugTrait::class,
             class_uses(CacheManager::class)
+        );
+
+        $this->assertContains(
+            DebugTrait::class,
+            class_uses(TaggedCacher::class)
+        );
+
+        $this->assertContains(
+            DebugTrait::class,
+            class_uses(Lock::class)
         );
     }
 

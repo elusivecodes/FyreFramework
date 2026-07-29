@@ -3,12 +3,14 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Http\Cookie;
 
+use Fyre\Core\Traits\DebugTrait;
 use Fyre\Http\Client\Response;
 use Fyre\Http\Cookie\Cookie;
 use Fyre\Http\Cookie\CookieJar;
 use Fyre\Http\Uri;
 use PHPUnit\Framework\TestCase;
 
+use function class_uses;
 use function explode;
 use function str_repeat;
 use function strlen;
@@ -125,6 +127,14 @@ final class CookieJarTest extends TestCase
         $this->assertStringNotContainsString('test0=value', $header);
         $this->assertStringContainsString('test1=value', $header);
         $this->assertStringContainsString('test180=value', $header);
+    }
+
+    public function testDebug(): void
+    {
+        $this->assertContains(
+            DebugTrait::class,
+            class_uses(CookieJar::class)
+        );
     }
 
     public function testGetHeader(): void

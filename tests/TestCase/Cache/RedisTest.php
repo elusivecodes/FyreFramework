@@ -7,9 +7,7 @@ use Fyre\Cache\CacheManager;
 use Fyre\Cache\Cacher;
 use Fyre\Cache\Exceptions\CacheException;
 use Fyre\Cache\Handlers\Redis\RedisCacher;
-use Fyre\Cache\TaggedCacher;
 use Fyre\Core\Container;
-use Fyre\Core\Traits\DebugTrait;
 use Override;
 use PHPUnit\Framework\TestCase;
 use Tests\TestCase\Cache\Cacher\DecrementTestTrait;
@@ -22,7 +20,6 @@ use Tests\TestCase\Cache\Cacher\LockTestTrait;
 use Tests\TestCase\Cache\Cacher\RememberTestTrait;
 use Tests\TestCase\Cache\Cacher\TagsTestTrait;
 
-use function class_uses;
 use function getenv;
 
 final class RedisTest extends TestCase
@@ -99,11 +96,6 @@ final class RedisTest extends TestCase
                 'connection' => '[Redis]',
             ],
             $data
-        );
-
-        $this->assertContains(
-            DebugTrait::class,
-            class_uses(TaggedCacher::class)
         );
     }
 

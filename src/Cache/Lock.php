@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace Fyre\Cache;
 
 use Fyre\Cache\Exceptions\InvalidArgumentException;
+use Fyre\Core\Attributes\SensitiveProperty;
+use Fyre\Core\Traits\DebugTrait;
 
 use function bin2hex;
 use function hrtime;
@@ -16,10 +18,13 @@ use function usleep;
  */
 abstract class Lock
 {
+    use DebugTrait;
+
     protected const RETRY_DELAY = 10000;
 
     protected bool $acquired = false;
 
+    #[SensitiveProperty]
     protected string $owner;
 
     /**

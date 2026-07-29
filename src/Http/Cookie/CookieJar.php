@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Fyre\Http\Cookie;
 
+use Fyre\Core\Traits\DebugTrait;
 use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
@@ -24,6 +25,8 @@ use function usort;
  */
 class CookieJar
 {
+    use DebugTrait;
+
     protected const MAX_COOKIE_HEADER_SIZE = 16384;
 
     protected const MAX_COOKIE_SIZE = 4096;

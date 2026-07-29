@@ -7,11 +7,12 @@ use Fyre\Cache\Lock;
 
 use function array_key_exists;
 use function chmod;
+use function clearstatcache;
 use function fclose;
 use function fflush;
-use function file_exists;
 use function flock;
 use function fopen;
+use function fstat;
 use function ftruncate;
 use function fwrite;
 use function is_array;
@@ -20,8 +21,10 @@ use function is_resource;
 use function is_string;
 use function rewind;
 use function serialize;
+use function stat;
 use function stream_get_contents;
 use function time;
+use function unlink;
 use function unserialize;
 
 use const LOCK_EX;
@@ -80,28 +83,44 @@ class FileLock extends Lock
     }
 
     /**
+     * Checks whether a handle points to the current lock file.
+     *
+     * @param resource $handle The file handle.
+     * @return bool Whether the handle points to the current lock file.
+     */
+    protected function isCurrentFile(mixed $handle): bool
+    {
+        clearstatcache(true, $this->key);
+
+        $fileStat = @stat($this->key);
+        $handleStat = @fstat($handle);
+
+        return $fileStat !== false &&
+            $handleStat !== false &&
+            $fileStat['dev'] === $handleStat['dev'] &&
+            $fileStat['ino'] === $handleStat['ino'];
+    }
+
+    /**
      * Opens and locks the lock file.
      *
      * @return false|resource The file handle, or false if the file could not be locked.
      */
     protected function openLock(): mixed
     {
-        $chmod = !file_exists($this->key);
         $handle = @fopen($this->key, 'c+b');
 
         if (!is_resource($handle)) {
             return false;
         }
 
-        if (!@flock($handle, LOCK_EX)) {
+        if (!@flock($handle, LOCK_EX) || !$this->isCurrentFile($handle)) {
             @fclose($handle);
 
             return false;
         }
 
-        if ($chmod) {
-            @chmod($this->key, $this->mode);
-        }
+        @chmod($this->key, $this->mode);
 
         return $handle;
     }
@@ -193,7 +212,7 @@ class FileLock extends Lock
                 return false;
             }
 
-            return $this->writeLock($handle, null);
+            return @unlink($this->key) || $this->writeLock($handle, null);
         } finally {
             @fclose($handle);
         }
