@@ -162,7 +162,7 @@ class Client implements ClientInterface
         $options = array_replace_recursive($this->config, $options);
         $request = $this->buildRequest('DELETE', $url, $data, $options);
 
-        return $this->send($request, $options);
+        return $this->sendPrepared($request, $options);
     }
 
     /**
@@ -178,7 +178,7 @@ class Client implements ClientInterface
         $options = array_replace_recursive($this->config, $options);
         $request = $this->buildRequest('GET', $url, $data, $options);
 
-        return $this->send($request, $options);
+        return $this->sendPrepared($request, $options);
     }
 
     /**
@@ -204,7 +204,7 @@ class Client implements ClientInterface
         $options = array_replace_recursive($this->config, $options);
         $request = $this->buildRequest('HEAD', $url, $data, $options);
 
-        return $this->send($request, $options);
+        return $this->sendPrepared($request, $options);
     }
 
     /**
@@ -220,7 +220,7 @@ class Client implements ClientInterface
         $options = array_replace_recursive($this->config, $options);
         $request = $this->buildRequest('OPTIONS', $url, $data, $options);
 
-        return $this->send($request, $options);
+        return $this->sendPrepared($request, $options);
     }
 
     /**
@@ -236,7 +236,7 @@ class Client implements ClientInterface
         $options = array_replace_recursive($this->config, $options);
         $request = $this->buildRequest('PATCH', $url, $data, $options);
 
-        return $this->send($request, $options);
+        return $this->sendPrepared($request, $options);
     }
 
     /**
@@ -252,7 +252,7 @@ class Client implements ClientInterface
         $options = array_replace_recursive($this->config, $options);
         $request = $this->buildRequest('POST', $url, $data, $options);
 
-        return $this->send($request, $options);
+        return $this->sendPrepared($request, $options);
     }
 
     /**
@@ -268,7 +268,7 @@ class Client implements ClientInterface
         $options = array_replace_recursive($this->config, $options);
         $request = $this->buildRequest('PUT', $url, $data, $options);
 
-        return $this->send($request, $options);
+        return $this->sendPrepared($request, $options);
     }
 
     /**
@@ -291,71 +291,9 @@ class Client implements ClientInterface
      */
     public function send(RequestInterface $request, array $options = []): Response
     {
-        if (isset($options['timeout']) && $options['timeout'] < 0) {
-            throw new InvalidArgumentException('Client option `timeout` must not be negative.');
-        }
+        $options = array_replace_recursive($this->config, $options);
 
-        if (isset($options['maxRedirects']) && $options['maxRedirects'] < 0) {
-            throw new InvalidArgumentException('Client option `maxRedirects` must not be negative.');
-        }
-
-        $redirects = (int) ($options['maxRedirects'] ?? 0);
-        $visited = [];
-
-        $handler = static::$mockHandler ?? $this->handler;
-
-        while (true) {
-            $visitKey = $request->getMethod().' '.(string) $request->getUri()->withFragment('');
-
-            if (isset($visited[$visitKey])) {
-                throw new RequestException('Redirect loop detected.', $request);
-            }
-
-            $visited[$visitKey] = true;
-
-            $response = $handler->send($request, $options);
-
-            $uri = $request->getUri();
-
-            $this->cookieJar->storeResponse($uri, $response);
-
-            if (!$response->isRedirect() || $redirects <= 0) {
-                break;
-            }
-
-            $redirects--;
-
-            $redirectUri = static::buildRedirectUri(
-                $uri,
-                $response->getHeaderLine('Location'),
-                $request
-            );
-            $request = static::buildRedirectRequest(
-                $request,
-                $redirectUri,
-                $response->getStatusCode()
-            );
-
-            unset($options['body'], $options['headers'], $options['method']);
-
-            if (static::isCrossOrigin($uri, $redirectUri)) {
-                foreach (['Authorization', 'Proxy-Authorization', 'Referer'] as $header) {
-                    $request = $request->withoutHeader($header);
-                }
-
-                unset($options['auth'], $options['ssl']);
-            }
-
-            $cookieHeader = $this->cookieJar->getHeader($redirectUri);
-
-            if ($cookieHeader !== '') {
-                $request = $request->withHeader('Cookie', $cookieHeader);
-            } else {
-                $request = $request->withoutHeader('Cookie');
-            }
-        }
-
-        return $response;
+        return $this->sendPrepared($request, $options);
     }
 
     /**
@@ -390,7 +328,7 @@ class Client implements ClientInterface
         $options = array_replace_recursive($this->config, $options);
         $request = $this->buildRequest('TRACE', $url, $data, $options);
 
-        return $this->send($request, $options);
+        return $this->sendPrepared($request, $options);
     }
 
     /**
@@ -462,17 +400,99 @@ class Client implements ClientInterface
             }
         }
 
-        $cookieHeader = $this->cookieJar->getHeader($uri);
-
-        if ($cookieHeader !== '') {
-            $request = $request->withHeader('Cookie', $cookieHeader);
-        }
-
         if ($data !== []) {
             $request = $request->withData($data);
         }
 
         return $request;
+    }
+
+    /**
+     * Sends a Request using prepared Client options.
+     *
+     * @param RequestInterface $request The Request.
+     * @param array<string, mixed> $options The prepared options.
+     * @return Response The Response instance.
+     *
+     * @throws InvalidArgumentException If the Client options are not valid.
+     * @throws NetworkException If a network error occurs.
+     * @throws RequestException If a request error occurs.
+     */
+    protected function sendPrepared(RequestInterface $request, array $options): Response
+    {
+        if (isset($options['timeout']) && $options['timeout'] < 0) {
+            throw new InvalidArgumentException('Client option `timeout` must not be negative.');
+        }
+
+        if (isset($options['maxRedirects']) && $options['maxRedirects'] < 0) {
+            throw new InvalidArgumentException('Client option `maxRedirects` must not be negative.');
+        }
+
+        if (!$request->hasHeader('Cookie')) {
+            $cookieHeader = $this->cookieJar->getHeader($request->getUri());
+
+            if ($cookieHeader !== '') {
+                $request = $request->withHeader('Cookie', $cookieHeader);
+            }
+        }
+
+        $redirects = (int) ($options['maxRedirects'] ?? 0);
+        $visited = [];
+
+        $handler = static::$mockHandler ?? $this->handler;
+
+        while (true) {
+            $visitKey = $request->getMethod().' '.(string) $request->getUri()->withFragment('');
+
+            if (isset($visited[$visitKey])) {
+                throw new RequestException('Redirect loop detected.', $request);
+            }
+
+            $visited[$visitKey] = true;
+
+            $response = $handler->send($request, $options);
+
+            $uri = $request->getUri();
+
+            $this->cookieJar->storeResponse($uri, $response);
+
+            if (!$response->isRedirect() || $redirects <= 0) {
+                break;
+            }
+
+            $redirects--;
+
+            $redirectUri = static::buildRedirectUri(
+                $uri,
+                $response->getHeaderLine('Location'),
+                $request
+            );
+            $request = static::buildRedirectRequest(
+                $request,
+                $redirectUri,
+                $response->getStatusCode()
+            );
+
+            unset($options['body'], $options['headers'], $options['method']);
+
+            if (static::isCrossOrigin($uri, $redirectUri)) {
+                foreach (['Authorization', 'Proxy-Authorization', 'Referer'] as $header) {
+                    $request = $request->withoutHeader($header);
+                }
+
+                unset($options['auth'], $options['ssl']);
+            }
+
+            $cookieHeader = $this->cookieJar->getHeader($redirectUri);
+
+            if ($cookieHeader !== '') {
+                $request = $request->withHeader('Cookie', $cookieHeader);
+            } else {
+                $request = $request->withoutHeader('Cookie');
+            }
+        }
+
+        return $response;
     }
 
     /**

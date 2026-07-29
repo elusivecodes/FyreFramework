@@ -730,6 +730,43 @@ final class ClientTest extends TestCase
         );
     }
 
+    public function testSendConfiguredOptions(): void
+    {
+        $client = new Client([
+            'maxRedirects' => 1,
+        ]);
+        $request = new Request('http://localhost:8888/redirect');
+
+        $response = $client->send($request);
+
+        $this->assertSame(
+            [
+                'value' => '1',
+            ],
+            $response->getJson()
+        );
+    }
+
+    public function testSendCookies(): void
+    {
+        $client = new Client();
+        $client->addCookie(new Cookie('test', 'value', [
+            'domain' => 'localhost',
+            'hostOnly' => true,
+        ]));
+
+        $request = new Request('http://localhost:8888/cookie');
+
+        $response = $client->send($request);
+
+        $this->assertSame(
+            [
+                'test' => 'value',
+            ],
+            $response->getJson()
+        );
+    }
+
     public function testSendNetworkException(): void
     {
         $this->expectException(NetworkException::class);
