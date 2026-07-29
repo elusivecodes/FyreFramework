@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Mail\Email;
 
+use InvalidArgumentException;
+
 trait PriorityTestTrait
 {
     public function testHeaderPriority(): void
@@ -28,6 +30,22 @@ trait PriorityTestTrait
             1,
             $this->email->getPriority()
         );
+    }
+
+    public function testSetPriorityInvalid(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Email priority must be between 1 and 5.');
+
+        $this->email->setPriority(0);
+    }
+
+    public function testSetPriorityInvalidMaximum(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Email priority must be between 1 and 5.');
+
+        $this->email->setPriority(6);
     }
 
     public function testSetPriorityNull(): void

@@ -5,14 +5,18 @@ namespace Fyre\Security\Encryption\Handlers;
 
 use Fyre\Security\Encryption\Encrypter;
 use Fyre\Security\Encryption\Exceptions\EncryptionException;
+use InvalidArgumentException;
 use Override;
 
 use function hash_equals;
+use function in_array;
 use function openssl_cipher_iv_length;
 use function openssl_decrypt;
 use function openssl_encrypt;
+use function openssl_get_cipher_methods;
 use function openssl_random_pseudo_bytes;
 use function serialize;
+use function strtolower;
 use function unserialize;
 
 use const OPENSSL_RAW_DATA;
@@ -32,6 +36,28 @@ class OpenSSLEncrypter extends Encrypter
     protected static array $defaults = [
         'cipher' => 'AES-256-CTR',
     ];
+
+    /**
+     * Constructs an OpenSSLEncrypter.
+     *
+     * @param array<string, mixed> $options The Encrypter options.
+     *
+     * @throws InvalidArgumentException If an OpenSSL encrypter option is not valid.
+     */
+    public function __construct(array $options = [])
+    {
+        parent::__construct($options);
+
+        $cipher = strtolower($this->config['cipher']);
+
+        if (!in_array($cipher, openssl_get_cipher_methods(), true)) {
+            throw new InvalidArgumentException('OpenSSL cipher `'.$this->config['cipher'].'` is not valid.');
+        }
+
+        if (openssl_cipher_iv_length($cipher) <= 0) {
+            throw new InvalidArgumentException('OpenSSL cipher `'.$this->config['cipher'].'` must use an initialization vector.');
+        }
+    }
 
     /**
      * {@inheritDoc}

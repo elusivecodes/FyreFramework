@@ -18,6 +18,20 @@ final class SodiumTest extends TestCase
 {
     use EncrypterTestTrait;
 
+    public function testDigest(): void
+    {
+        $encrypter = new SodiumEncrypter([
+            'digest' => 'SHA3-256',
+        ]);
+
+        $encrypted = $encrypter->encrypt('test', 'key');
+
+        $this->assertSame(
+            'test',
+            $encrypter->decrypt($encrypted, 'key')
+        );
+    }
+
     public function testGenerateKey(): void
     {
         $key = $this->encrypter->generateKey();
@@ -35,6 +49,16 @@ final class SodiumTest extends TestCase
 
         new SodiumEncrypter([
             'blockSize' => 0,
+        ]);
+    }
+
+    public function testInvalidDigest(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Encryption digest `invalid` is not valid.');
+
+        new SodiumEncrypter([
+            'digest' => 'invalid',
         ]);
     }
 

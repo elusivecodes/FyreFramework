@@ -767,9 +767,15 @@ class Email
      *
      * @param int|null $priority The priority.
      * @return static The Email instance.
+     *
+     * @throws InvalidArgumentException If the priority is not valid.
      */
     public function setPriority(int|null $priority = null): static
     {
+        if ($priority !== null && ($priority <= 0 || $priority > 5)) {
+            throw new InvalidArgumentException('Email priority must be between 1 and 5.');
+        }
+
         $this->priority = $priority;
 
         return $this;

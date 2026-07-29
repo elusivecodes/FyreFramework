@@ -5,12 +5,17 @@ namespace Fyre\Security\Encryption;
 
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
+use InvalidArgumentException;
 
 use function array_replace;
 use function assert;
 use function hash_hkdf;
 use function hash_hmac;
+use function hash_hmac_algos;
+use function in_array;
 use function mb_substr;
+use function strlen;
+use function strtolower;
 
 /**
  * Provides shared encryption helpers for encrypter implementations.
@@ -39,10 +44,16 @@ abstract class Encrypter
      * Constructs an Encrypter.
      *
      * @param array<string, mixed> $options The Encrypter options.
+     *
+     * @throws InvalidArgumentException If an Encrypter option is not valid.
      */
     public function __construct(array $options = [])
     {
         $this->config = array_replace(self::$defaults, static::$defaults, $options);
+
+        if (!in_array(strtolower($this->config['digest']), hash_hmac_algos(), true)) {
+            throw new InvalidArgumentException('Encryption digest `'.$this->config['digest'].'` is not valid.');
+        }
     }
 
     /**
@@ -114,13 +125,11 @@ abstract class Encrypter
     /**
      * Returns the HMAC length.
      *
-     * Note: This assumes the configured digest is in the form `SHAxxx` (e.g. `SHA512`).
-     *
      * @return int The HMAC length.
      */
     protected function getHmacLength(): int
     {
-        return (int) (((float) static::substr($this->config['digest'], 3)) / 8);
+        return $this->getHmac('', '') |> strlen(...);
     }
 
     /**

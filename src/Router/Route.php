@@ -8,6 +8,7 @@ use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Http\ClientResponse;
 use Fyre\Http\Uri;
+use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -56,6 +57,8 @@ abstract class Route
      * @param string[]|null $methods The methods.
      * @param array<Closure|MiddlewareInterface|string> $middleware The middleware.
      * @param array<string, string> $placeholders The placeholders.
+     *
+     * @throws InvalidArgumentException If the port is not valid.
      */
     public function __construct(
         protected Container $container,
@@ -70,6 +73,10 @@ abstract class Route
     ) {
         if ($this->host !== null) {
             $this->setHost($this->host);
+        }
+
+        if ($this->port !== null) {
+            $this->setPort($this->port);
         }
     }
 
@@ -316,9 +323,15 @@ abstract class Route
      *
      * @param int $port The route port.
      * @return static The Route.
+     *
+     * @throws InvalidArgumentException If the port is not valid.
      */
     public function setPort(int $port): static
     {
+        if ($port <= 0 || $port > 65535) {
+            throw new InvalidArgumentException('Route port must be between 1 and 65535.');
+        }
+
         $this->port = $port;
 
         return $this;
