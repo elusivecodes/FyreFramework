@@ -1,11 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace Fyre\Cache\Handlers;
+namespace Fyre\Cache\Handlers\Memcached;
 
 use DateInterval;
 use Fyre\Cache\Cacher;
 use Fyre\Cache\Exceptions\CacheException;
+use Fyre\Cache\Lock;
 use Fyre\Core\Attributes\SensitivePropertyArray;
 use Memcached;
 use MemcachedException;
@@ -159,6 +160,19 @@ class MemcachedCacher extends Cacher
         $this->connection->add($key, 0);
 
         return $this->connection->increment($key, $amount, $amount);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function lock(string $key, int $expires = 30): Lock
+    {
+        return new MemcachedLock(
+            $this->connection,
+            $this->prepareLockKey($key),
+            $expires
+        );
     }
 
     /**

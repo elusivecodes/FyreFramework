@@ -5,7 +5,7 @@ namespace Fyre\Security;
 
 use Closure;
 use Fyre\Cache\CacheManager;
-use Fyre\Cache\Handlers\FileCacher;
+use Fyre\Cache\Handlers\File\FileCacher;
 use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;

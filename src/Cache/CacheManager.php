@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Fyre\Cache;
 
 use Fyre\Cache\Exceptions\InvalidArgumentException;
-use Fyre\Cache\Handlers\NullCacher;
+use Fyre\Cache\Handlers\Null\NullCacher;
 use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;

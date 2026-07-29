@@ -6,7 +6,7 @@ namespace Tests\TestCase\Cache;
 use Fyre\Cache\CacheManager;
 use Fyre\Cache\Cacher;
 use Fyre\Cache\Exceptions\CacheException;
-use Fyre\Cache\Handlers\MemcachedCacher;
+use Fyre\Cache\Handlers\Memcached\MemcachedCacher;
 use Fyre\Cache\TaggedCacher;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
@@ -18,6 +18,7 @@ use Tests\TestCase\Cache\Cacher\EmptyTestTrait;
 use Tests\TestCase\Cache\Cacher\GetSetTestTrait;
 use Tests\TestCase\Cache\Cacher\HasTestTrait;
 use Tests\TestCase\Cache\Cacher\IncrementTestTrait;
+use Tests\TestCase\Cache\Cacher\LockTestTrait;
 use Tests\TestCase\Cache\Cacher\RememberTestTrait;
 use Tests\TestCase\Cache\Cacher\TagsTestTrait;
 
@@ -32,6 +33,7 @@ final class MemcachedTest extends TestCase
     use GetSetTestTrait;
     use HasTestTrait;
     use IncrementTestTrait;
+    use LockTestTrait;
     use RememberTestTrait;
     use TagsTestTrait;
 

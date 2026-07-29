@@ -1,10 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace Fyre\Cache\Handlers;
+namespace Fyre\Cache\Handlers\Array;
 
+use ArrayObject;
 use DateInterval;
 use Fyre\Cache\Cacher;
+use Fyre\Cache\Lock;
 use Override;
 
 use function array_key_exists;
@@ -20,6 +22,23 @@ class ArrayCacher extends Cacher
      * @var array<string, array{data: mixed, expires: int|null}>
      */
     protected array $cache = [];
+
+    /**
+     * @var ArrayObject<string, array{expires: int, owner: string}>
+     */
+    protected ArrayObject $locks;
+
+    /**
+     * Constructs an ArrayCacher.
+     *
+     * @param array<string, mixed> $options The Cacher options.
+     */
+    public function __construct(array $options = [])
+    {
+        parent::__construct($options);
+
+        $this->locks = new ArrayObject();
+    }
 
     /**
      * {@inheritDoc}
@@ -94,6 +113,19 @@ class ArrayCacher extends Cacher
         $this->cache[$key]['data'] += $amount;
 
         return $this->cache[$key]['data'];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function lock(string $key, int $expires = 30): Lock
+    {
+        return new ArrayLock(
+            $this->locks,
+            $this->prepareLockKey($key),
+            $expires
+        );
     }
 
     /**

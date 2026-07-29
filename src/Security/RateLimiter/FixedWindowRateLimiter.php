@@ -38,19 +38,25 @@ class FixedWindowRateLimiter extends RateLimiter
 
         $cacher = $this->cacheManager->use($this->cacheConfig);
 
-        $count = $cacher->get($key, 0);
-        $allowed = $count + $cost <= $limit;
+        return $cacher->synchronized(
+            $key,
+            static function() use ($cacher, $cost, $key, $limit, $now, $window, $windowStart): array {
+                $count = $cacher->get($key, 0);
+                $allowed = $count + $cost <= $limit;
 
-        if ($allowed) {
-            $count += $cost;
-            $cacher->set($key, $count, $windowStart + $window - $now);
-        }
+                if ($allowed) {
+                    $count += $cost;
+                    $cacher->set($key, $count, $windowStart + $window - $now);
+                }
 
-        return [
-            'allowed' => $allowed,
-            'limit' => $limit,
-            'remaining' => (int) max(0, $limit - $count),
-            'reset' => $windowStart + $window,
-        ];
+                return [
+                    'allowed' => $allowed,
+                    'limit' => $limit,
+                    'remaining' => (int) max(0, $limit - $count),
+                    'reset' => $windowStart + $window,
+                ];
+            },
+            wait: 1
+        );
     }
 }

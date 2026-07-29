@@ -6,6 +6,7 @@ namespace Fyre\Cache;
 use Closure;
 use DateInterval;
 use DateTimeImmutable;
+use Fyre\Cache\Exceptions\CacheException;
 use Fyre\Cache\Exceptions\InvalidArgumentException;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
@@ -156,6 +157,15 @@ abstract class Cacher implements CacheInterface
     }
 
     /**
+     * Creates a cache lock.
+     *
+     * @param string $key The lock key.
+     * @param int $expires The lock lifetime in seconds.
+     * @return Lock The new Lock.
+     */
+    abstract public function lock(string $key, int $expires = 30): Lock;
+
+    /**
      * Retrieves an item from the cache, or saves a new value if it does not exist.
      *
      * @param string $key The cache key.
@@ -195,6 +205,41 @@ abstract class Cacher implements CacheInterface
         }
 
         return true;
+    }
+
+    /**
+     * Executes a callback while holding a cache lock.
+     *
+     * @template T
+     *
+     * @param string $key The lock key.
+     * @param Closure(): T $callback The callback.
+     * @param int $expires The lock lifetime in seconds.
+     * @param float $wait The maximum number of seconds to wait.
+     * @return T The callback result.
+     *
+     * @throws CacheException If the lock could not be acquired.
+     */
+    public function synchronized(
+        string $key,
+        Closure $callback,
+        int $expires = 30,
+        float $wait = 0
+    ): mixed {
+        $lock = $this->lock($key, $expires);
+
+        if (!$lock->acquire($wait)) {
+            throw new CacheException(sprintf(
+                'Cache lock `%s` could not be acquired.',
+                $key
+            ));
+        }
+
+        try {
+            return $callback();
+        } finally {
+            $lock->release();
+        }
     }
 
     /**
@@ -248,5 +293,18 @@ abstract class Cacher implements CacheInterface
         }
 
         return $this->config['prefix'].$key;
+    }
+
+    /**
+     * Returns the real cache lock key.
+     *
+     * @param string $key The lock key.
+     * @return string The real lock key with the configured prefix applied.
+     *
+     * @throws InvalidArgumentException If the cache key is not valid.
+     */
+    protected function prepareLockKey(string $key): string
+    {
+        return $this->prepareKey('__lock__.'.$key);
     }
 }

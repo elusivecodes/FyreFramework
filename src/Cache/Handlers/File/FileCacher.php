@@ -1,11 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace Fyre\Cache\Handlers;
+namespace Fyre\Cache\Handlers\File;
 
 use DateInterval;
 use DirectoryIterator;
 use Fyre\Cache\Cacher;
+use Fyre\Cache\Lock;
 use Fyre\Core\Attributes\SensitiveProperty;
 use Fyre\Core\Attributes\SensitivePropertyArray;
 use Fyre\Utility\Path;
@@ -231,6 +232,21 @@ class FileCacher extends Cacher
         @fclose($handle);
 
         return $data['data'];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function lock(string $key, int $expires = 30): Lock
+    {
+        $key = $this->prepareLockKey($key);
+
+        return new FileLock(
+            Path::join($this->path, $key),
+            $expires,
+            $this->config['mode']
+        );
     }
 
     /**

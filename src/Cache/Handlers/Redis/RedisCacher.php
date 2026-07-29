@@ -1,12 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace Fyre\Cache\Handlers;
+namespace Fyre\Cache\Handlers\Redis;
 
 use DateInterval;
 use Fyre\Cache\Cacher;
 use Fyre\Cache\Exceptions\CacheException;
 use Fyre\Cache\Exceptions\InvalidArgumentException;
+use Fyre\Cache\Lock;
 use Fyre\Core\Attributes\SensitivePropertyArray;
 use Override;
 use Redis;
@@ -241,6 +242,19 @@ class RedisCacher extends Cacher
         }
 
         return $this->connection->hIncrBy($key, 'value', $amount);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function lock(string $key, int $expires = 30): Lock
+    {
+        return new RedisLock(
+            $this->connection,
+            $this->prepareLockKey($key),
+            $expires
+        );
     }
 
     /**

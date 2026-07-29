@@ -5,7 +5,7 @@ namespace Tests\TestCase\Cache;
 
 use Fyre\Cache\CacheManager;
 use Fyre\Cache\Cacher;
-use Fyre\Cache\Handlers\ArrayCacher;
+use Fyre\Cache\Handlers\Array\ArrayCacher;
 use Fyre\Cache\TaggedCacher;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
@@ -17,6 +17,7 @@ use Tests\TestCase\Cache\Cacher\EmptyTestTrait;
 use Tests\TestCase\Cache\Cacher\GetSetTestTrait;
 use Tests\TestCase\Cache\Cacher\HasTestTrait;
 use Tests\TestCase\Cache\Cacher\IncrementTestTrait;
+use Tests\TestCase\Cache\Cacher\LockTestTrait;
 use Tests\TestCase\Cache\Cacher\RememberTestTrait;
 use Tests\TestCase\Cache\Cacher\TagsTestTrait;
 
@@ -30,6 +31,7 @@ final class ArrayTest extends TestCase
     use GetSetTestTrait;
     use HasTestTrait;
     use IncrementTestTrait;
+    use LockTestTrait;
     use RememberTestTrait;
     use TagsTestTrait;
 
@@ -48,6 +50,7 @@ final class ArrayTest extends TestCase
                     'prefix' => 'prefix.',
                     'className' => ArrayCacher::class,
                 ],
+                'locks' => '[ArrayObject]',
             ],
             $data
         );

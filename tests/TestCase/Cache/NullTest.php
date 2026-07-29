@@ -5,7 +5,8 @@ namespace Tests\TestCase\Cache;
 
 use Fyre\Cache\CacheManager;
 use Fyre\Cache\Cacher;
-use Fyre\Cache\Handlers\NullCacher;
+use Fyre\Cache\Handlers\Null\NullCacher;
+use Fyre\Cache\Handlers\Null\NullLock;
 use Fyre\Core\Container;
 use Override;
 use PHPUnit\Framework\TestCase;
@@ -105,6 +106,32 @@ final class NullTest extends TestCase
         );
     }
 
+    public function testLock(): void
+    {
+        $lock = $this->cacher->lock('test');
+
+        $this->assertInstanceOf(
+            NullLock::class,
+            $lock
+        );
+
+        $this->assertTrue(
+            $lock->acquire()
+        );
+
+        $this->assertTrue(
+            $lock->refresh()
+        );
+
+        $this->assertTrue(
+            $lock->release()
+        );
+
+        $this->assertFalse(
+            $lock->isAcquired()
+        );
+    }
+
     public function testRemember(): void
     {
         $calls = 0;
@@ -125,6 +152,30 @@ final class NullTest extends TestCase
 
                 return $calls;
             })
+        );
+    }
+
+    public function testSynchronized(): void
+    {
+        $calls = 0;
+
+        $result = $this->cacher->synchronized(
+            'test',
+            static function() use (&$calls): string {
+                $calls++;
+
+                return 'result';
+            }
+        );
+
+        $this->assertSame(
+            'result',
+            $result
+        );
+
+        $this->assertSame(
+            1,
+            $calls
         );
     }
 

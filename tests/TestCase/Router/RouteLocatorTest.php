@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\Router;
 
 use Fyre\Cache\CacheManager;
-use Fyre\Cache\Handlers\FileCacher;
+use Fyre\Cache\Handlers\File\FileCacher;
 use Fyre\Core\Container;
 use Fyre\Core\Loader;
 use Fyre\Http\ServerRequest;

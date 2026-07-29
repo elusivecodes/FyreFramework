@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use Fyre\Cache\Handlers\NullCacher;
+use Fyre\Cache\Handlers\Null\NullCacher;
 use Fyre\DB\Handlers\Sqlite\SqliteConnection;
 use Fyre\Log\Handlers\FileLogger;
 use Fyre\Mail\Handlers\SendmailMailer;

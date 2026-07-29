@@ -36,37 +36,43 @@ class SlidingWindowRateLimiter extends RateLimiter
 
         $cacher = $this->cacheManager->use($this->cacheConfig);
 
-        $data = $cacher->get($key, [
-            'count' => 0,
-            'reset' => $now + $window,
-            'window_start' => $now,
-        ]);
+        return $cacher->synchronized(
+            $key,
+            static function() use ($cacher, $cost, $key, $limit, $now, $window): array {
+                $data = $cacher->get($key, [
+                    'count' => 0,
+                    'reset' => $now + $window,
+                    'window_start' => $now,
+                ]);
 
-        $elapsed = $now - $data['window_start'];
+                $elapsed = $now - $data['window_start'];
 
-        if ($elapsed >= $window) {
-            $data = [
-                'count' => 0,
-                'reset' => $now + $window,
-                'window_start' => $now,
-            ];
-        } else {
-            $weight = 1 - ($elapsed / $window);
-            $data['count'] = (int) ceil($data['count'] * $weight);
-        }
+                if ($elapsed >= $window) {
+                    $data = [
+                        'count' => 0,
+                        'reset' => $now + $window,
+                        'window_start' => $now,
+                    ];
+                } else {
+                    $weight = 1 - ($elapsed / $window);
+                    $data['count'] = (int) ceil($data['count'] * $weight);
+                }
 
-        $allowed = $limit >= $data['count'] + $cost;
+                $allowed = $limit >= $data['count'] + $cost;
 
-        if ($allowed) {
-            $data['count'] += $cost;
-            $cacher->set($key, $data, $window);
-        }
+                if ($allowed) {
+                    $data['count'] += $cost;
+                    $cacher->set($key, $data, $window);
+                }
 
-        return [
-            'allowed' => $allowed,
-            'limit' => $limit,
-            'remaining' => (int) max(0, $limit - $data['count']),
-            'reset' => (int) $data['reset'],
-        ];
+                return [
+                    'allowed' => $allowed,
+                    'limit' => $limit,
+                    'remaining' => (int) max(0, $limit - $data['count']),
+                    'reset' => (int) $data['reset'],
+                ];
+            },
+            wait: 1
+        );
     }
 }

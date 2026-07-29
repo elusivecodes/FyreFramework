@@ -1,10 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace Fyre\Cache\Handlers;
+namespace Fyre\Cache\Handlers\Null;
 
 use DateInterval;
 use Fyre\Cache\Cacher;
+use Fyre\Cache\Lock;
 use Override;
 
 /**
@@ -46,6 +47,18 @@ class NullCacher extends Cacher
     public function increment(string $key, int $amount = 1): int
     {
         return $amount;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function lock(string $key, int $expires = 30): Lock
+    {
+        return new NullLock(
+            $this->prepareLockKey($key),
+            $expires
+        );
     }
 
     /**

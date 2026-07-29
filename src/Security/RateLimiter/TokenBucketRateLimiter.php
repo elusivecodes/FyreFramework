@@ -37,29 +37,35 @@ class TokenBucketRateLimiter extends RateLimiter
 
         $cacher = $this->cacheManager->use($this->cacheConfig);
 
-        $data = $cacher->get($key, [
-            'tokens' => $limit,
-            'last_update' => $now,
-        ]);
+        return $cacher->synchronized(
+            $key,
+            static function() use ($cacher, $cost, $key, $limit, $now, $refillRate, $window): array {
+                $data = $cacher->get($key, [
+                    'tokens' => $limit,
+                    'last_update' => $now,
+                ]);
 
-        $data['tokens'] = min($limit, $data['tokens'] + (($now - $data['last_update']) * $refillRate));
-        $data['last_update'] = $now;
+                $data['tokens'] = min($limit, $data['tokens'] + (($now - $data['last_update']) * $refillRate));
+                $data['last_update'] = $now;
 
-        $allowed = $data['tokens'] >= $cost;
+                $allowed = $data['tokens'] >= $cost;
 
-        if ($allowed) {
-            $data['tokens'] -= $cost;
-        }
+                if ($allowed) {
+                    $data['tokens'] -= $cost;
+                }
 
-        $cacher->set($key, $data, $window);
+                $cacher->set($key, $data, $window);
 
-        $secondsToFull = (int) ceil(($limit - $data['tokens']) / $refillRate);
+                $secondsToFull = (int) ceil(($limit - $data['tokens']) / $refillRate);
 
-        return [
-            'allowed' => $allowed,
-            'limit' => $limit,
-            'remaining' => (int) $data['tokens'],
-            'reset' => $now + $secondsToFull,
-        ];
+                return [
+                    'allowed' => $allowed,
+                    'limit' => $limit,
+                    'remaining' => (int) $data['tokens'],
+                    'reset' => $now + $secondsToFull,
+                ];
+            },
+            wait: 1
+        );
     }
 }

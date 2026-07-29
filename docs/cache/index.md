@@ -50,8 +50,8 @@ Handler-specific options are documented below.
 ### Example configuration
 
 ```php
-use Fyre\Cache\Handlers\FileCacher;
-use Fyre\Cache\Handlers\RedisCacher;
+use Fyre\Cache\Handlers\File\FileCacher;
+use Fyre\Cache\Handlers\Redis\RedisCacher;
 
 return [
     'Cache' => [
@@ -78,13 +78,13 @@ The options below are specific to the built-in handlers under `Fyre\Cache\Handle
 
 ### Array handler
 
-Caches values in an in-memory array for the current PHP process (`Fyre\Cache\Handlers\ArrayCacher`).
+Caches values in an in-memory array for the current PHP process (`Fyre\Cache\Handlers\Array\ArrayCacher`).
 
 - No handler-specific options.
 
 ### File handler
 
-Caches values on the filesystem (`Fyre\Cache\Handlers\FileCacher`).
+Caches values on the filesystem (`Fyre\Cache\Handlers\File\FileCacher`).
 
 Make sure the configured `path` exists or can be created, and is writable by the PHP process.
 
@@ -95,7 +95,7 @@ Options:
 
 ### Redis handler
 
-Caches values using Redis (`Fyre\Cache\Handlers\RedisCacher`).
+Caches values using Redis (`Fyre\Cache\Handlers\Redis\RedisCacher`).
 
 Requires `ext-redis` and a reachable Redis server.
 
@@ -113,7 +113,7 @@ Options:
 
 ### Memcached handler
 
-Caches values using Memcached (`Fyre\Cache\Handlers\MemcachedCacher`).
+Caches values using Memcached (`Fyre\Cache\Handlers\Memcached\MemcachedCacher`).
 
 Requires `ext-memcached` and a reachable Memcached server.
 
@@ -125,7 +125,7 @@ Options:
 
 ### Null handler
 
-No-op handler (`Fyre\Cache\Handlers\NullCacher`). Reads always return the provided default, writes are ignored, and `increment()` / `decrement()` return the passed amount rather than persisting a counter.
+No-op handler (`Fyre\Cache\Handlers\Null\NullCacher`). Reads always return the provided default, writes are ignored, and `increment()` / `decrement()` return the passed amount rather than persisting a counter.
 
 - No handler-specific options.
 
@@ -221,7 +221,7 @@ Arguments:
 - `$options` (`array<string, mixed>`): cache options including `className`.
 
 ```php
-use Fyre\Cache\Handlers\ArrayCacher;
+use Fyre\Cache\Handlers\Array\ArrayCacher;
 
 $cache = $caches->build([
     'className' => ArrayCacher::class,
@@ -254,7 +254,7 @@ Arguments:
 - `$options` (`array<string, mixed>`): cache options for the handler.
 
 ```php
-use Fyre\Cache\Handlers\FileCacher;
+use Fyre\Cache\Handlers\File\FileCacher;
 
 $caches->setConfig('local', [
     'className' => FileCacher::class,

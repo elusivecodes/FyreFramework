@@ -152,7 +152,7 @@ return [
 
 ```php
 use Fyre\Auth\Authenticators\SessionAuthenticator;
-use Fyre\Cache\Handlers\FileCacher;
+use Fyre\Cache\Handlers\File\FileCacher;
 use Fyre\DB\Handlers\Sqlite\SqliteConnection;
 use Fyre\Http\Session\Handlers\FileSessionHandler;
 use Fyre\Log\Handlers\FileLogger;

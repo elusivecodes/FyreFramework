@@ -5,7 +5,7 @@ namespace Tests\TestCase\DB\Schema\Postgres;
 
 use Fyre\Cache\CacheManager;
 use Fyre\Cache\Cacher;
-use Fyre\Cache\Handlers\FileCacher;
+use Fyre\Cache\Handlers\File\FileCacher;
 use Fyre\Core\Container;
 use Fyre\DB\Connection;
 use Fyre\DB\ConnectionManager;

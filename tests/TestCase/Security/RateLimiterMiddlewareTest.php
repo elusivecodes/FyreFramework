@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\Security;
 
 use Fyre\Cache\CacheManager;
-use Fyre\Cache\Handlers\FileCacher;
+use Fyre\Cache\Handlers\File\FileCacher;
 use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
