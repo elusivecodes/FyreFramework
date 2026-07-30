@@ -37,6 +37,7 @@
             <exclude>tests/TestCase/DB/Schema/Mysql</exclude>
             <exclude>tests/TestCase/DB/Schema/Postgres</exclude>
             <exclude>tests/TestCase/DB/Schema/Sqlite</exclude>
+            <exclude>tests/TestCase/Http/Client/ClientTest.php</exclude>
             <exclude>tests/TestCase/Http/Session/MariaDbTest.php</exclude>
             <exclude>tests/TestCase/Http/Session/MemcachedTest.php</exclude>
             <exclude>tests/TestCase/Http/Session/MysqlTest.php</exclude>
@@ -54,6 +55,7 @@
             <exclude>tests/TestCase/Queue/WorkerTest.php</exclude>
             <exclude>tests/TestCase/Router/RouteModelParamsTest.php</exclude>
             <exclude>tests/TestCase/TestSuite/Fixture</exclude>
+            <exclude>tests/TestCase/Utility/PdfTest.php</exclude>
             <exclude>tests/TestCase/View/Helpers/Form/Context/MariaDb</exclude>
             <exclude>tests/TestCase/View/Helpers/Form/Context/Mysql</exclude>
             <exclude>tests/TestCase/View/Helpers/Form/Context/Postgres</exclude>
@@ -122,6 +124,10 @@
         </testsuite>
         <testsuite name="smtp">
             <file>tests/TestCase/Mail/SmtpTest.php</file>
+        </testsuite>
+        <testsuite name="integration">
+            <file>tests/TestCase/Http/Client/ClientTest.php</file>
+            <file>tests/TestCase/Utility/PdfTest.php</file>
         </testsuite>
     </testsuites>
     <source>

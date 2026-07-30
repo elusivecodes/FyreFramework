@@ -31,8 +31,14 @@ jobs:
           extensions: intl, mbstring
           coverage: none
 
+      - name: Validate Composer configuration
+        run: composer validate --strict
+
       - name: Install dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Audit dependencies
+        run: composer audit --no-interaction
 
       - name: PHP-CS-Fixer (dry-run)
         run: composer cs
@@ -89,7 +95,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [sqlite, mariadb, mysql, postgres, redis, memcached, smtp]
+        suite: [sqlite, mariadb, mysql, postgres, redis, memcached, smtp, integration]
         include:
           - suite: sqlite
             service: ""
@@ -105,6 +111,8 @@ jobs:
             service: memcached
           - suite: smtp
             service: mailpit
+          - suite: integration
+            service: ""
     steps:
       - uses: actions/checkout@v6
 
