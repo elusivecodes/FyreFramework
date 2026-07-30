@@ -75,7 +75,7 @@ The static helpers are useful when you need to build strings before writing them
 
 Common constants:
 
-- Colors: `Console::BLACK`, `Console::RED`, `Console::GREEN`, `Console::YELLOW`, `Console::BLUE`, `Console::PURPLE`, `Console::CYAN`, `Console::WHITE`
+- Colors: `Console::BLACK`, `Console::DARKGRAY`, `Console::GRAY`, `Console::WHITE`, `Console::RED`, `Console::GREEN`, `Console::YELLOW`, `Console::BLUE`, `Console::PURPLE`, `Console::CYAN`
 - Styles: `Console::BOLD`, `Console::DIM`, `Console::ITALIC`, `Console::UNDERLINE`, `Console::FLASH`
 
 ## Streams and testing
@@ -123,6 +123,9 @@ Write a line to the output stream with a default informational color.
 
 Arguments:
 - `$text` (`string`): the text to write.
+- `$color` (`int`): the text color (default: `Console::BLUE`).
+- `$background` (`int|null`): the text background (default: `null`).
+- `$style` (`int`): the text style (default: `0`).
 
 ```php
 $io->info('Starting…');
@@ -134,6 +137,9 @@ Write a line to the output stream with a default success color.
 
 Arguments:
 - `$text` (`string`): the text to write.
+- `$color` (`int`): the text color (default: `Console::GREEN`).
+- `$background` (`int|null`): the text background (default: `null`).
+- `$style` (`int`): the text style (default: `0`).
 
 ```php
 $io->success('Done');
@@ -145,6 +151,9 @@ Write a line to the output stream with a default warning color.
 
 Arguments:
 - `$text` (`string`): the text to write.
+- `$color` (`int`): the text color (default: `Console::YELLOW`).
+- `$background` (`int|null`): the text background (default: `null`).
+- `$style` (`int`): the text style (default: `0`).
 
 ```php
 $io->warning('This may take a while');
@@ -156,6 +165,9 @@ Write a line to the error stream. If the configured error stream is not a valid 
 
 Arguments:
 - `$text` (`string`): the text to write.
+- `$color` (`int`): the text color (default: `Console::RED`).
+- `$background` (`int|null`): the text background (default: `null`).
+- `$style` (`int`): the text style (default: `0`).
 
 ```php
 $io->error('Invalid option');
@@ -167,6 +179,9 @@ Write a line to the output stream with a dim default style.
 
 Arguments:
 - `$text` (`string`): the text to write.
+- `$color` (`int|null`): the text color (default: `null`).
+- `$background` (`int|null`): the text background (default: `null`).
+- `$style` (`int`): the text style (default: `Console::DIM`).
 
 ```php
 $io->comment('Use --help to list options.');
@@ -205,7 +220,7 @@ Prompt for a choice and return the selected option.
 
 Arguments:
 - `$text` (`string`): the prompt text.
-- `$options` (`array`): the options (list of choices, or an associative array of `choice => description`).
+- `$options` (`array<int|string>`): the options (list of choices, or an associative array of `choice => description`).
 - `$default` (`int|string|null`): the default choice when the user submits an empty response or enters an unknown option.
 
 When `$options` is associative, the descriptions are displayed to the user, but the returned value is still the selected key.
@@ -324,6 +339,7 @@ $io = new Console($input, $output, $error);
 A few behaviors are worth keeping in mind:
 
 - `choice()` compares user input case-insensitively and returns the default when no match is found.
+- `choice()` preserves the original string or integer type of the selected option.
 - `confirm()` returns `true` only when the user selects `y`.
 - `input()` returns an empty string when no input stream is available.
 - `progress(null)` clears the current indicator.

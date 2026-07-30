@@ -18,6 +18,7 @@ use PHPUnit\Framework\TestCase;
 use Tests\Mock\Commands\ArgumentsCommand;
 use Tests\Mock\Commands\BoolOptionsCommand;
 use Tests\Mock\Commands\OptionsCommand;
+use Tests\Mock\Commands\StringOptionsCommand;
 use Tests\Mock\Commands\TestCommand;
 use Tests\Mock\Commands\TypeOptionsCommand;
 
@@ -87,6 +88,13 @@ final class CommandRunnerTest extends TestCase
                         ],
                     ],
                     'className' => OptionsCommand::class,
+                ],
+                'string_options' => [
+                    'description' => '',
+                    'options' => [
+                        'value' => 'Please enter a value',
+                    ],
+                    'className' => StringOptionsCommand::class,
                 ],
                 'tester' => [
                     'description' => 'This is a test command.',
@@ -186,14 +194,6 @@ final class CommandRunnerTest extends TestCase
         );
     }
 
-    public function testHandleCommandArgumentBoolMultipleOptions(): void
-    {
-        $this->assertSame(
-            0,
-            $this->runner->handle(['', 'bool_options', '--test', '--other', 'value'])
-        );
-    }
-
     public function testHandleCommandArgumentBoolOption(): void
     {
         $this->assertSame(
@@ -207,6 +207,21 @@ final class CommandRunnerTest extends TestCase
         $this->assertSame(
             0,
             $this->runner->handle(['', 'bool_options', '--test', 'y'])
+        );
+    }
+
+    public function testHandleCommandArgumentInvalidOption(): void
+    {
+        $this->assertSame(
+            Command::CODE_ERROR,
+            $this->runner->handle(['', 'bool_options', '--test', '--other', 'value'])
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;31mInvalid option: other\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
         );
     }
 
@@ -362,6 +377,24 @@ final class CommandRunnerTest extends TestCase
 
         $this->assertSame(
             "\033[0;33mPlease enter a value (value)\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
+    public function testHandleCommandStringOption(): void
+    {
+        fwrite($this->input, 'value'.PHP_EOL);
+        rewind($this->input);
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->runner->handle(['', 'string_options'])
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;33mPlease enter a value\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
     }

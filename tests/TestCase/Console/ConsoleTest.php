@@ -68,10 +68,34 @@ final class ConsoleTest extends TestCase
 
         $this->assertSame(
             "\033[0;33mSelect one\033[0m".PHP_EOL.
-            "\033[0;36m  [a]  \033[0m\033[2;37mTest 1\033[0m".PHP_EOL.
-            "\033[0;36m  [b]  \033[0m\033[2;37mTest 2\033[0m".PHP_EOL.
-            "\033[0;36m  [c]  \033[0m\033[2;37mTest 3\033[0m".PHP_EOL.
+            "\033[0;36m  [a]  \033[0m\033[2;97mTest 1\033[0m".PHP_EOL.
+            "\033[0;36m  [b]  \033[0m\033[2;97mTest 2\033[0m".PHP_EOL.
+            "\033[0;36m  [c]  \033[0m\033[2;97mTest 3\033[0m".PHP_EOL.
             "\033[0;33mChoice\033[0m (\033[1;36ma\033[0m/\033[2;36mb\033[0m/\033[2;36mc\033[0m)".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
+    public function testChoiceAssocInteger(): void
+    {
+        fwrite($this->input, '2'.PHP_EOL);
+        rewind($this->input);
+
+        $this->assertSame(
+            2,
+            $this->console->choice('Select one', [
+                1 => 'Test 1',
+                2 => 'Test 2',
+            ], 1)
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;33mSelect one\033[0m".PHP_EOL.
+            "\033[0;36m  [1]  \033[0m\033[2;97mTest 1\033[0m".PHP_EOL.
+            "\033[0;36m  [2]  \033[0m\033[2;97mTest 2\033[0m".PHP_EOL.
+            "\033[0;33mChoice\033[0m (\033[1;36m1\033[0m/\033[2;36m2\033[0m)".PHP_EOL,
             stream_get_contents($this->output)
         );
     }
@@ -102,7 +126,7 @@ final class ConsoleTest extends TestCase
         rewind($this->output);
 
         $this->assertSame(
-            "\033[2;37mTest\033[0m".PHP_EOL,
+            "\033[2;97mTest\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
     }
@@ -275,7 +299,7 @@ final class ConsoleTest extends TestCase
     public function testStyleBackground(): void
     {
         $this->assertSame(
-            "\033[0;37;44mTest\033[0m",
+            "\033[0;97;44mTest\033[0m",
             Console::style('Test', background: Console::BLUE)
         );
     }
@@ -283,7 +307,7 @@ final class ConsoleTest extends TestCase
     public function testStyleBold(): void
     {
         $this->assertSame(
-            "\033[1;37mTest\033[0m",
+            "\033[1;97mTest\033[0m",
             Console::style('Test', style: Console::BOLD)
         );
     }
@@ -296,10 +320,18 @@ final class ConsoleTest extends TestCase
         );
     }
 
+    public function testStyleDarkGray(): void
+    {
+        $this->assertSame(
+            "\033[0;90mTest\033[0m",
+            Console::style('Test', Console::DARKGRAY)
+        );
+    }
+
     public function testStyleDim(): void
     {
         $this->assertSame(
-            "\033[2;37mTest\033[0m",
+            "\033[2;97mTest\033[0m",
             Console::style('Test', style: Console::DIM)
         );
     }
@@ -307,15 +339,23 @@ final class ConsoleTest extends TestCase
     public function testStyleFlash(): void
     {
         $this->assertSame(
-            "\033[5;37mTest\033[0m",
+            "\033[5;97mTest\033[0m",
             Console::style('Test', style: Console::FLASH)
+        );
+    }
+
+    public function testStyleGray(): void
+    {
+        $this->assertSame(
+            "\033[0;37mTest\033[0m",
+            Console::style('Test', Console::GRAY)
         );
     }
 
     public function testStyleItalic(): void
     {
         $this->assertSame(
-            "\033[3;37mTest\033[0m",
+            "\033[3;97mTest\033[0m",
             Console::style('Test', style: Console::ITALIC)
         );
     }
@@ -323,8 +363,16 @@ final class ConsoleTest extends TestCase
     public function testStyleUnderline(): void
     {
         $this->assertSame(
-            "\033[4;37mTest\033[0m",
+            "\033[4;97mTest\033[0m",
             Console::style('Test', style: Console::UNDERLINE)
+        );
+    }
+
+    public function testStyleWhite(): void
+    {
+        $this->assertSame(
+            "\033[0;97mTest\033[0m",
+            Console::style('Test', Console::WHITE)
         );
     }
 

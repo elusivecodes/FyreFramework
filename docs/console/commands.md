@@ -56,6 +56,7 @@ Command input follows a few simple rules:
 - `--name value` and `--name=value` are both supported
 - options without a value are treated as `true`
 - `-o value` is supported when the option key is a single character
+- unknown named options produce an error
 - positional values are matched to option keys in the order the command defines them
 
 For example, `db:rollback default 2 --steps 5` resolves as `db = default`, `batches = 2`, `steps = 5`.
@@ -169,6 +170,7 @@ Common generators:
 - `make:cell_template` - generate a cell template
 - `make:element` - generate an element template
 - `make:template` - generate a template
+- `make:test` - generate a test case
 
 Examples:
 
@@ -212,13 +214,6 @@ use Fyre\Console\Console;
 
 class ClearCacheCommand extends Command
 {
-    public function __construct(
-        Console $io,
-        protected CacheManager $cacheManager,
-    ) {
-        parent::__construct($io);
-    }
-
     protected string|null $alias = 'app:clear-cache';
 
     protected string $description = 'Delete a cache key.';
@@ -238,6 +233,13 @@ class ClearCacheCommand extends Command
             'default' => false,
         ],
     ];
+
+    public function __construct(
+        Console $io,
+        protected CacheManager $cacheManager,
+    ) {
+        parent::__construct($io);
+    }
 
     public function run(string $cache, string $key, bool $force): int
     {
@@ -310,7 +312,7 @@ Run a command directly by alias.
 
 Arguments:
 - `$alias` (`string`): the command alias.
-- `$arguments` (`array<string|true>`): parsed option and argument values.
+- `$arguments` (`array<array-key, mixed>`): positional or named option values.
 
 ```php
 $exitCode = $commandRunner->run('db:migrate', [
@@ -342,11 +344,12 @@ $commandRunner->addNamespace('App\Commands');
 
 A few practical details are worth keeping in mind:
 
-- long options support both `--db default` and `--db=default`
-- positional arguments follow the option order defined by the command
-- `clear()` also removes registered namespaces, so add them again before rediscovering commands
-- `queue:worker` requires process forking (`ext-pcntl`)
-- `make:*` commands do not overwrite existing files
+- Long options support both `--db default` and `--db=default`.
+- Unknown named options return an error instead of being treated as positional values.
+- Positional arguments follow the option order defined by the command.
+- `clear()` also removes registered namespaces, so add them again before rediscovering commands.
+- `queue:worker` requires process forking (`ext-pcntl`).
+- `make:*` commands do not overwrite existing files unless you pass `--force`.
 
 ## Related
 

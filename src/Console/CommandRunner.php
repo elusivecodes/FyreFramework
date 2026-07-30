@@ -15,8 +15,6 @@ use Fyre\Utility\Inflector;
 use ReflectionClass;
 use RegexIterator;
 
-use function array_diff_key;
-use function array_intersect_key;
 use function array_is_list;
 use function array_key_exists;
 use function array_keys;
@@ -25,6 +23,7 @@ use function implode;
 use function in_array;
 use function is_array;
 use function is_bool;
+use function is_int;
 use function is_subclass_of;
 use function ksort;
 use function method_exists;
@@ -150,7 +149,7 @@ class CommandRunner
      * Runs a command.
      *
      * @param string $alias The command alias.
-     * @param array<string|true> $arguments The arguments.
+     * @param array<array-key, mixed> $arguments The arguments.
      * @return int The exit code.
      */
     public function run(string $alias, array $arguments = []): int
@@ -181,8 +180,27 @@ class CommandRunner
 
         $options = [];
 
-        $namedArguments = array_intersect_key($arguments, $command['options']);
-        $listArguments = array_diff_key($arguments, $command['options']);
+        $namedArguments = [];
+        $listArguments = [];
+
+        foreach ($arguments as $key => $value) {
+            if (is_int($key)) {
+                $listArguments[] = $value;
+
+                continue;
+            }
+
+            if (!array_key_exists($key, $command['options'])) {
+                $this->io->error(sprintf(
+                    'Invalid option: %s',
+                    $key
+                ));
+
+                return Command::CODE_ERROR;
+            }
+
+            $namedArguments[$key] = $value;
+        }
 
         foreach ($command['options'] as $key => $data) {
             if (array_key_exists($key, $namedArguments)) {
@@ -194,7 +212,10 @@ class CommandRunner
             }
 
             if (!is_array($data)) {
-                $data = ['text' => (string) $data];
+                $data = [
+                    'text' => (string) $data,
+                    'required' => true,
+                ];
             }
 
             $data['text'] ??= '';

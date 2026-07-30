@@ -53,13 +53,13 @@ class Console
 
     public const CYAN = 36;
 
-    public const DARKGRAY = 100;
+    public const DARKGRAY = 90;
 
     public const DIM = 2;
 
     public const FLASH = 5;
 
-    public const GRAY = 47;
+    public const GRAY = 37;
 
     public const GREEN = 32;
 
@@ -71,7 +71,7 @@ class Console
 
     public const UNDERLINE = 4;
 
-    public const WHITE = 37;
+    public const WHITE = 97;
 
     public const YELLOW = 33;
 
@@ -195,7 +195,7 @@ class Console
      * displayed as descriptions.
      *
      * @param string $text The prompt text.
-     * @param array<string> $options The options.
+     * @param array<int|string> $options The options.
      * @param int|string|null $default The default option.
      * @return int|string|null The selected option.
      */
@@ -209,13 +209,13 @@ class Console
 
             $maxLength = 0;
             foreach ($optionKeys as $option) {
-                $maxLength = max($maxLength, strlen($option));
+                $maxLength = max($maxLength, strlen((string) $option));
             }
 
             foreach ($options as $option => $description) {
                 $key = str_pad('  ['.$option.']', $maxLength + 6);
                 $key = static::style($key, static::CYAN);
-                $value = static::style($description, style: static::DIM);
+                $value = static::style((string) $description, style: static::DIM);
 
                 $this->write($key.$value);
             }
@@ -233,7 +233,7 @@ class Console
                 $style = static::DIM;
             }
 
-            $optionList[] = static::style($option, static::CYAN, style: $style);
+            $optionList[] = static::style((string) $option, static::CYAN, style: $style);
         }
 
         $this->write($prefix.' ('.implode('/', $optionList).')');
