@@ -107,7 +107,7 @@ class MysqlColumn extends Column
                     $this->type = 'tinyblob';
                 } else if ($this->length <= 65535) {
                     $this->type = 'blob';
-                } else if ($this->length <= 16777215) {
+                } else if ($this->length <= 16_777_215) {
                     $this->type = 'mediumblob';
                 } else {
                     $this->type = 'longblob';
@@ -172,7 +172,7 @@ class MysqlColumn extends Column
                     $this->type = 'tinytext';
                 } else if ($this->length <= 65535) {
                     $this->type = 'text';
-                } else if ($this->length <= 16777215) {
+                } else if ($this->length <= 16_777_215) {
                     $this->type = 'mediumtext';
                 } else {
                     $this->type = 'longtext';
@@ -227,11 +227,11 @@ class MysqlColumn extends Column
                 break;
             case 'mediumblob':
             case 'mediumtext':
-                $this->length = 16777215;
+                $this->length = 16_777_215;
                 break;
             case 'longblob':
             case 'longtext':
-                $this->length = 4294967295;
+                $this->length = 4_294_967_295;
                 break;
             case 'binary':
             case 'varbinary':

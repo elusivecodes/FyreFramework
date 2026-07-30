@@ -701,14 +701,14 @@ trait AddColumnTestTrait
 
         $this->forge->addColumn('test', 'value', [
             'type' => TextType::class,
-            'length' => 4294967295,
+            'length' => 4_294_967_295,
         ]);
 
         $this->assertSame(
             [
                 'name' => 'value',
                 'type' => 'longtext',
-                'length' => 4294967295,
+                'length' => 4_294_967_295,
                 'precision' => null,
                 'scale' => null,
                 'fractionalSeconds' => null,
@@ -775,14 +775,14 @@ trait AddColumnTestTrait
 
         $this->forge->addColumn('test', 'value', [
             'type' => TextType::class,
-            'length' => 16777215,
+            'length' => 16_777_215,
         ]);
 
         $this->assertSame(
             [
                 'name' => 'value',
                 'type' => 'mediumtext',
-                'length' => 16777215,
+                'length' => 16_777_215,
                 'precision' => null,
                 'scale' => null,
                 'fractionalSeconds' => null,

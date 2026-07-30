@@ -36,9 +36,9 @@ trait DbSchemaTrait
     protected const MAX_VALUES = [
         'tinyint' => 127,
         'smallint' => 32767,
-        'mediumint' => 8388607,
-        'int' => 2147483647,
-        'integer' => 2147483647,
+        'mediumint' => 8_388_607,
+        'int' => 2_147_483_647,
+        'integer' => 2_147_483_647,
     ];
 
     /**

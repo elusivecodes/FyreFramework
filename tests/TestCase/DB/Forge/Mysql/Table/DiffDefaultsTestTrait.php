@@ -205,7 +205,7 @@ trait DiffDefaultsTestTrait
         $this->forge->createTable('test', [
             'value' => [
                 'type' => TextType::class,
-                'length' => 4294967295,
+                'length' => 4_294_967_295,
             ],
         ]);
 
@@ -216,7 +216,7 @@ trait DiffDefaultsTestTrait
                 ->clear()
                 ->addColumn('value', [
                     'type' => TextType::class,
-                    'length' => 4294967295,
+                    'length' => 4_294_967_295,
                 ])
                 ->sql()
         );
@@ -249,7 +249,7 @@ trait DiffDefaultsTestTrait
         $this->forge->createTable('test', [
             'value' => [
                 'type' => TextType::class,
-                'length' => 16777215,
+                'length' => 16_777_215,
             ],
         ]);
 
@@ -260,7 +260,7 @@ trait DiffDefaultsTestTrait
                 ->clear()
                 ->addColumn('value', [
                     'type' => TextType::class,
-                    'length' => 16777215,
+                    'length' => 16_777_215,
                 ])
                 ->sql()
         );

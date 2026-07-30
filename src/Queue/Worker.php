@@ -40,7 +40,7 @@ class Worker
         'maxJobs' => 0,
         'maxRuntime' => 0,
         'rest' => 10000,
-        'sleep' => 1000000,
+        'sleep' => 1_000_000,
     ];
 
     /**

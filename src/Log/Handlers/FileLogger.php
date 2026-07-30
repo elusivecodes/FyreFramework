@@ -50,7 +50,7 @@ class FileLogger extends Logger
         'file' => null,
         'suffix' => null,
         'extension' => 'log',
-        'maxSize' => 1048576,
+        'maxSize' => 1_048_576,
         'mask' => null,
     ];
 
