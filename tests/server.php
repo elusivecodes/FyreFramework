@@ -129,6 +129,7 @@ switch ($_SERVER['SCRIPT_NAME']) {
             'authorization' => $_SERVER['HTTP_AUTHORIZATION'] ?? '',
             'proxyAuthorization' => $_SERVER['HTTP_PROXY_AUTHORIZATION'] ?? '',
             'referer' => $_SERVER['HTTP_REFERER'] ?? '',
+            'apiKey' => $_SERVER['HTTP_X_API_KEY'] ?? '',
             'cookies' => $_COOKIE,
         ]);
         break;

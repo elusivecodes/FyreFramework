@@ -21,16 +21,21 @@ use Override;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
+use RuntimeException;
 use Throwable;
 
 use function array_intersect_key;
+use function array_merge;
 use function array_merge_recursive;
 use function array_replace_recursive;
+use function array_unique;
 use function in_array;
 use function is_string;
 use function parse_str;
 use function sprintf;
+use function strlen;
 use function trim;
 
 /**
@@ -63,6 +68,8 @@ class Client implements ClientInterface
         'protocolVersion' => '1.1',
         'timeout' => 30,
         'maxRedirects' => 0,
+        'maxRedirectBodySize' => 16_777_216,
+        'sensitiveHeaders' => [],
     ];
 
     protected static MockHandler|null $mockHandler = null;
@@ -115,6 +122,10 @@ class Client implements ClientInterface
 
         if ($this->config['maxRedirects'] < 0) {
             throw new InvalidArgumentException('Client option `maxRedirects` must not be negative.');
+        }
+
+        if ($this->config['maxRedirectBodySize'] < 0) {
+            throw new InvalidArgumentException('Client option `maxRedirectBodySize` must not be negative.');
         }
 
         $this->cookieJar = new CookieJar();
@@ -428,6 +439,10 @@ class Client implements ClientInterface
             throw new InvalidArgumentException('Client option `maxRedirects` must not be negative.');
         }
 
+        if (isset($options['maxRedirectBodySize']) && $options['maxRedirectBodySize'] < 0) {
+            throw new InvalidArgumentException('Client option `maxRedirectBodySize` must not be negative.');
+        }
+
         if (!$request->hasHeader('Cookie')) {
             $cookieHeader = $this->cookieJar->getHeader($request->getUri());
 
@@ -437,6 +452,27 @@ class Client implements ClientInterface
         }
 
         $redirects = (int) ($options['maxRedirects'] ?? 0);
+
+        $body = $request->getBody();
+
+        if (
+            $redirects > 0 &&
+            !$body->isSeekable()
+        ) {
+            try {
+                $request = static::bufferBody(
+                    $body,
+                    $options['maxRedirectBodySize']
+                ) |> $request->withBody(...);
+            } catch (Throwable $e) {
+                throw new RequestException(
+                    'Request body cannot be buffered for redirect replay.',
+                    $request,
+                    previous: $e
+                );
+            }
+        }
+
         $visited = [];
 
         $handler = static::$mockHandler ?? $this->handler;
@@ -476,7 +512,12 @@ class Client implements ClientInterface
             unset($options['body'], $options['headers'], $options['method']);
 
             if (static::isCrossOrigin($uri, $redirectUri)) {
-                foreach (['Authorization', 'Proxy-Authorization', 'Referer'] as $header) {
+                $sensitiveHeaders = array_merge(
+                    ['Authorization', 'Proxy-Authorization', 'Referer'],
+                    $options['sensitiveHeaders']
+                ) |> array_unique(...);
+
+                foreach ($sensitiveHeaders as $header) {
                     $request = $request->withoutHeader($header);
                 }
 
@@ -493,6 +534,46 @@ class Client implements ClientInterface
         }
 
         return $response;
+    }
+
+    /**
+     * Copies a request body into a seekable Stream.
+     *
+     * @param StreamInterface $body The request body.
+     * @param int $maxSize The maximum body size.
+     * @return Stream The buffered Stream.
+     */
+    protected static function bufferBody(StreamInterface $body, int $maxSize): Stream
+    {
+        $buffer = Stream::createFromString();
+        $size = 0;
+
+        do {
+            $chunk = $body->read(8192);
+
+            if ($chunk === '') {
+                if ($body->eof()) {
+                    break;
+                }
+
+                throw new RuntimeException('Request body could not be read for redirect replay.');
+            }
+
+            $chunkSize = strlen($chunk);
+            $size += $chunkSize;
+
+            if ($size > $maxSize) {
+                throw new RuntimeException('Request body exceeds the redirect replay size limit.');
+            }
+
+            if ($buffer->write($chunk) !== $chunkSize) {
+                throw new RuntimeException('Request body could not be buffered for redirect replay.');
+            }
+        } while (!$body->eof());
+
+        $buffer->rewind();
+
+        return $buffer;
     }
 
     /**

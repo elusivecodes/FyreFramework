@@ -11,14 +11,22 @@ use Fyre\Http\Client\Exceptions\RequestException;
 use Fyre\Http\Client\Request;
 use Fyre\Http\Client\Response;
 use Fyre\Http\Cookie\Cookie;
+use Fyre\Http\Stream;
 use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
 
 use function class_uses;
 use function exec;
+use function fclose;
 use function fopen;
+use function fwrite;
 use function sleep;
+use function stream_socket_pair;
+
+use const STREAM_IPPROTO_IP;
+use const STREAM_PF_UNIX;
+use const STREAM_SOCK_STREAM;
 
 final class ClientTest extends TestCase
 {
@@ -302,6 +310,16 @@ final class ClientTest extends TestCase
         );
     }
 
+    public function testInvalidMaxRedirectBodySize(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Client option `maxRedirectBodySize` must not be negative.');
+
+        new Client([
+            'maxRedirectBodySize' => -1,
+        ]);
+    }
+
     public function testInvalidMaxRedirects(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -309,6 +327,16 @@ final class ClientTest extends TestCase
 
         new Client([
             'maxRedirects' => -1,
+        ]);
+    }
+
+    public function testInvalidRequestMaxRedirectBodySize(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Client option `maxRedirectBodySize` must not be negative.');
+
+        new Client()->send(new Request('https://example.com'), [
+            'maxRedirectBodySize' => -1,
         ]);
     }
 
@@ -592,6 +620,39 @@ final class ClientTest extends TestCase
         );
     }
 
+    public function testRedirectBodySizeLimit(): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Request body cannot be buffered for redirect replay.');
+
+        $sockets = stream_socket_pair(
+            STREAM_PF_UNIX,
+            STREAM_SOCK_STREAM,
+            STREAM_IPPROTO_IP
+        );
+
+        $this->assertNotFalse($sockets);
+
+        [$reader, $writer] = $sockets;
+
+        fwrite($writer, 'value');
+        fclose($writer);
+
+        $body = new Stream($reader);
+        $request = new Request(
+            'http://localhost:8888/redirect-method?status=307',
+            [
+                'method' => 'POST',
+                'body' => $body,
+            ]
+        );
+
+        new Client()->send($request, [
+            'maxRedirects' => 1,
+            'maxRedirectBodySize' => 4,
+        ]);
+    }
+
     public function testRedirectInvalidLocation(): void
     {
         $this->expectException(RequestException::class);
@@ -661,6 +722,42 @@ final class ClientTest extends TestCase
         }
     }
 
+    public function testRedirectNonSeekableBody(): void
+    {
+        $sockets = stream_socket_pair(
+            STREAM_PF_UNIX,
+            STREAM_SOCK_STREAM,
+            STREAM_IPPROTO_IP
+        );
+
+        $this->assertNotFalse($sockets);
+
+        [$reader, $writer] = $sockets;
+
+        fwrite($writer, 'value');
+        fclose($writer);
+
+        $body = new Stream($reader);
+        $request = new Request(
+            'http://localhost:8888/redirect-method?status=307',
+            [
+                'method' => 'POST',
+                'body' => $body,
+            ]
+        );
+
+        $response = new Client()->send($request, [
+            'maxRedirects' => 1,
+        ]);
+
+        $body->close();
+
+        $this->assertSame(
+            'value',
+            $response->getJson()['body']
+        );
+    }
+
     public function testRedirectRebuildsCookies(): void
     {
         $client = new Client();
@@ -698,10 +795,15 @@ final class ClientTest extends TestCase
 
         $response = $client->get('http://localhost:8888/redirect-cross-origin', options: [
             'maxRedirects' => 1,
+            'sensitiveHeaders' => [
+                'X-Api-Key',
+                'Authorization',
+            ],
             'headers' => [
                 'Authorization' => 'Bearer secret',
                 'Proxy-Authorization' => 'Basic secret',
                 'Referer' => 'http://localhost:8888/private',
+                'X-Api-Key' => 'secret',
             ],
         ]);
 
@@ -720,6 +822,11 @@ final class ClientTest extends TestCase
         $this->assertSame(
             '',
             $data['referer']
+        );
+
+        $this->assertSame(
+            '',
+            $data['apiKey']
         );
 
         $this->assertSame(
