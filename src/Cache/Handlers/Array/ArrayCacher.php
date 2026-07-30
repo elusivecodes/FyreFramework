@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Fyre\Cache\Handlers\Array;
 
-use ArrayObject;
 use DateInterval;
 use Fyre\Cache\Cacher;
 use Fyre\Cache\Lock;
@@ -24,21 +23,9 @@ class ArrayCacher extends Cacher
     protected array $cache = [];
 
     /**
-     * @var ArrayObject<string, array{expires: int, owner: string}>
+     * @var array<string, array{expires: int, owner: string}>
      */
-    protected ArrayObject $locks;
-
-    /**
-     * Constructs an ArrayCacher.
-     *
-     * @param array<string, mixed> $options The Cacher options.
-     */
-    public function __construct(array $options = [])
-    {
-        parent::__construct($options);
-
-        $this->locks = new ArrayObject();
-    }
+    protected array $locks = [];
 
     /**
      * {@inheritDoc}

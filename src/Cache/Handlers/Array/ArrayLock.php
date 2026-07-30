@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Fyre\Cache\Handlers\Array;
 
-use ArrayObject;
 use Fyre\Cache\Lock;
 
 use function time;
@@ -14,21 +13,17 @@ use function time;
 class ArrayLock extends Lock
 {
     /**
-     * @var ArrayObject<string, array{expires: int, owner: string}>
-     */
-    protected ArrayObject $locks;
-
-    /**
      * Constructs an ArrayLock.
      *
-     * @param ArrayObject<string, array{expires: int, owner: string}> $locks The shared lock data.
+     * @param array<string, array{expires: int, owner: string}> $locks The shared lock data.
      * @param string $key The lock key.
      * @param int $expires The lock lifetime in seconds.
      */
-    public function __construct(ArrayObject $locks, string $key, int $expires = 30)
-    {
-        $this->locks = $locks;
-
+    public function __construct(
+        protected array &$locks,
+        string $key,
+        int $expires = 30
+    ) {
         parent::__construct($key, $expires);
     }
 
@@ -37,9 +32,10 @@ class ArrayLock extends Lock
      */
     protected function acquireLock(): bool
     {
-        $lock = $this->locks[$this->key] ?? null;
-
-        if ($lock && $lock['expires'] > time()) {
+        if (
+            isset($this->locks[$this->key]) &&
+            $this->locks[$this->key]['expires'] > time()
+        ) {
             return false;
         }
 
@@ -56,12 +52,10 @@ class ArrayLock extends Lock
      */
     protected function refreshLock(): bool
     {
-        $lock = $this->locks[$this->key] ?? null;
-
         if (
-            !$lock ||
-            $lock['expires'] <= time() ||
-            $lock['owner'] !== $this->owner
+            !isset($this->locks[$this->key]) ||
+            $this->locks[$this->key]['expires'] <= time() ||
+            $this->locks[$this->key]['owner'] !== $this->owner
         ) {
             return false;
         }
@@ -76,12 +70,10 @@ class ArrayLock extends Lock
      */
     protected function releaseLock(): bool
     {
-        $lock = $this->locks[$this->key] ?? null;
-
         if (
-            !$lock ||
-            $lock['expires'] <= time() ||
-            $lock['owner'] !== $this->owner
+            !isset($this->locks[$this->key]) ||
+            $this->locks[$this->key]['expires'] <= time() ||
+            $this->locks[$this->key]['owner'] !== $this->owner
         ) {
             return false;
         }

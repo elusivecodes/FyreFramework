@@ -46,7 +46,7 @@ final class ArrayTest extends TestCase
                     'prefix' => 'prefix.',
                     'className' => ArrayCacher::class,
                 ],
-                'locks' => '[ArrayObject]',
+                'locks' => [],
             ],
             $data
         );
