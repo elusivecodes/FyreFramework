@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Fyre\Cache\Handlers\Array;
 
-use DateInterval;
 use Fyre\Cache\Cacher;
 use Fyre\Cache\Lock;
 use Override;
@@ -69,7 +68,7 @@ class ArrayCacher extends Cacher
 
         $data = $this->cache[$key];
 
-        if ($data['expires'] !== null && $data['expires'] < time()) {
+        if ($data['expires'] !== null && $data['expires'] <= time()) {
             unset($this->cache[$key]);
 
             return $default;
@@ -119,17 +118,14 @@ class ArrayCacher extends Cacher
      * {@inheritDoc}
      */
     #[Override]
-    public function set(string $key, mixed $data, DateInterval|int|null $expire = null): bool
+    protected function setValue(string $key, mixed $value, int|null $expires): bool
     {
-        $key = $this->prepareKey($key);
-        $expires = $this->getExpires($expire);
-
         if ($expires !== null) {
             $expires += time();
         }
 
         $this->cache[$key] = [
-            'data' => $data,
+            'data' => $value,
             'expires' => $expires,
         ];
 

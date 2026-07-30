@@ -213,7 +213,7 @@ Arguments:
 - `$callback` (`Closure`): Receives `(item, key)` and returns the mapped value.
 
 ```php
-$values = (new Collection([1, 2, 3]))
+$values = new Collection([1, 2, 3])
     ->map(static fn(int $value): int => $value * 10)
     ->toList(); // [10, 20, 30]
 ```
@@ -226,7 +226,7 @@ Arguments:
 - `$callback` (`Closure`): Receives `(item, key)` and returns `true` to keep the item.
 
 ```php
-$values = (new Collection([1, 2, 3, 4]))
+$values = new Collection([1, 2, 3, 4])
     ->filter(static fn(int $value): bool => $value % 2 === 0)
     ->toList(); // [2, 4]
 ```
@@ -239,7 +239,7 @@ Arguments:
 - `$callback` (`Closure`): Receives `(item, key)` and returns `true` to reject the item.
 
 ```php
-$values = (new Collection([1, 2, 3, 4]))
+$values = new Collection([1, 2, 3, 4])
     ->reject(static fn(int $value): bool => $value % 2 === 0)
     ->toList(); // [1, 3]
 ```
@@ -253,7 +253,7 @@ Arguments:
 
 ```php
 $sum = 0;
-(new Collection([1, 2, 3]))->each(static function(int $value) use (&$sum): void {
+new Collection([1, 2, 3])->each(static function(int $value) use (&$sum): void {
     $sum += $value;
 });
 ```
@@ -267,7 +267,7 @@ Arguments:
 - `$initial` (`mixed`): the initial accumulator value.
 
 ```php
-$sum = (new Collection([1, 2, 3]))
+$sum = new Collection([1, 2, 3])
     ->reduce(static fn(int $acc, int $value): int => $acc + $value, 0); // 6
 ```
 
@@ -280,7 +280,7 @@ Arguments:
 - `$preserveKeys` (`bool`): whether to preserve the original keys.
 
 ```php
-$chunks = (new Collection([1, 2, 3, 4, 5]))
+$chunks = new Collection([1, 2, 3, 4, 5])
     ->chunk(2)
     ->toList(); // [[1, 2], [3, 4], [5]]
 ```
@@ -293,7 +293,7 @@ Arguments:
 - `...$arrays` (`iterable[]`) The iterables to append.
 
 ```php
-$values = (new Collection([1, 2]))
+$values = new Collection([1, 2])
     ->merge([3, 4])
     ->toList(); // [1, 2, 3, 4]
 ```
@@ -306,7 +306,7 @@ Arguments:
 - `...$iterables` (`iterable[]`) The iterables to zip with.
 
 ```php
-$pairs = (new Collection(['a', 'b']))
+$pairs = new Collection(['a', 'b'])
     ->zip([1, 2])
     ->toList(); // [['a', 1], ['b', 2]]
 ```
@@ -321,7 +321,7 @@ Arguments:
 - `$length` (`int`): the number of items to skip.
 
 ```php
-$values = (new Collection([1, 2, 3, 4]))
+$values = new Collection([1, 2, 3, 4])
     ->skip(2)
     ->toList(); // [3, 4]
 ```
@@ -334,7 +334,7 @@ Arguments:
 - `$length` (`int`): the number of items to take.
 
 ```php
-$values = (new Collection([1, 2, 3, 4]))
+$values = new Collection([1, 2, 3, 4])
     ->take(2)
     ->toList(); // [1, 2]
 ```
@@ -347,7 +347,7 @@ Arguments:
 - `$callback` (`Closure`): Receives `(item, key)` and returns `true` to start yielding.
 
 ```php
-$values = (new Collection([1, 2, 3, 4]))
+$values = new Collection([1, 2, 3, 4])
     ->skipUntil(static fn(int $value): bool => $value >= 3)
     ->toList(); // [3, 4]
 ```
@@ -360,7 +360,7 @@ Arguments:
 - `$callback` (`Closure`): Receives `(item, key)` and returns `true` to keep skipping.
 
 ```php
-$values = (new Collection([1, 2, 3, 4]))
+$values = new Collection([1, 2, 3, 4])
     ->skipWhile(static fn(int $value): bool => $value < 3)
     ->toList(); // [3, 4]
 ```
@@ -373,7 +373,7 @@ Arguments:
 - `$callback` (`Closure`): Receives `(item, key)` and returns `true` to stop.
 
 ```php
-$values = (new Collection([1, 2, 3, 4]))
+$values = new Collection([1, 2, 3, 4])
     ->takeUntil(static fn(int $value): bool => $value >= 3)
     ->toList(); // [1, 2]
 ```
@@ -386,7 +386,7 @@ Arguments:
 - `$callback` (`Closure`): Receives `(item, key)` and returns `true` to keep taking.
 
 ```php
-$values = (new Collection([1, 2, 3, 4]))
+$values = new Collection([1, 2, 3, 4])
     ->takeWhile(static fn(int $value): bool => $value < 3)
     ->toList(); // [1, 2]
 ```
@@ -401,10 +401,10 @@ Arguments:
 - `$valuePath` (`array|Closure|string`): the value path (dot notation, key segments, or a callback).
 
 ```php
-$emails = (new Collection([
+$emails = new Collection([
     ['profile' => ['email' => 'a@example.com']],
     ['profile' => ['email' => 'b@example.com']],
-]))
+])
     ->extract('profile.email')
     ->toList();
 ```
@@ -417,10 +417,10 @@ Arguments:
 - `$keyPath` (`array|Closure|string`): the key path (dot notation, key segments, or a callback).
 
 ```php
-$byId = (new Collection([
+$byId = new Collection([
     ['id' => 10, 'name' => 'A'],
     ['id' => 11, 'name' => 'B'],
-]))
+])
     ->indexBy('id')
     ->toArray();
 ```
@@ -434,10 +434,10 @@ Arguments:
 - `$valuePath` (`array|Closure|string|null`): the value path (defaults to the whole item).
 
 ```php
-$names = (new Collection([
+$names = new Collection([
     ['id' => 10, 'name' => 'A'],
     ['id' => 11, 'name' => 'B'],
-]))
+])
     ->combine('id', 'name')
     ->toArray(); // [10 => 'A', 11 => 'B']
 ```
@@ -450,11 +450,11 @@ Arguments:
 - `$keyPath` (`array|Closure|string`): the key path.
 
 ```php
-$grouped = (new Collection([
+$grouped = new Collection([
     ['role' => 'admin', 'name' => 'A'],
     ['role' => 'user', 'name' => 'B'],
     ['role' => 'user', 'name' => 'C'],
-]))
+])
     ->groupBy('role')
     ->toArray();
 ```
@@ -467,11 +467,11 @@ Arguments:
 - `$keyPath` (`array|Closure|string`): the key path.
 
 ```php
-$counts = (new Collection([
+$counts = new Collection([
     ['role' => 'admin'],
     ['role' => 'user'],
     ['role' => 'user'],
-]))
+])
     ->countBy('role')
     ->toArray(); // ['admin' => 1, 'user' => 2]
 ```
@@ -486,7 +486,7 @@ Arguments:
 - `$callback` (`Closure`): Receives `(item, key)` and returns `true` to match.
 
 ```php
-$value = (new Collection([1, 2, 3]))
+$value = new Collection([1, 2, 3])
     ->find(static fn(int $value): bool => $value > 1); // 2
 ```
 
@@ -498,7 +498,7 @@ Arguments:
 - `$callback` (`Closure`): Receives `(item, key)` and returns `true` to match.
 
 ```php
-$value = (new Collection([1, 2, 3]))
+$value = new Collection([1, 2, 3])
     ->findLast(static fn(int $value): bool => $value > 1); // 3
 ```
 
@@ -510,7 +510,7 @@ Arguments:
 - `$callback` (`Closure`): Receives `(item, key)` and returns `true` for matches.
 
 ```php
-$ok = (new Collection([2, 4, 6]))
+$ok = new Collection([2, 4, 6])
     ->every(static fn(int $value): bool => $value % 2 === 0); // true
 ```
 
@@ -522,7 +522,7 @@ Arguments:
 - `$callback` (`Closure`): Receives `(item, key)` and returns `true` for matches.
 
 ```php
-$ok = (new Collection([1, 2, 3]))
+$ok = new Collection([1, 2, 3])
     ->some(static fn(int $value): bool => $value % 2 === 0); // true
 ```
 
@@ -534,7 +534,7 @@ Arguments:
 - `$callback` (`Closure`): Receives `(item, key)` and returns `true` for matches.
 
 ```php
-$ok = (new Collection([1, 2, 3]))
+$ok = new Collection([1, 2, 3])
     ->none(static fn(int $value): bool => $value < 0); // true
 ```
 
@@ -546,7 +546,7 @@ Arguments:
 - `$value` (`mixed`): the value to search for.
 
 ```php
-$ok = (new Collection([1, 2, 3]))->includes(2); // true
+$ok = new Collection([1, 2, 3])->includes(2); // true
 ```
 
 #### **Find the first key for a value** (`indexOf()`)
@@ -557,7 +557,7 @@ Arguments:
 - `$value` (`mixed`): the value to search for.
 
 ```php
-$key = (new Collection(['a' => 1, 'b' => 2]))->indexOf(2); // "b"
+$key = new Collection(['a' => 1, 'b' => 2])->indexOf(2); // "b"
 ```
 
 #### **Find the last key for a value** (`lastIndexOf()`)
@@ -568,7 +568,7 @@ Arguments:
 - `$value` (`mixed`): the value to search for.
 
 ```php
-$key = (new Collection([1, 2, 1]))->lastIndexOf(1); // 2
+$key = new Collection([1, 2, 1])->lastIndexOf(1); // 2
 ```
 
 ### Ordering and uniqueness
@@ -582,7 +582,7 @@ Arguments:
 - `$descending` (`bool`): whether to sort in descending order.
 
 ```php
-$values = (new Collection([3, 1, 2]))
+$values = new Collection([3, 1, 2])
     ->sort(Collection::SORT_NATURAL)
     ->toList(); // [1, 2, 3]
 ```
@@ -597,10 +597,10 @@ Arguments:
 - `$descending` (`bool`): whether to sort in descending order.
 
 ```php
-$values = (new Collection([
+$values = new Collection([
     ['id' => 2],
     ['id' => 1],
-]))
+])
     ->sortBy('id', Collection::SORT_NUMERIC)
     ->toList();
 ```
@@ -610,7 +610,7 @@ $values = (new Collection([
 Reverses the order of items.
 
 ```php
-$values = (new Collection([1, 2, 3]))
+$values = new Collection([1, 2, 3])
     ->reverse()
     ->toList(); // [3, 2, 1]
 ```
@@ -620,7 +620,7 @@ $values = (new Collection([1, 2, 3]))
 Randomizes item order.
 
 ```php
-$values = (new Collection([1, 2, 3]))->shuffle()->toList();
+$values = new Collection([1, 2, 3])->shuffle()->toList();
 ```
 
 #### **Return unique items** (`unique()`)
@@ -632,7 +632,7 @@ Arguments:
 - `$strict` (`bool`): whether to compare values strictly.
 
 ```php
-$values = (new Collection([1, '1', 2]))
+$values = new Collection([1, '1', 2])
     ->unique(null, true)
     ->toList(); // [1, "1", 2]
 ```
@@ -644,7 +644,7 @@ $values = (new Collection([1, '1', 2]))
 Yields the keys from the collection.
 
 ```php
-$keys = (new Collection(['a' => 1, 'b' => 2]))
+$keys = new Collection(['a' => 1, 'b' => 2])
     ->keys()
     ->toList(); // ["a", "b"]
 ```
@@ -654,7 +654,7 @@ $keys = (new Collection(['a' => 1, 'b' => 2]))
 Yields the values from the collection (re-indexed as a list when materialized via `toList()`).
 
 ```php
-$values = (new Collection(['a' => 1, 'b' => 2]))
+$values = new Collection(['a' => 1, 'b' => 2])
     ->values()
     ->toList(); // [1, 2]
 ```
@@ -664,7 +664,7 @@ $values = (new Collection(['a' => 1, 'b' => 2]))
 Swaps keys and values.
 
 ```php
-$flipped = (new Collection(['a' => 1, 'b' => 2]))
+$flipped = new Collection(['a' => 1, 'b' => 2])
     ->flip()
     ->toArray(); // [1 => "a", 2 => "b"]
 ```
@@ -679,7 +679,7 @@ Arguments:
 - `$valuePath` (`array|Closure|string|null`): the value path (defaults to the item itself).
 
 ```php
-$sum = (new Collection([1, 2, 3]))->sumOf(); // 6
+$sum = new Collection([1, 2, 3])->sumOf(); // 6
 ```
 
 #### **Average values** (`avg()`)
@@ -690,7 +690,7 @@ Arguments:
 - `$valuePath` (`array|Closure|string|null`): the value path (defaults to the item itself).
 
 ```php
-$avg = (new Collection([1, 2, 3]))->avg(); // 2.0
+$avg = new Collection([1, 2, 3])->avg(); // 2.0
 ```
 
 #### **Minimum value** (`min()`)
@@ -701,7 +701,7 @@ Arguments:
 - `$valuePath` (`array|Closure|string|null`): the value path (defaults to the item itself).
 
 ```php
-$min = (new Collection([3, 1, 2]))->min(); // 1
+$min = new Collection([3, 1, 2])->min(); // 1
 ```
 
 #### **Maximum value** (`max()`)
@@ -712,7 +712,7 @@ Arguments:
 - `$valuePath` (`array|Closure|string|null`): the value path (defaults to the item itself).
 
 ```php
-$max = (new Collection([3, 1, 2]))->max(); // 3
+$max = new Collection([3, 1, 2])->max(); // 3
 ```
 
 #### **Median value** (`median()`)
@@ -723,7 +723,7 @@ Arguments:
 - `$valuePath` (`array|Closure|string|null`): the value path (defaults to the item itself).
 
 ```php
-$median = (new Collection([1, 3, 2, 4]))->median(); // 2.5
+$median = new Collection([1, 3, 2, 4])->median(); // 2.5
 ```
 
 ### Nested structures
@@ -736,7 +736,7 @@ Arguments:
 - `$prefix` (`int|string|null`): a key prefix to prepend.
 
 ```php
-$flat = (new Collection(['a' => ['b' => 1]]))
+$flat = new Collection(['a' => ['b' => 1]])
     ->dot()
     ->toArray(); // ["a.b" => 1]
 ```
@@ -749,7 +749,7 @@ Arguments:
 - `$maxDepth` (`int`): the maximum depth to flatten.
 
 ```php
-$values = (new Collection([1, [2, [3]]]))
+$values = new Collection([1, [2, [3]]])
     ->flatten()
     ->toList(); // [1, 2, 3]
 ```
@@ -764,10 +764,10 @@ Arguments:
 - `$nestingKey` (`string`): the key used for nesting children (defaults to `'children'`).
 
 ```php
-$tree = (new Collection([
+$tree = new Collection([
     ['id' => 1, 'parent_id' => null, 'name' => 'Root'],
     ['id' => 2, 'parent_id' => 1, 'name' => 'Child'],
-]))
+])
     ->nest()
     ->toArray();
 ```
@@ -781,9 +781,9 @@ Arguments:
 - `$nestingKey` (`string`): the key used for nesting children (defaults to `'children'`).
 
 ```php
-$values = (new Collection([
+$values = new Collection([
     ['id' => 1, 'children' => [['id' => 2]]],
-]))
+])
     ->listNested('desc')
     ->toList();
 ```
@@ -799,9 +799,9 @@ Arguments:
 - `$nestingKey` (`string`): the key used for nesting children (defaults to `'children'`).
 
 ```php
-$labels = (new Collection([
+$labels = new Collection([
     ['id' => 1, 'children' => [['id' => 2]]],
-]))
+])
     ->printNested('id')
     ->toArray();
 ```
@@ -813,7 +813,7 @@ $labels = (new Collection([
 Returns the items in the collection as an array.
 
 ```php
-$array = (new Collection(['a' => 1]))->toArray();
+$array = new Collection(['a' => 1])->toArray();
 ```
 
 #### **Materialize as a list** (`toList()`)
@@ -821,7 +821,7 @@ $array = (new Collection(['a' => 1]))->toArray();
 Returns the values in the collection as a list (re-indexed numerically).
 
 ```php
-$list = (new Collection(['a' => 1, 'b' => 2]))->toList(); // [1, 2]
+$list = new Collection(['a' => 1, 'b' => 2])->toList(); // [1, 2]
 ```
 
 #### **Convert to JSON** (`toJson()`)
@@ -829,7 +829,7 @@ $list = (new Collection(['a' => 1, 'b' => 2]))->toList(); // [1, 2]
 Returns a JSON string representation of the collection.
 
 ```php
-$json = (new Collection(['a' => 1]))->toJson();
+$json = new Collection(['a' => 1])->toJson();
 ```
 
 #### **Cache computed values** (`cache()`)
@@ -855,7 +855,7 @@ $eager = Collection::range(1, 3)->collect();
 Returns the first value in the collection, or `null` if empty.
 
 ```php
-$first = (new Collection([1, 2, 3]))->first(); // 1
+$first = new Collection([1, 2, 3])->first(); // 1
 ```
 
 #### **Get the last value** (`last()`)
@@ -863,7 +863,7 @@ $first = (new Collection([1, 2, 3]))->first(); // 1
 Returns the last value in the collection, or `null` if empty.
 
 ```php
-$last = (new Collection([1, 2, 3]))->last(); // 3
+$last = new Collection([1, 2, 3])->last(); // 3
 ```
 
 #### **Check whether the collection is empty** (`isEmpty()`)
@@ -871,7 +871,7 @@ $last = (new Collection([1, 2, 3]))->last(); // 3
 Returns `true` if the collection has no items.
 
 ```php
-$ok = (new Collection([]))->isEmpty(); // true
+$ok = new Collection([])->isEmpty(); // true
 ```
 
 #### **Count items** (`count()`)
@@ -879,7 +879,7 @@ $ok = (new Collection([]))->isEmpty(); // true
 Counts all items in the collection.
 
 ```php
-$count = (new Collection([1, 2, 3]))->count(); // 3
+$count = new Collection([1, 2, 3])->count(); // 3
 
 // Equivalent:
 $count = count(new Collection([1, 2, 3])); // 3
@@ -894,7 +894,7 @@ Arguments:
 - `$finalGlue` (`string|null`): the conjunction used between the last two values.
 
 ```php
-$value = (new Collection(['a', 'b', 'c']))->join(', ', ' and '); // "a, b and c"
+$value = new Collection(['a', 'b', 'c'])->join(', ', ' and '); // "a, b and c"
 ```
 
 #### **Pick a random value** (`randomValue()`)
@@ -902,7 +902,7 @@ $value = (new Collection(['a', 'b', 'c']))->join(', ', ' and '); // "a, b and c"
 Returns a random item, or `null` if the collection is empty.
 
 ```php
-$value = (new Collection([1, 2, 3]))->randomValue();
+$value = new Collection([1, 2, 3])->randomValue();
 ```
 
 #### **Include only specific keys** (`only()`)
@@ -913,7 +913,7 @@ Arguments:
 - `$keys` (`array`): the keys to include.
 
 ```php
-$subset = (new Collection(['a' => 1, 'b' => 2]))
+$subset = new Collection(['a' => 1, 'b' => 2])
     ->only(['b'])
     ->toArray(); // ["b" => 2]
 ```
@@ -926,7 +926,7 @@ Arguments:
 - `$keys` (`array`): the keys to exclude.
 
 ```php
-$subset = (new Collection(['a' => 1, 'b' => 2]))
+$subset = new Collection(['a' => 1, 'b' => 2])
     ->except(['b'])
     ->toArray(); // ["a" => 1]
 ```

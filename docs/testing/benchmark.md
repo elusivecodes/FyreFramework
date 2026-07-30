@@ -44,7 +44,7 @@ $bench->add('serialize', static fn(): string => serialize(['a' => 1, 'b' => 2]))
 `run(int $iterations = 1000): array` executes each registered callback `$iterations` times and returns results keyed by test name.
 
 ```php
-$bench = (new Benchmark())
+$bench = new Benchmark()
     ->add('a', static fn(): int => 1 + 1)
     ->add('b', static fn(): int => 2 + 2);
 

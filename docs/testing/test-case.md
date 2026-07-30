@@ -63,7 +63,7 @@ Most examples assume you’re in a `TestCase`.
 Skip the current test when the condition is true.
 
 Arguments:
-- `$condition` (`bool`): whether to skip the test.
+- `$shouldSkip` (`bool`): whether to skip the test.
 - `$message` (`string`): the skip message to display.
 
 ```php
@@ -75,7 +75,7 @@ $this->skipIf(!extension_loaded('pdo_mysql'), 'pdo_mysql is required for this te
 Skip the current test unless the condition is true.
 
 Arguments:
-- `$condition` (`bool`): whether the test can run.
+- `$shouldNotSkip` (`bool`): whether the test can run.
 - `$message` (`string`): the skip message to display.
 
 ```php

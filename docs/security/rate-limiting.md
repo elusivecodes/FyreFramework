@@ -213,8 +213,8 @@ $message = $limiter->getMessage();
 
 A few behaviors are worth keeping in mind:
 
-- Inline middleware arguments are strings; when an override is provided, `RateLimiterMiddleware` casts it with `(int)`, so `'0'` is applied as `0` rather than treated as “no override”.
-- The built-in strategies assume `limit` and `window` are positive integers; non-numeric values (cast to `0`) or explicit `0` configured via options can lead to invalid results.
+- Inline middleware arguments are strings and are cast to integers before validation. Use integer strings for `limit`, `window`, and `cost` overrides.
+- `limit` and `window` must be greater than `0`, and `cost` must not be negative. Invalid bounds throw an `InvalidArgumentException`.
 - The `route` identifier always includes the client IP; it does not group all clients together for the same controller action.
 - The `ip` identifier uses `REMOTE_ADDR` by default. With proxy trust enabled, an empty trusted list accepts the rightmost forwarded address; otherwise the chain is walked right-to-left through explicitly trusted addresses.
 - If the configured cache does not include the `ratelimiter` config key, `RateLimiter` registers one automatically using `FileCacher` with a `ratelimiter:` prefix.

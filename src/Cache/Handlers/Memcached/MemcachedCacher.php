@@ -18,6 +18,7 @@ use function array_map;
 use function in_array;
 use function iterator_to_array;
 use function sprintf;
+use function time;
 
 /**
  * Caches values using Memcached.
@@ -45,6 +46,19 @@ class MemcachedCacher extends Cacher
     protected array $config;
 
     protected Memcached $connection;
+
+    /**
+     * Returns the Memcached expiry value.
+     *
+     * @param int $expires The expiration interval in seconds.
+     * @return int The expiry value.
+     */
+    public static function getExpiry(int $expires): int
+    {
+        return $expires > 2_592_000 ?
+            time() + $expires :
+            $expires;
+    }
 
     /**
      * Constructs a MemcachedCacher.
@@ -177,17 +191,6 @@ class MemcachedCacher extends Cacher
 
     /**
      * {@inheritDoc}
-     */
-    #[Override]
-    public function set(string $key, mixed $value, DateInterval|int|null $expire = null): bool
-    {
-        $key = $this->prepareKey($key);
-
-        return $this->connection->set($key, $value, $this->getExpires($expire) ?? 0);
-    }
-
-    /**
-     * {@inheritDoc}
      *
      * @param iterable<string, mixed> $values The values to set.
      */
@@ -195,14 +198,25 @@ class MemcachedCacher extends Cacher
     public function setMultiple(iterable $values, DateInterval|int|null $expire = null): bool
     {
         $values = iterator_to_array($values);
+        $expires = $this->getExpires($expire);
+
+        if ($expires !== null && $expires <= 0) {
+            array_keys($values) |> $this->deleteMultiple(...);
+
+            return true;
+        }
+
         $keys = array_map(
             $this->prepareKey(...),
             array_keys($values)
         );
 
         $values = array_combine($keys, $values);
+        $expires = $expires === null ?
+            0 :
+            static::getExpiry($expires);
 
-        return $this->connection->setMulti($values, $this->getExpires($expire) ?? 0);
+        return $this->connection->setMulti($values, $expires);
     }
 
     /**
@@ -217,5 +231,18 @@ class MemcachedCacher extends Cacher
         $server = $this->config['host'].':'.$this->config['port'];
 
         return $stats[$server] ?? null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    protected function setValue(string $key, mixed $value, int|null $expires): bool
+    {
+        $expires = $expires === null ?
+            0 :
+            static::getExpiry($expires);
+
+        return $this->connection->set($key, $value, $expires);
     }
 }

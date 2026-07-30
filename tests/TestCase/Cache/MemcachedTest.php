@@ -70,6 +70,35 @@ final class MemcachedTest extends TestCase
         ]);
     }
 
+    public function testSetLongExpiry(): void
+    {
+        $this->assertTrue(
+            $this->cacher->set('test', 'value', 2_592_001)
+        );
+
+        $this->assertSame(
+            'value',
+            $this->cacher->get('test')
+        );
+    }
+
+    public function testSetMultipleLongExpiry(): void
+    {
+        $values = [
+            'test1' => 'value1',
+            'test2' => 'value2',
+        ];
+
+        $this->assertTrue(
+            $this->cacher->setMultiple($values, 2_592_001)
+        );
+
+        $this->assertSame(
+            $values,
+            $this->cacher->getMultiple(['test1', 'test2'])
+        );
+    }
+
     #[Override]
     protected function setUp(): void
     {

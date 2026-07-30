@@ -106,6 +106,28 @@ trait GetSetTestTrait
         );
     }
 
+    public function testSetGetMultipleZeroExpiry(): void
+    {
+        $values = [
+            'test1' => 'value1',
+            'test2' => 'value2',
+        ];
+
+        $this->cacher->setMultiple($values);
+
+        $this->assertTrue(
+            $this->cacher->setMultiple($values, 0)
+        );
+
+        $this->assertSame(
+            [
+                'test1' => null,
+                'test2' => null,
+            ],
+            $this->cacher->getMultiple(['test1', 'test2'])
+        );
+    }
+
     public function testSetGetObject(): void
     {
         $object = (object) ['key' => 'value'];
@@ -134,5 +156,31 @@ trait GetSetTestTrait
         $this->expectExceptionMessage('Cache key `test/` is not valid.');
 
         $this->cacher->set('test/', 'value', 1);
+    }
+
+    public function testSetNegativeExpiry(): void
+    {
+        $this->cacher->set('test', 'value');
+
+        $this->assertTrue(
+            $this->cacher->set('test', 'new', -1)
+        );
+
+        $this->assertNull(
+            $this->cacher->get('test')
+        );
+    }
+
+    public function testSetZeroExpiry(): void
+    {
+        $this->cacher->set('test', 'value');
+
+        $this->assertTrue(
+            $this->cacher->set('test', 'new', 0)
+        );
+
+        $this->assertNull(
+            $this->cacher->get('test')
+        );
     }
 }

@@ -125,7 +125,7 @@
         <testsuite name="smtp">
             <file>tests/TestCase/Mail/SmtpTest.php</file>
         </testsuite>
-        <testsuite name="integration">
+        <testsuite name="external">
             <file>tests/TestCase/Http/Client/ClientTest.php</file>
             <file>tests/TestCase/Utility/PdfTest.php</file>
         </testsuite>

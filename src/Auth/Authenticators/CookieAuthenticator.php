@@ -11,8 +11,11 @@ use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+use function array_is_list;
 use function count;
 use function hash_hmac;
+use function is_array;
+use function is_string;
 use function json_decode;
 use function json_encode;
 use function password_hash;
@@ -62,13 +65,25 @@ class CookieAuthenticator extends Authenticator
         $cookieName = $this->config['cookieName'];
         $cookie = $request->getCookieParams()[$cookieName] ?? null;
 
-        if (!$cookie) {
+        if ($cookie === null || $cookie === '') {
+            return null;
+        }
+
+        if (!is_string($cookie)) {
+            $this->logout();
+
             return null;
         }
 
         $data = json_decode(rawurldecode($cookie), true);
 
-        if (!$data || count($data) !== 2) {
+        if (
+            !is_array($data) ||
+            !array_is_list($data) ||
+            count($data) !== 2 ||
+            !is_string($data[0]) ||
+            !is_string($data[1])
+        ) {
             $this->logout();
 
             return null;

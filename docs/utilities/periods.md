@@ -500,7 +500,7 @@ Returns a new collection sorted by each period’s included start timestamp.
 $a = new Period('2026-02-10', '2026-02-12');
 $b = new Period('2026-02-01', '2026-02-05');
 
-$sorted = (new PeriodCollection($a, $b))->sort();
+$sorted = new PeriodCollection($a, $b)->sort();
 ```
 
 #### **Remove duplicates** (`unique()`)
@@ -511,7 +511,7 @@ Returns a new collection with duplicate periods removed. Periods are considered 
 $a = new Period('2026-02-01', '2026-02-05');
 $b = new Period('2026-02-01', '2026-02-05');
 
-$unique = (new PeriodCollection($a, $b))->unique();
+$unique = new PeriodCollection($a, $b)->unique();
 ```
 
 #### **Get collection boundaries** (`boundaries()`)
@@ -522,7 +522,7 @@ Returns the minimal `Period` covering all periods in the collection, or `null` i
 $a = new Period('2026-02-01', '2026-02-05');
 $b = new Period('2026-02-10', '2026-02-12');
 
-$boundaries = (new PeriodCollection($a, $b))->boundaries();
+$boundaries = new PeriodCollection($a, $b)->boundaries();
 ```
 
 #### **Find gaps inside boundaries** (`gaps()`)
@@ -533,7 +533,7 @@ Returns a new collection containing the uncovered ranges inside `boundaries()`.
 $a = new Period('2026-02-01', '2026-02-05');
 $b = new Period('2026-02-10', '2026-02-12');
 
-$gaps = (new PeriodCollection($a, $b))->gaps();
+$gaps = new PeriodCollection($a, $b)->gaps();
 ```
 
 #### **Intersect a period with every element** (`intersect()`)
@@ -548,7 +548,7 @@ $window = new Period('2026-02-04', '2026-02-11');
 $a = new Period('2026-02-01', '2026-02-05');
 $b = new Period('2026-02-10', '2026-02-12');
 
-$overlaps = (new PeriodCollection($a, $b))->intersect($window);
+$overlaps = new PeriodCollection($a, $b)->intersect($window);
 ```
 
 #### **Subtract a set of periods** (`subtract()`)

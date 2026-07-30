@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Fyre\Cache\Handlers\Redis;
 
-use DateInterval;
 use Fyre\Cache\Cacher;
 use Fyre\Cache\Exceptions\CacheException;
 use Fyre\Cache\Exceptions\InvalidArgumentException;
@@ -263,11 +262,8 @@ class RedisCacher extends Cacher
      * Note: Only scalar types, arrays, objects, and null are supported.
      */
     #[Override]
-    public function set(string $key, mixed $value, DateInterval|int|null $expire = null): bool
+    protected function setValue(string $key, mixed $value, int|null $expires): bool
     {
-        $key = $this->prepareKey($key);
-        $expires = $this->getExpires($expire);
-
         $type = gettype($value);
 
         switch ($type) {
@@ -285,12 +281,16 @@ class RedisCacher extends Cacher
                 return false;
         }
 
-        $this->connection->hMSet($key, ['type' => $type, 'value' => $value]);
-
-        if ($expires !== null) {
-            $this->connection->expire($key, $expires);
+        if (!$this->connection->hMSet($key, ['type' => $type, 'value' => $value])) {
+            return false;
         }
 
-        return true;
+        if ($expires === null) {
+            $this->connection->persist($key);
+
+            return true;
+        }
+
+        return $this->connection->expire($key, $expires);
     }
 }

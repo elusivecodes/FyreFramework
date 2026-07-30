@@ -19,6 +19,8 @@ use Tests\TestCase\Cache\Cacher\LockTestTrait;
 use Tests\TestCase\Cache\Cacher\RememberTestTrait;
 use Tests\TestCase\Cache\Cacher\TagsTestTrait;
 
+use function sleep;
+
 final class ArrayTest extends TestCase
 {
     use DecrementTestTrait;
@@ -49,6 +51,24 @@ final class ArrayTest extends TestCase
                 'locks' => [],
             ],
             $data
+        );
+    }
+
+    public function testTaggedInvalidationDoesNotExpire(): void
+    {
+        $cacher = new ArrayCacher([
+            'expire' => 1,
+        ]);
+
+        $usersCache = $cacher->tags('users');
+        $usersCache->set('user.1', 'value', 30);
+
+        $cacher->invalidateTag('users');
+
+        sleep(2);
+
+        $this->assertNull(
+            $usersCache->get('user.1')
         );
     }
 

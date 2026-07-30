@@ -69,7 +69,7 @@ $response = new ClientResponse([
 ```php
 use Fyre\Http\ClientResponse;
 
-$response = (new ClientResponse())
+$response = new ClientResponse()
     ->withJson(['ok' => true]);
 ```
 
@@ -78,7 +78,7 @@ $response = (new ClientResponse())
 ```php
 use Fyre\Http\ClientResponse;
 
-$response = (new ClientResponse())
+$response = new ClientResponse()
     ->withCookie('session', 'abc123', httpOnly: true, secure: true)
     ->withExpiredCookie('legacy_session');
 ```
@@ -151,7 +151,7 @@ Both download builders set the usual download headers for you, including `Conten
 use Fyre\Http\ClientResponse;
 use Fyre\Http\ResponseEmitter;
 
-$response = (new ClientResponse(['body' => 'Hello']))
+$response = new ClientResponse(['body' => 'Hello'])
     ->withContentType('text/plain')
     ->withCookie('session', 'abc123', httpOnly: true, secure: true);
 

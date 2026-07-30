@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Fyre\Cache\Handlers\File;
 
-use DateInterval;
 use DirectoryIterator;
 use Fyre\Cache\Cacher;
 use Fyre\Cache\Lock;
@@ -255,12 +254,9 @@ class FileCacher extends Cacher
      * Note: Values are stored as a serialized array containing `data` and `expires`.
      */
     #[Override]
-    public function set(string $key, mixed $data, DateInterval|int|null $expire = null): bool
+    protected function setValue(string $key, mixed $value, int|null $expires): bool
     {
-        $key = $this->prepareKey($key);
         $filePath = Path::join($this->path, $key);
-
-        $expires = $this->getExpires($expire);
 
         if ($expires !== null) {
             $expires += time();
@@ -269,7 +265,7 @@ class FileCacher extends Cacher
         $chmod = !file_exists($filePath);
 
         $data = serialize([
-            'data' => $data,
+            'data' => $value,
             'expires' => $expires,
         ]);
 

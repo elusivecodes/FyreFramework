@@ -8,7 +8,6 @@ use Memcached;
 
 use function array_key_exists;
 use function is_array;
-use function time;
 
 /**
  * Provides owner-token locking using Memcached.
@@ -37,25 +36,13 @@ class MemcachedLock extends Lock
      */
     protected function acquireLock(): bool
     {
-        $expires = $this->getExpiry();
+        $expires = MemcachedCacher::getExpiry($this->expires);
 
         if ($this->connection->add($this->key, $this->owner, $expires)) {
             return true;
         }
 
         return $this->swapLock(static::AVAILABLE, $this->owner);
-    }
-
-    /**
-     * Returns the Memcached expiry value.
-     *
-     * @return int The expiry value.
-     */
-    protected function getExpiry(): int
-    {
-        return $this->expires > 2_592_000 ?
-            time() + $this->expires :
-            $this->expires;
     }
 
     /**
@@ -117,7 +104,7 @@ class MemcachedLock extends Lock
             $lock['cas'], // @phpstan-ignore argument.type
             $this->key,
             $value,
-            $this->getExpiry()
+            MemcachedCacher::getExpiry($this->expires)
         );
     }
 }

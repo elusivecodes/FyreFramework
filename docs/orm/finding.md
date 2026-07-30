@@ -168,6 +168,8 @@ If the model uses a composite primary key, pass an array of values in primary-ke
 $membership = $Memberships->get([10, 25]);
 ```
 
+Every primary-key value is required. Missing, `null`, empty-string, or empty-array values throw an `OrmException`.
+
 ## Working with `Result`
 
 `Fyre\ORM\Result` wraps a database `ResultSet` and turns each row into an entity (including contained data and `_matchingData` when applicable).
@@ -235,10 +237,18 @@ Create an ORM-aware `SelectQuery`.
 Arguments:
 - `$fields` (`array<mixed>|string|null`): the `SELECT` fields.
 - `$contain` (`array<mixed>|string|null`): relationships to load via `contain()`.
+- `$join` (`array<array<string, mixed>>|null`): tables or queries to join.
 - `$conditions` (`array<mixed>|string|null`): the `WHERE` conditions.
 - `$orderBy` (`array<string>|string|null`): the `ORDER BY` fields.
+- `$groupBy` (`string|string[]|null`): the `GROUP BY` fields.
+- `$having` (`array<mixed>|string|null`): the `HAVING` conditions.
 - `$limit` (`int|null`): the `LIMIT` clause.
 - `$offset` (`int|null`): the `OFFSET` clause.
+- `$epilog` (`string|null`): SQL appended to the generated query.
+- `$connectionType` (`string`): the connection type (defaults to `Model::READ`).
+- `$alias` (`string|null`): the query alias.
+- `$autoFields` (`bool|null`): whether to automatically select model fields.
+- `...$options` (`mixed`): additional find options.
 
 ```php
 $query = $Users->find(conditions: ['Users.active' => 1]);
@@ -250,6 +260,8 @@ Look up a single entity by primary key(s) and return the first match (or `null`)
 
 Arguments:
 - `$primaryValues` (`array<int|string>|int|string`): the primary key value(s).
+
+The remaining optional arguments are the same query arguments accepted by `find()`.
 
 ```php
 $user = $Users->get(10);

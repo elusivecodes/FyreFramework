@@ -95,7 +95,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [sqlite, mariadb, mysql, postgres, redis, memcached, smtp, integration]
+        suite: [sqlite, mariadb, mysql, postgres, redis, memcached, smtp, external]
         include:
           - suite: sqlite
             service: ""
@@ -111,7 +111,7 @@ jobs:
             service: memcached
           - suite: smtp
             service: mailpit
-          - suite: integration
+          - suite: external
             service: ""
     steps:
       - uses: actions/checkout@v6

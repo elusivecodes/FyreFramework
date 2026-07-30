@@ -232,7 +232,7 @@ Prefer bound values wherever possible. Query builders bind values by default (vi
 
 Common issues when setting up connections:
 
-- If you get an `InvalidArgumentException` when calling `use()` / `build()`, make sure your connection config includes a valid `className` that extends `Fyre\DB\Connection` (see [Configuring connections](#configuring-connections)).
+- If you get an `InvalidArgumentException` when calling `use()` / `build()`, make sure your connection config includes a valid `className` that extends `Fyre\DB\Connection` (see [Connection configuration](#connection-configuration)).
 - If you call `use()` with a key that has not been configured, connection creation will fail because there is no stored config for that key.
 - If a connection fails immediately on `use()`, connection handlers call `connect()` during construction, so network/credential/database-name errors surface as soon as you resolve the connection. Double-check `host`, `port`, `username`, `password`, and `database`.
 - If SQLite reports “unable to open database file”, verify the directory for your SQLite file exists and is writable by the PHP process. Use an absolute path if your working directory differs between environments.

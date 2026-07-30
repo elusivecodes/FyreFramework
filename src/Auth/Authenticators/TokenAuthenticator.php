@@ -8,6 +8,7 @@ use Fyre\ORM\Entity;
 use Override;
 use Psr\Http\Message\ServerRequestInterface;
 
+use function is_string;
 use function str_starts_with;
 use function strlen;
 use function substr;
@@ -40,8 +41,16 @@ class TokenAuthenticator extends Authenticator
             $request->getHeaderLine($this->config['tokenHeader']) :
             null;
 
-        if ($token && $this->config['tokenHeaderPrefix'] && str_starts_with($token, $this->config['tokenHeaderPrefix'].' ')) {
+        if (
+            $token &&
+            $this->config['tokenHeaderPrefix'] &&
+            str_starts_with($token, $this->config['tokenHeaderPrefix'].' ')
+        ) {
             $token = substr($token, strlen($this->config['tokenHeaderPrefix']) + 1);
+        }
+
+        if ($token === '') {
+            $token = null;
         }
 
         $tokenQuery = $this->config['tokenQuery'];
@@ -49,7 +58,7 @@ class TokenAuthenticator extends Authenticator
             $request->getQueryParams()[$tokenQuery] ?? null :
             null;
 
-        if (!$token) {
+        if (!is_string($token) || $token === '') {
             return null;
         }
 

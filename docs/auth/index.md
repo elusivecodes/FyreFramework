@@ -9,20 +9,14 @@ Auth covers authentication (who the user is), authorization (what they can do), 
 
 ## Start here
 
-At a high level, the auth subsystem is split into:
+Choose the page that matches what you need to do:
 
-- **Authentication:** `Auth` is the usual entry point for authentication. It resolves and stores the current user, typically via one or more authenticators.
-- **Authorization:** `Auth::access()` returns an `Access` instance that evaluates rules and policies for the resolved user.
-- **Middleware integration:** auth middleware runs authentication for the current request, attaches `auth` and `user` request attributes, and provides route-level guards such as `authenticated`, `unauthenticated`, and `can`.
-
-A typical path through the subsystem looks like this:
-
-- Start with [Authentication](authentication.md) to configure authenticators and login/logout flows.
-- Add [Auth Middleware](middleware.md) to establish request auth context and guard routes.
-- Use [Authorization](authorization.md) when you need named rules or policy-based access checks.
+- **Configure login and identity**: start with [Authentication](authentication.md).
+- **Attach auth context and guard routes**: add [Auth Middleware](middleware.md).
+- **Check access rules and policies**: use [Authorization](authorization.md).
 
 ## Pages in this section
 
-- [Authentication](authentication.md) — configure authenticators and resolve the current user.
-- [Auth Middleware](middleware.md) — run authentication on requests and guard routes.
-- [Authorization](authorization.md) — define access rules/policies and enforce authorization.
+- [Authentication](authentication.md) - configure authenticators and resolve the current user
+- [Auth Middleware](middleware.md) - run authentication on requests and guard routes
+- [Authorization](authorization.md) - define access rules and policies and enforce authorization

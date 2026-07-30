@@ -21,6 +21,7 @@ use Tests\TestCase\Cache\Cacher\RememberTestTrait;
 use Tests\TestCase\Cache\Cacher\TagsTestTrait;
 
 use function getenv;
+use function sleep;
 
 final class RedisTest extends TestCase
 {
@@ -123,6 +124,19 @@ final class RedisTest extends TestCase
             'port' => 1,
             'timeout' => 1,
         ]);
+    }
+
+    public function testSetClearsExpiry(): void
+    {
+        $this->cacher->set('test', 'value', 1);
+        $this->cacher->set('test', 'new');
+
+        sleep(2);
+
+        $this->assertSame(
+            'new',
+            $this->cacher->get('test')
+        );
     }
 
     #[Override]

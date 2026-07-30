@@ -120,6 +120,35 @@ final class AuthenticatorTest extends TestCase
         $this->assertTrue($this->auth->isLoggedIn());
     }
 
+    public function testCookieAuthenticatorInvalidData(): void
+    {
+        foreach ([rawurlencode('"invalid"'), rawurlencode('[[],[]]'), []] as $value) {
+            $authenticator = $this->container->build(CookieAuthenticator::class);
+
+            $request = $this->container->build(ServerRequest::class, [
+                'options' => [
+                    'cookies' => [
+                        'auth' => $value,
+                    ],
+                ],
+            ]);
+
+            $this->assertNull(
+                $authenticator->authenticate($request)
+            );
+
+            $response = $authenticator->beforeResponse(new ClientResponse());
+
+            [$cookieString] = $response->getHeader('Set-Cookie');
+
+            $cookie = Cookie::createFromHeaderString($cookieString);
+
+            $this->assertTrue(
+                $cookie->isExpired()
+            );
+        }
+    }
+
     public function testCookieAuthenticatorLogin(): void
     {
         $authenticator = $this->container->build(CookieAuthenticator::class);
@@ -379,6 +408,39 @@ final class AuthenticatorTest extends TestCase
             'options' => [
                 'server' => [
                     'HTTP_AUTHORIZATION' => 'Bearer Ew7tqx8kH6QsNe8SS0tVT0BX2LIRVQyl',
+                ],
+            ],
+        ]);
+
+        $response = $handler->handle($request);
+
+        $this->assertInstanceOf(
+            ClientResponse::class,
+            $response
+        );
+
+        $this->assertTrue($this->auth->isLoggedIn());
+    }
+
+    public function testTokenAuthenticatorQuery(): void
+    {
+        $authenticator = $this->container->build(TokenAuthenticator::class, [
+            'options' => [
+                'tokenQuery' => 'token',
+            ],
+        ]);
+        $this->auth->addAuthenticator($authenticator);
+
+        $queue = new MiddlewareQueue([
+            'auth',
+        ]);
+
+        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'get' => [
+                    'token' => 'Ew7tqx8kH6QsNe8SS0tVT0BX2LIRVQyl',
                 ],
             ],
         ]);

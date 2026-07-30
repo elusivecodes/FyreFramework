@@ -1,11 +1,12 @@
 # FyreFramework Documentation
 
-Use this page to find the part of the framework you need.
+Use this page to find the part of the `fyre/framework` package you need.
+
+These docs cover the framework APIs your application uses. Project layout, entry points, and application-specific bootstrap remain in your application repository.
 
 ## Table of Contents
 
 - [Start here](#start-here)
-- [What these docs cover](#what-these-docs-cover)
 - [Framework overview](#framework-overview)
 - [Pages in this section](#pages-in-this-section)
 
@@ -13,19 +14,13 @@ Use this page to find the part of the framework you need.
 
 Pick a path based on what you are building:
 
-- **Core services**: [Core](core/index.md) -> [Container](core/container.md) -> [Engine](core/engine.md)
+- **Core services**: [Core](core/index.md) -> [Engine](core/engine.md) -> [Container](core/container.md)
 - **HTTP applications**: [HTTP](http/index.md) -> [Routing](routing/index.md)
 - **Data and persistence**: [Database](database/index.md) -> [ORM](orm/index.md)
-- **Auth and security**: [Auth](auth/index.md) -> [Security](security/index.md)
-- **Shared services**: [Events](events/index.md) -> [Logging](logging/index.md) -> [Mail](mail/index.md) -> [Cache](cache/index.md) -> [Queue](queue/index.md)
-- **Rendering and forms**: [View](view/index.md) -> [Form](form/index.md)
-- **Tooling and tests**: [Console](console/index.md) -> [Testing](testing/index.md) -> [Utilities](utilities/index.md)
-
-## What these docs cover
-
-These pages document the `fyre/framework` package and the APIs your application uses.
-
-Project layout, entry points, and app-specific bootstrap live in your application. These docs stay focused on the framework package itself.
+- **Auth and security**: [Auth](auth/index.md), [Security](security/index.md)
+- **Shared services**: [Events](events/index.md), [Logging](logging/index.md), [Mail](mail/index.md), [Cache](cache/index.md), [Queue](queue/index.md)
+- **Rendering and forms**: [View](view/index.md), [Form](form/index.md)
+- **Tooling and tests**: [Console](console/index.md), [Testing](testing/index.md), [Utilities](utilities/index.md)
 
 ## Framework overview
 
@@ -50,7 +45,7 @@ Start with the section you need most, then follow the related links from there.
 - [Security](security/index.md) - CSP, CSRF, encryption, and rate limiting
 - [Database](database/index.md) - connections, queries, schema tools, migrations, and types
 - [ORM](orm/index.md) - models, entities, relationships, queries, and persistence
-- [Cache](cache/index.md) - cache handlers, cache usage, and tagged cache entries
+- [Cache](cache/index.md) - cache handlers, common operations, locks, and tagged entries
 - [Events](events/index.md) - events and listeners
 - [Logging](logging/index.md) - loggers, levels, scopes, and handlers
 - [Mail](mail/index.md) - building and sending email

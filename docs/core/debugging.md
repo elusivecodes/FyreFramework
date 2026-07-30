@@ -92,7 +92,7 @@ Returns the structured array used for debug output.
 ```php
 use Fyre\Utility\FileSystem\File;
 
-$info = (new File('/path/to/file.txt'))->__debugInfo();
+$info = new File('/path/to/file.txt')->__debugInfo();
 ```
 
 ## Behavior notes

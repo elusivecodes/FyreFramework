@@ -17,9 +17,11 @@ Use cache to store expensive values behind named cache handlers.
 - [Using a cache](#using-a-cache)
 - [Common operations](#common-operations)
   - [Tagged cache entries](#tagged-cache-entries)
+  - [Cache locks](#cache-locks)
 - [Method guide](#method-guide)
   - [`CacheManager`](#cachemanager)
   - [`Cacher`](#cacher)
+  - [`Lock`](#lock)
   - [`TaggedCacher`](#taggedcacher)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
@@ -32,6 +34,7 @@ Most applications follow the same flow:
 - resolve a cache with `CacheManager::use()` or the `cache()` helper
 - use `remember()` for values you want to compute on a miss
 - use tags when you want to invalidate groups of cached values
+- use locks when shared work must not run concurrently
 
 ## Configuring caches
 
@@ -125,7 +128,7 @@ Options:
 
 ### Null handler
 
-No-op handler (`Fyre\Cache\Handlers\Null\NullCacher`). Reads always return the provided default, writes are ignored, and `increment()` / `decrement()` return the passed amount rather than persisting a counter.
+No-op handler (`Fyre\Cache\Handlers\Null\NullCacher`). Reads always return the provided default, writes are ignored, `increment()` returns `$amount`, and `decrement()` returns `-$amount` without persisting a counter.
 
 - No handler-specific options.
 
@@ -193,11 +196,42 @@ $same = $cache->tags(['active', 'users'])->get('user.1');
 
 Tag invalidation is version-based. Invalidating a tag does not eagerly delete every tagged key; instead, tagged entries become stale and are treated as cache misses on the next read.
 
+### Cache locks
+
+Use `synchronized()` when a callback must run while holding a named lock. The lock is released in a `finally` block, including when the callback throws.
+
+```php
+$report = $cache->synchronized(
+    'reports.daily',
+    static fn() => buildDailyReport(),
+    expires: 30,
+    wait: 2
+);
+```
+
+`expires` controls the lock lifetime. `wait` controls how long to wait for another owner to release the lock; the default `0` makes a single acquisition attempt.
+
+For manual lock management, always release an acquired lock in a `finally` block:
+
+```php
+$lock = $cache->lock('reports.daily', 30);
+
+if (!$lock->acquire(2)) {
+    throw new RuntimeException('The report is already being generated.');
+}
+
+try {
+    $report = buildDailyReport();
+} finally {
+    $lock->release();
+}
+```
+
 ## Method guide
 
 This section focuses on the methods you are most likely to use when selecting handlers and caching values.
 
-Examples below assume `$caches` is a `CacheManager` instance, `$cache` is a `Cacher` instance, and `$tagged` is a `TaggedCacher` instance.
+Examples below assume `$caches` is a `CacheManager` instance, `$cache` is a `Cacher` instance, `$lock` is a `Lock` instance, and `$tagged` is a `TaggedCacher` instance.
 
 ### `CacheManager`
 
@@ -285,6 +319,35 @@ Arguments:
 $value = $cache->remember('reports.latest', static fn() => buildLatestReport(), 600);
 ```
 
+#### **Create a cache lock** (`lock()`)
+
+Creates an owner-specific lock for a cache key.
+
+Arguments:
+- `$key` (`string`): the lock key.
+- `$expires` (`int`): the lock lifetime in seconds (default: `30`).
+
+```php
+$lock = $cache->lock('reports.daily', 30);
+```
+
+#### **Run work under a lock** (`synchronized()`)
+
+Acquires a lock, executes a callback, and releases the lock when the callback finishes.
+
+Arguments:
+- `$key` (`string`): the lock key.
+- `$callback` (`Closure`): the callback to execute.
+- `$expires` (`int`): the lock lifetime in seconds (default: `30`).
+- `$wait` (`float`): the maximum number of seconds to wait (default: `0`).
+
+```php
+$report = $cache->synchronized(
+    'reports.daily',
+    static fn() => buildDailyReport()
+);
+```
+
 #### **Increment a numeric value** (`increment()`)
 
 Increments a cached numeric value.
@@ -332,6 +395,43 @@ Arguments:
 ```php
 $cache->invalidateTag('users');
 $cache->invalidateTags(['users', 'active']);
+```
+
+### `Lock`
+
+#### **Acquire a lock** (`acquire()`)
+
+Attempts to acquire the lock for this owner.
+
+Arguments:
+- `$wait` (`float`): the maximum number of seconds to wait (default: `0`).
+
+```php
+$acquired = $lock->acquire(2);
+```
+
+#### **Check lock state** (`isAcquired()`)
+
+Returns whether this object currently considers the lock acquired.
+
+```php
+$acquired = $lock->isAcquired();
+```
+
+#### **Refresh a lock** (`refresh()`)
+
+Extends the lifetime of an acquired lock using its configured expiration.
+
+```php
+$refreshed = $lock->refresh();
+```
+
+#### **Release a lock** (`release()`)
+
+Releases a lock owned by this object.
+
+```php
+$released = $lock->release();
 ```
 
 ### `TaggedCacher`
@@ -403,9 +503,13 @@ A few behaviors are worth keeping in mind:
 - in debug mode, caching is often disabled, so newly resolved caches act like a no-op cache
 - disabling caching affects newly built handlers only; already-loaded cache instances keep behaving as before until they are rebuilt
 - cache keys cannot contain `{ } ( ) / \ @ :`
+- passing a zero or negative TTL to `set()` or `setMultiple()` deletes the affected entries, while `null` uses the handler's configured `expire` value
 - `FileCacher` needs a writable path, and its prefix cannot contain the system directory separator
 - `RedisCacher::clear()` needs a prefix unless `flushDatabase` is enabled
 - invalidating a tag is lazy: tagged values become stale and disappear on the next tagged read
+- `ArrayCacher` locks coordinate only with locks created by the same cacher instance, while file, Redis, and Memcached locks can coordinate across workers
+- `NullCacher` locks are no-ops and do not coordinate shared work
+- `synchronized()` throws a `CacheException` if it cannot acquire the lock within the configured wait time
 
 ## Related
 

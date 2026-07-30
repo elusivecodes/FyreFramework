@@ -8,6 +8,9 @@ This page covers authenticator configuration, request flow, and the `Auth` / `Id
 
 - [Start here](#start-here)
 - [Built-in authenticators](#built-in-authenticators)
+  - [`SessionAuthenticator`](#sessionauthenticator)
+  - [`CookieAuthenticator`](#cookieauthenticator)
+  - [`TokenAuthenticator`](#tokenauthenticator)
 - [Authentication flow](#authentication-flow)
 - [Configuring authenticators](#configuring-authenticators)
 - [Common setups](#common-setups)
@@ -48,11 +51,39 @@ If you haven’t set up middleware yet, start with [Auth Middleware](middleware.
 
 ## Built-in authenticators
 
-Fyre includes several built-in authenticators:
+Fyre includes three built-in authenticators. Each authenticator receives its listed options alongside `className`.
 
-- `SessionAuthenticator`: reads an ID from the session and loads the user from the configured model
-- `CookieAuthenticator`: reads a cookie and validates it against the stored user (optionally writing/clearing the cookie in `beforeResponse()`)
-- `TokenAuthenticator`: extracts a token from a request header or query parameter and loads the user from the configured model
+### `SessionAuthenticator`
+
+Reads an identity value from the session and loads the user from the model configured by `Identifier`.
+
+- `sessionKey` (`string`): the session key used to store the identity (default: `'auth'`)
+- `sessionField` (`string`): the user field stored in the session and used for lookup (default: `'id'`)
+
+When login changes the stored identity, the authenticator rotates the session ID before storing the new value. Logout removes the session value and rotates the session ID again.
+
+### `CookieAuthenticator`
+
+Reads a remember-me cookie and validates it against the stored user. Login can queue a cookie for the next response, while logout or an invalid payload queues it for deletion.
+
+- `cookieName` (`string`): the cookie name (default: `'auth'`)
+- `cookieOptions` (`array<string, mixed>`): options passed to `Cookie` (default: `['httpOnly' => true]`)
+- `identifierField` (`string`): the user field stored in the cookie (default: `'email'`)
+- `passwordField` (`string`): the password-hash field used to invalidate old cookies after password changes (default: `'password'`)
+- `salt` (`string|null`): an optional secret HMAC key included when deriving the cookie token (default: `null`)
+
+Within `CookieAuthenticator`, `cookieOptions.expires` is a lifetime in seconds and is converted to an absolute expiry when the cookie is written. If it is omitted, the result is a browser-session cookie. Set `cookieOptions.secure` to `true` when the application uses HTTPS.
+
+### `TokenAuthenticator`
+
+Loads the user by a token read from a request header or query parameter.
+
+- `tokenHeader` (`string|null`): the request header to inspect (default: `'Authorization'`)
+- `tokenHeaderPrefix` (`string|null`): the prefix stripped from the header value (default: `'Bearer'`)
+- `tokenQuery` (`string|null`): a query parameter used when the header is absent (default: `null`)
+- `tokenField` (`string`): the user field matched against the token (default: `'token'`)
+
+The configured header takes precedence. The query parameter is checked only when that header is absent.
 
 ## Authentication flow
 
@@ -89,6 +120,10 @@ return [
             [
                 'className' => CookieAuthenticator::class,
                 'cookieName' => 'auth',
+                'cookieOptions' => [
+                    'expires' => 2_592_000,
+                    'secure' => true,
+                ],
             ],
             [
                 'className' => TokenAuthenticator::class,
@@ -99,6 +134,8 @@ return [
     ],
 ];
 ```
+
+This example keeps the cookie for 30 days and requires HTTPS. For local development over plain HTTP, set `secure` to `false`.
 
 `Auth.loginRoute` controls where unauthenticated HTML requests are redirected by middleware. This value is a *route alias* (the `as` name), not a URL path; see [Router aliases](../routing/router.md#aliases-and-url-generation). If not configured, it defaults to `login`.
 
@@ -143,6 +180,10 @@ return [
             [
                 'className' => CookieAuthenticator::class,
                 'cookieName' => 'auth',
+                'cookieOptions' => [
+                    'expires' => 2_592_000,
+                    'secure' => true,
+                ],
             ],
         ],
     ],
@@ -388,6 +429,7 @@ A few behaviors are worth keeping in mind:
 - Authenticators are executed in order and stop at the first one that returns a user.
 - `Identifier::attempt()` can automatically upgrade stored password hashes on successful login when the hash needs rehashing.
 - `CookieAuthenticator` clears invalid cookies automatically when it detects a bad remember-me payload.
+- `SessionAuthenticator` rotates the session ID when the stored identity changes and whenever the user logs out.
 
 ## Related
 

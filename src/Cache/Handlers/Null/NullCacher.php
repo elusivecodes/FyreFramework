@@ -65,7 +65,16 @@ class NullCacher extends Cacher
      * {@inheritDoc}
      */
     #[Override]
-    public function set(string $key, mixed $data, DateInterval|int|null $expire = null): bool
+    public function set(string $key, mixed $value, DateInterval|int|null $expire = null): bool
+    {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    protected function setValue(string $key, mixed $value, int|null $expires): bool
     {
         return true;
     }

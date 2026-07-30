@@ -11,6 +11,8 @@ It gives you convenient verb methods, an in-memory cookie jar, optional redirect
   - [Sending JSON](#sending-json)
 - [Configuration](#configuration)
 - [Redirects and cookies](#redirects-and-cookies)
+  - [Redirect behavior](#redirect-behavior)
+  - [Cookie behavior](#cookie-behavior)
 - [Working with responses](#working-with-responses)
   - [Check status and read headers](#check-status-and-read-headers)
   - [Decode JSON responses](#decode-json-responses)
@@ -88,6 +90,8 @@ Common options:
 - `protocolVersion`: `'1.0'`, `'1.1'`, or `'2.0'`
 - `timeout`: timeout in seconds (interpreted by handlers that support it, such as `CurlHandler`)
 - `maxRedirects`: number of redirects to follow when using `Client::send()` (and the verb methods)
+- `maxRedirectBodySize`: maximum number of bytes used to buffer a non-seekable request body for redirect replay (default: `16_777_216`)
+- `sensitiveHeaders`: additional header names to remove from cross-origin redirects
 
 Example:
 
@@ -108,11 +112,31 @@ $client = new Client([
 
 `Client::send()` and the verb methods can follow redirects when `maxRedirects` is greater than `0`.
 
+### Redirect behavior
+
+Relative `Location` values are resolved against the current request URI. Empty, malformed, non-HTTP(S), credential-bearing, and hostless redirect locations throw a `RequestException`. Redirect loops also throw a `RequestException`.
+
+Redirect methods and bodies follow these rules:
+
+- `303` changes every method except `HEAD` to `GET` and removes the request body
+- `301` and `302` change `POST` to `GET` and remove the request body
+- `307` and `308` preserve the method and body
+- other preserved-method redirects rewind the request body before replaying it
+
+When redirects are enabled, a non-seekable request body is copied to a seekable stream before the first request. If it cannot be read or exceeds `maxRedirectBodySize`, the request throws a `RequestException`.
+
+Cross-origin redirects remove `Authorization`, `Proxy-Authorization`, and `Referer` headers, plus any names configured in `sensitiveHeaders`. Client `auth` and `ssl` options are not forwarded to the new origin.
+
+### Cookie behavior
+
 The client also keeps an in-memory cookie jar:
 
 - cookies received from responses are stored on the `Client` instance
-- matching cookies are sent on later requests from that same client instance
+- cookies are matched by host-only or domain scope, path, expiry, and the `Secure` flag
+- matching cookies are sent on later requests from that same client instance, with longer matching paths first
 - cookies are not persisted beyond the life of the PHP process
+
+Malformed cookies, invalid domains, `Secure` cookies received over HTTP, invalid `__Secure-` / `__Host-` cookies, and insecure cookies that would overwrite an overlapping secure cookie are ignored. The jar also limits individual cookie size, cookies per domain, total cookies, and the generated `Cookie` header size.
 
 ## Working with responses
 

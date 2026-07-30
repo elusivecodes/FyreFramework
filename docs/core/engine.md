@@ -70,8 +70,11 @@ Create the loader, pass it into your application, share the instance, and then r
 ```php
 use Fyre\Core\Loader;
 
-$loader = (new Loader())
-    ->loadComposer('vendor/autoload.php')
+$composer = require 'vendor/autoload.php';
+
+$loader = new Loader()
+    ->addClassMap($composer->getClassMap())
+    ->addNamespaces($composer->getPrefixesPsr4())
     ->register();
 
 $app = new Application($loader);

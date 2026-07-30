@@ -106,7 +106,7 @@ $registry->group('web', [
     'auth',
 ]);
 
-$queue = (new MiddlewareQueue())
+$queue = new MiddlewareQueue()
     ->add('web');
 ```
 
@@ -124,7 +124,7 @@ This is commonly used for middleware that accepts optional parameters, such as:
 ```php
 use Fyre\Http\MiddlewareQueue;
 
-$queue = (new MiddlewareQueue())
+$queue = new MiddlewareQueue()
     ->add('throttle:120,60,2');
 ```
 
@@ -154,7 +154,7 @@ Arguments:
 ```php
 use Fyre\Http\MiddlewareQueue;
 
-$queue = (new MiddlewareQueue())
+$queue = new MiddlewareQueue()
     ->add('session')
     ->add('router');
 ```
@@ -169,7 +169,7 @@ Arguments:
 ```php
 use Fyre\Http\MiddlewareQueue;
 
-$queue = (new MiddlewareQueue())
+$queue = new MiddlewareQueue()
     ->add('router')
     ->prepend('error');
 ```
@@ -185,7 +185,7 @@ Arguments:
 ```php
 use Fyre\Http\MiddlewareQueue;
 
-$queue = (new MiddlewareQueue())
+$queue = new MiddlewareQueue()
     ->add('router')
     ->add('bindings')
     ->insertAt(1, 'auth');

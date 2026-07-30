@@ -131,9 +131,10 @@ abstract class Cacher implements CacheInterface
      */
     public function invalidateTag(string $tag): bool
     {
-        return $this->set(
-            TaggedCacher::tagKey($tag),
-            TaggedCacher::generateToken()
+        return $this->setValue(
+            TaggedCacher::tagKey($tag) |> $this->prepareKey(...),
+            TaggedCacher::generateToken(),
+            null
         );
     }
 
@@ -188,6 +189,28 @@ abstract class Cacher implements CacheInterface
         $this->set($key, $value, $expire);
 
         return $value;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function set(string $key, mixed $value, DateInterval|int|null $expire = null): bool
+    {
+        $expires = $this->getExpires($expire);
+        $preparedKey = $this->prepareKey($key);
+
+        if ($expires !== null && $expires <= 0) {
+            $this->delete($key);
+
+            return true;
+        }
+
+        return $this->setValue(
+            $preparedKey,
+            $value,
+            $expires
+        );
     }
 
     /**
@@ -307,4 +330,14 @@ abstract class Cacher implements CacheInterface
     {
         return $this->prepareKey('__lock__.'.$key);
     }
+
+    /**
+     * Stores a value using a prepared cache key.
+     *
+     * @param string $key The prepared cache key.
+     * @param mixed $value The cache value.
+     * @param int|null $expires The expiration interval in seconds.
+     * @return bool Whether the value was cached.
+     */
+    abstract protected function setValue(string $key, mixed $value, int|null $expires): bool;
 }

@@ -154,7 +154,7 @@ If the resolved value is an array (for example, requesting the whole file key), 
 
 - [Form Validators](../form/validators.md) — `Fyre\Form\Validator` looks up default rule messages under `Validation.*` when a rule fails and no explicit message is provided.
 - [ORM](../orm/index.md) — rules in `Fyre\ORM\RuleSet` look up messages under `RuleSet.*`.
-- Console tooling — `make:lang` defaults to `Lang::getDefaultLocale()` and the first configured language path (see [Console commands](../console/commands.md#makelang)).
+- Console tooling — `make:lang` defaults to `Lang::getDefaultLocale()` and the first configured language path (see [Make commands](../console/commands.md#make-commands)).
 
 ## Method guide
 

@@ -27,8 +27,11 @@ The common bootstrap flow is:
 ```php
 use Fyre\Core\Loader;
 
-$loader = (new Loader())
-    ->loadComposer('vendor/autoload.php')
+$composer = require 'vendor/autoload.php';
+
+$loader = new Loader()
+    ->addClassMap($composer->getClassMap())
+    ->addNamespaces($composer->getPrefixesPsr4())
     ->register();
 ```
 
@@ -50,27 +53,23 @@ If you skip `Loader`, directly referenced classes can still autoload through Com
 
 ## Bootstrapping from Composer
 
-The usual setup is to load Composer's autoload data and then register the loader:
-
-```php
-use Fyre\Core\Loader;
-
-$loader = (new Loader())
-    ->loadComposer('vendor/autoload.php')
-    ->register();
-```
-
-If you already have the Composer autoloader instance, you can feed its data in directly:
+Require Composer's autoloader first, then copy its class-map and namespace-prefix data into `Loader`:
 
 ```php
 use Fyre\Core\Loader;
 
 $composer = require 'vendor/autoload.php';
 
-$loader = (new Loader())
+$loader = new Loader()
     ->addClassMap($composer->getClassMap())
     ->addNamespaces($composer->getPrefixesPsr4())
     ->register();
+```
+
+Use `loadComposer()` when you need to add mappings from a separate Composer installation that has not already been included:
+
+```php
+$loader->loadComposer('plugins/vendor/autoload.php');
 ```
 
 ## Adding class maps and namespaces
@@ -142,7 +141,7 @@ Arguments:
 - `$composerPath` (`string`): the path to the Composer autoload file.
 
 ```php
-$loader->loadComposer('vendor/autoload.php');
+$loader->loadComposer('plugins/vendor/autoload.php');
 ```
 
 #### **Register the autoloader** (`register()`)
@@ -290,6 +289,7 @@ A few practical details are worth keeping in mind:
 
 - `register()` and `unregister()` are idempotent.
 - `loadComposer()` is a no-op when the file path does not exist.
+- `loadComposer()` expects an autoload file that has not already been included so the file returns its Composer autoloader instance.
 - `findFolders()` returns only directories that actually exist on disk.
 - Class-map entries take precedence over namespace prefix lookups.
 

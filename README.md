@@ -6,37 +6,31 @@
 [![Packagist Downloads](https://img.shields.io/packagist/dt/fyre/framework.svg)](https://packagist.org/packages/fyre/framework)
 [![GitHub License](https://img.shields.io/github/license/elusivecodes/FyreFramework.svg)](LICENSE)
 
-FyreFramework is a modular PHP framework package for HTTP apps, CLI tools, data access, views, caching, queues, and more.
+Use FyreFramework to build HTTP applications and CLI tools with routing, ORM, views, caching, queues, and other focused components.
 
-This repository contains the `fyre/framework` package. Install it into your application with Composer and use the pieces you need, or build on the default `Engine` runtime when you want the framework's common services wired together.
+Install the `fyre/framework` package and use individual subsystems as needed, or extend `Engine` when you want the framework's common application services available by default.
 
 ## Table of Contents
 
-- [Overview](#overview)
+- [Start here](#start-here)
 - [Requirements](#requirements)
 - [Installation](#installation)
-- [Getting started](#getting-started)
+- [Application bootstrap](#application-bootstrap)
 - [Documentation](#documentation)
-- [Development](#development)
+- [Repository development](#repository-development)
 - [License](#license)
 
-## Overview
+## Start here
 
-Fyre keeps the framework split into focused subsystems, so you can adopt one piece at a time or use them together in a conventional application stack.
-
-Common use cases include:
-
-- Building web applications with PSR-7 requests, responses, middleware, and routing
-- Working with SQL databases through the query layer and ORM
-- Rendering templates and forms on the server
-- Running background work with queues and workers
-- Adding shared services such as caching, logging, mail, events, and validation
+- **Install the framework package**: follow [Installation](#installation).
+- **Build around the default application services**: see [Application bootstrap](#application-bootstrap).
+- **Use a specific subsystem**: browse the [documentation](#documentation).
 
 ## Requirements
 
 - PHP >= 8.5
-- Required PHP extensions: `intl`, `mbstring`
-- For database connections: `ext-pdo` plus the matching PDO driver such as `pdo_mysql`, `pdo_pgsql`, or `pdo_sqlite`
+- Required PHP extensions: `ext-intl`, `ext-mbstring`
+- For database connections: `ext-pdo` plus the matching PDO driver such as `ext-pdo_mysql`, `ext-pdo_pgsql`, or `ext-pdo_sqlite`
 
 Optional (depending on the parts you use):
 
@@ -56,14 +50,16 @@ Install the package with Composer:
 composer require fyre/framework
 ```
 
-## Getting started
+## Application bootstrap
 
-A common starting point is to extend `Fyre\Core\Engine`, register the application instance, and add your middleware, routes, and other app services around it.
+A common bootstrap extends `Fyre\Core\Engine`, customizes the middleware queue, and shares the application instance with the framework helpers.
 
 ```php
 use Fyre\Core\Engine;
 use Fyre\Core\Loader;
 use Fyre\Http\MiddlewareQueue;
+
+$composer = require 'vendor/autoload.php';
 
 final class Application extends Engine
 {
@@ -76,43 +72,55 @@ final class Application extends Engine
     }
 }
 
-$loader = (new Loader())
-    ->loadComposer('vendor/autoload.php')
+$loader = new Loader()
+    ->addClassMap($composer->getClassMap())
+    ->addNamespaces($composer->getPrefixesPsr4())
     ->register();
 
 $app = new Application($loader);
 Application::setInstance($app);
 ```
 
-Your application repository decides the entry points, bootstrap flow, and project layout around this package.
+Your application repository defines its entry points, routes, configuration paths, and project layout around this package.
 
-For a fuller walkthrough, start with [Core](docs/core/index.md), then [Engine](docs/core/engine.md).
+Continue with [Engine](docs/core/engine.md), [HTTP Middleware](docs/http/middleware.md), and [Routing](docs/routing/index.md).
 
 ## Documentation
 
 Start with the [documentation index](docs/index.md), or jump to the area you need:
 
-- **Core services**: [Core](docs/core/index.md) -> [Container](docs/core/container.md) -> [Engine](docs/core/engine.md)
+- **Core services**: [Core](docs/core/index.md) -> [Engine](docs/core/engine.md) -> [Container](docs/core/container.md)
 - **HTTP applications**: [HTTP](docs/http/index.md) -> [Routing](docs/routing/index.md)
 - **Data and persistence**: [Database](docs/database/index.md) -> [ORM](docs/orm/index.md)
-- **Auth and security**: [Auth](docs/auth/index.md) -> [Security](docs/security/index.md)
-- **Shared services**: [Events](docs/events/index.md) -> [Logging](docs/logging/index.md) -> [Mail](docs/mail/index.md) -> [Cache](docs/cache/index.md) -> [Queue](docs/queue/index.md)
-- **Rendering and forms**: [View](docs/view/index.md) -> [Form](docs/form/index.md)
-- **Tooling and tests**: [Console](docs/console/index.md) -> [Testing](docs/testing/index.md) -> [Utilities](docs/utilities/index.md)
+- **Auth and security**: [Auth](docs/auth/index.md), [Security](docs/security/index.md)
+- **Shared services**: [Events](docs/events/index.md), [Logging](docs/logging/index.md), [Mail](docs/mail/index.md), [Cache](docs/cache/index.md), [Queue](docs/queue/index.md)
+- **Rendering and forms**: [View](docs/view/index.md), [Form](docs/form/index.md)
+- **Tooling and tests**: [Console](docs/console/index.md), [Testing](docs/testing/index.md), [Utilities](docs/utilities/index.md)
 
-## Development
+## Repository development
 
-Install dev dependencies and run the main checks:
+Install the repository's dev dependencies and run the baseline checks:
 
 ```bash
+composer validate --strict
 composer install
+composer audit --no-interaction
 composer cs
 composer phpstan
 composer phpstan-tests
 composer test:core
 ```
 
-Integration suites are available for services defined in `docker-compose.yml`:
+Additional local suites cover SQLite and external runtime integrations:
+
+```bash
+composer test:sqlite
+composer test:external
+```
+
+The SQLite suite requires `ext-pdo` and `ext-pdo_sqlite`. The external suite requires `ext-curl` and a `google-chrome` executable for PDF rendering.
+
+Service-backed suites are available for dependencies defined in `docker-compose.yml`:
 
 ```bash
 docker compose up -d mysql
