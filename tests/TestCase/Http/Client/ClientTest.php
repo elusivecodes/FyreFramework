@@ -941,7 +941,7 @@ final class ClientTest extends TestCase
     #[Override]
     public static function setUpBeforeClass(): void
     {
-        self::$pid = (int) exec('nohup php -S localhost:8888 tests/server.php >/dev/null 2>&1 & echo $!');
+        self::$pid = (int) exec('nohup php -S 127.0.0.1:8888 tests/server.php >/dev/null 2>&1 & echo $!');
         sleep(1);
     }
 
