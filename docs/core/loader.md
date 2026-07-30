@@ -53,20 +53,9 @@ If you skip `Loader`, directly referenced classes can still autoload through Com
 
 ## Bootstrapping from Composer
 
-Require Composer's autoloader first, then copy its class-map and namespace-prefix data into `Loader`:
+The bootstrap above copies Composer's class-map and PSR-4 prefix data into `Loader`, then registers it with PHP's autoload stack.
 
-```php
-use Fyre\Core\Loader;
-
-$composer = require 'vendor/autoload.php';
-
-$loader = new Loader()
-    ->addClassMap($composer->getClassMap())
-    ->addNamespaces($composer->getPrefixesPsr4())
-    ->register();
-```
-
-Use `loadComposer()` when you need to add mappings from a separate Composer installation that has not already been included:
+Use `loadComposer()` when you want to add mappings from another Composer installation by path:
 
 ```php
 $loader->loadComposer('plugins/vendor/autoload.php');
@@ -289,7 +278,6 @@ A few practical details are worth keeping in mind:
 
 - `register()` and `unregister()` are idempotent.
 - `loadComposer()` is a no-op when the file path does not exist.
-- `loadComposer()` expects an autoload file that has not already been included so the file returns its Composer autoloader instance.
 - `findFolders()` returns only directories that actually exist on disk.
 - Class-map entries take precedence over namespace prefix lookups.
 

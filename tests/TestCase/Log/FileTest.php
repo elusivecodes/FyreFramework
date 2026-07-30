@@ -8,6 +8,7 @@ use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Log\Handlers\FileLogger;
 use Fyre\Log\LogManager;
+use Fyre\Utility\Path;
 use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
@@ -20,6 +21,7 @@ use function mkdir;
 use function preg_quote;
 use function rmdir;
 use function strtoupper;
+use function sys_get_temp_dir;
 use function unlink;
 
 use const JSON_THROW_ON_ERROR;
@@ -109,6 +111,16 @@ final class FileTest extends TestCase
         $this->assertMatchesRegularExpression(
             '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[DEBUG\] test/',
             file_get_contents('log/debug-cli.log') ?: ''
+        );
+    }
+
+    public function testDefaultPath(): void
+    {
+        $logger = new FileLogger();
+
+        $this->assertSame(
+            Path::join(sys_get_temp_dir(), 'fyre', 'logs'),
+            $logger->getConfig()['path']
         );
     }
 

@@ -78,8 +78,8 @@ class ConnectionConfig
 
 `DebugTrait` keeps debug output readable by applying a few rules:
 
-- scalar values and `null` are left as they are
-- masked values become `[*****]`
+- masked values become `[*****]`, except `null` and empty strings
+- other scalar values and `null` are left as they are
 - arrays are expanded only to a limited depth
 - non-scalar objects and resources are reduced to a type label such as `[stdClass]`
 

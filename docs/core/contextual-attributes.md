@@ -50,10 +50,11 @@ When a parameter has a contextual attribute, the container lets that attribute s
 
 In practice, the order is:
 
-1. a named argument you pass explicitly
-2. a contextual attribute on the parameter
-3. the class or interface type-hint
-4. the parameter default value or `null`
+1. a matching named argument you pass explicitly
+2. the next positional argument you pass explicitly
+3. a contextual attribute on the parameter
+4. the class or interface type-hint
+5. the parameter default value or `null`
 
 ## Built-in attributes
 
@@ -136,13 +137,13 @@ function encryptionExample(#[Encryption('openssl')] Encrypter $enc): Encrypter
 ### `Log`
 
 - **Use**: `#[Log(string $key = LogManager::DEFAULT)]`
-- **Resolves**: `LoggerInterface`
+- **Resolves**: `Logger`
 
 ```php
 use Fyre\Core\Attributes\Log;
-use Psr\Log\LoggerInterface;
+use Fyre\Log\Logger;
 
-function logExample(#[Log('other')] LoggerInterface $log): LoggerInterface
+function logExample(#[Log('other')] Logger $log): Logger
 {
     return $log;
 }
@@ -249,7 +250,7 @@ $container->bindAttribute(
 
 A few practical details are worth keeping in mind:
 
-- If you pass a named argument for the parameter, that value wins and the attribute is not used.
+- If you pass a named or positional argument for the parameter, that value wins and the attribute is not used.
 - If a parameter has a contextual attribute, the container uses it before trying the type-hint directly.
 - Only the first matching contextual attribute on a parameter is used.
 

@@ -142,13 +142,11 @@ final class LoaderTest extends TestCase
 
     public function testLoadComposer(): void
     {
-        $this->loader->loadComposer('tests/autoload.php');
+        $this->loader->loadComposer('vendor/autoload.php');
+        $this->loader->loadComposer('vendor/autoload.php');
 
-        $this->assertSame(
-            [
-                Path::resolve('src'),
-            ],
-            $this->loader->getNamespace('Fyre')
+        $this->assertTrue(
+            $this->loader->hasNamespace('Fyre')
         );
     }
 

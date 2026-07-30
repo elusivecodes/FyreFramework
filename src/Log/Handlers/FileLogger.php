@@ -26,6 +26,7 @@ use function is_resource;
 use function mkdir;
 use function rewind;
 use function sprintf;
+use function sys_get_temp_dir;
 use function time;
 
 use const LOCK_EX;
@@ -46,7 +47,7 @@ class FileLogger extends Logger
     #[Override]
     #[SensitivePropertyArray(['path'])]
     protected static array $defaults = [
-        'path' => '/var/log/',
+        'path' => null,
         'file' => null,
         'suffix' => null,
         'extension' => 'log',
@@ -76,6 +77,7 @@ class FileLogger extends Logger
             $this->config['suffix'] ??= '-cli';
         }
 
+        $this->path ??= Path::join(sys_get_temp_dir(), 'fyre', 'logs');
         $this->path = Path::resolve($this->config['path']);
 
         if (!is_dir($this->path) && !mkdir($this->path, 0777, true)) {

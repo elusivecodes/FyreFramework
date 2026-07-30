@@ -263,22 +263,21 @@ class Loader
      * If the file does not exist, this method is a no-op.
      *
      * The file is expected to return a Composer autoloader instance (e.g. the value returned by
-     * including `vendor/autoload.php`), supporting `getClassMap()` and `getPrefixesPsr4()`.
+     * requiring `vendor/autoload.php`), supporting `getClassMap()` and `getPrefixesPsr4()`.
      *
      * @param string $composerPath The Composer autoload.php path.
      * @return static The Loader instance.
      */
     public function loadComposer(string $composerPath): static
     {
-        if (is_file($composerPath)) {
-            $composer = include_once $composerPath;
-
-            $classMap = $composer->getClassMap();
-            $namespaces = $composer->getPrefixesPsr4();
-
-            $this->addClassMap($classMap);
-            $this->addNamespaces($namespaces);
+        if (!is_file($composerPath)) {
+            return $this;
         }
+
+        $composer = require $composerPath;
+
+        $composer->getClassMap() |> $this->addClassMap(...);
+        $composer->getPrefixesPsr4() |> $this->addNamespaces(...);
 
         return $this;
     }

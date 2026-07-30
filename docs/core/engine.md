@@ -28,14 +28,17 @@ Most applications use `Engine` like this:
 use Fyre\Core\Config;
 use Fyre\Core\Engine;
 use Fyre\Http\MiddlewareQueue;
-use Fyre\Log\Handlers\FileLogger;
+use Fyre\Log\LogManager;
 use Psr\Log\LoggerInterface;
 
 class Application extends Engine
 {
     public function boot(Config $config): void
     {
-        $this->singleton(LoggerInterface::class, FileLogger::class);
+        $this->singleton(
+            LoggerInterface::class,
+            static fn(LogManager $logs): LoggerInterface => $logs->use()
+        );
 
         $config->load('bootstrap');
     }

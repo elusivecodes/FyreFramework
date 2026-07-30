@@ -34,7 +34,7 @@ The container gives you three core capabilities:
 `Container` also implements PSR-11:
 
 - `get()` delegates to `use()`
-- `has()` checks whether an alias can be resolved
+- `has()` checks whether an alias maps to a factory or instantiable class
 
 ## Core workflows
 
@@ -117,11 +117,12 @@ If you pass manual arguments while resolving a shared binding, the returned inst
 
 For both `build()` and `call()`, parameters are resolved in this order:
 
-1. named arguments you pass explicitly
-2. a contextual attribute on the parameter
-3. a class or interface type-hint
-4. the parameter default value or `null` when allowed
-5. otherwise, a `ContainerException`
+1. a matching named argument you pass explicitly
+2. the next positional argument you pass explicitly
+3. a contextual attribute on the parameter
+4. a class or interface type-hint
+5. the parameter default value or `null` when allowed
+6. otherwise, a `ContainerException`
 
 That keeps constructor and method signatures predictable while still allowing targeted overrides.
 
@@ -156,7 +157,7 @@ Resolves an alias into a service or value.
 
 Arguments:
 - `$alias` (`string`): a class name or custom alias.
-- `$arguments` (`array`): optional named arguments.
+- `$arguments` (`array`): optional named or positional arguments.
 
 ```php
 use Fyre\Core\Config;
@@ -181,7 +182,7 @@ $cache = $container->get('cache');
 
 #### **PSR-11 presence check** (`has()`)
 
-Returns whether an alias can be resolved.
+Checks whether an alias maps to a factory or instantiable class without resolving it.
 
 Arguments:
 - `$alias` (`string`): a class name or custom alias.
@@ -198,7 +199,7 @@ Builds a fresh instance of the exact class you pass in.
 
 Arguments:
 - `$className` (`string`): the class to instantiate.
-- `$arguments` (`array`): optional named constructor arguments.
+- `$arguments` (`array`): optional named or positional constructor arguments.
 
 ```php
 $lang = $container->build(Lang::class);
@@ -210,7 +211,7 @@ Invokes a callable and resolves its parameters through the container.
 
 Arguments:
 - `$callable` (`array|object|string`): a closure, invokable object, object method, class method, or `'ClassName::method'`.
-- `$arguments` (`array`): optional named arguments.
+- `$arguments` (`array`): optional named or positional arguments.
 
 ```php
 use Fyre\Core\Attributes\Config as ConfigAttribute;
@@ -258,6 +259,8 @@ Arguments:
 - `$scoped` (`bool`): whether the shared result should be cleared by `clearScoped()`.
 
 ```php
+use Fyre\Cache\Handlers\Array\ArrayCacher;
+
 $container->bind('cache', ArrayCacher::class);
 $cache = $container->use('cache');
 ```

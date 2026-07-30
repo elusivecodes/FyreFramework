@@ -119,7 +119,7 @@ return [
 
 `FileLogger` (the `Fyre\Log\Handlers\FileLogger` handler) supports these additional options:
 
-- `path` (`string`): the folder to write log files into (default: `/var/log/`). If it does not exist, the handler attempts to create it. In most applications, you’ll want something like `tmp/logs` (system folders may require elevated permissions).
+- `path` (`string`): the folder to write log files into (default: `<system temp>/fyre/logs`). If it does not exist, the handler attempts to create it. For durable production logs, configure an application-owned path explicitly.
 - `file` (`string|null`): the base filename (without extension) to write to. When `null`, the log level is used (one file per level).
 - `suffix` (`string|null`): a suffix appended to the base filename. When running under CLI, `-cli` is used by default when `suffix` is not specified.
 - `extension` (`string`): file extension without the leading dot (default: `log`). Set to an empty string to omit the extension.
@@ -152,7 +152,7 @@ Fyre includes a small set of handlers under `Fyre\Log\Handlers\*`. You can defin
 
 `FileLogger` writes formatted messages to files under `path`. By default, it writes one file per log level (for example, `error.log`), but you can set `file` to write all levels into a single file.
 
-In most applications, prefer a writable application folder like `tmp/logs` over system folders like `/var/log/`.
+For durable production logs, prefer a writable application folder like `tmp/logs` over the temporary default.
 
 ### Array handler
 

@@ -192,7 +192,7 @@ return [
         ],
         'reportTo' => [
             'group' => 'csp',
-            'max_age' => 10886400,
+            'max_age' => 10_886_400,
             'endpoints' => [
                 ['url' => 'https://example.com/csp-report'],
             ],
