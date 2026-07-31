@@ -8,6 +8,7 @@ use Fyre\Mail\Email;
 use Fyre\Mail\Exceptions\MailException;
 use Fyre\Mail\Mailer;
 use Override;
+use Throwable;
 
 use function array_key_first;
 use function base64_encode;
@@ -41,7 +42,7 @@ class SmtpMailer extends Mailer
         'host' => '127.0.0.1',
         'username' => null,
         'password' => null,
-        'port' => '465',
+        'port' => '25',
         'auth' => false,
         'tls' => false,
         'dsn' => false,
@@ -168,7 +169,7 @@ class SmtpMailer extends Mailer
      */
     protected function connect(): void
     {
-        $this->socket = stream_socket_client(
+        $this->socket = @stream_socket_client(
             $this->config['host'].':'.$this->config['port'],
             $errno,
             $errstr,
@@ -176,8 +177,8 @@ class SmtpMailer extends Mailer
             STREAM_CLIENT_CONNECT,
             stream_context_create([
                 'ssl' => [
-                    'verify_peer' => false,
-                    'verify_peer_name' => false,
+                    'verify_peer' => true,
+                    'verify_peer_name' => true,
                 ],
             ])
         ) ?: null;
@@ -186,24 +187,44 @@ class SmtpMailer extends Mailer
             throw new MailException('SMTP connection failed.');
         }
 
-        stream_set_timeout($this->socket, 5);
+        try {
+            stream_set_timeout($this->socket, 5);
 
-        $welcome = $this->getData();
+            $welcome = $this->getData();
 
-        $this->sendCommand('hello');
-
-        if ($this->config['tls']) {
-            $this->sendCommand('starttls');
-
-            if (is_resource($this->socket)) {
-                stream_socket_enable_crypto($this->socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+            if (!str_starts_with($welcome, '220')) {
+                throw new MailException(sprintf(
+                    'SMTP invalid reply: %s',
+                    $welcome
+                ));
             }
 
             $this->sendCommand('hello');
-        }
 
-        if ($this->config['auth']) {
-            $this->authenticate();
+            if ($this->config['tls']) {
+                $this->sendCommand('starttls');
+
+                if (
+                    !is_resource($this->socket) ||
+                    @stream_socket_enable_crypto($this->socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT) !== true
+                ) {
+                    throw new MailException('SMTP TLS negotiation failed.');
+                }
+
+                $this->sendCommand('hello');
+            }
+
+            if ($this->config['auth']) {
+                $this->authenticate();
+            }
+        } catch (Throwable $e) {
+            if (is_resource($this->socket)) {
+                fclose($this->socket);
+            }
+
+            $this->socket = null;
+
+            throw $e;
         }
     }
 
@@ -231,9 +252,17 @@ class SmtpMailer extends Mailer
         }
 
         $data = '';
-        while (($str = fgets($this->socket, 512)) !== false) {
-            $data .= $str;
-        }
+
+        do {
+            $line = fgets($this->socket, 512);
+
+            if ($line === false) {
+                throw new MailException('SMTP connection closed unexpectedly.');
+            }
+
+            $data .= $line;
+            $hasMoreLines = ($line[3] ?? null) === '-';
+        } while ($hasMoreLines);
 
         return $data;
     }
@@ -254,7 +283,7 @@ class SmtpMailer extends Mailer
 
         switch ($command) {
             case 'hello':
-                if ($this->config['auth']) {
+                if ($this->config['auth'] || $this->config['tls'] || $this->config['dsn']) {
                     $message = 'EHLO';
                 } else {
                     $message = 'HELO';

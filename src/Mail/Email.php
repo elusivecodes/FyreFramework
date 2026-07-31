@@ -432,9 +432,10 @@ class Email
     /**
      * Returns the full email header lines.
      *
+     * @param bool $includeBcc Whether to include BCC addresses.
      * @return array<string, int|string|string[]> The email header lines.
      */
-    public function getFullHeaders(): array
+    public function getFullHeaders(bool $includeBcc = false): array
     {
         $headers = [];
 
@@ -445,7 +446,6 @@ class Email
             'Return-Path' => 'returnPath',
             'To' => 'to',
             'Cc' => 'cc',
-            'Bcc' => 'bcc',
         ];
 
         foreach ($addressHeaders as $header => $property) {
@@ -482,7 +482,13 @@ class Email
 
         $headers['Content-Transfer-Encoding'] = '8bit';
 
-        return array_merge($headers, $this->headers);
+        $headers = array_merge($headers, $this->headers);
+
+        if ($includeBcc && $this->bcc !== []) {
+            $headers['Bcc'] = $this->formatAddresses($this->bcc);
+        }
+
+        return $headers;
     }
 
     /**
@@ -888,20 +894,25 @@ class Email
                 $attachment['disposition'] ??= 'attachment';
             }
 
-            if (isset($attachment['file'])) {
-                $attachment['content'] ??= file_get_contents($attachment['file']);
-            } else if (!isset($attachment['content'])) {
+            $content = $attachment['content'] ?? null;
+
+            if ($content === null && isset($attachment['file'])) {
+                $content = @file_get_contents($attachment['file']);
+            }
+
+            if (!is_string($content)) {
                 throw new RuntimeException(sprintf(
                     'Email attachment `%s` is not valid.',
                     $filename
                 ));
             }
 
-            $finfo = new finfo(FILEINFO_MIME);
-            $mimeType = $finfo->buffer($attachment['content']);
-            $attachment['mimeType'] ??= $mimeType;
+            if (!isset($attachment['mimeType'])) {
+                $mimeType = new finfo(FILEINFO_MIME_TYPE)->buffer($content);
+                $attachment['mimeType'] = $mimeType ?: 'application/octet-stream';
+            }
 
-            $attachment['content'] = base64_encode($attachment['content']) |> chunk_split(...);
+            $content = base64_encode($content) |> chunk_split(...);
 
             $lines[] = '--'.$boundary;
             $lines[] = 'Content-Type: '.$attachment['mimeType'].'; name="'.$filename.'"';
@@ -913,7 +924,7 @@ class Email
             }
 
             $lines[] = '';
-            $lines[] = $attachment['content'];
+            $lines[] = $content;
             $lines[] = '';
         }
 

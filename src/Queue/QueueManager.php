@@ -95,7 +95,7 @@ class QueueManager
      */
     public function getConfig(string|null $key = null): array|null
     {
-        if (!$key) {
+        if ($key === null) {
             return $this->config;
         }
 

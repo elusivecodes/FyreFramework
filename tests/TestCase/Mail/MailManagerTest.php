@@ -61,6 +61,20 @@ final class MailManagerTest extends TestCase
         );
     }
 
+    public function testGetConfigEmptyKey(): void
+    {
+        $config = [
+            'className' => SendmailMailer::class,
+        ];
+
+        $this->mailManager->setConfig('', $config);
+
+        $this->assertSame(
+            $config,
+            $this->mailManager->getConfig('')
+        );
+    }
+
     public function testGetConfigKey(): void
     {
         $this->assertSame(

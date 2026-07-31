@@ -111,6 +111,20 @@ final class QueueManagerTest extends TestCase
         );
     }
 
+    public function testGetConfigEmptyKey(): void
+    {
+        $config = [
+            'className' => RedisQueue::class,
+        ];
+
+        $this->queueManager->setConfig('', $config);
+
+        $this->assertSame(
+            $config,
+            $this->queueManager->getConfig('')
+        );
+    }
+
     public function testGetConfigKey(): void
     {
         $this->assertSame(

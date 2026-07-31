@@ -318,7 +318,7 @@ class EventManager implements EventDispatcherInterface, ListenerProviderInterfac
 
         return $this->listenerEvents[$listener::class] = $cache->remember(
             $cacheKey,
-            static fn() => static::findEvents($listener)
+            static fn(): array => static::findEvents($listener)
         );
     }
 

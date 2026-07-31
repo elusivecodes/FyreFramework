@@ -14,7 +14,10 @@ use PHPUnit\Framework\TestCase;
 
 use function array_shift;
 use function base64_encode;
+use function fclose;
 use function fopen;
+use function fwrite;
+use function rewind;
 use function str_contains;
 
 final class SmtpMailerTest extends TestCase
@@ -95,6 +98,14 @@ final class SmtpMailerTest extends TestCase
         }, $this->mailer, SmtpMailer::class)();
     }
 
+    public function testDefaultPort(): void
+    {
+        $this->assertSame(
+            '25',
+            $this->mailer->getConfig()['port']
+        );
+    }
+
     public function testDestruct(): void
     {
         $this->replies = [
@@ -117,7 +128,7 @@ final class SmtpMailerTest extends TestCase
         );
 
         $this->assertNull(
-            Closure::bind(function() {
+            Closure::bind(function(): mixed {
                 return $this->socket;
             }, $this->mailer, SmtpMailer::class)()
         );
@@ -171,6 +182,54 @@ final class SmtpMailerTest extends TestCase
         }, $mailer, SmtpMailer::class)();
     }
 
+    public function testGetData(): void
+    {
+        $mailer = new SmtpMailer($this->container);
+
+        $data = Closure::bind(function(): string {
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            fwrite($socket, "250-First line\r\n250 Final line\r\nNext line\r\n");
+            rewind($socket);
+            $this->socket = $socket;
+
+            try {
+                return $this->getData();
+            } finally {
+                fclose($socket);
+                $this->socket = null;
+            }
+        }, $mailer, SmtpMailer::class)();
+
+        $this->assertSame(
+            "250-First line\r\n250 Final line\r\n",
+            $data
+        );
+    }
+
+    public function testGetDataConnectionClosed(): void
+    {
+        $this->expectException(MailException::class);
+        $this->expectExceptionMessage('SMTP connection closed unexpectedly.');
+
+        $mailer = new SmtpMailer($this->container);
+
+        Closure::bind(function(): void {
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            $this->socket = $socket;
+
+            try {
+                $this->getData();
+            } finally {
+                fclose($socket);
+                $this->socket = null;
+            }
+        }, $mailer, SmtpMailer::class)();
+    }
+
     public function testSend(): void
     {
         /** @var SmtpMailer&Stub $mailer */
@@ -188,6 +247,7 @@ final class SmtpMailerTest extends TestCase
         $replies = [
             '250 From',
             '250 To',
+            '250 Bcc',
             '354 Data',
             '250 Queued',
             '250 Reset',
@@ -213,6 +273,7 @@ final class SmtpMailerTest extends TestCase
         $email = $mailer->email()
             ->setFrom('from@example.com')
             ->setTo('to@example.com')
+            ->setBcc('bcc@example.com')
             ->setSubject('Test')
             ->setBodyText('.Test');
 
@@ -229,22 +290,32 @@ final class SmtpMailerTest extends TestCase
         );
 
         $this->assertSame(
-            'DATA',
+            'RCPT TO:<bcc@example.com>',
             $sent[2]
         );
 
-        $this->assertTrue(
-            str_contains($sent[3], "\r\n\r\n..Test\r\n\r\n")
+        $this->assertSame(
+            'DATA',
+            $sent[3]
         );
 
-        $this->assertSame(
-            '.',
+        $this->assertTrue(
+            str_contains($sent[4], "\r\n\r\n..Test\r\n\r\n")
+        );
+
+        $this->assertStringNotContainsString(
+            'Bcc:',
             $sent[4]
         );
 
         $this->assertSame(
-            'RSET',
+            '.',
             $sent[5]
+        );
+
+        $this->assertSame(
+            'RSET',
+            $sent[6]
         );
 
         Closure::bind(function(): void {
@@ -392,7 +463,7 @@ final class SmtpMailerTest extends TestCase
         }, $this->mailer, SmtpMailer::class)();
 
         $this->assertNull(
-            Closure::bind(function() {
+            Closure::bind(function(): mixed {
                 return $this->socket;
             }, $this->mailer, SmtpMailer::class)()
         );

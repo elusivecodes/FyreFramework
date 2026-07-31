@@ -113,7 +113,7 @@ final class PromiseTest extends TestCase
     {
         new Promise(static function(Closure $resolve, Closure $reject): void {
             throw new Exception();
-        })->catch(static function(): void {})->then(static function() {
+        })->catch(static function(): void {})->then(static function(): void {
             throw new Exception('test');
         })->catch(function(Throwable $reason): void {
             $this->assertSame(
@@ -372,7 +372,7 @@ final class PromiseTest extends TestCase
     {
         $this->expectException(Exception::class);
 
-        Promise::reject()->catch(static function() {
+        Promise::reject()->catch(static function(): void {
             throw new Exception();
         });
     }
@@ -391,7 +391,7 @@ final class PromiseTest extends TestCase
     {
         $this->expectException(Exception::class);
 
-        Promise::resolve(1)->then(static function() {
+        Promise::resolve(1)->then(static function(): void {
             throw new Exception();
         });
     }

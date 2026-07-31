@@ -9,6 +9,7 @@ use Fyre\Mail\Handlers\DebugMailer;
 use Fyre\Mail\MailManager;
 use Override;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 use function file_get_contents;
 
@@ -246,6 +247,22 @@ final class DebugTest extends TestCase
             '<img src="cid:1234">',
             $sentEmail['body'] ?? ''
         );
+    }
+
+    public function testMailSendAttachmentInvalid(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Email attachment `missing.txt` is not valid.');
+
+        $this->mailer->email()
+            ->setTo('test1@test.com')
+            ->setFrom('test2@test.com')
+            ->addAttachments([
+                'missing.txt' => [
+                    'file' => 'tests/assets/missing.txt',
+                ],
+            ])
+            ->send();
     }
 
     public function testMailSendHtml(): void

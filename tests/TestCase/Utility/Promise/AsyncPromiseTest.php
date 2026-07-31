@@ -279,7 +279,7 @@ final class AsyncPromiseTest extends TestCase
             throw new Exception();
         });
 
-        $promise->catch(static function(): void {})->then(static function() {
+        $promise->catch(static function(): void {})->then(static function(): void {
             throw new Exception('test');
         })->catch(function(Throwable $reason): void {
             $this->assertSame(

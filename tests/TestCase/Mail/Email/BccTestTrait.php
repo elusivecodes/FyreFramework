@@ -54,7 +54,7 @@ trait BccTestTrait
     {
         $this->email->setBcc('test1@test.com');
 
-        $headers = $this->email->getFullHeaders();
+        $headers = $this->email->getFullHeaders(true);
 
         $this->assertSame(
             'test1@test.com',
@@ -69,7 +69,7 @@ trait BccTestTrait
             'test1@test.com' => 'Тестовое задание',
         ]);
 
-        $headers = $this->email->getFullHeaders();
+        $headers = $this->email->getFullHeaders(true);
 
         $this->assertSame(
             '=?ISO-8859-1?B?Pz8/Pz8/Pz8gPz8/Pz8/Pw==?= <test1@test.com>',
@@ -83,11 +83,21 @@ trait BccTestTrait
             'test1@test.com' => 'Тестовое задание',
         ]);
 
-        $headers = $this->email->getFullHeaders();
+        $headers = $this->email->getFullHeaders(true);
 
         $this->assertSame(
             '=?UTF-8?B?0KLQtdGB0YLQvtCy0L7QtSDQt9Cw0LTQsNC90LjQtQ==?= <test1@test.com>',
             $headers['Bcc']
+        );
+    }
+
+    public function testHeaderBccExcluded(): void
+    {
+        $this->email->setBcc('test1@test.com');
+
+        $this->assertArrayNotHasKey(
+            'Bcc',
+            $this->email->getFullHeaders()
         );
     }
 
@@ -98,7 +108,7 @@ trait BccTestTrait
             'test2@test.com' => 'Test 2',
         ]);
 
-        $headers = $this->email->getFullHeaders();
+        $headers = $this->email->getFullHeaders(true);
 
         $this->assertSame(
             'Test 1 <test1@test.com>, Test 2 <test2@test.com>',
@@ -112,7 +122,7 @@ trait BccTestTrait
             'test1@test.com' => 'Test',
         ]);
 
-        $headers = $this->email->getFullHeaders();
+        $headers = $this->email->getFullHeaders(true);
 
         $this->assertSame(
             'Test <test1@test.com>',

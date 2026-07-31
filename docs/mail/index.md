@@ -100,7 +100,7 @@ The options below are specific to the built-in handler classes under `Fyre\Mail\
 Implemented by `SmtpMailer`. Sends mail via SMTP.
 
 - `host` (`string`): default `127.0.0.1`
-- `port` (`int|string`): default `465`
+- `port` (`int|string`): default `25`
 - `username` (`string|null`): default `null`
 - `password` (`string|null`): default `null`
 - `auth` (`bool`): default `false`
@@ -110,17 +110,13 @@ Implemented by `SmtpMailer`. Sends mail via SMTP.
 
 `tls=true` enables `STARTTLS`. This mailer does not automatically secure the connection based on port; on most servers, use port `587` for `STARTTLS`.
 
-The default port is `465`, which is commonly used for implicit TLS (SMTPS). This handler only performs implicit TLS when you prefix `host` with `tls://` (or `ssl://`) and leave `tls` as `false`.
+For implicit TLS (SMTPS), prefix `host` with `tls://` (or `ssl://`), use port `465`, and leave `tls` as `false`.
 
 #### Security considerations
 
-`SmtpMailer` disables TLS certificate verification (`verify_peer` / `verify_peer_name` are `false`). This means TLS protects against passive eavesdropping, but it does not protect you from man-in-the-middle attacks on untrusted networks.
+`SmtpMailer` verifies TLS certificates and peer names using PHP's configured certificate authority store. TLS negotiation failures stop the connection before authentication.
 
-Practical mitigation options:
-
-- Prefer sending through a trusted internal relay on the same host/network.
-- Use a network-level guarantee (for example a private network, VPN, or a service mesh) between your app and your SMTP server.
-- If you need strict certificate validation, implement a custom `Mailer` handler that enables peer verification (or proxy SMTP through a component that performs verification).
+If your SMTP server uses a private certificate authority, configure PHP's OpenSSL certificate authority settings before enabling TLS.
 
 ### Sendmail
 
@@ -166,6 +162,7 @@ use Fyre\Mail\Mailer;
 function sendWelcome(#[Mail] Mailer $mailer): void
 {
     $mailer->email()
+        ->setFrom('no-reply@example.com', 'Example App')
         ->setTo('user@example.com')
         ->setSubject('Welcome')
         ->setBodyText("Hello!\n")
@@ -182,6 +179,7 @@ use Fyre\Mail\Mailer;
 function sendWelcomeDebug(#[Mail('debug')] Mailer $mailer): void
 {
     $mailer->email()
+        ->setFrom('no-reply@example.com', 'Example App')
         ->setTo('user@example.com')
         ->setSubject('Welcome')
         ->setBodyText("Hello!\n")
@@ -254,6 +252,22 @@ $mailer = $mailers->build([
 ]);
 ```
 
+#### **Register mailer configuration** (`setConfig()`)
+
+Stores a mailer configuration under a new key.
+
+Arguments:
+- `$key` (`string`): the mailer key.
+- `$options` (`array<string, mixed>`): mailer options including `className`.
+
+```php
+use Fyre\Mail\Handlers\DebugMailer;
+
+$mailers->setConfig('debug', [
+    'className' => DebugMailer::class,
+]);
+```
+
 #### **Read stored configuration** (`getConfig()`)
 
 Returns the stored config array. When called with no key, it returns all stored configs.
@@ -266,6 +280,28 @@ $all = $mailers->getConfig();
 $default = $mailers->getConfig('default');
 ```
 
+#### **Check stored configuration** (`hasConfig()`)
+
+Checks whether configuration exists for a mailer key.
+
+Arguments:
+- `$key` (`string`): the mailer key.
+
+```php
+$configured = $mailers->hasConfig('debug');
+```
+
+#### **Check a loaded mailer** (`isLoaded()`)
+
+Checks whether a mailer has already been built for a key.
+
+Arguments:
+- `$key` (`string`): the mailer key.
+
+```php
+$loaded = $mailers->isLoaded('debug');
+```
+
 #### **Unload a mailer key** (`unload()`)
 
 Removes the stored configuration and any loaded mailer for that key.
@@ -275,6 +311,14 @@ Arguments:
 
 ```php
 $mailers->unload('debug');
+```
+
+#### **Clear all mailers** (`clear()`)
+
+Removes all stored configurations and loaded mailers.
+
+```php
+$mailers->clear();
 ```
 
 ### `Mailer`
@@ -296,6 +340,7 @@ Arguments:
 
 ```php
 $email = $mailer->email()
+    ->setFrom('no-reply@example.com', 'Example App')
     ->setTo('user@example.com')
     ->setSubject('Hello')
     ->setBodyText("Hi!\n");
@@ -332,11 +377,10 @@ $client = $mailer->getClient();
 A few behaviors are worth keeping in mind:
 
 - `Mailer::send()` throws a `MailException` if an email has no recipients.
-- `MailManager::setConfig()` rejects duplicate keys, and `MailManager::unload()` removes both the stored config and any loaded mailer for that key.
-- `MailManager::use()` requires that the selected key has a valid stored config with a `className`.
+- Set a valid `From` address before sending; `MailManager` does not provide a default sender.
 - `SmtpMailer` only enables `STARTTLS` when `tls` is `true` (it does not automatically secure the connection based on port).
 - `SmtpMailer` does not enable implicit TLS unless you prefix `host` with `tls://` (or `ssl://`).
-- `SmtpMailer` disables TLS certificate verification (`verify_peer` / `verify_peer_name` are `false`) (see [Security considerations](#security-considerations)).
+- `SmtpMailer` verifies TLS certificates and peer names and stops before authentication when TLS negotiation fails.
 - When `auth` is enabled for `SmtpMailer`, `username` and `password` must be set to strings.
 
 ## Related

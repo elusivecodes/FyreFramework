@@ -56,12 +56,12 @@ final class MacroTest extends TestCase
 
     public function testMacroCallStatic(): void
     {
-        MyClass::staticMacro('testMacro', function() {
-            return 'Hello, World!';
-        });
-
         $this->expectException(BadMethodCallException::class);
         $this->expectExceptionMessage('Macro `Tests\Mock\Core\Macro\MyClass::testMacro` is not registered.');
+
+        MyClass::staticMacro('testMacro', function(): string {
+            return 'Hello, World!';
+        });
 
         $obj = new MyClass();
         $obj->testMacro();

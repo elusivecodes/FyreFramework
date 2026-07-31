@@ -114,6 +114,20 @@ final class ConnectionManagerTest extends TestCase
         );
     }
 
+    public function testGetConfigEmptyKey(): void
+    {
+        $config = [
+            'className' => MysqlConnection::class,
+        ];
+
+        $this->connectionManager->setConfig('', $config);
+
+        $this->assertSame(
+            $config,
+            $this->connectionManager->getConfig('')
+        );
+    }
+
     public function testGetConfigKey(): void
     {
         $this->assertSame(

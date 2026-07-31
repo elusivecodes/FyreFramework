@@ -28,7 +28,7 @@ class SendmailMailer extends Mailer
     {
         static::checkEmail($email);
 
-        $headers = $email->getFullHeaders();
+        $headers = $email->getFullHeaders(true);
         $body = $email->getFullBodyString();
 
         $to = $headers['To'] ?? '';

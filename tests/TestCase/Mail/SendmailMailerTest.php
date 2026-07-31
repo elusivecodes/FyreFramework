@@ -58,11 +58,12 @@ final class SendmailMailerTest extends TestCase
 
         $email = $this->mailer->email()
             ->setTo('to@example.com')
+            ->setBcc('bcc@example.com')
             ->setFrom('from@example.com')
             ->setSubject('Test')
             ->setBodyText('This is a test');
 
-        $expectedHeaders = $email->getFullHeaders();
+        $expectedHeaders = $email->getFullHeaders(true);
         $expectedBody = $email->getFullBodyString();
         $expectedTo = $expectedHeaders['To'] ?? '';
         $expectedSubject = $expectedHeaders['Subject'] ?? '';

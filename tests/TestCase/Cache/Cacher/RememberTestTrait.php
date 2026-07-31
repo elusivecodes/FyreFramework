@@ -19,13 +19,13 @@ trait RememberTestTrait
 
         $this->assertSame(
             1,
-            $this->cacher->remember('test', static fn() => 2)
+            $this->cacher->remember('test', static fn(): int => 2)
         );
     }
 
     public function testRememberExpiry(): void
     {
-        $this->cacher->remember('test', static fn() => 2, 1);
+        $this->cacher->remember('test', static fn(): int => 2, 1);
 
         sleep(2);
 
@@ -39,20 +39,20 @@ trait RememberTestTrait
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Cache key `test/` is not valid.');
 
-        $this->cacher->remember('test/', static fn() => 2);
+        $this->cacher->remember('test/', static fn(): int => 2);
     }
 
     public function testRememberMissing(): void
     {
         $this->assertSame(
             2,
-            $this->cacher->remember('test', static fn() => 2)
+            $this->cacher->remember('test', static fn(): int => 2)
         );
     }
 
     public function testRememberPersists(): void
     {
-        $this->cacher->remember('test', static fn() => 2);
+        $this->cacher->remember('test', static fn(): int => 2);
 
         $this->assertSame(
             2,
