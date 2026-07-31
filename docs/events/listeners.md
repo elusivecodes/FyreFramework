@@ -10,7 +10,7 @@ Listener classes work with `EventManager`: you implement `EventListenerInterface
 - [Declaring listener methods](#declaring-listener-methods)
   - [Listening to named events](#listening-to-named-events)
   - [Listening to object events](#listening-to-object-events)
-- [Listening to multiple events](#listening-to-multiple-events)
+  - [Listening to multiple events](#listening-to-multiple-events)
 - [Registering a listener class](#registering-a-listener-class)
 - [Discovery and caching](#discovery-and-caching)
 - [Behavior notes](#behavior-notes)
@@ -131,9 +131,24 @@ $eventManager->removeListener($listener);
 
 When you call `addListener()`, the event manager discovers the methods marked with `#[On]` and registers them as callbacks.
 
-That discovery is cached per listener class. If a cache configuration exists under the key `_events`, the metadata can also be stored through the cache layer.
+That discovery is cached in memory per listener class. If a cache configuration exists under the key `_events`, the metadata is also stored through the cache layer.
 
-This matters mostly when you change listener attributes or method names while using cached metadata: clear the `_events` cache so the new definitions are discovered.
+Event metadata caching is optional. For example, you can configure a file-backed cache:
+
+```php
+use Fyre\Cache\Handlers\File\FileCacher;
+
+return [
+    'Cache' => [
+        '_events' => [
+            'className' => FileCacher::class,
+            'path' => 'tmp/cache/events',
+        ],
+    ],
+];
+```
+
+When listener attributes or method names change, clear the `_events` cache before new event managers are built. An existing `EventManager` keeps an in-memory copy; restart the process, or call `EventManager::clear()` and register its listeners again.
 
 ## Behavior notes
 
@@ -143,9 +158,10 @@ A few behaviors are worth keeping in mind:
 - If the `On` priority argument is omitted, the event manager uses `EventManager::PRIORITY_NORMAL`.
 - For named `Event` dispatch, handler parameters must match what is actually passed: the `Event` instance first, then event data values only (keys are not passed).
 - For object event dispatch, the handler receives only the event object.
-- Discovery caching is per listener class; if you change attributes or method names while using the `_events` cache, clear the cache so the updated metadata is discovered.
+- Clearing the `_events` cache does not update metadata already loaded by an existing `EventManager`.
 
 ## Related
 
 - [Events](index.md) - overview and key concepts
 - [Event Manager](event-manager.md) - register listeners and dispatch events
+- [Cache](../cache/index.md) - configure the optional `_events` cache handler

@@ -15,6 +15,8 @@ It supports direct callbacks, listener classes that use `#[On]`, the framework's
   - [Dispatching a named `Event`](#dispatching-a-named-event)
   - [Dispatching an object event](#dispatching-an-object-event)
   - [Using `trigger()`](#using-trigger)
+- [Working with `Event`](#working-with-event)
+- [Dispatching from classes](#dispatching-from-classes)
 - [Listener ordering](#listener-ordering)
 - [Parent event managers](#parent-event-managers)
 - [Method guide](#method-guide)
@@ -60,7 +62,7 @@ use Fyre\Event\EventManager;
 
 $eventManager->on(
     'User.created',
-    static function (Event $event, string $id): void {
+    static function(Event $event, string $id): void {
         // ...
     },
     EventManager::PRIORITY_HIGH
@@ -74,7 +76,7 @@ final class UserRegistered {}
 
 $eventManager->on(
     UserRegistered::class,
-    static function (UserRegistered $event): void {
+    static function(UserRegistered $event): void {
         // ...
     }
 );
@@ -116,6 +118,8 @@ For the fuller listener-class workflow, see [Event Listeners](listeners.md).
 
 `dispatch()` returns the event object, so you can inspect any changes made by listeners afterward.
 
+`EventManager` implements PSR-14 `EventDispatcherInterface` and `ListenerProviderInterface`. The framework `Event` class implements `StoppableEventInterface`.
+
 ### Dispatching a named `Event`
 
 When dispatching `Event`, each callback is called with:
@@ -130,7 +134,7 @@ use Fyre\Event\Event;
 
 $eventManager->on(
     'Mail.sent',
-    static function (Event $event, string $messageId): void {
+    static function(Event $event, string $messageId): void {
         // ...
     }
 );
@@ -154,7 +158,7 @@ $event = new UserRegistered();
 
 $eventManager->on(
     UserRegistered::class,
-    static function (UserRegistered $event): void {
+    static function(UserRegistered $event): void {
         // ...
     }
 );
@@ -173,13 +177,63 @@ use Fyre\Event\Event;
 
 $eventManager->on(
     'Cache.miss',
-    static function (Event $event, string $key): void {
+    static function(Event $event, string $key): void {
         // ...
     }
 );
 
 $event = $eventManager->trigger('Cache.miss', 'users:42');
 ```
+
+## Working with `Event`
+
+Use `Event` when you need a named event with an optional subject, positional data, and a result listeners can inspect or change.
+
+```php
+use Fyre\Event\Event;
+
+$event = new Event('User.created', $user, [$id]);
+$eventManager->dispatch($event);
+
+$subject = $event->getSubject();
+$result = $event->getResult();
+```
+
+The main methods are:
+
+- `getName()` returns the event identifier.
+- `getSubject()` returns the object or value the event relates to.
+- `getData()` and `setData()` read or replace the positional values passed to named-event listeners.
+- `getResult()` and `setResult()` let listeners share a result through the event.
+- `stopPropagation()` prevents later listeners and parent managers from receiving the event.
+
+## Dispatching from classes
+
+Use `EventDispatcherTrait` when a class needs to publish events through an injected `EventManager`. `dispatchEvent()` uses the current object as the subject unless you provide another object.
+
+```php
+use Fyre\Event\EventManager;
+use Fyre\Event\Traits\EventDispatcherTrait;
+
+class Importer
+{
+    use EventDispatcherTrait;
+
+    public function __construct(EventManager $eventManager)
+    {
+        $this->setEventManager($eventManager);
+    }
+
+    public function import(array $rows): void
+    {
+        // ...
+
+        $this->dispatchEvent('Import.completed', [count($rows)]);
+    }
+}
+```
+
+Use `getEventManager()` and `setEventManager()` when the manager needs to be read or replaced directly.
 
 ## Listener ordering
 
@@ -220,16 +274,9 @@ Arguments:
 - `$priority` (`int|null`): the callback priority (lower values run first).
 
 ```php
-use Fyre\Event\Event;
 use Fyre\Event\EventManager;
 
-$eventManager->on(
-    'User.created',
-    static function (Event $event, string $id): void {
-        // ...
-    },
-    EventManager::PRIORITY_HIGH
-);
+$eventManager->on('User.created', $callback, EventManager::PRIORITY_HIGH);
 ```
 
 #### **Remove callbacks** (`off()`)
@@ -252,21 +299,6 @@ Arguments:
 - `$listener` (`EventListenerInterface`): the listener object to register.
 
 ```php
-use Fyre\Event\Attributes\On;
-use Fyre\Event\Event;
-use Fyre\Event\EventListenerInterface;
-use Fyre\Event\EventManager;
-
-final class AuditListener implements EventListenerInterface
-{
-    #[On('User.created', EventManager::PRIORITY_NORMAL)]
-    public function onUserCreated(Event $event, string $id): void
-    {
-        // ...
-    }
-}
-
-$listener = new AuditListener();
 $eventManager->addListener($listener);
 ```
 
@@ -323,6 +355,17 @@ if ($eventManager->has('User.created')) {
 }
 ```
 
+#### **Resolve callbacks for an event** (`getListenersForEvent()`)
+
+Returns the matching callbacks registered on the current manager in priority order. Parent-manager callbacks are dispatched separately and are not included in this list.
+
+Arguments:
+- `$event` (`object`): the event used to resolve the identifier.
+
+```php
+$listeners = $eventManager->getListenersForEvent($event);
+```
+
 #### **Clear all callbacks** (`clear()`)
 
 Remove all registered callbacks (including those registered via listener classes) and any cached ordering.
@@ -340,10 +383,11 @@ A few behaviors are worth keeping in mind:
 - For object events, listeners receive only the event object.
 - If the event implements `StoppableEventInterface` (including `Event`), dispatch stops before the next listener when propagation has been stopped, and parent dispatch is skipped.
 - For `Event`, if a listener sets the result to `false`, the event manager calls `Event::stopPropagation()` after that listener runs.
+- `getListenersForEvent()` returns callbacks from the current manager only; `dispatch()` handles parent managers separately.
 
 ## Related
 
 - [Events](index.md) - overview and key concepts
 - [Event Listeners](listeners.md) - define listener classes with `#[On]`
-- [Cache](../cache/index.md) - configure the `_events` cache
+- [Cache](../cache/index.md) - configure cache handlers used for listener metadata
 - [ORM Events](../orm/events.md) - events published by the ORM layer

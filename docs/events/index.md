@@ -17,6 +17,7 @@ Pick a path based on how you want to work with events:
 
 - **Registering callbacks and dispatching events**: start with [Event Manager](event-manager.md)
 - **Grouping related handlers into a class**: start with [Event Listeners](listeners.md)
+- **Publishing events from your own classes**: use `EventDispatcherTrait` as shown in [Dispatching from classes](event-manager.md#dispatching-from-classes)
 - **Hooking into framework subsystems**: see pages such as [ORM Events](../orm/events.md) and [Queue Worker](../queue/worker.md)
 
 ## Events overview
@@ -29,6 +30,7 @@ The main pieces are straightforward:
 - other event objects can also be dispatched; in that case the identifier is the event object's class name
 - `EventManager` lets you register direct callbacks and dispatch events
 - listener classes group handlers using `#[On]` and register them through `EventManager::addListener()`
+- `EventDispatcherTrait` gives application classes a small `dispatchEvent()` convenience API
 - callbacks run in ascending priority order, with lower values executing first
 
 ## Pages in this section
