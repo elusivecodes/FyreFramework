@@ -653,6 +653,16 @@ final class ClientTest extends TestCase
         ]);
     }
 
+    public function testRedirectEmptyLocation(): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Redirect location is not valid.');
+
+        new Client()->get('http://localhost:8888/redirect-empty', options: [
+            'maxRedirects' => 1,
+        ]);
+    }
+
     public function testRedirectInvalidLocation(): void
     {
         $this->expectException(RequestException::class);

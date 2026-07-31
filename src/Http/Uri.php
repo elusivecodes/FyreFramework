@@ -88,7 +88,7 @@ class Uri implements Stringable, UriInterface
     {
         $host = $this->getHost();
 
-        if (!$host) {
+        if ($host === '') {
             return '';
         }
 
@@ -97,13 +97,13 @@ class Uri implements Stringable, UriInterface
 
         $result = $this->getUserInfo();
 
-        if ($result) {
+        if ($result !== '') {
             $result .= '@';
         }
 
         $result .= $host;
 
-        if ($port && $port !== getservbyname($scheme, 'tcp')) {
+        if ($port !== null && $port !== getservbyname($scheme, 'tcp')) {
             $result .= ':'.$port;
         }
 
@@ -233,9 +233,14 @@ class Uri implements Stringable, UriInterface
     public function getUserInfo(): string
     {
         $result = $this->uri->getUsername() ?? '';
+        $password = $this->uri->getPassword();
 
-        if ($this->showPassword === true && $this->uri->getPassword()) {
-            $result .= ':'.$this->uri->getPassword();
+        if (
+            $this->showPassword === true &&
+            $password !== null &&
+            $password !== ''
+        ) {
+            $result .= ':'.$password;
         }
 
         return $result;
@@ -285,7 +290,7 @@ class Uri implements Stringable, UriInterface
     public function withAuthority(string $authority): static
     {
         $scheme = $this->getScheme();
-        $uri = $scheme ? $scheme.'://'.$authority : '//'.$authority;
+        $uri = $scheme !== '' ? $scheme.'://'.$authority : '//'.$authority;
 
         return new static($uri)
             ->withPath($this->getPath())
@@ -305,7 +310,7 @@ class Uri implements Stringable, UriInterface
 
         $temp = clone $this;
 
-        $temp->uri = $temp->uri->withFragment($fragment ?: null);
+        $temp->uri = $temp->uri->withFragment($fragment === '' ? null : $fragment);
 
         return $temp;
     }
@@ -318,7 +323,7 @@ class Uri implements Stringable, UriInterface
     {
         $temp = clone $this;
 
-        $temp->uri = $temp->uri->withHost($host ?: null);
+        $temp->uri = $temp->uri->withHost($host === '' ? null : $host);
 
         return $temp;
     }
@@ -392,7 +397,7 @@ class Uri implements Stringable, UriInterface
 
         $temp = clone $this;
 
-        $temp->uri = $temp->uri->withQuery($query ?: null);
+        $temp->uri = $temp->uri->withQuery($query === '' ? null : $query);
         $temp->queryParams = null;
 
         return $temp;
@@ -417,7 +422,7 @@ class Uri implements Stringable, UriInterface
     {
         $temp = clone $this;
 
-        $temp->uri = $temp->uri->withScheme($scheme ?: null);
+        $temp->uri = $temp->uri->withScheme($scheme === '' ? null : $scheme);
 
         return $temp;
     }
@@ -432,7 +437,7 @@ class Uri implements Stringable, UriInterface
 
         $userInfo = $user;
 
-        if ($password) {
+        if ($password !== null && $password !== '') {
             $userInfo .= ':'.$password;
         }
 

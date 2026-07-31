@@ -381,11 +381,16 @@ class ServerRequest extends Request implements ServerRequestInterface
             if (str_starts_with($contentType, 'application/x-www-form-urlencoded') && in_array($this->method, ['PUT', 'PATCH', 'DELETE'], true)) {
                 parse_str((string) $this->body, $this->data);
             } else if (str_starts_with($contentType, 'application/json')) {
-                $this->data = json_decode((string) $this->body, true) ?? [];
+                $data = json_decode((string) $this->body, true);
 
-                if (json_last_error() !== JSON_ERROR_NONE) {
+                if (
+                    json_last_error() !== JSON_ERROR_NONE ||
+                    !is_array($data)
+                ) {
                     throw new RuntimeException('The request body is not valid.');
                 }
+
+                $this->data = $data;
             } else {
                 $this->data = $_POST;
             }

@@ -289,7 +289,7 @@ Resolve a URI string relative to the current URI.
 
 If `$uri` includes a host, it is treated as absolute and returned as-is.
 
-If `$uri` does not start with `/`, it is resolved relative to the current path. The current path is always treated as a directory base (even when it looks like a file path), so a base path like `/app/docs/page` resolves `assets/app.css` under `/app/docs/page/`.
+If `$uri` does not start with `/`, it is resolved using the current path as an RFC 3986 base. The last path segment is replaced unless the base path ends with `/`, so `/app/docs/page` resolves `assets/app.css` to `/app/docs/assets/app.css`.
 
 Arguments:
 - `$uri` (`string`): a URI string to resolve.
@@ -300,7 +300,7 @@ use Fyre\Http\Uri;
 $base = Uri::createFromString('https://example.com/app/docs/page');
 
 $relative = (string) $base->resolveRelativeUri('assets/app.css');
-// https://example.com/app/docs/page/assets/app.css
+// https://example.com/app/docs/assets/app.css
 
 $rooted = (string) $base->resolveRelativeUri('/assets/app.css');
 // https://example.com/assets/app.css

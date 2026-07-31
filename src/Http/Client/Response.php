@@ -97,13 +97,11 @@ class Response extends HttpResponse
     /**
      * Checks whether the response is a redirect.
      *
-     * Requires both a redirect status code and a non-empty `Location` header.
-     *
      * @return bool Whether the response is a redirect.
      */
     public function isRedirect(): bool
     {
-        return in_array($this->statusCode, static::REDIRECT_CODES, true) && $this->getHeaderLine('Location');
+        return in_array($this->statusCode, static::REDIRECT_CODES, true);
     }
 
     /**

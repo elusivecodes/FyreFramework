@@ -77,7 +77,7 @@ class FileLogger extends Logger
             $this->config['suffix'] ??= '-cli';
         }
 
-        $this->path ??= Path::join(sys_get_temp_dir(), 'fyre', 'logs');
+        $this->config['path'] ??= Path::join(sys_get_temp_dir(), 'fyre', 'logs');
         $this->path = Path::resolve($this->config['path']);
 
         if (!is_dir($this->path) && !mkdir($this->path, 0777, true)) {

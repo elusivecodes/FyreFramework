@@ -185,7 +185,7 @@ $response = $response->withContentType('text/plain');
 
 #### **Write a JSON body** (`withJson()`)
 
-Sets `Content-Type` to `application/json` and writes a pretty-printed JSON body.
+Sets `Content-Type` to `application/json` and writes a pretty-printed JSON body. A `JsonException` is thrown if the data cannot be encoded.
 
 Arguments:
 - `$data` (`mixed`): the data to encode.
@@ -398,6 +398,7 @@ A few behaviors are worth keeping in mind:
 ## Related
 
 - [HTTP Requests](requests.md)
+- [Cookies](cookies.md)
 - [HTTP Middleware](middleware.md)
 - [Request Handler](request-handler.md)
 - [Sessions](sessions.md)

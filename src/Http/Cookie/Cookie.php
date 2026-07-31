@@ -125,6 +125,16 @@ class Cookie
                 default => $key
             };
 
+            if (in_array($key, ['secure', 'httpOnly'], true)) {
+                $options[$key] = true;
+
+                continue;
+            }
+
+            if ($attributeValue === null) {
+                continue;
+            }
+
             if ($key === 'expires') {
                 $expires = $attributeValue;
 
@@ -141,7 +151,7 @@ class Cookie
                 $hasDomainAttribute = true;
             }
 
-            $options[$key] = $attributeValue ?? true;
+            $options[$key] = $attributeValue;
         }
 
         if ($expires !== null) {

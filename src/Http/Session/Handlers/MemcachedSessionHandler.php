@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Fyre\Http\Session\Handlers;
 
+use Fyre\Cache\Handlers\Memcached\MemcachedCacher;
 use Fyre\Http\Session\Exceptions\SessionException;
 use Fyre\Http\Session\SessionHandler;
 use Memcached;
@@ -129,8 +130,9 @@ class MemcachedSessionHandler extends SessionHandler
         }
 
         $key = $this->prepareKey($sessionId);
+        $expires = MemcachedCacher::getExpiry((int) $this->config['expires']);
 
-        return $this->connection->touch($key, $this->config['expires']);
+        return $this->connection->touch($key, $expires);
     }
 
     /**
@@ -159,8 +161,9 @@ class MemcachedSessionHandler extends SessionHandler
         }
 
         $key = $this->prepareKey($sessionId);
+        $expires = MemcachedCacher::getExpiry((int) $this->config['expires']);
 
-        if (!$this->connection->set($key, $data, $this->config['expires'])) {
+        if (!$this->connection->set($key, $data, $expires)) {
             return false;
         }
 

@@ -119,6 +119,7 @@ final class MemcachedTest extends TestCase
                 'className' => MemcachedSessionHandler::class,
                 'host' => getenv('MEMCACHED_HOST'),
                 'port' => getenv('MEMCACHED_PORT'),
+                'expires' => 2_592_001,
             ],
         ]);
 

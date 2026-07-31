@@ -1,6 +1,6 @@
 # HTTP
 
-HTTP covers incoming requests, outgoing responses, middleware, sessions, and the outbound HTTP client.
+HTTP covers incoming requests, outgoing responses, cookies, middleware, sessions, and the outbound HTTP client.
 
 ## Table of Contents
 
@@ -15,6 +15,7 @@ Pick the path that matches what you are doing:
 - **Handling incoming requests**: [HTTP Requests](requests.md) -> [HTTP Responses](responses.md) -> [HTTP Middleware](middleware.md)
 - **Running request flow through middleware**: [HTTP Middleware](middleware.md) -> [Request Handler](request-handler.md)
 - **Working with sessions**: [Sessions](sessions.md)
+- **Working with cookies**: [Cookies](cookies.md)
 - **Calling external services**: [HTTP Client](client.md)
 - **Working with URLs and user agents**: [URI](uri.md) and [User Agents](user-agents.md)
 
@@ -29,6 +30,7 @@ The core pieces are straightforward:
 
 - `ServerRequest` gives you request data, headers, uploads, locale negotiation, and request attributes
 - `ClientResponse` and its subclasses help you return HTML, JSON, redirects, downloads, and cookies
+- `Cookie` and `CookieJar` represent cookies and scope them to matching request URIs
 - `MiddlewareQueue` and `RequestHandler` run shared request logic in order
 - `Session` manages per-user state across requests
 - `Client` makes outbound HTTP calls and returns client responses
@@ -40,6 +42,7 @@ The core pieces are straightforward:
 - [HTTP Middleware](middleware.md) - define the middleware queue and register aliases or groups
 - [Request Handler](request-handler.md) - execute a middleware queue and hand off to a fallback handler
 - [HTTP Client](client.md) - make outbound HTTP requests and work with client responses
+- [Cookies](cookies.md) - create, parse, scope, and store HTTP cookies
 - [Sessions](sessions.md) - store state across requests and configure session handlers
 - [URI](uri.md) - read and update URI parts, query parameters, and path segments
 - [User Agents](user-agents.md) - identify browsers, platforms, bots, and mobile devices

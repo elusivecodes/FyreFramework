@@ -7,6 +7,7 @@ use DateTimeInterface;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Http\Cookie\Cookie;
 use Fyre\Utility\DateTime\DateTime;
+use JsonException;
 use SimpleXMLElement;
 
 use function array_values;
@@ -17,6 +18,7 @@ use function json_encode;
 use function strtotime;
 
 use const JSON_PRETTY_PRINT;
+use const JSON_THROW_ON_ERROR;
 
 /**
  * Provides an HTTP response with convenience helpers.
@@ -217,10 +219,12 @@ class ClientResponse extends Response
      *
      * @param mixed $data The data to send.
      * @return static The new ClientResponse instance with the JSON body.
+     *
+     * @throws JsonException If the data cannot be encoded.
      */
     public function withJson(mixed $data): static
     {
-        $data = (string) json_encode($data, JSON_PRETTY_PRINT);
+        $data = json_encode($data, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
         $body = Stream::createFromString($data);
 
         return $this

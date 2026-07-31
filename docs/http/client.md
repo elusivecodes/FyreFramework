@@ -315,7 +315,13 @@ Arguments:
 ```php
 use Fyre\Http\Cookie\Cookie;
 
-$client->addCookie(new Cookie('token', 'abc123'));
+$cookie = new Cookie('token', 'abc123', [
+    'domain' => 'api.example.com',
+    'hostOnly' => true,
+    'secure' => true,
+]);
+
+$client->addCookie($cookie);
 ```
 
 ### `Response`
@@ -389,7 +395,7 @@ if ($response->isOk()) {
 
 #### **Check whether the response is a redirect** (`isRedirect()`)
 
-Returns `true` when the status code is a redirect and a non-empty `Location` header is present.
+Returns `true` when the status code is `301`, `302`, `303`, `307`, or `308`.
 
 ```php
 if ($response->isRedirect()) {
@@ -409,5 +415,6 @@ A few behaviors are worth keeping in mind:
 ## Related
 
 - [HTTP Client Testing](../testing/http-client.md)
+- [Cookies](cookies.md)
 - [URI](uri.md)
 - [HTTP Responses](responses.md)

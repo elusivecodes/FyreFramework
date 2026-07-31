@@ -249,11 +249,12 @@ Arguments:
 
 ```php
 use Fyre\Http\UploadedFile;
+use const UPLOAD_ERR_OK;
 
 $file = $request->getUploadedFile('avatar');
 
-if ($file instanceof UploadedFile) {
-    $file->moveTo('/path/to/avatar.jpg');
+if ($file instanceof UploadedFile && $file->getError() === UPLOAD_ERR_OK) {
+    $size = $file->getSize();
 }
 ```
 
@@ -428,7 +429,7 @@ $body = (string) $request->getBody();
 
 A few practical details are worth keeping in mind:
 
-- `getParsedBody()` always returns an array, but it can throw `RuntimeException` when JSON parsing fails for `application/json` requests.
+- `getParsedBody()` always returns an array, but it throws `RuntimeException` when an `application/json` body is invalid or does not decode to an array.
 - `getParsedBody()` treats `application/x-www-form-urlencoded` bodies specially only for `PUT`, `PATCH`, and `DELETE` requests; other cases fall back to `$_POST`.
 - `withUploadedFiles()` expects `UploadedFile` instances (and nested arrays of them) and throws when other values are provided.
 - `getClientIp()` uses `REMOTE_ADDR` by default. Proxy trust with an empty trusted list accepts the rightmost forwarded address; a non-empty list restricts forwarding to explicitly trusted proxy hops.

@@ -87,6 +87,22 @@ trait UriAttributesWithTestTrait
         );
     }
 
+    public function testWithFragmentZero(): void
+    {
+        $uri1 = new Uri();
+        $uri2 = $uri1->withFragment('0');
+
+        $this->assertNotSame(
+            $uri1,
+            $uri2
+        );
+
+        $this->assertSame(
+            '0',
+            $uri2->getFragment()
+        );
+    }
+
     public function testWithHost(): void
     {
         $uri1 = new Uri();
@@ -99,6 +115,22 @@ trait UriAttributesWithTestTrait
 
         $this->assertSame(
             'test.com',
+            $uri2->getHost()
+        );
+    }
+
+    public function testWithHostZero(): void
+    {
+        $uri1 = new Uri();
+        $uri2 = $uri1->withHost('0');
+
+        $this->assertNotSame(
+            $uri1,
+            $uri2
+        );
+
+        $this->assertSame(
+            '0',
             $uri2->getHost()
         );
     }
@@ -235,6 +267,22 @@ trait UriAttributesWithTestTrait
         );
     }
 
+    public function testWithQueryZero(): void
+    {
+        $uri1 = new Uri();
+        $uri2 = $uri1->withQuery('0');
+
+        $this->assertNotSame(
+            $uri1,
+            $uri2
+        );
+
+        $this->assertSame(
+            '0',
+            $uri2->getQuery()
+        );
+    }
+
     public function testWithScheme(): void
     {
         $uri1 = new Uri();
@@ -279,6 +327,22 @@ trait UriAttributesWithTestTrait
 
         $this->assertSame(
             'test:pass',
+            $uri2->getUserInfo()
+        );
+    }
+
+    public function testWithUserInfoWithZeroPassword(): void
+    {
+        $uri1 = new Uri('http://localhost/');
+        $uri2 = $uri1->withUserInfo('test', '0');
+
+        $this->assertNotSame(
+            $uri1,
+            $uri2
+        );
+
+        $this->assertSame(
+            'test:0',
             $uri2->getUserInfo()
         );
     }

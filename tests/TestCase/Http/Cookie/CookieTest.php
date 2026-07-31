@@ -69,6 +69,19 @@ final class CookieTest extends TestCase
         );
     }
 
+    public function testCreateFromHeaderStringFlagValues(): void
+    {
+        $cookie = Cookie::createFromHeaderString('test=value; secure=false; httponly=false');
+
+        $this->assertTrue(
+            $cookie->isSecure()
+        );
+
+        $this->assertTrue(
+            $cookie->isHttpOnly()
+        );
+    }
+
     public function testCreateFromHeaderStringInvalidExpires(): void
     {
         $expires = time() + 3600;

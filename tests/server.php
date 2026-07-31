@@ -98,6 +98,9 @@ switch ($_SERVER['SCRIPT_NAME']) {
 
         header('Location: http://127.0.0.1:8888/redirect-target', true, 302);
         break;
+    case '/redirect-empty':
+        header('HTTP/1.1 302 Found');
+        break;
     case '/redirect-invalid':
         header('Location: mailto:test@example.com', true, 302);
         break;

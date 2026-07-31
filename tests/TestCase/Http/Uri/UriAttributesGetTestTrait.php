@@ -39,6 +39,14 @@ trait UriAttributesGetTestTrait
         );
     }
 
+    public function testGetAuthorityZeroHost(): void
+    {
+        $this->assertSame(
+            '0',
+            Uri::createFromString('http://0/')->getAuthority()
+        );
+    }
+
     public function testGetFragment(): void
     {
         $this->assertSame(
@@ -167,6 +175,14 @@ trait UriAttributesGetTestTrait
         $this->assertSame(
             'user:password',
             Uri::createFromString('http://user:password@domain.com/')->getUserInfo()
+        );
+    }
+
+    public function testGetUserInfoWithZeroPassword(): void
+    {
+        $this->assertSame(
+            'user:0',
+            Uri::createFromString('http://user:0@domain.com/')->getUserInfo()
         );
     }
 }

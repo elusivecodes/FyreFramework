@@ -5,11 +5,14 @@ namespace Tests\TestCase\Http\ClientResponse;
 
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Http\ClientResponse;
+use JsonException;
 use PHPUnit\Framework\TestCase;
 use SimpleXMLElement;
 
 use function class_uses;
 use function json_decode;
+
+use const NAN;
 
 final class ClientResponseTest extends TestCase
 {
@@ -69,6 +72,14 @@ final class ClientResponseTest extends TestCase
             'application/json; charset=UTF-8',
             $response2->getHeaderLine('Content-Type')
         );
+    }
+
+    public function testWithJsonInvalid(): void
+    {
+        $this->expectException(JsonException::class);
+        $this->expectExceptionMessage('Inf and NaN cannot be JSON encoded');
+
+        new ClientResponse()->withJson(NAN);
     }
 
     public function testWithXml(): void

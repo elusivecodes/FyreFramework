@@ -5,6 +5,7 @@ namespace Tests\TestCase\Http\ServerRequest;
 
 use Fyre\Http\ServerRequest;
 use Fyre\Utility\DateTime\DateTime;
+use RuntimeException;
 
 use function json_encode;
 
@@ -157,6 +158,21 @@ trait DataTestTrait
             'value',
             $request->getData('test.a')
         );
+    }
+
+    public function testGetDataJsonScalar(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The request body is not valid.');
+
+        $request = new ServerRequest($this->config, $this->type, [
+            'server' => [
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            'body' => 'true',
+        ]);
+
+        $request->getData();
     }
 
     public function testGetDataType(): void
