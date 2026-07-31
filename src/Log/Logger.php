@@ -10,10 +10,10 @@ use JsonSerializable;
 use Psr\Log\AbstractLogger;
 use Serializable;
 use Stringable;
+use Throwable;
 
 use function array_intersect;
 use function array_key_exists;
-use function array_keys;
 use function array_replace;
 use function array_unique;
 use function date;
@@ -26,8 +26,8 @@ use function is_scalar;
 use function json_encode;
 use function method_exists;
 use function preg_match_all;
+use function preg_replace_callback;
 use function serialize;
-use function str_replace;
 use function strpos;
 use function strtoupper;
 
@@ -144,49 +144,63 @@ abstract class Logger extends AbstractLogger
 
         $keys = array_unique($matches[1]);
         $replacements = [];
-        $jsonFlags = JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE;
 
         foreach ($keys as $key) {
             $replaceKey = '{'.$key.'}';
+            $value = null;
 
-            if (array_key_exists($key, $context)) {
-                $value = $context[$key];
+            try {
+                if (array_key_exists($key, $context)) {
+                    $value = $context[$key];
 
-                if (is_scalar($value) || $value === null) {
-                    $replacements[$replaceKey] = (string) $value;
-                } else if (is_array($value) || $value instanceof JsonSerializable) {
-                    $replacements[$replaceKey] = json_encode($value, $jsonFlags);
-                } else if ($value instanceof ArrayObject) {
-                    $replacements[$replaceKey] = json_encode($value->getArrayCopy(), $jsonFlags);
-                } else if ($value instanceof Serializable) {
-                    $replacements[$replaceKey] = serialize($value);
-                } else if ($value instanceof Stringable) {
-                    $replacements[$replaceKey] = (string) $value;
-                } else if (is_object($value) && method_exists($value, 'toArray')) {
-                    $replacements[$replaceKey] = json_encode($value->toArray(), $jsonFlags);
-                } else if (is_object($value) && method_exists($value, '__debugInfo')) {
-                    $replacements[$replaceKey] = json_encode($value->__debugInfo(), $jsonFlags);
+                    if (is_scalar($value) || $value === null) {
+                        $replacements[$replaceKey] = (string) $value;
+                    } else if (is_array($value) || $value instanceof JsonSerializable) {
+                        $replacements[$replaceKey] = json_encode($value, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+                    } else if ($value instanceof ArrayObject) {
+                        $replacements[$replaceKey] = json_encode($value->getArrayCopy(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+                    } else if ($value instanceof Serializable) {
+                        $replacements[$replaceKey] = serialize($value);
+                    } else if ($value instanceof Stringable) {
+                        $replacements[$replaceKey] = (string) $value;
+                    } else if (is_object($value) && method_exists($value, 'toArray')) {
+                        $replacements[$replaceKey] = json_encode($value->toArray(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+                    } else if (is_object($value) && method_exists($value, '__debugInfo')) {
+                        $replacements[$replaceKey] = json_encode($value->__debugInfo(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+                    } else {
+                        $replacements[$replaceKey] = '[unhandled type '.get_debug_type($value).']';
+                    }
                 } else {
-                    $replacements[$replaceKey] = '[unhandled type '.get_debug_type($value).']';
-                }
-            } else {
-                $value = match ($key) {
-                    'backtrace' => debug_backtrace(0),
-                    'get_vars' => $_GET,
-                    'post_vars' => $_POST,
-                    'server_vars' => $_SERVER,
-                    'session_vars' => $_SESSION,
-                    default => null
-                };
+                    $value = match ($key) {
+                        'backtrace' => debug_backtrace(0),
+                        'get_vars' => $_GET,
+                        'post_vars' => $_POST,
+                        'server_vars' => $_SERVER,
+                        'session_vars' => $_SESSION ?? [],
+                        default => null
+                    };
 
-                if ($value !== null) {
-                    $replacements[$replaceKey] = json_encode($value, $jsonFlags);
+                    if ($value !== null) {
+                        $replacements[$replaceKey] = json_encode($value, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+                    }
                 }
+            } catch (Throwable) {
+                $replacements[$replaceKey] = '[unhandled type '.get_debug_type($value).']';
             }
         }
 
-        $replacementKeys = array_keys($replacements);
+        return preg_replace_callback(
+            '/(\\\\)?{([\w-]+)}/i',
+            static function(array $match) use ($replacements): string {
+                $replaceKey = '{'.$match[2].'}';
 
-        return str_replace($replacementKeys, $replacements, $message);
+                if (($match[1] ?? '') !== '') {
+                    return $replaceKey;
+                }
+
+                return $replacements[$replaceKey] ?? $replaceKey;
+            },
+            $message
+        ) ?? $message;
     }
 }

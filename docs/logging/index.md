@@ -51,14 +51,12 @@ use Fyre\Log\LogManager;
 
 $logs = app(LogManager::class);
 
-$logs->handle('error', 'Payment failed for user {id}', ['id' => 123], 'payments');
+$logs->handle('error', 'Payment failed for user {id}', ['id' => 123]);
 ```
 
 ## Configuring handlers
 
 Handler configuration is read from the `Log` key in your config (see [Config](../core/config.md)). Each named handler config is an options array passed to the selected handler class.
-
-Config examples assume any referenced handler classes (for example `FileLogger` / `ArrayLogger`) are already imported at the top of the config file.
 
 ### Common handler options
 
@@ -72,6 +70,8 @@ These options apply to all handlers that extend `Fyre\Log\Logger`:
 Both `levels` and `scopes` accept a single string, a list of strings, or `null`:
 
 ```php
+use Fyre\Log\Handlers\FileLogger;
+
 return [
     'Log' => [
         'errors' => [
@@ -93,6 +93,8 @@ return [
 The default `scopes` value is `[]`, which means the handler matches only unscoped messages (`scope: null`).
 
 ```php
+use Fyre\Log\Handlers\FileLogger;
+
 return [
     'Log' => [
         // scopes: [] (default) → matches only unscoped messages
@@ -129,6 +131,9 @@ return [
 ### Example configuration
 
 ```php
+use Fyre\Log\Handlers\ArrayLogger;
+use Fyre\Log\Handlers\FileLogger;
+
 return [
     'Log' => [
         'default' => [
@@ -150,7 +155,7 @@ Fyre includes a small set of handlers under `Fyre\Log\Handlers\*`. You can defin
 
 ### File handler
 
-`FileLogger` writes formatted messages to files under `path`. By default, it writes one file per log level (for example, `error.log`), but you can set `file` to write all levels into a single file.
+`FileLogger` writes formatted messages to files under `path`. By default, it writes one file per log level (for example, `error.log` for web requests and `error-cli.log` for CLI processes). Set `file` to write all levels into a single file.
 
 For durable production logs, prefer a writable application folder like `tmp/logs` over the temporary default.
 
@@ -193,9 +198,10 @@ If you use contextual attributes, `Fyre\Core\Attributes\Log` can resolve a handl
 To log a literal placeholder (rather than interpolating it), escape it with a backslash:
 
 ```php
-$logs->handle('info', 'User id: {id}', ['id' => 123]);
-$logs->handle('info', 'Literal placeholder: \{id}');
+$logs->handle('info', 'User id: {id}; literal placeholder: \{id}', ['id' => 123]);
 ```
+
+The escaped `\{id}` placeholder is written as `{id}` without the backslash.
 
 ## Method guide
 
@@ -238,6 +244,8 @@ Arguments:
 - `$options` (`array<string, mixed>`): handler options including `className`.
 
 ```php
+use Fyre\Log\Handlers\ArrayLogger;
+
 $logger = $logs->build([
     'className' => ArrayLogger::class,
     'levels' => ['debug', 'info'],
@@ -253,6 +261,8 @@ Arguments:
 - `$options` (`array<string, mixed>`): handler options including `className`.
 
 ```php
+use Fyre\Log\Handlers\ArrayLogger;
+
 $logs->setConfig('buffer', [
     'className' => ArrayLogger::class,
     'levels' => ['debug', 'info'],
@@ -271,19 +281,57 @@ $all = $logs->getConfig();
 $default = $logs->getConfig('default');
 ```
 
+#### **Check for stored configuration** (`hasConfig()`)
+
+Returns whether a handler config exists.
+
+Arguments:
+- `$key` (`string`): the handler config key (defaults to `default`).
+
+```php
+$configured = $logs->hasConfig('buffer');
+```
+
+#### **Check whether a handler is loaded** (`isLoaded()`)
+
+Returns whether a shared handler instance has been created by `use()` or `handle()`.
+
+Arguments:
+- `$key` (`string`): the handler config key (defaults to `default`).
+
+```php
+$loaded = $logs->isLoaded('buffer');
+```
+
+#### **Unload a handler** (`unload()`)
+
+Remove a handler instance and its stored configuration.
+
+Arguments:
+- `$key` (`string`): the handler config key (defaults to `default`).
+
+```php
+$logs->unload('buffer');
+```
+
+#### **Clear all handlers** (`clear()`)
+
+Remove all handler instances and stored configurations.
+
+```php
+$logs->clear();
+```
+
 ## Behavior notes
 
 A few behaviors are worth keeping in mind:
 
 - `LogManager::handle()` validates levels against the supported list and is case-sensitive, so `error` is valid but `ERROR` is not.
-- `LogManager::setConfig()` rejects duplicate keys.
-- `LogManager::use()` does not ignore unknown keys. If the key has no stored config, handler building fails because there is no valid `className`.
 - Scope filtering is opt-in: when a handler has the default `scopes` value of `[]`, it matches only when `scope` is `null`. Passing a scope will skip those handlers unless `scopes` is configured (or `scopes` is `null`).
-- `FileLogger` creates the `path` folder when it does not exist (and throws if it cannot create it).
-- `FileLogger` rotates by copying the current file when it reaches `maxSize` and then truncating the original file in place. If the destination file cannot be opened for appending, the write is skipped.
+- `FileLogger` creates its configured `path` when necessary and rotates the active file after it reaches `maxSize`.
 - `ArrayLogger` keeps messages in memory only and stores them without timestamps.
-- Message interpolation supports `{key}` placeholders from your context array and special keys like `{get_vars}`, `{post_vars}`, `{server_vars}`, `{session_vars}`, and `{backtrace}`. Escape placeholders with a backslash (for example `\{id}`).
-- When values are encoded as JSON during interpolation, encoding errors can throw and are not swallowed.
+- Message interpolation supports `{key}` placeholders from your context array and special keys like `{get_vars}`, `{post_vars}`, `{server_vars}`, `{session_vars}`, and `{backtrace}`. Escape a placeholder with a backslash (for example, `\{id}`) to write it literally without the backslash.
+- Context values that cannot be converted to strings are written using an `[unhandled type Type]` placeholder.
 - Be careful with the special interpolation keys: `{get_vars}`, `{post_vars}`, `{server_vars}`, `{session_vars}`, and `{backtrace}` can include secrets or personal data. Avoid logging them in production unless you are sure the output is safe.
 
 ## Related

@@ -9,6 +9,7 @@ use Fyre\Log\Handlers\ArrayLogger;
 use JsonSerializable;
 use Override;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Stringable;
 
 use function array_key_exists;
@@ -126,6 +127,39 @@ final class LoggerTest extends TestCase
         );
     }
 
+    public function testInterpolateInvalidContextValue(): void
+    {
+        $value = new class () implements JsonSerializable
+        {
+            #[Override]
+            public function jsonSerialize(): mixed
+            {
+                throw new RuntimeException();
+            }
+        };
+
+        $this->logger->log('debug', '{value}', [
+            'value' => $value,
+        ]);
+
+        $this->assertSame(
+            '[DEBUG] [unhandled type '.get_debug_type($value).']',
+            $this->logger->read()[0] ?? ''
+        );
+    }
+
+    public function testInterpolateMissingSession(): void
+    {
+        unset($_SESSION);
+
+        $this->logger->log('debug', '{session_vars}');
+
+        $this->assertSame(
+            '[DEBUG] []',
+            $this->logger->read()[0] ?? ''
+        );
+    }
+
     public function testInterpolateSessionAndEscapedPlaceholders(): void
     {
         $_SESSION = ['user' => 1];
@@ -134,8 +168,7 @@ final class LoggerTest extends TestCase
 
         $this->assertSame(
             '[DEBUG] '.
-            json_encode($_SESSION, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE).' \\'.
-            json_encode($_SESSION, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE).' {missing}',
+            json_encode($_SESSION, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE).' {session_vars} {missing}',
             $this->logger->read()[0] ?? ''
         );
     }

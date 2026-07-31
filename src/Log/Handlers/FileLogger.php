@@ -118,9 +118,10 @@ class FileLogger extends Logger
         if (filesize($filePath) >= $this->config['maxSize']) {
             $oldPath = Path::join($this->path, $fileBase.'.'.time().($extension ? '.'.$extension : ''));
 
-            @copy($filePath, $oldPath);
-            @ftruncate($handle, 0);
-            @rewind($handle);
+            if (@copy($filePath, $oldPath)) {
+                @ftruncate($handle, 0);
+                @rewind($handle);
+            }
         }
 
         $message = static::interpolate($message, $context);
