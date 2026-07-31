@@ -706,7 +706,7 @@ trait JoinTestTrait
     public function testJoinUsing(): void
     {
         $this->assertSame(
-            'SELECT * FROM test INNER JOIN test2 USING id',
+            'SELECT * FROM test INNER JOIN test2 USING (id)',
             $this->db->select()
                 ->from('test')
                 ->join([

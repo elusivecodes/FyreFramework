@@ -99,7 +99,7 @@ foreach ($schema->tables() as $name => $table) {
 
 ### Performance note: parsing default values
 
-`Column::defaultValue()` returns a parsed default value. When the configured default is a database expression (represented as a `QueryLiteral`), this method executes a `SELECT` query to evaluate it. Scalar defaults are returned directly without querying.
+`Column::defaultValue()` returns a parsed default value. When the configured default is a database expression (represented as a `QueryLiteral`), this method executes a `SELECT` query to evaluate it. Scalar defaults are parsed through the column type without querying.
 
 If you are inspecting lots of columns (for example across many tables), prefer reading the normalized default via `Column::getDefault()` (or `Column::toArray()`) and only call `defaultValue()` for the specific columns you need.
 
@@ -302,8 +302,9 @@ $ok = $table->hasAutoIncrement();
 
 Returns a parsed default value.
 
-- If the introspected default is a scalar, it is returned as-is.
+- If the introspected default is a scalar, it is parsed through the column type.
 - If the introspected default is a `QueryLiteral` (database expression), this method executes a `SELECT` query to evaluate it.
+- If there is no default, this method returns `null` for nullable columns and `''` otherwise.
 
 ```php
 $table = $schema->table('users');

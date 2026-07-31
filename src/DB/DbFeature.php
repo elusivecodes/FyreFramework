@@ -12,7 +12,9 @@ enum DbFeature
 {
     case DeleteAlias;
     case DeleteJoin;
+    case DeleteLimit;
     case DeleteMultipleTables;
+    case DeleteOrderBy;
     case DeleteUsing;
     case InsertReturning;
     case UpdateFrom;

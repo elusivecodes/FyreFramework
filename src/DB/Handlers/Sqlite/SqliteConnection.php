@@ -168,6 +168,8 @@ class SqliteConnection extends Connection
     public function supports(DbFeature $feature): bool
     {
         return match ($feature) {
+            DbFeature::DeleteLimit,
+            DbFeature::DeleteOrderBy,
             DbFeature::UpdateFrom => true,
             default => false,
         };

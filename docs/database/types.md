@@ -64,7 +64,7 @@ Most built-in types override one or more of these methods to validate and normal
 Types show up in a few places across the framework:
 
 - **ORM entities**: entity data is hydrated from database values through column types, and the same type information is commonly used when parsing incoming form data before it is written back.
-- **Forms and view form helpers**: `Fyre\Form\Form`, form fields, and the view `FormHelper` use `TypeParser` to normalize submitted values before validation or writing.
+- **Forms and view form helpers**: forms validate raw submitted values before parsing fields through `TypeParser`, while the view `FormHelper` uses the same types to normalize control values.
 - **Console argument parsing**: command option values can be parsed into typed PHP values through the same type system.
 - **Request data parsing**: request query / post / body values can also be normalized with `TypeParser` when you want explicit typed input handling.
 - **Query execution**: values such as `Fyre\Utility\DateTime\DateTime` are converted to database-safe values before binding.
@@ -146,7 +146,7 @@ Parses a date and normalizes it to the start of the day. Uses server time zone `
 
 Parses a date-time into a `Fyre\Utility\DateTime\DateTime` instance. It accepts:
 
-- timestamps (digit-only strings/values)
+- integer timestamps and integer-formatted strings
 - `Fyre\Utility\DateTime\DateTime` instances
 - any `DateTimeInterface` implementation
 - strings matching common formats (or a configured locale format)
@@ -237,7 +237,7 @@ class UuidType extends Type
 
         $value = strtolower((string) $value);
 
-        return preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $value) ?
+        return preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/', $value) === 1 ?
             $value :
             null;
     }

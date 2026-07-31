@@ -29,9 +29,13 @@ class DeleteQuery extends Query
     use JoinTrait {
         join as protected _join;
     }
-    use LimitTrait;
+    use LimitTrait {
+        limit as protected _limit;
+    }
     use MacroTrait;
-    use OrderByTrait;
+    use OrderByTrait {
+        orderBy as protected _orderBy;
+    }
     use WhereTrait;
 
     #[Override]
@@ -130,6 +134,41 @@ class DeleteQuery extends Query
         $this->_join($joins, $overwrite);
 
         return $this;
+    }
+
+    /**
+     * Sets the LIMIT clause.
+     *
+     * @param int|null $limit The limit.
+     * @return static The DeleteQuery instance.
+     *
+     * @throws BadMethodCallException If the DELETE LIMIT feature is not supported.
+     */
+    public function limit(int|null $limit = null): static
+    {
+        if (!$this->connection->supports(DbFeature::DeleteLimit)) {
+            throw new BadMethodCallException('DELETE queries with a LIMIT clause are not supported by this connection.');
+        }
+
+        return $this->_limit($limit);
+    }
+
+    /**
+     * Sets the ORDER BY fields.
+     *
+     * @param array<string>|string $fields The fields.
+     * @param bool $overwrite Whether to overwrite the existing fields.
+     * @return static The DeleteQuery instance.
+     *
+     * @throws BadMethodCallException If the DELETE ORDER BY feature is not supported.
+     */
+    public function orderBy(array|string $fields, bool $overwrite = false): static
+    {
+        if (!$this->connection->supports(DbFeature::DeleteOrderBy)) {
+            throw new BadMethodCallException('DELETE queries with an ORDER BY clause are not supported by this connection.');
+        }
+
+        return $this->_orderBy($fields, $overwrite);
     }
 
     /**

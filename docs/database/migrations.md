@@ -175,6 +175,8 @@ To target a specific connection, call `setConnection()` before rolling back.
 
 If you provide both `$batches` and `$steps`, rollback stops when either limit is reached.
 
+If a migration recorded in history can no longer be discovered, rollback throws a `DbException` and leaves that history entry intact.
+
 ```php
 // Roll back the latest batch (default behavior).
 $runner->rollback();
@@ -203,7 +205,7 @@ History behavior used by `MigrationRunner`:
 A few behaviors are worth keeping in mind:
 
 - `migrate()` skips any migration name already present in history.
-- `rollback()` removes history entries even when the corresponding migration class is no longer discoverable, so there may be nothing to call for `down()`.
+- `rollback()` throws and preserves the history entry when the corresponding migration class cannot be found.
 - Migration execution is not automatically wrapped in a transaction.
 - If a migration does not implement `up()` or `down()`, the missing method is skipped and execution continues.
 

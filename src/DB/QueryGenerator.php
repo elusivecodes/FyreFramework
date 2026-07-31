@@ -548,7 +548,7 @@ abstract class QueryGenerator
             ], $binder);
 
             if ($join['using']) {
-                $query .= ' USING '.$join['using'];
+                $query .= ' USING ('.$join['using'].')';
             } else {
                 $query .= ' ON '.$this->buildConditions($join['conditions'], $binder);
             }

@@ -26,23 +26,6 @@ trait DeleteTestTrait
         $this->db->delete('alt');
     }
 
-    public function testDeleteFull(): void
-    {
-        $this->assertSame(
-            'DELETE FROM test WHERE test.name = \'test\' ORDER BY test.id ASC LIMIT 20',
-            $this->db->delete()
-                ->from('test')
-                ->where([
-                    'test.name' => 'test',
-                ])
-                ->orderBy([
-                    'test.id' => 'ASC',
-                ])
-                ->limit(20)
-                ->sql()
-        );
-    }
-
     public function testDeleteJoin(): void
     {
         $this->expectException(BadMethodCallException::class);
@@ -62,13 +45,12 @@ trait DeleteTestTrait
 
     public function testDeleteLimit(): void
     {
-        $this->assertSame(
-            'DELETE FROM test LIMIT 1',
-            $this->db->delete()
-                ->from('test')
-                ->limit(1)
-                ->sql()
-        );
+        $this->expectException(BadMethodCallException::class);
+        $this->expectExceptionMessage('DELETE queries with a LIMIT clause are not supported by this connection.');
+
+        $this->db->delete()
+            ->from('test')
+            ->limit(1);
     }
 
     public function testDeleteMultipleTables(): void
@@ -85,27 +67,12 @@ trait DeleteTestTrait
 
     public function testDeleteOrderBy(): void
     {
-        $this->assertSame(
-            'DELETE FROM test ORDER BY id ASC',
-            $this->db->delete()
-                ->from('test')
-                ->orderBy('id ASC')
-                ->sql()
-        );
-    }
+        $this->expectException(BadMethodCallException::class);
+        $this->expectExceptionMessage('DELETE queries with an ORDER BY clause are not supported by this connection.');
 
-    public function testDeleteOrderByArray(): void
-    {
-        $this->assertSame(
-            'DELETE FROM test ORDER BY id ASC, value DESC',
-            $this->db->delete()
-                ->from('test')
-                ->orderBy([
-                    'id' => 'ASC',
-                    'value' => 'DESC',
-                ])
-                ->sql()
-        );
+        $this->db->delete()
+            ->from('test')
+            ->orderBy('id ASC');
     }
 
     public function testDeleteTables(): void

@@ -129,7 +129,7 @@ The query compiler supports a compact condition-array format (used by `where()` 
 
 - **Equality by default**: `['id' => 5]` compiles as `id = :p0`.
 - **Operator suffixes**: append an operator to the key (for example `>=`, `!=`, `LIKE`, `IN`, `IS NOT`).
-- `IN` / `NOT IN`: an array value compiles as `IN (...)` by default, or respect an explicit `IN` / `NOT IN` suffix.
+- `IN` / `NOT IN`: an array value compiles as `IN (...)` by default, or respects an explicit `IN` / `NOT IN` suffix.
 - **Logical groups**: use `['and' => [...]]`, `['or' => [...]]`, `['not' => [...]]` (nestable).
 - **Raw fragments**: numeric keys are treated as raw expressions and are not parameterized.
 
@@ -245,7 +245,7 @@ $rows = $db->select([
     ->all();
 ```
 
-When joining, you can use either `using` (emitted as-is after `USING`) or `conditions` (compiled via the same condition-array rules as `where()`):
+When joining, you can use either `using` (wrapped in parentheses after `USING`) or `conditions` (compiled via the same condition-array rules as `where()`):
 
 ```php
 $rows = $db->select('*')
@@ -356,7 +356,6 @@ This query type compiles to a `DELETE ... FROM ...` statement (optionally with `
 $db->delete()
     ->from('logs')
     ->where(['created <' => $beforeDateTime])
-    ->limit(1000)
     ->execute();
 ```
 
@@ -365,8 +364,10 @@ Some DELETE features are connection-dependent:
 - `DeleteQuery::alias()` throws if deleting by alias is not supported.
 - `DeleteQuery::using()` throws if `DELETE ... USING` is not supported.
 - `DeleteQuery::join()` throws if `DELETE ... JOIN` is not supported.
+- `DeleteQuery::orderBy()` throws if `DELETE ... ORDER BY` is not supported.
+- `DeleteQuery::limit()` throws if `DELETE ... LIMIT` is not supported.
 
-Key methods you’ll use most often: `from()`, `where()`, `orderBy()`, `limit()`, plus optional `alias()` / `using()` / `join()` when supported.
+Key methods you’ll use most often: `from()` and `where()`, plus optional `alias()`, `using()`, `join()`, `orderBy()`, and `limit()` when supported.
 
 ## Other write queries
 
@@ -489,7 +490,7 @@ A few behaviors are worth keeping in mind:
 - Numeric keys in condition/data arrays are treated as raw SQL fragments and bypass value binding.
 - Passing a raw string to `where()` or `having()` is treated as a literal SQL fragment and bypasses binding.
 - For null comparisons, use `IS` / `IS NOT` in the condition key (for example `['deleted IS' => null]`).
-- `UpdateQuery::from()`, `UpdateQuery::join()`, `DeleteQuery::alias()`, `DeleteQuery::using()`, and `DeleteQuery::join()` can throw when the underlying connection does not support the feature.
+- `UpdateQuery::from()`, `UpdateQuery::join()`, `DeleteQuery::alias()`, `DeleteQuery::using()`, `DeleteQuery::join()`, `DeleteQuery::orderBy()`, and `DeleteQuery::limit()` can throw when the underlying connection does not support the feature.
 - `ResultSet::count()` may buffer remaining rows when the driver’s `rowCount()` is unreliable; `ResultSet::valid()` may also advance the cursor to populate the buffer.
 
 ## Related

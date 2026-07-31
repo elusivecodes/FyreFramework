@@ -374,7 +374,7 @@ Creates an `InsertQuery` for inserting rows.
 ```php
 $db->insert()
     ->into('users')
-    ->values(['email' => 'a@example.com'])
+    ->values([['email' => 'a@example.com']])
     ->execute();
 ```
 
@@ -506,7 +506,7 @@ Arguments:
 $ok = $db->transactional(function($db) {
     $db->insert()
         ->into('audit_log')
-        ->values(['event' => 'test'])
+        ->values([['event' => 'test']])
         ->execute();
 
     return false;
@@ -665,7 +665,7 @@ if ($db instanceof MysqlConnection) {
 
 #### **Get the active schema** (`getSchema()`)
 
-Returns the current schema search path for the connection.
+Returns the schema name configured on the connection.
 
 ```php
 use Fyre\DB\Handlers\Postgres\PostgresConnection;

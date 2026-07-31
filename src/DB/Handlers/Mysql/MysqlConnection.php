@@ -195,7 +195,9 @@ class MysqlConnection extends Connection
         return match ($feature) {
             DbFeature::DeleteAlias,
             DbFeature::DeleteJoin,
+            DbFeature::DeleteLimit,
             DbFeature::DeleteMultipleTables,
+            DbFeature::DeleteOrderBy,
             DbFeature::UpdateJoin,
             DbFeature::UpdateMultipleTables => true,
             default => false,
