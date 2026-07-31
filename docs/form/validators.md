@@ -22,7 +22,7 @@ They are useful in forms, ORM workflows, and any custom code path that accepts s
 
 Validators are commonly used by:
 
-- [Forms](forms.md) (`Fyre\Form\Form`) to validate parsed input before processing.
+- [Forms](forms.md) (`Fyre\Form\Form`) to validate raw input before parsing and processing.
 - [Models](../orm/models.md) (`Fyre\ORM\Model`) to validate user input and populate entity errors.
 
 Validation rules are represented by `Fyre\Form\Rule`. Rules can be created using built-in `Rule::*()` factories (see [Validation rules](rules.md)), or by providing a custom callback when adding a rule.
@@ -42,7 +42,7 @@ Use the optional arguments to configure the rule:
 
 - `$on` sets a rule type; when you pass a `$type` to `validate(..., type: ...)`, rules with a different type are skipped (rules with no type always run).
 - `$message` sets a default failure message (used when the callback does not return a custom message).
-- `$name` sets the language fallback key under `Validation.{name}` (see [Error Messages and Language Fallback](#error-messages-and-language-fallback)).
+- `$name` sets or overrides the language fallback key under `Validation.{name}` (see [Error Messages and Language Fallback](#error-messages-and-language-fallback)). Built-in `Rule::*()` factories already provide their own names; this argument is mainly useful for custom callbacks.
 
 Example: validating a registration payload with type-specific rules.
 
@@ -56,11 +56,11 @@ $data = [
 
 $validator->clear();
 
-$validator->add('email', Rule::email(), name: 'email');
-$validator->add('password', Rule::minLength(12), name: 'minLength');
+$validator->add('email', Rule::email());
+$validator->add('password', Rule::minLength(12));
 
 // Apply a rule only for a specific validation "type".
-$validator->add('password', Rule::required(), on: 'create', name: 'required');
+$validator->add('password', Rule::required(), on: 'create');
 
 $errors = $validator->validate($data, type: 'create');
 ```
@@ -68,6 +68,8 @@ $errors = $validator->validate($data, type: 'create');
 ## Custom callback rules
 
 Prefer `Rule::*()` factories when they exist (they’re reusable and come with consistent metadata). Use callbacks for application-specific checks.
+
+Callbacks passed directly to `Validator::add()` use the default `Rule` behavior and skip missing or empty values. Construct a `Rule` explicitly with `skipEmpty: false` when the callback must handle empty values, and set both skip options to `false` when it must also handle missing fields.
 
 The validator calls callbacks through the container, so your callback can declare:
 
@@ -79,10 +81,6 @@ Example: return a custom error message string.
 ```php
 $validator->add('username', static function(mixed $value): bool|string {
     $value = (string) $value;
-
-    if ($value === '') {
-        return true;
-    }
 
     if (strlen($value) < 3) {
         return 'Username must be at least 3 characters.';
@@ -105,20 +103,32 @@ $validator->add(
 Example: use other input fields with the `data` argument.
 
 ```php
-$validator->add('state', static function(mixed $value, array $data): bool {
-    if (($data['country'] ?? null) !== 'AU') {
-        return true;
-    }
+use Fyre\Form\Rule;
 
-    return $value !== null && $value !== '';
-}, message: 'State is required when country is AU.');
+$stateRequired = new Rule(
+    static function(mixed $value, array $data): bool {
+        if (($data['country'] ?? null) !== 'AU') {
+            return true;
+        }
+
+        return $value !== null && $value !== '' && $value !== [];
+    },
+    skipEmpty: false,
+    skipNotSet: false
+);
+
+$validator->add(
+    'state',
+    $stateRequired,
+    message: 'State is required when country is AU.'
+);
 ```
 
 ## Running validation
 
 Validation runs field-by-field and rule-by-rule, calling each rule callback through the container. A callback can declare any of these named arguments:
 
-- `value` (the field value; defaults to `null` when the field is missing)
+- `value` (the field value; defaults to `null` when a rule is configured to run for a missing field)
 - `data` (the full input array)
 - `field` (the field name)
 
@@ -172,14 +182,13 @@ Arguments:
 - `$rule` (`Closure|Rule`): the rule or callback to apply.
 - `$on` (`string|null`): optional rule type; when you pass a `$type` to `validate(..., type: ...)`, rules with a different type are skipped.
 - `$message` (`string|null`): optional message used when the rule fails and the callback does not return a custom message.
-- `$name` (`string|null`): optional name used for language fallback under `Validation.{name}`.
+- `$name` (`string|null`): optional name used for language fallback under `Validation.{name}`; built-in rules already provide a name.
 
 ```php
 use Fyre\Form\Rule;
 
-$validator->add('email', Rule::email(), name: 'email');
-$validator->add('password', Rule::minLength(12), name: 'minLength');
-$validator->add('password', Rule::required(), on: 'create', name: 'required');
+$validator->add('email', Rule::email());
+$validator->add('password', Rule::required(), on: 'create');
 ```
 
 #### **Validate data** (`validate()`)
@@ -192,7 +201,8 @@ Arguments:
 
 ```php
 use Fyre\Form\Rule;
-$validator->add('email', Rule::email(), name: 'email');
+
+$validator->add('email', Rule::email());
 
 $errors = $validator->validate(['email' => 'not-an-email']);
 ```
@@ -207,7 +217,7 @@ $validator->clear();
 
 #### **Remove rules** (`remove()`)
 
-Removes all rules for a field, or a single named rule for a field.
+Removes all rules for a field, or every rule for the field with a matching name. The method returns whether any rules were removed.
 
 Arguments:
 - `$field` (`string`): the field name.
@@ -215,7 +225,7 @@ Arguments:
 
 ```php
 $validator->remove('email'); // remove all email rules
-$validator->remove('email', 'required'); // remove only the named rule
+$validator->remove('email', 'required'); // remove all matching rules
 ```
 
 #### **Inspect field rules** (`getFieldRules()`)

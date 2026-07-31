@@ -16,6 +16,7 @@ It works well for request payloads, settings forms, multi-step workflows, and ot
 - [Method guide](#method-guide)
   - [`Form`](#form)
   - [`Schema`](#schema)
+  - [`Field`](#field)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -68,9 +69,9 @@ class RegisterForm extends Form
     public function buildValidator(Validator $validator): Validator
     {
         return $validator
-            ->add('email', Rule::email(), name: 'email')
-            ->add('password', Rule::minLength(12), name: 'minLength')
-            ->add('password', Rule::required(), name: 'required');
+            ->add('email', Rule::email())
+            ->add('password', Rule::minLength(12))
+            ->add('password', Rule::required());
     }
 
     protected function process(array $data): bool
@@ -116,9 +117,9 @@ Declare schema fields with:
 The `$options` array is passed as constructor arguments to `Fyre\Form\Field`. Common options include:
 
 - `type` (`string`): type identifier used to parse the value (default: `string`).
-- `length` (`int|null`): optional length metadata stored on the field.
+- `length` (`int|null`): optional length metadata retained for supported field types and normalized to `null` for other types.
 - `precision` (`int|null`): optional precision metadata stored on the field.
-- `scale` (`int|null`): optional scale metadata stored on the field (for example, decimal scale).
+- `scale` (`int|null`): decimal scale, which defaults to `0` for decimal fields and is normalized to `null` for other types.
 - `fractionalSeconds` (`int|null`): optional fractional-seconds precision metadata.
 - `default` (`mixed`): default metadata stored on the field (not automatically applied during parsing).
 - `enumClass` (`class-string<UnitEnum>|null`): optional PHP enum class used to convert parsed scalars into enum cases.
@@ -305,6 +306,40 @@ Arguments:
 $schema->removeField('email');
 ```
 
+### `Field`
+
+Most examples below assume you already have a `$field` (a `Field` instance returned by `Schema::field()`).
+
+#### **Inspect field metadata** (`getName()`, `getType()`, `toArray()`)
+
+Read individual metadata values or return all field metadata as an array. Dedicated getters are also available for `length`, `precision`, `scale`, `fractionalSeconds`, `default`, and `enumClass`.
+
+```php
+$type = $field->getType();
+$metadata = $field->toArray();
+```
+
+#### **Resolve the field type** (`type()`)
+
+Retrieve the configured `Fyre\DB\Type` instance used to parse this field.
+
+```php
+$type = $field->type();
+```
+
+#### **Manage enum metadata** (`setEnumClass()`, `getEnumClass()`, `hasEnumClass()`)
+
+Set or inspect the optional PHP enum class associated with the field.
+
+Arguments:
+- `$enumClass` (`class-string<UnitEnum>`): the enum class.
+
+```php
+use App\Enums\Status;
+
+$field->setEnumClass(Status::class);
+```
+
 ## Behavior notes
 
 A few behaviors are worth keeping in mind:
@@ -312,7 +347,8 @@ A few behaviors are worth keeping in mind:
 - `Form::execute()` parses only keys that are present in the input array; it does not automatically apply field defaults.
 - When `execute()` receives keys that are not present in the schema, it stores those values unchanged.
 - When `execute(..., validate: true)` fails, parsing does not run and the stored form data remains the raw input.
-- Field `length`, `precision`, `scale`, `default`, and optional `enumClass` values are stored on `Field` metadata.
+- Field `length` is retained only for supported types, decimal `scale` defaults to `0`, and `scale` is normalized to `null` for other types.
+- Field `precision`, `fractionalSeconds`, `default`, and optional `enumClass` values are stored as metadata.
 - If you call `execute(..., validate: false)`, the form’s existing error map is not updated until you call `validate()`.
 
 ## Related

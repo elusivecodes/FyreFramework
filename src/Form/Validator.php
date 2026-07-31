@@ -212,7 +212,7 @@ class Validator
             }
 
             if ($fieldErrors !== []) {
-                $errors[$field] = array_unique($fieldErrors);
+                $errors[$field] = array_unique($fieldErrors) |> array_values(...);
             }
         }
 

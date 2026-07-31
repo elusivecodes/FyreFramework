@@ -149,14 +149,15 @@ final class ValidatorTest extends TestCase
 
     public function testMultipleErrorsUnique(): void
     {
-        $this->validator->add('test', Rule::naturalNumber());
-        $this->validator->add('test', Rule::greaterThan(1));
+        $this->validator->add('test', Rule::naturalNumber(), message: 'error');
+        $this->validator->add('test', Rule::greaterThan(1), message: 'error');
+        $this->validator->add('test', Rule::lessThan(0), message: 'other error');
 
         $this->assertSame(
             [
                 'test' => [
-                    'The test must be a natural number.',
-                    'The test must be greater than 1.',
+                    'error',
+                    'other error',
                 ],
             ],
             $this->validator->validate([

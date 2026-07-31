@@ -44,7 +44,9 @@ Most `Rule::*()` factories default to:
 - `skipEmpty = true`
 - `skipNotSet = true`
 
-So a rule is typically evaluated only when a field is present and non-empty, unless the specific factory overrides this. The most important exceptions are:
+Each factory also assigns its own rule name for language fallback, so you do not need to pass the same name to `Validator::add()`.
+
+A rule is typically evaluated only when a field is present and non-empty, unless the specific factory overrides this. The most important exceptions are:
 
 - `Rule::notEmpty()` — does not skip empty values.
 - `Rule::required()` — does not skip empty values and does not skip when the field is not set.
@@ -59,7 +61,7 @@ Most examples below assume you already have a `$validator` instance.
 If a field is optional, you can usually attach only the format rule. Most format rules skip empty values by default, so missing/empty values won’t fail:
 
 ```php
-$validator->add('website', Rule::url(), name: 'url');
+$validator->add('website', Rule::url());
 ```
 
 ### Required + format
@@ -67,8 +69,8 @@ $validator->add('website', Rule::url(), name: 'url');
 If a field must be present and non-empty, combine `required()` with another rule:
 
 ```php
-$validator->add('email', Rule::required(), name: 'required');
-$validator->add('email', Rule::email(), name: 'email');
+$validator->add('email', Rule::required());
+$validator->add('email', Rule::email());
 ```
 
 ### Require presence vs required
@@ -76,16 +78,17 @@ $validator->add('email', Rule::email(), name: 'email');
 Use `requirePresence()` when the key must exist (even if the value is `null`). Use `required()` when you need a non-empty value:
 
 ```php
-$validator->add('middle_name', Rule::requirePresence(), name: 'requirePresence');
-$validator->add('first_name', Rule::required(), name: 'required');
+$validator->add('middle_name', Rule::requirePresence());
+$validator->add('first_name', Rule::required());
 ```
 
 ### Cross-field matching
 
-Use `matches()` when one field must match another (for example, password confirmation):
+Use `matches()` when one field must match another (for example, password confirmation). Add `required()` when the confirmation itself is mandatory because `matches()` skips missing and empty values by default:
 
 ```php
-$validator->add('password_confirm', Rule::matches('password'), name: 'matches');
+$validator->add('password_confirm', Rule::required());
+$validator->add('password_confirm', Rule::matches('password'));
 ```
 
 ## Text rules
