@@ -45,7 +45,7 @@ $commandRunner->handle(['app', 'queue:worker']);
 $commandRunner->handle(['app', 'queue:worker', '--queue', 'emails', '--max-runtime', '3600']);
 ```
 
-`queue:worker` requires the `pcntl` extension for signal handling.
+`Worker` requires the `pcntl` extension for signal handling, whether it is started directly or through `queue:worker`.
 
 Recommended production setup:
 
@@ -71,6 +71,8 @@ Before each valid job runs, the worker clears scoped container services so each 
 
 There is no built-in per-job timeout. If jobs call external systems, set timeouts in those clients and let your process supervisor restart stuck workers if needed.
 
+With `RedisQueue`, a job that is not settled within the handler's `visibilityTimeout` can be delivered to another worker. Set the timeout longer than the longest expected job runtime.
+
 ## Lifecycle events
 
 The worker dispatches these events through the event system:
@@ -90,16 +92,53 @@ use Fyre\Event\Event;
 use Fyre\Queue\Message;
 use Throwable;
 
-$eventManager->on('Queue.failure', static function(Event $event, Message $message, bool $shouldRetry): void {
+$eventManager->on('Queue.failure', static function(
+    Event $event,
+    Message $message,
+    bool $shouldRetry,
+): void {
     log_message('debug', 'Queue failure (retry='.(int) $shouldRetry.'): '.$message->getHash());
 });
 
-$eventManager->on('Queue.exception', static function(Event $event, Message $message, Throwable $exception, bool $shouldRetry): void {
+$eventManager->on('Queue.exception', static function(
+    Event $event,
+    Message $message,
+    Throwable $exception,
+    bool $shouldRetry,
+): void {
     log_message('error', 'Queue exception: '.$exception->getMessage());
 });
 ```
 
-For broader event-listener patterns, see [Events](../events/index.md).
+Listener classes can use queue-specific attributes instead of event-name strings:
+
+- `#[OnStart]` listens to `Queue.start`
+- `#[OnSuccess]` listens to `Queue.success`
+- `#[OnFailure]` listens to `Queue.failure`
+- `#[OnException]` listens to `Queue.exception`
+- `#[OnInvalid]` listens to `Queue.invalid`
+
+Each attribute accepts an optional event priority. The listener method receives the same arguments shown above, including the `Event` object first.
+
+```php
+use Fyre\Event\Event;
+use Fyre\Event\EventListenerInterface;
+use Fyre\Queue\Events\OnSuccess;
+use Fyre\Queue\Message;
+
+final class QueueListener implements EventListenerInterface
+{
+    #[OnSuccess]
+    public function success(Event $event, Message $message): void
+    {
+        // ...
+    }
+}
+
+$eventManager->addListener(new QueueListener());
+```
+
+For broader event-listener patterns, see [Event Listeners](../events/listeners.md).
 
 ## Worker options
 
@@ -110,7 +149,7 @@ Pass worker options as the fourth argument when you construct `Worker` directly:
 - `maxJobs` (`int`) - maximum number of jobs before stopping (default: `0`, unlimited)
 - `maxRuntime` (`int`) - maximum runtime in seconds before stopping (default: `0`, unlimited)
 - `rest` (`int`) - microseconds to sleep after processing a job (default: `10000`)
-- `sleep` (`int`) - microseconds to sleep when no job is available (default: `1000000`)
+- `sleep` (`int`) - microseconds to sleep when no job is available (default: `1_000_000`)
 
 ```php
 use Fyre\Queue\Worker;
@@ -120,7 +159,7 @@ $worker = new Worker($container, $queueManager, $eventManager, [
     'maxJobs' => 100,
     'maxRuntime' => 3600,
     'rest' => 10000,
-    'sleep' => 1000000,
+    'sleep' => 1_000_000,
 ]);
 
 $worker->run();

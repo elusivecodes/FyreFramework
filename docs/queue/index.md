@@ -126,6 +126,7 @@ Options:
 - `password` (`string|null`) - Redis password (default: `null`)
 - `database` (`int|null`) - Redis database index (default: `null`)
 - `timeout` (`int`) - connection timeout in seconds (default: `0`)
+- `visibilityTimeout` (`int`) - seconds before an uncompleted job can be delivered again (default: `300`)
 - `persist` (`bool`) - whether to use a persistent connection (default: `true`)
 - `tls` (`bool`) - whether to connect using `tls://` (default: `false`)
 - `ssl` (`array`) - TLS client settings (`key`, `cert`, `ca`)
@@ -189,7 +190,7 @@ The most common message options are:
 - `delay` (`int`) - delay in seconds before the job becomes ready
 - `expires` (`int`) - number of seconds before the job expires
 - `retry` (`bool`) - whether retries are allowed (default: `true`)
-- `maxRetries` (`int`) - maximum retry attempts (default: `5`)
+- `maxRetries` (`int`) - maximum total execution attempts, including the initial attempt (default: `5`)
 - `unique` (`bool`) - whether the handler should enforce uniqueness (default: `false`)
 
 For more direct control, you can also set absolute `after` and `before` timestamps instead of `delay` and `expires`.
@@ -200,7 +201,9 @@ Jobs are processed by a [Queue Worker](worker.md). The worker pops the next avai
 
 The built-in way to run a worker is the `queue:worker` console command; see [Console Commands](../console/commands.md#queueworker).
 
-Queues are designed for at-least-once processing. A job may run more than once, so prefer idempotent job design.
+Queues are designed for at-least-once processing. `RedisQueue` reserves each popped job until it is completed, failed, or discarded. If the worker stops first, the job becomes available again after `visibilityTimeout` seconds.
+
+A job may run more than once, so prefer idempotent job design and set `visibilityTimeout` longer than the expected job runtime.
 
 ## Inspecting queues
 
@@ -213,7 +216,13 @@ $queueNames = $queue->queues();
 $stats = $queue->stats('search');
 ```
 
-With `RedisQueue`, stats include `queued`, `delayed`, `completed`, `failed`, and `total`.
+`RedisQueue` reports these statistics:
+
+- `queued` - messages currently ready for a worker
+- `delayed` - messages waiting for their `after` timestamp
+- `completed` - successful completions since the statistics were last reset
+- `failed` - failed execution attempts since the last reset, including attempts that were retried
+- `total` - delivery attempts made available since the last reset, including retries and recovered reservations
 
 You can also inspect queue stats from the CLI using `queue:stats`; see [Console Commands](../console/commands.md#queuestats).
 
@@ -414,8 +423,10 @@ A few behaviors are worth keeping in mind:
 - Invalid messages are skipped and emit `Queue.invalid`; expired messages are dropped silently.
 - `QueueManager::push()` does not return whether the handler accepted the message, so uniqueness or expiry can prevent enqueueing without raising an error.
 - `Message::shouldRetry()` increments the retry counter, so call it only once for a given failure.
-- `RedisQueue` removes its uniqueness key when a message is popped, so uniqueness only applies while the job is waiting in Redis.
-- `RedisQueue` retries happen immediately unless the message already has a future `after` timestamp.
+- `maxRetries` includes the initial execution, so a value of `5` permits the initial attempt and up to four retries.
+- `RedisQueue` holds a message's uniqueness key while it is delayed, queued, processing, or waiting for a retry. The key is removed when the message is completed, permanently failed, or discarded.
+- `RedisQueue` retries immediately and does not provide built-in retry delay or backoff.
+- `RedisQueue` storage is internal to the handler. Drain or clear existing queues before upgrading from a version that used a different storage format.
 - Delays and expiries depend on system time, so keep worker hosts time-synced.
 
 ## Related

@@ -279,7 +279,7 @@ final class PromiseTest extends TestCase
 
         $next = null;
         $next = $promise->then(static function() use (&$next): PromiseInterface {
-            if (!$next instanceof PromiseInterface) {
+            if (!($next instanceof PromiseInterface)) {
                 throw new LogicException('Chained promise was not initialized.');
             }
 

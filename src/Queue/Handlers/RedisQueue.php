@@ -12,23 +12,36 @@ use InvalidArgumentException;
 use Override;
 use Redis;
 use RedisException;
+use WeakMap;
 
-use function count;
+use function bin2hex;
 use function explode;
 use function in_array;
+use function is_string;
+use function random_bytes;
 use function serialize;
 use function sprintf;
+use function strlen;
+use function substr;
 use function time;
 use function unserialize;
 
 /**
  * Queue implementation backed by Redis.
  *
- * Uses a Redis list for queued messages, a sorted set for delayed messages, and a hash for
- * uniqueness checks (when enabled).
+ * Uses a Redis list for queued messages, sorted sets for delayed and processing messages,
+ * and a hash for uniqueness checks (when enabled).
  */
 class RedisQueue extends Queue
 {
+    protected const ID_LENGTH = 32;
+
+    protected const NO_UNIQUE_HASH = '--------------------------------';
+
+    protected const PAYLOAD_HEADER_LENGTH = 64;
+
+    protected const RELEASE_LIMIT = 100;
+
     /**
      * @var array<string, mixed>
      */
@@ -39,6 +52,7 @@ class RedisQueue extends Queue
         'port' => 6379,
         'database' => null,
         'timeout' => 0,
+        'visibilityTimeout' => 300,
         'persist' => true,
         'tls' => false,
         'ssl' => [
@@ -68,20 +82,36 @@ class RedisQueue extends Queue
     protected Redis $connection;
 
     /**
+     * @var WeakMap<Message, array{
+     *     queue: string,
+     *     payload: string,
+     *     reservation: string,
+     *     uniqueHash: string|null
+     * }>
+     */
+    protected WeakMap $reservations;
+
+    /**
      * Constructs a RedisQueue.
      *
      * @param Container $container The Container.
      * @param array<string, mixed> $options The queue options.
      *
      * @throws QueueException If the connection fails.
-     * @throws InvalidArgumentException If the connection database is not valid.
+     * @throws InvalidArgumentException If a queue option is not valid.
      */
     public function __construct(Container $container, array $options = [])
     {
         parent::__construct($container, $options);
 
+        $this->reservations = new WeakMap();
+
         try {
             $this->connection = new Redis();
+
+            if ($this->config['visibilityTimeout'] <= 0) {
+                throw new InvalidArgumentException('Redis queue option `visibilityTimeout` must be greater than 0.');
+            }
 
             $tls = $this->config['tls'] ? 'tls://' : '';
 
@@ -138,9 +168,12 @@ class RedisQueue extends Queue
     #[Override]
     public function clear(string $queue = self::DEFAULT): void
     {
-        $this->connection->del(static::prepareKey($queue));
-        $this->connection->del(static::prepareKey($queue, 'unique'));
-        $this->connection->zRemRangeByScore(static::prepareKey($queue, 'delayed'), '-inf', '+inf');
+        $this->connection->del(
+            static::prepareKey($queue),
+            static::prepareKey($queue, 'delayed'),
+            static::prepareKey($queue, 'processing'),
+            static::prepareKey($queue, 'unique')
+        );
     }
 
     /**
@@ -149,9 +182,16 @@ class RedisQueue extends Queue
     #[Override]
     public function complete(Message $message): void
     {
-        $queue = $message->getQueue();
+        $this->settle($message, 'complete');
+    }
 
-        $this->connection->incrBy(static::prepareKey($queue, 'completed'), 1);
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function discard(Message $message): void
+    {
+        $this->settle($message, 'discard');
     }
 
     /**
@@ -160,15 +200,24 @@ class RedisQueue extends Queue
     #[Override]
     public function fail(Message $message): bool
     {
-        $queue = $message->getQueue();
-
-        $this->connection->incrBy(static::prepareKey($queue, 'failed'), 1);
-
-        if (!$message->shouldRetry()) {
+        if (!isset($this->reservations[$message])) {
             return false;
         }
 
-        return $this->push($message);
+        $data = $this->reservations[$message];
+        $shouldRetry = $message->shouldRetry();
+
+        $payload = $shouldRetry ?
+            substr($data['payload'], 0, static::PAYLOAD_HEADER_LENGTH).serialize($message) :
+            '';
+
+        $settled = $this->settle(
+            $message,
+            $shouldRetry ? 'retry' : 'failed',
+            $payload
+        );
+
+        return $settled && $shouldRetry;
     }
 
     /**
@@ -177,41 +226,31 @@ class RedisQueue extends Queue
     #[Override]
     public function pop(string $queue = self::DEFAULT): Message|null
     {
-        // check for delayed messages
-        $this->connection->watch(static::prepareKey($queue, 'delayed'));
+        $this->releaseMessages($queue, 'delayed');
+        $this->releaseMessages($queue, 'processing', true);
 
-        $itemsReady = $this->connection->zRangeByScore(static::prepareKey($queue, 'delayed'), '0', (string) time());
+        $data = $this->reserve($queue);
 
-        if ($itemsReady !== []) {
-            $this->connection->multi();
-
-            foreach ($itemsReady as $data) {
-                $this->connection->lPush(static::prepareKey($queue), $data);
-            }
-
-            $this->connection->zRem(static::prepareKey($queue, 'delayed'), ...$itemsReady);
-            $this->connection->incrBy(static::prepareKey($queue, 'total'), count($itemsReady));
-            $this->connection->exec();
-        } else {
-            $this->connection->unwatch();
-        }
-
-        // get the next message
-        $data = $this->connection->rPop(static::prepareKey($queue));
-
-        if (!$data) {
+        if ($data === null) {
             return null;
         }
 
-        $message = @unserialize($data);
+        $payload = $data['payload'];
+        $uniqueHash = static::getUniqueHash($payload);
+        $message = substr($payload, static::PAYLOAD_HEADER_LENGTH) |> @unserialize(...);
 
-        if (!$message instanceof Message) {
+        if (!($message instanceof Message)) {
+            $this->settleReservation($queue, $data['reservation'], $uniqueHash, 'discard');
+
             return null;
         }
 
-        if ($message->isUnique()) {
-            $this->connection->hDel(static::prepareKey($queue, 'unique'), $message->getHash());
-        }
+        $this->reservations[$message] = [
+            'queue' => $queue,
+            'payload' => $payload,
+            'reservation' => $data['reservation'],
+            'uniqueHash' => $uniqueHash,
+        ];
 
         return $message;
     }
@@ -227,28 +266,48 @@ class RedisQueue extends Queue
         }
 
         $queue = $message->getQueue();
+        $uniqueHash = $message->isUnique() ?
+            $message->getHash() :
+            null;
 
-        if ($message->isUnique()) {
-            $uniqueKey = static::prepareKey($queue, 'unique');
-            $messageHash = $message->getHash();
+        $payload = static::generateId()
+            .($uniqueHash ?? static::NO_UNIQUE_HASH)
+            .serialize($message);
 
-            if ($this->connection->hExists($uniqueKey, $messageHash)) {
-                return false;
-            }
+        $after = $message->isReady() ?
+            null :
+            $message->getAfter();
 
-            $this->connection->hSet($uniqueKey, $messageHash, 1);
-        }
+        $result = $this->connection->eval(
+            <<<'LUA'
+                if ARGV[2] ~= '' then
+                    if redis.call('hsetnx', KEYS[1], ARGV[2], 1) == 0 then
+                        return 0
+                    end
+                end
 
-        $data = serialize($message);
+                if ARGV[3] ~= '' then
+                    redis.call('zadd', KEYS[3], ARGV[3], ARGV[1])
+                else
+                    redis.call('lpush', KEYS[2], ARGV[1])
+                    redis.call('incr', KEYS[4])
+                end
 
-        if (!$message->isReady()) {
-            $this->connection->zAdd(static::prepareKey($queue, 'delayed'), (float) $message->getAfter(), $data);
-        } else {
-            $this->connection->lPush(static::prepareKey($queue), $data);
-            $this->connection->incrBy(static::prepareKey($queue, 'total'), 1);
-        }
+                return 1
+                LUA,
+            [
+                static::prepareKey($queue, 'unique'),
+                static::prepareKey($queue),
+                static::prepareKey($queue, 'delayed'),
+                static::prepareKey($queue, 'total'),
+                $payload,
+                $uniqueHash ?? '',
+                $after === null ? '' : (string) $after,
+            ],
+            4
+        );
 
-        return true;
+        return (int) $result === 1;
     }
 
     /**
@@ -279,9 +338,9 @@ class RedisQueue extends Queue
     #[Override]
     public function reset(string $queue = self::DEFAULT): void
     {
-        $this->connection->del(static::prepareKey($queue, 'completed'));
-        $this->connection->del(static::prepareKey($queue, 'failed'));
-        $this->connection->del(static::prepareKey($queue, 'total'));
+        static::prepareKey($queue, 'completed') |> $this->connection->del(...);
+        static::prepareKey($queue, 'failed') |> $this->connection->del(...);
+        static::prepareKey($queue, 'total') |> $this->connection->del(...);
     }
 
     /**
@@ -291,12 +350,225 @@ class RedisQueue extends Queue
     public function stats(string $queue = self::DEFAULT): array
     {
         return [
-            'queued' => (int) $this->connection->lLen(static::prepareKey($queue)),
+            'queued' => (int) (static::prepareKey($queue) |> $this->connection->lLen(...)),
             'delayed' => (int) $this->connection->zCount(static::prepareKey($queue, 'delayed'), '-inf', '+inf'),
-            'completed' => (int) $this->connection->get(static::prepareKey($queue, 'completed')),
-            'failed' => (int) $this->connection->get(static::prepareKey($queue, 'failed')),
-            'total' => (int) $this->connection->get(static::prepareKey($queue, 'total')),
+            'completed' => (int) (static::prepareKey($queue, 'completed') |> $this->connection->get(...)),
+            'failed' => (int) (static::prepareKey($queue, 'failed') |> $this->connection->get(...)),
+            'total' => (int) (static::prepareKey($queue, 'total') |> $this->connection->get(...)),
         ];
+    }
+
+    /**
+     * Releases messages that are ready to be queued.
+     *
+     * @param string $queue The queue name.
+     * @param string $source The source key suffix.
+     * @param bool $reserved Whether the source contains reservations.
+     */
+    protected function releaseMessages(string $queue, string $source, bool $reserved = false): void
+    {
+        $this->connection->eval(
+            <<<'LUA'
+                local items = redis.call(
+                    'zrangebyscore',
+                    KEYS[1],
+                    '-inf',
+                    ARGV[1],
+                    'limit',
+                    0,
+                    ARGV[2]
+                )
+
+                local moved = 0
+
+                for _, item in ipairs(items) do
+                    if redis.call('zrem', KEYS[1], item) == 1 then
+                        if ARGV[3] == '1' then
+                            item = string.sub(item, tonumber(ARGV[4]) + 1)
+                        end
+
+                        redis.call('lpush', KEYS[2], item)
+                        moved = moved + 1
+                    end
+                end
+
+                if moved > 0 then
+                    redis.call('incrby', KEYS[3], moved)
+                end
+
+                return moved
+                LUA,
+            [
+                static::prepareKey($queue, $source),
+                static::prepareKey($queue),
+                static::prepareKey($queue, 'total'),
+                (string) time(),
+                (string) static::RELEASE_LIMIT,
+                $reserved ? '1' : '0',
+                (string) static::ID_LENGTH,
+            ],
+            3
+        );
+    }
+
+    /**
+     * Reserves the next queued message.
+     *
+     * @param string $queue The queue name.
+     * @return array{payload: string, reservation: string}|null The reservation data.
+     */
+    protected function reserve(string $queue): array|null
+    {
+        $receipt = static::generateId();
+
+        $payload = $this->connection->eval(
+            <<<'LUA'
+                local payload = redis.call('rpop', KEYS[1])
+
+                if not payload then
+                    return false
+                end
+
+                redis.call('zadd', KEYS[2], ARGV[1], ARGV[2] .. payload)
+
+                return payload
+                LUA,
+            [
+                static::prepareKey($queue),
+                static::prepareKey($queue, 'processing'),
+                (string) (time() + $this->config['visibilityTimeout']),
+                $receipt,
+            ],
+            2
+        );
+
+        if (!is_string($payload)) {
+            return null;
+        }
+
+        return [
+            'payload' => $payload,
+            'reservation' => $receipt.$payload,
+        ];
+    }
+
+    /**
+     * Settles a message reservation.
+     *
+     * @param Message $message The Message.
+     * @param 'complete'|'discard'|'failed'|'retry' $action The settlement action.
+     * @param string $payload The retry payload.
+     * @return bool Whether the reservation was settled.
+     */
+    protected function settle(Message $message, string $action, string $payload = ''): bool
+    {
+        if (!isset($this->reservations[$message])) {
+            return false;
+        }
+
+        $data = $this->reservations[$message];
+
+        $result = $this->settleReservation(
+            $data['queue'],
+            $data['reservation'],
+            $data['uniqueHash'],
+            $action,
+            $payload
+        );
+
+        unset($this->reservations[$message]);
+
+        return $result;
+    }
+
+    /**
+     * Settles a raw message reservation.
+     *
+     * @param string $queue The queue name.
+     * @param string $reservation The reservation data.
+     * @param string|null $uniqueHash The uniqueness hash.
+     * @param 'complete'|'discard'|'failed'|'retry' $action The settlement action.
+     * @param string $payload The retry payload.
+     * @return bool Whether the reservation was settled.
+     */
+    protected function settleReservation(
+        string $queue,
+        string $reservation,
+        string|null $uniqueHash,
+        string $action,
+        string $payload = ''
+    ): bool {
+        $result = $this->connection->eval(
+            <<<'LUA'
+                if redis.call('zrem', KEYS[1], ARGV[1]) == 0 then
+                    return 0
+                end
+
+                if ARGV[3] == 'retry' then
+                    redis.call('incr', KEYS[4])
+                    redis.call('lpush', KEYS[5], ARGV[4])
+                    redis.call('incr', KEYS[6])
+
+                    return 1
+                end
+
+                if ARGV[3] == 'complete' then
+                    redis.call('incr', KEYS[3])
+                elseif ARGV[3] == 'failed' then
+                    redis.call('incr', KEYS[4])
+                end
+
+                if ARGV[2] ~= '' then
+                    redis.call('hdel', KEYS[2], ARGV[2])
+                end
+
+                return 1
+                LUA,
+            [
+                static::prepareKey($queue, 'processing'),
+                static::prepareKey($queue, 'unique'),
+                static::prepareKey($queue, 'completed'),
+                static::prepareKey($queue, 'failed'),
+                static::prepareKey($queue),
+                static::prepareKey($queue, 'total'),
+                $reservation,
+                $uniqueHash ?? '',
+                $action,
+                $payload,
+            ],
+            6
+        );
+
+        return (int) $result === 1;
+    }
+
+    /**
+     * Generates a queue identifier.
+     *
+     * @return string The identifier.
+     */
+    protected static function generateId(): string
+    {
+        return random_bytes(16) |> bin2hex(...);
+    }
+
+    /**
+     * Returns the uniqueness hash from a payload.
+     *
+     * @param string $payload The payload.
+     * @return string|null The uniqueness hash.
+     */
+    protected static function getUniqueHash(string $payload): string|null
+    {
+        if (strlen($payload) < static::PAYLOAD_HEADER_LENGTH) {
+            return null;
+        }
+
+        $uniqueHash = substr($payload, static::ID_LENGTH, static::ID_LENGTH);
+
+        return $uniqueHash === static::NO_UNIQUE_HASH ?
+            null :
+            $uniqueHash;
     }
 
     /**

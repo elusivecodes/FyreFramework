@@ -34,6 +34,9 @@ class TestQueue extends Queue
     public function complete(Message $message): void {}
 
     #[Override]
+    public function discard(Message $message): void {}
+
+    #[Override]
     public function fail(Message $message): bool
     {
         return false;

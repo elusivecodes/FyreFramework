@@ -540,7 +540,7 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
     #[Override]
     public function getIterator(): Iterator
     {
-        if (!$this->source instanceof Closure) {
+        if (!($this->source instanceof Closure)) {
             return new ArrayIterator($this->source);
         }
 
@@ -1267,7 +1267,7 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
      */
     public function toArray(): array
     {
-        if (!$this->source instanceof Closure) {
+        if (!($this->source instanceof Closure)) {
             return $this->source;
         }
 

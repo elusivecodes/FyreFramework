@@ -56,7 +56,7 @@ class HasOne extends Relationship
     ): bool {
         $child = $this->getProperty() |> $entity->get(...);
 
-        if (!$child || !$child instanceof Entity) {
+        if (!$child || !($child instanceof Entity)) {
             return true;
         }
 

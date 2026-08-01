@@ -60,6 +60,13 @@ abstract class Queue
     abstract public function complete(Message $message): void;
 
     /**
+     * Discards a message without recording a result.
+     *
+     * @param Message $message The Message.
+     */
+    abstract public function discard(Message $message): void;
+
+    /**
      * Marks a job as failed.
      *
      * @param Message $message The Message.

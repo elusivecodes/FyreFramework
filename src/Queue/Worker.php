@@ -159,12 +159,15 @@ class Worker
     protected function process(Message $message): void
     {
         if (!$message->isValid()) {
+            $this->queue->discard($message);
             $this->dispatchEvent('Queue.invalid', ['message' => $message]);
 
             return;
         }
 
         if ($message->isExpired()) {
+            $this->queue->discard($message);
+
             return;
         }
 

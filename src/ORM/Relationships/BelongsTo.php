@@ -86,7 +86,7 @@ class BelongsTo extends Relationship
     ): bool {
         $parent = $this->getProperty() |> $entity->get(...);
 
-        if (!$parent || !$parent instanceof Entity) {
+        if (!$parent || !($parent instanceof Entity)) {
             return true;
         }
 
