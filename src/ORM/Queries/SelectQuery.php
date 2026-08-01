@@ -227,6 +227,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
 
             if ($this->options['events'] && !$this->beforeFindTriggered) {
                 $this->model->dispatchEvent('ORM.beforeFind', ['query' => $query, 'options' => $this->options]);
+                $query->beforeFindTriggered = true;
             }
 
             $this->count = $query->getConnection()

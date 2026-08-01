@@ -42,9 +42,10 @@ Rules run during `Model::save()` and `Model::saveMany()` when `$checkRules` is e
 
 At a high level, the workflow looks like this:
 
-1. The save can return early if the entity already has errors or no changes.
-2. If rule checks are enabled, the model runs its `RuleSet` against the entity.
-3. If any rule fails, the save fails.
+1. Existing entities with no changes are skipped.
+2. For new or dirty entities, existing errors prevent the save before rules run.
+3. If rule checks are enabled, the model runs its `RuleSet` against the entity.
+4. If any rule fails, the save fails.
 
 ## Defining rules
 
@@ -310,10 +311,10 @@ class UsersModel extends Model
 
 A few behaviors are worth keeping in mind:
 
-- Rule checks only run when `$checkRules` is enabled and the save has not already returned early because the entity has errors or no changes.
+- Rule checks only run when `$checkRules` is enabled, the entity is new or dirty, and its entity graph has no existing errors.
 - `RuleSet::validate()` runs all rules; it does not stop at the first failure.
 - Built-in rules often return early for cases like empty field lists or unchanged fields.
-- `existsIn()` requires the relationship to exist; if it does not, an assertion may fail at runtime (depending on how PHP assertions are configured).
+- `existsIn()` requires the relationship to exist; if it does not, an `OrmException` is thrown.
 - Query-based rules disable ORM events for the constraint check (`events: false`), so event-driven behavior will not influence rule queries.
 - If ORM events are enabled, `ORM.beforeRules` is dispatched before validation. `ORM.afterRules` is dispatched only after validation succeeds.
 

@@ -21,6 +21,8 @@ use function array_filter;
 use function class_uses;
 use function get_parent_class;
 use function in_array;
+use function is_array;
+use function iterator_to_array;
 
 /**
  * Adds soft-delete behavior to ORM models.
@@ -378,6 +380,14 @@ trait SoftDeleteTrait
         bool $dependents = true,
         mixed ...$options
     ): bool {
+        if (!is_array($entities)) {
+            $entities = iterator_to_array($entities);
+        }
+
+        if ($entities === []) {
+            return true;
+        }
+
         $options['dependents'] ??= true;
 
         $connection = $this->getConnection();
@@ -468,10 +478,8 @@ trait SoftDeleteTrait
             return true;
         }
 
-        if (get_parent_class($className) !== false) {
-            return static::hasSoftDelete(parent::class);
-        }
+        $parentClass = get_parent_class($className);
 
-        return false;
+        return $parentClass !== false && static::hasSoftDelete($parentClass);
     }
 }

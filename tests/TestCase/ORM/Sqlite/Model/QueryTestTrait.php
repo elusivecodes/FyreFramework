@@ -127,6 +127,23 @@ trait QueryTestTrait
         );
     }
 
+    public function testFindCountTriggersBeforeFindOnce(): void
+    {
+        $count = 0;
+        $Items = $this->modelRegistry->use('Items');
+
+        $Items->getEventManager()->on('ORM.beforeFind', static function() use (&$count): void {
+            $count++;
+        });
+
+        $Items->find()->count();
+
+        $this->assertSame(
+            1,
+            $count
+        );
+    }
+
     public function testFindOptionSql(): void
     {
         $this->assertSame(

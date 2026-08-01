@@ -32,7 +32,7 @@ Most ORM work starts from a model and flows through entities:
 - **Relationships** connect models, control how related data is loaded, and influence saving/deleting behavior.
 - **Rule sets** run integrity checks during save workflows (distinct from input validation).
 
-Saves fail when entities have errors, and existing entities with no changes are skipped.
+New or dirty entity graphs fail to save when they have errors. Existing entities with no changes are skipped before errors are checked.
 
 ## Pages in this section
 

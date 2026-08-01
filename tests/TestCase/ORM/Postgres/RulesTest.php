@@ -5,6 +5,7 @@ namespace Tests\TestCase\ORM\Postgres;
 
 use Fyre\Core\Traits\StaticMacroTrait;
 use Fyre\Form\Validator;
+use Fyre\ORM\Exceptions\OrmException;
 use Fyre\ORM\Queries\SelectQuery;
 use Fyre\ORM\RuleSet;
 use PHPUnit\Framework\TestCase;
@@ -107,6 +108,22 @@ final class RulesTest extends TestCase
             ],
             $post->getErrors()
         );
+    }
+
+    public function testExistsInMissingRelationship(): void
+    {
+        $this->expectException(OrmException::class);
+        $this->expectExceptionMessage('Model `Posts` does not have a relationship to `Missing`.');
+
+        $Posts = $this->modelRegistry->use('Posts');
+        $rules = $this->container->build(RuleSet::class, ['model' => $Posts]);
+        $rules->add(RuleSet::existsIn(['user_id'], 'Missing'));
+
+        $post = $Posts->newEntity([
+            'user_id' => 1,
+        ], validate: false);
+
+        $rules->validate($post);
     }
 
     public function testExistsInNull(): void

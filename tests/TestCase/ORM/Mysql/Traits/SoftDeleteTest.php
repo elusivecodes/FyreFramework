@@ -5,6 +5,7 @@ namespace Tests\TestCase\ORM\Mysql\Traits;
 
 use Fyre\ORM\Entity;
 use Fyre\Utility\DateTime\DateTime;
+use Generator;
 use PHPUnit\Framework\Attributes\Before;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Entities\Address;
@@ -471,6 +472,41 @@ final class SoftDeleteTest extends TestCase
                 ->all()
                 ->map(static fn(Entity $item): int|null => $item->id)
                 ->toArray()
+        );
+    }
+
+    public function testRestoreManyGenerator(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+
+        $users = $Users->newEntities([
+            [
+                'name' => 'Test 1',
+            ],
+            [
+                'name' => 'Test 2',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Users->saveMany($users)
+        );
+
+        $this->assertTrue(
+            $Users->deleteMany($users)
+        );
+
+        $generator = static function() use ($users): Generator {
+            yield from $users;
+        };
+
+        $this->assertTrue(
+            $Users->restoreMany($generator())
+        );
+
+        $this->assertSame(
+            2,
+            $Users->find()->count()
         );
     }
 

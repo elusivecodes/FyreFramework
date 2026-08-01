@@ -12,7 +12,7 @@ Most application code starts from a model instance such as `$Users`.
   - [Building entities from a model](#building-entities-from-a-model)
   - [Model validation](#model-validation)
   - [Saving and deleting entities](#saving-and-deleting-entities)
-- [Loading models](#loading-models)
+- [Resolving models](#resolving-models)
   - [Using `ModelRegistry`](#using-modelregistry)
 - [Method guide](#method-guide)
   - [Querying](#querying)
@@ -20,7 +20,7 @@ Most application code starts from a model instance such as `$Users`.
   - [Persistence](#persistence)
   - [Configuration](#configuration)
   - [Validation](#validation)
-  - [Loading models](#loading-models-1)
+  - [`ModelRegistry`](#modelregistry)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -152,7 +152,7 @@ Persistence operations are entity-first:
 - `save(Entity $entity, ...)` inserts or updates based on entity state, can optionally save related data, and can optionally clean the entity after commit.
 - `delete(Entity $entity, ...)` deletes the record and can optionally cascade into owning-side relationships.
 
-Validation errors prevent saves; for validation concepts and rule building, see [Form Validators](../form/validators.md) and [Rule Sets](rulesets.md).
+Errors prevent new or dirty entities from being saved. Existing entities with no changes are skipped before errors are checked. For validation concepts and rule building, see [Form Validators](../form/validators.md) and [Rule Sets](rulesets.md).
 
 ```php
 $user = $Users->get(10);
@@ -162,7 +162,7 @@ if ($user) {
 }
 ```
 
-## Loading models
+## Resolving models
 
 ### Using `ModelRegistry`
 
@@ -233,7 +233,7 @@ Build an entity from user input, optionally parsing schema types, guarding field
 
 Arguments:
 - `$data` (`array`): the input data.
-- `$associated` (`array|string|null`): associated relationships to allow.
+- `$associated` (`array|string|null`): relationships to accept and configure; when `null`, every relationship defined directly on the model is eligible.
 - `$guard` (`bool`): whether to enforce accessibility.
 - `$validate` (`bool`): whether to validate and populate errors.
 
@@ -266,7 +266,7 @@ if ($user) {
 
 #### **Save an entity** (`save()`)
 
-Insert or update an entity based on its state. Saves return `false` when the entity has errors. For related saves, rules, and bulk saves, see [Saving Data](saving.md) and [Rule Sets](rulesets.md).
+Insert or update an entity based on its state. Saves return `false` when a new or dirty entity graph has errors; clean existing entities are skipped first. For related saves, rules, and bulk saves, see [Saving Data](saving.md) and [Rule Sets](rulesets.md).
 
 Arguments:
 - `$entity` (`Entity`): the entity to persist.
@@ -324,7 +324,7 @@ Retrieve the lazily-built validator instance for the model. On first access, the
 $validator = $Users->getValidator();
 ```
 
-### Loading models
+### `ModelRegistry`
 
 #### **Load a model by alias** (`use()`)
 

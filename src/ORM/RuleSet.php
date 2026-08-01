@@ -9,14 +9,15 @@ use Fyre\Core\Lang;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\StaticMacroTrait;
 use Fyre\DB\QueryGenerator;
+use Fyre\ORM\Exceptions\OrmException;
 use Fyre\ORM\Queries\SelectQuery;
 
 use function array_all;
 use function array_any;
 use function array_intersect;
 use function array_map;
-use function assert;
 use function implode;
+use function sprintf;
 
 /**
  * Provides reusable ORM rules for entity/model integrity checks.
@@ -78,7 +79,13 @@ class RuleSet
 
             $relationship = $model->getRelationship($name);
 
-            assert($relationship instanceof Relationship);
+            if (!$relationship) {
+                throw new OrmException(sprintf(
+                    'Model `%s` does not have a relationship to `%s`.',
+                    $model->getAlias(),
+                    $name
+                ));
+            }
 
             $target = $relationship->getTarget();
 

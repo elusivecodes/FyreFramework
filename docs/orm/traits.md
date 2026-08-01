@@ -4,9 +4,6 @@ Use ORM traits when you want reusable model behavior such as soft deletes or aut
 
 You can also write your own traits to share model helpers or event-based behavior across models.
 
-- `SoftDeleteTrait` — soft deletes, restore, and “include deleted” query helpers.
-- `TimestampsTrait` — automatic `created`/`modified` timestamp updates on save.
-
 ## Table of Contents
 
 - [Start here](#start-here)
@@ -121,12 +118,14 @@ class PostsModel extends Model
 
 ### When timestamps are set
 
-On save, the trait sets timestamps to `DateTime::now()`:
+When a save proceeds to persistence, the trait sets timestamps to `DateTime::now()`:
 
 - If the entity is new and the schema has the `$createdField` column, it sets that field.
-- If the schema has the `$modifiedField` column, it sets that field on every save.
+- If the schema has the `$modifiedField` column, it sets that field.
 
 Both fields are set as temporary values on the entity (`temporary: true`) right before persistence.
+
+Saving an existing entity with no dirty fields returns before the `BeforeSave` event, so its timestamps are not changed.
 
 ### Timestamp configuration
 
@@ -208,9 +207,13 @@ Clears the deleted field (sets it to `null`) and saves the entity, restoring it 
 
 Arguments:
 - `$entity` (`Entity`): the entity to restore.
-- `$cascade` (`bool`): whether to restore related children.
+- `$saveRelated` (`bool`): whether to save related entities.
+- `$checkRules` (`bool`): whether to run the model rule set.
+- `$checkExists` (`bool`): whether to check that the entity exists.
 - `$events` (`bool`): whether to trigger events.
-- `...$options` (`mixed`) Additional save options.
+- `$clean` (`bool`): whether to clean the entity after saving.
+- `$dependents` (`bool`): whether to restore dependent children.
+- `...$options` (`mixed`): additional save options.
 
 ```php
 $Users->restore($entity);
@@ -222,9 +225,13 @@ Restores many entities from soft deletes.
 
 Arguments:
 - `$entities` (`iterable<Entity>`): the entities to restore.
-- `$cascade` (`bool`): whether to restore related children.
+- `$saveRelated` (`bool`): whether to save related entities.
+- `$checkRules` (`bool`): whether to run the model rule set.
+- `$checkExists` (`bool`): whether to check that the entities exist.
 - `$events` (`bool`): whether to trigger events.
-- `...$options` (`mixed`) Additional save options.
+- `$clean` (`bool`): whether to clean the entities after saving.
+- `$dependents` (`bool`): whether to restore dependent children.
+- `...$options` (`mixed`): additional save options.
 
 ```php
 $Users->restoreMany($entities);
@@ -238,7 +245,7 @@ Arguments:
 - `$entity` (`Entity`): the entity to delete.
 - `$cascade` (`bool`): whether to delete related children.
 - `$events` (`bool`): whether to trigger events.
-- `...$options` (`mixed`) Additional delete options.
+- `...$options` (`mixed`): additional delete options.
 
 ```php
 if (!$Users->purge($entity)) {
@@ -254,7 +261,7 @@ Arguments:
 - `$entities` (`iterable<Entity>`): the entities to delete.
 - `$cascade` (`bool`): whether to delete related children.
 - `$events` (`bool`): whether to trigger events.
-- `...$options` (`mixed`) Additional delete options.
+- `...$options` (`mixed`): additional delete options.
 
 ```php
 $Users->purgeMany($entities);

@@ -329,6 +329,8 @@ For eager-loading strategies (`select`, `subquery`, `cte`), contain options are 
 - `connectionType` (connection type for the related query)
 - `callback` (a `Closure` that receives and returns a `SelectQuery`)
 
+`limit` and `offset` apply to the combined query used to load a contain path. When that query loads relationships for multiple source entities, these options apply to the combined related rows rather than separately to each source entity. For example, `limit: 10` while loading posts for several users loads at most ten posts in total. Per-source limits are not currently supported by eager loading.
+
 Example:
 
 ```php
@@ -337,10 +339,9 @@ $users = $Users->find()
         'Posts' => [
             'conditions' => ['Posts.published' => true],
             'orderBy' => 'Posts.id DESC',
-            'limit' => 10,
             'contain' => [
                 'Comments' => [
-                    'limit' => 3,
+                    'orderBy' => 'Comments.id ASC',
                 ],
             ],
         ],
@@ -369,7 +370,9 @@ use Fyre\ORM\Queries\SelectQuery;
 $users = $Users->find()
     ->contain([
         'Posts' => [
-            'callback' => static fn(SelectQuery $query): SelectQuery => $query->limit(5),
+            'callback' => static fn(SelectQuery $query): SelectQuery => $query->where([
+                'Posts.featured' => true,
+            ]),
         ],
     ])
     ->toArray();
