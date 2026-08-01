@@ -113,33 +113,37 @@ class Worker
             $running = false;
         };
 
-        pcntl_async_signals(true);
+        try {
+            pcntl_async_signals(true);
 
-        pcntl_signal(SIGTERM, $stop);
-        pcntl_signal(SIGQUIT, $stop);
+            pcntl_signal(SIGTERM, $stop);
+            pcntl_signal(SIGQUIT, $stop);
 
-        while ($running) {
-            if ($this->config['maxJobs'] && $this->jobCount >= $this->config['maxJobs']) {
-                break;
+            while ($running) {
+                if ($this->config['maxJobs'] && $this->jobCount >= $this->config['maxJobs']) {
+                    break;
+                }
+
+                if ($this->config['maxRuntime'] && time() - $this->start >= $this->config['maxRuntime']) {
+                    break;
+                }
+
+                $message = $this->queue->pop($this->config['queue']);
+
+                if ($message) {
+                    $this->process($message);
+
+                    usleep($this->config['rest']);
+                } else {
+                    usleep($this->config['sleep']);
+                }
             }
+        } finally {
+            pcntl_signal(SIGTERM, SIG_DFL);
+            pcntl_signal(SIGQUIT, SIG_DFL);
 
-            if ($this->config['maxRuntime'] && time() - $this->start >= $this->config['maxRuntime']) {
-                break;
-            }
-
-            $message = $this->queue->pop($this->config['queue']);
-
-            if ($message) {
-                $this->process($message);
-
-                usleep($this->config['rest']);
-            } else {
-                usleep($this->config['sleep']);
-            }
+            $this->start = null;
         }
-
-        pcntl_signal(SIGTERM, SIG_DFL);
-        pcntl_signal(SIGQUIT, SIG_DFL);
     }
 
     /**
@@ -166,28 +170,29 @@ class Worker
 
         $config = $message->getConfig();
 
+        $this->container->clearScoped();
+        $this->dispatchEvent('Queue.start', ['message' => $message]);
+
         try {
-            $this->dispatchEvent('Queue.start', ['message' => $message]);
-
-            $this->container->clearScoped();
-
             $result = $this->container->call([$config['className'], $config['method']], $config['arguments']);
-
-            if ($result === false) {
-                $retried = $this->queue->fail($message);
-
-                $this->dispatchEvent('Queue.failure', ['message' => $message, 'shouldRetry' => $retried]);
-            } else {
-                $this->queue->complete($message);
-
-                $this->dispatchEvent('Queue.success', ['message' => $message]);
-            }
         } catch (Throwable $e) {
             $retried = $this->queue->fail($message);
 
             $this->dispatchEvent('Queue.exception', ['message' => $message, 'exception' => $e, 'shouldRetry' => $retried]);
+
+            return;
+        } finally {
+            $this->jobCount++;
         }
 
-        $this->jobCount++;
+        if ($result === false) {
+            $retried = $this->queue->fail($message);
+
+            $this->dispatchEvent('Queue.failure', ['message' => $message, 'shouldRetry' => $retried]);
+        } else {
+            $this->queue->complete($message);
+
+            $this->dispatchEvent('Queue.success', ['message' => $message]);
+        }
     }
 }

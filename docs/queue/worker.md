@@ -29,6 +29,8 @@ For queue setup and enqueueing, see [Queue](index.md).
 
 The built-in way to start a worker is the `queue:worker` console command; see [Console Commands](../console/commands.md#queueworker).
 
+The command runs in the foreground until it receives a stop signal or reaches its configured job or runtime limit. Use a process supervisor to run and restart it in production.
+
 The command accepts the main worker options:
 
 - `config` - queue handler config key
@@ -43,7 +45,7 @@ $commandRunner->handle(['app', 'queue:worker']);
 $commandRunner->handle(['app', 'queue:worker', '--queue', 'emails', '--max-runtime', '3600']);
 ```
 
-`queue:worker` requires the `pcntl` extension and process forking support.
+`queue:worker` requires the `pcntl` extension for signal handling.
 
 Recommended production setup:
 

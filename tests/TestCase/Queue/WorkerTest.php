@@ -349,6 +349,38 @@ final class WorkerTest extends TestCase
         );
     }
 
+    public function testWorkerMultipleRuns(): void
+    {
+        $this->queueManager->push(MockJob::class, ['test' => 1]);
+        $this->queueManager->push(MockJob::class, ['test' => 2]);
+
+        $worker = $this->container->build(Worker::class, [
+            'options' => [
+                'maxJobs' => 1,
+                'maxRuntime' => 5,
+            ],
+        ]);
+
+        $worker->run();
+        $worker->run();
+
+        $this->assertSame(
+            [
+                'queued' => 0,
+                'delayed' => 0,
+                'completed' => 2,
+                'failed' => 0,
+                'total' => 2,
+            ],
+            $this->queue->stats()
+        );
+
+        $this->assertStringEqualsFile(
+            'tmp/job',
+            '12'
+        );
+    }
+
     #[Override]
     protected function setUp(): void
     {

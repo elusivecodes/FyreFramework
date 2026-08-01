@@ -348,7 +348,7 @@ A few practical details are worth keeping in mind:
 - Unknown named options return an error instead of being treated as positional values.
 - Positional arguments follow the option order defined by the command.
 - `clear()` also removes registered namespaces, so add them again before rediscovering commands.
-- `queue:worker` requires process forking (`ext-pcntl`).
+- `queue:worker` runs in the foreground and requires `ext-pcntl` for signal handling.
 - `make:*` commands do not overwrite existing files unless you pass `--force`.
 
 ## Related

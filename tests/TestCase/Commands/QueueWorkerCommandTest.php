@@ -19,7 +19,6 @@ use Fyre\Utility\Inflector;
 use Fyre\Utility\Path;
 use Override;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use Tests\Mock\Jobs\MockJob;
 
 use function fclose;
@@ -32,7 +31,6 @@ use function rmdir;
 use function stream_get_contents;
 use function unlink;
 
-use const PHP_EOL;
 use const ROOT;
 
 final class QueueWorkerCommandTest extends TestCase
@@ -69,7 +67,7 @@ final class QueueWorkerCommandTest extends TestCase
         $this->queueManager->push(MockJob::class, ['test' => 1]);
         $this->queueManager->push(MockJob::class, ['test' => 2]);
 
-        $command = $this->createCommand(0);
+        $command = new QueueWorkerCommand($this->console, $this->container);
 
         $this->assertSame(
             Command::CODE_SUCCESS,
@@ -111,16 +109,6 @@ final class QueueWorkerCommandTest extends TestCase
         );
     }
 
-    public function testQueueWorkerForkFailure(): void
-    {
-        $command = $this->createCommand(-1);
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Unable to fork process.');
-
-        $command->run('default', 'default', 1, 5);
-    }
-
     public function testQueueWorkerOptions(): void
     {
         $allCommands = $this->commandRunner->all();
@@ -140,34 +128,6 @@ final class QueueWorkerCommandTest extends TestCase
         );
     }
 
-    public function testQueueWorkerParent(): void
-    {
-        $command = $this->createCommand(123);
-
-        $this->assertSame(
-            Command::CODE_SUCCESS,
-            $command->run('default', 'default', 1, 5)
-        );
-
-        rewind($this->output);
-
-        $this->assertSame(
-            Console::style('Worker started on PID: 123', Console::CYAN).PHP_EOL,
-            stream_get_contents($this->output)
-        );
-
-        rewind($this->error);
-
-        $this->assertSame(
-            '',
-            stream_get_contents($this->error)
-        );
-
-        $this->assertFalse(
-            file_exists('tmp/job')
-        );
-    }
-
     public function testQueueWorkerQueue(): void
     {
         $this->queueManager->push(MockJob::class, ['test' => 1]);
@@ -176,7 +136,7 @@ final class QueueWorkerCommandTest extends TestCase
             'queue' => 'test',
         ]);
 
-        $command = $this->createCommand(0);
+        $command = new QueueWorkerCommand($this->console, $this->container);
 
         $this->assertSame(
             Command::CODE_SUCCESS,
@@ -209,19 +169,6 @@ final class QueueWorkerCommandTest extends TestCase
             ],
             $this->otherQueue->stats('test')
         );
-    }
-
-    protected function createCommand(int $pid): QueueWorkerCommand
-    {
-        $command = $this->getStubBuilder(QueueWorkerCommand::class)
-            ->setConstructorArgs([$this->console, $this->container])
-            ->onlyMethods(['fork'])
-            ->getStub();
-
-        $command->method('fork')
-            ->willReturn($pid);
-
-        return $command;
     }
 
     #[Override]

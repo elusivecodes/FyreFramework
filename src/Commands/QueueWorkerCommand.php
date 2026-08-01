@@ -10,15 +10,9 @@ use Fyre\Queue\Queue;
 use Fyre\Queue\QueueManager;
 use Fyre\Queue\Worker;
 use Override;
-use RuntimeException;
-
-use function pcntl_fork;
-use function sprintf;
 
 /**
  * Implements the queue worker console command.
- *
- * Forks and runs a background queue worker process.
  */
 class QueueWorkerCommand extends Command
 {
@@ -26,7 +20,7 @@ class QueueWorkerCommand extends Command
     protected string|null $alias = 'queue:worker';
 
     #[Override]
-    protected string $description = 'Start a background queue worker.';
+    protected string $description = 'Start a queue worker.';
 
     #[Override]
     protected array $options = [
@@ -62,50 +56,25 @@ class QueueWorkerCommand extends Command
     /**
      * Runs the command.
      *
-     * Note: The worker is started in a child process and the parent returns immediately after printing the PID.
-     * Options are forwarded to {@see Worker} as-is.
-     *
      * @param string $config The queue config key.
      * @param string $queue The queue name.
      * @param int $maxJobs The maximum number of jobs to run.
      * @param int $maxRuntime The maximum number of seconds to run.
      * @return int|null The exit code.
-     *
-     * @throws RuntimeException If the process cannot be forked.
      */
     public function run(string $config, string $queue, int $maxJobs, int $maxRuntime): int|null
     {
-        $pid = $this->fork();
+        $worker = $this->container->use(Worker::class, [
+            'options' => [
+                'config' => $config,
+                'queue' => $queue,
+                'maxJobs' => $maxJobs,
+                'maxRuntime' => $maxRuntime,
+            ],
+        ]);
 
-        if ($pid === -1) {
-            throw new RuntimeException('Unable to fork process.');
-        }
-
-        if ($pid) {
-            $this->io->write(sprintf('Worker started on PID: %d', $pid), Console::CYAN);
-        } else {
-            $worker = $this->container->use(Worker::class, [
-                'options' => [
-                    'config' => $config,
-                    'queue' => $queue,
-                    'maxJobs' => $maxJobs,
-                    'maxRuntime' => $maxRuntime,
-                ],
-            ]);
-
-            $worker->run();
-        }
+        $worker->run();
 
         return static::CODE_SUCCESS;
-    }
-
-    /**
-     * Forks the current process.
-     *
-     * @return int The child PID, 0 in the child process, or -1 on failure.
-     */
-    protected function fork(): int
-    {
-        return pcntl_fork();
     }
 }

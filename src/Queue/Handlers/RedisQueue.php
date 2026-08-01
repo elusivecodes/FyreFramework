@@ -13,7 +13,6 @@ use Override;
 use Redis;
 use RedisException;
 
-use function array_shift;
 use function count;
 use function explode;
 use function in_array;
@@ -204,7 +203,11 @@ class RedisQueue extends Queue
             return null;
         }
 
-        $message = unserialize($data);
+        $message = @unserialize($data);
+
+        if (!$message instanceof Message) {
+            return null;
+        }
 
         if ($message->isUnique()) {
             $this->connection->hDel(static::prepareKey($queue, 'unique'), $message->getHash());
@@ -254,19 +257,16 @@ class RedisQueue extends Queue
     #[Override]
     public function queues(): array
     {
-        $keys = $this->connection->keys(static::prepareKey('*'));
-
+        $iterator = null;
         $queues = [];
 
-        foreach ($keys as $key) {
-            $values = explode(':', $key);
+        while (($keys = $this->connection->scan($iterator, static::prepareKey('*'), 50)) !== false) {
+            foreach ($keys as $key) {
+                $queue = explode(':', $key, 3)[1] ?? '';
 
-            if (count($values) > 1) {
-                array_shift($values);
-            }
-
-            if ($values[0] && !in_array($values[0], $queues, true)) {
-                $queues[] = $values[0];
+                if ($queue && !in_array($queue, $queues, true)) {
+                    $queues[] = $queue;
+                }
             }
         }
 

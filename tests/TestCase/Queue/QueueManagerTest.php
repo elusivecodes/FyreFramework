@@ -13,6 +13,7 @@ use Fyre\Queue\QueueManager;
 use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
+use Redis;
 
 use function class_uses;
 use function getenv;
@@ -174,6 +175,34 @@ final class QueueManagerTest extends TestCase
         $this->assertContains(
             MacroTrait::class,
             class_uses(Queue::class)
+        );
+    }
+
+    public function testPopInvalidMessage(): void
+    {
+        $connection = new Redis();
+        $connection->connect(
+            (string) getenv('REDIS_HOST'),
+            (int) getenv('REDIS_PORT')
+        );
+
+        $password = getenv('REDIS_PASSWORD');
+
+        if ($password) {
+            $connection->auth($password);
+        }
+
+        $database = (int) getenv('REDIS_DATABASE');
+
+        if ($database) {
+            $connection->select($database);
+        }
+
+        $connection->lPush('queue:default', 'invalid');
+        $connection->close();
+
+        $this->assertNull(
+            $this->queueManager->use()->pop()
         );
     }
 

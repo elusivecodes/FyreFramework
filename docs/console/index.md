@@ -37,4 +37,4 @@ If you are writing a command class, extend `Fyre\Console\Command`, define an ali
 
 - [Console Testing](../testing/console.md) - execute commands and assert output in tests
 - [Database Migrations](../database/migrations.md) - migration commands and migration workflow
-- [Queue Worker](../queue/worker.md) - running background workers from the console
+- [Queue Worker](../queue/worker.md) - running queue workers from the console

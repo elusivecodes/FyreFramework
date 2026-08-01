@@ -448,6 +448,28 @@ final class ListenerTest extends TestCase
         );
     }
 
+    public function testListenerSuccessException(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Listener failed.');
+
+        $this->queueManager->push(MockJob::class, ['test' => 1]);
+
+        $eventManager = $this->container->use(EventManager::class);
+        $eventManager->on('Queue.success', static function(): never {
+            throw new RuntimeException('Listener failed.');
+        });
+
+        $worker = $this->container->build(Worker::class, [
+            'options' => [
+                'maxJobs' => 1,
+                'maxRuntime' => 5,
+            ],
+        ]);
+
+        $worker->run();
+    }
+
     #[Override]
     protected function setUp(): void
     {
