@@ -45,11 +45,6 @@ class RouteLocator
     protected const CACHE_KEY = '_routes';
 
     /**
-     * @var array<string, array<string, mixed>[]>
-     */
-    protected array $routes = [];
-
-    /**
      * Constructs a RouteLocator.
      *
      * @param Loader $loader The Loader.
@@ -67,8 +62,6 @@ class RouteLocator
      */
     public function clear(): void
     {
-        $this->routes = [];
-
         $cache = $this->getCache();
 
         if ($cache) {
@@ -92,14 +85,12 @@ class RouteLocator
 
         $routes = [];
         foreach ($namespaces as $namespace) {
-            if (isset($this->routes[$namespace])) {
-                $routes[] = $this->routes[$namespace];
-            } else if ($cache) {
-                $cacheKey = str_replace('\\', '.', $namespace);
-                $routes[] = $cache->remember($cacheKey, fn(): array => $this->findRoutes($namespace));
-            } else {
-                $routes[] = $this->findRoutes($namespace);
-            }
+            $routes[] = $cache ?
+                $cache->remember(
+                    str_replace('\\', '.', $namespace),
+                    fn(): array => $this->findRoutes($namespace)
+                ) :
+                $this->findRoutes($namespace);
         }
 
         $routes = array_merge([], ...$routes);
@@ -147,6 +138,7 @@ class RouteLocator
         $folders = $this->loader->findFolders($namespace);
 
         $routes = [];
+        $loadedClasses = [];
 
         foreach ($folders as $folder) {
             $folderLength = strlen($folder);
@@ -176,7 +168,7 @@ class RouteLocator
 
                 $className = $fullNamespace.$controllerName;
 
-                if (!class_exists($className)) {
+                if (!class_exists($className) || isset($loadedClasses[$className])) {
                     continue;
                 }
 
@@ -210,6 +202,14 @@ class RouteLocator
                 foreach ($methods as $method) {
                     $methodName = $method->getName();
                     $methodAttribute = $method->getAttributes(Route::class, ReflectionAttribute::IS_INSTANCEOF)[0] ?? null;
+
+                    if (
+                        $method->isConstructor() ||
+                        $method->isDestructor() ||
+                        (!$methodAttribute && str_starts_with($methodName, '__'))
+                    ) {
+                        continue;
+                    }
 
                     if ($methodAttribute && is_a($methodAttribute->getName(), Hidden::class, true)) {
                         continue;

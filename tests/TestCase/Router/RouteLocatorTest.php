@@ -20,6 +20,9 @@ use Tests\Mock\Controllers\Locate\DashboardController;
 use Tests\Mock\Controllers\Locate\ParentCategory\ChildItemsController;
 use Tests\Mock\Controllers\Locate\PostsController;
 
+use function array_column;
+use function array_unique;
+use function array_values;
 use function mkdir;
 use function rmdir;
 use function strcmp;
@@ -347,6 +350,27 @@ final class RouteLocatorTest extends TestCase
                 ],
             ],
             $routes
+        );
+    }
+
+    public function testDiscoverDuplicateClass(): void
+    {
+        $this->container->use(Loader::class)->addNamespaces([
+            'Tests\Mock\Controllers\Locate' => [
+                'tests/Mock/Controllers/Locate',
+                'tests/Mock/Controllers/LocateDuplicate',
+            ],
+        ]);
+
+        $routes = $this->routeLocator->discover([
+            'Tests\Mock\Controllers\Locate',
+        ]);
+
+        $aliases = array_column($routes, 'as');
+
+        $this->assertSame(
+            array_values(array_unique($aliases)),
+            $aliases
         );
     }
 

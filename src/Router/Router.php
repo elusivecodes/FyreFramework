@@ -6,7 +6,6 @@ namespace Fyre\Router;
 use Closure;
 use Fyre\Core\Config;
 use Fyre\Core\Container;
-use Fyre\Core\Loader;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Http\Exceptions\NotFoundException;
@@ -85,13 +84,12 @@ class Router
      * Constructs a Router.
      *
      * @param Container $container The Container.
-     * @param Loader $loader The Loader.
      * @param ModelRegistry $modelRegistry The ModelRegistry.
+     * @param RouteLocator $routeLocator The RouteLocator.
      * @param Config $config The Config.
      */
     public function __construct(
         protected Container $container,
-        protected Loader $loader,
         protected ModelRegistry $modelRegistry,
         protected RouteLocator $routeLocator,
         Config $config
@@ -365,9 +363,11 @@ class Router
             'as' => $as,
         ];
 
-        $this->container->call($callback, ['router' => $this]);
-
-        array_pop($this->groups);
+        try {
+            $this->container->call($callback, ['router' => $this]);
+        } finally {
+            array_pop($this->groups);
+        }
     }
 
     /**

@@ -6,10 +6,35 @@ namespace Tests\TestCase\Router\Router;
 use Fyre\Http\ServerRequest;
 use Fyre\Router\Router;
 use Fyre\Router\Routes\ControllerRoute;
+use RuntimeException;
 use Tests\Mock\Controllers\HomeController;
 
 trait PrefixTestTrait
 {
+    public function testGroupPrefixClearedAfterException(): void
+    {
+        $router = $this->container->use(Router::class);
+
+        try {
+            $router->group(
+                static fn() => throw new RuntimeException('Test exception.'),
+                prefix: 'prefix'
+            );
+        } catch (RuntimeException $e) {
+            $this->assertSame(
+                'Test exception.',
+                $e->getMessage()
+            );
+        }
+
+        $route = $router->get('home', HomeController::class);
+
+        $this->assertSame(
+            '/home',
+            $route->getPath()
+        );
+    }
+
     public function testPrefix(): void
     {
         $router = $this->container->use(Router::class);
