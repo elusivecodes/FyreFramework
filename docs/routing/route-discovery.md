@@ -97,14 +97,14 @@ Use `Fyre\Router\Attributes\Route` when you want to set `methods` explicitly (in
 
 `Route` supports these values:
 
-- `path` (string|null)
-- `scheme` (string|null)
-- `host` (string|null)
-- `port` (int|null)
-- `methods` (string[]|null)
+- `path` (`string|null`)
+- `scheme` (`string|null`)
+- `host` (`string|null`)
+- `port` (`int|null`)
+- `methods` (`string[]|null`)
 - `middleware` (`array<Closure|MiddlewareInterface|string>`)
 - `placeholders` (`array<string, string>` placeholder patterns)
-- `as` (string|null)
+- `as` (`string|null`)
 
 ```php
 use Fyre\Router\Attributes\Route;
@@ -230,7 +230,7 @@ A few behaviors are worth keeping in mind:
 - Use one route attribute per controller and per method.
 - If you want discovery to skip a controller or action, make `#[Hidden]` the route attribute on that class or method.
 - Public methods are route candidates, including inherited public methods. Constructors, destructors, and unannotated magic methods are ignored.
-- More specific discovered routes are connected before less specific ones.
+- Routes with more literal path content are connected first. When literal lengths match, routes with fewer optional placeholders come first; remaining ties retain discovery order. Placeholder names and custom patterns do not affect this ordering.
 
 ## Related
 

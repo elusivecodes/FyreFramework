@@ -15,13 +15,9 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 
 use function assert;
-use function explode;
 use function is_string;
 use function preg_replace_callback;
 use function sprintf;
-use function str_contains;
-use function str_ends_with;
-use function substr;
 
 /**
  * Issues an HTTP redirect.
@@ -82,19 +78,9 @@ class RedirectRoute extends Route
         $arguments = $request->getAttribute('routeArguments', []);
 
         $destination = (string) preg_replace_callback(
-            '/\/\{([^\}]+)\}/',
+            static::PLACEHOLDER_REGEXP,
             static function(array $match) use ($arguments): string {
-                $name = $match[1];
-
-                $optional = false;
-                if (str_ends_with($name, '?')) {
-                    $name = substr($name, 0, -1);
-                    $optional = true;
-                }
-
-                if (str_contains($name, ':')) {
-                    [$name, $field] = explode(':', $name, 2);
-                }
+                [$name, , $optional] = static::parsePlaceholder($match[2]);
 
                 $arguments[$name] ??= null;
 
@@ -109,7 +95,7 @@ class RedirectRoute extends Route
                     return '';
                 }
 
-                return '/'.$arguments[$name];
+                return $match[1].$arguments[$name];
             },
             $this->destination
         );

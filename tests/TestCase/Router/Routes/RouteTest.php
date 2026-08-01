@@ -119,6 +119,39 @@ final class RouteTest extends TestCase
         );
     }
 
+    public function testCheckPathLiteralCharacters(): void
+    {
+        $route = $this->container->build(ControllerRoute::class, [
+            'destination' => [TestController::class, 'test'],
+            'path' => 'files/archive.zip',
+        ]);
+
+        $matchingRequest = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REQUEST_URI' => '/files/archive.zip',
+                ],
+            ],
+        ]);
+
+        $invalidRequest = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REQUEST_URI' => '/files/archiveXzip',
+                ],
+            ],
+        ]);
+
+        $this->assertInstanceOf(
+            ServerRequest::class,
+            $route->parseRequest($matchingRequest)
+        );
+
+        $this->assertNull(
+            $route->parseRequest($invalidRequest)
+        );
+    }
+
     public function testCheckPathPlaceholderBindingConstraintAndOptionalMarker(): void
     {
         $route = $this->container->build(ControllerRoute::class, [
@@ -173,6 +206,69 @@ final class RouteTest extends TestCase
         );
     }
 
+    public function testCheckPathPlaceholderCaptures(): void
+    {
+        $route = $this->container->build(ControllerRoute::class, [
+            'destination' => [TestController::class, 'test'],
+            'path' => 'test/{a}/{b}',
+            'placeholders' => [
+                'a' => '(foo|bar)',
+            ],
+        ]);
+
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REQUEST_URI' => '/test/foo/tail',
+                ],
+            ],
+        ]);
+
+        $request = $route->parseRequest($request);
+
+        $this->assertSame(
+            [
+                'a' => 'foo',
+                'b' => 'tail',
+            ],
+            $request?->getAttribute('routeArguments')
+        );
+    }
+
+    public function testCheckPathPlaceholdersWithinSegment(): void
+    {
+        $route = $this->container->build(ControllerRoute::class, [
+            'destination' => [TestController::class, 'test'],
+            'path' => 'files/{name}.{extension}',
+        ]);
+
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REQUEST_URI' => '/files/archive.zip',
+                ],
+            ],
+        ]);
+
+        $request = $route->parseRequest($request);
+
+        $this->assertSame(
+            [
+                'name' => null,
+                'extension' => null,
+            ],
+            $route->getBindingFields()
+        );
+
+        $this->assertSame(
+            [
+                'name' => 'archive',
+                'extension' => 'zip',
+            ],
+            $request?->getAttribute('routeArguments')
+        );
+    }
+
     public function testGetPath(): void
     {
         $route = $this->container->build(ControllerRoute::class, [
@@ -184,6 +280,17 @@ final class RouteTest extends TestCase
             'test/{a}',
             $route->getPath()
         );
+    }
+
+    public function testOptionalPlaceholderWithinSegmentInvalid(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Optional route placeholders must occupy an entire path segment.');
+
+        $this->container->build(ControllerRoute::class, [
+            'destination' => [TestController::class, 'test'],
+            'path' => 'files/{name?}.zip',
+        ]);
     }
 
     public function testSetHost(): void

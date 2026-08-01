@@ -239,17 +239,6 @@ final class RouteLocatorTest extends TestCase
                     'as' => 'comments.update',
                 ],
                 [
-                    'path' => 'comments/get/{comment}',
-                    'destination' => [CommentsController::class, 'get'],
-                    'scheme' => null,
-                    'host' => null,
-                    'port' => null,
-                    'methods' => ['GET'],
-                    'middleware' => [],
-                    'placeholders' => [],
-                    'as' => 'comments.get',
-                ],
-                [
                     'path' => 'comments/create',
                     'destination' => [CommentsController::class, 'create'],
                     'scheme' => null,
@@ -261,15 +250,26 @@ final class RouteLocatorTest extends TestCase
                     'as' => 'comments.create',
                 ],
                 [
-                    'path' => 'posts/{post?}',
-                    'destination' => [PostsController::class, 'put'],
+                    'path' => 'comments/get/{comment}',
+                    'destination' => [CommentsController::class, 'get'],
                     'scheme' => null,
                     'host' => null,
                     'port' => null,
-                    'methods' => ['PUT'],
+                    'methods' => ['GET'],
                     'middleware' => [],
                     'placeholders' => [],
-                    'as' => 'posts.put',
+                    'as' => 'comments.get',
+                ],
+                [
+                    'path' => 'comments',
+                    'destination' => [CommentsController::class, 'index'],
+                    'scheme' => null,
+                    'host' => null,
+                    'port' => null,
+                    'methods' => ['GET'],
+                    'middleware' => [],
+                    'placeholders' => [],
+                    'as' => 'comments.index',
                 ],
                 [
                     'path' => 'posts/{post}',
@@ -305,17 +305,6 @@ final class RouteLocatorTest extends TestCase
                     'as' => 'posts.update',
                 ],
                 [
-                    'path' => 'comments',
-                    'destination' => [CommentsController::class, 'index'],
-                    'scheme' => null,
-                    'host' => null,
-                    'port' => null,
-                    'methods' => ['GET'],
-                    'middleware' => [],
-                    'placeholders' => [],
-                    'as' => 'comments.index',
-                ],
-                [
                     'path' => 'posts',
                     'destination' => [PostsController::class, 'create'],
                     'scheme' => null,
@@ -336,6 +325,17 @@ final class RouteLocatorTest extends TestCase
                     'middleware' => [],
                     'placeholders' => [],
                     'as' => 'posts.index',
+                ],
+                [
+                    'path' => 'posts/{post?}',
+                    'destination' => [PostsController::class, 'put'],
+                    'scheme' => null,
+                    'host' => null,
+                    'port' => null,
+                    'methods' => ['PUT'],
+                    'middleware' => [],
+                    'placeholders' => [],
+                    'as' => 'posts.put',
                 ],
                 [
                     'path' => '/',
@@ -369,7 +369,7 @@ final class RouteLocatorTest extends TestCase
         $aliases = array_column($routes, 'as');
 
         $this->assertSame(
-            array_values(array_unique($aliases)),
+            array_unique($aliases) |> array_values(...),
             $aliases
         );
     }
@@ -405,6 +405,26 @@ final class RouteLocatorTest extends TestCase
         $this->assertSame(
             'index',
             $route->getAction()
+        );
+    }
+
+    public function testDiscoverSpecificRoutesFirst(): void
+    {
+        $this->container->use(CacheManager::class)->clear();
+
+        $routes = $this->routeLocator->discover([
+            'Tests\Mock\Controllers\RouteOrder',
+        ]);
+
+        $this->assertSame(
+            [
+                'files/settings',
+                'files/{name}.json',
+                'files/{veryLongIdentifier}',
+                'files',
+                'files/{path?}',
+            ],
+            array_column($routes, 'path')
         );
     }
 

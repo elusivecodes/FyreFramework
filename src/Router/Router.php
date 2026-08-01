@@ -25,14 +25,11 @@ use function array_map;
 use function array_merge;
 use function array_pop;
 use function array_unique;
-use function explode;
 use function getservbyname;
 use function implode;
 use function preg_match;
 use function preg_replace_callback;
 use function sprintf;
-use function str_contains;
-use function str_ends_with;
 use function str_starts_with;
 use function strlen;
 use function strtoupper;
@@ -618,20 +615,8 @@ class Router
         $destination = $route->getPath();
         $placeholders = $route->getPlaceholders();
 
-        $destination = (string) preg_replace_callback('/\/\{([^\}]+)\}/', function(array $match) use ($arguments, $placeholders): string {
-            $name = $match[1];
-
-            $optional = false;
-            if (str_ends_with($name, '?')) {
-                $name = substr($name, 0, -1);
-                $optional = true;
-            }
-
-            if (str_contains($name, ':')) {
-                [$name, $field] = explode(':', $name, 2);
-            } else {
-                $field = null;
-            }
+        $destination = (string) preg_replace_callback(Route::PLACEHOLDER_REGEXP, function(array $match) use ($arguments, $placeholders): string {
+            [$name, $field, $optional] = Route::parsePlaceholder($match[2]);
 
             $value = $arguments[$name] ?? null;
 
@@ -668,7 +653,7 @@ class Router
                 ));
             }
 
-            return '/'.$value;
+            return $match[1].$value;
         }, $destination);
 
         if ($this->baseUri) {

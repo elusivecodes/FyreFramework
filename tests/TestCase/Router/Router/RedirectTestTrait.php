@@ -77,4 +77,27 @@ trait RedirectTestTrait
             $response->getHeaderLine('Location')
         );
     }
+
+    public function testRedirectArgumentsWithinSegment(): void
+    {
+        $router = $this->container->use(Router::class);
+
+        $router->redirect('files/{name}.{extension}', 'https://test.com/{name}.{extension}');
+
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REQUEST_URI' => '/files/archive.zip',
+                ],
+            ],
+        ]);
+
+        $request = $router->parseRequest($request);
+        $response = $request->getAttribute('route')->handle($request);
+
+        $this->assertSame(
+            'https://test.com/archive.zip',
+            $response->getHeaderLine('Location')
+        );
+    }
 }

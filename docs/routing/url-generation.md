@@ -46,7 +46,7 @@ Arguments:
 - `$scheme` (`string|null`): override the scheme used for URL generation.
 - `$host` (`string|null`): override the host used for URL generation.
 - `$port` (`int|null`): override the port used for URL generation.
-- `$full` (`bool|null`): whether to force a full (absolute) URL.
+- `$full` (`bool|null`): whether to generate a full URL when a scheme and host are available.
 
 ```php
 $url = $router->url('posts.show', [
@@ -56,7 +56,20 @@ $url = $router->url('posts.show', [
 
 If the placeholder uses a field override like `{post:slug}`, the argument key is still the placeholder name (`post`). The `:slug` portion is used when extracting a value from an ORM entity.
 
-Scheme/host/port can be provided explicitly. Use `full: true` to force an absolute URL.
+Required placeholders can be combined with static text and other placeholders in the same path segment:
+
+```php
+$router->get('files/{name}.{extension}', [FilesController::class, 'show'], as: 'files.show');
+
+$url = $router->url('files.show', [
+    'name' => 'report',
+    'extension' => 'pdf',
+]);
+```
+
+This generates `/files/report.pdf`.
+
+Scheme, host, and port can be provided explicitly. Use `full: true` to generate an absolute URL when a scheme and host are available from the arguments, route, or `App.baseUri`.
 
 ```php
 $url = $router->url(
@@ -113,7 +126,7 @@ A few behaviors are worth keeping in mind:
 - If a placeholder value is a PHP enum case, the router uses the backing value for backed enums and the case name for unit enums. The same normalization applies when an entity route field contains an enum case.
 - Optional placeholders like `{id?}` use the base placeholder name for argument lookup (for example `['id' => 123]`).
 - If a routed request is available, `Router::url()` returns a path-only URL when the scheme, host, and port match the current request, and a full URL when they differ.
-- If no routed request is available, `Router::url()` defaults to returning a full URL unless `full: false` is provided.
+- If no routed request is available, `Router::url()` defaults to full URL generation. An absolute result still requires both a scheme and host from the arguments, route, or `App.baseUri`.
 - Port comparisons treat the scheme’s default port (for example 80/443) as equivalent to an omitted port on the current request.
 
 ## Related

@@ -8,7 +8,7 @@ use Fyre\Cache\Cacher;
 use Fyre\Core\Loader;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Router\Attributes\Hidden;
-use Fyre\Router\Attributes\Route;
+use Fyre\Router\Attributes\Route as RouteAttribute;
 use Fyre\Utility\Inflector;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -17,6 +17,7 @@ use ReflectionClass;
 use ReflectionMethod;
 use RegexIterator;
 
+use function array_column;
 use function array_filter;
 use function array_map;
 use function array_merge;
@@ -26,9 +27,10 @@ use function implode;
 use function is_a;
 use function ltrim;
 use function mb_strlen;
+use function preg_replace_callback;
 use function str_ends_with;
 use function str_replace;
-use function strcmp;
+use function str_starts_with;
 use function strlen;
 use function substr;
 use function usort;
@@ -95,15 +97,41 @@ class RouteLocator
 
         $routes = array_merge([], ...$routes);
 
-        usort(
-            $routes,
-            static fn(array $a, array $b): int => mb_strlen($b['path']) <=> mb_strlen($a['path']) ?:
-                    strcmp($a['path'], $b['path']) ?:
-                    strcmp($a['destination'][0], $b['destination'][0]) ?:
-                    strcmp($a['destination'][1], $b['destination'][1])
+        $sortableRoutes = array_map(
+            static function(array $route): array {
+                $optionalCount = 0;
+                $path = Router::normalizePath($route['path']);
+
+                $path = (string) preg_replace_callback(
+                    Route::PLACEHOLDER_REGEXP,
+                    static function(array $match) use (&$optionalCount): string {
+                        if (str_ends_with($match[2], '?')) {
+                            $optionalCount++;
+
+                            return '';
+                        }
+
+                        return $match[1];
+                    },
+                    $path
+                );
+
+                return [
+                    'route' => $route,
+                    'literalLength' => mb_strlen($path),
+                    'optionalCount' => $optionalCount,
+                ];
+            },
+            $routes
         );
 
-        return $routes;
+        usort(
+            $sortableRoutes,
+            static fn(array $a, array $b): int => $b['literalLength'] <=> $a['literalLength'] ?:
+                $a['optionalCount'] <=> $b['optionalCount']
+        );
+
+        return array_column($sortableRoutes, 'route');
     }
 
     /**
@@ -122,7 +150,7 @@ class RouteLocator
      * Finds all routes in a namespace.
      *
      * Discovers controllers/actions by scanning PHP files in the namespace folders, and
-     * uses {@see Route} attributes (and {@see Hidden}) to build route metadata.
+     * uses {@see RouteAttribute} attributes (and {@see Hidden}) to build route metadata.
      *
      * Note: When no route path is provided, paths and aliases are derived from the
      * controller/method names, and optional method parameters become `{param?}` path
@@ -180,7 +208,7 @@ class RouteLocator
                     continue;
                 }
 
-                $classAttribute = $reflection->getAttributes(Route::class, ReflectionAttribute::IS_INSTANCEOF)[0] ?? null;
+                $classAttribute = $reflection->getAttributes(RouteAttribute::class, ReflectionAttribute::IS_INSTANCEOF)[0] ?? null;
 
                 if ($classAttribute && is_a($classAttribute->getName(), Hidden::class, true)) {
                     continue;
@@ -201,7 +229,7 @@ class RouteLocator
 
                 foreach ($methods as $method) {
                     $methodName = $method->getName();
-                    $methodAttribute = $method->getAttributes(Route::class, ReflectionAttribute::IS_INSTANCEOF)[0] ?? null;
+                    $methodAttribute = $method->getAttributes(RouteAttribute::class, ReflectionAttribute::IS_INSTANCEOF)[0] ?? null;
 
                     if (
                         $method->isConstructor() ||

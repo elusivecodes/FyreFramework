@@ -21,7 +21,7 @@ Use `RouteHandler` when you want to:
 - run route-level middleware before the route destination
 - keep route dispatch separate from your global middleware setup
 
-If you are building a middleware flow manually, `RouteHandler` is the piece that usually runs after the [Request Handler](../http/request-handler.md) has finished the global middleware stack.
+If you are building a middleware flow manually, use `RouteHandler` as the [Request Handler](../http/request-handler.md) fallback so it runs when the global middleware queue is exhausted.
 
 ## Requirements
 

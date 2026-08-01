@@ -42,6 +42,21 @@ trait UrlTestTrait
         );
     }
 
+    public function testUrlArgumentsWithinSegment(): void
+    {
+        $router = $this->container->use(Router::class);
+
+        $router->connect('files/{name}.{extension}', HomeController::class, as: 'files.view');
+
+        $this->assertSame(
+            '/files/archive.zip',
+            $router->url('files.view', [
+                'name' => 'archive',
+                'extension' => 'zip',
+            ])
+        );
+    }
+
     public function testUrlBackedEnumArgument(): void
     {
         $router = $this->container->use(Router::class);

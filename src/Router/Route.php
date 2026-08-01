@@ -14,8 +14,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use ReflectionParameter;
 
-use function array_keys;
-use function array_shift;
+use function count;
 use function explode;
 use function getservbyname;
 use function in_array;
@@ -23,28 +22,57 @@ use function is_string;
 use function preg_match;
 use function preg_match_all;
 use function preg_quote;
-use function preg_replace_callback;
+use function preg_split;
 use function str_contains;
 use function str_ends_with;
 use function str_replace;
 use function substr;
 
 use const PREG_SET_ORDER;
+use const PREG_SPLIT_DELIM_CAPTURE;
+use const PREG_UNMATCHED_AS_NULL;
 
 /**
  * Provides a base route definition.
  *
- * Note: Placeholders in route paths use `{name}` syntax, may be marked optional with `?`
- * (e.g. `{id?}`), and can specify a binding field via `{name:field}`.
+ * Note: Placeholders in route paths use `{name}` syntax, may appear within a segment,
+ * and can specify a binding field via `{name:field}`. Optional placeholders use
+ * `{name?}` syntax and must occupy an entire segment.
  */
 abstract class Route
 {
     use DebugTrait;
 
+    public const PLACEHOLDER_REGEXP = '`(/?)\{([^}]+)\}`';
+
     /**
      * @var array<string, string|null>|null
      */
     protected array|null $bindingFields = null;
+
+    /**
+     * Parses a route placeholder.
+     *
+     * @param string $placeholder The placeholder definition.
+     * @return array{0: string, 1: string|null, 2: bool} The name, binding field and optional flag.
+     */
+    public static function parsePlaceholder(string $placeholder): array
+    {
+        $optional = str_ends_with($placeholder, '?');
+
+        if ($optional) {
+            $placeholder = substr($placeholder, 0, -1);
+        }
+
+        if (str_contains($placeholder, ':')) {
+            [$name, $field] = explode(':', $placeholder, 2);
+        } else {
+            $name = $placeholder;
+            $field = null;
+        }
+
+        return [$name, $field, $optional];
+    }
 
     /**
      * Constructs a Route.
@@ -58,7 +86,7 @@ abstract class Route
      * @param array<Closure|MiddlewareInterface|string> $middleware The middleware.
      * @param array<string, string> $placeholders The placeholders.
      *
-     * @throws InvalidArgumentException If the port is not valid.
+     * @throws InvalidArgumentException If the path or port is not valid.
      */
     public function __construct(
         protected Container $container,
@@ -71,6 +99,10 @@ abstract class Route
         protected array $middleware = [],
         protected array $placeholders = []
     ) {
+        if (preg_match('`[^/]\{[^}]+\?\}|\{[^}]+\?\}[^/]`', $this->path)) {
+            throw new InvalidArgumentException('Optional route placeholders must occupy an entire path segment.');
+        }
+
         if ($this->host !== null) {
             $this->setHost($this->host);
         }
@@ -94,12 +126,12 @@ abstract class Route
             return $this->bindingFields;
         }
 
-        preg_match_all('/\{([^\}]+)\}/', $this->path, $placeholders, PREG_SET_ORDER);
+        preg_match_all(static::PLACEHOLDER_REGEXP, $this->path, $placeholders, PREG_SET_ORDER);
 
         $this->bindingFields = [];
 
         foreach ($placeholders as $placeholder) {
-            [$name, $field] = static::parsePlaceholder($placeholder[1]);
+            [$name, $field] = static::parsePlaceholder($placeholder[2]);
 
             $this->bindingFields[$name] = $field;
         }
@@ -245,17 +277,16 @@ abstract class Route
             $path = $uri->getPath() |> Router::normalizePath(...);
         }
 
-        if (!preg_match($this->getPathRegExp(), $path, $matches)) {
+        [$pathRegExp, $captures] = $this->getPathRegExp();
+
+        if (!preg_match($pathRegExp, $path, $matches, PREG_UNMATCHED_AS_NULL)) {
             return null;
         }
 
-        array_shift($matches);
-
         $arguments = [];
-        $parameters = $this->getBindingFields() |> array_keys(...);
 
-        foreach ($parameters as $i => $name) {
-            $arguments[$name] = $matches[$i] ?? null;
+        foreach ($captures as $name => $capture) {
+            $arguments[$name] = $matches[$capture] ?? null;
         }
 
         return $request
@@ -365,32 +396,38 @@ abstract class Route
     /**
      * Returns the route path regular expression.
      *
-     * Note: Placeholders are expanded into capture groups; optional placeholders are
-     * wrapped so the full segment is optional.
+     * Note: Static path segments are escaped and placeholders use generated named captures
+     * so custom placeholder captures do not affect argument extraction.
      *
-     * @return string The route path regular expression.
+     * @return array{0: string, 1: array<string, string>} The route path regular expression and captures.
      */
-    protected function getPathRegExp(): string
+    protected function getPathRegExp(): array
     {
-        $path = (string) preg_replace_callback(
-            '/\/\{([^\}]+)\}/',
-            function(array $match): string {
-                [$name, , $optional] = static::parsePlaceholder($match[1]);
+        $parts = preg_split(
+            static::PLACEHOLDER_REGEXP,
+            Router::normalizePath($this->path),
+            flags: PREG_SPLIT_DELIM_CAPTURE
+        ) ?: [];
 
-                if (isset($this->placeholders[$name])) {
-                    $pattern = $this->placeholders[$name];
-                } else {
-                    $pattern = '[^/]+';
-                }
+        $path = preg_quote($parts[0] ?? '', '`');
+        $captures = [];
 
-                return $optional ?
-                    '(?:/('.$pattern.'))?' :
-                    '/('.$pattern.')';
-            },
-            Router::normalizePath($this->path)
-        );
+        for ($i = 1; $i < count($parts); $i += 3) {
+            [$name, , $optional] = static::parsePlaceholder($parts[$i + 1]);
 
-        return '`^'.$path.'\z`u';
+            $capture = 'routeArgument'.$i;
+            $pattern = $this->placeholders[$name] ?? '[^/]+';
+
+            $path .= $optional ?
+                '(?:'.$parts[$i].'(?<'.$capture.'>'.$pattern.'))?' :
+                $parts[$i].'(?<'.$capture.'>'.$pattern.')';
+
+            $path .= preg_quote($parts[$i + 2], '`');
+
+            $captures[$name] = $capture;
+        }
+
+        return ['`^'.$path.'\z`u', $captures];
     }
 
     /**
@@ -400,28 +437,4 @@ abstract class Route
      * @return ResponseInterface|string The Response or string response.
      */
     abstract protected function process(ServerRequestInterface $request): ResponseInterface|string;
-
-    /**
-     * Parses a route placeholder.
-     *
-     * @param string $placeholder The placeholder definition.
-     * @return array{0: string, 1: string|null, 2: bool} The name, binding field and optional flag.
-     */
-    protected static function parsePlaceholder(string $placeholder): array
-    {
-        $optional = str_ends_with($placeholder, '?');
-
-        if ($optional) {
-            $placeholder = substr($placeholder, 0, -1);
-        }
-
-        if (str_contains($placeholder, ':')) {
-            [$name, $field] = explode(':', $placeholder, 2);
-        } else {
-            $name = $placeholder;
-            $field = null;
-        }
-
-        return [$name, $field, $optional];
-    }
 }

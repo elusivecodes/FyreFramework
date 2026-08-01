@@ -38,7 +38,7 @@ Use `Router` when you want to:
 
 Routes are registered with `Router::connect()`. Convenience methods exist for common HTTP verbs, but they all end up calling `connect()` with a predefined method list.
 
-In an application, routes are typically defined in `CONFIG/routes.php` (commonly `config/routes.php`) and loaded when the router is constructed.
+In an application, routes are typically defined in `CONFIG/routes.php` (commonly `config/routes.php`). When using `Engine`, this file is loaded if it exists when the `Router` singleton is first resolved.
 
 Most examples assume you already have a `$router` instance (for example via dependency injection). You can also resolve it from the container:
 
@@ -50,7 +50,7 @@ $router = app(Router::class);
 
 Examples below also assume `ServerRequestInterface` is already imported when needed.
 
-All route paths are normalized to a leading slash with no surrounding slashes (for example, `posts/` becomes `/posts`).
+All route paths are normalized to exactly one leading slash and no trailing slash (for example, `posts/` becomes `/posts`).
 
 ### Basic route (closure destination)
 
@@ -143,6 +143,7 @@ $router->group(
 Route paths support placeholders using `{name}` syntax:
 
 - `{id}` captures a single path segment
+- `{name}.{extension}` places multiple required placeholders within one segment
 - `{id?}` makes the entire `/{id}` segment optional during matching
 - `{post:slug}` associates a placeholder with a “binding field” name (used by binding middleware)
 
@@ -385,7 +386,7 @@ Arguments:
 - `$scheme` (`string|null`): override the scheme used for URL generation.
 - `$host` (`string|null`): override the host used for URL generation.
 - `$port` (`int|null`): override the port used for URL generation.
-- `$full` (`bool|null`): whether to force a full (absolute) URL.
+- `$full` (`bool|null`): whether to generate a full URL when a scheme and host are available.
 
 ```php
 $url = $router->url('posts.show', [
@@ -407,7 +408,7 @@ $baseUri = $router->getBaseUri();
 
 #### **Normalize a path** (`normalizePath()`)
 
-Normalize a path to have a leading slash and no surrounding slashes. Duplicate slashes inside the path are not collapsed.
+Normalize a path to have exactly one leading slash and no trailing slash. Duplicate slashes inside the path are not collapsed.
 
 Arguments:
 - `$path` (`string`): the path to normalize.
@@ -426,6 +427,7 @@ A few behaviors are worth keeping in mind:
 - Route matching uses normalized paths, but duplicate slashes inside the path are not collapsed.
 - Group alias prefixes are concatenated directly (no separator is inserted), so include your own separator (for example `api.`) if needed.
 - Optional placeholders (`{id?}`) make the entire `/{id}` segment optional during matching, and the extracted argument key is `id` (not `id?`).
+- Optional placeholders must occupy an entire path segment.
 - `Router::url()` uses the base placeholder name for argument lookup (for example `['id' => 123]` for `{id?}`).
 - Host matching supports `*` wildcards (for example `*.example.com`).
 - If `App.baseUri` includes a path such as `/subdir`, the router removes that path before matching requests and adds it back when generating URLs.
