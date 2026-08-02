@@ -180,4 +180,16 @@ trait InputTestTrait
             $this->view->Form->input('key.input')
         );
     }
+
+    public function testInputValuePostNull(): void
+    {
+        $_POST['input'] = null;
+
+        $this->assertSame(
+            '<input id="input" name="input" type="text" placeholder="Input" />',
+            $this->view->Form->input('input', [
+                'default' => 'test',
+            ])
+        );
+    }
 }

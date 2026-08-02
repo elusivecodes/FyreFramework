@@ -35,7 +35,6 @@ use function explode;
 use function in_array;
 use function is_array;
 use function is_subclass_of;
-use function method_exists;
 use function preg_replace;
 use function sprintf;
 use function str_ends_with;
@@ -51,6 +50,33 @@ use function trim;
  */
 class FormHelper extends Helper
 {
+    protected const INPUT_TYPES = [
+        'checkbox',
+        'color',
+        'date',
+        'datetime',
+        'email',
+        'file',
+        'hidden',
+        'image',
+        'month',
+        'number',
+        'password',
+        'radio',
+        'range',
+        'reset',
+        'search',
+        'select',
+        'selectMulti',
+        'submit',
+        'tel',
+        'text',
+        'textarea',
+        'time',
+        'url',
+        'week',
+    ];
+
     /**
      * @var array<class-string, class-string<Context>>
      */
@@ -344,7 +370,7 @@ class FormHelper extends Helper
 
         unset($args[0]['type']);
 
-        if (!method_exists($this, $type)) {
+        if (!in_array($type, static::INPUT_TYPES, true)) {
             throw new InvalidArgumentException(sprintf(
                 'Input type `%s` is not valid.',
                 $type
@@ -506,11 +532,11 @@ class FormHelper extends Helper
     /**
      * Renders a multipart form open tag.
      *
-     * @param mixed $item The context item.
+     * @param object|null $item The context item.
      * @param array<mixed> $attributes The form attributes.
      * @return string The form open HTML.
      */
-    public function openMultipart(mixed $item = null, array $attributes = [], string|null $idPrefix = null): string
+    public function openMultipart(object|null $item = null, array $attributes = [], string|null $idPrefix = null): string
     {
         $attributes['enctype'] = 'multipart/form-data';
 
@@ -877,24 +903,6 @@ class FormHelper extends Helper
     }
 
     /**
-     * Returns a value from post data.
-     *
-     * @param string $name The field name.
-     * @return mixed The value.
-     */
-    protected function getDataValue(string $name): mixed
-    {
-        $key = static::getKey($name);
-        $body = $this->request->getParsedBody();
-
-        if (!is_array($body)) {
-            return null;
-        }
-
-        return Arr::getDot($body, $key);
-    }
-
-    /**
      * Returns the field ID.
      *
      * @param string $key The field key.
@@ -946,14 +954,23 @@ class FormHelper extends Helper
         $options['name'] ??= null;
 
         $value = null;
+        $hasDataValue = false;
+        $body = $this->request->getParsedBody();
 
-        if ($options['name']) {
-            $value = $this->getDataValue($options['name']);
+        if ($options['name'] && is_array($body)) {
+            $dataKey = static::getKey($options['name']);
+
+            if (Arr::hasDot($body, $dataKey)) {
+                $value = Arr::getDot($body, $dataKey);
+                $hasDataValue = true;
+            }
         }
 
-        $value ??= $context->getValue($key);
-        $value ??= $options['default'] ?? null;
-        $value ??= $context->getDefaultValue($key);
+        if (!$hasDataValue) {
+            $value = $context->getValue($key);
+            $value ??= $options['default'] ?? null;
+            $value ??= $context->getDefaultValue($key);
+        }
 
         return is_array($value) ?
             array_map(EnumHelper::normalizeValue(...), $value) :

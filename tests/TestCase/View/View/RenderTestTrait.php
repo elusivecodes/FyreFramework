@@ -5,7 +5,9 @@ namespace Tests\TestCase\View\View;
 
 use Fyre\Event\Event;
 use InvalidArgumentException;
+use RuntimeException;
 
+use function ob_get_level;
 use function realpath;
 
 trait RenderTestTrait
@@ -79,6 +81,28 @@ trait RenderTestTrait
         $this->assertSame(
             'Test',
             $this->view->render('test/deep/test')
+        );
+    }
+
+    public function testRenderExceptionCleanup(): void
+    {
+        $bufferLevel = ob_get_level();
+        $this->view->setLayout(null);
+
+        try {
+            $this->view->render('test/exception');
+            $this->fail('Expected render to throw an exception.');
+        } catch (RuntimeException $e) {
+            $this->assertSame('Test exception.', $e->getMessage());
+        }
+
+        $this->assertSame($bufferLevel, ob_get_level());
+
+        $this->view->set('a', 1);
+
+        $this->assertSame(
+            'Template: 1',
+            $this->view->render('test/template')
         );
     }
 

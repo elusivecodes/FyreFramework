@@ -24,6 +24,7 @@ use function extract;
 use function func_get_arg;
 use function ob_end_clean;
 use function ob_get_contents;
+use function ob_get_level;
 use function ob_start;
 use function sprintf;
 
@@ -310,63 +311,72 @@ class View
      */
     public function render(string $file): string
     {
-        $filePath = $this->templateLocator->locate($file);
+        $bufferLevel = ob_get_level();
 
-        if (!$filePath) {
-            throw new InvalidArgumentException(sprintf(
-                'Template `%s` could not be found.',
-                $file
-            ));
+        try {
+            $filePath = $this->templateLocator->locate($file);
+
+            if (!$filePath) {
+                throw new InvalidArgumentException(sprintf(
+                    'Template `%s` could not be found.',
+                    $file
+                ));
+            }
+
+            $layoutPath = $this->layout ?
+                $this->templateLocator->locate($this->layout, TemplateLocator::LAYOUTS_FOLDER) :
+                null;
+
+            if ($this->layout && !$layoutPath) {
+                throw new InvalidArgumentException(sprintf(
+                    'Layout template `%s` could not be found.',
+                    $this->layout
+                ));
+            }
+
+            $this->dispatchEvent('View.beforeRender', ['filePath' => $filePath]);
+
+            $this->content = $this->evaluate($filePath, $this->data);
+
+            $event = $this->dispatchEvent('View.afterRender', ['filePath' => $filePath, 'content' => $this->content]);
+
+            $result = $event->getResult();
+
+            if ($result !== null) {
+                $this->content = $result;
+            }
+
+            if (!$layoutPath) {
+                $result = $this->content;
+            } else {
+                $this->dispatchEvent('View.beforeLayout', ['layoutPath' => $layoutPath]);
+
+                $result = $this->evaluate($layoutPath, $this->data);
+
+                $layoutEvent = $this->dispatchEvent('View.afterLayout', ['layoutPath' => $layoutPath, 'content' => $result]);
+
+                $result = $layoutEvent->getResult() ?? $result;
+            }
+
+            $hasUnclosedBlocks = $this->blockStack !== [];
+
+            while ($this->blockStack !== []) {
+                $this->end();
+            }
+
+            if ($hasUnclosedBlocks) {
+                throw new LogicException('Unable to render view while blocks remain open.');
+            }
+
+            return $result;
+        } finally {
+            while (ob_get_level() > $bufferLevel) {
+                ob_end_clean();
+            }
+
+            $this->blockStack = [];
+            $this->blocks = [];
         }
-
-        $layoutPath = $this->layout ?
-            $this->templateLocator->locate($this->layout, TemplateLocator::LAYOUTS_FOLDER) :
-            null;
-
-        if ($this->layout && !$layoutPath) {
-            throw new InvalidArgumentException(sprintf(
-                'Layout template `%s` could not be found.',
-                $this->layout
-            ));
-        }
-
-        $this->dispatchEvent('View.beforeRender', ['filePath' => $filePath]);
-
-        $this->content = $this->evaluate($filePath, $this->data);
-
-        $event = $this->dispatchEvent('View.afterRender', ['filePath' => $filePath, 'content' => $this->content]);
-
-        $result = $event->getResult();
-
-        if ($result !== null) {
-            $this->content = $result;
-        }
-
-        if (!$layoutPath) {
-            $result = $this->content;
-        } else {
-            $this->dispatchEvent('View.beforeLayout', ['layoutPath' => $layoutPath]);
-
-            $result = $this->evaluate($layoutPath, $this->data);
-
-            $layoutEvent = $this->dispatchEvent('View.afterLayout', ['layoutPath' => $layoutPath, 'content' => $result]);
-
-            $result = $layoutEvent->getResult() ?? $result;
-        }
-
-        $hasUnclosedBlocks = $this->blockStack !== [];
-
-        while ($this->blockStack !== []) {
-            $this->end();
-        }
-
-        if ($hasUnclosedBlocks) {
-            throw new LogicException('Unable to render view while blocks remain open.');
-        }
-
-        $this->blocks = [];
-
-        return $result;
     }
 
     /**

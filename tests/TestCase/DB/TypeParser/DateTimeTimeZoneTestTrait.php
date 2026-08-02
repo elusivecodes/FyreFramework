@@ -284,7 +284,7 @@ trait DateTimeTimeZoneTestTrait
     public function testDateTimeTimeZoneToDatabaseString(): void
     {
         $this->assertSame(
-            '2021-12-31 22:59:11.000000+10:00',
+            '2021-12-31 22:59:11.123000+10:00',
             $this->type->use('datetime-timezone')->toDatabase('2021-12-31 22:59:11.12345+10')
         );
     }

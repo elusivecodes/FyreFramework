@@ -17,6 +17,8 @@ For long-lived, per-view utilities accessed through `$this->SomeHelperName`, see
   - [Cell templates and defaults](#cell-templates-and-defaults)
 - [Passing data to cell actions and templates](#passing-data-to-cell-actions-and-templates)
 - [Overriding the template](#overriding-the-template)
+- [Cell events](#cell-events)
+- [Method guide](#method-guide)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -90,14 +92,14 @@ class RecentPostsCell extends Cell
 }
 ```
 
-Action methods are invoked via the container, so you can pass values via `$args` and also rely on type-hinted dependencies when appropriate.
+Public action methods are invoked via the container, so you can pass values via `$args` and also rely on type-hinted dependencies when appropriate. Methods inherited from the base `Cell` class cannot be used as actions.
 
 ### Cell templates and defaults
 
 If you do not call `Cell::setTemplate()`, the template name is derived from:
 
 - the cell short name (class name without the trailing `Cell`), and
-- the action name normalized by `TemplateLocator::normalize()`.
+- the action name converted to `snake_case`.
 
 Default templates for the cell above:
 
@@ -142,12 +144,87 @@ echo $this->cell('RecentPosts', ['limit' => 5])
     ->setTemplate('Shared/promo');
 ```
 
+## Cell events
+
+Cells dispatch events through the parent View's event manager. Listener callbacks receive the `Event` first, followed by the values listed for that event:
+
+- `Cell.beforeAction` - `Cell $cell`, `string $action`, `array $args`
+- `Cell.afterAction` - `Cell $cell`, `string $action`, `array $args`
+- `Cell.beforeRender` - `string $filePath`
+- `Cell.afterRender` - `string $filePath`, `string $content`
+
+Listeners for `Cell.afterRender` can replace the rendered content by calling `$event->setResult($content)` with a string. See [Event Listeners](../events/listeners.md) for listener registration.
+
+## Method guide
+
+Applies to `Fyre\View\Cell`, which is typically created from a template via `View::cell()`.
+
+#### **Render the cell** (`render()`)
+
+Runs the selected action and renders the resolved cell template.
+
+```php
+$content = $this->cell('RecentPosts')->render();
+```
+
+#### **Set a single template value** (`set()`)
+
+Sets one value on the cell's child view.
+
+Arguments:
+- `$name` (`string`): the variable name.
+- `$value` (`mixed`): the variable value.
+
+```php
+$cell->set('title', 'Recent posts');
+```
+
+#### **Set multiple template values** (`setData()`)
+
+Merges values into the cell's child view data.
+
+Arguments:
+- `$data` (`array<string, mixed>`): the view data.
+
+```php
+$cell->setData([
+    'title' => 'Recent posts',
+]);
+```
+
+#### **Select a cell template** (`setTemplate()`)
+
+Sets the template path relative to the `cells` folder.
+
+Arguments:
+- `$file` (`string`): the template path relative to `cells/`.
+
+```php
+$cell->setTemplate('RecentPosts/custom');
+```
+
+#### **Read the selected template** (`getTemplate()`)
+
+Returns the explicitly selected template path, or `null` when the action-derived default will be used.
+
+```php
+$template = $cell->getTemplate();
+```
+
+#### **Get the child view** (`getView()`)
+
+Returns the child view used to render the cell. It shares the parent request and has no layout.
+
+```php
+$view = $cell->getView();
+```
+
 ## Behavior notes
 
 A few behaviors are worth keeping in mind:
 
 - `View::cell()` throws an `InvalidArgumentException` if the cell class cannot be resolved.
-- The action defaults to `display`. If the action method does not exist, `Cell::render()` throws a `RuntimeException`.
+- The action defaults to `display`. If the action method is missing, non-public, or inherited from the base `Cell` class, `Cell::render()` throws a `RuntimeException`.
 - If the resolved template does not exist under the `cells/` folder, `Cell::render()` throws a `RuntimeException`.
 - Each `View::cell()` call creates a new instance; use [Helpers](helpers.md) when you need a reusable per-view object.
 - Only the first `::` is treated as the action separator; avoid using `::` anywhere else in the cell string.

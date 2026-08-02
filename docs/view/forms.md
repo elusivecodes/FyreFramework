@@ -105,10 +105,10 @@ echo $this->Form->password('password');
 echo $this->Form->textarea('bio');
 ```
 
-Checkboxes can render an accompanying hidden field so unchecked boxes still submit a value:
+Checkboxes render an accompanying hidden field by default so unchecked boxes still submit a value. Pass `hiddenField: false` to disable it:
 
 ```php
-echo $this->Form->checkbox('active', hiddenField: true);
+echo $this->Form->checkbox('active');
 ```
 
 Selects accept explicit options, or can source options from the current context when available:
@@ -140,10 +140,10 @@ The helper can use a backing entity or form object to supply values, defaults, a
 
 For most field methods, the helper resolves the field value in this order:
 
-1) **Request data**: if the computed/provided `name` exists in the parsed request body and the parsed body is an array, that value wins (useful for redisplaying user input after validation errors).
-2) **Backed value**: the current value from the entity or form object.
-3) **Explicit default**: `['default' => ...]` in attributes.
-4) **Backed default**: a default derived from the current entity or form object.
+1. **Request data**: if the computed/provided `name` exists in the parsed request body and the parsed body is an array, that value wins (useful for redisplaying user input after validation errors).
+2. **Backed value**: the current value from the entity or form object.
+3. **Explicit default**: `['default' => ...]` in attributes.
+4. **Backed default**: a default derived from the current entity or form object.
 
 ### Using an entity
 
@@ -212,7 +212,7 @@ echo $this->Form->open(null, [
 Opens a multipart form for file uploads by setting `enctype="multipart/form-data"`.
 
 Arguments:
-- `$item` (`mixed`): context item (same as `open()`).
+- `$item` (`object|null`): context item (same as `open()`).
 - `$attributes` (`array<string, mixed>`): form attributes.
 - `$idPrefix` (`string|null`): optional prefix for generated `id` values.
 
@@ -315,15 +315,15 @@ echo $this->Form->file('avatar');
 
 #### **Render a checkbox** (`checkbox()`)
 
-Renders a checkbox input. When `$hiddenField` is true, a hidden field is emitted first so an unchecked checkbox still submits a value.
+Renders a checkbox input. By default, a hidden field is emitted first so an unchecked checkbox still submits a value.
 
 Arguments:
 - `$key` (`string`): field key.
 - `$attributes` (`array<string, mixed>`): checkbox attributes.
-- `$hiddenField` (`bool`): whether to render a hidden field.
+- `$hiddenField` (`bool`): whether to render a hidden field (defaults to `true`).
 
 ```php
-echo $this->Form->checkbox('active', hiddenField: true);
+echo $this->Form->checkbox('active');
 ```
 
 #### **Render a radio input** (`radio()`)
@@ -340,13 +340,13 @@ echo $this->Form->radio('status', ['value' => 'published']);
 
 #### **Render a select** (`select()`)
 
-Renders a `<select>`. If no `$options` are provided, options can be derived from the current context. When using `multiple`, the helper appends `[]` to the computed `name` and can emit a hidden field for empty submissions.
+Renders a `<select>`. If no `$options` are provided, options can be derived from the current context. When using `multiple`, the helper appends `[]` to the computed `name` and emits a hidden field for empty submissions by default.
 
 Arguments:
 - `$key` (`string`): field key.
 - `$attributes` (`array<string, mixed>`): select attributes.
 - `$options` (`array<string, mixed>|null`): options (or `null` to use the context).
-- `$hiddenField` (`bool`): whether to render a hidden field for multiple selects.
+- `$hiddenField` (`bool`): whether to render a hidden field for multiple selects (defaults to `true`).
 
 ```php
 echo $this->Form->select('role', options: [
@@ -363,7 +363,7 @@ Arguments:
 - `$key` (`string`): field key.
 - `$attributes` (`array<string, mixed>`): select attributes.
 - `$options` (`array<string, mixed>|null`): options (or `null` to use the context).
-- `$hiddenField` (`bool`): whether to render a hidden field.
+- `$hiddenField` (`bool`): whether to render a hidden field (defaults to `true`).
 
 ```php
 echo $this->Form->selectMulti('tags');
@@ -429,7 +429,7 @@ A few behaviors are worth keeping in mind:
 
 - `open()` throws if you attempt to open a new form while an existing form context is still open; call `close()` first.
 - `open()` throws if you pass an object class that does not have a mapped form context.
-- `input()` throws if you pass an unknown input `type` (it must map to a method on `FormHelper`).
+- `input()` throws if you pass an unsupported input `type`.
 - `open()` defaults `action` to the current request URI when `action` is missing or empty.
 - Value resolution prioritizes request data over context values; this is useful for redisplaying user input, but can surprise you if you expected the entity value to win.
 - Setting an attribute to `false` removes it from the output (except `data-*` attributes, which are preserved even when set to `false`).

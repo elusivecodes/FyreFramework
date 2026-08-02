@@ -75,6 +75,16 @@ final class FormTest extends TestCase
         ]);
     }
 
+    public function testInvalidInputTypeMethod(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Input type `close` is not valid.');
+
+        $this->view->Form->input('input', [
+            'type' => 'close',
+        ]);
+    }
+
     public function testUnclosedForm(): void
     {
         $this->expectException(BadMethodCallException::class);

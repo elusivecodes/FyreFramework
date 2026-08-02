@@ -19,9 +19,10 @@ Most view work comes down to rendering a template, optionally wrapping it in a l
   - [Folders and file names](#folders-and-file-names)
   - [File extension handling](#file-extension-handling)
   - [Cell template defaults](#cell-template-defaults)
+- [View events](#view-events)
 - [Method guide](#method-guide)
   - [`View`](#view)
-  - [`Cell`](#cell)
+  - [`TemplateLocator`](#templatelocator)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -195,11 +196,24 @@ If a template name does not end with `.php`, the locator appends `.php` automati
 When a cell does not set a template explicitly via `Cell::setTemplate()`, the default template path is derived from:
 
 - the cell class short name (with the trailing `Cell` removed), and
-- the cell action name normalized by `TemplateLocator::normalize()`.
+- the cell action name converted to `snake_case`.
 
 For example, a `RecentPostsCell` action method named `byCategory` defaults to:
 
 - `cells/RecentPosts/by_category.php`
+
+## View events
+
+`View` dispatches events through its event manager while rendering templates, layouts, and elements. Listener callbacks receive the `Event` first, followed by the values listed for that event:
+
+- `View.beforeRender` - `string $filePath`
+- `View.afterRender` - `string $filePath`, `string $content`
+- `View.beforeLayout` - `string $layoutPath`
+- `View.afterLayout` - `string $layoutPath`, `string $content`
+- `View.beforeElement` - `string $filePath`
+- `View.afterElement` - `string $filePath`, `string $content`
+
+Listeners for `View.afterRender`, `View.afterLayout`, and `View.afterElement` can replace the rendered content by calling `$event->setResult($content)` with a string. See [Event Listeners](../events/listeners.md) for listener registration.
 
 ## Method guide
 
@@ -245,6 +259,14 @@ $view->setData([
 ]);
 ```
 
+#### **Read view data** (`getData()`)
+
+Returns all values currently assigned to the view.
+
+```php
+$data = $view->getData();
+```
+
 #### **Select a layout** (`setLayout()`)
 
 Sets the layout name. Use `null` to disable layout rendering.
@@ -255,6 +277,22 @@ Arguments:
 ```php
 $view->setLayout('default');
 echo $view->render('blog/index');
+```
+
+#### **Read the selected layout** (`getLayout()`)
+
+Returns the selected layout name, or `null` when layout rendering is disabled.
+
+```php
+$layout = $view->getLayout();
+```
+
+#### **Get the request** (`getRequest()`)
+
+Returns the `ServerRequestInterface` used by the view.
+
+```php
+$request = $view->getRequest();
 ```
 
 #### **Read rendered template content** (`content()`)
@@ -375,48 +413,62 @@ Arguments:
 $this->reset('sidebar');
 ```
 
-### `Cell`
+### `TemplateLocator`
 
-Applies to `Fyre\View\Cell`, which is typically created from a template via `View::cell()`.
+Applies to `Fyre\View\TemplateLocator`, which manages the base paths used to locate templates.
 
-#### **Set a single cell view value** (`set()`)
+#### **Add a template path** (`addPath()`)
 
-Sets a view data value on the cell’s child view. The value becomes available to the cell template as a local variable when the cell renders.
+Adds a base path to the end of the lookup order. Duplicate paths are ignored.
 
 Arguments:
-- `$name` (`string`): the variable name.
-- `$value` (`mixed`): the variable value.
+- `$path` (`string`): the template base path.
 
 ```php
-$cell = $this->cell('RecentPosts');
-$cell->set('title', 'Recent posts');
-echo $cell;
+$templateLocator->addPath('/path/to/app/templates');
 ```
 
-#### **Set multiple cell view values** (`setData()`)
+#### **Remove a template path** (`removePath()`)
 
-Merges an array of view data into the cell’s child view data set.
+Removes a base path from the lookup order.
 
 Arguments:
-- `$data` (`array<string, mixed>`): the view data.
+- `$path` (`string`): the template base path.
 
 ```php
-$cell = $this->cell('RecentPosts');
-$cell->setData(['title' => 'Recent posts']);
-echo $cell;
+$templateLocator->removePath('/path/to/plugin/templates');
 ```
 
-#### **Select a cell template** (`setTemplate()`)
+#### **Read template paths** (`getPaths()`)
 
-Sets the cell template path relative to the `cells` folder.
-
-Arguments:
-- `$file` (`string`): the template path relative to `cells/`.
+Returns the configured template base paths in lookup order.
 
 ```php
-$cell = $this->cell('RecentPosts');
-$cell->setTemplate('RecentPosts/custom');
-echo $cell;
+$paths = $templateLocator->getPaths();
+```
+
+#### **Clear template paths** (`clear()`)
+
+Removes all configured template paths.
+
+```php
+$templateLocator->clear();
+```
+
+#### **Locate a template** (`locate()`)
+
+Returns the resolved template file path, or `null` when no configured base path contains the file. The optional folder is inserted between the base path and template name.
+
+Arguments:
+- `$name` (`string`): the template name.
+- `$folder` (`string`): the optional folder within each base path.
+
+```php
+$filePath = $templateLocator->locate('blog/index');
+$layoutPath = $templateLocator->locate(
+    'default',
+    TemplateLocator::LAYOUTS_FOLDER
+);
 ```
 
 ## Behavior notes

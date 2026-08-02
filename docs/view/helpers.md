@@ -20,11 +20,12 @@ Form helper usage is documented separately in [Forms (view helper)](forms.md).
   - [Format helper](#format-helper)
   - [URL helper](#url-helper)
 - [Creating custom helpers](#creating-custom-helpers)
-  - [Registering your helpers namespace](#registering-your-helpers-namespace)
+  - [Choosing a helper namespace](#choosing-a-helper-namespace)
   - [Writing a helper class](#writing-a-helper-class)
   - [Loading custom helpers](#loading-custom-helpers)
 - [Method guide](#method-guide)
   - [`View`](#view)
+  - [`Helper`](#helper)
   - [`HelperRegistry`](#helperregistry)
   - [`CspHelper`](#csphelper)
   - [`UrlHelper`](#urlhelper)
@@ -83,7 +84,7 @@ Built-in helpers live under `Fyre\View\Helpers` and are always considered after 
 
 ### CSP helper
 
-`CspHelper` integrates Content Security Policy (CSP) into templates by generating per-render nonces and adding them to all configured CSP policies on the shared `ContentSecurityPolicy` instance.
+`CspHelper` integrates Content Security Policy (CSP) into templates by generating script and style nonces on first use and adding them to all configured CSP policies on the shared `ContentSecurityPolicy` instance.
 
 Example: adding a script nonce to inline scripts:
 
@@ -118,22 +119,22 @@ Common tasks:
 
 Custom helpers are discovered using the same `{Name}Helper` convention as built-ins. Helpers are built through the container, so you can type-hint additional dependencies in your constructor as needed.
 
-### Registering your helpers namespace
+### Choosing a helper namespace
 
-Register the namespace that contains your helper classes on the `HelperRegistry` instance used by your views:
+`Engine` registers `App\Helpers` by default, so application helpers in that namespace require no additional setup. Register any additional helper namespace on the `HelperRegistry` instance used by your views:
 
 ```php
-$helperRegistry->addNamespace('App\View\Helpers');
+$helperRegistry->addNamespace('Plugin\Helpers');
 ```
 
-The registry will now consider classes like `App\View\Helpers\BreadcrumbsHelper` when you access `$this->Breadcrumbs` in a template.
+The registry will now also consider classes like `Plugin\Helpers\BreadcrumbsHelper` when you access `$this->Breadcrumbs` in a template.
 
 ### Writing a helper class
 
 Helpers typically extend `Fyre\View\Helper`. If you define `protected static array $defaults`, options passed when loading the helper are merged into those defaults.
 
 ```php
-namespace App\View\Helpers;
+namespace App\Helpers;
 
 use Fyre\View\Helper;
 
@@ -192,6 +193,26 @@ $url = $this->Url; // loads UrlHelper on first access
 echo $url->path('/');
 ```
 
+### `Helper`
+
+Applies to `Fyre\View\Helper` and its subclasses. These methods are primarily useful when writing custom helpers.
+
+#### **Read helper configuration** (`getConfig()`)
+
+Returns the helper options after they have been merged with the helper's defaults.
+
+```php
+$config = $this->getConfig();
+```
+
+#### **Get the view** (`getView()`)
+
+Returns the view that loaded the helper.
+
+```php
+$request = $this->getView()->getRequest();
+```
+
 ### `HelperRegistry`
 
 Applies to `Fyre\View\HelperRegistry`, which is typically configured during application bootstrapping.
@@ -204,7 +225,7 @@ Arguments:
 - `$namespace` (`string`): the namespace to add.
 
 ```php
-$helperRegistry->addNamespace('App\View\Helpers');
+$helperRegistry->addNamespace('Plugin\Helpers');
 ```
 
 #### **Find a helper class** (`find()`)

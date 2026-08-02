@@ -7,7 +7,9 @@ use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Utility\Path;
+use Fyre\Utility\Str;
 use ReflectionClass;
+use ReflectionMethod;
 use RuntimeException;
 
 use function method_exists;
@@ -96,7 +98,7 @@ abstract class Cell
      *
      * @return string The rendered cell.
      *
-     * @throws RuntimeException If the method or template does not exist.
+     * @throws RuntimeException If the action is not valid or the template does not exist.
      */
     public function render(): string
     {
@@ -105,6 +107,16 @@ abstract class Cell
         if (!method_exists($this, $this->action)) {
             throw new RuntimeException(sprintf(
                 'Cell method `%s::%s` does not exist.',
+                $cell,
+                $this->action
+            ));
+        }
+
+        $method = new ReflectionMethod($this, $this->action);
+
+        if (!$method->isPublic() || $method->getDeclaringClass()->getName() === self::class) {
+            throw new RuntimeException(sprintf(
+                'Cell method `%s::%s` is not a valid action.',
                 $cell,
                 $this->action
             ));
@@ -119,7 +131,7 @@ abstract class Cell
         $template = $this->template;
 
         if ($template === null) {
-            $file = TemplateLocator::normalize($this->action);
+            $file = Str::snake($this->action);
             $template = Path::join($cell, $file);
         }
 

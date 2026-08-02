@@ -284,7 +284,7 @@ trait DateTimeFractionalTestTrait
     public function testDateTimeFractionalToDatabaseString(): void
     {
         $this->assertSame(
-            '2021-12-31 22:59:11.000000',
+            '2021-12-31 22:59:11.123000',
             $this->type->use('datetime-fractional')->toDatabase('2021-12-31 22:59:11.12345')
         );
     }

@@ -9,13 +9,11 @@ use Fyre\Utility\Path;
 use function array_splice;
 use function in_array;
 use function is_file;
-use function preg_replace;
 use function realpath;
 use function rtrim;
 use function str_contains;
 use function str_ends_with;
 use function str_starts_with;
-use function strtolower;
 
 use const DIRECTORY_SEPARATOR;
 
@@ -41,19 +39,6 @@ class TemplateLocator
      * @var string[]
      */
     protected array $paths = [];
-
-    /**
-     * Normalizes a file name.
-     *
-     * Note: This converts camelCase/PascalCase to snake_case.
-     *
-     * @param string $string The input string.
-     * @return string The normalized string.
-     */
-    public static function normalize(string $string): string
-    {
-        return ((string) preg_replace('/(?<=[^A-Z])[A-Z]/', '_\0', $string)) |> strtolower(...);
-    }
 
     /**
      * Adds a path for loading templates.

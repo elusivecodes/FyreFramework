@@ -48,6 +48,14 @@ final class CellTest extends TestCase
         );
     }
 
+    public function testCellInheritedMethod(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Cell method `Test::getView` is not a valid action.');
+
+        $this->view->cell('Test::getView')->render();
+    }
+
     public function testCellInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -62,6 +70,14 @@ final class CellTest extends TestCase
         $this->expectExceptionMessage('Cell method `Test::invalid` does not exist.');
 
         $this->view->cell('Test::invalid')->render();
+    }
+
+    public function testCellNonPublicMethod(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Cell method `Example::hidden` is not a valid action.');
+
+        $this->view->cell('Example::hidden')->render();
     }
 
     public function testData(): void

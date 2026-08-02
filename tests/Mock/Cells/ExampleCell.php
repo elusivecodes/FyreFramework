@@ -13,4 +13,6 @@ class ExampleCell extends Cell
     {
         $this->set('a', $value);
     }
+
+    protected function hidden(): void {}
 }
