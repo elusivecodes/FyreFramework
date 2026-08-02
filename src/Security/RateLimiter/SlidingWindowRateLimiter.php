@@ -7,7 +7,7 @@ use Fyre\Security\RateLimiter;
 use Override;
 use Psr\Http\Message\ServerRequestInterface;
 
-use function ceil;
+use function floor;
 use function max;
 use function time;
 
@@ -29,45 +29,36 @@ class SlidingWindowRateLimiter extends RateLimiter
 
         [$limit, $window, $cost] = $this->resolveParameters($request, $limit, $window, $cost);
 
-        $identifier = $this->getIdentifier($request);
-        $key = $this->generateKey($identifier);
+        $windowStart = $now - ($now % $window);
+        $elapsed = $now - $windowStart;
+
+        $key = $this->generateKey($this->getIdentifier($request));
+        $currentKey = $key.'_'.$windowStart;
+        $previousKey = $key.'_'.($windowStart - $window);
 
         $cacher = $this->cacheManager->use($this->cacheConfig);
 
         return $cacher->synchronized(
             $key,
-            static function() use ($cacher, $cost, $key, $limit, $now, $window): array {
-                $data = $cacher->get($key, [
-                    'count' => 0,
-                    'reset' => $now + $window,
-                    'window_start' => $now,
-                ]);
+            static function() use ($cacher, $cost, $currentKey, $elapsed, $limit, $previousKey, $window, $windowStart): array {
+                $current = (int) $cacher->get($currentKey, 0);
+                $previous = (int) $cacher->get($previousKey, 0);
 
-                $elapsed = $now - $data['window_start'];
-
-                if ($elapsed >= $window) {
-                    $data = [
-                        'count' => 0,
-                        'reset' => $now + $window,
-                        'window_start' => $now,
-                    ];
-                } else {
-                    $weight = 1 - ($elapsed / $window);
-                    $data['count'] = (int) ceil($data['count'] * $weight);
-                }
-
-                $allowed = $limit >= $data['count'] + $cost;
+                $count = $current + ($previous * (($window - $elapsed) / $window));
+                $allowed = $count + $cost <= $limit;
 
                 if ($allowed) {
-                    $data['count'] += $cost;
-                    $cacher->set($key, $data, $window);
+                    $current += $cost;
+                    $count += $cost;
+
+                    $cacher->set($currentKey, $current, ($window * 2) - $elapsed);
                 }
 
                 return [
                     'allowed' => $allowed,
                     'limit' => $limit,
-                    'remaining' => (int) max(0, $limit - $data['count']),
-                    'reset' => (int) $data['reset'],
+                    'remaining' => (int) max(0, floor($limit - $count)),
+                    'reset' => $windowStart + $window,
                 ];
             },
             wait: 1

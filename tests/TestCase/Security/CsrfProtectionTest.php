@@ -7,6 +7,7 @@ use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Security\CsrfProtection;
+use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
 
@@ -59,6 +60,17 @@ final class CsrfProtectionTest extends TestCase
             'Csrf-Token',
             $this->csrfProtection->getHeader()
         );
+    }
+
+    public function testInvalidSalt(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('CSRF salt must not be empty.');
+
+        $container = new Container();
+        $container->singleton(Config::class);
+
+        $container->build(CsrfProtection::class);
     }
 
     #[Override]

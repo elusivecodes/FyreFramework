@@ -23,6 +23,7 @@ use function hash_equals;
 use function hash_hmac;
 use function in_array;
 use function is_array;
+use function is_string;
 use function ord;
 use function random_bytes;
 use function strlen;
@@ -90,6 +91,10 @@ class CsrfProtection
         Config $config
     ) {
         $options = array_replace_recursive(static::$defaults, $config->get('Csrf', []));
+
+        if (!$options['salt']) {
+            throw new InvalidArgumentException('CSRF salt must not be empty.');
+        }
 
         $this->cookieOptions = $options['cookie'];
         $this->field = $options['field'];
@@ -164,7 +169,8 @@ class CsrfProtection
 
         $cookieName = $this->cookieOptions['name'];
 
-        $this->token = $request->getCookieParams()[$cookieName] ?? null;
+        $token = $request->getCookieParams()[$cookieName] ?? null;
+        $this->token = is_string($token) ? $token : null;
 
         if (!$hasData || ($this->skipCheck && $this->container->call($this->skipCheck, ['request' => $request]) === true)) {
             return $request;
@@ -175,7 +181,7 @@ class CsrfProtection
         }
 
         if (
-            !$userToken ||
+            !is_string($userToken) ||
             !$this->token ||
             !$this->verifyToken($this->token) ||
             !hash_equals((string) $this->unsaltToken($userToken), $this->token)
@@ -294,6 +300,11 @@ class CsrfProtection
         }
 
         $length = static::TOKEN_LENGTH + 40;
+
+        if (strlen($decoded) !== $length * 2) {
+            return null;
+        }
+
         $salted = substr($decoded, 0, $length);
         $salt = substr($decoded, $length);
 

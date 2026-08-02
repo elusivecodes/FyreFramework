@@ -7,8 +7,10 @@ use Fyre\Core\Config;
 use Fyre\Core\Traits\DebugTrait;
 use Psr\Http\Message\ResponseInterface;
 
+use function implode;
 use function json_encode;
 
+use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
 /**
@@ -36,9 +38,9 @@ class ContentSecurityPolicy
     protected array $policies = [];
 
     /**
-     * @var array<string, mixed>
+     * @var array<string, string>
      */
-    protected array $reportTo = [];
+    protected array $reportingEndpoints = [];
 
     /**
      * Constructs a ContentSecurityPolicy.
@@ -57,16 +59,15 @@ class ContentSecurityPolicy
             $this->createPolicy($key, $options[$key]);
         }
 
-        if (isset($options['reportTo'])) {
-            $this->setReportTo($options['reportTo']);
+        if (isset($options['reportingEndpoints'])) {
+            $this->setReportingEndpoints($options['reportingEndpoints']);
         }
     }
 
     /**
      * Adds ContentSecurityPolicy headers to a Response.
      *
-     * Note: Only configured policies with non-empty header strings are emitted. If
-     * `Report-To` data is present, it is JSON-encoded and added as a `Report-To` header.
+     * Note: Only configured policies with non-empty header strings are emitted.
      *
      * @param ResponseInterface $response The Response.
      * @return ResponseInterface The new Response.
@@ -87,8 +88,14 @@ class ContentSecurityPolicy
             $response = $response->withHeader($header, $value);
         }
 
-        if ($this->reportTo !== []) {
-            $response = $response->withHeader('Report-To', (string) json_encode($this->reportTo, JSON_UNESCAPED_SLASHES));
+        if ($this->reportingEndpoints !== []) {
+            $endpoints = [];
+
+            foreach ($this->reportingEndpoints as $name => $url) {
+                $endpoints[] = $name.'='.json_encode($url, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+            }
+
+            $response = $response->withHeader('Reporting-Endpoints', implode(', ', $endpoints));
         }
 
         return $response;
@@ -139,13 +146,13 @@ class ContentSecurityPolicy
     }
 
     /**
-     * Returns the Report-To values.
+     * Returns the reporting endpoints.
      *
-     * @return array<string, mixed> The Report-To values.
+     * @return array<string, string> The reporting endpoints.
      */
-    public function getReportTo(): array
+    public function getReportingEndpoints(): array
     {
-        return $this->reportTo;
+        return $this->reportingEndpoints;
     }
 
     /**
@@ -174,14 +181,14 @@ class ContentSecurityPolicy
     }
 
     /**
-     * Sets the Report-To values.
+     * Sets the reporting endpoints.
      *
-     * @param array<string, mixed> $reportTo The Report-To values.
+     * @param array<string, string> $reportingEndpoints The reporting endpoints.
      * @return static The ContentSecurityPolicy instance.
      */
-    public function setReportTo(array $reportTo): static
+    public function setReportingEndpoints(array $reportingEndpoints): static
     {
-        $this->reportTo = $reportTo;
+        $this->reportingEndpoints = $reportingEndpoints;
 
         return $this;
     }

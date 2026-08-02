@@ -160,7 +160,7 @@ abstract class RateLimiter
      * @param int|null $cost The request cost.
      * @return RateLimitData The rate limit data.
      */
-    abstract public function checkLimit(ServerRequestInterface $request, int|null $limit, int|null $window, int|null $cost = 1): array;
+    abstract public function checkLimit(ServerRequestInterface $request, int|null $limit = null, int|null $window = null, int|null $cost = null): array;
 
     /**
      * Returns the error message.

@@ -113,32 +113,20 @@ final class ContentSecurityPolicyTest extends TestCase
         );
     }
 
-    public function testSetReportTo(): void
+    public function testSetReportingEndpoints(): void
     {
         $this->assertSame(
             $this->csp,
-            $this->csp->setReportTo([
-                'group' => 'csp-endpoint',
-                'max_age' => '10886400',
-                'endpoints' => [
-                    [
-                        'url' => 'https://test.com/csp-report',
-                    ],
-                ],
+            $this->csp->setReportingEndpoints([
+                'csp-endpoint' => 'https://test.com/csp-report',
             ])
         );
 
         $this->assertSame(
             [
-                'group' => 'csp-endpoint',
-                'max_age' => '10886400',
-                'endpoints' => [
-                    [
-                        'url' => 'https://test.com/csp-report',
-                    ],
-                ],
+                'csp-endpoint' => 'https://test.com/csp-report',
             ],
-            $this->csp->getReportTo()
+            $this->csp->getReportingEndpoints()
         );
     }
 

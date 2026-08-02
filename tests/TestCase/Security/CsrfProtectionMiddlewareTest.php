@@ -56,6 +56,33 @@ final class CsrfProtectionMiddlewareTest extends TestCase
         );
     }
 
+    public function testCookieInvalidType(): void
+    {
+        $this->expectException(CsrfTokenException::class);
+        $this->expectExceptionMessage('CSRF Token Mismatch');
+
+        $csrfProtection = $this->container->use(CsrfProtection::class);
+        $middleware = $this->container->build(CsrfProtectionMiddleware::class);
+
+        $queue = new MiddlewareQueue();
+        $queue->add($middleware);
+
+        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'method' => 'POST',
+                'headers' => [
+                    'Csrf-Token' => $csrfProtection->getFormToken(),
+                ],
+                'cookies' => [
+                    'CsrfToken' => [],
+                ],
+            ],
+        ]);
+
+        $handler->handle($request);
+    }
+
     public function testCookieMissing(): void
     {
         $this->expectException(CsrfTokenException::class);
@@ -152,6 +179,60 @@ final class CsrfProtectionMiddlewareTest extends TestCase
             ClientResponse::class,
             $response
         );
+    }
+
+    public function testFormTokenInvalidType(): void
+    {
+        $this->expectException(CsrfTokenException::class);
+        $this->expectExceptionMessage('CSRF Token Mismatch');
+
+        $csrfProtection = $this->container->use(CsrfProtection::class);
+        $middleware = $this->container->build(CsrfProtectionMiddleware::class);
+
+        $queue = new MiddlewareQueue();
+        $queue->add($middleware);
+
+        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'method' => 'POST',
+                'cookies' => [
+                    'CsrfToken' => $csrfProtection->getCookieToken(),
+                ],
+                'data' => [
+                    'csrf_token' => [],
+                ],
+            ],
+        ]);
+
+        $handler->handle($request);
+    }
+
+    public function testFormTokenMalformed(): void
+    {
+        $this->expectException(CsrfTokenException::class);
+        $this->expectExceptionMessage('CSRF Token Mismatch');
+
+        $csrfProtection = $this->container->use(CsrfProtection::class);
+        $middleware = $this->container->build(CsrfProtectionMiddleware::class);
+
+        $queue = new MiddlewareQueue();
+        $queue->add($middleware);
+
+        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'method' => 'POST',
+                'headers' => [
+                    'Csrf-Token' => 'YQ==',
+                ],
+                'cookies' => [
+                    'CsrfToken' => $csrfProtection->getCookieToken(),
+                ],
+            ],
+        ]);
+
+        $handler->handle($request);
     }
 
     public function testFormTokenMissing(): void

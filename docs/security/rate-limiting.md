@@ -36,9 +36,9 @@ Unlike a simple “requests per minute” counter, Fyre’s rate limiting can ac
 
 `RateLimiterMiddleware` can select a built-in strategy using the `strategy` option:
 
-- `slidingWindow` (default) — `SlidingWindowRateLimiter`
-- `fixedWindow` — `FixedWindowRateLimiter`
-- `tokenBucket` — `TokenBucketRateLimiter`
+- `slidingWindow` (default) - `SlidingWindowRateLimiter` estimates a moving window by weighting the previous fixed bucket and combining it with the current bucket
+- `fixedWindow` - `FixedWindowRateLimiter` counts usage in discrete windows and can permit bursts around window boundaries
+- `tokenBucket` - `TokenBucketRateLimiter` refills budget steadily over time and allows bursts while sufficient budget remains
 
 You can also provide a custom limiter class via the `className` option (it must extend `RateLimiter`).
 
@@ -74,9 +74,14 @@ Proxy trust uses the application configuration shared with `ServerRequest`:
 - `App.trustProxy` — whether forwarded IP headers should be considered (default: `false`)
 - `App.trustedProxies` — proxy IPs allowed to supply forwarded headers (default: `[]`; an empty list accepts the rightmost forwarded address)
 
-The limiter-specific `ipHeader` option selects the forwarded IP header name or ordered list of names to check (default: `X-Forwarded-For`; the first non-empty match is used, and names are matched case-insensitively).
+The limiter-specific `ipHeader` option selects the forwarded IP header name or ordered list of names to check (default: `X-Forwarded-For`). The first header present in the server parameters is checked, and names are matched case-insensitively. If that value is empty or malformed, resolution stops and returns the last valid address, usually `REMOTE_ADDR`.
 
 Cost can be configured as either a fixed integer or a callback. When it’s a callback, the `RateLimiter` computes cost by calling it through the container with the current request.
+
+The remaining limiter options are:
+
+- `cacheConfig` (`string`): cache configuration used to store limiter state (default: `ratelimiter`).
+- `message` (`string`): exception message used when a request is rejected (default: `Rate limit exceeded`).
 
 ### Skipping checks
 
@@ -86,13 +91,15 @@ You can bypass rate limiting for specific requests using the `skipCheck` option.
 
 When rate limit data is available, responses include:
 
-- `X-RateLimit-Limit` — the effective limit
-- `X-RateLimit-Remaining` — remaining budget after the request
-- `X-RateLimit-Reset` — the reset time as a UNIX timestamp
+- `X-RateLimit-Limit` - the effective limit
+- `X-RateLimit-Remaining` - remaining budget after the request
+- `X-RateLimit-Reset` - the strategy-specific reset timestamp
+
+For fixed and sliding windows, `X-RateLimit-Reset` is the next discrete window boundary. For token buckets, it is the estimated time when the bucket will be full again.
 
 When a request is rejected, `RateLimiterMiddleware` throws `TooManyRequestsException` with:
 
-- `Retry-After` — seconds until the reset time (minimum `1`)
+- `Retry-After` - seconds until the reported `X-RateLimit-Reset` time (minimum `1`)
 
 ## Middleware integration
 

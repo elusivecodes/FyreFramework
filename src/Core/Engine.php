@@ -91,6 +91,7 @@ class Engine extends Container
             )
             ->scoped(Auth::class)
             ->scoped(Benchmark::class)
+            ->scoped(ContentSecurityPolicy::class)
             ->scoped(CsrfProtection::class)
             ->scoped(
                 MiddlewareQueue::class,
@@ -144,7 +145,6 @@ class Engine extends Container
             )
             ->singleton(ConnectionManager::class)
             ->singleton(Console::class)
-            ->singleton(ContentSecurityPolicy::class)
             ->singleton(EncryptionManager::class)
             ->singleton(
                 EntityLocator::class,

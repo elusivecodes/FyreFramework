@@ -136,8 +136,10 @@ use Fyre\Security\Encryption\EncryptionManager;
 
 $encrypter = app(EncryptionManager::class)->use();
 
-$key = base64_decode((string) getenv('APP_ENCRYPTION_KEY'), true);
-if ($key === false) {
+$encodedKey = getenv('APP_ENCRYPTION_KEY');
+$key = is_string($encodedKey) ? base64_decode($encodedKey, true) : false;
+
+if ($key === false || $key === '') {
     throw new RuntimeException('Missing or invalid APP_ENCRYPTION_KEY.');
 }
 
@@ -316,7 +318,7 @@ A few behaviors are worth keeping in mind:
 - When integrity checks fail, `decrypt()` throws `Fyre\Security\Encryption\Exceptions\EncryptionException`.
 - `EncryptionManager::use($key)` requires a valid config entry containing a `className`; requesting a missing key (or invalid class) results in an `InvalidArgumentException` from `build()`.
 - `EncryptionManager::setConfig()` throws if the key already exists; to replace a key, call `unload()` first.
-- The `digest` option controls both HKDF and HMAC behavior; `Encrypter::getHmacLength()` assumes the digest is in `SHA###` form (for example `SHA512`).
+- The `digest` option controls both HKDF and HMAC behavior and must be supported by `hash_hmac()`.
 
 ## Related
 

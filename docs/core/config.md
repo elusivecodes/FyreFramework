@@ -189,17 +189,15 @@ return [
         'default' => [
             'default-src' => ['self'],
             'img-src' => ['self', 'data:'],
+            'report-to' => 'csp',
         ],
-        'reportTo' => [
-            'group' => 'csp',
-            'max_age' => 10_886_400,
-            'endpoints' => [
-                ['url' => 'https://example.com/csp-report'],
-            ],
+        'reportingEndpoints' => [
+            'csp' => 'https://example.com/csp-report',
         ],
     ],
 
     'Csrf' => [
+        'salt' => 'your-secret-here',
         'field' => 'csrf_token',
         'header' => 'Csrf-Token',
         'cookie' => [

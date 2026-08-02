@@ -8,6 +8,7 @@ In Fyre, CSRF protection uses a cookie token plus a matching form field or reque
 
 - [Start here](#start-here)
 - [Configuring CSRF](#configuring-csrf)
+  - [Options](#options)
   - [Example `config/app.php`](#example-configappphp)
 - [Middleware integration](#middleware-integration)
 - [`FormHelper` integration](#formhelper-integration)
@@ -39,7 +40,21 @@ CSRF behavior is configured under the `Csrf` key in [Config](../core/config.md).
 
 If `Csrf.salt` changes, existing tokens can no longer be validated (and all clients will effectively “lose” their CSRF cookies until they refresh and get a new one).
 
-If `Csrf.salt` is missing or empty, tokens are still generated but the construction is weaker than intended. Always set a real secret.
+If `Csrf.salt` is missing or empty, constructing `CsrfProtection` raises an `InvalidArgumentException`.
+
+### Options
+
+- `salt` (`string`): stable secret used to authenticate tokens; this option is required.
+- `field` (`string|null`): parsed-body field used to read the form token (default: `csrf_token`); use `null` to disable form-field tokens.
+- `header` (`string|null`): request header used to read the form token (default: `Csrf-Token`); use `null` to disable header tokens.
+- `skipCheck` (`Closure|null`): callback that receives the request and bypasses validation when it returns `true`.
+- `cookie.name` (`string`): cookie name (default: `CsrfToken`).
+- `cookie.expires` (`int`): lifetime in seconds, or `0` for a session cookie (default: `0`).
+- `cookie.domain` (`string`): cookie domain (default: an empty string).
+- `cookie.path` (`string`): cookie path (default: `/`).
+- `cookie.secure` (`bool`): whether the cookie is restricted to HTTPS (default: `true`).
+- `cookie.httpOnly` (`bool`): whether JavaScript is prevented from reading the cookie (default: `false`).
+- `cookie.sameSite` (`string`): SameSite policy (default: `Lax`).
 
 ### Example `config/app.php`
 

@@ -64,14 +64,9 @@ final class CspMiddlewareTest extends TestCase
                 'default-src' => 'self',
                 'report-to' => 'csp-endpoint',
             ],
-            'reportTo' => [
-                'group' => 'csp-endpoint',
-                'max_age' => '10886400',
-                'endpoints' => [
-                    [
-                        'url' => 'https://test.com/csp-report',
-                    ],
-                ],
+            'reportingEndpoints' => [
+                'csp-endpoint' => 'https://test.com/csp-report',
+                'default' => 'https://test.com/default-report',
             ],
         ]);
         $middleware = $this->container->build(CspMiddleware::class);
@@ -90,8 +85,8 @@ final class CspMiddlewareTest extends TestCase
         );
 
         $this->assertSame(
-            '{"group":"csp-endpoint","max_age":"10886400","endpoints":[{"url":"https://test.com/csp-report"}]}',
-            $response->getHeaderLine('Report-To')
+            'csp-endpoint="https://test.com/csp-report", default="https://test.com/default-report"',
+            $response->getHeaderLine('Reporting-Endpoints')
         );
     }
 

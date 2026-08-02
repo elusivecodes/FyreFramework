@@ -39,7 +39,7 @@ When emitting headers, `ContentSecurityPolicy` can output:
 
 - `Content-Security-Policy` (enforced)
 - `Content-Security-Policy-Report-Only` (report-only)
-- `Report-To` (when configured via `setReportTo()`)
+- `Reporting-Endpoints` (when configured via `setReportingEndpoints()`)
 
 This is typically used through:
 
@@ -58,7 +58,7 @@ CSP is configured under the `Csp` key in [Config](../core/config.md). `ContentSe
 If you want browsers to send CSP violation reports, configure:
 
 - a `report-to` directive in the policy that references a group name
-- `Csp.reportTo` so `ContentSecurityPolicy` can emit the `Report-To` header for that group
+- `Csp.reportingEndpoints` so `ContentSecurityPolicy` can emit the `Reporting-Endpoints` header for that group
 
 You can also include `report-uri` for compatibility with older reporting implementations.
 
@@ -76,11 +76,8 @@ return [
             'report-to' => 'csp',
             'report-uri' => 'https://reports.example.com/csp',
         ],
-        'reportTo' => [
-            'group' => 'csp',
-            'endpoints' => [
-                ['url' => 'https://reports.example.com/csp'],
-            ],
+        'reportingEndpoints' => [
+            'csp' => 'https://reports.example.com/csp',
         ],
     ],
 ];
@@ -222,23 +219,20 @@ Arguments:
 $response = $csp->addHeaders($response);
 ```
 
-#### **Configure Report-To output** (`setReportTo()`)
+#### **Configure reporting endpoints** (`setReportingEndpoints()`)
 
-Sets `Report-To` data that will be JSON-encoded and emitted as a `Report-To` header when non-empty. This class does not validate the payload structure.
+Sets the named endpoints emitted in the `Reporting-Endpoints` header when non-empty.
 
 Arguments:
-- `$reportTo` (`array`): the report-to payload to emit.
+- `$reportingEndpoints` (`array<string, string>`): the endpoint names and URLs to emit.
 
-`setReportTo()` only affects the `Report-To` response header. To make CSP use that group for violation reporting, also set a `report-to` directive in your CSP policy (for example `'report-to' => 'csp'`).
+`setReportingEndpoints()` only affects the `Reporting-Endpoints` response header. To make CSP use an endpoint for violation reporting, also set a `report-to` directive in your CSP policy with the same name (for example `'report-to' => 'csp'`).
 
 ```php
 use Fyre\Security\ContentSecurityPolicy;
 
-$csp->setReportTo([
-    'group' => 'csp',
-    'endpoints' => [
-        ['url' => 'https://reports.example.com/csp'],
-    ],
+$csp->setReportingEndpoints([
+    'csp' => 'https://reports.example.com/csp',
 ]);
 ```
 
@@ -341,7 +335,7 @@ A few behaviors are worth keeping in mind:
 - Only policies with keys `default` and `report` are emitted as headers; other stored policies are not added by `addHeaders()`.
 - A policy with no directives produces an empty header string and is not emitted.
 - Unknown directive names raise an `InvalidArgumentException`.
-- `Report-To` is emitted only when `setReportTo()` has been called with a non-empty array; it does not automatically add a `report-to` directive to your policies.
+- `Reporting-Endpoints` is emitted only when `setReportingEndpoints()` has been called with a non-empty array; it does not automatically add a `report-to` directive to your policies.
 - `CspHelper` mutates the `ContentSecurityPolicy` instance by updating stored policies in place (it is not a “pure” formatter).
 - When you enable nonces via `CspHelper`, define a baseline `script-src` / `style-src` yourself (for example including `self`). Adding `script-src` can change CSP fallback behavior by overriding `default-src`.
 - `scriptNonce()` and `styleNonce()` reuse the same nonce for repeated calls on the current helper instance, so you can call them from multiple partials within a render without appending duplicate nonce values.
