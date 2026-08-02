@@ -718,11 +718,11 @@ final class MakeModelTest extends TestCase
 
         $this->container = $container;
 
-        $tmpDir = Path::normalize(Path::join(ROOT, 'tmp'));
+        $tmpDir = Path::join(ROOT, 'tmp');
 
         $container->use(Loader::class)->addNamespaces([
             'Example\\' => $tmpDir,
-            'Fyre\Commands\\' => Path::normalize(Path::join(ROOT, 'src/Commands')),
+            'Fyre\Commands\\' => Path::join(ROOT, 'src/Commands'),
             'Tests\\' => $tmpDir,
         ]);
         $container->use(EntityLocator::class)->addNamespace('Example\Entities');

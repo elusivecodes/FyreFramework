@@ -277,9 +277,8 @@ abstract class Relationship
      */
     public function getForeignKey(): string
     {
-        return $this->foreignKey ??= $this->modelKey(
-            $this->source->getClassAlias()
-        );
+        return $this->foreignKey ??= $this->source->getClassAlias()
+            |> $this->modelKey(...);
     }
 
     /**

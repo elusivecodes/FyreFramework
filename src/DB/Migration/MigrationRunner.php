@@ -88,7 +88,7 @@ class MigrationRunner
      */
     public function getForge(): Forge
     {
-        return $this->forgeRegistry->use($this->getConnection());
+        return $this->getConnection() |> $this->forgeRegistry->use(...);
     }
 
     /**

@@ -154,11 +154,11 @@ final class MakeJobTest extends TestCase
         $container->singleton(CommandRunner::class);
         $container->singleton(Make::class);
 
-        $tmpDir = Path::normalize(Path::join(ROOT, 'tmp'));
+        $tmpDir = Path::join(ROOT, 'tmp');
 
         $container->use(Loader::class)->addNamespaces([
             'Example\\' => $tmpDir,
-            'Fyre\Commands\\' => Path::normalize(Path::join(ROOT, 'src/Commands')),
+            'Fyre\Commands\\' => Path::join(ROOT, 'src/Commands'),
         ]);
 
         $input = fopen('php://memory', 'r+b');

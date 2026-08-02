@@ -344,7 +344,7 @@ class ModelSourceBuilder
             return null;
         }
 
-        $targetAlias = $this->modelAlias($target->getName());
+        $targetAlias = $target->getName() |> $this->modelAlias(...);
         $hasUniqueIndex = $target->indexes()->some(
             static fn(Index $index): bool => $index->isUnique() &&
                 static::columnsMatch($index->getColumns(), $columns)
@@ -404,7 +404,7 @@ class ModelSourceBuilder
             return null;
         }
 
-        $cases = trim(substr($comment, 6));
+        $cases = substr($comment, 6) |> trim(...);
 
         if ($cases === '') {
             return null;
@@ -481,7 +481,7 @@ class ModelSourceBuilder
         }
 
         $targetAlias = $this->modelAlias($targetName);
-        $junctionAlias = $this->modelAlias($junction->getName());
+        $junctionAlias = $junction->getName() |> $this->modelAlias(...);
         $sourceColumns = $sourceForeignKey->getColumns();
         $sourceReferencedColumns = $sourceForeignKey->getReferencedColumns();
         $targetColumns = $targetForeignKey->getColumns();

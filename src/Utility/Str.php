@@ -189,7 +189,7 @@ abstract class Str
      */
     public static function camel(string $string): string
     {
-        return lcfirst(static::pascal($string));
+        return static::pascal($string) |> lcfirst(...);
     }
 
     /**

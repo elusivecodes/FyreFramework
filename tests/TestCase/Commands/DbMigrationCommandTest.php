@@ -207,7 +207,7 @@ final class DbMigrationCommandTest extends TestCase
         $this->schema = $container->use(SchemaRegistry::class)->use($this->db);
 
         $container->use(Loader::class)->addNamespaces([
-            'Fyre\Commands\\' => Path::normalize(Path::join(ROOT, 'src/Commands')),
+            'Fyre\Commands\\' => Path::join(ROOT, 'src/Commands'),
             'Tests\Mock\Migrations' => 'tests/Mock/Migrations',
         ]);
 

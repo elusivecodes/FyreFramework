@@ -804,7 +804,7 @@ class Model implements EventListenerInterface
      */
     public function getRules(): RuleSet
     {
-        return $this->rules ??= $this->buildRules($this->container->build(RuleSet::class, ['model' => $this]));
+        return $this->rules ??= $this->container->build(RuleSet::class, ['model' => $this]) |> $this->buildRules(...);
     }
 
     /**
@@ -826,7 +826,7 @@ class Model implements EventListenerInterface
      */
     public function getTable(): string
     {
-        return $this->table ??= $this->inflector->underscore($this->getClassAlias());
+        return $this->table ??= $this->getClassAlias() |> $this->inflector->underscore(...);
     }
 
     /**
@@ -840,7 +840,7 @@ class Model implements EventListenerInterface
             return $this->validator;
         }
 
-        $validator = $this->buildValidator($this->container->build(Validator::class));
+        $validator = $this->container->build(Validator::class) |> $this->buildValidator(...);
 
         $this->dispatchEvent('ORM.buildValidator', ['validator' => $validator]);
 

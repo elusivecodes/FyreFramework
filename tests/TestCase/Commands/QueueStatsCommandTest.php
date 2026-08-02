@@ -160,7 +160,7 @@ final class QueueStatsCommandTest extends TestCase
         $container->singleton(QueueManager::class);
 
         $container->use(Loader::class)->addNamespaces([
-            'Fyre\Commands\\' => Path::normalize(Path::join(ROOT, 'src/Commands')),
+            'Fyre\Commands\\' => Path::join(ROOT, 'src/Commands'),
         ]);
 
         $container->use(Config::class)->set('Queue', [

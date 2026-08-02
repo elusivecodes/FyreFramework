@@ -311,7 +311,7 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
     public function count(): int
     {
         if ($this->source instanceof Closure) {
-            return iterator_count($this->getIterator());
+            return $this->getIterator() |> iterator_count(...);
         }
 
         return count($this->source);
@@ -1271,7 +1271,7 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
             return $this->source;
         }
 
-        return iterator_to_array($this->getIterator());
+        return $this->getIterator() |> iterator_to_array(...);
     }
 
     /**
@@ -1291,7 +1291,7 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
      */
     public function toList(): array
     {
-        return array_values($this->values()->toArray());
+        return $this->values()->toArray() |> array_values(...);
     }
 
     /**

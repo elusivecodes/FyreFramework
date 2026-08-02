@@ -87,7 +87,7 @@ final class TemplateLocatorTest extends TestCase
 
     public function testLocateSymlinkOutsidePath(): void
     {
-        $suffix = bin2hex(random_bytes(8));
+        $suffix = random_bytes(8) |> bin2hex(...);
         $rootPath = sys_get_temp_dir().'/fyre-template-root-'.$suffix;
         $outsidePath = sys_get_temp_dir().'/fyre-template-outside-'.$suffix.'.php';
         $linkPath = $rootPath.'/outside.php';

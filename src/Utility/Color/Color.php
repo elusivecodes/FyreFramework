@@ -746,11 +746,11 @@ abstract class Color implements Stringable
      */
     public function label(): string
     {
-        $a = array_values($this->toArray());
+        $a = $this->toArray() |> array_values(...);
 
         $closestDist = PHP_INT_MAX;
         foreach (static::CSS_COLORS as $label => $hex) {
-            $b = array_values(static::createFromString($hex)->toArray());
+            $b = static::createFromString($hex)->toArray() |> array_values(...);
 
             $dist = array_reduce([
                 $a[0] - $b[0],
@@ -982,7 +982,7 @@ abstract class Color implements Stringable
     {
         $alpha ??= $this->alpha < 1;
 
-        $values = array_values($this->toArray());
+        $values = $this->toArray() |> array_values(...);
 
         $result = 'color('.
             static::COLOR_SPACE.
@@ -1092,7 +1092,7 @@ abstract class Color implements Stringable
     protected static function isInGamut(self $color, string $space): bool
     {
         [$min, $max] = static::FIT_GAMUT_RANGES[$space];
-        $values = array_values($color->toArray());
+        $values = $color->toArray() |> array_values(...);
 
         foreach ([$values[0], $values[1], $values[2]] as $value) {
             if (!is_finite($value) || $value < $min || $value > $max) {

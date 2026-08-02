@@ -184,10 +184,10 @@ final class MakeTestTest extends TestCase
         $container->singleton(CommandRunner::class);
         $container->singleton(Make::class);
 
-        $tmpDir = Path::normalize(Path::join(ROOT, 'tmp'));
+        $tmpDir = Path::join(ROOT, 'tmp');
 
         $container->use(Loader::class)->addNamespaces([
-            'Fyre\Commands\\' => Path::normalize(Path::join(ROOT, 'src/Commands')),
+            'Fyre\Commands\\' => Path::join(ROOT, 'src/Commands'),
             'Tests\\' => $tmpDir,
         ]);
 

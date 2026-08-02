@@ -39,7 +39,7 @@ trait FormSchemaTrait
         }
 
         $formField = $schema->field($field);
-        $value = $formField->type()->parse($formField->getDefault());
+        $value = $formField->getDefault() |> $formField->type()->parse(...);
         $enumClass = $formField->getEnumClass();
 
         return $enumClass ?

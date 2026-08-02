@@ -188,11 +188,11 @@ final class MakeMigrationTest extends TestCase
         $container->singleton(Make::class);
         $container->singleton(MigrationRunner::class);
 
-        $tmpDir = Path::normalize(Path::join(ROOT, 'tmp'));
+        $tmpDir = Path::join(ROOT, 'tmp');
 
         $container->use(Loader::class)->addNamespaces([
             'Example\\' => $tmpDir,
-            'Fyre\Commands\\' => Path::normalize(Path::join(ROOT, 'src/Commands')),
+            'Fyre\Commands\\' => Path::join(ROOT, 'src/Commands'),
         ]);
         $container->use(MigrationRunner::class)->addNamespace('Example\Migrations');
 

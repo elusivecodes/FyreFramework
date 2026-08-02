@@ -158,10 +158,10 @@ class CommandRunner
         $command = $commands[$alias] ?? null;
 
         if (!$command) {
-            $this->io->error(sprintf(
+            sprintf(
                 'Invalid command: %s',
                 $alias
-            ));
+            ) |> $this->io->error(...);
 
             return Command::CODE_ERROR;
         }
@@ -170,10 +170,10 @@ class CommandRunner
         $className = $command['className'];
 
         if (!method_exists($className, 'run')) {
-            $this->io->error(sprintf(
+            sprintf(
                 'Missing run method: %s',
                 $alias
-            ));
+            ) |> $this->io->error(...);
 
             return Command::CODE_ERROR;
         }
@@ -191,10 +191,10 @@ class CommandRunner
             }
 
             if (!array_key_exists($key, $command['options'])) {
-                $this->io->error(sprintf(
+                sprintf(
                     'Invalid option: %s',
                     $key
-                ));
+                ) |> $this->io->error(...);
 
                 return Command::CODE_ERROR;
             }
@@ -232,10 +232,10 @@ class CommandRunner
                     array_keys($data['values']);
 
                 if ($value !== null && !in_array($value, $optionKeys, true)) {
-                    $this->io->error(sprintf(
+                    sprintf(
                         'Invalid option value for: %s',
                         $key
-                    ));
+                    ) |> $this->io->error(...);
                     $value = null;
                 }
 
@@ -259,10 +259,10 @@ class CommandRunner
                 }
             } else {
                 if (is_bool($value)) {
-                    $this->io->error(sprintf(
+                    sprintf(
                         'Invalid value for: %s',
                         $key
-                    ));
+                    ) |> $this->io->error(...);
                     $value = null;
                 }
 

@@ -62,7 +62,7 @@ class RequestHandler implements RequestHandlerInterface
                 ]);
         }
 
-        $middleware = $this->middlewareRegistry->resolve($this->queue->current());
+        $middleware = $this->queue->current() |> $this->middlewareRegistry->resolve(...);
 
         $this->queue->next();
 

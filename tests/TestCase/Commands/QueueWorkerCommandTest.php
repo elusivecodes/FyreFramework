@@ -184,7 +184,7 @@ final class QueueWorkerCommandTest extends TestCase
         $this->container->singleton(QueueManager::class);
 
         $this->container->use(Loader::class)->addNamespaces([
-            'Fyre\Commands\\' => Path::normalize(Path::join(ROOT, 'src/Commands')),
+            'Fyre\Commands\\' => Path::join(ROOT, 'src/Commands'),
         ]);
 
         $this->container->use(Config::class)->set('Queue', [

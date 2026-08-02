@@ -50,7 +50,7 @@ class EntityContext extends Context
         ModelRegistry $modelRegistry,
         protected Entity $item
     ) {
-        $this->model = $modelRegistry->use((string) $item->getSource());
+        $this->model = ((string) $item->getSource()) |> $modelRegistry->use(...);
     }
 
     /**

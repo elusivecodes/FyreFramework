@@ -213,7 +213,7 @@ class Uri implements Stringable, UriInterface
      */
     public function getTotalSegments(): int
     {
-        return count($this->getSegments());
+        return $this->getSegments() |> count(...);
     }
 
     /**

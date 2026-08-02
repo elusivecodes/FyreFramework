@@ -218,7 +218,7 @@ final class AuthenticatorTest extends TestCase
             $cookie->getName()
         );
 
-        $value = rawurldecode($cookie->getValue());
+        $value = $cookie->getValue() |> rawurldecode(...);
         $data = json_decode($value, true);
 
         $this->assertCount(2, $data);

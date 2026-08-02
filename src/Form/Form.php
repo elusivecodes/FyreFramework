@@ -150,7 +150,7 @@ class Form implements EventListenerInterface
      */
     public function getSchema(): Schema
     {
-        return $this->schema ??= $this->buildSchema($this->container->build(Schema::class));
+        return $this->schema ??= $this->container->build(Schema::class) |> $this->buildSchema(...);
     }
 
     /**
@@ -164,7 +164,7 @@ class Form implements EventListenerInterface
             return $this->validator;
         }
 
-        $validator = $this->buildValidator($this->container->build(Validator::class));
+        $validator = $this->container->build(Validator::class) |> $this->buildValidator(...);
 
         $this->dispatchEvent('Form.buildValidator', ['validator' => $validator]);
 

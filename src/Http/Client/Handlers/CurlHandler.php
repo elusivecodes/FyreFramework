@@ -197,7 +197,7 @@ class CurlHandler extends ClientHandler
      */
     protected static function buildResponse(string $contents, int $headerSize): Response
     {
-        $header = trim(substr($contents, 0, $headerSize));
+        $header = substr($contents, 0, $headerSize) |> trim(...);
         $body = substr($contents, $headerSize);
 
         $response = new Response();
