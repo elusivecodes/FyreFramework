@@ -33,13 +33,30 @@ use Fyre\TestSuite\Constraint\Session\SessionEquals;
 use Fyre\TestSuite\Constraint\Session\SessionHasKey;
 use Fyre\TestSuite\Constraint\Session\SessionNotHasKey;
 use Fyre\TestSuite\TestCase;
+use Fyre\Utility\Arr;
+use InvalidArgumentException;
+use LogicException;
 use PHPUnit\Framework\Attributes\After;
+use RuntimeException;
 
 use function array_replace_recursive;
-use function is_string;
+use function array_walk_recursive;
+use function basename;
+use function copy;
+use function filesize;
+use function http_build_query;
+use function in_array;
+use function is_file;
 use function json_encode;
+use function parse_str;
+use function sprintf;
+use function str_starts_with;
+use function sys_get_temp_dir;
+use function tempnam;
+use function unlink;
 
 use const JSON_THROW_ON_ERROR;
+use const UPLOAD_ERR_OK;
 
 /**
  * Test case helpers for integration tests.
@@ -52,9 +69,15 @@ trait IntegrationTestTrait
 
     protected array $request = [];
 
+    protected array $requestData = [];
+
+    protected array $requestFiles = [];
+
     protected ClientResponse|null $response = null;
 
     protected array $session = [];
+
+    protected array $temporaryUploads = [];
 
     /**
      * Assert that the content type of the response matches the expected type.
@@ -415,7 +438,7 @@ trait IntegrationTestTrait
     }
 
     /**
-     * Assert that the response is a failure (status code 500-505).
+     * Assert that the response is a failure (status code 500-599).
      *
      * @param string $message The message to display on failure.
      */
@@ -427,7 +450,7 @@ trait IntegrationTestTrait
 
         $this->assertThat(
             $this->response,
-            new StatusCodeBetween(500, 505),
+            new StatusCodeBetween(500, 599),
             $message
         );
     }
@@ -475,7 +498,7 @@ trait IntegrationTestTrait
      * @param string $body The expected response body.
      * @param string $message The message to display on failure.
      */
-    public function assertResponseNotEquals(mixed $body, string $message = ''): void
+    public function assertResponseNotEquals(string $body, string $message = ''): void
     {
         if (!$this->response) {
             $this->fail('No response has been set.');
@@ -582,6 +605,19 @@ trait IntegrationTestTrait
     }
 
     /**
+     * Add data to the next request.
+     *
+     * @param array<string, mixed> $data The request data.
+     */
+    public function data(array $data): void
+    {
+        $this->requestData = array_replace_recursive(
+            $this->requestData,
+            $data
+        );
+    }
+
+    /**
      * Send a DELETE request to the application.
      *
      * @param string $path The request path.
@@ -599,11 +635,83 @@ trait IntegrationTestTrait
     public function enableCsrfToken(string $cookieName = 'CsrfToken'): void
     {
         $csrfProtection = $this->app->use(CsrfProtection::class);
+        $field = $csrfProtection->getField();
         $header = $csrfProtection->getHeader();
 
+        if ($field === null && $header === null) {
+            throw new LogicException('CSRF token field and header are disabled.');
+        }
+
+        $formToken = $csrfProtection->getFormToken();
+
+        if ($formToken === null) {
+            throw new LogicException('Failed to generate CSRF form token.');
+        }
+
         $this->cookies[$cookieName] = $csrfProtection->getCookieToken();
-        $this->request['headers'] ??= [];
-        $this->request['headers'][$header] = $csrfProtection->getFormToken();
+
+        if ($field !== null) {
+            $this->data([$field => $formToken]);
+        }
+
+        if ($header !== null) {
+            $this->request['headers'] ??= [];
+            $this->request['headers'][$header] = $formToken;
+        }
+    }
+
+    /**
+     * Add an uploaded file to the request.
+     *
+     * @param string $name The file field name using "dot" notation.
+     * @param string $path The file path.
+     * @param string|null $clientFilename The client filename.
+     * @param string|null $clientMediaType The client media type.
+     */
+    public function file(
+        string $name,
+        string $path,
+        string|null $clientFilename = null,
+        string|null $clientMediaType = null
+    ): void {
+        if (
+            !is_file($path) ||
+            ($size = filesize($path)) === false
+        ) {
+            throw new InvalidArgumentException(sprintf(
+                'Uploaded file `%s` is not valid.',
+                $path
+            ));
+        }
+
+        $temporaryPath = tempnam(sys_get_temp_dir(), 'fyre-upload-');
+
+        if ($temporaryPath === false) {
+            throw new RuntimeException('Unable to create temporary uploaded file.');
+        }
+
+        if (!copy($path, $temporaryPath)) {
+            @unlink($temporaryPath);
+
+            throw new RuntimeException(sprintf(
+                'Uploaded file `%s` could not be copied.',
+                $path
+            ));
+        }
+
+        $this->temporaryUploads[] = $temporaryPath;
+
+        $this->requestFiles = Arr::setDot(
+            $this->requestFiles,
+            $name,
+            [
+                'tmp_name' => $temporaryPath,
+                'name' => $clientFilename ?? basename($path),
+                'type' => $clientMediaType,
+                'size' => $size,
+                'error' => UPLOAD_ERR_OK,
+            ]
+        );
     }
 
     /**
@@ -695,10 +803,17 @@ trait IntegrationTestTrait
     #[After]
     protected function cleanup(): void
     {
+        foreach ($this->temporaryUploads as $path) {
+            @unlink($path);
+        }
+
         $this->cookies = [];
         $this->request = [];
+        $this->requestData = [];
+        $this->requestFiles = [];
         $this->response = null;
         $this->session = [];
+        $this->temporaryUploads = [];
         $_SESSION = [];
     }
 
@@ -707,18 +822,24 @@ trait IntegrationTestTrait
      *
      * @param string $path The request path.
      * @param string $method The request method.
-     * @param array<string, mixed>|string $data The request data.
+     * @param array<string, mixed> $data The request data.
      */
-    protected function sendRequest(string $path, string $method, array|string $data = []): void
+    protected function sendRequest(string $path, string $method, array $data = []): void
     {
+        $requestData = $this->requestData;
+        $requestFiles = $this->requestFiles;
+
+        $this->requestData = [];
+        $this->requestFiles = [];
+
         $uri = Uri::createFromString($path);
 
         $options = array_replace_recursive($this->request, [
             'headers' => [],
             'cookies' => $this->cookies,
             'get' => $uri->getQueryParams(),
-            'data' => [],
-            'files' => [],
+            'data' => $requestData,
+            'files' => $requestFiles,
             'server' => [
                 'REQUEST_METHOD' => $method,
                 'REQUEST_URI' => $uri->getPath(),
@@ -726,16 +847,39 @@ trait IntegrationTestTrait
             ],
         ]);
 
-        if (is_string($data)) {
-            $options['body'] = $data;
-        } else if (
-            isset($options['headers']['Content-Type']) &&
-            $options['headers']['Content-Type'] === 'application/json' &&
-            $data !== []
-        ) {
-            $options['body'] = (string) json_encode($data, JSON_THROW_ON_ERROR);
-        } else {
-            $options['data'] = $data;
+        if (in_array($method, ['DELETE', 'PATCH', 'POST', 'PUT'], true)) {
+            $data = array_replace_recursive($data, $options['data']);
+            $contentType = $options['headers']['Content-Type'] ?? null;
+
+            if (
+                $contentType === null &&
+                ($data !== [] || $options['files'] !== [])
+            ) {
+                $contentType = $options['files'] === [] ?
+                    'application/x-www-form-urlencoded' :
+                    'multipart/form-data';
+
+                $options['headers']['Content-Type'] = $contentType;
+            }
+
+            if (str_starts_with($contentType ?? '', 'application/json')) {
+                $options['body'] = (string) json_encode($data, JSON_THROW_ON_ERROR);
+                unset($options['data']);
+            } else if (str_starts_with($contentType ?? '', 'application/x-www-form-urlencoded')) {
+                $options['body'] = http_build_query($data);
+
+                if ($method === 'POST') {
+                    parse_str($options['body'], $options['data']);
+                } else {
+                    unset($options['data']);
+                }
+            } else {
+                array_walk_recursive($data, static function(mixed &$value): void {
+                    $value = (string) $value;
+                });
+
+                $options['data'] = $data;
+            }
         }
 
         $this->app->use(MiddlewareQueue::class)->rewind();
@@ -748,6 +892,10 @@ trait IntegrationTestTrait
 
         $_SESSION = $this->session;
 
-        $this->response = $handler->handle($request);
+        try {
+            $this->response = $handler->handle($request);
+        } finally {
+            $this->session = $_SESSION;
+        }
     }
 }

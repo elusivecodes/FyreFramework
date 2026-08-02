@@ -31,4 +31,12 @@ trait SessionTrait
 
         $this->assertSession('value', 'key');
     }
+
+    public function testSessionPersistsBetweenRequests(): void
+    {
+        $this->get('/session');
+        $this->get('/response');
+
+        $this->assertSession('value', 'key');
+    }
 }

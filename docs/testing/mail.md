@@ -404,6 +404,8 @@ A few behaviors are worth keeping in mind:
 
 - `...At()` methods use 1-based indexing. If the index is out of range, the assertion behaves like “no emails matched”.
 - `assertMailContains()` searches the full encoded body string. Prefer `assertMailContainsText()` / `assertMailContainsHtml()` when you want to target a specific body type.
+- Captured messages are cloned when sent, so later changes to the original `Email` do not alter the recorded message.
+- Captured messages are cleared and the original `MailManager` configuration is restored after each test.
 - Line endings are normalized before body comparisons (so `\r\n` and `\n` do not cause false negatives).
 
 ## Related

@@ -98,7 +98,7 @@ Register a mock response for `Client::get()` calls matching the URL.
 Arguments:
 - `$url` (`string`): the request URL to match (supports `*` wildcards).
 - `$response` (`Response`): the response to return.
-- `$match` (`Closure(RequestInterface): bool|null`): an optional callback to accept/reject the request.
+- `$match` (`(Closure(RequestInterface): bool)|null`): an optional callback to accept/reject the request.
 
 ```php
 use Psr\Http\Message\RequestInterface;
@@ -125,7 +125,7 @@ Register a mock response for `Client::post()` calls matching the URL.
 Arguments:
 - `$url` (`string`): the request URL to match (supports `*` wildcards).
 - `$response` (`Response`): the response to return.
-- `$match` (`Closure(RequestInterface): bool|null`): an optional callback to accept/reject the request.
+- `$match` (`(Closure(RequestInterface): bool)|null`): an optional callback to accept/reject the request.
 
 ```php
 $this->mockClientPost('http://localhost/test', $this->createResponse(201, [], 'Created'));
@@ -142,7 +142,7 @@ Register a mock response for `Client::put()` calls matching the URL.
 Arguments:
 - `$url` (`string`): the request URL to match (supports `*` wildcards).
 - `$response` (`Response`): the response to return.
-- `$match` (`Closure(RequestInterface): bool|null`): an optional callback to accept/reject the request.
+- `$match` (`(Closure(RequestInterface): bool)|null`): an optional callback to accept/reject the request.
 
 ```php
 $this->mockClientPut('http://localhost/test', $this->createResponse(200, [], 'Updated'));
@@ -159,7 +159,7 @@ Register a mock response for `Client::patch()` calls matching the URL.
 Arguments:
 - `$url` (`string`): the request URL to match (supports `*` wildcards).
 - `$response` (`Response`): the response to return.
-- `$match` (`Closure(RequestInterface): bool|null`): an optional callback to accept/reject the request.
+- `$match` (`(Closure(RequestInterface): bool)|null`): an optional callback to accept/reject the request.
 
 ```php
 $this->mockClientPatch('http://localhost/test', $this->createResponse(200, [], 'Patched'));
@@ -176,7 +176,7 @@ Register a mock response for `Client::delete()` calls matching the URL.
 Arguments:
 - `$url` (`string`): the request URL to match (supports `*` wildcards).
 - `$response` (`Response`): the response to return.
-- `$match` (`Closure(RequestInterface): bool|null`): an optional callback to accept/reject the request.
+- `$match` (`(Closure(RequestInterface): bool)|null`): an optional callback to accept/reject the request.
 
 ```php
 $this->mockClientDelete('http://localhost/test', $this->createResponse(204));

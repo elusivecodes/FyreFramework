@@ -5,6 +5,7 @@ namespace Tests\TestCase\Http\ServerRequest;
 
 use Fyre\Http\ServerRequest;
 use Fyre\Http\UploadedFile;
+use InvalidArgumentException;
 
 trait UploadedFileTestTrait
 {
@@ -198,5 +199,19 @@ trait UploadedFileTestTrait
             ],
             $request2->getUploadedFiles()
         );
+    }
+
+    public function testWithUploadedFilesInvalid(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Uploaded file `test.nested` is not valid.');
+
+        $request = new ServerRequest($this->config, $this->type);
+
+        $request->withUploadedFiles([
+            'test' => [
+                'nested' => 'invalid',
+            ],
+        ]);
     }
 }

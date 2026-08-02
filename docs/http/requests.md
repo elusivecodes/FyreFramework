@@ -431,7 +431,7 @@ A few practical details are worth keeping in mind:
 
 - `getParsedBody()` always returns an array, but it throws `RuntimeException` when an `application/json` body is invalid or does not decode to an array.
 - `getParsedBody()` treats `application/x-www-form-urlencoded` bodies specially only for `PUT`, `PATCH`, and `DELETE` requests; other cases fall back to `$_POST`.
-- `withUploadedFiles()` expects `UploadedFile` instances (and nested arrays of them) and throws when other values are provided.
+- `withUploadedFiles()` expects `UploadedFileInterface` instances (and nested arrays of them) and throws when other values are provided.
 - `getClientIp()` uses `REMOTE_ADDR` by default. Proxy trust with an empty trusted list accepts the rightmost forwarded address; a non-empty list restricts forwarding to explicitly trusted proxy hops.
 - `negotiate('content', $supported, strictMatch: true)` returns an empty string when no acceptable match is found.
 

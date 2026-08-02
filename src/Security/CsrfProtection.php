@@ -221,7 +221,7 @@ class CsrfProtection
      */
     public function getFormToken(): string|null
     {
-        return $this->saltToken($this->getCookieToken());
+        return $this->getCookieToken() |> $this->saltToken(...);
     }
 
     /**

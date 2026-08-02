@@ -11,7 +11,9 @@ use RuntimeException;
 
 use function assert;
 use function class_uses;
+use function file_get_contents;
 use function file_put_contents;
+use function sys_get_temp_dir;
 use function tempnam;
 use function unlink;
 
@@ -123,6 +125,35 @@ final class UploadedFileTest extends TestCase
         @unlink($filePath);
     }
 
+    public function testGetStreamMoved(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Upload already moved: test.txt');
+
+        $filePath = tempnam(sys_get_temp_dir(), 'uploaded-file');
+
+        assert($filePath !== false);
+
+        $targetPath = $filePath.'.moved';
+        file_put_contents($filePath, 'This is a test.');
+
+        $file = new UploadedFile(
+            $filePath,
+            15,
+            UPLOAD_ERR_OK,
+            'test.txt',
+            'text/plain'
+        );
+
+        try {
+            $file->moveTo($targetPath);
+            $file->getStream();
+        } finally {
+            @unlink($filePath);
+            @unlink($targetPath);
+        }
+    }
+
     public function testMoveTo(): void
     {
         $this->expectException(RuntimeException::class);
@@ -137,6 +168,38 @@ final class UploadedFileTest extends TestCase
         );
 
         $file->moveTo('tmp/php1');
+    }
+
+    public function testMoveToFile(): void
+    {
+        $filePath = tempnam(sys_get_temp_dir(), 'uploaded-file');
+
+        assert($filePath !== false);
+
+        $targetPath = $filePath.'.moved';
+        file_put_contents($filePath, 'This is a test.');
+
+        $file = new UploadedFile(
+            $filePath,
+            15,
+            UPLOAD_ERR_OK,
+            'test.txt',
+            'text/plain'
+        );
+
+        try {
+            $file->getStream();
+            $file->moveTo($targetPath);
+
+            $this->assertFileDoesNotExist($filePath);
+            $this->assertSame(
+                'This is a test.',
+                file_get_contents($targetPath)
+            );
+        } finally {
+            @unlink($filePath);
+            @unlink($targetPath);
+        }
     }
 
     public function testMoveToMoved(): void

@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 use Fyre\Http\ClientResponse;
 use Fyre\Http\DownloadResponse;
+use Fyre\Http\ServerRequest;
 use Fyre\Router\Router;
+use Psr\Http\Message\UploadedFileInterface;
 use Tests\Mock\Controllers\TestController;
 
 /** @var Router $router */
@@ -20,6 +22,50 @@ $router->get('empty', static function(): string {
 
 $router->get('cookie', static function(): ClientResponse {
     return response()->withCookie('key', 'value');
+});
+
+$router->post('csrf', static function(ServerRequest $request): string {
+    return (string) $request->getParsedBody()['value'];
+});
+
+$router->connect(
+    'data',
+    static function(ServerRequest $request): string {
+        return (string) json_encode($request->getParsedBody(), JSON_THROW_ON_ERROR);
+    },
+    methods: ['POST', 'PUT']
+);
+
+$router->post('upload', static function(ServerRequest $request): string {
+    $file = $request->getUploadedFile('profile.avatar');
+
+    if ($file === null) {
+        return 'No file.';
+    }
+
+    if (!($file instanceof UploadedFileInterface)) {
+        throw new RuntimeException('Uploaded file is not valid.');
+    }
+
+    return (string) json_encode([
+        'contentType' => $request->getHeaderLine('Content-Type'),
+        'filename' => $file->getClientFilename(),
+        'mediaType' => $file->getClientMediaType(),
+        'contents' => (string) $file->getStream(),
+        'data' => $request->getParsedBody(),
+    ], JSON_THROW_ON_ERROR);
+});
+
+$router->post('upload/move', static function(ServerRequest $request): string {
+    $file = $request->getUploadedFile('profile.avatar');
+
+    if (!($file instanceof UploadedFileInterface)) {
+        throw new RuntimeException('Uploaded file is not valid.');
+    }
+
+    $file->moveTo((string) $request->getParsedBody()['target']);
+
+    return '';
 });
 
 $router->get('header', static function(): ClientResponse {
@@ -52,4 +98,8 @@ $router->get('error', static function(): void {
 
 $router->get('fail', static function(): void {
     abort(500);
+});
+
+$router->get('fail-extended', static function(): void {
+    abort(507);
 });

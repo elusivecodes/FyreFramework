@@ -63,6 +63,10 @@ class TestCase extends \PHPUnit\Framework\TestCase
      */
     protected function setupFixtures(): void
     {
+        if ($this->fixtures === []) {
+            return;
+        }
+
         $connection = $this->app->use(ConnectionManager::class)->use();
         $fixtureRegistry = $this->app->use(FixtureRegistry::class);
 
@@ -82,6 +86,10 @@ class TestCase extends \PHPUnit\Framework\TestCase
      */
     protected function teardownFixtures(): void
     {
+        if ($this->fixtures === []) {
+            return;
+        }
+
         $fixtureRegistry = $this->app->use(FixtureRegistry::class);
         $connection = $this->app->use(ConnectionManager::class)->use();
         $tables = [];

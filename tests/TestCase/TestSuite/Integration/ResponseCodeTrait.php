@@ -75,10 +75,17 @@ trait ResponseCodeTrait
         $this->assertResponseFailure();
     }
 
+    public function testResponseFailureExtendedStatus(): void
+    {
+        $this->get('/fail-extended');
+
+        $this->assertResponseFailure();
+    }
+
     public function testResponseFailureFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that response status code is between 500 and 505.');
+        $this->expectExceptionMessage('Failed asserting that response status code is between 500 and 599.');
 
         $this->get('/response');
 

@@ -83,7 +83,7 @@ To use a different model alias, set `protected string $classAlias` in the fixtur
 
 The fixture implementation creates entities with `guard: false` and `validate: false`, and saves them with `checkExists: false` and `checkRules: false`. If any row cannot be saved, `run()` throws a `RuntimeException`.
 
-By default, fixtures do not build nested relationship data. To allow nested data, set `protected array|string|null $associated` on the fixture. Cleanup is typically handled by [`TestCase`](test-case.md), which truncates the fixture table and any tables implied by the fixture's configured associations.
+By default, fixtures do not build nested relationship data. To allow nested data, set `protected array|string|null $associated` on the fixture. Setup and cleanup are typically handled by [`TestCase`](test-case.md), which disables foreign key checks while loading and truncating fixture tables and always re-enables them afterward.
 
 ## Examples
 
@@ -176,8 +176,6 @@ $fixtureRegistry->unload('Items');
 
 Clear all configured namespaces and unload all cached fixtures.
 
-Arguments: (none)
-
 ```php
 $fixtureRegistry->clear();
 ```
@@ -212,8 +210,6 @@ $fixture = $fixtureRegistry->build('Items');
 
 Insert all rows returned by `data()` into the model table.
 
-Arguments: (none)
-
 ```php
 $fixtureRegistry->use('Items')->run();
 ```
@@ -221,8 +217,6 @@ $fixtureRegistry->use('Items')->run();
 #### **Return fixture rows** (`data()`)
 
 Return the dataset used by `run()`. Most fixtures simply set the protected `$data` property.
-
-Arguments: (none)
 
 ```php
 namespace App\Fixtures;
@@ -241,8 +235,6 @@ final class ItemsFixture extends Fixture
 
 Return the relationships that `run()` may build from nested row data.
 
-Arguments: (none)
-
 ```php
 namespace App\Fixtures;
 
@@ -258,8 +250,6 @@ final class ItemsFixture extends Fixture
 
 Return the model alias for the fixture. By default, this is derived from the fixture class name by stripping the `Fixture` suffix.
 
-Arguments: (none)
-
 ```php
 $alias = $fixtureRegistry->use('Items')->getClassAlias();
 ```
@@ -268,8 +258,6 @@ $alias = $fixtureRegistry->use('Items')->getClassAlias();
 
 Return the model instance used by the fixture (cached per fixture instance).
 
-Arguments: (none)
-
 ```php
 $model = $fixtureRegistry->use('Items')->getModel();
 ```
@@ -277,8 +265,6 @@ $model = $fixtureRegistry->use('Items')->getModel();
 #### **Return affected tables** (`getTables()`)
 
 Return the fixture table plus any tables implied by the fixture's configured associations.
-
-Arguments: (none)
 
 ```php
 $tables = $fixtureRegistry->use('Items')->getTables();
@@ -295,7 +281,7 @@ A few behaviors are worth keeping in mind:
 - `Fixture::run()` creates entities with `guard: false` and `validate: false`, and saves them with `checkExists: false` and `checkRules: false`; database constraints can still cause saves to fail (and will throw).
 - Fixtures default to `protected array|string|null $associated = []`, so nested relationship data is ignored unless you explicitly allow it.
 - `Fixture::getTables()` includes the fixture model table, associated target tables, and `ManyToMany` junction tables implied by the configured associations.
-- When fixtures are used through `TestCase`, cleanup truncates the fixture table plus any tables implied by the fixture's configured associations.
+- When fixtures are used through `TestCase`, foreign key checks are disabled while fixture data is loaded and while affected tables are truncated. They are re-enabled even if either operation fails.
 
 ## Related
 

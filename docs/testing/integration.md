@@ -11,6 +11,8 @@ It is a good fit for request and response testing, redirects, cookies, session s
 - [Setting request state](#setting-request-state)
   - [Cookies](#cookies)
   - [Session](#session)
+  - [Request data](#request-data)
+  - [Uploaded files](#uploaded-files)
   - [JSON requests](#json-requests)
   - [CSRF](#csrf)
 - [Asserting the response](#asserting-the-response)
@@ -65,9 +67,11 @@ Query strings in the path are parsed and passed through as GET parameters:
 $this->get('/search?q=fyre');
 ```
 
+Non-JSON array data is URL-encoded by default, so parsed scalar values use the same string representation as PHP form data.
+
 ## Setting request state
 
-`IntegrationTestTrait` keeps per-test request state that is reused across requests in the current test until it is changed or cleared.
+`IntegrationTestTrait` keeps persistent request configuration for the current test. Body data and uploaded files are staged separately for the next request only.
 
 ### Cookies
 
@@ -92,9 +96,39 @@ $this->session([
 $this->get('/account');
 ```
 
+### Request data
+
+Use `data()` to add body data to the next request. Repeated calls merge recursively:
+
+```php
+$this->data(['active' => true]);
+$this->post('/users', ['name' => 'Test User']);
+```
+
+Staged data takes precedence over values passed directly to the request method.
+Use `data()` to add body data to a `DELETE` request.
+
+### Uploaded files
+
+Use `file()` to add a local file to the next request. The field name supports dot notation for nested uploads:
+
+```php
+$this->file(
+    'profile.avatar',
+    'tests/files/avatar.png',
+    'avatar.png',
+    'image/png'
+);
+
+$this->post('/profile', ['name' => 'Test User']);
+```
+
+`POST`, `PUT`, `PATCH`, and `DELETE` requests containing files default to `multipart/form-data`.
+The source file is copied to a temporary location, so application code can move the upload without modifying the original file.
+
 ### JSON requests
 
-Use `requestAsJson()` to set `Accept: application/json` and `Content-Type: application/json` for subsequent requests in the current test. When you send `post()`/`put()`/`patch()` with a non-empty `$data` array, the trait JSON-encodes the data into the request body:
+Use `requestAsJson()` to set `Accept: application/json` and `Content-Type: application/json` for subsequent requests in the current test. The merged data for `POST`, `PUT`, `PATCH`, and `DELETE` requests is JSON-encoded into the request body. When no data is supplied, the body is `[]`:
 
 ```php
 $this->requestAsJson();
@@ -103,7 +137,7 @@ $this->post('/users', ['name' => 'Test User']);
 
 ### CSRF
 
-Use `enableCsrfToken()` to populate the CSRF cookie and header using the framework’s `CsrfProtection` service. Those values then remain part of the current test request state unless you change them:
+Use `enableCsrfToken()` to populate the CSRF cookie, field, and header configured by the framework’s `CsrfProtection` service. The form field applies to the next request, while the cookie and header remain part of the current test request state:
 
 ```php
 $this->enableCsrfToken();
@@ -233,9 +267,36 @@ $this->session(['Auth' => ['user_id' => 1]]);
 $this->get('/account');
 ```
 
+#### **Add request data** (`data()`)
+
+Adds body data to the next request. Repeated calls merge recursively, and staged values take precedence over values passed directly to the request method.
+
+Arguments:
+- `$data` (`array<string, mixed>`): the request data to merge.
+
+```php
+$this->data(['active' => true]);
+$this->post('/users', ['name' => 'Test User']);
+```
+
+#### **Add an uploaded file** (`file()`)
+
+Adds a local file to the next request. The field name supports dot notation for nested uploads.
+
+Arguments:
+- `$name` (`string`): the file field name.
+- `$path` (`string`): the local file path.
+- `$clientFilename` (`string|null`): the optional client filename. Defaults to the local filename.
+- `$clientMediaType` (`string|null`): the optional client media type.
+
+```php
+$this->file('avatar', 'tests/files/avatar.png', 'avatar.png', 'image/png');
+$this->post('/profile');
+```
+
 #### **Mark subsequent requests as JSON** (`requestAsJson()`)
 
-Sets `Accept: application/json` and `Content-Type: application/json` for subsequent requests in the current test.
+Sets `Accept: application/json` and `Content-Type: application/json` for subsequent requests in the current test. Body data is JSON-encoded, with an empty data set encoded as `[]`.
 
 ```php
 $this->requestAsJson();
@@ -244,7 +305,7 @@ $this->get('/api/health');
 
 #### **Enable CSRF token for subsequent requests** (`enableCsrfToken()`)
 
-Populates the CSRF cookie and header using the framework’s CSRF protection service.
+Populates the CSRF cookie, field, and header configured by the framework’s CSRF protection service.
 
 Arguments:
 - `$cookieName` (`string`): the name of the CSRF token cookie.
@@ -307,7 +368,7 @@ $this->assertResponseError();
 
 #### **Assert the response is a failure** (`assertResponseFailure()`)
 
-Asserts that the last response status code is between 500 and 505.
+Asserts that the last response status code is between 500 and 599.
 
 Arguments:
 - `$message` (`string`): the message to display on failure.
@@ -361,7 +422,7 @@ $this->assertResponseEquals('exact response');
 Asserts that the last response body does not equal the expected value.
 
 Arguments:
-- `$body` (`mixed`): the value to compare against.
+- `$body` (`string`): the value to compare against.
 - `$message` (`string`): the message to display on failure.
 
 ```php
@@ -633,7 +694,8 @@ $this->assertFlashMessage('Saved', 'default');
 A few behaviors are worth keeping in mind:
 
 - Response assertion helpers require a response; calling most `assert*()` methods before a request fails with "No response has been set."
-- Request state (`cookie()`, `session()`, `requestAsJson()`, `enableCsrfToken()`) persists across requests within the same test until you overwrite it. The trait clears it automatically after each test.
+- Request state (`cookie()`, `session()`, `requestAsJson()`, and the CSRF cookie and header) persists across requests within the same test until you overwrite it. The trait clears it automatically after each test.
+- Data and files added with `data()` and `file()` apply only to the next request and are cleared before it is sent.
 - `IntegrationTestTrait` stores only the last response; each new request replaces the previous `$response`.
 - `session()` sets `$_SESSION` for the request, and session assertions read from `$_SESSION` (not the response).
 

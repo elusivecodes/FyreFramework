@@ -15,6 +15,7 @@ final class IntegrationTest extends TestCase
     use ContentTypeTrait;
     use CookieSetTrait;
     use CookieTrait;
+    use CsrfTrait;
     use FileTrait;
     use FlashMessageEqualsTrait;
     use HeaderContainsTrait;
@@ -23,12 +24,14 @@ final class IntegrationTest extends TestCase
     use RedirectContainsTrait;
     use RedirectEqualsTrait;
     use RedirectTrait;
+    use RequestDataTrait;
     use ResponseCodeTrait;
     use ResponseContainsTrait;
     use ResponseEmptyTrait;
     use ResponseEqualsTrait;
     use SessionHasKeyTrait;
     use SessionTrait;
+    use UploadedFileTrait;
 
     #[Override]
     public static function setUpBeforeClass(): void

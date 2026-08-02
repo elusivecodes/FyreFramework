@@ -9,7 +9,9 @@ use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
 
+use function is_uploaded_file;
 use function move_uploaded_file;
+use function rename;
 use function sprintf;
 
 use const UPLOAD_ERR_OK;
@@ -81,14 +83,17 @@ class UploadedFile implements UploadedFileInterface
 
     /**
      * {@inheritDoc}
-     *
-     * Note: This will open the underlying temp file path. Calling this after a successful
-     * {@see UploadedFile::moveTo()} may fail depending on how the runtime handles moved
-     * uploaded files.
      */
     #[Override]
     public function getStream(): StreamInterface
     {
+        if ($this->hasMoved) {
+            throw new RuntimeException(sprintf(
+                'Upload already moved: %s',
+                $this->clientFilename ?? ''
+            ));
+        }
+
         return $this->stream ??= Stream::createFromFile($this->file);
     }
 
@@ -116,7 +121,16 @@ class UploadedFile implements UploadedFileInterface
             ));
         }
 
-        if (!move_uploaded_file($this->file, $targetPath)) {
+        if ($this->stream) {
+            $this->stream->close();
+            $this->stream = null;
+        }
+
+        $moved = is_uploaded_file($this->file) ?
+            move_uploaded_file($this->file, $targetPath) :
+            @rename($this->file, $targetPath);
+
+        if (!$moved) {
             throw new RuntimeException(sprintf(
                 'Failed to move upload `%s` to `%s`.',
                 $this->clientFilename ?? '',

@@ -141,6 +141,7 @@ A few behaviors are worth keeping in mind:
 
 - Scope matching is strict, so assertions only read from handlers that can handle both the level and the scope.
 - `setupLogs()` clears the current `LogManager` config, so call it after any setup that depends on your normal logging configuration.
+- The original `LogManager` configuration is restored after each test.
 - When you use associative keys in `$logHandlers`, provide `levels`; otherwise the key name becomes the default `levels` value.
 
 ## Related

@@ -10,6 +10,7 @@ use Fyre\Utility\Arr;
 use InvalidArgumentException;
 use Override;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
 
 use function array_key_exists;
@@ -25,6 +26,7 @@ use function is_array;
 use function json_decode;
 use function json_last_error;
 use function locale_get_default;
+use function ltrim;
 use function parse_str;
 use function parse_url;
 use function preg_match;
@@ -125,11 +127,14 @@ class ServerRequest extends Request implements ServerRequestInterface
         $this->files = $options['files'] ?? null;
 
         if ($this->files) {
-            $this->files = static::buildFiles(static::normalizeFiles($this->files));
+            $this->files = static::normalizeFiles($this->files) |> static::buildFiles(...);
         }
 
         $options['method'] ??= $this->getServer('REQUEST_METHOD');
-        $options['headers'] = array_merge(static::buildHeaders($this->getServerParams()), $options['headers'] ?? []);
+        $options['headers'] = array_merge(
+            $this->getServerParams() |> static::buildHeaders(...),
+            $options['headers'] ?? []
+        );
         $options['body'] ??= Stream::createFromFile('php://input');
 
         parent::__construct(null, $options);
@@ -500,7 +505,7 @@ class ServerRequest extends Request implements ServerRequestInterface
     #[Override]
     public function getUploadedFiles(): array
     {
-        return $this->files ??= static::buildFiles(static::normalizeFiles($_FILES));
+        return $this->files ??= static::normalizeFiles($_FILES) |> static::buildFiles(...);
     }
 
     /**
@@ -757,8 +762,8 @@ class ServerRequest extends Request implements ServerRequestInterface
     /**
      * Returns the new ServerRequest instance with updated uploaded files.
      *
-     * Note: This implementation expects {@see UploadedFile} instances (and nested arrays of
-     * them) and will throw if other values are provided.
+     * Note: This implementation expects {@see UploadedFileInterface} instances (and nested
+     * arrays of them) and will throw if other values are provided.
      *
      * @param array<string, mixed> $data The uploaded files.
      * @return static The new ServerRequest instance with the updated uploaded files.
@@ -888,25 +893,26 @@ class ServerRequest extends Request implements ServerRequestInterface
      * @param array<string, mixed> $files The files to validate.
      * @param string $path The file path.
      *
-     * @throws RuntimeException If an invalid uploaded file is found.
+     * @throws InvalidArgumentException If an invalid uploaded file is found.
      */
     protected static function validateFiles(array $files, string $path = ''): void
     {
         foreach ($files as $key => $file) {
+            $filePath = ltrim($path.'.'.$key, '.');
+
             if (is_array($file)) {
-                static::validateFiles($file, $path.'.'.$key);
+                static::validateFiles($file, $filePath);
 
                 continue;
             }
 
-            if ($file instanceof UploadedFile) {
+            if ($file instanceof UploadedFileInterface) {
                 continue;
             }
 
-            throw new RuntimeException(sprintf(
-                'Uploaded file `%s.%s` is not valid.',
-                $path,
-                $key
+            throw new InvalidArgumentException(sprintf(
+                'Uploaded file `%s` is not valid.',
+                $filePath
             ));
         }
     }

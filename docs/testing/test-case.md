@@ -50,7 +50,7 @@ final class UsersTableTest extends TestCase
 
 For fixture definitions, discovery rules, and examples, see [Fixtures](fixtures.md).
 
-When cleanup runs, `TestCase` truncates the fixture tables plus any tables implied by the fixtures' configured associations, with foreign key checks temporarily disabled on the active database connection.
+During setup, `TestCase` disables foreign key checks while loading fixture data. During cleanup, it does the same while truncating the fixture tables and any tables implied by configured associations. Foreign key checks are re-enabled even if either operation fails.
 
 ## Method guide
 
@@ -86,7 +86,7 @@ $this->skipUnless(PHP_VERSION_ID >= 80500, 'PHP 8.5+ is required for this test.'
 
 A few behaviors are worth keeping in mind:
 
-- When fixtures are enabled via `$fixtures`, `TestCase` applies fixtures before each test and truncates the fixture tables plus any tables implied by their configured associations after each test, with foreign key checks temporarily disabled on the active database connection.
+- When fixtures are enabled via `$fixtures`, `TestCase` temporarily disables foreign key checks during both setup and cleanup and re-enables them if either operation fails.
 - `TestCase` uses the existing shared `Engine` instance from `Engine::getInstance()` and does not boot a fresh application by itself.
 - `TestCase` calls `$this->app->clearScoped()` in `setUp()`, so scoped services do not leak across tests.
 

@@ -126,8 +126,8 @@ Arguments:
 - `$message` (`string`): the message to display on failure.
 
 ```php
-$this->exec('invalid');
-$this->assertOutputContains('Invalid command: invalid');
+$this->exec('users:list');
+$this->assertOutputContains('user@example.com');
 ```
 
 #### **Assert stdout does not contain** (`assertOutputNotContains()`)
@@ -139,8 +139,8 @@ Arguments:
 - `$message` (`string`): the message to display on failure.
 
 ```php
-$this->exec('invalid');
-$this->assertOutputNotContains('All good');
+$this->exec('users:list');
+$this->assertOutputNotContains('disabled@example.com');
 ```
 
 #### **Assert stdout matches pattern** (`assertOutputRegExp()`)
@@ -152,8 +152,8 @@ Arguments:
 - `$message` (`string`): the message to display on failure.
 
 ```php
-$this->exec('invalid');
-$this->assertOutputRegExp('/Invalid command:/');
+$this->exec('users:list');
+$this->assertOutputRegExp('/\d+ users/');
 ```
 
 #### **Assert stdout contains table row** (`assertOutputContainsRow()`)
@@ -165,8 +165,8 @@ Arguments:
 - `$message` (`string`): the message to display on failure.
 
 ```php
-fwrite($this->output, '| a | b | c |'.PHP_EOL);
-$this->assertOutputContainsRow(['a', 'b', 'c']);
+$this->exec('users:list');
+$this->assertOutputContainsRow(['1', 'user@example.com', 'active']);
 ```
 
 #### **Assert stdout is empty** (`assertOutputEmpty()`)
@@ -227,6 +227,7 @@ A few behaviors are worth keeping in mind:
 - `exec()` treats `$input` as a list of lines and appends `PHP_EOL` to each line before running the command.
 - The command string is split using `str_getcsv($command, ' ', '"', '\\')`, so quoting with `"` and escaping with `\` are supported.
 - `CommandRunner` is resolved from the engine container during setup; if your test commands live outside the default namespaces, add them to `$this->runner` before calling `exec()`.
+- The trait restores the original `Console` and closes its in-memory streams after each test.
 
 ## Related
 
