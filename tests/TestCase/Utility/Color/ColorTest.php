@@ -337,6 +337,22 @@ final class ColorTest extends TestCase
         Color::createFromString('invalid');
     }
 
+    public function testCreateFromStringInvalidHexLength(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Color string `#12345` is not valid.');
+
+        Color::createFromString('#12345');
+    }
+
+    public function testCreateFromStringInvalidHexLengthWithAlpha(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Color string `#1234567` is not valid.');
+
+        Color::createFromString('#1234567');
+    }
+
     public function testCreateFromStringLab(): void
     {
         $color = Color::createFromString('lab(91.74 2.78 -9.72)');

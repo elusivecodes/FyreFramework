@@ -156,7 +156,9 @@ $dt = DateTime::now('UTC', 'en');
 
 #### **Parse an ISO string** (`createFromIsoString()`)
 
-Parses an ISO 8601 / RFC3339-style string using the `rfc3339_extended` pattern from `DateTime::FORMATS`.
+Parses an extended RFC3339 string with millisecond precision.
+
+This method throws `DateMalformedStringException` when the date string is not valid RFC3339.
 
 Arguments:
 - `$dateString` (`string`): the date string.
@@ -1299,8 +1301,8 @@ $leap = DateTime::now('UTC', 'en')->isLeapYear();
 
 A few behaviors are worth keeping in mind:
 
-- `toIsoString()` always formats with locale `en` and time zone `UTC`, regardless of the instance’s current locale/time zone.
-- `createFromIsoString()` parses using locale `en` and then applies the requested locale to the resulting instance.
+- `toIsoString()` always formats in UTC, regardless of the instance’s current time zone.
+- `createFromIsoString()` converts the parsed instant to the requested time zone, or the default time zone when none is provided.
 - Date clamping affects `withMonth()` and `withYear()` when `$date` is omitted. Control this with `DateTime::withDateClamping()`.
 - `getTimeZoneOffset()` and `withTimeZoneOffset()` use the inverse sign convention of `DateTimeZone::getOffset()` (negative values indicate time zones ahead of UTC).
 - The `diffIn*()` methods default to `$relative = true`, which normalizes the comparison into the receiver’s time zone and aligns smaller calendar fields before computing the unit difference.

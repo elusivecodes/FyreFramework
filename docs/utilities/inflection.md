@@ -4,7 +4,6 @@ Use `Inflector` when you need pluralization, singularization, and naming-convent
 
 For general string transformations (casing, searching, slicing, escaping), see [Strings](strings.md).
 
-
 ## Table of Contents
 
 - [Start here](#start-here)

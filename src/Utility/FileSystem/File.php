@@ -40,6 +40,7 @@ use function is_writable;
 use function rewind;
 use function sprintf;
 use function strtok;
+use function substr;
 use function time;
 use function touch;
 use function unlink;
@@ -666,8 +667,14 @@ class File
             throw new RuntimeException('File handle is not valid.');
         }
 
-        if (@fwrite($this->handle, $data) === false) {
-            throw ErrorException::forLastError(__FILE__, __LINE__ - 1) ?? new RuntimeException();
+        while ($data !== '') {
+            $written = @fwrite($this->handle, $data);
+
+            if ($written === false || $written === 0) {
+                throw ErrorException::forLastError(__FILE__, __LINE__ - 3) ?? new RuntimeException();
+            }
+
+            $data = substr($data, $written);
         }
 
         return $this;

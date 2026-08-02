@@ -4,7 +4,6 @@ Use `Path` when you want platform-aware path string handling without touching th
 
 For filesystem operations (reading, writing, copying), see [File System](file-system.md).
 
-
 ## Table of Contents
 
 - [Start here](#start-here)
@@ -81,7 +80,7 @@ Arguments:
 $path = Path::normalize('tmp//cache/./../cache/routes.php'); // "tmp/cache/routes.php"
 ```
 
-`normalize()` is a string operation; it does not check the filesystem.
+`normalize()` is a string operation; it does not check the filesystem. Leading `..` segments are preserved for relative paths and discarded when they would traverse above an absolute root.
 
 ### Resolving
 

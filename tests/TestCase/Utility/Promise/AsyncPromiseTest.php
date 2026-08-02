@@ -19,6 +19,32 @@ use function sleep;
 final class AsyncPromiseTest extends TestCase
 {
     #[RunInSeparateProcess]
+    public function testAllPreservesOrder(): void
+    {
+        $promise1 = new AsyncPromise(static function(Closure $resolve): void {
+            sleep(1);
+            $resolve(1);
+        });
+
+        $promise2 = new AsyncPromise(static function(Closure $resolve): void {
+            $resolve(2);
+        });
+
+        Promise::all([
+            'first' => $promise1,
+            'second' => $promise2,
+        ])->then(function(array $values): void {
+            $this->assertSame(
+                [
+                    'first' => 1,
+                    'second' => 2,
+                ],
+                $values
+            );
+        });
+    }
+
+    #[RunInSeparateProcess]
     public function testAny(): void
     {
         $promise1 = new AsyncPromise(static function(Closure $resolve): void {

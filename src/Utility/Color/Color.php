@@ -34,6 +34,7 @@ use function fmod;
 use function hexdec;
 use function hypot;
 use function implode;
+use function in_array;
 use function is_finite;
 use function max;
 use function min;
@@ -484,7 +485,10 @@ abstract class Color implements Stringable
             $string = static::CSS_COLORS[$string];
         }
 
-        if (preg_match('/^#([0-9a-f]{3,8})$/i', $string, $match)) {
+        if (
+            preg_match('/^#([0-9a-f]+)$/i', $string, $match) &&
+            in_array(strlen($match[1]), [3, 4, 6, 8], true)
+        ) {
             $hex = $match[1];
 
             if (strlen($hex) <= 4) {

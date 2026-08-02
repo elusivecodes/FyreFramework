@@ -6,15 +6,17 @@ namespace Fyre\Utility;
 use Fyre\Core\Traits\StaticMacroTrait;
 
 use function array_filter;
+use function array_key_last;
 use function array_pop;
 use function array_reverse;
 use function array_unshift;
-use function count;
 use function explode;
 use function getcwd;
 use function implode;
 use function pathinfo;
 use function preg_match;
+use function str_ends_with;
+use function str_starts_with;
 
 use const DIRECTORY_SEPARATOR;
 use const PATHINFO_BASENAME;
@@ -131,24 +133,22 @@ abstract class Path
      */
     public static function normalize(string $path = ''): string
     {
-        $segments = explode(DIRECTORY_SEPARATOR, $path);
+        $isAbsolute = str_starts_with($path, DIRECTORY_SEPARATOR);
+        $hasTrailingSeparator = str_ends_with($path, DIRECTORY_SEPARATOR);
 
         $newPath = [];
-        foreach ($segments as $i => $segment) {
-            if ($segment === '.') {
+        foreach (explode(DIRECTORY_SEPARATOR, $path) as $segment) {
+            if ($segment === '' || $segment === '.') {
                 continue;
             }
 
-            if ($segment === '..' && $newPath !== []) {
-                $lastPath = array_pop($newPath);
-                if ($lastPath !== '..') {
-                    continue;
+            if ($segment === '..') {
+                if ($newPath !== [] && $newPath[array_key_last($newPath)] !== '..') {
+                    array_pop($newPath);
+                } elseif (!$isAbsolute) {
+                    $newPath[] = $segment;
                 }
 
-                $newPath[] = $lastPath;
-            }
-
-            if ($segment === '' && $newPath !== [] && $i < count($segments) - 1) {
                 continue;
             }
 
@@ -157,8 +157,12 @@ abstract class Path
 
         $result = implode(DIRECTORY_SEPARATOR, $newPath);
 
-        if ($result === '' && $path !== '' && $path[0] === DIRECTORY_SEPARATOR) {
-            return DIRECTORY_SEPARATOR;
+        if ($isAbsolute) {
+            $result = DIRECTORY_SEPARATOR.$result;
+        }
+
+        if ($result !== '' && $result !== DIRECTORY_SEPARATOR && $hasTrailingSeparator) {
+            $result .= DIRECTORY_SEPARATOR;
         }
 
         return $result === '' ? '.' : $result;

@@ -15,6 +15,9 @@ use ReflectionFunction;
 use RuntimeException;
 use Throwable;
 
+use function array_fill_keys;
+use function array_keys;
+
 /**
  * Provides a promise implementation.
  *
@@ -54,7 +57,7 @@ class Promise implements PromiseInterface
     public static function all(array $promisesOrValues): PromiseInterface
     {
         return new Promise(static function(Closure $resolve, Closure $reject) use ($promisesOrValues): void {
-            $values = [];
+            $values = array_fill_keys(array_keys($promisesOrValues), null);
             $rejected = false;
 
             while ($promisesOrValues !== []) {

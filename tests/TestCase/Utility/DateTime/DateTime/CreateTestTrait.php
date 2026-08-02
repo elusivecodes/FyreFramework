@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\DateTime\DateTime;
 
+use DateMalformedStringException;
 use Fyre\Utility\DateTime\DateTime;
 
 use function time;
@@ -173,8 +174,8 @@ trait CreateTestTrait
     public function testCreateFromIsoString(): void
     {
         $this->assertSame(
-            '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromIsoString('2019-01-01T00:00:00.000+00:00')->toIsoString()
+            '2019-01-01T00:00:00.123+00:00',
+            DateTime::createFromIsoString('2019-01-01T00:00:00.123+00:00')->toIsoString()
         );
     }
 
@@ -184,6 +185,14 @@ trait CreateTestTrait
             DateTime::class,
             DateTime::createFromIsoString('2019-01-01T00:00:00.000+00:00')
         );
+    }
+
+    public function testCreateFromIsoStringInvalid(): void
+    {
+        $this->expectException(DateMalformedStringException::class);
+        $this->expectExceptionMessage('Date string is not valid RFC 3339.');
+
+        DateTime::createFromIsoString('invalid');
     }
 
     public function testCreateFromIsoStringWithLocale(): void

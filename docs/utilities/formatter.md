@@ -24,21 +24,23 @@ In views, you will usually access the same behavior through the [Format helper](
 
 ```php
 use Fyre\Core\Config;
+use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\Formatter;
 
 $config = new Config();
 $formatter = new Formatter($config);
+$formatter->setDefaultLocale('en_US');
 ```
 
 Format values via a `Formatter` instance:
 
 ```php
-echo $formatter->number(1234.567);      // "1,234.567" (in en_US)
+echo $formatter->number(1234.567);      // "1,234.567"
 echo $formatter->currency(123.456);     // "$123.46"
 echo $formatter->percent(0.123);        // "12%"
 
 $dt = new DateTime('2026-02-01 11:59:59');
-echo $formatter->datetime($dt);         // e.g. "02/01/2026, 11:59 AM" (in en_US)
+echo $formatter->datetime($dt);         // e.g. "02/01/2026, 11:59 AM"
 ```
 
 Or format directly from a template using the Format helper:

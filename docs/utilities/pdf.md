@@ -4,7 +4,6 @@ Use `Pdf` when you want to generate PDFs by rendering HTML through headless Chro
 
 You can render a URL, a file path, or an in-memory HTML string.
 
-
 ## Table of Contents
 
 - [Start here](#start-here)

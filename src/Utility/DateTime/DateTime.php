@@ -138,18 +138,26 @@ class DateTime implements JsonSerializable, Stringable
     /**
      * Creates a new DateTime from an ISO format string.
      *
-     * Note: The string is parsed using {@see self::FORMATS} `rfc3339_extended` with the `en` locale to avoid
-     * locale-specific parsing differences, then the resulting DateTime locale is updated.
-     *
      * @param string $dateString The date string.
      * @param string|null $timeZone The time zone to use.
      * @param string|null $locale The locale to use.
      * @return static The new DateTime instance.
+     *
+     * @throws DateMalformedStringException If the date string is not valid RFC 3339.
      */
     public static function createFromIsoString(string $dateString, string|null $timeZone = null, string|null $locale = null): static
     {
-        return static::createFromFormat(static::FORMATS['rfc3339_extended'], $dateString, $timeZone, 'en')
-            ->withLocale($locale ?? static::getDefaultLocale());
+        $dateTime = DateTimeImmutable::createFromFormat(DateTimeInterface::RFC3339_EXTENDED, $dateString);
+
+        if ($dateTime === false) {
+            throw new DateMalformedStringException('Date string is not valid RFC 3339.');
+        }
+
+        return static::createFromNativeDateTime(
+            $dateTime,
+            $timeZone ?? static::getDefaultTimeZone(),
+            $locale
+        );
     }
 
     /**
@@ -1795,17 +1803,14 @@ class DateTime implements JsonSerializable, Stringable
     /**
      * Formats the current date as an ISO 8601 / RFC3339 string in UTC.
      *
-     * Uses the "rfc3339_extended" pattern (e.g. "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"),
-     * always with locale "en" and time zone "UTC".
-     *
      * @return string The formatted date string.
      */
     public function toIsoString(): string
     {
         return $this
-            ->withLocale('en')
             ->withTimeZone('UTC')
-            ->format(static::FORMATS['rfc3339_extended']);
+            ->toNativeDateTime()
+            ->format(DateTimeInterface::RFC3339_EXTENDED);
     }
 
     /**
@@ -1815,7 +1820,12 @@ class DateTime implements JsonSerializable, Stringable
      */
     public function toNativeDateTime(): \DateTime
     {
-        return $this->calendar->toDateTime();
+        return $this->calendar->toDateTime()->setTime(
+            $this->getHours(),
+            $this->getMinutes(),
+            $this->getSeconds(),
+            $this->getMilliseconds() * 1000
+        );
     }
 
     /**

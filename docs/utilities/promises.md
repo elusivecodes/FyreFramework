@@ -4,7 +4,6 @@ Use promises when you want to represent a value later and compose follow-up work
 
 Use `Promise` when the work can run in the current process and you mainly want chaining. Use `AsyncPromise` for CLI workloads you want to run in a forked child process and wait on later.
 
-
 ## Table of Contents
 
 - [Start here](#start-here)

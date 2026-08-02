@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\DateTime\DateTime;
 
+use DateTimeInterface;
 use Fyre\Utility\DateTime\DateTime;
 
 trait OutputTestTrait
@@ -26,8 +27,18 @@ trait OutputTestTrait
     public function testToIsoString(): void
     {
         $this->assertSame(
-            '2017-12-31T14:00:00.000+00:00',
-            DateTime::createFromArray([2018], 'Australia/Brisbane')->toIsoString()
+            '2017-12-31T14:00:00.123+00:00',
+            DateTime::createFromArray([2018, 1, 1, 0, 0, 0, 123], 'Australia/Brisbane')->toIsoString()
+        );
+    }
+
+    public function testToNativeDateTime(): void
+    {
+        $this->assertSame(
+            '2018-01-01T00:00:00.123+10:00',
+            DateTime::createFromArray([2018, 1, 1, 0, 0, 0, 123], 'Australia/Brisbane')
+                ->toNativeDateTime()
+                ->format(DateTimeInterface::RFC3339_EXTENDED)
         );
     }
 

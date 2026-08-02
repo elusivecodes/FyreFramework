@@ -4,7 +4,6 @@ Use `Color` when you need to parse CSS-like color input, convert between color s
 
 Concrete color spaces are represented by `Colors\*` classes such as `Srgb`, `Lab`, and `XyzD65`.
 
-
 ## Table of Contents
 
 - [Start here](#start-here)

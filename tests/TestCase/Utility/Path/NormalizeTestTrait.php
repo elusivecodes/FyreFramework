@@ -15,6 +15,14 @@ trait NormalizeTestTrait
         );
     }
 
+    public function testNormalizeWithCurrentPathOnly(): void
+    {
+        $this->assertSame(
+            '.',
+            Path::normalize('./')
+        );
+    }
+
     public function testNormalizeWithDeepPath(): void
     {
         $this->assertSame(
@@ -60,6 +68,22 @@ trait NormalizeTestTrait
         $this->assertSame(
             'sub/dir/file.ext',
             Path::normalize('test/../sub/dir/file.ext')
+        );
+    }
+
+    public function testNormalizeWithParentPathAboveRoot(): void
+    {
+        $this->assertSame(
+            '/sub/dir/file.ext',
+            Path::normalize('/test/../../sub/dir/file.ext')
+        );
+    }
+
+    public function testNormalizeWithParentPathBeforeRelativePath(): void
+    {
+        $this->assertSame(
+            '../sub/dir/file.ext',
+            Path::normalize('test/../../sub/dir/file.ext')
         );
     }
 

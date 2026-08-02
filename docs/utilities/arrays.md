@@ -4,7 +4,6 @@
 
 If you want fluent, chainable pipelines for sequences (with operations like `map()`, `filter()`, and `reduce()`), use [Collections](collections.md) instead.
 
-
 ## Table of Contents
 
 - [Start here](#start-here)

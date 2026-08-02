@@ -4,7 +4,6 @@ Use `File` and `Folder` when you want a small object API for common filesystem o
 
 For path-only operations (join/normalize/resolve, basename/dirname, etc), see [Paths](paths.md).
 
-
 ## Table of Contents
 
 - [Start here](#start-here)
@@ -469,7 +468,7 @@ $group = $file->group();
 
 #### **Get the resolved path** (`path()`)
 
-Returns the resolved full path to the file.
+Returns the resolved path to the file.
 
 ```php
 $path = $file->path();

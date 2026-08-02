@@ -2,7 +2,6 @@
 
 `Str` (`Fyre\Utility\Str`) is a static string utility class for common transformations (casing, identifiers, slicing, search/replace, padding, and escaping).
 
-
 ## Table of Contents
 
 - [Start here](#start-here)
@@ -632,7 +631,7 @@ A few behaviors are worth keeping in mind:
 
 - `chunk()`, `length()`, `limit()`, `slice()`, and `replaceAt()` operate on bytes (via `str_split()`, `strlen()`, `substr()`, and `substr_replace()`), which can split multi-byte UTF-8 characters.
 - `after()`, `afterLast()`, `before()`, and `beforeLast()` return the original string when the search string is empty or not found.
-- `startsWith()` and `endsWith()` delegate to PHP’s `str_starts_with()` / `str_ends_with()`, so an empty search string returns `true`.
+- `startsWith()` and `endsWith()` return `false` when the search string is empty.
 - `split()` returns an empty array when the delimiter is an empty string.
 - `replaceFirst()`, `replaceLast()`, and `replaceArray()` return the original string when the search string is empty.
 - `replaceArray()` replaces each match with the next replacement, and uses `''` once replacements run out.

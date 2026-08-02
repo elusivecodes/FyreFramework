@@ -6,7 +6,6 @@ Use `PeriodCollection` (`Fyre\Utility\DateTime\PeriodCollection`) when you need 
 
 For single instants (time zones, localization, calendar-aware diffs), see [Date/time](datetime.md).
 
-
 ## Table of Contents
 
 - [Start here](#start-here)
@@ -106,7 +105,7 @@ $ok = $outer->contains($inner); // true
 
 #### **Check whether periods overlap** (`overlapsWith()`)
 
-Returns whether two periods overlap (including when they share boundary instants).
+Returns whether two periods overlap. A shared boundary instant counts only when that boundary is included by both periods.
 
 Arguments:
 - `$other` (`Period`): the period to compare against.
