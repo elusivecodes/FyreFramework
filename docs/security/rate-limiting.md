@@ -51,7 +51,7 @@ An identifier is the “key space” used to track usage. It is configured on th
 
 When `identifier` is a list, the identifier is assembled by concatenating these sources (with `_`) in the order provided.
 
-If your app runs behind a reverse proxy, be careful with IP-based identification. By default, the built-in `ip` identifier uses `REMOTE_ADDR`. When `App.trustProxy` is enabled with no trusted proxy list, the rightmost forwarded address is used. A non-empty `App.trustedProxies` list restricts resolution to explicitly trusted proxy hops. Header names are matched case-insensitively. For custom trust rules, you can still use an `identifier` callback.
+If your app runs behind a reverse proxy, be careful with IP-based identification. By default, the built-in `ip` identifier uses `REMOTE_ADDR`. When `App.trustProxy` is enabled with no trusted proxy list, the rightmost `X-Forwarded-For` address is used. A non-empty `App.trustedProxies` list restricts resolution to explicitly trusted proxy hops. For a different forwarded header or custom trust rules, use an `identifier` callback.
 
 ### Supported identifier sources
 
@@ -73,8 +73,6 @@ Proxy trust uses the application configuration shared with `ServerRequest`:
 
 - `App.trustProxy` — whether forwarded IP headers should be considered (default: `false`)
 - `App.trustedProxies` — proxy IPs allowed to supply forwarded headers (default: `[]`; an empty list accepts the rightmost forwarded address)
-
-The limiter-specific `ipHeader` option selects the forwarded IP header name or ordered list of names to check (default: `X-Forwarded-For`). The first header present in the server parameters is checked, and names are matched case-insensitively. If that value is empty or malformed, resolution stops and returns the last valid address, usually `REMOTE_ADDR`.
 
 Cost can be configured as either a fixed integer or a callback. When it’s a callback, the `RateLimiter` computes cost by calling it through the container with the current request.
 

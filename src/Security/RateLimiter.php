@@ -14,7 +14,6 @@ use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-use function array_map;
 use function array_replace_recursive;
 use function array_reverse;
 use function explode;
@@ -22,9 +21,6 @@ use function filter_var;
 use function hash;
 use function implode;
 use function in_array;
-use function str_replace;
-use function str_starts_with;
-use function strtoupper;
 use function trim;
 
 use const FILTER_VALIDATE_IP;
@@ -51,7 +47,6 @@ abstract class RateLimiter
         'cost' => 1,
         'message' => 'Rate limit exceeded',
         'identifier' => ['ip'],
-        'ipHeader' => 'X-Forwarded-For',
         'skipCheck' => null,
     ];
 
@@ -63,11 +58,6 @@ abstract class RateLimiter
      * @var Closure|string[]
      */
     protected array|Closure $identifier;
-
-    /**
-     * @var string[]
-     */
-    protected array $ipHeader;
 
     protected int $limit;
 
@@ -108,16 +98,6 @@ abstract class RateLimiter
         $this->identifier = $options['identifier'] instanceof Closure ?
             $options['identifier'] :
             (array) $options['identifier'];
-        $this->ipHeader = array_map(
-            static function(string $header): string {
-                $header = strtoupper(str_replace('-', '_', $header));
-
-                return str_starts_with($header, 'HTTP_') ?
-                    $header :
-                    'HTTP_'.$header;
-            },
-            (array) $options['ipHeader']
-        );
         $this->trustProxy = $config->get('App.trustProxy', false);
         $this->trustedProxies = $config->get('App.trustedProxies', []);
         $this->skipCheck = $options['skipCheck'];
@@ -250,8 +230,8 @@ abstract class RateLimiter
     /**
      * Returns the IP identifier.
      *
-     * Note: Uses `REMOTE_ADDR` by default. When proxy trust is enabled, the configured
-     * forwarded IP header is resolved from right to left using the trusted proxy list.
+     * Note: Uses `REMOTE_ADDR` by default. When proxy trust is enabled, `X-Forwarded-For`
+     * is resolved from right to left using the configured trusted proxy list.
      *
      * @param ServerRequestInterface $request The ServerRequest.
      * @return string The IP identifier.
@@ -259,7 +239,7 @@ abstract class RateLimiter
     protected function getIpIdentifier(ServerRequestInterface $request): string
     {
         $params = $request->getServerParams();
-        $remoteAddr = $params['REMOTE_ADDR'] ?? 'unknown';
+        $remoteAddr = $params['REMOTE_ADDR'] ?? '';
 
         if (
             !$this->trustProxy ||
@@ -271,33 +251,31 @@ abstract class RateLimiter
             return $remoteAddr;
         }
 
-        foreach ($this->ipHeader as $header) {
-            if (!isset($params[$header])) {
-                continue;
-            }
+        $forwardedFor = $request->getHeaderLine('X-Forwarded-For');
 
-            $clientIp = $remoteAddr;
-            $forwardedIps = explode(',', $params[$header])
-                |> array_reverse(...);
-
-            foreach ($forwardedIps as $forwardedIp) {
-                $forwardedIp = trim($forwardedIp);
-
-                if (!filter_var($forwardedIp, FILTER_VALIDATE_IP)) {
-                    return $clientIp;
-                }
-
-                $clientIp = $forwardedIp;
-
-                if (!in_array($clientIp, $this->trustedProxies, true)) {
-                    break;
-                }
-            }
-
-            return $clientIp;
+        if (!$forwardedFor) {
+            return $remoteAddr;
         }
 
-        return $remoteAddr;
+        $clientIp = $remoteAddr;
+        $forwardedIps = explode(',', $forwardedFor)
+            |> array_reverse(...);
+
+        foreach ($forwardedIps as $forwardedIp) {
+            $forwardedIp = trim($forwardedIp);
+
+            if (!filter_var($forwardedIp, FILTER_VALIDATE_IP)) {
+                return $clientIp;
+            }
+
+            $clientIp = $forwardedIp;
+
+            if (!in_array($clientIp, $this->trustedProxies, true)) {
+                break;
+            }
+        }
+
+        return $clientIp;
     }
 
     /**
