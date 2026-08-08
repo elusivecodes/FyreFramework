@@ -11,9 +11,11 @@ Most applications configure one or more handlers, then write messages through `L
   - [Common handler options](#common-handler-options)
   - [Scope filtering example](#scope-filtering-example)
   - [`FileLogger` options](#filelogger-options)
+  - [`ConsoleLogger` options](#consolelogger-options)
   - [Example configuration](#example-configuration)
 - [Built-in handlers](#built-in-handlers)
   - [File handler](#file-handler)
+  - [Console handler](#console-handler)
   - [Array handler](#array-handler)
 - [Writing log messages](#writing-log-messages)
   - [Fan-out with `handle()`](#fan-out-with-handle)
@@ -128,10 +130,17 @@ return [
 - `maxSize` (`int`): the file size threshold (in bytes) that triggers rotation (default: `1048576`).
 - `mask` (`int|null`): permissions applied when creating a new log file (only when the target file does not already exist).
 
+### `ConsoleLogger` options
+
+`ConsoleLogger` (the `Fyre\Log\Handlers\ConsoleLogger` handler) supports this additional option:
+
+- `stream` (`string`): the writable stream URI (default: `php://stderr`).
+
 ### Example configuration
 
 ```php
 use Fyre\Log\Handlers\ArrayLogger;
+use Fyre\Log\Handlers\ConsoleLogger;
 use Fyre\Log\Handlers\FileLogger;
 
 return [
@@ -144,6 +153,10 @@ return [
             'className' => ArrayLogger::class,
             'levels' => ['debug', 'info'],
             'scopes' => null,
+        ],
+        'console' => [
+            'className' => ConsoleLogger::class,
+            'stream' => 'php://stderr',
         ],
     ],
 ];
@@ -158,6 +171,10 @@ Fyre includes a small set of handlers under `Fyre\Log\Handlers\*`. You can defin
 `FileLogger` writes formatted messages to files under `path`. By default, it writes one file per log level (for example, `error.log` for web requests and `error-cli.log` for CLI processes). Set `file` to write all levels into a single file.
 
 For durable production logs, prefer a writable application folder like `tmp/logs` over the temporary default.
+
+### Console handler
+
+`ConsoleLogger` writes timestamped messages to `php://stderr` by default. Set `stream` to `php://stdout` when logs should be written to standard output instead.
 
 ### Array handler
 
@@ -329,6 +346,7 @@ A few behaviors are worth keeping in mind:
 - `LogManager::handle()` validates levels against the supported list and is case-sensitive, so `error` is valid but `ERROR` is not.
 - Scope filtering is opt-in: when a handler has the default `scopes` value of `[]`, it matches only when `scope` is `null`. Passing a scope will skip those handlers unless `scopes` is configured (or `scopes` is `null`).
 - `FileLogger` creates its configured `path` when necessary and rotates the active file after it reaches `maxSize`.
+- `ConsoleLogger` writes timestamped messages to `php://stderr` by default.
 - `ArrayLogger` keeps messages in memory only and stores them without timestamps.
 - Message interpolation supports `{key}` placeholders from your context array and special keys like `{get_vars}`, `{post_vars}`, `{server_vars}`, `{session_vars}`, and `{backtrace}`. Escape a placeholder with a backslash (for example, `\{id}`) to write it literally without the backslash.
 - Context values that cannot be converted to strings are written using an `[unhandled type Type]` placeholder.
