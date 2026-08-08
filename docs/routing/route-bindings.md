@@ -9,6 +9,8 @@ Use route bindings when you want route placeholders to resolve to typed values b
 - [Defining bindable routes](#defining-bindable-routes)
   - [Connecting routes with router methods](#connecting-routes-with-router-methods)
   - [Connecting routes with route attributes](#connecting-routes-with-route-attributes)
+- [Custom binding callbacks](#custom-binding-callbacks)
+  - [Custom model queries](#custom-model-queries)
 - [Enum bindings](#enum-bindings)
 - [Binding by field](#binding-by-field)
 - [Nested bindings](#nested-bindings)
@@ -22,6 +24,7 @@ Route bindings are for handlers that want typed values (for example `Post $post`
 
 - bind placeholder values to ORM entities before the handler runs
 - parse placeholder values into enum cases before the handler runs
+- resolve route values into other application-specific types
 - keep binding logic centralized in middleware (instead of repeated lookups in handlers)
 - support nested resource patterns (parent → child) with scoped binding
 
@@ -48,10 +51,11 @@ If you use route bindings, placeholders should be compatible with PHP parameter 
 
 ## Defining bindable routes
 
-A route parameter is eligible for binding when:
+A route argument is eligible for binding when the route placeholder name matches the handler parameter name. The middleware then uses:
 
-- the route placeholder name matches the handler parameter name, and
-- the handler parameter is typed as a subclass of `Fyre\ORM\Entity`, or a supported PHP enum
+- the callback configured for that parameter, when present
+- automatic ORM entity binding for parameters typed as a subclass of `Fyre\ORM\Entity`
+- automatic enum binding for supported PHP enums
 
 Bindings work with controller actions and closure routes.
 
@@ -108,6 +112,79 @@ class PostsController
 ```
 
 To learn how attributes become registered routes, see [Route Discovery](route-discovery.md).
+
+## Custom binding callbacks
+
+Use `bindingCallbacks` when automatic entity or enum binding does not provide the value you need. Callbacks are indexed by handler parameter name and take precedence over automatic binding.
+
+```php
+$router->get(
+    'revisions/{revision}',
+    static function(int $revision): string {
+        return 'Revision '.$revision;
+    },
+    bindingCallbacks: [
+        'revision' => static fn(string $value): int|null => filter_var(
+            $value,
+            FILTER_VALIDATE_INT,
+            FILTER_NULL_ON_FAILURE
+        ),
+    ]
+);
+```
+
+The callback converts the raw route value to an integer. `FILTER_NULL_ON_FAILURE` makes invalid input return `null`, while preserving `0` as a valid result.
+
+Each callback is executed through the container and receives these named arguments when requested:
+
+- `$value`: the raw matched route value
+- `$request`: the current `ServerRequestInterface`
+
+Other typed dependencies are resolved from the container. The callback result replaces the route argument. Returning `null` means the value could not be resolved and throws `NotFoundException`; values such as `false`, `0`, and an empty string remain valid results.
+
+Callbacks run in handler parameter order. After each callback or automatic binding succeeds, the request’s `routeArguments` attribute is updated. A later callback can therefore read values resolved for earlier parameters, as shown in the custom model query below.
+
+You can also attach callbacks after connecting a route with `Route::setBindingCallback()`. See [Route configuration](router.md#route-configuration).
+
+### Custom model queries
+
+A callback can replace the normal model route-key lookup with a complete query:
+
+```php
+use Fyre\ORM\Entity;
+use Fyre\ORM\ModelRegistry;
+use Psr\Http\Message\ServerRequestInterface;
+
+$router->get(
+    'users/{user}/posts/{post}',
+    static function(User $user, Post $post): string {
+        return $post->toJson();
+    },
+    bindingCallbacks: [
+        'post' => static function(
+            string $value,
+            ServerRequestInterface $request,
+            ModelRegistry $models
+        ): Entity|null {
+            $arguments = $request->getAttribute('routeArguments', []);
+            $user = $arguments['user'];
+
+            return $models->use('Posts')
+                ->find()
+                ->where([
+                    'Posts.user_id' => $user->id,
+                    'Posts.slug' => $value,
+                    'Posts.published' => true,
+                ])
+                ->first();
+        },
+    ]
+);
+```
+
+The `$user` parameter is bound first, so the `post` callback can use it to scope the query. If a callback returns an `Entity`, that entity becomes the parent used by subsequent automatic nested entity bindings.
+
+Route attributes accept the same `bindingCallbacks` map. See [Route Discovery](route-discovery.md#the-route-attribute) for an example.
 
 ## Enum bindings
 
@@ -168,7 +245,7 @@ Field overrides also affect extracting placeholder values when generating URLs f
 
 ## Nested bindings
 
-When multiple entity parameters are bound, bindings pass the most recently resolved entity as the “parent” to the next binding. This enables common nested resource patterns where the child binding is scoped to the parent.
+When multiple entity parameters are bound, bindings pass the most recently resolved entity as the “parent” to the next automatic entity binding. Entities returned by custom callbacks participate in the same behavior. This enables common nested resource patterns where the child binding is scoped to the parent.
 
 In practice:
 
@@ -193,11 +270,13 @@ In this example, `$comment` is resolved with `$post` as the parent.
 A few behaviors are worth keeping in mind:
 
 - Binding only runs when a route matched and `routeArguments` is not empty.
-- Only parameters with a single named type are considered for binding; union and intersection types are ignored.
-- Optional placeholders like `{post?}` are present as `null` when the segment is missing; use a nullable entity parameter (for example `Post|null`) to allow that case.
-- If an optional placeholder is missing and the parameter is a non-nullable bindable type (for example `Post $post` or `Status $status`), bindings will throw `NotFoundException`.
+- Automatic entity and enum binding only considers parameters with a single named type. Custom callbacks can resolve parameters with other type declarations.
+- Custom callbacks take precedence over automatic entity and enum binding. Only a `null` result throws `NotFoundException`.
+- Optional placeholders like `{post?}` are initially present as `null` when the segment is missing. A declared parameter default is used when available, a required nullable parameter receives `null`, and a required non-nullable parameter throws `NotFoundException`.
+- Binding callbacks are not called when an optional placeholder is missing.
+- Callbacks run in handler parameter order. The request passed to a callback contains resolved values for earlier parameters and raw values for later parameters.
 - Placeholder names must match handler parameter names exactly; placeholders like `{post-id}` produce an argument key of `post-id` and cannot bind to a PHP parameter name like `$postId`.
-- For nested binding, parameter order matters: the “parent” for a binding is the last successfully resolved entity parameter.
+- For nested binding, parameter order matters: the “parent” for an automatic entity binding is the last successfully resolved entity parameter.
 
 ## Related
 

@@ -105,6 +105,7 @@ Use `Fyre\Router\Attributes\Route` when you want to set `methods` explicitly (in
 - `middleware` (`array<Closure|MiddlewareInterface|string>`)
 - `placeholders` (`array<string, string>` placeholder patterns)
 - `as` (`string|null`)
+- `bindingCallbacks` (`array<string, Closure>` callbacks indexed by parameter name)
 
 ```php
 use Fyre\Router\Attributes\Route;
@@ -118,6 +119,31 @@ class WebhookController
     }
 }
 ```
+
+Binding callbacks can also be declared directly in route attributes:
+
+```php
+use Fyre\Router\Attributes\Get;
+
+class RevisionsController
+{
+    #[Get('revisions/{revision}', bindingCallbacks: [
+        'revision' => static function(string $value): int|null {
+            return filter_var(
+                $value,
+                FILTER_VALIDATE_INT,
+                FILTER_NULL_ON_FAILURE
+            );
+        },
+    ])]
+    public function show(int $revision): string
+    {
+        return 'Revision '.$revision;
+    }
+}
+```
+
+Attribute arguments require full closures; arrow functions cannot be used as attribute constant expressions. For callback behavior and custom query examples, see [Route Bindings](route-bindings.md#custom-binding-callbacks).
 
 ### Hiding controllers and actions
 
@@ -191,7 +217,7 @@ Alias generation follows this order:
 You can define defaults at the controller level and override at the method level:
 
 - `scheme`, `host`, `port`, and `methods` use method-level values when provided; otherwise they fall back to controller-level defaults.
-- `middleware` and `placeholders` are merged: controller values first, then method values.
+- `middleware`, `placeholders`, and `bindingCallbacks` are merged: controller values first, then method values. Method callbacks replace controller callbacks with the same parameter name.
 
 If a method attribute provides a `path`, it replaces any controller `path` value (the controller `path` is not automatically prefixed or combined).
 

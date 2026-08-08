@@ -85,6 +85,7 @@ abstract class Route
      * @param string[]|null $methods The methods.
      * @param array<Closure|MiddlewareInterface|string> $middleware The middleware.
      * @param array<string, string> $placeholders The placeholders.
+     * @param array<string, Closure> $bindingCallbacks The route binding callbacks.
      *
      * @throws InvalidArgumentException If the path or port is not valid.
      */
@@ -97,7 +98,8 @@ abstract class Route
         protected int|null $port = null,
         protected array|null $methods = null,
         protected array $middleware = [],
-        protected array $placeholders = []
+        protected array $placeholders = [],
+        protected array $bindingCallbacks = []
     ) {
         if (preg_match('`[^/]\{[^}]+\?\}|\{[^}]+\?\}[^/]`', $this->path)) {
             throw new InvalidArgumentException('Optional route placeholders must occupy an entire path segment.');
@@ -110,6 +112,16 @@ abstract class Route
         if ($this->port !== null) {
             $this->setPort($this->port);
         }
+    }
+
+    /**
+     * Returns the route binding callbacks.
+     *
+     * @return array<string, Closure> The route binding callbacks.
+     */
+    public function getBindingCallbacks(): array
+    {
+        return $this->bindingCallbacks;
     }
 
     /**
@@ -292,6 +304,20 @@ abstract class Route
         return $request
             ->withAttribute('route', $this)
             ->withAttribute('routeArguments', $arguments);
+    }
+
+    /**
+     * Sets a route binding callback.
+     *
+     * @param string $parameter The route parameter.
+     * @param Closure $callback The route binding callback.
+     * @return static The Route.
+     */
+    public function setBindingCallback(string $parameter, Closure $callback): static
+    {
+        $this->bindingCallbacks[$parameter] = $callback;
+
+        return $this;
     }
 
     /**

@@ -42,6 +42,7 @@ class ControllerRoute extends Route
      * @param string[]|null $methods The methods.
      * @param array<Closure|MiddlewareInterface|string> $middleware The middleware.
      * @param array<string, string> $placeholders The placeholders.
+     * @param array<string, Closure> $bindingCallbacks The route binding callbacks.
      */
     public function __construct(
         Container $container,
@@ -52,7 +53,8 @@ class ControllerRoute extends Route
         int|null $port = null,
         array|null $methods = null,
         array $middleware = [],
-        array $placeholders = []
+        array $placeholders = [],
+        array $bindingCallbacks = []
     ) {
         parent::__construct(
             $container,
@@ -63,7 +65,8 @@ class ControllerRoute extends Route
             $port,
             $methods,
             $middleware,
-            $placeholders
+            $placeholders,
+            $bindingCallbacks
         );
 
         $destination = (array) $this->destination;

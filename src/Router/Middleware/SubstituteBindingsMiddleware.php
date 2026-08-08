@@ -45,6 +45,7 @@ class SubstituteBindingsMiddleware implements MiddlewareInterface
      * {@inheritDoc}
      *
      * Note: Route arguments are substituted based on the route destination signature.
+     * Custom binding callbacks take precedence over the default binding behavior.
      * Parameters typed as {@see Entity} are resolved via model route bindings and replace
      * the original scalar argument value. Parameters typed as enums are parsed from the
      * route argument value.
@@ -68,6 +69,7 @@ class SubstituteBindingsMiddleware implements MiddlewareInterface
 
         $params = $route->getParameters();
         $fields = $route->getBindingFields();
+        $bindingCallbacks = $route->getBindingCallbacks();
 
         $parent = null;
 
@@ -78,49 +80,60 @@ class SubstituteBindingsMiddleware implements MiddlewareInterface
                 continue;
             }
 
+            $value = $arguments[$name];
+            $callback = $bindingCallbacks[$name] ?? null;
             $type = $param->getType();
+            $typeName = $type instanceof ReflectionNamedType ? $type->getName() : null;
 
-            if (!($type instanceof ReflectionNamedType)) {
-                continue;
-            }
-
-            $typeName = $type->getName();
-
-            if ($arguments[$name] === null) {
-                if (!$type->allowsNull()) {
+            if ($value === null) {
+                if ($param->isDefaultValueAvailable()) {
+                    unset($arguments[$name]);
+                    $request = $request->withAttribute('routeArguments', $arguments);
+                } else if (!$param->allowsNull()) {
                     throw new NotFoundException();
                 }
 
-                if (is_subclass_of($typeName, Entity::class)) {
+                if ($typeName !== null && is_subclass_of($typeName, Entity::class)) {
                     $parent = null;
                 }
 
                 continue;
             }
 
-            if (is_subclass_of($typeName, Entity::class)) {
-                $Model = $this->entityLocator->findAlias($typeName) |> $this->modelRegistry->use(...);
-                $field = $fields[$name] ?? $Model->getRouteKey();
-
-                $entity = $Model->resolveRouteBinding($arguments[$name], $field, $parent);
-
-                if (!$entity) {
-                    throw new NotFoundException();
+            if ($callback) {
+                $value = $this->container->call(
+                    $callback,
+                    [
+                        'value' => $value,
+                        'request' => $request,
+                    ]
+                );
+            } else if ($typeName !== null) {
+                if (is_subclass_of($typeName, Entity::class)) {
+                    $Model = $this->entityLocator->findAlias($typeName) |> $this->modelRegistry->use(...);
+                    $field = $fields[$name] ?? $Model->getRouteKey();
+                    $value = $Model->resolveRouteBinding($value, $field, $parent);
+                } else if (is_subclass_of($typeName, UnitEnum::class)) {
+                    $value = EnumHelper::parseValue($typeName, $value);
+                } else {
+                    continue;
                 }
-
-                $parent = $entity;
-                $arguments[$name] = $entity;
-            } else if (is_subclass_of($typeName, UnitEnum::class)) {
-                $enum = EnumHelper::parseValue($typeName, $arguments[$name]);
-
-                if (!$enum) {
-                    throw new NotFoundException();
-                }
-
-                $arguments[$name] = $enum;
+            } else {
+                continue;
             }
+
+            if ($value === null) {
+                throw new NotFoundException();
+            }
+
+            if ($value instanceof Entity) {
+                $parent = $value;
+            }
+
+            $arguments[$name] = $value;
+            $request = $request->withAttribute('routeArguments', $arguments);
         }
 
-        return $request->withAttribute('routeArguments', $arguments) |> $handler->handle(...);
+        return $handler->handle($request);
     }
 }

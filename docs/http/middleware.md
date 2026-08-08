@@ -78,9 +78,9 @@ These aliases are mapped by default:
 - `csrf` → `Fyre\Security\Middleware\CsrfProtectionMiddleware`: enforces CSRF token checks and applies CSRF response behavior via `beforeResponse()`.
 - `csp` → `Fyre\Security\Middleware\CspMiddleware`: applies CSP headers to the response returned by the next handler.
 - `router` → `Fyre\Router\Middleware\RouterMiddleware`: parses the request through the router and sets route attributes like `relativePath`, `route`, and `routeArguments`.
-- `bindings` → `Fyre\Router\Middleware\SubstituteBindingsMiddleware`: substitutes route parameters with bound values (for example, ORM entities) and throws a not-found exception when a binding cannot be resolved.
+- `bindings` → `Fyre\Router\Middleware\SubstituteBindingsMiddleware`: resolves route parameters through custom callbacks or automatic entity and enum binding, and throws a not-found exception when a value cannot be resolved.
 
-For deeper topic documentation, see [Authentication](../auth/authentication.md), [Authorization](../auth/authorization.md), [Auth Middleware](../auth/middleware.md), [CSRF](../security/csrf.md), [Content Security Policy (CSP)](../security/csp.md), and [Router](../routing/router.md).
+For deeper topic documentation, see [Authentication](../auth/authentication.md), [Authorization](../auth/authorization.md), [Auth Middleware](../auth/middleware.md), [CSRF](../security/csrf.md), [Content Security Policy (CSP)](../security/csp.md), [Router](../routing/router.md), and [Route Bindings](../routing/route-bindings.md).
 
 ### Other built-in middleware
 

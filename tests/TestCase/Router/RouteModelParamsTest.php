@@ -15,6 +15,7 @@ use Fyre\Http\Exceptions\NotFoundException;
 use Fyre\Http\MiddlewareQueue;
 use Fyre\Http\RequestHandler;
 use Fyre\Http\ServerRequest;
+use Fyre\ORM\Entity;
 use Fyre\ORM\EntityLocator;
 use Fyre\ORM\ModelRegistry;
 use Fyre\Router\Middleware\RouterMiddleware;
@@ -71,6 +72,60 @@ final class RouteModelParamsTest extends TestCase
             'options' => [
                 'server' => [
                     'REQUEST_URI' => '/test/1',
+                ],
+            ],
+        ]);
+
+        $response = $handler->handle($request);
+
+        $this->assertTrue($ran);
+
+        $this->assertInstanceOf(
+            ClientResponse::class,
+            $response
+        );
+    }
+
+    public function testProcessClosureRouteModelParamsBindingCallback(): void
+    {
+        $ran = false;
+
+        $destination = function(Item $item) use (&$ran): string {
+            $ran = true;
+
+            $this->assertSame(
+                'Test',
+                $item->name
+            );
+
+            return '';
+        };
+
+        $this->router->connect('test/{item}', $destination, bindingCallbacks: [
+            'item' => static function(string $value, ModelRegistry $modelRegistry): Entity|null {
+                return $modelRegistry->use('Items')
+                    ->find()
+                    ->where([
+                        'Items.name' => $value,
+                    ])
+                    ->first();
+            },
+        ]);
+
+        $queue = new MiddlewareQueue([
+            RouterMiddleware::class,
+            SubstituteBindingsMiddleware::class,
+        ]);
+
+        $routeHandler = $this->container->build(RouteHandler::class);
+        $handler = $this->container->build(RequestHandler::class, [
+            'queue' => $queue,
+            'fallbackHandler' => $routeHandler,
+        ]);
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'server' => [
+                    'REQUEST_URI' => '/test/Test',
                 ],
             ],
         ]);

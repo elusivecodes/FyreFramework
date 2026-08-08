@@ -79,9 +79,19 @@ trait PostTestTrait
 
     public function testPostArguments(): void
     {
+        $callback = static function(string $value): string {
+            return $value;
+        };
+
         $router = $this->container->use(Router::class);
 
-        $router->post('home/alternate/{a}/{b}/{c}', [HomeController::class, 'altMethod']);
+        $router->post(
+            'home/alternate/{a}/{b}/{c}',
+            [HomeController::class, 'altMethod'],
+            bindingCallbacks: [
+                'a' => $callback,
+            ]
+        );
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
@@ -108,6 +118,13 @@ trait PostTestTrait
         $this->assertSame(
             'altMethod',
             $route->getAction()
+        );
+
+        $this->assertSame(
+            [
+                'a' => $callback,
+            ],
+            $route->getBindingCallbacks()
         );
 
         $this->assertSame(

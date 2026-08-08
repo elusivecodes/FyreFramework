@@ -131,7 +131,51 @@ class RouteLocator
                 $a['optionalCount'] <=> $b['optionalCount']
         );
 
-        return array_column($sortableRoutes, 'route');
+        $reflections = [];
+        $classCallbacks = [];
+
+        return array_map(
+            function(array $route) use (&$reflections, &$classCallbacks): array {
+                $hasBindingCallbacks = $route['hasBindingCallbacks'];
+
+                unset($route['hasBindingCallbacks']);
+
+                if (!$hasBindingCallbacks) {
+                    return $route;
+                }
+
+                [$className, $methodName] = $route['destination'];
+                $reflections[$className] ??= new ReflectionClass($className);
+
+                if (!isset($classCallbacks[$className])) {
+                    $classAttribute = $reflections[$className]->getAttributes(
+                        RouteAttribute::class,
+                        ReflectionAttribute::IS_INSTANCEOF
+                    )[0] ?? null;
+                    $classRoute = $classAttribute ?
+                        $classAttribute->newInstance()->getRoute() :
+                        [];
+
+                    $classCallbacks[$className] = $classRoute['bindingCallbacks'] ?? [];
+                }
+
+                $methodAttribute = $reflections[$className]->getMethod($methodName)->getAttributes(
+                    RouteAttribute::class,
+                    ReflectionAttribute::IS_INSTANCEOF
+                )[0] ?? null;
+                $methodRoute = $methodAttribute ?
+                    $methodAttribute->newInstance()->getRoute() :
+                    [];
+
+                $route['bindingCallbacks'] = array_merge(
+                    $classCallbacks[$className],
+                    $methodRoute['bindingCallbacks'] ?? []
+                );
+
+                return $route;
+            },
+            array_column($sortableRoutes, 'route')
+        );
     }
 
     /**
@@ -224,6 +268,7 @@ class RouteLocator
                 } else {
                     $routeDefaults = [];
                 }
+                $hasDefaultBindingCallbacks = ($routeDefaults['bindingCallbacks'] ?? []) !== [];
 
                 $methods = $reflection->getMethods(ReflectionMethod::IS_PUBLIC);
 
@@ -249,6 +294,8 @@ class RouteLocator
                     } else {
                         $route = [];
                     }
+
+                    $data = [];
 
                     if (isset($route['path'])) {
                         $data['path'] = $route['path'];
@@ -293,6 +340,9 @@ class RouteLocator
                     };
                     $data['middleware'] = array_merge($routeDefaults['middleware'] ?? [], $route['middleware'] ?? []);
                     $data['placeholders'] = array_merge($routeDefaults['placeholders'] ?? [], $route['placeholders'] ?? []);
+
+                    $data['hasBindingCallbacks'] = $hasDefaultBindingCallbacks ||
+                        ($route['bindingCallbacks'] ?? []) !== [];
 
                     if (isset($route['as'])) {
                         $data['as'] = $route['as'];

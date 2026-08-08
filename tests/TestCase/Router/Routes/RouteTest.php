@@ -196,9 +196,18 @@ final class RouteTest extends TestCase
             $route->parseRequest($matchingRequest)
         );
 
+        $optionalRequest = $route->parseRequest($optionalRequest);
+
         $this->assertInstanceOf(
             ServerRequest::class,
-            $route->parseRequest($optionalRequest)
+            $optionalRequest
+        );
+
+        $this->assertSame(
+            [
+                'item' => null,
+            ],
+            $optionalRequest->getAttribute('routeArguments')
         );
 
         $this->assertNull(
@@ -269,6 +278,27 @@ final class RouteTest extends TestCase
         );
     }
 
+    public function testGetBindingCallbacks(): void
+    {
+        $callback = static function(string $value): string {
+            return $value;
+        };
+
+        $route = $this->container->build(ControllerRoute::class, [
+            'destination' => [TestController::class, 'test'],
+            'bindingCallbacks' => [
+                'item' => $callback,
+            ],
+        ]);
+
+        $this->assertSame(
+            [
+                'item' => $callback,
+            ],
+            $route->getBindingCallbacks()
+        );
+    }
+
     public function testGetPath(): void
     {
         $route = $this->container->build(ControllerRoute::class, [
@@ -291,6 +321,29 @@ final class RouteTest extends TestCase
             'destination' => [TestController::class, 'test'],
             'path' => 'files/{name?}.zip',
         ]);
+    }
+
+    public function testSetBindingCallback(): void
+    {
+        $callback = static function(string $value): string {
+            return $value;
+        };
+
+        $route = $this->container->build(ControllerRoute::class, [
+            'destination' => [TestController::class, 'test'],
+        ]);
+
+        $this->assertSame(
+            $route,
+            $route->setBindingCallback('item', $callback)
+        );
+
+        $this->assertSame(
+            [
+                'item' => $callback,
+            ],
+            $route->getBindingCallbacks()
+        );
     }
 
     public function testSetHost(): void

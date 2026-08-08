@@ -16,7 +16,7 @@ Pick a path based on what you’re doing:
 - **Defining routes**: start with [Router](router.md)
 - **Dispatching a matched route**: see [Route Handler](route-handler.md)
 - **Generating links from aliases**: see [URL Generation](url-generation.md)
-- **Injecting typed entities and enum cases from route parameters**: see [Route Bindings](route-bindings.md)
+- **Resolving route parameters into typed or application-specific values**: see [Route Bindings](route-bindings.md)
 - **Using controller attributes and conventions**: see [Route Discovery](route-discovery.md)
 
 ## Routing overview
@@ -31,7 +31,7 @@ The main pieces are straightforward:
 
 - `Router` defines routes, matches requests, and generates URLs
 - `RouteHandler` dispatches the matched route and any route middleware
-- route bindings replace raw route values with ORM entities or enum cases when you want typed parameters
+- route bindings replace raw route values with custom values, ORM entities, or enum cases
 - route discovery builds routes from controller attributes and conventions
 
 ## Pages in this section
@@ -39,7 +39,7 @@ The main pieces are straightforward:
 - [Router](router.md) - define routes, groups, placeholders, and aliases
 - [Route Handler](route-handler.md) - dispatch a matched route and run route middleware
 - [URL Generation](url-generation.md) - generate paths and full URLs from aliases
-- [Route Bindings](route-bindings.md) - replace route values with ORM entities or enum cases
+- [Route Bindings](route-bindings.md) - resolve route values with callbacks or automatic entity and enum binding
 - [Route Discovery](route-discovery.md) - build routes from controller attributes and conventions
 
 ## Related

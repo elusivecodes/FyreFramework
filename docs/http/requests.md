@@ -147,6 +147,8 @@ Attributes are request-scoped values that are not part of the HTTP message itsel
 
 Attributes are typically written by middleware and read by downstream middleware/handlers. See [Method guide → Attributes](#attributes) for the `getAttribute()`/`withAttribute()` helpers.
 
+Router middleware stores matched placeholder values in the `routeArguments` attribute. Binding middleware replaces those values as each argument is resolved, so downstream middleware and handlers receive the bound values. See [Route Bindings](../routing/route-bindings.md).
+
 ## Method guide
 
 This section focuses on the methods you’ll use most when working with `ServerRequest`.

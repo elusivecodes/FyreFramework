@@ -23,6 +23,7 @@ class Put extends Route
      * @param array<Closure|MiddlewareInterface|string> $middleware The route middleware.
      * @param array<string, string> $placeholders The route placeholders.
      * @param string|null $as The route alias.
+     * @param array<string, Closure> $bindingCallbacks The route binding callbacks.
      */
     public function __construct(
         string|null $path = null,
@@ -32,6 +33,7 @@ class Put extends Route
         array $middleware = [],
         array $placeholders = [],
         string|null $as = null,
+        array $bindingCallbacks = [],
     ) {
         parent::__construct(
             $path,
@@ -41,7 +43,8 @@ class Put extends Route
             ['PUT'],
             $middleware,
             $placeholders,
-            $as
+            $as,
+            $bindingCallbacks
         );
     }
 }

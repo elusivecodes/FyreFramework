@@ -22,6 +22,7 @@ use function class_uses;
 final class RouterTest extends TestCase
 {
     use BaseUriTestTrait;
+    use BindingCallbackTestTrait;
     use ConnectTestTrait;
     use DeleteTestTrait;
     use FindRouteTestTrait;

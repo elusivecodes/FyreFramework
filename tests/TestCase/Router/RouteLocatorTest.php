@@ -19,6 +19,7 @@ use Tests\Mock\Controllers\Locate\CommentsController;
 use Tests\Mock\Controllers\Locate\DashboardController;
 use Tests\Mock\Controllers\Locate\ParentCategory\ChildItemsController;
 use Tests\Mock\Controllers\Locate\PostsController;
+use Tests\Mock\Controllers\RouteBindings\ItemsController;
 
 use function array_column;
 use function array_unique;
@@ -58,6 +59,7 @@ final class RouteLocatorTest extends TestCase
                     'methods' => ['POST'],
                     'middleware' => [],
                     'placeholders' => [],
+                    'hasBindingCallbacks' => false,
                     'as' => 'comments.create',
                 ],
                 [
@@ -69,6 +71,7 @@ final class RouteLocatorTest extends TestCase
                     'methods' => ['DELETE'],
                     'middleware' => [],
                     'placeholders' => [],
+                    'hasBindingCallbacks' => false,
                     'as' => 'comments.delete',
                 ],
                 [
@@ -80,6 +83,7 @@ final class RouteLocatorTest extends TestCase
                     'methods' => ['GET'],
                     'middleware' => [],
                     'placeholders' => [],
+                    'hasBindingCallbacks' => false,
                     'as' => 'comments.get',
                 ],
                 [
@@ -91,6 +95,7 @@ final class RouteLocatorTest extends TestCase
                     'methods' => ['GET'],
                     'middleware' => [],
                     'placeholders' => [],
+                    'hasBindingCallbacks' => false,
                     'as' => 'comments.index',
                 ],
                 [
@@ -102,6 +107,7 @@ final class RouteLocatorTest extends TestCase
                     'methods' => ['PATCH', 'PUT'],
                     'middleware' => [],
                     'placeholders' => [],
+                    'hasBindingCallbacks' => false,
                     'as' => 'comments.update',
                 ],
                 [
@@ -113,6 +119,7 @@ final class RouteLocatorTest extends TestCase
                     'methods' => ['GET'],
                     'middleware' => [],
                     'placeholders' => [],
+                    'hasBindingCallbacks' => false,
                     'as' => 'dashboard.index',
                 ],
                 [
@@ -124,6 +131,7 @@ final class RouteLocatorTest extends TestCase
                     'methods' => ['GET'],
                     'middleware' => [],
                     'placeholders' => [],
+                    'hasBindingCallbacks' => false,
                     'as' => 'parent-category.child-items.do-something',
                 ],
                 [
@@ -135,6 +143,7 @@ final class RouteLocatorTest extends TestCase
                     'methods' => ['POST'],
                     'middleware' => [],
                     'placeholders' => [],
+                    'hasBindingCallbacks' => false,
                     'as' => 'posts.create',
                 ],
                 [
@@ -146,6 +155,7 @@ final class RouteLocatorTest extends TestCase
                     'methods' => ['DELETE'],
                     'middleware' => [],
                     'placeholders' => [],
+                    'hasBindingCallbacks' => false,
                     'as' => 'posts.delete',
                 ],
                 [
@@ -157,6 +167,7 @@ final class RouteLocatorTest extends TestCase
                     'methods' => ['GET'],
                     'middleware' => [],
                     'placeholders' => [],
+                    'hasBindingCallbacks' => false,
                     'as' => 'posts.get',
                 ],
                 [
@@ -168,6 +179,7 @@ final class RouteLocatorTest extends TestCase
                     'methods' => ['GET'],
                     'middleware' => [],
                     'placeholders' => [],
+                    'hasBindingCallbacks' => false,
                     'as' => 'posts.index',
                 ],
                 [
@@ -179,6 +191,7 @@ final class RouteLocatorTest extends TestCase
                     'methods' => ['PUT'],
                     'middleware' => [],
                     'placeholders' => [],
+                    'hasBindingCallbacks' => false,
                     'as' => 'posts.put',
                 ],
                 [
@@ -190,6 +203,7 @@ final class RouteLocatorTest extends TestCase
                     'methods' => ['PATCH'],
                     'middleware' => [],
                     'placeholders' => [],
+                    'hasBindingCallbacks' => false,
                     'as' => 'posts.update',
                 ],
             ],
@@ -353,6 +367,45 @@ final class RouteLocatorTest extends TestCase
         );
     }
 
+    public function testDiscoverBindingCallbacks(): void
+    {
+        $routes = $this->routeLocator->discover([
+            'Tests\Mock\Controllers\RouteBindings',
+        ]);
+
+        $this->assertCount(
+            1,
+            $routes
+        );
+
+        $this->assertSame(
+            [ItemsController::class, 'get'],
+            $routes[0]['destination']
+        );
+
+        $callbacks = $routes[0]['bindingCallbacks'];
+
+        $this->assertSame(
+            'class-value',
+            $callbacks['category']('value')
+        );
+
+        $this->assertSame(
+            'method-value',
+            $callbacks['item']('value')
+        );
+
+        $cachedRoutes = $this->container->use(CacheManager::class)
+            ->use('_routes')
+            ->get('Tests.Mock.Controllers.RouteBindings');
+
+        $this->assertTrue($cachedRoutes[0]['hasBindingCallbacks']);
+        $this->assertArrayNotHasKey(
+            'bindingCallbacks',
+            $cachedRoutes[0]
+        );
+    }
+
     public function testDiscoverDuplicateClass(): void
     {
         $this->container->use(Loader::class)->addNamespaces([
@@ -459,6 +512,7 @@ final class RouteLocatorTest extends TestCase
     protected function tearDown(): void
     {
         @unlink('tmp/routes.Tests.Mock.Controllers.Locate');
+        @unlink('tmp/routes.Tests.Mock.Controllers.RouteBindings');
         @rmdir('tmp');
     }
 }

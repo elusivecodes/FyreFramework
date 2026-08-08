@@ -19,6 +19,7 @@ Use `Fyre\Router\Router` to define routes, match requests, and generate URLs fro
   - [Discovering routes with `Router::discoverRoutes()`](#discovering-routes-with-routerdiscoverroutes)
 - [Method guide](#method-guide)
   - [Route definitions](#route-definitions)
+  - [Route configuration](#route-configuration)
   - [Route discovery](#route-discovery)
   - [Request parsing](#request-parsing)
   - [URL generation](#url-generation)
@@ -120,7 +121,7 @@ When a destination runs, it may return a `ResponseInterface` or a string. If it 
 
 `Router::group()` lets you apply shared settings to multiple routes. Groups can be nested; settings cascade down to all routes connected inside the callback.
 
-Group settings are applied in stack order (nested groups last). Middleware and placeholders are merged from outer → inner → route.
+Group settings are applied in stack order (nested groups last). Middleware, placeholders, and binding callbacks are merged from outer → inner → route.
 
 ```php
 use Fyre\Router\Router;
@@ -244,7 +245,7 @@ Most examples assume you already have a `$router` instance (see [Defining routes
 
 #### **Connect a route** (`connect()`)
 
-Connect a route path to a destination, optionally constraining scheme/host/port/methods, attaching route-specific middleware, and registering an alias for URL generation.
+Connect a route path to a destination, optionally constraining scheme/host/port/methods, attaching route-specific middleware or binding callbacks, and registering an alias for URL generation.
 
 Arguments:
 - `$path` (`string`): the route path (normalized before use).
@@ -257,6 +258,7 @@ Arguments:
 - `$placeholders` (`array`): placeholder patterns (regex strings without delimiters).
 - `$as` (`string|null`): alias name for URL generation.
 - `$redirect` (`bool`): whether to create a redirect route.
+- `$bindingCallbacks` (`array<string, Closure>`): callbacks indexed by route parameter name.
 
 ```php
 $router->connect(
@@ -270,7 +272,7 @@ $router->connect(
 
 #### **Connect common HTTP verb routes** (`get()`, `post()`, `put()`, `patch()`, `delete()`)
 
-Convenience wrappers around `connect()` that pre-fill the `methods` argument.
+Convenience wrappers around `connect()` that pre-fill the `methods` argument. Each method also accepts the `bindingCallbacks` argument described above.
 
 ```php
 use Psr\Http\Message\ServerRequestInterface;
@@ -303,7 +305,7 @@ $router->redirect('old-posts/{id}', '/posts/{id}');
 
 #### **Group routes** (`group()`)
 
-Apply shared options (prefix, constraints, middleware, placeholders, alias prefix) to all routes connected inside the callback.
+Apply shared options (prefix, constraints, middleware, placeholders, binding callbacks, alias prefix) to all routes connected inside the callback.
 
 Arguments:
 - `$callback` (`Closure`): callback invoked to connect the group’s routes.
@@ -314,6 +316,7 @@ Arguments:
 - `$middleware` (`array`): middleware merged into routes in the group.
 - `$placeholders` (`array`): placeholder patterns merged into routes in the group.
 - `$as` (`string|null`): alias prefix concatenated onto route aliases in the group.
+- `$bindingCallbacks` (`array<string, Closure>`): binding callbacks merged into routes in the group.
 
 ```php
 use Fyre\Router\Router;
@@ -332,12 +335,36 @@ $router->group(
 );
 ```
 
+Nested groups override callbacks from outer groups with the same parameter name. Callbacks defined directly on a route override matching group callbacks. See [Route Bindings](route-bindings.md#custom-binding-callbacks) for callback behavior and examples.
+
 #### **Clear routes** (`clear()`)
 
 Remove all connected routes and alias mappings.
 
 ```php
 $router->clear();
+```
+
+### Route configuration
+
+#### **Read binding callbacks** (`Route::getBindingCallbacks()`)
+
+Return the route binding callbacks indexed by parameter name.
+
+```php
+$callbacks = $route->getBindingCallbacks();
+```
+
+#### **Set a binding callback** (`Route::setBindingCallback()`)
+
+Add or replace the binding callback for a route parameter.
+
+Arguments:
+- `$parameter` (`string`): route parameter name.
+- `$callback` (`Closure`): callback used to resolve the matched value.
+
+```php
+$route->setBindingCallback('post', $callback);
 ```
 
 ### Route discovery
@@ -427,6 +454,7 @@ A few behaviors are worth keeping in mind:
 - Route matching uses normalized paths, but duplicate slashes inside the path are not collapsed.
 - Group alias prefixes are concatenated directly (no separator is inserted), so include your own separator (for example `api.`) if needed.
 - Optional placeholders (`{id?}`) make the entire `/{id}` segment optional during matching, and the extracted argument key is `id` (not `id?`).
+- Missing optional placeholders are initially stored as `null`. Binding middleware applies declared parameter defaults, preserves `null` for required nullable parameters, and rejects required non-nullable parameters.
 - Optional placeholders must occupy an entire path segment.
 - `Router::url()` uses the base placeholder name for argument lookup (for example `['id' => 123]` for `{id?}`).
 - Host matching supports `*` wildcards (for example `*.example.com`).

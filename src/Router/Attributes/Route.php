@@ -25,6 +25,7 @@ class Route
      * @param array<Closure|MiddlewareInterface|string> $middleware The route middleware.
      * @param array<string, string> $placeholders The route placeholders.
      * @param string|null $as The route alias.
+     * @param array<string, Closure> $bindingCallbacks The route binding callbacks.
      */
     public function __construct(
         protected string|null $path = null,
@@ -35,6 +36,7 @@ class Route
         protected array $middleware = [],
         protected array $placeholders = [],
         protected string|null $as = null,
+        protected array $bindingCallbacks = [],
     ) {}
 
     /**
@@ -56,6 +58,7 @@ class Route
             'middleware' => $this->middleware,
             'placeholders' => $this->placeholders,
             'as' => $this->as,
+            'bindingCallbacks' => $this->bindingCallbacks,
         ];
     }
 }

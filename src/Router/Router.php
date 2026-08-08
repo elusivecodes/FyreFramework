@@ -107,7 +107,7 @@ class Router
      * Connects a route.
      *
      * Note: Route group settings are applied in stack order (nested groups last), and
-     * middleware/placeholders are merged from outer → inner → route.
+     * middleware, placeholders and binding callbacks are merged from outer → inner → route.
      *
      * Note: For controller routes, the destination array must contain a controller class
      * name (not an instance).
@@ -122,6 +122,7 @@ class Router
      * @param array<string, string> $placeholders The route placeholders.
      * @param string|null $as The route alias.
      * @param bool $redirect Whether the route is a redirect.
+     * @param array<string, Closure> $bindingCallbacks The route binding callbacks.
      * @return Route The Route.
      */
     public function connect(
@@ -134,7 +135,8 @@ class Router
         array $middleware = [],
         array $placeholders = [],
         string|null $as = null,
-        bool $redirect = false
+        bool $redirect = false,
+        array $bindingCallbacks = []
     ): Route {
         $path = static::normalizePath($path);
 
@@ -152,6 +154,7 @@ class Router
         $groupPort = null;
         $groupMiddleware = [];
         $groupPlaceholders = [];
+        $groupBindingCallbacks = [];
         $groupAs = [];
 
         foreach ($this->groups as $group) {
@@ -173,6 +176,7 @@ class Router
 
             $groupMiddleware = array_merge($groupMiddleware, (array) $group['middleware']);
             $groupPlaceholders = array_merge($groupPlaceholders, $group['placeholders']);
+            $groupBindingCallbacks = array_merge($groupBindingCallbacks, $group['bindingCallbacks']);
 
             if ($group['as']) {
                 $groupAs[] = $group['as'];
@@ -196,6 +200,7 @@ class Router
 
         $middleware = array_merge($groupMiddleware, $middleware);
         $placeholders = array_merge($groupPlaceholders, $placeholders);
+        $bindingCallbacks = array_merge($groupBindingCallbacks, $bindingCallbacks);
 
         if ($as && $groupAs !== []) {
             $as = implode('', $groupAs).$as;
@@ -209,6 +214,7 @@ class Router
             'methods' => $methods,
             'middleware' => $middleware,
             'placeholders' => $placeholders,
+            'bindingCallbacks' => $bindingCallbacks,
         ]);
 
         $this->routes[] = $route;
@@ -232,6 +238,7 @@ class Router
      * @param array<Closure|MiddlewareInterface|string> $middleware The route middleware.
      * @param array<string, string> $placeholders The route placeholders.
      * @param string|null $as The route alias.
+     * @param array<string, Closure> $bindingCallbacks The route binding callbacks.
      * @return Route The Route.
      */
     public function delete(
@@ -243,7 +250,8 @@ class Router
         array $methods = ['DELETE'],
         array $middleware = [],
         array $placeholders = [],
-        string|null $as = null
+        string|null $as = null,
+        array $bindingCallbacks = []
     ): Route {
         return $this->connect(
             $path,
@@ -254,7 +262,8 @@ class Router
             $methods,
             $middleware,
             $placeholders,
-            $as
+            $as,
+            bindingCallbacks: $bindingCallbacks
         );
     }
 
@@ -287,6 +296,7 @@ class Router
      * @param array<Closure|MiddlewareInterface|string> $middleware The route middleware.
      * @param array<string, string> $placeholders The route placeholders.
      * @param string|null $as The route alias.
+     * @param array<string, Closure> $bindingCallbacks The route binding callbacks.
      * @return Route The Route.
      */
     public function get(
@@ -298,7 +308,8 @@ class Router
         array $methods = ['GET'],
         array $middleware = [],
         array $placeholders = [],
-        string|null $as = null
+        string|null $as = null,
+        array $bindingCallbacks = []
     ): Route {
         return $this->connect(
             $path,
@@ -309,7 +320,8 @@ class Router
             $methods,
             $middleware,
             $placeholders,
-            $as
+            $as,
+            bindingCallbacks: $bindingCallbacks
         );
     }
 
@@ -339,6 +351,7 @@ class Router
      * @param array<Closure|MiddlewareInterface|string> $middleware The route middleware.
      * @param array<string, string> $placeholders The route placeholders.
      * @param string|null $as The route alias.
+     * @param array<string, Closure> $bindingCallbacks The route binding callbacks.
      */
     public function group(
         Closure $callback,
@@ -348,7 +361,8 @@ class Router
         int|null $port = null,
         array $middleware = [],
         array $placeholders = [],
-        string|null $as = null
+        string|null $as = null,
+        array $bindingCallbacks = []
     ): void {
         $this->groups[] = [
             'prefix' => $prefix,
@@ -358,6 +372,7 @@ class Router
             'middleware' => $middleware,
             'placeholders' => $placeholders,
             'as' => $as,
+            'bindingCallbacks' => $bindingCallbacks,
         ];
 
         try {
@@ -421,6 +436,7 @@ class Router
      * @param array<Closure|MiddlewareInterface|string> $middleware The route middleware.
      * @param array<string, string> $placeholders The route placeholders.
      * @param string|null $as The route alias.
+     * @param array<string, Closure> $bindingCallbacks The route binding callbacks.
      * @return Route The Route.
      */
     public function patch(
@@ -432,7 +448,8 @@ class Router
         array $methods = ['PATCH'],
         array $middleware = [],
         array $placeholders = [],
-        string|null $as = null
+        string|null $as = null,
+        array $bindingCallbacks = []
     ): Route {
         return $this->connect(
             $path,
@@ -443,7 +460,8 @@ class Router
             $methods,
             $middleware,
             $placeholders,
-            $as
+            $as,
+            bindingCallbacks: $bindingCallbacks
         );
     }
 
@@ -459,6 +477,7 @@ class Router
      * @param array<Closure|MiddlewareInterface|string> $middleware The route middleware.
      * @param array<string, string> $placeholders The route placeholders.
      * @param string|null $as The route alias.
+     * @param array<string, Closure> $bindingCallbacks The route binding callbacks.
      * @return Route The Route.
      */
     public function post(
@@ -470,7 +489,8 @@ class Router
         array $methods = ['POST'],
         array $middleware = [],
         array $placeholders = [],
-        string|null $as = null
+        string|null $as = null,
+        array $bindingCallbacks = []
     ): Route {
         return $this->connect(
             $path,
@@ -481,7 +501,8 @@ class Router
             $methods,
             $middleware,
             $placeholders,
-            $as
+            $as,
+            bindingCallbacks: $bindingCallbacks
         );
     }
 
@@ -497,6 +518,7 @@ class Router
      * @param array<Closure|MiddlewareInterface|string> $middleware The route middleware.
      * @param array<string, string> $placeholders The route placeholders.
      * @param string|null $as The route alias.
+     * @param array<string, Closure> $bindingCallbacks The route binding callbacks.
      * @return Route The Route.
      */
     public function put(
@@ -508,7 +530,8 @@ class Router
         array $methods = ['PUT'],
         array $middleware = [],
         array $placeholders = [],
-        string|null $as = null
+        string|null $as = null,
+        array $bindingCallbacks = []
     ): Route {
         return $this->connect(
             $path,
@@ -519,7 +542,8 @@ class Router
             $methods,
             $middleware,
             $placeholders,
-            $as
+            $as,
+            bindingCallbacks: $bindingCallbacks
         );
     }
 
