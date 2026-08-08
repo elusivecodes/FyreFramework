@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\MariaDb\Model;
 
+use Tests\Mock\Enums\Status;
+
 trait SchemaTestTrait
 {
     public function testAliasField(): void
@@ -26,6 +28,14 @@ trait SchemaTestTrait
         $this->assertSame(
             'name',
             $this->modelRegistry->use('Items')->getDisplayName()
+        );
+    }
+
+    public function testGetEnumClass(): void
+    {
+        $this->assertSame(
+            Status::class,
+            $this->modelRegistry->use('EnumItems')->getSchema()->getEnumClass('name')
         );
     }
 

@@ -116,7 +116,6 @@ final class MakeModelTest extends TestCase
                 '{properties}' => '',
                 '{rules}' => '',
                 '{validator}' => '',
-                '{initialize}' => '',
             ]),
             $filePath
         );
@@ -166,13 +165,12 @@ final class MakeModelTest extends TestCase
                 ]),
                 '{rules}' => '',
                 '{validator}' => '',
-                '{initialize}' => '',
             ]),
             'tmp/Models/ExampleModel.php'
         );
     }
 
-    public function testMakeModelEnumInitialization(): void
+    public function testMakeModelEnum(): void
     {
         $column = $this->schema->table('posts')->column('title');
         $comment = new ReflectionProperty(Column::class, 'comment');
@@ -200,6 +198,70 @@ final class MakeModelTest extends TestCase
                     '    case Published = \'published\';',
             ]),
             'tmp/Enums/BlogPostTitle.php'
+        );
+        $this->assertFileMatchesFormat(
+            Make::loadStub('model', [
+                '{namespace}' => 'Example\Models',
+                '{uses}' => implode(PHP_EOL, [
+                    'use Example\Entities\BlogPost;',
+                    'use Example\Enums\BlogPostTitle;',
+                    'use Fyre\Form\Rule;',
+                    'use Fyre\Form\Validator;',
+                    'use Fyre\ORM\Attributes\BelongsTo;',
+                    'use Fyre\ORM\Attributes\EnumField;',
+                    'use Fyre\ORM\Attributes\HasMany;',
+                    'use Fyre\ORM\Attributes\ManyToMany;',
+                    'use Fyre\ORM\Model;',
+                    'use Fyre\ORM\Relationships\BelongsTo as BelongsToRelationship;',
+                    'use Fyre\ORM\Relationships\HasMany as HasManyRelationship;',
+                    'use Fyre\ORM\Relationships\ManyToMany as ManyToManyRelationship;',
+                    'use Fyre\ORM\RuleSet;',
+                    'use Fyre\ORM\Traits\TimestampsTrait;',
+                    'use Override;',
+                ]),
+                '{docblock}' => implode(PHP_EOL, [
+                    '/**',
+                    ' * @extends Model<BlogPost>',
+                    ' *',
+                    ' * @property BelongsToRelationship<static, UsersModel> $Users',
+                    ' * @property HasManyRelationship<static, PostsCategoriesModel> $PostsCategories',
+                    ' * @property HasManyRelationship<static, PostsLabelsModel> $PostsLabels',
+                    ' * @property ManyToManyRelationship<static, TagsModel> $Tags',
+                    ' * @use TimestampsTrait<BlogPost>',
+                    ' */',
+                ]),
+                '{attributes}' => implode(PHP_EOL, [
+                    '#[EnumField(\'title\', BlogPostTitle::class)]',
+                    '#[BelongsTo(\'Users\')]',
+                    '#[HasMany(\'PostsCategories\', [',
+                    '    \'foreignKey\' => \'post_id\',',
+                    '])]',
+                    '#[HasMany(\'PostsLabels\', [',
+                    '    \'foreignKey\' => \'post_id\',',
+                    '])]',
+                    '#[ManyToMany(\'Tags\', [',
+                    '    \'through\' => \'PostsTags\',',
+                    '    \'foreignKey\' => \'post_id\',',
+                    '])]',
+                    '',
+                ]),
+                '{class}' => 'BlogPostModel',
+                '{traits}' => '    use TimestampsTrait;'.PHP_EOL.PHP_EOL,
+                '{properties}' => '    protected string $table = \'posts\';'.PHP_EOL.PHP_EOL,
+                '{rules}' => '        $rules->add(RuleSet::existsIn([\'user_id\'], \'Users\'));'.PHP_EOL.PHP_EOL,
+                '{validator}' => implode(PHP_EOL, [
+                    '        $validator->add(\'user_id\', Rule::required(), on: \'create\', name: \'required\');',
+                    '        $validator->add(\'user_id\', Rule::integer(), name: \'integer\');',
+                    '        $validator->add(\'title\', Rule::required(), on: \'create\', name: \'required\');',
+                    '        $validator->add(\'title\', Rule::maxLength(255), name: \'maxLength\');',
+                    '        $validator->add(\'title\', Rule::in([\'draft\', \'published\']), name: \'in\');',
+                    '        $validator->add(\'created\', Rule::dateTime(), name: \'datetime\');',
+                    '        $validator->add(\'modified\', Rule::dateTime(), name: \'datetime\');',
+                    '',
+                    '',
+                ]),
+            ]),
+            'tmp/Models/BlogPostModel.php'
         );
     }
 
@@ -327,7 +389,6 @@ final class MakeModelTest extends TestCase
                 '{properties}' => '',
                 '{rules}' => '',
                 '{validator}' => '',
-                '{initialize}' => '',
             ]),
             $filePath
         );
@@ -505,7 +566,6 @@ final class MakeModelTest extends TestCase
             '{properties}' => '',
             '{rules}' => '',
             '{validator}' => '',
-            '{initialize}' => '',
         ];
         $uses = [
             'use Example\Entities\Post;',

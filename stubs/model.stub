@@ -19,5 +19,5 @@ class {class} extends Model
     public function buildValidator(Validator $validator): Validator
     {
 {validator}        return $validator;
-    }{initialize}
+    }
 }

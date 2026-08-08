@@ -19,6 +19,7 @@ use Fyre\DB\Types\IntegerType;
 use Fyre\Form\Rule;
 use Fyre\Form\Validator;
 use Fyre\ORM\Attributes\BelongsTo;
+use Fyre\ORM\Attributes\EnumField;
 use Fyre\ORM\Attributes\HasMany;
 use Fyre\ORM\Attributes\HasOne;
 use Fyre\ORM\Attributes\ManyToMany;
@@ -139,13 +140,12 @@ class ModelSourceBuilder
                 $validator
             ),
             '{docblock}' => static::buildDocBlock($entityClass, $relationships, $traits),
-            '{attributes}' => static::relationshipAttributes($relationships),
+            '{attributes}' => static::buildAttributes($enums, $relationships),
             '{class}' => $className,
             '{traits}' => static::buildTraits($traits),
             '{properties}' => static::buildProperties($connection, $table),
             '{rules}' => static::buildStatements($rules),
             '{validator}' => static::buildStatements($validator),
-            '{initialize}' => static::buildInitialize($enums),
         ]);
     }
 
@@ -542,6 +542,48 @@ class ModelSourceBuilder
     }
 
     /**
+     * Builds model attributes.
+     *
+     * @param EnumData[] $enums The enum fields.
+     * @param ModelRelationshipData[] $relationships The model relationships.
+     * @return string The model attributes.
+     */
+    protected static function buildAttributes(array $enums, array $relationships): string
+    {
+        $lines = [];
+
+        foreach ($enums as $enum) {
+            $lines[] = '#[EnumField('.var_export($enum['field'], true).', '.$enum['className'].'::class)]';
+        }
+
+        foreach ($relationships as $relationship) {
+            $attributeClass = match ($relationship['type']) {
+                self::BELONGS_TO => BelongsTo::class,
+                self::HAS_ONE => HasOne::class,
+                self::MANY_TO_MANY => ManyToMany::class,
+                default => HasMany::class,
+            };
+            $attribute = new ReflectionClass($attributeClass)->getShortName();
+            $line = '#['.$attribute.'('.var_export($relationship['alias'], true);
+
+            if ($relationship['options'] !== []) {
+                $line .= ', [';
+
+                foreach ($relationship['options'] as $key => $value) {
+                    $line .= PHP_EOL.'    '.var_export($key, true).' => '.var_export($value, true).',';
+                }
+
+                $line .= PHP_EOL.']';
+            }
+
+            $line .= ')]';
+            $lines[] = $line;
+        }
+
+        return $lines === [] ? '' : implode(PHP_EOL, $lines).PHP_EOL;
+    }
+
+    /**
      * Builds the model docblock.
      *
      * @param string $entityClass The entity class name.
@@ -578,34 +620,6 @@ class ModelSourceBuilder
         $lines[] = ' */';
 
         return implode(PHP_EOL, $lines);
-    }
-
-    /**
-     * Builds the optional initialize method for enum fields.
-     *
-     * @param EnumData[] $enums The enum fields.
-     * @return string The method source code.
-     */
-    protected static function buildInitialize(array $enums): string
-    {
-        if ($enums === []) {
-            return '';
-        }
-
-        $lines = [
-            '    #[Override]',
-            '    public function initialize(): void',
-            '    {',
-        ];
-
-        foreach ($enums as $enum) {
-            $lines[] = '        $this->getSchema()->setEnumClass('.
-                var_export($enum['field'], true).', '.$enum['className'].'::class);';
-        }
-
-        $lines[] = '    }';
-
-        return PHP_EOL.PHP_EOL.implode(PHP_EOL, $lines);
     }
 
     /**
@@ -709,6 +723,10 @@ class ModelSourceBuilder
 
         if ($validator !== []) {
             $imports[] = Rule::class;
+        }
+
+        if ($enums !== []) {
+            $imports[] = EnumField::class;
         }
 
         foreach ($enums as $enum) {
@@ -889,47 +907,6 @@ class ModelSourceBuilder
         }
 
         return $lines;
-    }
-
-    /**
-     * Builds relationship attributes.
-     *
-     * @param ModelRelationshipData[] $relationships The model relationships.
-     * @return string The relationship attributes.
-     */
-    protected static function relationshipAttributes(array $relationships): string
-    {
-        if ($relationships === []) {
-            return '';
-        }
-
-        $lines = [];
-
-        foreach ($relationships as $relationship) {
-            $attributeClass = match ($relationship['type']) {
-                self::BELONGS_TO => BelongsTo::class,
-                self::HAS_ONE => HasOne::class,
-                self::MANY_TO_MANY => ManyToMany::class,
-                default => HasMany::class,
-            };
-            $attribute = new ReflectionClass($attributeClass)->getShortName();
-            $line = '#['.$attribute.'('.var_export($relationship['alias'], true);
-
-            if ($relationship['options'] !== []) {
-                $line .= ', [';
-
-                foreach ($relationship['options'] as $key => $value) {
-                    $line .= PHP_EOL.'    '.var_export($key, true).' => '.var_export($value, true).',';
-                }
-
-                $line .= PHP_EOL.']';
-            }
-
-            $line .= ')]';
-            $lines[] = $line;
-        }
-
-        return implode(PHP_EOL, $lines).PHP_EOL;
     }
 
     /**

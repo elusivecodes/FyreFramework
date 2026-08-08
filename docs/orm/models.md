@@ -94,19 +94,15 @@ By default, `newEntity()` and `patchEntity()` perform a full “user input” wo
 - optional validation (and error population)
 - optional association handling via the `$associated` option
 
-If a field should hydrate and marshal as a PHP enum, configure that on the schema during `initialize()`:
+If a field should hydrate and marshal as a PHP enum, map the field to its enum class using `EnumField`:
 
 ```php
 use App\Enums\Status;
+use Fyre\ORM\Attributes\EnumField;
 use Fyre\ORM\Model;
 
-class ArticlesModel extends Model
-{
-    public function initialize(): void
-    {
-        $this->getSchema()->setEnumClass('status', Status::class);
-    }
-}
+#[EnumField('status', Status::class)]
+class ArticlesModel extends Model {}
 ```
 
 When selecting relationships, model relationship names can be expressed using dot-notation strings and nested arrays. For querying and eager-loading, see [Finding Data](finding.md).
