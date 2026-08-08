@@ -252,10 +252,13 @@ final class MakeModelTest extends TestCase
                 '{validator}' => implode(PHP_EOL, [
                     '        $validator->add(\'user_id\', Rule::required(), on: \'create\', name: \'required\');',
                     '        $validator->add(\'user_id\', Rule::integer(), name: \'integer\');',
+                    '',
                     '        $validator->add(\'title\', Rule::required(), on: \'create\', name: \'required\');',
                     '        $validator->add(\'title\', Rule::maxLength(255), name: \'maxLength\');',
                     '        $validator->add(\'title\', Rule::in([\'draft\', \'published\']), name: \'in\');',
+                    '',
                     '        $validator->add(\'created\', Rule::dateTime(), name: \'datetime\');',
+                    '',
                     '        $validator->add(\'modified\', Rule::dateTime(), name: \'datetime\');',
                     '',
                     '',
@@ -651,6 +654,7 @@ final class MakeModelTest extends TestCase
         $this->assertStringContainsString(
             implode(PHP_EOL, [
                 '        $rules->add(RuleSet::existsIn([\'user_id\'], \'Users\'));',
+                '',
                 '        $rules->add(RuleSet::isUnique([\'email\']));',
             ]),
             $source

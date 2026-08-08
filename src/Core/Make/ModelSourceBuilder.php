@@ -665,7 +665,9 @@ class ModelSourceBuilder
         }
 
         return implode(PHP_EOL, array_map(
-            static fn(string $line): string => '        '.$line,
+            static fn(string $line): string => $line === '' ?
+                '' :
+                '        '.$line,
             $lines
         )).PHP_EOL.PHP_EOL;
     }
@@ -802,7 +804,7 @@ class ModelSourceBuilder
      */
     protected static function getRules(array $indexes, array $relationships): array
     {
-        $lines = [];
+        $existsInRules = [];
 
         foreach ($relationships as $relationship) {
             if ($relationship['type'] !== self::BELONGS_TO) {
@@ -822,18 +824,24 @@ class ModelSourceBuilder
                 $arguments[] = 'targetFields: '.static::formatStringArray($relationship['bindingKey']);
             }
 
-            $lines[] = '$rules->add(RuleSet::existsIn('.implode(', ', $arguments).'));';
+            $existsInRules[] = '$rules->add(RuleSet::existsIn('.implode(', ', $arguments).'));';
         }
+
+        $uniqueRules = [];
 
         foreach ($indexes as $index) {
             if (!$index->isUnique() || $index->isPrimary() || $index->getColumns() === []) {
                 continue;
             }
 
-            $lines[] = '$rules->add(RuleSet::isUnique('.static::formatStringArray($index->getColumns()).'));';
+            $uniqueRules[] = '$rules->add(RuleSet::isUnique('.static::formatStringArray($index->getColumns()).'));';
         }
 
-        return $lines;
+        if ($existsInRules !== [] && $uniqueRules !== []) {
+            $existsInRules[] = '';
+        }
+
+        return [...$existsInRules, ...$uniqueRules];
     }
 
     /**
@@ -890,6 +898,14 @@ class ModelSourceBuilder
             }
 
             $rules = static::validatorRules($column, $enumValues[$name] ?? []);
+
+            if ($rules === []) {
+                continue;
+            }
+
+            if ($lines !== []) {
+                $lines[] = '';
+            }
 
             foreach ($rules as $ruleName => $rule) {
                 $arguments = [
