@@ -89,7 +89,7 @@ Validation and rule sets both produce errors on entities, but they run at differ
 - **Validation** runs when building or patching entities (when `$validate` is enabled). It validates user input shape and constraints (required fields, formats, lengths) and writes errors onto the entity. See [Form Validators](../form/validators.md).
 - **Rule sets** run during `save()` / `saveMany()` (when `$checkRules` is enabled). They enforce model-level integrity that may require database context (for example uniqueness and foreign key existence) and can also write errors onto the entity. See [Rule Sets](rulesets.md).
 
-If a new or dirty entity graph already has errors, `save()` / `saveMany()` return `false` without attempting persistence. Clean existing entities are skipped before errors are checked.
+If an entity is new or dirty, saving fails without attempting persistence when it or any nested entity already has errors. Clean existing entities are skipped before errors are checked.
 
 ## Saving entities
 
@@ -100,10 +100,10 @@ If a new or dirty entity graph already has errors, `save()` / `saveMany()` retur
 Important behaviors:
 
 - If the entity is not new and not dirty, `save()` returns `true` without issuing queries or checking errors.
-- If a new or dirty entity graph has errors, `save()` returns `false`.
+- If the entity is new or dirty and it or any nested entity has errors, `save()` returns `false`.
 - When enabled, existence checks run for “new” entities that already have primary key values.
 - When enabled, rule sets run as part of the save workflow. See [Rule Sets](rulesets.md).
-- The save runs inside a transaction; failures roll back and clear temporary field changes on the entity graph.
+- The save runs inside a transaction; failures roll back and clear temporary field changes on the entity and its related entities.
 
 ```php
 $user = $Users->newEntity(['email' => 'ada@example.com']);
@@ -121,7 +121,7 @@ Important behaviors:
 
 - Entities that are neither new nor dirty are filtered out before saving.
 - If the filtered list is empty, `saveMany()` returns `true`.
-- If any remaining entity graph has errors, `saveMany()` returns `false`.
+- If any remaining entity or nested entity has errors, `saveMany()` returns `false`.
 - Any failure rolls back all changes.
 
 ```php
@@ -142,7 +142,7 @@ When saving related entities is enabled (the default), a model saves relationshi
 
 In both phases, the ORM sets relationship keys as *temporary* values during the transaction (for example foreign keys on children, or a belongs-to foreign key on the source entity). If the save fails, those temporary values are cleared as part of the rollback.
 
-To build an entity graph from input, provide nested data using relationship **property names** (by default, the underscored relationship name; singular for single relations, plural for multiple).
+To build an entity with related data from input, provide nested data using relationship **property names** (by default, the underscored relationship name; singular for single relations, plural for multiple).
 
 The `$associated` option is optional. When omitted, every relationship defined directly on the current model is eligible. Use it when you need to restrict those relationships or enable and configure deeper relationship paths.
 
@@ -185,7 +185,7 @@ $article = $Articles->newEntity(
 $Articles->save($article);
 ```
 
-To persist only the primary entity and ignore any nested relationship graph, pass `saveRelated: false`:
+To persist only the primary entity and ignore related entities, pass `saveRelated: false`:
 
 ```php
 $Articles->save($article, saveRelated: false);
@@ -436,7 +436,7 @@ A few behaviors are worth keeping in mind:
 - `newEntity()` / `patchEntity()` run validation with the model validator when `$validate` is enabled and write errors onto the entity. See [Form Validators](../form/validators.md).
 - Parse events (`ORM.beforeParse` / `ORM.afterParse`) run only when both `$parse` and `$events` are enabled.
 - `save()` returns early (and does not issue queries) when an entity is not new and has no dirty fields.
-- `save()` / `saveMany()` return `false` when a new or dirty entity graph has errors; clean existing entities are skipped before errors are checked.
+- When an entity is new or dirty, `save()` / `saveMany()` return `false` if it or any nested entity has errors; clean existing entities are skipped before errors are checked.
 - When `$checkRules` is enabled, rule sets can add errors during `save()` / `saveMany()` and cause the save to return `false`. See [Rule Sets](rulesets.md).
 - When saving related entities is enabled, belongs-to relations are saved before the main entity, and owning-side relations are saved after.
 - Primary keys and relationship keys populated during a save are set as temporary values during the transaction; a failed save clears them, and successful post-commit cleaning (when enabled) clears the temporary status and marks entities as not new.

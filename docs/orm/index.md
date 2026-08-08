@@ -28,11 +28,11 @@ Pick a path based on what you’re doing:
 Most ORM work starts from a model and flows through entities:
 
 - **Models** represent a table and act as the entry point for querying and persistence.
-- **Entities** represent individual records (or graphs of related records) and track changes and errors.
+- **Entities** represent individual records, can contain related entities, and track changes and errors.
 - **Relationships** connect models, control how related data is loaded, and influence saving/deleting behavior.
 - **Rule sets** run integrity checks during save workflows (distinct from input validation).
 
-New or dirty entity graphs fail to save when they have errors. Existing entities with no changes are skipped before errors are checked.
+New or dirty entities fail to save when they or any nested entities have errors. Existing entities with no changes are skipped before errors are checked.
 
 ## Pages in this section
 

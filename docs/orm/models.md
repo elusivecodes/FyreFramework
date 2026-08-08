@@ -266,7 +266,7 @@ if ($user) {
 
 #### **Save an entity** (`save()`)
 
-Insert or update an entity based on its state. Saves return `false` when a new or dirty entity graph has errors; clean existing entities are skipped first. For related saves, rules, and bulk saves, see [Saving Data](saving.md) and [Rule Sets](rulesets.md).
+Insert or update an entity based on its state. When an entity is new or dirty, saving returns `false` if it or any nested entity has errors; clean existing entities are skipped first. For related saves, rules, and bulk saves, see [Saving Data](saving.md) and [Rule Sets](rulesets.md).
 
 Arguments:
 - `$entity` (`Entity`): the entity to persist.

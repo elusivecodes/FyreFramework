@@ -311,7 +311,7 @@ class UsersModel extends Model
 
 A few behaviors are worth keeping in mind:
 
-- Rule checks only run when `$checkRules` is enabled, the entity is new or dirty, and its entity graph has no existing errors.
+- Rule checks only run when `$checkRules` is enabled, the entity is new or dirty, and neither it nor any nested entity has existing errors.
 - `RuleSet::validate()` runs all rules; it does not stop at the first failure.
 - Built-in rules often return early for cases like empty field lists or unchanged fields.
 - `existsIn()` requires the relationship to exist; if it does not, an `OrmException` is thrown.
