@@ -57,7 +57,7 @@ class FulfilledPromise implements PromiseInterface
         }
 
         try {
-            return Promise::resolve($onFulfilled($this->value));
+            return $onFulfilled($this->value) |> Promise::resolve(...);
         } catch (Throwable $e) {
             return new RejectedPromise($e);
         }

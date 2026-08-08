@@ -147,7 +147,7 @@ class Model implements EventListenerInterface
                     if ($oldValue === null) {
                         $contain[$name][$key] = $value;
                     } else if ($value !== null) {
-                        $contain[$name][$key] = static fn(SelectQuery $query): SelectQuery => $value($oldValue($query));
+                        $contain[$name][$key] = static fn(SelectQuery $query): SelectQuery => $oldValue($query) |> $value;
                     }
                 } else {
                     $contain[$name][$key] = $value;

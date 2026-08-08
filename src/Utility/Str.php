@@ -662,7 +662,8 @@ abstract class Str
 
         $string = (string) preg_replace('/\s+/u', '', ucwords($string));
 
-        return strtolower((string) preg_replace('/(.)(?=[A-Z])/u', '$1'.$delimiter, $string));
+        return ((string) preg_replace('/(.)(?=[A-Z])/u', '$1'.$delimiter, $string))
+            |> strtolower(...);
     }
 
     /**

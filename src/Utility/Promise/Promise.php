@@ -339,8 +339,9 @@ class Promise implements PromiseInterface
 
         try {
             if ($paramCount === 0) {
-                $value = $callback();
-                $this->settle(static::resolve($value));
+                $callback()
+                    |> static::resolve(...)
+                    |> $this->settle(...);
             } else {
                 $target = & $this;
 
@@ -350,7 +351,7 @@ class Promise implements PromiseInterface
                             return;
                         }
 
-                        $target->settle(static::resolve($value));
+                        static::resolve($value) |> $target->settle(...);
                         $target = null;
                     },
                     function(Throwable|null $reason = null) use (&$target): void {
@@ -360,12 +361,12 @@ class Promise implements PromiseInterface
 
                         $target = null;
 
-                        $this->settle(static::reject($reason));
+                        static::reject($reason) |> $this->settle(...);
                     }
                 );
             }
         } catch (Throwable $e) {
-            $this->settle(static::reject($e));
+            static::reject($e) |> $this->settle(...);
         }
     }
 

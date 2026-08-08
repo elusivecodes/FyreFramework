@@ -81,7 +81,7 @@ class RejectedPromise implements PromiseInterface
         $this->handled = true;
 
         try {
-            return Promise::resolve($onRejected($this->reason));
+            return $onRejected($this->reason) |> Promise::resolve(...);
         } catch (Throwable $e) {
             return new static($e);
         }

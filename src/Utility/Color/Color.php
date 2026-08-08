@@ -475,7 +475,9 @@ abstract class Color implements Stringable
      */
     public static function createFromString(string $string): static
     {
-        $string = trim((string) preg_replace('/\s+/', ' ', $string)) |> strtolower(...);
+        $string = ((string) preg_replace('/\s+/', ' ', $string))
+            |> trim(...)
+            |> strtolower(...);
 
         if ($string === 'transparent') {
             return static::createFromRgb(alpha: 0);
@@ -1120,7 +1122,7 @@ abstract class Color implements Stringable
         }
 
         if (str_ends_with($value, 'rad')) {
-            return rad2deg((float) substr($value, 0, -3));
+            return ((float) substr($value, 0, -3)) |> rad2deg(...);
         }
 
         if (str_ends_with($value, 'turn')) {

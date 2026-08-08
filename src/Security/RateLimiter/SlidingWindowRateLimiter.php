@@ -32,7 +32,7 @@ class SlidingWindowRateLimiter extends RateLimiter
         $windowStart = $now - ($now % $window);
         $elapsed = $now - $windowStart;
 
-        $key = $this->generateKey($this->getIdentifier($request));
+        $key = $this->getIdentifier($request) |> $this->generateKey(...);
         $currentKey = $key.'_'.$windowStart;
         $previousKey = $key.'_'.($windowStart - $window);
 

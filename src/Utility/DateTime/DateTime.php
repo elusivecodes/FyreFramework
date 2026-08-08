@@ -2220,7 +2220,7 @@ class DateTime implements JsonSerializable, Stringable
         $field = static::getAdjustmentField($timeUnit);
 
         if ($relative) {
-            $other = $other->withTimeZone($this->getTimeZone());
+            $other = $this->getTimeZone() |> $other->withTimeZone(...);
             $adjust = false;
 
             foreach (['year', 'month', 'week', 'day', 'hour', 'minute', 'second', 'millisecond'] as $timeUnit) {
