@@ -87,7 +87,7 @@ class SubstituteBindingsMiddleware implements MiddlewareInterface
 
             if ($value === null) {
                 if ($param->isDefaultValueAvailable()) {
-                    unset($arguments[$name]);
+                    $arguments[$name] = $param->getDefaultValue();
                     $request = $request->withAttribute('routeArguments', $arguments);
                 } else if (!$param->allowsNull()) {
                     throw new NotFoundException();
