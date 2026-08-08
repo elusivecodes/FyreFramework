@@ -206,7 +206,7 @@ final class QueryTest extends TestCase
 
         $this->assertSame(
             'Items',
-            $result1->getSource()
+            $result1->getModelAlias()
         );
 
         $this->assertSame(
@@ -227,7 +227,7 @@ final class QueryTest extends TestCase
 
         $this->assertSame(
             'Items',
-            $result2->getSource()
+            $result2->getModelAlias()
         );
 
         $this->assertSame(

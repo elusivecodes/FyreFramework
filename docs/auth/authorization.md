@@ -128,7 +128,7 @@ In practice, named rules are the better fit for direct checks such as `admin`, w
 The first argument after the rule name is treated as the policy subject. `Access` derives the policy alias from that subject:
 
 - a string alias (for example `'Articles'`)
-- an `Entity` (uses `Entity::getSource()`)
+- an `Entity` (uses `Entity::getModelAlias()`)
 - a `Model` (uses `Model::getAlias()`)
 
 If you pass the wrong subject, or `null` when a subject is required, policy lookup may not run and `allows()` can fall back to deny.
@@ -385,7 +385,7 @@ A few behaviors are worth keeping in mind:
 
 - `allows()` defaults to deny when no before callback, named rule, policy method, or after callback applies.
 - If a named rule produces a non-`null` result (including `false`), policy lookup is skipped.
-- When authorizing with an `Entity`, the entity must have a non-`null` source (`Entity::getSource()`) or no policy can be resolved for it.
+- When authorizing with an `Entity`, the entity must have a non-`null` model alias (`Entity::getModelAlias()`) or no policy can be resolved for it.
 - If guests are allowed, make the user parameter nullable in your rule or policy method signature.
 
 ## Related

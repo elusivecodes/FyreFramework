@@ -39,6 +39,7 @@ In normal ORM usage, you don’t manually construct entities. Instead, create an
 For the full workflows, see [Models](models.md), [Finding Data](finding.md), and [Saving Data](saving.md).
 
 If you use custom entity subclasses, the ORM resolves them using the usual alias and namespace conventions.
+Entities created by a model retain its runtime alias, available through `getModelAlias()`.
 
 ## Field access and guarding
 

@@ -5,12 +5,14 @@ namespace Tests\TestCase\ORM;
 
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
+use Fyre\ORM\Exceptions\OrmException;
 use Fyre\ORM\Model;
 use Fyre\ORM\ModelRegistry;
 use Fyre\ORM\Relationship;
 use Fyre\ORM\Result;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Tests\Mock\Entities\User;
 use Tests\Mock\Models\ORM\ItemsModel;
 use Tests\Mock\Models\ORM\UsersModel;
 use Tests\TestCase\ORM\Mysql\MysqlConnectionTrait;
@@ -115,6 +117,21 @@ final class ModelRegistryTest extends TestCase
         );
     }
 
+    public function testGetEntityClass(): void
+    {
+        $model = $this->modelRegistry->use('Members', 'Users');
+
+        $this->assertSame(
+            User::class,
+            $model->getEntityClass()
+        );
+
+        $this->assertSame(
+            'Members',
+            $model->newEmptyEntity()->getModelAlias()
+        );
+    }
+
     public function testGetNamespaces(): void
     {
         $this->assertSame(
@@ -181,6 +198,33 @@ final class ModelRegistryTest extends TestCase
             $this->modelRegistry,
             $this->modelRegistry->removeNamespace('Tests\Invalid\Model')
         );
+    }
+
+    public function testSaveEntityFromMatchingModelClass(): void
+    {
+        $Members = $this->modelRegistry->use('Members', 'Users');
+        $Users = $this->modelRegistry->use('Users');
+
+        $user = $Members->newEmptyEntity()
+            ->setNew(false);
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+    }
+
+    public function testSaveInvalidEntityClass(): void
+    {
+        $this->expectException(OrmException::class);
+        $this->expectExceptionMessage('Model `Users` requires an entity of type `Tests\Mock\Entities\User`, `Tests\Mock\Entities\Post` given.');
+
+        $Users = $this->modelRegistry->createDefaultModel()
+            ->setClassAlias('Users');
+        $post = $this->modelRegistry->use('Posts')
+            ->newEmptyEntity()
+            ->setNew(false);
+
+        $Users->saveMany([$post]);
     }
 
     public function testSetDefaultModelClass(): void

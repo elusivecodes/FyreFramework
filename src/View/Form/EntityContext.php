@@ -41,7 +41,7 @@ class EntityContext extends Context
     /**
      * Constructs an EntityContext.
      *
-     * Note: The root model is resolved from the entity source.
+     * Note: The root model is resolved from the entity model alias.
      *
      * @param ModelRegistry $modelRegistry The ModelRegistry.
      * @param Entity $item The entity.
@@ -50,7 +50,7 @@ class EntityContext extends Context
         ModelRegistry $modelRegistry,
         protected Entity $item
     ) {
-        $this->model = ((string) $item->getSource()) |> $modelRegistry->use(...);
+        $this->model = ((string) $item->getModelAlias()) |> $modelRegistry->use(...);
     }
 
     /**

@@ -108,7 +108,7 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
      * Constructs an Entity.
      *
      * @param array<string, mixed> $data The data for populating the entity.
-     * @param string|null $source The source.
+     * @param string|null $modelAlias The model alias.
      * @param bool $new Whether the entity is new.
      * @param bool $guard Whether to check field accessibility.
      * @param bool $mutate Whether to apply mutator methods.
@@ -116,7 +116,7 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
      */
     public function __construct(
         array $data = [],
-        protected string|null $source = null,
+        protected string|null $modelAlias = null,
         protected bool $new = true,
         bool $guard = false,
         bool $mutate = true,
@@ -499,6 +499,16 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
     }
 
     /**
+     * Returns the model alias.
+     *
+     * @return string|null The model alias.
+     */
+    public function getModelAlias(): string|null
+    {
+        return $this->modelAlias;
+    }
+
+    /**
      * Returns an original value from the entity.
      *
      * @param string $field The field name.
@@ -554,16 +564,6 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
         }
 
         return $original;
-    }
-
-    /**
-     * Returns the entity source.
-     *
-     * @return string|null The source.
-     */
-    public function getSource(): string|null
-    {
-        return $this->source;
     }
 
     /**
@@ -947,6 +947,19 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
     }
 
     /**
+     * Sets the model alias.
+     *
+     * @param string $modelAlias The model alias.
+     * @return static The Entity instance.
+     */
+    public function setModelAlias(string $modelAlias): static
+    {
+        $this->modelAlias = $modelAlias;
+
+        return $this;
+    }
+
+    /**
      * Sets whether the Entity is new.
      *
      * @param bool $new Whether the entity is new.
@@ -973,19 +986,6 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
         } else {
             $this->originalFields += array_fill_keys($fields, true);
         }
-
-        return $this;
-    }
-
-    /**
-     * Sets the Entity source.
-     *
-     * @param string $source The source.
-     * @return static The Entity instance.
-     */
-    public function setSource(string $source): static
-    {
-        $this->source = $source;
 
         return $this;
     }

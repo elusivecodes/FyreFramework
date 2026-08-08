@@ -388,6 +388,8 @@ trait SoftDeleteTrait
             return true;
         }
 
+        $this->checkEntities($entities);
+
         $options['dependents'] ??= true;
 
         $connection = $this->getConnection();

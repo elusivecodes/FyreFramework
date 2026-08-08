@@ -55,7 +55,7 @@ final class EntityTest extends TestCase
         );
 
         $this->assertNull(
-            $entity->getSource()
+            $entity->getModelAlias()
         );
 
         $this->assertTrue(
@@ -64,6 +64,16 @@ final class EntityTest extends TestCase
 
         $this->assertFalse(
             $entity->isDirty()
+        );
+    }
+
+    public function testEntityModelAlias(): void
+    {
+        $entity = new Entity(modelAlias: 'test');
+
+        $this->assertSame(
+            'test',
+            $entity->getModelAlias()
         );
     }
 
@@ -97,6 +107,21 @@ final class EntityTest extends TestCase
         );
     }
 
+    public function testEntitySetModelAlias(): void
+    {
+        $entity = new Entity();
+
+        $this->assertSame(
+            $entity,
+            $entity->setModelAlias('test')
+        );
+
+        $this->assertSame(
+            'test',
+            $entity->getModelAlias()
+        );
+    }
+
     public function testEntitySetNew(): void
     {
         $entity = new Entity();
@@ -108,31 +133,6 @@ final class EntityTest extends TestCase
 
         $this->assertFalse(
             $entity->isNew()
-        );
-    }
-
-    public function testEntitySetSource(): void
-    {
-        $entity = new Entity();
-
-        $this->assertSame(
-            $entity,
-            $entity->setSource('test')
-        );
-
-        $this->assertSame(
-            'test',
-            $entity->getSource()
-        );
-    }
-
-    public function testEntitySource(): void
-    {
-        $entity = new Entity(source: 'test');
-
-        $this->assertSame(
-            'test',
-            $entity->getSource()
         );
     }
 

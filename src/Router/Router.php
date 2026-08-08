@@ -632,7 +632,7 @@ class Router
             }
 
             if ($value instanceof Entity) {
-                $Model = ((string) $value->getSource()) |> $this->modelRegistry->use(...);
+                $Model = ((string) $value->getModelAlias()) |> $this->modelRegistry->use(...);
                 $field ??= $Model->getRouteKey();
 
                 $value = $value->get($field);

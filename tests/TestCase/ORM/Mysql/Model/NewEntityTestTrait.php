@@ -27,7 +27,7 @@ trait NewEntityTestTrait
 
         $this->assertSame(
             'Items',
-            $item->getSource()
+            $item->getModelAlias()
         );
     }
 
@@ -44,7 +44,7 @@ trait NewEntityTestTrait
 
         $this->assertSame(
             'Items',
-            $item->getSource()
+            $item->getModelAlias()
         );
 
         $this->assertSame(
@@ -76,7 +76,7 @@ trait NewEntityTestTrait
 
         $this->assertSame(
             'Items',
-            $item->getSource()
+            $item->getModelAlias()
         );
 
         $this->assertNull(
@@ -151,17 +151,17 @@ trait NewEntityTestTrait
 
         $this->assertSame(
             'Users',
-            $user->getSource()
+            $user->getModelAlias()
         );
 
         $this->assertSame(
             'Posts',
-            $user->posts[0]->getSource()
+            $user->posts[0]->getModelAlias()
         );
 
         $this->assertSame(
             'Posts',
-            $user->posts[1]->getSource()
+            $user->posts[1]->getModelAlias()
         );
 
         $this->assertNull(
@@ -200,12 +200,12 @@ trait NewEntityTestTrait
 
         $this->assertSame(
             'Addresses',
-            $address->getSource()
+            $address->getModelAlias()
         );
 
         $this->assertSame(
             'Users',
-            $address->user->getSource()
+            $address->user->getModelAlias()
         );
 
         $this->assertTrue(
@@ -254,12 +254,12 @@ trait NewEntityTestTrait
 
         $this->assertSame(
             'Addresses',
-            $address->getSource()
+            $address->getModelAlias()
         );
 
         $this->assertSame(
             'Users',
-            $address->user->getSource()
+            $address->user->getModelAlias()
         );
 
         $this->assertNull(
@@ -361,42 +361,42 @@ trait NewEntityTestTrait
 
         $this->assertSame(
             'Users',
-            $user->getSource()
+            $user->getModelAlias()
         );
 
         $this->assertSame(
             'Posts',
-            $user->posts[0]->getSource()
+            $user->posts[0]->getModelAlias()
         );
 
         $this->assertSame(
             'Posts',
-            $user->posts[1]->getSource()
+            $user->posts[1]->getModelAlias()
         );
 
         $this->assertSame(
             'Addresses',
-            $user->address->getSource()
+            $user->address->getModelAlias()
         );
 
         $this->assertSame(
             'Tags',
-            $user->posts[0]->tags[0]->getSource()
+            $user->posts[0]->tags[0]->getModelAlias()
         );
 
         $this->assertSame(
             'Tags',
-            $user->posts[0]->tags[1]->getSource()
+            $user->posts[0]->tags[1]->getModelAlias()
         );
 
         $this->assertSame(
             'Tags',
-            $user->posts[1]->tags[0]->getSource()
+            $user->posts[1]->tags[0]->getModelAlias()
         );
 
         $this->assertSame(
             'Tags',
-            $user->posts[1]->tags[1]->getSource()
+            $user->posts[1]->tags[1]->getModelAlias()
         );
     }
 
@@ -450,17 +450,17 @@ trait NewEntityTestTrait
 
         $this->assertSame(
             'Users',
-            $user->getSource()
+            $user->getModelAlias()
         );
 
         $this->assertSame(
             'Posts',
-            $user->posts[0]->getSource()
+            $user->posts[0]->getModelAlias()
         );
 
         $this->assertSame(
             'Posts',
-            $user->posts[1]->getSource()
+            $user->posts[1]->getModelAlias()
         );
 
         $this->assertTrue(
@@ -529,17 +529,17 @@ trait NewEntityTestTrait
 
         $this->assertSame(
             'Users',
-            $user->getSource()
+            $user->getModelAlias()
         );
 
         $this->assertSame(
             'Posts',
-            $user->posts[0]->getSource()
+            $user->posts[0]->getModelAlias()
         );
 
         $this->assertSame(
             'Posts',
-            $user->posts[1]->getSource()
+            $user->posts[1]->getModelAlias()
         );
 
         $this->assertNull(
@@ -598,12 +598,12 @@ trait NewEntityTestTrait
 
         $this->assertSame(
             'Users',
-            $user->getSource()
+            $user->getModelAlias()
         );
 
         $this->assertSame(
             'Addresses',
-            $user->address->getSource()
+            $user->address->getModelAlias()
         );
 
         $this->assertTrue(
@@ -652,12 +652,12 @@ trait NewEntityTestTrait
 
         $this->assertSame(
             'Users',
-            $user->getSource()
+            $user->getModelAlias()
         );
 
         $this->assertSame(
             'Addresses',
-            $user->address->getSource()
+            $user->address->getModelAlias()
         );
 
         $this->assertNull(
@@ -764,17 +764,17 @@ trait NewEntityTestTrait
 
         $this->assertSame(
             'Posts',
-            $post->getSource()
+            $post->getModelAlias()
         );
 
         $this->assertSame(
             'Tags',
-            $post->tags[0]->getSource()
+            $post->tags[0]->getModelAlias()
         );
 
         $this->assertSame(
             'Tags',
-            $post->tags[1]->getSource()
+            $post->tags[1]->getModelAlias()
         );
 
         $this->assertTrue(
@@ -867,17 +867,17 @@ trait NewEntityTestTrait
 
         $this->assertSame(
             'Posts',
-            $post->getSource()
+            $post->getModelAlias()
         );
 
         $this->assertSame(
             'Tags',
-            $post->tags[0]->getSource()
+            $post->tags[0]->getModelAlias()
         );
 
         $this->assertSame(
             'Tags',
-            $post->tags[1]->getSource()
+            $post->tags[1]->getModelAlias()
         );
 
         $this->assertNull(

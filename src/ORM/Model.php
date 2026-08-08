@@ -54,11 +54,9 @@ use function assert;
 use function count;
 use function ctype_upper;
 use function explode;
-use function gettype;
-use function is_a;
+use function get_debug_type;
 use function is_array;
 use function is_numeric;
-use function is_object;
 use function is_string;
 use function iterator_to_array;
 use function preg_replace;
@@ -410,6 +408,8 @@ class Model implements EventListenerInterface
         bool $events = true,
         mixed ...$options
     ): bool {
+        $this->checkEntities([$entity]);
+
         $options['cascade'] = $cascade;
         $options['events'] = $events;
 
@@ -480,7 +480,7 @@ class Model implements EventListenerInterface
             return true;
         }
 
-        static::checkEntities($entities);
+        $this->checkEntities($entities);
 
         $options['cascade'] = $cascade;
         $options['events'] = $events;
@@ -749,6 +749,19 @@ class Model implements EventListenerInterface
     }
 
     /**
+     * Returns the Entity class.
+     *
+     * @return class-string<TEntity> The Entity class name.
+     */
+    public function getEntityClass(): string
+    {
+        /** @var class-string<TEntity> $entityClass */
+        $entityClass = $this->getClassAlias() |> $this->entityLocator->find(...);
+
+        return $entityClass;
+    }
+
+    /**
      * Returns the primary key(s).
      *
      * @return string[] The primary key(s).
@@ -918,6 +931,8 @@ class Model implements EventListenerInterface
      */
     public function loadInto(Entity $entity, array $contain): Entity|null
     {
+        $this->checkEntities([$entity]);
+
         $primaryValues = $this->getPrimaryKey() |> $entity->extract(...);
 
         $tempEntity = $this->get($primaryValues, contain: $contain, autoFields: false);
@@ -1174,6 +1189,8 @@ class Model implements EventListenerInterface
         bool|null $new = null,
         mixed ...$options
     ): void {
+        $this->checkEntities([$entity]);
+
         $this->injectInto($entity, $data, [
             'associated' => $associated,
             'accessible' => $accessible,
@@ -1217,8 +1234,8 @@ class Model implements EventListenerInterface
             ]);
 
         if ($parent) {
-            $source = (string) $parent->getSource();
-            $relationship = $this->getRelationship($source);
+            $modelAlias = (string) $parent->getModelAlias();
+            $relationship = $this->getRelationship($modelAlias);
 
             if ($relationship) {
                 $target = $relationship->getTarget();
@@ -1233,7 +1250,7 @@ class Model implements EventListenerInterface
                 $primaryValues = $parent->extract($primaryKeys);
                 $conditions = QueryGenerator::combineConditions($targetFields, $primaryValues);
 
-                $query->innerJoinWith($source, $conditions);
+                $query->innerJoinWith($modelAlias, $conditions);
             }
         }
 
@@ -1261,6 +1278,8 @@ class Model implements EventListenerInterface
         bool $clean = true,
         mixed ...$options
     ): bool {
+        $this->checkEntities([$entity]);
+
         if (!$entity->isNew() && !$entity->isDirty()) {
             return true;
         }
@@ -1336,6 +1355,12 @@ class Model implements EventListenerInterface
             $entities = iterator_to_array($entities);
         }
 
+        if ($entities === []) {
+            return true;
+        }
+
+        $this->checkEntities($entities);
+
         $entities = array_filter(
             $entities,
             static fn(Entity $entity): bool => $entity->isNew() || $entity->isDirty()
@@ -1344,8 +1369,6 @@ class Model implements EventListenerInterface
         if ($entities === []) {
             return true;
         }
-
-        static::checkEntities($entities);
 
         $options['saveRelated'] = $saveRelated;
         $options['checkRules'] = $checkRules;
@@ -1642,6 +1665,31 @@ class Model implements EventListenerInterface
     }
 
     /**
+     * Checks whether all entities are valid for this Model.
+     *
+     * @param mixed[] $entities The entities.
+     *
+     * @throws OrmException If an entity is not valid for this Model.
+     */
+    protected function checkEntities(array $entities): void
+    {
+        $entityClass = $this->getEntityClass();
+
+        foreach ($entities as $entity) {
+            if ($entity instanceof $entityClass) {
+                continue;
+            }
+
+            throw new OrmException(sprintf(
+                'Model `%s` requires an entity of type `%s`, `%s` given.',
+                $this->getAlias(),
+                $entityClass,
+                get_debug_type($entity)
+            ));
+        }
+    }
+
+    /**
      * Determines whether entities already exist, and marks them not new.
      *
      * @param TEntity[] $entities The entities.
@@ -1709,16 +1757,9 @@ class Model implements EventListenerInterface
      */
     protected function createEntity(): Entity
     {
-        $alias = $this->getClassAlias();
+        $entity = $this->getEntityClass() |> $this->container->build(...);
 
-        /**
-         * @var class-string<TEntity> $className
-         */
-        $className = $this->entityLocator->find($alias);
-
-        $entity = $this->container->build($className);
-
-        return $entity->setSource($alias);
+        return $this->getAlias() |> $entity->setModelAlias(...);
     }
 
     /**
@@ -2108,34 +2149,6 @@ class Model implements EventListenerInterface
     }
 
     /**
-     * Determines whether all entities are instances of Entity.
-     *
-     * @param mixed[] $entities The entities.
-     *
-     * @throws OrmException If an entity is not an instance of Entity.
-     */
-    protected static function checkEntities(array $entities): void
-    {
-        foreach ($entities as $entity) {
-            if (!is_object($entity)) {
-                throw new OrmException(sprintf(
-                    'Entity `%s` must be an object and extend `%s`.',
-                    gettype($entity),
-                    Entity::class
-                ));
-            }
-
-            if (!is_a($entity, Entity::class)) {
-                throw new OrmException(sprintf(
-                    'Entity `%s` must extend `%s`.',
-                    $entity::class,
-                    Entity::class
-                ));
-            }
-        }
-    }
-
-    /**
      * Cleans entities recursively.
      *
      * @param Entity[] $entities The entities.
@@ -2143,7 +2156,7 @@ class Model implements EventListenerInterface
      */
     protected static function cleanEntities(array $entities, Model $model): void
     {
-        $source = $model->getAlias();
+        $modelAlias = $model->getAlias();
         $relationships = $model->getRelationships();
 
         foreach ($relationships as $relationship) {
@@ -2177,7 +2190,7 @@ class Model implements EventListenerInterface
             $entity
                 ->clean()
                 ->setNew(false)
-                ->setSource($source);
+                ->setModelAlias($modelAlias);
         }
     }
 

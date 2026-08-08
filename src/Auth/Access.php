@@ -224,7 +224,7 @@ class Access
             $alias = $value;
         } else if ($value instanceof Entity) {
             $item = $value;
-            $alias = $item->getSource();
+            $alias = $item->getModelAlias();
         } else if ($value instanceof Model) {
             $alias = $value->getAlias();
         }

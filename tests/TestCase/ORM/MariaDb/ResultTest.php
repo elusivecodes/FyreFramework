@@ -100,7 +100,7 @@ final class ResultTest extends TestCase
 
         $this->assertSame(
             'Items',
-            $item->getSource()
+            $item->getModelAlias()
         );
 
         $this->assertSame(
@@ -142,7 +142,7 @@ final class ResultTest extends TestCase
 
         $this->assertSame(
             'Items',
-            $item->getSource()
+            $item->getModelAlias()
         );
 
         $this->assertSame(
@@ -231,7 +231,7 @@ final class ResultTest extends TestCase
 
         $this->assertSame(
             'Items',
-            $item->getSource()
+            $item->getModelAlias()
         );
 
         $this->assertSame(

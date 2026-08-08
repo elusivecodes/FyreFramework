@@ -55,6 +55,7 @@ Models have two related identities:
 Table metadata is derived from the model and schema:
 
 - `getTable()` defaults to an underscored form of the class alias.
+- `getEntityClass()` resolves the entity class from the class alias.
 - `getPrimaryKey()` defaults to the table schema primary key (or an empty array when none is available).
 - `getDisplayName()` picks the first matching column from `name`, `title`, `label`, then the primary key(s).
 - `getRouteKey()` picks `slug` if available, otherwise falls back to the primary key(s).
@@ -75,12 +76,14 @@ class UsersModel extends Model
 
 ### Building entities from a model
 
-Creating entities through a model ensures they have the correct source and participate in model-driven behavior like schema parsing and validation:
+Creating entities through a model assigns the runtime model alias and enables model-driven behavior like schema parsing and validation:
 
 - `newEmptyEntity()` creates a blank entity for the model.
 - `newEntity()` builds an entity from user data.
 - `patchEntity()` applies user data onto an existing entity.
 - `newEntities()` / `patchEntities()` apply the same workflow to multiple records.
+
+Methods that accept entities require the entity class configured for the model. Models with different aliases but the same entity class can operate on the same entities.
 
 By default, `newEntity()` and `patchEntity()` perform a full “user input” workflow:
 
