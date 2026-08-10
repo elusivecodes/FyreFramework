@@ -15,7 +15,11 @@ trait CaseTestTrait
             'SELECT CASE WHEN "status" = \'active\' THEN \'Enabled\' ELSE \'Disabled\' END AS "status_label" FROM "test"',
             $this->db->select([
                 'status_label' => static fn(Query $query): CaseExpression => $query->case()
-                    ->when($query->expr()->eq('status', 'active'), 'Enabled')
+                    ->when(
+                        $query->expr()
+                            ->eq('status', 'active'),
+                        'Enabled'
+                    )
                     ->else('Disabled'),
             ])
                 ->from('test')
@@ -62,7 +66,8 @@ trait CaseTestTrait
             $this->db->select([
                 'display_name' => static fn(Query $query): CaseExpression => $query->case()
                     ->when(
-                        $query->expr()->isNotNull('test.name'),
+                        $query->expr()
+                            ->isNotNull('test.name'),
                         $query->identifier('test.name')
                     )
                     ->else($query->identifier('test.fallback_name')),
@@ -78,8 +83,16 @@ trait CaseTestTrait
             'SELECT CASE WHEN "status" = \'active\' THEN \'Enabled\' WHEN "status" = \'pending\' THEN \'Pending\' ELSE \'Disabled\' END AS "status_label" FROM "test"',
             $this->db->select([
                 'status_label' => static fn(Query $query): CaseExpression => $query->case()
-                    ->when($query->expr()->eq('status', 'active'), 'Enabled')
-                    ->when($query->expr()->eq('status', 'pending'), 'Pending')
+                    ->when(
+                        $query->expr()
+                            ->eq('status', 'active'),
+                        'Enabled'
+                    )
+                    ->when(
+                        $query->expr()
+                            ->eq('status', 'pending'),
+                        'Pending'
+                    )
                     ->else('Disabled'),
             ])
                 ->from('test')
@@ -93,7 +106,11 @@ trait CaseTestTrait
             'SELECT CASE WHEN "status" = \'active\' THEN \'Enabled\' END AS "status_label" FROM "test"',
             $this->db->select([
                 'status_label' => static fn(Query $query): CaseExpression => $query->case()
-                    ->when($query->expr()->eq('status', 'active'), 'Enabled'),
+                    ->when(
+                        $query->expr()
+                            ->eq('status', 'active'),
+                        'Enabled'
+                    ),
             ])
                 ->from('test')
                 ->sql()
