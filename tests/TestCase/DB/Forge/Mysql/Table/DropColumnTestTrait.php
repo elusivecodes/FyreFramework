@@ -31,7 +31,7 @@ trait DropColumnTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test DROP COLUMN value',
+                'ALTER TABLE `test` DROP COLUMN `value`',
             ],
             $this->forge
                 ->build('test')
@@ -44,7 +44,7 @@ trait DropColumnTestTrait
     {
         $this->assertSame(
             [
-                'CREATE TABLE test (id INT(11) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
+                'CREATE TABLE `test` (`id` INT(11) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
             ],
             $this->forge
                 ->build('test')

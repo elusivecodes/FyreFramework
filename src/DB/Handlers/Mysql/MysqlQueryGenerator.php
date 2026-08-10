@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace Fyre\DB\Handlers\Mysql;
 
+use Fyre\DB\Expressions\ValueExpressionInterface;
 use Fyre\DB\QueryGenerator;
+use Fyre\DB\ValueBinder;
 use Override;
 
 use function array_filter;
@@ -23,6 +25,27 @@ class MysqlQueryGenerator extends QueryGenerator
      * {@inheritDoc}
      */
     #[Override]
+    protected function buildComparison(
+        ValueExpressionInterface $field,
+        string $operator,
+        mixed $value,
+        ValueBinder|null $binder = null
+    ): string {
+        if (!in_array($operator, ['IS DISTINCT FROM', 'IS NOT DISTINCT FROM'])) {
+            return parent::buildComparison($field, $operator, $value, $binder);
+        }
+
+        $comparison = $this->parseExpression($field, $binder, false).' <=> '.$this->parseExpression($value, $binder);
+
+        return $operator === 'IS DISTINCT FROM' ?
+            'NOT ('.$comparison.')' :
+            $comparison;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
     protected function buildOnConflict(array $conflictKeys, array $values, array $excludeUpdateKeys): string
     {
         $excludeUpdateKeys = array_merge($conflictKeys, $excludeUpdateKeys) |> array_unique(...);
@@ -35,7 +58,11 @@ class MysqlQueryGenerator extends QueryGenerator
         );
 
         $columns = array_map(
-            static fn(int|string $column): string => $column.' = VALUES('.$column.')',
+            function(int|string $column): string {
+                $column = $this->connection->quoteIdentifierPart((string) $column);
+
+                return $column.' = VALUES('.$column.')';
+            },
             $columns
         );
 

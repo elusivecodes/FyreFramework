@@ -33,7 +33,7 @@ trait RelationshipTestTrait
         ]);
 
         $this->assertSame(
-            'SELECT ChildItems.id AS ChildItems__id FROM items AS ChildItems INNER JOIN contains AS Contains ON Contains.contained_item_id = ChildItems.id INNER JOIN items AS ParentItems ON ParentItems.id = Contains.item_id',
+            'SELECT `ChildItems`.`id` AS `ChildItems__id` FROM `items` AS `ChildItems` INNER JOIN `contains` AS `Contains` ON `Contains`.`contained_item_id` = `ChildItems`.`id` INNER JOIN `items` AS `ParentItems` ON `ParentItems`.`id` = `Contains`.`item_id`',
             $Items->ChildItems->find()
                 ->innerJoinWith('ParentItems')
                 ->disableAutoFields()
@@ -78,7 +78,7 @@ trait RelationshipTestTrait
         );
 
         $this->assertSame(
-            'SELECT Items.id AS Items__id FROM items AS Items LEFT JOIN items AS Alias ON item_id = Items.id AND Alias.name = \'Test\'',
+            'SELECT `Items`.`id` AS `Items__id` FROM `items` AS `Items` LEFT JOIN `items` AS `Alias` ON `item_id` = `Items`.`id` AND `Alias`.`name` = \'Test\'',
             $Items->find()
                 ->disableAutoFields()
                 ->leftJoinWith('Alias')
@@ -131,7 +131,7 @@ trait RelationshipTestTrait
         );
 
         $this->assertSame(
-            'SELECT Items.id AS Items__id FROM items AS Items LEFT JOIN items AS Alias ON Alias.name = Items.name',
+            'SELECT `Items`.`id` AS `Items__id` FROM `items` AS `Items` LEFT JOIN `items` AS `Alias` ON `Alias`.`name` = `Items`.`name`',
             $Items->find()
                 ->disableAutoFields()
                 ->leftJoinWith('Alias')

@@ -10,8 +10,12 @@ use function file_get_contents;
 
 final class SqlTest extends TestCase
 {
+    use AggregateTestTrait;
+    use CaseTestTrait;
+    use ConditionTestTrait;
     use DeleteTestTrait;
     use ExceptTestTrait;
+    use FunctionTestTrait;
     use HavingTestTrait;
     use InsertFromTestTrait;
     use InsertTestTrait;
@@ -25,6 +29,7 @@ final class SqlTest extends TestCase
     use UpdateTestTrait;
     use UpsertTestTrait;
     use WhereTestTrait;
+    use WindowTestTrait;
     use WithTestTrait;
 
     public function testGetConnection(): void
@@ -59,7 +64,7 @@ final class SqlTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            'SELECT test.id, test.name FROM test WHERE test.name = \'test\'',
+            'SELECT "test"."id", "test"."name" FROM "test" WHERE "test"."name" = \'test\'',
             file_get_contents('log/queries-cli.log') ?: ''
         );
     }
@@ -81,7 +86,7 @@ final class SqlTest extends TestCase
     public function testToString(): void
     {
         $this->assertSame(
-            'SELECT * FROM test',
+            'SELECT * FROM "test"',
             (string) $this->db->select()
                 ->from('test')
         );

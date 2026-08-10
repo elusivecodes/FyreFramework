@@ -5,6 +5,7 @@ namespace Fyre\ORM\Relationships;
 
 use Closure;
 use Fyre\Core\Container;
+use Fyre\DB\Expressions\ConditionExpression;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Model;
 use Fyre\ORM\ModelRegistry;
@@ -142,7 +143,7 @@ class ManyToMany extends Relationship
         array|string|null $fields = null,
         array|string|null $contain = null,
         array|null $join = null,
-        array|string|null $conditions = null,
+        array|Closure|ConditionExpression|string|null $conditions = null,
         array|string|null $orderBy = null,
         array|string|null $groupBy = null,
         array|string|null $having = null,
@@ -166,7 +167,7 @@ class ManyToMany extends Relationship
                     $targetName => $contain ?? [],
                 ],
                 $join,
-                array_merge((array) ($conditions ?? []), $this->conditions),
+                array_merge(static::normalizeConditions($conditions), $this->conditions),
                 $orderBy ?? (isset($this->sort) ? $this->sort : null),
                 $groupBy,
                 $having,
@@ -296,7 +297,7 @@ class ManyToMany extends Relationship
         array|string|null $fields = null,
         array|string|null $contain = null,
         array|null $join = null,
-        array|string|null $conditions = null,
+        array|Closure|ConditionExpression|string|null $conditions = null,
         array|string|null $orderBy = null,
         array|string|null $groupBy = null,
         array|string|null $having = null,
@@ -345,7 +346,7 @@ class ManyToMany extends Relationship
             $fields,
             [$targetName => $contain ?? []],
             $join,
-            array_merge((array) ($conditions ?? []), $this->conditions),
+            array_merge(static::normalizeConditions($conditions), $this->conditions),
             $orderBy ?? (isset($this->sort) ? $this->sort : null),
             $groupBy,
             $having,

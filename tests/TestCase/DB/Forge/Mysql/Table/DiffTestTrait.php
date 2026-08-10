@@ -41,7 +41,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test DROP FOREIGN KEY value_id, ADD CONSTRAINT value_id FOREIGN KEY (value_id) REFERENCES test_values (id) ON UPDATE CASCADE ON DELETE CASCADE',
+                'ALTER TABLE `test` DROP FOREIGN KEY `value_id`, ADD CONSTRAINT `value_id` FOREIGN KEY (`value_id`) REFERENCES `test_values` (`id`) ON UPDATE CASCADE ON DELETE CASCADE',
             ],
             $this->forge
                 ->build('test')
@@ -77,7 +77,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test DROP INDEX value, ADD CONSTRAINT value UNIQUE KEY (value) USING BTREE',
+                'ALTER TABLE `test` DROP INDEX `value`, ADD CONSTRAINT `value` UNIQUE KEY (`value`) USING BTREE',
             ],
             $this->forge
                 ->build('test')
@@ -193,7 +193,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test ADD COLUMN value1 VARCHAR(80) CHARACTER SET \'utf8mb4\' COLLATE \'utf8mb4_unicode_ci\' NOT NULL AFTER id',
+                'ALTER TABLE `test` ADD COLUMN `value1` VARCHAR(80) CHARACTER SET \'utf8mb4\' COLLATE \'utf8mb4_unicode_ci\' NOT NULL AFTER `id`',
             ],
             $this->forge
                 ->build('test')
@@ -236,7 +236,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test ADD CONSTRAINT value_id FOREIGN KEY (value_id) REFERENCES test_values (id)',
+                'ALTER TABLE `test` ADD CONSTRAINT `value_id` FOREIGN KEY (`value_id`) REFERENCES `test_values` (`id`)',
             ],
             $this->forge
                 ->build('test')
@@ -269,7 +269,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test ADD INDEX value (value) USING BTREE',
+                'ALTER TABLE `test` ADD INDEX `value` (`value`) USING BTREE',
             ],
             $this->forge
                 ->build('test')
@@ -296,7 +296,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test ENGINE = MyISAM',
+                'ALTER TABLE `test` ENGINE = MyISAM',
             ],
             $this->forge
                 ->build('test', [
@@ -323,7 +323,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test CHANGE COLUMN value value VARCHAR(255) CHARACTER SET \'utf8mb4\' COLLATE \'utf8mb4_unicode_ci\' NOT NULL',
+                'ALTER TABLE `test` CHANGE COLUMN `value` `value` VARCHAR(255) CHARACTER SET \'utf8mb4\' COLLATE \'utf8mb4_unicode_ci\' NOT NULL',
             ],
             $this->forge
                 ->build('test')
@@ -355,7 +355,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test CHANGE COLUMN value2 value2 VARCHAR(80) CHARACTER SET \'utf8mb4\' COLLATE \'utf8mb4_unicode_ci\' NOT NULL AFTER id',
+                'ALTER TABLE `test` CHANGE COLUMN `value2` `value2` VARCHAR(80) CHARACTER SET \'utf8mb4\' COLLATE \'utf8mb4_unicode_ci\' NOT NULL AFTER `id`',
             ],
             $this->forge
                 ->build('test')
@@ -387,7 +387,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test DROP COLUMN value',
+                'ALTER TABLE `test` DROP COLUMN `value`',
             ],
             $this->forge
                 ->build('test')
@@ -429,7 +429,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test DROP FOREIGN KEY value_id',
+                'ALTER TABLE `test` DROP FOREIGN KEY `value_id`',
             ],
             $this->forge
                 ->build('test')
@@ -460,7 +460,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test DROP INDEX value',
+                'ALTER TABLE `test` DROP INDEX `value`',
             ],
             $this->forge
                 ->build('test')
@@ -486,7 +486,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test ADD PRIMARY KEY (id)',
+                'ALTER TABLE `test` ADD PRIMARY KEY (`id`)',
             ],
             $this->forge
                 ->build('test')

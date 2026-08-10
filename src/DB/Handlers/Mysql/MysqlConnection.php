@@ -44,6 +44,12 @@ class MysqlConnection extends Connection
     ];
 
     #[Override]
+    protected static string $identifierQuoteEnd = '`';
+
+    #[Override]
+    protected static string $identifierQuoteStart = '`';
+
+    #[Override]
     #[SensitivePropertyArray([
         'host',
         'username',

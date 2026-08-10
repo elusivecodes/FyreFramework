@@ -36,7 +36,7 @@ trait AddColumnTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test ADD COLUMN value INT(11) NOT NULL AFTER id',
+                'ALTER TABLE `test` ADD COLUMN `value` INT(11) NOT NULL AFTER `id`',
             ],
             $this->forge
                 ->build('test')
@@ -51,7 +51,7 @@ trait AddColumnTestTrait
     {
         $this->assertSame(
             [
-                'CREATE TABLE test (id INT(11) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
+                'CREATE TABLE `test` (`id` INT(11) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
             ],
             $this->forge
                 ->build('test')

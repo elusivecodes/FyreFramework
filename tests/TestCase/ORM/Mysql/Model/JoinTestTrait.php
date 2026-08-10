@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\Mysql\Model;
 
+use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Query;
 use Fyre\ORM\Exceptions\OrmException;
 
 trait JoinTestTrait
@@ -10,12 +12,14 @@ trait JoinTestTrait
     public function testContainInnerJoinConditionsSql(): void
     {
         $this->assertSame(
-            'SELECT Posts.id AS Posts__id FROM posts AS Posts INNER JOIN users AS Users ON Users.id = Posts.user_id INNER JOIN addresses AS Addresses ON Addresses.user_id = Users.id AND Addresses.suburb = \'Test\'',
+            'SELECT `Posts`.`id` AS `Posts__id` FROM `posts` AS `Posts` INNER JOIN `users` AS `Users` ON `Users`.`id` = `Posts`.`user_id` INNER JOIN `addresses` AS `Addresses` ON `Addresses`.`user_id` = `Users`.`id` AND `Addresses`.`suburb` = \'Test\'',
             $this->modelRegistry->use('Posts')
                 ->find()
-                ->innerJoinWith('Users.Addresses', [
-                    'Addresses.suburb' => 'Test',
-                ])
+                ->innerJoinWith(
+                    'Users.Addresses',
+                    static fn(Query $query): ConditionExpression => $query->expr()
+                        ->eq('Addresses.suburb', 'Test')
+                )
                 ->disableAutoFields()
                 ->sql()
         );
@@ -34,7 +38,7 @@ trait JoinTestTrait
     public function testContainInnerJoinMerge(): void
     {
         $this->assertSame(
-            'SELECT Posts.id AS Posts__id FROM posts AS Posts INNER JOIN users AS Users ON Users.id = Posts.user_id INNER JOIN addresses AS Addresses ON Addresses.user_id = Users.id',
+            'SELECT `Posts`.`id` AS `Posts__id` FROM `posts` AS `Posts` INNER JOIN `users` AS `Users` ON `Users`.`id` = `Posts`.`user_id` INNER JOIN `addresses` AS `Addresses` ON `Addresses`.`user_id` = `Users`.`id`',
             $this->modelRegistry->use('Posts')
                 ->find()
                 ->leftJoinWith('Users')
@@ -47,7 +51,7 @@ trait JoinTestTrait
     public function testContainInnerJoinOverwrite(): void
     {
         $this->assertSame(
-            'SELECT Posts.id AS Posts__id FROM posts AS Posts INNER JOIN users AS Users ON Users.id = Posts.user_id',
+            'SELECT `Posts`.`id` AS `Posts__id` FROM `posts` AS `Posts` INNER JOIN `users` AS `Users` ON `Users`.`id` = `Posts`.`user_id`',
             $this->modelRegistry->use('Posts')
                 ->find()
                 ->leftJoinWith('Users')
@@ -60,7 +64,7 @@ trait JoinTestTrait
     public function testContainInnerJoinSql(): void
     {
         $this->assertSame(
-            'SELECT Posts.id AS Posts__id FROM posts AS Posts INNER JOIN users AS Users ON Users.id = Posts.user_id INNER JOIN addresses AS Addresses ON Addresses.user_id = Users.id',
+            'SELECT `Posts`.`id` AS `Posts__id` FROM `posts` AS `Posts` INNER JOIN `users` AS `Users` ON `Users`.`id` = `Posts`.`user_id` INNER JOIN `addresses` AS `Addresses` ON `Addresses`.`user_id` = `Users`.`id`',
             $this->modelRegistry->use('Posts')
                 ->find()
                 ->innerJoinWith('Users.Addresses')
@@ -79,9 +83,8 @@ trait JoinTestTrait
             ->join([
                 'Users' => [
                     'table' => 'users',
-                    'conditions' => [
-                        'Users.id = Posts.user_id',
-                    ],
+                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields('Users.id', 'Posts.user_id'),
                 ],
             ])
             ->innerJoinWith('Users')
@@ -141,7 +144,7 @@ trait JoinTestTrait
     public function testContainJoinPathMerge(): void
     {
         $this->assertSame(
-            'SELECT Posts.id AS Posts__id, Users.id AS Users__id FROM posts AS Posts INNER JOIN users AS Users ON Users.id = Posts.user_id',
+            'SELECT `Posts`.`id` AS `Posts__id`, `Users`.`id` AS `Users__id` FROM `posts` AS `Posts` INNER JOIN `users` AS `Users` ON `Users`.`id` = `Posts`.`user_id`',
             $this->modelRegistry->use('Posts')
                 ->find()
                 ->contain([
@@ -158,7 +161,7 @@ trait JoinTestTrait
     public function testContainJoinType(): void
     {
         $this->assertSame(
-            'SELECT Posts.id AS Posts__id, Users.id AS Users__id FROM posts AS Posts INNER JOIN users AS Users ON Users.id = Posts.user_id',
+            'SELECT `Posts`.`id` AS `Posts__id`, `Users`.`id` AS `Users__id` FROM `posts` AS `Posts` INNER JOIN `users` AS `Users` ON `Users`.`id` = `Posts`.`user_id`',
             $this->modelRegistry->use('Posts')
                 ->find()
                 ->contain([
@@ -175,12 +178,14 @@ trait JoinTestTrait
     public function testContainLeftJoinConditionsSql(): void
     {
         $this->assertSame(
-            'SELECT Posts.id AS Posts__id FROM posts AS Posts LEFT JOIN users AS Users ON Users.id = Posts.user_id LEFT JOIN addresses AS Addresses ON Addresses.user_id = Users.id AND Addresses.suburb = \'Test\'',
+            'SELECT `Posts`.`id` AS `Posts__id` FROM `posts` AS `Posts` LEFT JOIN `users` AS `Users` ON `Users`.`id` = `Posts`.`user_id` LEFT JOIN `addresses` AS `Addresses` ON `Addresses`.`user_id` = `Users`.`id` AND `Addresses`.`suburb` = \'Test\'',
             $this->modelRegistry->use('Posts')
                 ->find()
-                ->leftJoinWith('Users.Addresses', [
-                    'Addresses.suburb' => 'Test',
-                ])
+                ->leftJoinWith(
+                    'Users.Addresses',
+                    static fn(Query $query): ConditionExpression => $query->expr()
+                        ->eq('Addresses.suburb', 'Test')
+                )
                 ->disableAutoFields()
                 ->sql()
         );
@@ -199,7 +204,7 @@ trait JoinTestTrait
     public function testContainLeftJoinMerge(): void
     {
         $this->assertSame(
-            'SELECT Posts.id AS Posts__id FROM posts AS Posts INNER JOIN users AS Users ON Users.id = Posts.user_id LEFT JOIN addresses AS Addresses ON Addresses.user_id = Users.id',
+            'SELECT `Posts`.`id` AS `Posts__id` FROM `posts` AS `Posts` INNER JOIN `users` AS `Users` ON `Users`.`id` = `Posts`.`user_id` LEFT JOIN `addresses` AS `Addresses` ON `Addresses`.`user_id` = `Users`.`id`',
             $this->modelRegistry->use('Posts')
                 ->find()
                 ->innerJoinWith('Users')
@@ -212,7 +217,7 @@ trait JoinTestTrait
     public function testContainLeftJoinOverwrite(): void
     {
         $this->assertSame(
-            'SELECT Posts.id AS Posts__id FROM posts AS Posts LEFT JOIN users AS Users ON Users.id = Posts.user_id',
+            'SELECT `Posts`.`id` AS `Posts__id` FROM `posts` AS `Posts` LEFT JOIN `users` AS `Users` ON `Users`.`id` = `Posts`.`user_id`',
             $this->modelRegistry->use('Posts')
                 ->find()
                 ->innerJoinWith('Users')
@@ -225,7 +230,7 @@ trait JoinTestTrait
     public function testContainLeftJoinSql(): void
     {
         $this->assertSame(
-            'SELECT Posts.id AS Posts__id FROM posts AS Posts LEFT JOIN users AS Users ON Users.id = Posts.user_id LEFT JOIN addresses AS Addresses ON Addresses.user_id = Users.id',
+            'SELECT `Posts`.`id` AS `Posts__id` FROM `posts` AS `Posts` LEFT JOIN `users` AS `Users` ON `Users`.`id` = `Posts`.`user_id` LEFT JOIN `addresses` AS `Addresses` ON `Addresses`.`user_id` = `Users`.`id`',
             $this->modelRegistry->use('Posts')
                 ->find()
                 ->leftJoinWith('Users.Addresses')
@@ -245,9 +250,8 @@ trait JoinTestTrait
             ->join([
                 'Users' => [
                     'table' => 'users',
-                    'conditions' => [
-                        'Users.id = Posts.user_id',
-                    ],
+                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields('Users.id', 'Posts.user_id'),
                 ],
             ])
             ->disableAutoFields()
@@ -257,7 +261,7 @@ trait JoinTestTrait
     public function testJoinContainJoinOrder(): void
     {
         $this->assertSame(
-            'SELECT Posts.id AS Posts__id, Users.id AS Users__id FROM posts AS Posts INNER JOIN comments AS Comments ON Comments.post_id = Posts.id INNER JOIN users AS CommentsUsers ON CommentsUsers.id = Comments.user_id INNER JOIN users AS Users ON Users.id = Posts.user_id',
+            'SELECT `Posts`.`id` AS `Posts__id`, `Users`.`id` AS `Users__id` FROM `posts` AS `Posts` INNER JOIN `comments` AS `Comments` ON `Comments`.`post_id` = `Posts`.`id` INNER JOIN `users` AS `CommentsUsers` ON `CommentsUsers`.`id` = `Comments`.`user_id` INNER JOIN `users` AS `Users` ON `Users`.`id` = `Posts`.`user_id`',
             $this->modelRegistry->use('Posts')
                 ->find()
                 ->contain([
@@ -270,9 +274,8 @@ trait JoinTestTrait
                 ->join([
                     'CommentsUsers' => [
                         'table' => 'users',
-                        'conditions' => [
-                            'CommentsUsers.id = Comments.user_id',
-                        ],
+                        'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                            ->equalFields('CommentsUsers.id', 'Comments.user_id'),
                     ],
                 ])
                 ->disableAutoFields()
@@ -283,24 +286,22 @@ trait JoinTestTrait
     public function testJoinOverwriteClearsJoinPaths(): void
     {
         $this->assertSame(
-            'SELECT Posts.id AS Posts__id FROM posts AS Posts INNER JOIN comments AS Comments ON Comments.post_id = Posts.id INNER JOIN users AS Users ON Users.id = Posts.user_id',
+            'SELECT `Posts`.`id` AS `Posts__id` FROM `posts` AS `Posts` INNER JOIN `comments` AS `Comments` ON `Comments`.`post_id` = `Posts`.`id` INNER JOIN `users` AS `Users` ON `Users`.`id` = `Posts`.`user_id`',
             $this->modelRegistry->use('Posts')
                 ->find()
                 ->innerJoinWith('Users')
                 ->join([
                     'Comments' => [
                         'table' => 'comments',
-                        'conditions' => [
-                            'Comments.post_id = Posts.id',
-                        ],
+                        'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                            ->equalFields('Comments.post_id', 'Posts.id'),
                     ],
                 ], true)
                 ->join([
                     'Users' => [
                         'table' => 'users',
-                        'conditions' => [
-                            'Users.id = Posts.user_id',
-                        ],
+                        'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                            ->equalFields('Users.id', 'Posts.user_id'),
                     ],
                 ])
                 ->disableAutoFields()
@@ -311,16 +312,15 @@ trait JoinTestTrait
     public function testJoinOverwriteClearsMatching(): void
     {
         $this->assertSame(
-            'SELECT Posts.id AS Posts__id FROM posts AS Posts INNER JOIN comments AS Comments ON Comments.post_id = Posts.id',
+            'SELECT `Posts`.`id` AS `Posts__id` FROM `posts` AS `Posts` INNER JOIN `comments` AS `Comments` ON `Comments`.`post_id` = `Posts`.`id`',
             $this->modelRegistry->use('Posts')
                 ->find()
                 ->matching('Users')
                 ->join([
                     'Comments' => [
                         'table' => 'comments',
-                        'conditions' => [
-                            'Comments.post_id = Posts.id',
-                        ],
+                        'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                            ->equalFields('Comments.post_id', 'Posts.id'),
                     ],
                 ], true)
                 ->disableAutoFields()
@@ -343,15 +343,14 @@ trait JoinTestTrait
         $query->reset();
 
         $this->assertSame(
-            'SELECT Posts.id AS Posts__id FROM posts AS Posts INNER JOIN users AS Users ON Users.id = Posts.user_id',
+            'SELECT `Posts`.`id` AS `Posts__id` FROM `posts` AS `Posts` INNER JOIN `users` AS `Users` ON `Users`.`id` = `Posts`.`user_id`',
             $query
                 ->contain([], true)
                 ->join([
                     'Users' => [
                         'table' => 'users',
-                        'conditions' => [
-                            'Users.id = Posts.user_id',
-                        ],
+                        'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                            ->equalFields('Users.id', 'Posts.user_id'),
                     ],
                 ])
                 ->sql()

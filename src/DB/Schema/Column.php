@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Fyre\DB\Schema;
 
 use Fyre\Core\Traits\DebugTrait;
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Type;
 use Fyre\DB\TypeParser;
 use InvalidArgumentException;
@@ -38,7 +38,7 @@ abstract class Column
      * @param int|null $fractionalSeconds The fractional seconds precision.
      * @param bool $nullable Whether the column is nullable.
      * @param bool $unsigned Whether the column is unsigned.
-     * @param bool|float|int|QueryLiteral|string|null $default The column default value.
+     * @param bool|float|int|LiteralExpression|string|null $default The column default value.
      * @param string|null $comment The column comment.
      * @param bool $autoIncrement Whether the column is auto-incrementing.
      * @param class-string<UnitEnum>|null $enumClass The enum class.
@@ -54,7 +54,7 @@ abstract class Column
         protected int|null $fractionalSeconds = null,
         protected bool $nullable = false,
         protected bool $unsigned = false,
-        protected bool|float|int|QueryLiteral|string|null $default = null,
+        protected bool|float|int|LiteralExpression|string|null $default = null,
         protected string|null $comment = null,
         protected bool $autoIncrement = false,
         protected string|null $enumClass = null,
@@ -63,7 +63,7 @@ abstract class Column
     /**
      * Returns the default value for the column.
      *
-     * Note: When the configured default is a {@see QueryLiteral}, this method will execute a `SELECT`
+     * Note: When the configured default is a {@see LiteralExpression}, this method will execute a `SELECT`
      * query to evaluate it.
      *
      * @return mixed The parsed default value.
@@ -74,7 +74,7 @@ abstract class Column
             return $this->nullable ? null : '';
         }
 
-        if ($this->default instanceof QueryLiteral) {
+        if ($this->default instanceof LiteralExpression) {
             return $this->table->getSchema()
                 ->getConnection()
                 ->rawQuery('SELECT '.(string) $this->default)
@@ -97,9 +97,9 @@ abstract class Column
     /**
      * Returns the column default value.
      *
-     * @return bool|float|int|QueryLiteral|string|null The column default value.
+     * @return bool|float|int|LiteralExpression|string|null The column default value.
      */
-    public function getDefault(): bool|float|int|QueryLiteral|string|null
+    public function getDefault(): bool|float|int|LiteralExpression|string|null
     {
         return $this->default;
     }

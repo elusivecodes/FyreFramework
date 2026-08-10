@@ -21,7 +21,7 @@ trait HasOneTestTrait
         ]);
 
         $this->assertSame(
-            'SELECT Users.id AS Users__id, Addresses.id AS Addresses__id FROM users AS Users LEFT JOIN addresses AS Addresses ON Addresses.user_id = Users.id AND Addresses.address_1 = \'test\'',
+            'SELECT `Users`.`id` AS `Users__id`, `Addresses`.`id` AS `Addresses__id` FROM `users` AS `Users` LEFT JOIN `addresses` AS `Addresses` ON `Addresses`.`user_id` = `Users`.`id` AND `Addresses`.`address_1` = \'test\'',
             $Users->find(contain: [
                 'Addresses',
             ])
@@ -37,7 +37,7 @@ trait HasOneTestTrait
         $Users->Addresses->setJoinType('inner');
 
         $this->assertSame(
-            'SELECT Users.id AS Users__id, Addresses.id AS Addresses__id FROM users AS Users INNER JOIN addresses AS Addresses ON Addresses.user_id = Users.id',
+            'SELECT `Users`.`id` AS `Users__id`, `Addresses`.`id` AS `Addresses__id` FROM `users` AS `Users` INNER JOIN `addresses` AS `Addresses` ON `Addresses`.`user_id` = `Users`.`id`',
             $Users->find(contain: [
                 'Addresses',
             ])
@@ -49,7 +49,7 @@ trait HasOneTestTrait
     public function testHasOneContainTypeJoinSql(): void
     {
         $this->assertSame(
-            'SELECT Users.id AS Users__id, Addresses.id AS Addresses__id FROM users AS Users INNER JOIN addresses AS Addresses ON Addresses.user_id = Users.id',
+            'SELECT `Users`.`id` AS `Users__id`, `Addresses`.`id` AS `Addresses__id` FROM `users` AS `Users` INNER JOIN `addresses` AS `Addresses` ON `Addresses`.`user_id` = `Users`.`id`',
             $this->modelRegistry->use('Users')
                 ->find(contain: [
                     'Addresses' => [
@@ -240,7 +240,7 @@ trait HasOneTestTrait
     public function testHasOneFindSql(): void
     {
         $this->assertSame(
-            'SELECT Users.id AS Users__id, Addresses.id AS Addresses__id FROM users AS Users LEFT JOIN addresses AS Addresses ON Addresses.user_id = Users.id',
+            'SELECT `Users`.`id` AS `Users__id`, `Addresses`.`id` AS `Addresses__id` FROM `users` AS `Users` LEFT JOIN `addresses` AS `Addresses` ON `Addresses`.`user_id` = `Users`.`id`',
             $this->modelRegistry->use('Users')
                 ->find(
                     fields: [
@@ -257,7 +257,7 @@ trait HasOneTestTrait
     public function testHasOneInnerJoinSql(): void
     {
         $this->assertSame(
-            'SELECT Users.id AS Users__id FROM users AS Users INNER JOIN addresses AS Addresses ON Addresses.user_id = Users.id',
+            'SELECT `Users`.`id` AS `Users__id` FROM `users` AS `Users` INNER JOIN `addresses` AS `Addresses` ON `Addresses`.`user_id` = `Users`.`id`',
             $this->modelRegistry->use('Users')
                 ->find()
                 ->innerJoinWith('Addresses')
@@ -396,7 +396,7 @@ trait HasOneTestTrait
     public function testHasOneLeftJoinSql(): void
     {
         $this->assertSame(
-            'SELECT Users.id AS Users__id FROM users AS Users LEFT JOIN addresses AS Addresses ON Addresses.user_id = Users.id',
+            'SELECT `Users`.`id` AS `Users__id` FROM `users` AS `Users` LEFT JOIN `addresses` AS `Addresses` ON `Addresses`.`user_id` = `Users`.`id`',
             $this->modelRegistry->use('Users')
                 ->find()
                 ->leftJoinWith('Addresses')
@@ -499,7 +499,7 @@ trait HasOneTestTrait
     public function testHasOneStrategyFindSql(): void
     {
         $this->assertSame(
-            'SELECT Users.id AS Users__id FROM users AS Users',
+            'SELECT `Users`.`id` AS `Users__id` FROM `users` AS `Users`',
             $this->modelRegistry->use('Users')
                 ->find(
                     fields: [

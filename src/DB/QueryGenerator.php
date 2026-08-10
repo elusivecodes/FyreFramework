@@ -5,6 +5,14 @@ namespace Fyre\DB;
 
 use Closure;
 use Fyre\Core\Traits\DebugTrait;
+use Fyre\DB\Expressions\AggregateExpression;
+use Fyre\DB\Expressions\CaseExpression;
+use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Expressions\FunctionExpression;
+use Fyre\DB\Expressions\IdentifierExpression;
+use Fyre\DB\Expressions\LiteralExpression;
+use Fyre\DB\Expressions\ValueExpressionInterface;
+use Fyre\DB\Expressions\WindowExpression;
 use Fyre\DB\Queries\DeleteQuery;
 use Fyre\DB\Queries\InsertFromQuery;
 use Fyre\DB\Queries\InsertQuery;
@@ -31,8 +39,10 @@ use function implode;
 use function in_array;
 use function is_array;
 use function is_numeric;
+use function is_string;
 use function preg_match;
 use function preg_replace;
+use function strtolower;
 use function strtoupper;
 use function trim;
 
@@ -48,11 +58,10 @@ abstract class QueryGenerator
 {
     use DebugTrait;
 
+    protected Query|null $currentQuery = null;
+
     /**
      * Combines conditions.
-     *
-     * Note: Null values become raw `... IS NULL` fragments (numeric keys) while non-null
-     * values are returned as `field => value` pairs.
      *
      * @param string[] $fields The fields.
      * @param array<mixed> $values The values.
@@ -71,10 +80,10 @@ abstract class QueryGenerator
             $value = $values[$i] ?? null;
 
             if ($value === null) {
-                $conditions[] = $field.' IS NULL';
-            } else {
-                $conditions[$field] = $value;
+                $field .= ' IS';
             }
+
+            $conditions[$field] = $value;
         }
 
         return $conditions;
@@ -93,31 +102,33 @@ abstract class QueryGenerator
             return [];
         }
 
-        $allConditions = array_map(
-            static fn(array $values): array => static::combineConditions($fields, $values),
-            $allValues
-        );
-
-        if (count($allConditions) === 1) {
-            return array_first($allConditions);
+        if (count($allValues) === 1) {
+            return static::combineConditions($fields, array_first($allValues));
         }
 
         if (count($fields) > 1) {
             return [
-                'or' => $allConditions,
+                'or' => array_map(
+                    static fn(array $values): array => static::combineConditions($fields, $values),
+                    $allValues
+                ),
             ];
         }
 
-        $nullCondition = null;
+        $hasNull = false;
         $values = [];
 
-        foreach ($allConditions as $conditions) {
-            foreach ($conditions as $key => $value) {
-                if (is_numeric($key)) {
-                    $nullCondition ??= $value;
-                } else if (!in_array($value, $values, true)) {
-                    $values[] = $value;
-                }
+        foreach ($allValues as $row) {
+            if ($row === []) {
+                continue;
+            }
+
+            $value = array_first($row);
+
+            if ($value === null) {
+                $hasNull = true;
+            } else if (!in_array($value, $values, true)) {
+                $values[] = $value;
             }
         }
 
@@ -132,8 +143,8 @@ abstract class QueryGenerator
             $conditions[$field.' IN'] = $values;
         }
 
-        if ($nullCondition) {
-            $conditions[] = $nullCondition;
+        if ($hasNull) {
+            $conditions[$field.' IS'] = null;
         }
 
         if (count($conditions) > 1) {
@@ -165,14 +176,16 @@ abstract class QueryGenerator
      */
     public function compileDelete(DeleteQuery $query, ValueBinder|null $binder = null): string
     {
-        $sql = $this->buildDelete($query->getTable(), $query->getAlias(), $query->getUsing() ?? [], $binder);
-        $sql .= $this->buildJoin($query->getJoin(), $binder);
-        $sql .= $this->buildWhere($query->getWhere(), $binder);
-        $sql .= $this->buildOrderBy($query->getOrderBy());
-        $sql .= $this->buildLimit($query->getLimit(), 0);
-        $sql .= $this->buildEpilog($query->getEpilog());
+        return $this->withQuery($query, function() use ($query, $binder): string {
+            $sql = $this->buildDelete($query->getTable(), $query->getAlias(), $query->getUsing() ?? [], $binder);
+            $sql .= $this->buildJoin($query->getJoin(), $binder);
+            $sql .= $this->buildWhere($query->getWhere(), $binder);
+            $sql .= $this->buildOrderBy($query->getOrderBy());
+            $sql .= $this->buildLimit($query->getLimit(), 0);
+            $sql .= $this->buildEpilog($query->getEpilog());
 
-        return $sql;
+            return $sql;
+        });
     }
 
     /**
@@ -187,14 +200,16 @@ abstract class QueryGenerator
      */
     public function compileInsert(InsertQuery $query, ValueBinder|null $binder = null): string
     {
-        if ($query->getConnection()->supports(DbFeature::InsertReturning) && !$query->getEpilog()) {
-            $query->epilog('RETURNING *');
-        }
+        return $this->withQuery($query, function() use ($query, $binder): string {
+            if ($this->connection->supports(DbFeature::InsertReturning) && !$query->getEpilog()) {
+                $query->epilog('RETURNING *');
+            }
 
-        $sql = $this->buildInsert($query->getTable(), $query->getValues(), $binder);
-        $sql .= $this->buildEpilog($query->getEpilog());
+            $sql = $this->buildInsert($query->getTable(), $query->getValues(), $binder);
+            $sql .= $this->buildEpilog($query->getEpilog());
 
-        return $sql;
+            return $sql;
+        });
     }
 
     /**
@@ -209,14 +224,16 @@ abstract class QueryGenerator
      */
     public function compileInsertFrom(InsertFromQuery $query, ValueBinder|null $binder = null): string
     {
-        if ($query->getConnection()->supports(DbFeature::InsertReturning) && !$query->getEpilog()) {
-            $query->epilog('RETURNING *');
-        }
+        return $this->withQuery($query, function() use ($query, $binder): string {
+            if ($this->connection->supports(DbFeature::InsertReturning) && !$query->getEpilog()) {
+                $query->epilog('RETURNING *');
+            }
 
-        $sql = $this->buildInsertFrom($query->getTable(), $query->getFrom(), $query->getColumns(), $binder);
-        $sql .= $this->buildEpilog($query->getEpilog());
+            $sql = $this->buildInsertFrom($query->getTable(), $query->getFrom(), $query->getColumns(), $binder);
+            $sql .= $this->buildEpilog($query->getEpilog());
 
-        return $sql;
+            return $sql;
+        });
     }
 
     /**
@@ -228,24 +245,26 @@ abstract class QueryGenerator
      */
     public function compileSelect(SelectQuery $query, ValueBinder|null $binder = null): string
     {
-        $sql = $this->buildWith($query->getWith(), $binder);
-        $sql .= $this->buildSelect($query->getTable(), $query->getSelect(), $query->getDistinct(), $binder);
-        $sql .= $this->buildJoin($query->getJoin(), $binder);
-        $sql .= $this->buildWhere($query->getWhere(), $binder);
+        return $this->withQuery($query, function() use ($query, $binder): string {
+            $sql = $this->buildWith($query->getWith(), $binder);
+            $sql .= $this->buildSelect($query->getTable(), $query->getSelect(), $query->getDistinct(), $binder);
+            $sql .= $this->buildJoin($query->getJoin(), $binder);
+            $sql .= $this->buildWhere($query->getWhere(), $binder);
 
-        $unions = $query->getUnion();
-        if ($unions !== []) {
-            $sql = '('.$sql.')';
-            $sql .= $this->buildUnion($unions, $binder);
-        }
+            $unions = $query->getUnion();
+            if ($unions !== []) {
+                $sql = '('.$sql.')';
+                $sql .= $this->buildUnion($unions, $binder);
+            }
 
-        $sql .= $this->buildGroupBy($query->getGroupBy());
-        $sql .= $this->buildHaving($query->getHaving(), $binder);
-        $sql .= $this->buildOrderBy($query->getOrderBy());
-        $sql .= $this->buildLimit($query->getLimit(), $query->getOffset());
-        $sql .= $this->buildEpilog($query->getEpilog());
+            $sql .= $this->buildGroupBy($query->getGroupBy());
+            $sql .= $this->buildHaving($query->getHaving(), $binder);
+            $sql .= $this->buildOrderBy($query->getOrderBy());
+            $sql .= $this->buildLimit($query->getLimit(), $query->getOffset());
+            $sql .= $this->buildEpilog($query->getEpilog());
 
-        return $sql;
+            return $sql;
+        });
     }
 
     /**
@@ -257,12 +276,14 @@ abstract class QueryGenerator
      */
     public function compileUpdate(UpdateQuery $query, ValueBinder|null $binder = null): string
     {
-        $sql = $this->buildUpdate($query->getTable(), $query->getData(), $query->getFrom() ?? [], $binder);
-        $sql .= $this->buildJoin($query->getJoin(), $binder);
-        $sql .= $this->buildWhere($query->getWhere(), $binder);
-        $sql .= $this->buildEpilog($query->getEpilog());
+        return $this->withQuery($query, function() use ($query, $binder): string {
+            $sql = $this->buildUpdate($query->getTable(), $query->getData(), $query->getFrom() ?? [], $binder);
+            $sql .= $this->buildJoin($query->getJoin(), $binder);
+            $sql .= $this->buildWhere($query->getWhere(), $binder);
+            $sql .= $this->buildEpilog($query->getEpilog());
 
-        return $sql;
+            return $sql;
+        });
     }
 
     /**
@@ -274,10 +295,12 @@ abstract class QueryGenerator
      */
     public function compileUpdateBatch(UpdateBatchQuery $query, ValueBinder|null $binder = null): string
     {
-        $sql = $this->buildUpdateBatch($query->getTable(), $query->getData(), $query->getKeys(), $binder);
-        $sql .= $this->buildEpilog($query->getEpilog());
+        return $this->withQuery($query, function() use ($query, $binder): string {
+            $sql = $this->buildUpdateBatch($query->getTable(), $query->getData(), $query->getKeys(), $binder);
+            $sql .= $this->buildEpilog($query->getEpilog());
 
-        return $sql;
+            return $sql;
+        });
     }
 
     /**
@@ -289,11 +312,173 @@ abstract class QueryGenerator
      */
     public function compileUpsert(UpsertQuery $query, ValueBinder|null $binder = null): string
     {
-        $sql = $this->buildInsert($query->getTable(), $query->getValues(), $binder);
-        $sql .= $this->buildOnConflict($query->getConflictKeys(), $query->getValues(), $query->getExcludeUpdateKeys());
-        $sql .= $this->buildEpilog($query->getEpilog());
+        return $this->withQuery($query, function() use ($query, $binder): string {
+            $sql = $this->buildInsert($query->getTable(), $query->getValues(), $binder);
+            $sql .= $this->buildOnConflict($query->getConflictKeys(), $query->getValues(), $query->getExcludeUpdateKeys());
+            $sql .= $this->buildEpilog($query->getEpilog());
 
-        return $sql;
+            return $sql;
+        });
+    }
+
+    /**
+     * Builds an aggregate expression.
+     *
+     * @param AggregateExpression $aggregate The AggregateExpression.
+     * @param ValueBinder|null $binder The value binder.
+     * @return string The aggregate expression.
+     */
+    protected function buildAggregate(AggregateExpression $aggregate, ValueBinder|null $binder = null): string
+    {
+        $arguments = $aggregate->getArguments();
+        $filter = $aggregate->getFilter();
+
+        if ($filter !== null) {
+            $argument = $arguments[0];
+
+            if ($argument instanceof IdentifierExpression && $argument->getIdentifier() === '*') {
+                $argument = 1;
+            }
+
+            $arguments[0] = new CaseExpression()
+                ->when($filter, $argument);
+        }
+
+        $arguments = array_map(
+            fn(mixed $argument): string => $this->parseExpression($argument, $binder),
+            $arguments
+        );
+
+        $query = $aggregate->getName().'(';
+
+        if ($aggregate->getDistinct()) {
+            $query .= 'DISTINCT ';
+        }
+
+        return $query.implode(', ', $arguments).')';
+    }
+
+    /**
+     * Builds a CASE expression.
+     *
+     * @param CaseExpression $case The CaseExpression.
+     * @param ValueBinder|null $binder The value binder.
+     * @return string The CASE expression.
+     *
+     * @throws InvalidArgumentException If the case expression has no branches.
+     */
+    protected function buildCase(CaseExpression $case, ValueBinder|null $binder = null): string
+    {
+        $cases = $case->getCases();
+
+        if ($cases === []) {
+            throw new InvalidArgumentException('Query CASE expression requires at least one WHEN branch.');
+        }
+
+        $query = 'CASE';
+
+        $value = $case->getValue();
+        $simple = $value !== null;
+
+        if ($simple) {
+            $query .= ' '.$this->parseExpression($value, $binder);
+        }
+
+        foreach ($cases as $branch) {
+            if (is_array($branch['when'])) {
+                if ($simple) {
+                    throw new InvalidArgumentException('Query simple CASE expression does not support array WHEN values.');
+                }
+
+                $query .= ' WHEN '.$this->buildConditions($branch['when'], $binder);
+            } else {
+                $query .= ' WHEN '.$this->parseExpression($branch['when'], $binder, $simple);
+            }
+
+            $query .= ' THEN '.$this->parseExpression($branch['then'], $binder);
+        }
+
+        $else = $case->getElse();
+        if ($else !== null) {
+            $query .= ' ELSE '.$this->parseExpression($else, $binder);
+        }
+
+        return $query.' END';
+    }
+
+    /**
+     * Builds a comparison expression.
+     *
+     * @param ValueExpressionInterface $field The field.
+     * @param string $operator The comparison operator.
+     * @param mixed $value The comparison value.
+     * @param ValueBinder|null $binder The value binder.
+     * @return string The comparison expression.
+     */
+    protected function buildComparison(
+        ValueExpressionInterface $field,
+        string $operator,
+        mixed $value,
+        ValueBinder|null $binder = null
+    ): string {
+        $field = $this->parseExpression($field, $binder, false);
+
+        if ($value === null && in_array($operator, ['IS', 'IS NOT'], true)) {
+            return $field.' '.$operator.' NULL';
+        }
+
+        if (in_array($operator, ['BETWEEN', 'NOT BETWEEN'], true)) {
+            return $field.' '.$operator.' '.$this->parseExpression($value[0], $binder).' AND '.$this->parseExpression($value[1], $binder);
+        }
+
+        if (in_array($operator, ['IN', 'NOT IN'], true) && is_array($value)) {
+            $values = array_map(
+                fn(mixed $item): string => $this->parseExpression($item, $binder),
+                $value
+            );
+
+            return $field.' '.$operator.' ('.implode(', ', $values).')';
+        }
+
+        return $field.' '.$operator.' '.$this->parseExpression($value, $binder);
+    }
+
+    /**
+     * Builds a condition expression.
+     *
+     * @param ConditionExpression $expression The condition expression.
+     * @param ValueBinder|null $binder The value binder.
+     * @return string The condition expression.
+     */
+    protected function buildConditionExpression(ConditionExpression $expression, ValueBinder|null $binder = null): string
+    {
+        $conditions = array_map(
+            function(array|ConditionExpression $condition) use ($binder): string {
+                if ($condition instanceof ConditionExpression) {
+                    return '('.$this->buildConditionExpression($condition, $binder).')';
+                }
+
+                $operator = $condition['operator'];
+
+                if ($operator === 'EXISTS' || $operator === 'NOT EXISTS') {
+                    return $operator.' '.$this->parseExpression($condition['query'], $binder);
+                }
+
+                if ($operator === 'NOT') {
+                    return 'NOT ('.$this->buildConditionExpression($condition['condition'], $binder).')';
+                }
+
+                return $this->buildComparison(
+                    $condition['field'],
+                    $operator,
+                    $condition['value'],
+                    $binder
+                );
+            },
+            $expression->getConditions()
+        );
+
+        return implode(' '.$expression->getConjunction().' ', $conditions);
     }
 
     /**
@@ -304,8 +489,11 @@ abstract class QueryGenerator
      * @param string $type The condition separator.
      * @return string The conditions.
      */
-    protected function buildConditions(array $conditions, ValueBinder|null $binder = null, string $type = 'AND'): string
-    {
+    protected function buildConditions(
+        array $conditions,
+        ValueBinder|null $binder = null,
+        string $type = 'AND'
+    ): string {
         $query = '';
 
         foreach ($conditions as $field => $value) {
@@ -335,6 +523,7 @@ abstract class QueryGenerator
                         $comparison = 'IN';
                     }
 
+                    $field = $this->connection->quoteIdentifier($field);
                     $value = array_map(fn(mixed $val): string => $this->parseExpression($val, $binder), $value);
 
                     $query .= $field.' '.$comparison.' ('.implode(', ', $value).')';
@@ -351,6 +540,14 @@ abstract class QueryGenerator
                     $comparison = (string) preg_replace('/\s+/', ' ', $comparison);
                 } else {
                     $comparison = '=';
+                }
+
+                $field = $this->connection->quoteIdentifier($field);
+
+                if ($value === null && in_array($comparison, ['IS', 'IS NOT'])) {
+                    $query .= $field.' '.$comparison.' NULL';
+
+                    continue;
                 }
 
                 $query .= $field.' '.$comparison.' '.$this->parseExpression($value, $binder);
@@ -373,15 +570,20 @@ abstract class QueryGenerator
     {
         if ($aliases === [] && count($tables) > 1) {
             $aliases = array_map(
-                static function(int|string $alias, string $table): string {
+                function(int|string $alias, string $table): string {
                     if (is_numeric($alias)) {
-                        return $table;
+                        return $this->connection->quoteIdentifier($table);
                     }
 
-                    return $alias;
+                    return $this->connection->quoteIdentifierPart($alias);
                 },
                 array_keys($tables),
                 $tables
+            );
+        } else {
+            $aliases = array_map(
+                $this->connection->quoteIdentifierPart(...),
+                $aliases
             );
         }
 
@@ -419,6 +621,78 @@ abstract class QueryGenerator
     }
 
     /**
+     * Builds a query function.
+     *
+     * @param FunctionExpression $function The FunctionExpression.
+     * @param ValueBinder|null $binder The value binder.
+     * @return string The query function.
+     */
+    protected function buildFunction(FunctionExpression $function, ValueBinder|null $binder = null): string
+    {
+        $name = $function->getName();
+        $arguments = $function->getArguments();
+
+        switch ($name) {
+            case 'CAST':
+                [$expression, $dataType] = $arguments;
+                $expression = $this->parseExpression($expression, $binder);
+
+                return 'CAST('.$expression.' AS '.$dataType.')';
+            case 'DATE_ADD':
+            case 'DATE_SUB':
+                [$expression, $value, $unit] = $arguments;
+                $expression = $this->parseExpression($expression, $binder);
+                $value = $this->parseExpression($value, $binder);
+
+                return $name.'('.$expression.', INTERVAL '.$value.' '.strtoupper((string) $unit).')';
+            case 'DATE_DIFF':
+                [$start, $end] = $arguments;
+                $start = $this->parseExpression($start, $binder);
+                $end = $this->parseExpression($end, $binder);
+
+                return 'DATEDIFF('.$start.', '.$end.')';
+            case 'DATE_PART':
+            case 'EXTRACT':
+                [$part, $expression] = $arguments;
+                $part = strtoupper((string) $part);
+                $expression = $this->parseExpression($expression, $binder);
+
+                return 'EXTRACT('.$part.' FROM '.$expression.')';
+            case 'DAY_OF_WEEK':
+                [$expression] = $arguments;
+                $expression = $this->parseExpression($expression, $binder);
+
+                return 'DAYOFWEEK('.$expression.')';
+            case 'JSON_VALUE':
+                [$expression, $path] = $arguments;
+                $expression = $this->parseExpression($expression, $binder);
+                $path = $this->parseExpression($path, $binder);
+
+                return 'JSON_VALUE('.$expression.', '.$path.')';
+            case 'NOW':
+                [$type] = $arguments;
+
+                return match (strtolower((string) $type)) {
+                    'date' => 'CURRENT_DATE()',
+                    'time' => 'CURRENT_TIME()',
+                    default => 'NOW()',
+                };
+            case 'WEEK_DAY':
+                [$expression] = $arguments;
+                $expression = $this->parseExpression($expression, $binder);
+
+                return 'WEEKDAY('.$expression.')';
+        }
+
+        $arguments = array_map(
+            fn(mixed $argument): string => $this->parseExpression($argument, $binder),
+            $arguments
+        );
+
+        return $name.'('.implode(', ', $arguments).')';
+    }
+
+    /**
      * Generates the GROUP BY portion of the query.
      *
      * @param string[] $fields The fields.
@@ -429,6 +703,11 @@ abstract class QueryGenerator
         if ($fields === []) {
             return '';
         }
+
+        $fields = array_map(
+            $this->connection->quoteIdentifier(...),
+            $fields
+        );
 
         $query = ' GROUP BY ';
         $query .= implode(', ', $fields);
@@ -491,6 +770,10 @@ abstract class QueryGenerator
 
         $query = 'INSERT INTO ';
         $query .= $this->buildTables($tables);
+        $columns = array_map(
+            $this->connection->quoteIdentifierPart(...),
+            $columns
+        );
         $query .= ' ('.implode(', ', $columns).')';
         $query .= ' VALUES ';
         $query .= implode(', ', $values);
@@ -502,17 +785,21 @@ abstract class QueryGenerator
      * Generates an INSERT query from another query.
      *
      * @param array<mixed> $tables The tables.
-     * @param Closure|QueryLiteral|SelectQuery|string $from The query.
+     * @param Closure|LiteralExpression|SelectQuery|string $from The query.
      * @param string[] $columns The columns.
      * @param ValueBinder|null $binder The value binder.
      * @return string The query string.
      */
-    protected function buildInsertFrom(array $tables, Closure|QueryLiteral|SelectQuery|string $from, array $columns, ValueBinder|null $binder = null): string
+    protected function buildInsertFrom(array $tables, Closure|LiteralExpression|SelectQuery|string $from, array $columns, ValueBinder|null $binder = null): string
     {
         $query = 'INSERT INTO ';
         $query .= $this->buildTables($tables);
 
         if ($columns !== []) {
+            $columns = array_map(
+                $this->connection->quoteIdentifierPart(...),
+                $columns
+            );
             $query .= ' ('.implode(', ', $columns).')';
         }
 
@@ -548,7 +835,7 @@ abstract class QueryGenerator
             ], $binder);
 
             if ($join['using']) {
-                $query .= ' USING ('.$join['using'].')';
+                $query .= ' USING ('.$this->connection->quoteIdentifier($join['using']).')';
             } else {
                 $query .= ' ON '.$this->buildConditions($join['conditions'], $binder);
             }
@@ -604,9 +891,9 @@ abstract class QueryGenerator
         }
 
         $fields = array_map(
-            static fn(int|string $field, string $dir): string => is_numeric($field) ?
-                $dir :
-                $field.' '.strtoupper($dir),
+            fn(int|string $field, string $dir): string => is_numeric($field) ?
+                $this->connection->quoteIdentifier($dir) :
+                $this->connection->quoteIdentifier($field).' '.strtoupper($dir),
             array_keys($fields),
             $fields
         );
@@ -657,13 +944,15 @@ abstract class QueryGenerator
     {
         return array_map(
             function(int|string $key, mixed $value) use ($binder): string {
-                $value = $this->parseExpression($value, $binder, false);
+                $value = is_string($value) ?
+                    $this->connection->quoteIdentifier($value) :
+                    $this->parseExpression($value, $binder, false);
 
                 if (is_numeric($key)) {
                     return $value;
                 }
 
-                return $value.' AS '.$key;
+                return $value.' AS '.$this->connection->quoteIdentifierPart((string) $key);
             },
             array_keys($fields),
             $fields
@@ -689,15 +978,17 @@ abstract class QueryGenerator
         $tables = array_map(
             function(int|string $alias, mixed $table) use ($binder, $with): string {
                 if ($with) {
-                    return $alias.' AS '.$this->parseExpression($table, $binder, false);
+                    return $this->connection->quoteIdentifierPart((string) $alias).' AS '.$this->parseExpression($table, $binder, false);
                 }
 
-                $fullTable = $this->parseExpression($table, $binder, false);
+                $fullTable = is_string($table) ?
+                    $this->connection->quoteIdentifier($table) :
+                    $this->parseExpression($table, $binder, false);
 
                 $query = $fullTable;
 
                 if ($alias !== $table && !is_numeric($alias)) {
-                    $query .= ' AS '.$alias;
+                    $query .= ' AS '.$this->connection->quoteIdentifierPart($alias);
                 }
 
                 return $query;
@@ -763,7 +1054,7 @@ abstract class QueryGenerator
                     return $this->parseExpression($value, $binder, false);
                 }
 
-                return $field.' = '.$this->parseExpression($value, $binder);
+                return $this->connection->quoteIdentifierPart($field).' = '.$this->parseExpression($value, $binder);
             },
             array_keys($data),
             $data
@@ -816,7 +1107,9 @@ abstract class QueryGenerator
         }
 
         foreach ($columns as $column) {
-            $sql = $column.' = CASE';
+            $column = (string) $column;
+            $quotedColumn = $this->connection->quoteIdentifierPart($column);
+            $sql = $quotedColumn.' = CASE';
 
             $useElse = false;
             foreach ($data as $j => $values) {
@@ -833,7 +1126,7 @@ abstract class QueryGenerator
             }
 
             if ($useElse) {
-                $sql .= ' ELSE '.$column;
+                $sql .= ' ELSE '.$quotedColumn;
             }
 
             $sql .= ' END';
@@ -869,6 +1162,47 @@ abstract class QueryGenerator
         $query .= $this->buildConditions($conditions, $binder);
 
         return $query;
+    }
+
+    /**
+     * Builds a window expression.
+     *
+     * @param WindowExpression $window The WindowExpression.
+     * @param ValueBinder|null $binder The value binder.
+     * @return string The window expression.
+     */
+    protected function buildWindow(WindowExpression $window, ValueBinder|null $binder = null): string
+    {
+        $clauses = [];
+
+        $partitionBy = $window->getPartitionBy();
+        if ($partitionBy !== []) {
+            $partitionBy = array_map(
+                fn(ValueExpressionInterface $field): string => $this->parseExpression($field, $binder, false),
+                $partitionBy
+            );
+
+            $clauses[] = 'PARTITION BY '.implode(', ', $partitionBy);
+        }
+
+        $orderBy = $window->getOrderBy();
+        if ($orderBy !== []) {
+            $clauses[] = $this->buildOrderBy($orderBy) |> trim(...);
+        }
+
+        $frame = $window->getFrame();
+        if ($frame !== null) {
+            $clauses[] = $frame['type'].' BETWEEN '.$frame['start'].' AND '.$frame['end'];
+        }
+
+        $exclude = $window->getExclude();
+        if ($exclude !== null) {
+            $clauses[] = 'EXCLUDE '.$exclude;
+        }
+
+        $query = $this->parseExpression($window->getFunction(), $binder, false);
+
+        return $query.' OVER ('.implode(' ', $clauses).')';
     }
 
     /**
@@ -918,7 +1252,7 @@ abstract class QueryGenerator
     protected function parseExpression(mixed $value, ValueBinder|null $binder = null, bool $quote = true, bool $wrapSql = true): string
     {
         if ($value instanceof Closure) {
-            $value = $value($this->connection, $binder);
+            $value = $value($this->currentQuery, $binder);
         }
 
         if ($value instanceof SelectQuery) {
@@ -927,8 +1261,32 @@ abstract class QueryGenerator
             return $wrapSql ? '('.$sql.')' : $sql;
         }
 
-        if ($value instanceof QueryLiteral) {
+        if ($value instanceof LiteralExpression) {
             return (string) $value;
+        }
+
+        if ($value instanceof CaseExpression) {
+            return $this->buildCase($value, $binder);
+        }
+
+        if ($value instanceof ConditionExpression) {
+            return $this->buildConditionExpression($value, $binder);
+        }
+
+        if ($value instanceof WindowExpression) {
+            return $this->buildWindow($value, $binder);
+        }
+
+        if ($value instanceof AggregateExpression) {
+            return $this->buildAggregate($value, $binder);
+        }
+
+        if ($value instanceof FunctionExpression) {
+            return $this->buildFunction($value, $binder);
+        }
+
+        if ($value instanceof IdentifierExpression) {
+            return $value->getIdentifier() |> $this->connection->quoteIdentifier(...);
         }
 
         if ($value instanceof UnitEnum) {
@@ -966,5 +1324,24 @@ abstract class QueryGenerator
         }
 
         return $this->connection->quote($value);
+    }
+
+    /**
+     * Compiles a query using the current query context.
+     *
+     * @param Query $query The Query.
+     * @param Closure(): string $callback The compilation callback.
+     * @return string The compiled query.
+     */
+    protected function withQuery(Query $query, Closure $callback): string
+    {
+        $previous = $this->currentQuery;
+        $this->currentQuery = $query;
+
+        try {
+            return $callback();
+        } finally {
+            $this->currentQuery = $previous;
+        }
     }
 }

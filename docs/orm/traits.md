@@ -189,6 +189,8 @@ This guide focuses on the public helper methods added by `SoftDeleteTrait`. `Tim
 
 Returns a `SelectQuery` that includes soft-deleted rows (equivalent to calling `find(..., deleted: true)`).
 
+This method accepts the same query arguments as `Model::find()`, including closure and `ConditionExpression` values for `conditions` and `having`.
+
 ```php
 $withDeleted = $Users->findWithDeleted()->toArray();
 ```
@@ -196,6 +198,8 @@ $withDeleted = $Users->findWithDeleted()->toArray();
 #### **Find only deleted** (`findOnlyDeleted()`)
 
 Returns a `SelectQuery` filtered to only soft-deleted rows.
+
+This method accepts the same query arguments as `Model::find()`, including closure and `ConditionExpression` values for `conditions` and `having`.
 
 ```php
 $deleted = $Users->findOnlyDeleted()->toArray();

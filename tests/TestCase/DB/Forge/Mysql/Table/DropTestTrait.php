@@ -31,7 +31,7 @@ trait DropTestTrait
 
         $this->assertSame(
             [
-                'DROP TABLE test',
+                'DROP TABLE `test`',
             ],
             $this->forge
                 ->build('test')

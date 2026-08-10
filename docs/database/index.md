@@ -15,6 +15,7 @@ Pick a path based on what you’re doing:
 
 - **Connecting to a database**: [Database connections](connections.md) for drivers, config, and selecting a connection.
 - **Reading and writing data with SQL**: [Database queries](queries.md) for query builders, binding, and `ResultSet`.
+- **Building conditions and calculated fields**: [Query expressions](expressions.md) for conditions, functions, aggregates, and windows.
 - **Inspecting an existing database**: [Schema](schema.md) for tables, columns, indexes, and foreign keys.
 - **Changing schema from code**: [Forge](forge.md) for DDL operations and generated SQL.
 - **Applying schema changes over time**: [Database Migrations](migrations.md) for discovery, migrate/rollback, and history.
@@ -25,13 +26,14 @@ Pick a path based on what you’re doing:
 Most database work in Fyre falls into three areas:
 
 - **Connections**: define one or more named databases and resolve the connection you want to use.
-- **Queries**: build SQL with bound values and work with results through `ResultSet`.
+- **Queries**: build SQL with bound values and reusable expressions, then work with results through `ResultSet`.
 - **Schema tooling**: inspect existing tables, change schema, and apply migrations over time.
 
 ## Pages in this section
 
 - [Database connections](connections.md) — configuring connections and selecting a connection for application code.
 - [Database queries](queries.md) — building and executing queries, value binding, and result handling.
+- [Query expressions](expressions.md) — building conditions, functions, aggregates, and window expressions.
 - [Schema](schema.md) — reading tables, columns, indexes, and foreign keys from an existing database.
 - [Forge](forge.md) — creating and altering schema from PHP code.
 - [Database Migrations](migrations.md) — running schema changes safely across environments.

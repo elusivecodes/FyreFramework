@@ -5,6 +5,11 @@ namespace Fyre\DB;
 
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\DB\Exceptions\DbException;
+use Fyre\DB\Expressions\CaseExpression;
+use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Expressions\FunctionBuilder;
+use Fyre\DB\Expressions\IdentifierExpression;
+use Fyre\DB\Expressions\LiteralExpression;
 use Override;
 use Stringable;
 
@@ -27,6 +32,8 @@ abstract class Query implements Stringable
     protected static bool $virtualTables = false;
 
     protected bool $dirty = false;
+
+    protected FunctionBuilder $functionBuilder;
 
     protected bool $multipleTables = false;
 
@@ -64,6 +71,17 @@ abstract class Query implements Stringable
     }
 
     /**
+     * Creates a CaseExpression.
+     *
+     * @param mixed $value The case value.
+     * @return CaseExpression The new CaseExpression instance.
+     */
+    public function case(mixed $value = null): CaseExpression
+    {
+        return new CaseExpression($value);
+    }
+
+    /**
      * Executes the query.
      *
      * Note: When binding is enabled, a {@see ValueBinder} is created if none is provided.
@@ -95,6 +113,27 @@ abstract class Query implements Stringable
     }
 
     /**
+     * Creates a condition expression.
+     *
+     * @param string $conjunction The condition conjunction.
+     * @return ConditionExpression The new ConditionExpression instance.
+     */
+    public function expr(string $conjunction = 'AND'): ConditionExpression
+    {
+        return new ConditionExpression($conjunction);
+    }
+
+    /**
+     * Returns the FunctionBuilder.
+     *
+     * @return FunctionBuilder The FunctionBuilder instance.
+     */
+    public function func(): FunctionBuilder
+    {
+        return $this->functionBuilder ??= new FunctionBuilder();
+    }
+
+    /**
      * Returns the Connection.
      *
      * @return Connection The Connection instance.
@@ -112,6 +151,28 @@ abstract class Query implements Stringable
     public function getTable(): array
     {
         return $this->table;
+    }
+
+    /**
+     * Creates an IdentifierExpression.
+     *
+     * @param string $identifier The identifier.
+     * @return IdentifierExpression The new IdentifierExpression instance.
+     */
+    public function identifier(string $identifier): IdentifierExpression
+    {
+        return new IdentifierExpression($identifier);
+    }
+
+    /**
+     * Creates a LiteralExpression.
+     *
+     * @param string $string The literal string.
+     * @return LiteralExpression The new LiteralExpression instance.
+     */
+    public function literal(string $string): LiteralExpression
+    {
+        return new LiteralExpression($string);
     }
 
     /**

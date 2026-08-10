@@ -44,7 +44,7 @@ class SqliteQueryGenerator extends QueryGenerator
     {
         $type = $column->getType();
 
-        $sql = $column->getName();
+        $sql = $column->getName() |> $this->quoteIdentifier(...);
 
         if ($column->isUnsigned()) {
             $sql .= ' UNSIGNED';
@@ -136,7 +136,7 @@ class SqliteQueryGenerator extends QueryGenerator
         if ($index->isPrimary()) {
             $sql = 'PRIMARY';
         } else if ($index->isUnique()) {
-            $sql = $index->getName();
+            $sql = $index->getName() |> $this->quoteIdentifier(...);
             $sql .= ' UNIQUE';
         } else {
             throw new InvalidArgumentException(sprintf(
@@ -146,7 +146,11 @@ class SqliteQueryGenerator extends QueryGenerator
         }
 
         $sql .= ' KEY (';
-        $sql .= implode(', ', $index->getColumns());
+        $columns = array_map(
+            $this->quoteIdentifier(...),
+            $index->getColumns()
+        );
+        $sql .= implode(', ', $columns);
         $sql .= ')';
 
         return $sql;
@@ -173,11 +177,15 @@ class SqliteQueryGenerator extends QueryGenerator
         }
 
         $sql .= 'INDEX ';
-        $sql .= $index->getName();
+        $sql .= $index->getName() |> $this->quoteIdentifier(...);
         $sql .= ' ON ';
-        $sql .= $index->getTable()->getName();
+        $sql .= $index->getTable()->getName() |> $this->quoteIdentifier(...);
         $sql .= ' (';
-        $sql .= implode(', ', $index->getColumns());
+        $columns = array_map(
+            $this->quoteIdentifier(...),
+            $index->getColumns()
+        );
+        $sql .= implode(', ', $columns);
         $sql .= ')';
 
         return $sql;
@@ -222,7 +230,7 @@ class SqliteQueryGenerator extends QueryGenerator
             $sql .= 'IF NOT EXISTS ';
         }
 
-        $sql .= $table->getName();
+        $sql .= $table->getName() |> $this->quoteIdentifier(...);
 
         $sql .= ' (';
         $sql .= implode(', ', $definitions);

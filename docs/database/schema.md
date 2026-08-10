@@ -99,7 +99,7 @@ foreach ($schema->tables() as $name => $table) {
 
 ### Performance note: parsing default values
 
-`Column::defaultValue()` returns a parsed default value. When the configured default is a database expression (represented as a `QueryLiteral`), this method executes a `SELECT` query to evaluate it. Scalar defaults are parsed through the column type without querying.
+`Column::defaultValue()` returns a parsed default value. When the configured default is a database expression (represented as a `LiteralExpression`), this method executes a `SELECT` query to evaluate it. Scalar defaults are parsed through the column type without querying.
 
 If you are inspecting lots of columns (for example across many tables), prefer reading the normalized default via `Column::getDefault()` (or `Column::toArray()`) and only call `defaultValue()` for the specific columns you need.
 
@@ -292,7 +292,7 @@ $ok = $table->hasAutoIncrement();
 #### **Get metadata** (`getName()`, `getType()`, `getLength()`, `getPrecision()`, `getDefault()`, `getComment()`, `getTable()`, `getEnumClass()`, `toArray()`)
 
 - `getType()` returns the driver-reported type string.
-- `getDefault()` returns the normalized default value as either a scalar (`string|int|float|bool|null`) or a `QueryLiteral` when the default is a database expression.
+- `getDefault()` returns the normalized default value as either a scalar (`string|int|float|bool|null`) or a `LiteralExpression` when the default is a database expression.
 - `getEnumClass()` returns the configured PHP enum class when one has been attached to the column.
 - `toArray()` returns column metadata as an array (driver-specific columns may include additional keys).
 
@@ -303,7 +303,7 @@ $ok = $table->hasAutoIncrement();
 Returns a parsed default value.
 
 - If the introspected default is a scalar, it is parsed through the column type.
-- If the introspected default is a `QueryLiteral` (database expression), this method executes a `SELECT` query to evaluate it.
+- If the introspected default is a `LiteralExpression` (database expression), this method executes a `SELECT` query to evaluate it.
 - If there is no default, this method returns `null` for nullable columns and `''` otherwise.
 
 ```php

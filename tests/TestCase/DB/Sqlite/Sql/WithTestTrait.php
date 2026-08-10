@@ -3,22 +3,22 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Sqlite\Sql;
 
-use Fyre\DB\Connection;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Queries\SelectQuery;
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Query;
 
 trait WithTestTrait
 {
     public function testWithClosure(): void
     {
+        $query = $this->db->select()
+            ->from('test');
+
         $this->assertSame(
-            'WITH alt AS (SELECT * FROM test) SELECT * FROM alt',
+            'WITH "alt" AS (SELECT * FROM "test") SELECT * FROM "alt"',
             $this->db->select()
                 ->with([
-                    'alt' => static function(Connection $db): SelectQuery {
-                        return $db->select()
-                            ->from('test');
-                    },
+                    'alt' => static fn(): SelectQuery => $query,
                 ])
                 ->from('alt')
                 ->sql()
@@ -28,11 +28,11 @@ trait WithTestTrait
     public function testWithLiteral(): void
     {
         $this->assertSame(
-            'WITH alt AS (SELECT * FROM test) SELECT * FROM alt',
+            'WITH "alt" AS (SELECT * FROM test) SELECT * FROM "alt"',
             $this->db->select()
                 ->with([
-                    'alt' => static function(Connection $db): QueryLiteral {
-                        return $db->literal('(SELECT * FROM test)');
+                    'alt' => static function(Query $query): LiteralExpression {
+                        return $query->literal('(SELECT * FROM test)');
                     },
                 ])
                 ->from('alt')
@@ -49,7 +49,7 @@ trait WithTestTrait
             ->from('test2');
 
         $this->assertSame(
-            'WITH alt1 AS (SELECT * FROM test1), alt2 AS (SELECT * FROM test2) SELECT * FROM alt1',
+            'WITH "alt1" AS (SELECT * FROM "test1"), "alt2" AS (SELECT * FROM "test2") SELECT * FROM "alt1"',
             $this->db->select()
                 ->with([
                     'alt1' => $query1,
@@ -71,7 +71,7 @@ trait WithTestTrait
             ->from('test2');
 
         $this->assertSame(
-            'WITH alt2 AS (SELECT * FROM test2) SELECT * FROM alt2',
+            'WITH "alt2" AS (SELECT * FROM "test2") SELECT * FROM "alt2"',
             $this->db->select()
                 ->with([
                     'alt1' => $query1,
@@ -86,14 +86,14 @@ trait WithTestTrait
 
     public function testWithRecursiveClosure(): void
     {
+        $query = $this->db->select()
+            ->from('test');
+
         $this->assertSame(
-            'WITH RECURSIVE alt AS (SELECT * FROM test) SELECT * FROM alt',
+            'WITH RECURSIVE "alt" AS (SELECT * FROM "test") SELECT * FROM "alt"',
             $this->db->select()
                 ->withRecursive([
-                    'alt' => static function(Connection $db): SelectQuery {
-                        return $db->select()
-                            ->from('test');
-                    },
+                    'alt' => static fn(): SelectQuery => $query,
                 ])
                 ->from('alt')
                 ->sql()
@@ -103,11 +103,11 @@ trait WithTestTrait
     public function testWithRecursiveLiteral(): void
     {
         $this->assertSame(
-            'WITH RECURSIVE alt AS (SELECT * FROM test) SELECT * FROM alt',
+            'WITH RECURSIVE "alt" AS (SELECT * FROM test) SELECT * FROM "alt"',
             $this->db->select()
                 ->withRecursive([
-                    'alt' => static function(Connection $db): QueryLiteral {
-                        return $db->literal('(SELECT * FROM test)');
+                    'alt' => static function(Query $query): LiteralExpression {
+                        return $query->literal('(SELECT * FROM test)');
                     },
                 ])
                 ->from('alt')
@@ -121,7 +121,7 @@ trait WithTestTrait
             ->from('test');
 
         $this->assertSame(
-            'WITH RECURSIVE alt AS (SELECT * FROM test) SELECT * FROM alt',
+            'WITH RECURSIVE "alt" AS (SELECT * FROM "test") SELECT * FROM "alt"',
             $this->db->select()
                 ->withRecursive([
                     'alt' => $query,
@@ -137,7 +137,7 @@ trait WithTestTrait
             ->from('test');
 
         $this->assertSame(
-            'WITH alt AS (SELECT * FROM test) SELECT * FROM alt',
+            'WITH "alt" AS (SELECT * FROM "test") SELECT * FROM "alt"',
             $this->db->select()
                 ->with([
                     'alt' => $query,

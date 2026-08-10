@@ -289,9 +289,9 @@ Column definitions accept a set of common options (driver handlers may support a
 - `precision` (`int|null`) The column precision (when applicable).
 - `nullable` (`bool`) Whether the column is nullable.
 - `unsigned` (`bool`) Whether the column is unsigned (when supported).
-- `default` (`bool|float|int|string|QueryLiteral|null`) The column default value.
+- `default` (`bool|float|int|string|LiteralExpression|null`) The column default value.
   - For scalar values, pass the native PHP type (strings are quoted by the driver generator).
-  - For SQL expressions, pass a `QueryLiteral` (for example `$forge->getConnection()->literal('CURRENT_TIMESTAMP')`).
+  - For SQL expressions, pass a `LiteralExpression` (for example `new LiteralExpression('CURRENT_TIMESTAMP')`).
   - `null` means “no DEFAULT clause” (not `DEFAULT NULL`).
 - `comment` (`string|null`) The column comment (when supported).
 - `autoIncrement` (`bool`) Whether the column auto-increments (driver-specific behavior).
@@ -337,7 +337,7 @@ A few behaviors are worth keeping in mind:
 
 - Forge runs real DDL against your connection.
 - Forge convenience methods execute immediately; use `build()->...->execute()` when you want to batch changes together.
-- Column `default` values accept scalars or `QueryLiteral` for raw SQL expressions.
+- Column `default` values accept scalars or `LiteralExpression` for raw SQL expressions.
 - When `changeColumn()` changes `type`, `length` and `precision` are cleared unless you provide new values.
 - Some drivers handle defaults specially. For example, MySQL normalizes some expression defaults.
 - `Table::execute()` runs generated queries sequentially and does not automatically wrap them in a transaction.

@@ -3,20 +3,20 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Sqlite\Sql;
 
-use Fyre\DB\Connection;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Queries\SelectQuery;
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Query;
 
 trait InsertFromTestTrait
 {
     public function testInsertFromClosure(): void
     {
+        $query = $this->db->select()
+            ->from('test2');
+
         $this->assertSame(
-            'INSERT INTO test SELECT * FROM test2',
-            $this->db->insertFrom(static function(Connection $db): SelectQuery {
-                return $db->select()
-                    ->from('test2');
-            })
+            'INSERT INTO "test" SELECT * FROM "test2"',
+            $this->db->insertFrom(static fn(): SelectQuery => $query)
                 ->into('test')
                 ->sql()
         );
@@ -24,12 +24,12 @@ trait InsertFromTestTrait
 
     public function testInsertFromColumnsClosure(): void
     {
+        $query = $this->db->select()
+            ->table('test2');
+
         $this->assertSame(
-            'INSERT INTO test (id, name) SELECT * FROM test2',
-            $this->db->insertFrom(static function(Connection $db): SelectQuery {
-                return $db->select()
-                    ->table('test2');
-            }, ['id', 'name'])
+            'INSERT INTO "test" ("id", "name") SELECT * FROM "test2"',
+            $this->db->insertFrom(static fn(): SelectQuery => $query, ['id', 'name'])
                 ->into('test')
                 ->sql()
         );
@@ -38,9 +38,9 @@ trait InsertFromTestTrait
     public function testInsertFromColumnsLiteral(): void
     {
         $this->assertSame(
-            'INSERT INTO test (id, name) SELECT * FROM test2',
-            $this->db->insertFrom(static function(Connection $db): QueryLiteral {
-                return $db->literal('SELECT * FROM test2');
+            'INSERT INTO "test" ("id", "name") SELECT * FROM test2',
+            $this->db->insertFrom(static function(Query $query): LiteralExpression {
+                return $query->literal('SELECT * FROM test2');
             }, ['id', 'name'])
                 ->into('test')
                 ->sql()
@@ -53,7 +53,7 @@ trait InsertFromTestTrait
             ->from('test2');
 
         $this->assertSame(
-            'INSERT INTO test (id, name) SELECT * FROM test2',
+            'INSERT INTO "test" ("id", "name") SELECT * FROM "test2"',
             $this->db->insertFrom($query, ['id', 'name'])
                 ->into('test')
                 ->sql()
@@ -63,7 +63,7 @@ trait InsertFromTestTrait
     public function testInsertFromColumnsString(): void
     {
         $this->assertSame(
-            'INSERT INTO test (id, name) SELECT * FROM test2',
+            'INSERT INTO "test" ("id", "name") SELECT * FROM test2',
             $this->db->insertFrom('SELECT * FROM test2', ['id', 'name'])
                 ->into('test')
                 ->sql()
@@ -73,9 +73,9 @@ trait InsertFromTestTrait
     public function testInsertFromLiteral(): void
     {
         $this->assertSame(
-            'INSERT INTO test SELECT * FROM test2',
-            $this->db->insertFrom(static function(Connection $db): QueryLiteral {
-                return $db->literal('SELECT * FROM test2');
+            'INSERT INTO "test" SELECT * FROM test2',
+            $this->db->insertFrom(static function(Query $query): LiteralExpression {
+                return $query->literal('SELECT * FROM test2');
             })
                 ->into('test')
                 ->sql()
@@ -88,7 +88,7 @@ trait InsertFromTestTrait
             ->from('test2');
 
         $this->assertSame(
-            'INSERT INTO test SELECT * FROM test2',
+            'INSERT INTO "test" SELECT * FROM "test2"',
             $this->db->insertFrom($query)
                 ->into('test')
                 ->sql()
@@ -98,7 +98,7 @@ trait InsertFromTestTrait
     public function testInsertFromString(): void
     {
         $this->assertSame(
-            'INSERT INTO test (id, name) SELECT * FROM test2',
+            'INSERT INTO "test" ("id", "name") SELECT * FROM test2',
             $this->db->insertFrom('SELECT * FROM test2', ['id', 'name'])
                 ->into('test')
                 ->sql()

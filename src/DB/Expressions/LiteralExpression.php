@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Fyre\DB;
+namespace Fyre\DB\Expressions;
 
 use Fyre\Core\Traits\DebugTrait;
 use Override;
@@ -12,12 +12,12 @@ use Stringable;
  *
  * Use this to embed literal SQL expressions into generated queries without binding.
  */
-class QueryLiteral implements Stringable
+class LiteralExpression implements Stringable, ValueExpressionInterface
 {
     use DebugTrait;
 
     /**
-     * Constructs a QueryLiteral.
+     * Constructs a LiteralExpression.
      *
      * @param string $string The literal string.
      */

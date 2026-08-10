@@ -17,7 +17,7 @@ trait TableTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test ENGINE = MyISAM',
+                'ALTER TABLE `test` ENGINE = MyISAM',
             ],
             $this->forge
                 ->build('test', [
@@ -31,7 +31,7 @@ trait TableTestTrait
     {
         $this->assertSame(
             [
-                'CREATE TABLE test (id INT(11) NOT NULL) ENGINE = MyISAM DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
+                'CREATE TABLE `test` (`id` INT(11) NOT NULL) ENGINE = MyISAM DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
             ],
             $this->forge
                 ->build('test', [

@@ -17,7 +17,7 @@ trait RenameTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test RENAME TO other',
+                'ALTER TABLE `test` RENAME TO `other`',
             ],
             $this->forge
                 ->build('test')
@@ -30,7 +30,7 @@ trait RenameTestTrait
     {
         $this->assertSame(
             [
-                'CREATE TABLE other (id INT(11) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
+                'CREATE TABLE `other` (`id` INT(11) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
             ],
             $this->forge
                 ->build('test')

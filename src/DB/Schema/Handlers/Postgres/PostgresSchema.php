@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Fyre\DB\Schema\Handlers\Postgres;
 
+use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Query;
 use Fyre\DB\Schema\Schema;
 use Override;
 
@@ -44,18 +46,16 @@ class PostgresSchema extends Schema
                     'table' => 'pg_catalog.pg_namespace',
                     'alias' => 'Namespaces',
                     'type' => 'INNER',
-                    'conditions' => [
-                        'Namespaces.nspname = Tables.table_schema',
-                    ],
+                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields('Namespaces.nspname', 'Tables.table_schema'),
                 ],
                 [
                     'table' => 'pg_catalog.pg_class',
                     'alias' => 'Classes',
                     'type' => 'INNER',
-                    'conditions' => [
-                        'Classes.relnamespace = Namespaces.oid',
-                        'Classes.relname = Tables.table_name',
-                    ],
+                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields('Classes.relnamespace', 'Namespaces.oid')
+                        ->equalFields('Classes.relname', 'Tables.table_name'),
                 ],
             ])
             ->where([

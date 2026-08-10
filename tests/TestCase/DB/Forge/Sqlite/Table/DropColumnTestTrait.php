@@ -31,7 +31,7 @@ trait DropColumnTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test DROP COLUMN value',
+                'ALTER TABLE "test" DROP COLUMN "value"',
             ],
             $this->forge
                 ->build('test')
@@ -44,7 +44,7 @@ trait DropColumnTestTrait
     {
         $this->assertSame(
             [
-                'CREATE TABLE test (id INTEGER NOT NULL)',
+                'CREATE TABLE "test" ("id" INTEGER NOT NULL)',
             ],
             $this->forge
                 ->build('test')

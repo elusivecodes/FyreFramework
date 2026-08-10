@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Schema;
 
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Expressions\LiteralExpression;
 use PHPUnit\Framework\TestCase;
 use Tests\TestCase\DB\Schema\Mysql\MysqlConnectionTrait;
 
@@ -151,7 +151,7 @@ final class CacheTest extends TestCase
                     'values' => null,
                     'nullable' => false,
                     'unsigned' => false,
-                    'default' => new QueryLiteral('CURRENT_TIMESTAMP'),
+                    'default' => new LiteralExpression('CURRENT_TIMESTAMP'),
                     'charset' => null,
                     'collation' => null,
                     'comment' => '',
@@ -166,7 +166,7 @@ final class CacheTest extends TestCase
                     'values' => null,
                     'nullable' => true,
                     'unsigned' => false,
-                    'default' => new QueryLiteral('CURRENT_TIMESTAMP'),
+                    'default' => new LiteralExpression('CURRENT_TIMESTAMP'),
                     'charset' => null,
                     'collation' => null,
                     'comment' => '',

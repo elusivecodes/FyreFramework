@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Fyre\DB\Schema\Handlers\Sqlite;
 
 use Fyre\Core\Container;
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Schema\Schema;
 use Fyre\DB\Schema\Table;
 use Fyre\DB\ValueBinder;
@@ -322,22 +322,22 @@ class SqliteTable extends Table
      * Parses a column default value from PRAGMA table_info.
      *
      * The raw value comes from `PRAGMA table_info(...).dflt_value` and is typically returned as a SQL fragment.
-     * This method normalizes scalar defaults (string|int|float|bool|null) and returns {@see QueryLiteral} for
+     * This method normalizes scalar defaults (string|int|float|bool|null) and returns {@see LiteralExpression} for
      * expressions.
      *
      * Supported patterns include:
      * - `NULL`/`null` (string) => `null`
      * - quoted strings: `'abc'` => `"abc"` (SQLite escaping `''`)
-     * - `CURRENT_TIMESTAMP...` => {@see QueryLiteral}(`CURRENT_TIMESTAMP`)
+     * - `CURRENT_TIMESTAMP...` => {@see LiteralExpression}(`CURRENT_TIMESTAMP`)
      * - numeric literals => `int`/`float`
      *
-     * Note: {@see QueryLiteral} is raw SQL; values originate from database metadata and should not be user-supplied.
+     * Note: {@see LiteralExpression} is raw SQL; values originate from database metadata and should not be user-supplied.
      *
      * @param mixed $default The raw default value.
      * @param string $type The column type.
-     * @return bool|float|int|QueryLiteral|string|null The normalized default.
+     * @return bool|float|int|LiteralExpression|string|null The normalized default.
      */
-    protected static function parseDefaultValue(mixed $default, string $type): bool|float|int|QueryLiteral|string|null
+    protected static function parseDefaultValue(mixed $default, string $type): bool|float|int|LiteralExpression|string|null
     {
         if ($default === null || !is_string($default)) {
             return $default;
@@ -354,7 +354,7 @@ class SqliteTable extends Table
         }
 
         if (str_starts_with($defaultLower, 'current_timestamp')) {
-            return new QueryLiteral('CURRENT_TIMESTAMP');
+            return new LiteralExpression('CURRENT_TIMESTAMP');
         }
 
         if (preg_match('/^\'(.*)\'$/s', $default, $matches)) {
@@ -363,6 +363,6 @@ class SqliteTable extends Table
 
         return filter_var($default, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE) ??
             filter_var($default, FILTER_VALIDATE_FLOAT, FILTER_NULL_ON_FAILURE) ??
-            new QueryLiteral($default);
+            new LiteralExpression($default);
     }
 }

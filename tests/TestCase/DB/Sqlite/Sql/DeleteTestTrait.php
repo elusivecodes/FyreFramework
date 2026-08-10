@@ -11,7 +11,7 @@ trait DeleteTestTrait
     public function testDelete(): void
     {
         $this->assertSame(
-            'DELETE FROM test',
+            'DELETE FROM "test"',
             $this->db->delete()
                 ->from('test')
                 ->sql()
@@ -29,7 +29,7 @@ trait DeleteTestTrait
     public function testDeleteFull(): void
     {
         $this->assertSame(
-            'DELETE FROM test WHERE test.name = \'test\' ORDER BY test.id ASC LIMIT 20',
+            'DELETE FROM "test" WHERE "test"."name" = \'test\' ORDER BY "test"."id" ASC LIMIT 20',
             $this->db->delete()
                 ->from('test')
                 ->where([
@@ -63,7 +63,7 @@ trait DeleteTestTrait
     public function testDeleteLimit(): void
     {
         $this->assertSame(
-            'DELETE FROM test LIMIT 1',
+            'DELETE FROM "test" LIMIT 1',
             $this->db->delete()
                 ->from('test')
                 ->limit(1)
@@ -86,7 +86,7 @@ trait DeleteTestTrait
     public function testDeleteOrderBy(): void
     {
         $this->assertSame(
-            'DELETE FROM test ORDER BY id ASC',
+            'DELETE FROM "test" ORDER BY id ASC',
             $this->db->delete()
                 ->from('test')
                 ->orderBy('id ASC')
@@ -97,7 +97,7 @@ trait DeleteTestTrait
     public function testDeleteOrderByArray(): void
     {
         $this->assertSame(
-            'DELETE FROM test ORDER BY id ASC, value DESC',
+            'DELETE FROM "test" ORDER BY "id" ASC, "value" DESC',
             $this->db->delete()
                 ->from('test')
                 ->orderBy([
@@ -111,7 +111,7 @@ trait DeleteTestTrait
     public function testDeleteTables(): void
     {
         $this->assertSame(
-            'DELETE FROM test AS alt',
+            'DELETE FROM "test" AS "alt"',
             $this->db->delete()
                 ->from([
                     'alt' => 'test',
@@ -133,7 +133,7 @@ trait DeleteTestTrait
     public function testDeleteWhere(): void
     {
         $this->assertSame(
-            'DELETE FROM test WHERE id = 1',
+            'DELETE FROM "test" WHERE "id" = 1',
             $this->db->delete()
                 ->from('test')
                 ->where([

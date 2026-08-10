@@ -3,8 +3,11 @@ declare(strict_types=1);
 
 namespace Fyre\DB\Schema\Handlers\Postgres;
 
+use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Expressions\FunctionExpression;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Handlers\Postgres\PostgresConnection;
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Query;
 use Fyre\DB\Schema\Table;
 use Override;
 
@@ -62,7 +65,9 @@ class PostgresTable extends Table
             'nullable' => 'Columns.is_nullable',
             'col_default' => 'Columns.column_default',
             'comment' => 'Descriptions.description',
-            'auto_increment' => 'pg_get_serial_sequence(Attributes.attrelid::regclass::text, Attributes.attname) IS NOT NULL',
+            'auto_increment' => new LiteralExpression(
+                'pg_get_serial_sequence("Attributes"."attrelid"::regclass::text, "Attributes"."attname") IS NOT NULL'
+            ),
         ])
             ->from([
                 'Columns' => 'information_schema.columns',
@@ -72,36 +77,32 @@ class PostgresTable extends Table
                     'table' => 'pg_catalog.pg_namespace',
                     'alias' => 'Namespaces',
                     'type' => 'INNER',
-                    'conditions' => [
-                        'Namespaces.nspname = Columns.table_schema',
-                    ],
+                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields('Namespaces.nspname', 'Columns.table_schema'),
                 ],
                 [
                     'table' => 'pg_catalog.pg_class',
                     'alias' => 'Classes',
                     'type' => 'INNER',
-                    'conditions' => [
-                        'Classes.relnamespace = Namespaces.oid',
-                        'Classes.relname = Columns.table_name',
-                    ],
+                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields('Classes.relnamespace', 'Namespaces.oid')
+                        ->equalFields('Classes.relname', 'Columns.table_name'),
                 ],
                 [
                     'table' => 'pg_catalog.pg_attribute',
                     'alias' => 'Attributes',
                     'type' => 'LEFT',
-                    'conditions' => [
-                        'Attributes.attrelid = Classes.oid',
-                        'Attributes.attname = Columns.column_name',
-                    ],
+                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields('Attributes.attrelid', 'Classes.oid')
+                        ->equalFields('Attributes.attname', 'Columns.column_name'),
                 ],
                 [
                     'table' => 'pg_catalog.pg_description',
                     'alias' => 'Descriptions',
                     'type' => 'LEFT',
-                    'conditions' => [
-                        'Descriptions.objoid = Classes.oid',
-                        'Descriptions.objsubid = Columns.ordinal_position',
-                    ],
+                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields('Descriptions.objoid', 'Classes.oid')
+                        ->equalFields('Descriptions.objsubid', 'Columns.ordinal_position'),
                 ],
             ])
             ->where([
@@ -186,7 +187,8 @@ class PostgresTable extends Table
         $results = $connection->select([
             'name' => 'Constraints.conname',
             'column_name' => 'Attributes.attname',
-            'ref_table_name' => 'Constraints.confrelid::regclass',
+            'ref_table_name' => static fn(Query $query): FunctionExpression => $query->func()
+                ->cast('Constraints.confrelid', 'regclass'),
             'ref_column' => 'Attributes2.attname',
             'on_update' => 'Constraints.confupdtype',
             'on_delete' => 'Constraints.confdeltype',
@@ -199,37 +201,43 @@ class PostgresTable extends Table
                     'table' => 'pg_catalog.pg_class',
                     'alias' => 'Classes',
                     'type' => 'INNER',
-                    'conditions' => [
-                        'Classes.oid = Constraints.conrelid',
-                        'Classes.relname' => $this->name,
-                    ],
+                    'conditions' => fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields('Classes.oid', 'Constraints.conrelid')
+                        ->eq('Classes.relname', $this->name),
                 ],
                 [
                     'table' => 'pg_catalog.pg_namespace',
                     'alias' => 'Namespaces',
                     'type' => 'INNER',
-                    'conditions' => [
-                        'Namespaces.oid = Classes.relnamespace',
-                        'Namespaces.nspname' => $connection->getSchema(),
-                    ],
+                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields('Namespaces.oid', 'Classes.relnamespace')
+                        ->eq('Namespaces.nspname', $connection->getSchema()),
                 ],
                 [
                     'table' => 'pg_catalog.pg_attribute',
                     'alias' => 'Attributes',
                     'type' => 'INNER',
-                    'conditions' => [
-                        'Attributes.attrelid = Classes.oid',
-                        'Attributes.attnum = ANY(Constraints.conkey)',
-                    ],
+                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields('Attributes.attrelid', 'Classes.oid')
+                        ->eq(
+                            'Attributes.attnum',
+                            new FunctionExpression('ANY', [
+                                $query->identifier('Constraints.conkey'),
+                            ])
+                        ),
                 ],
                 [
                     'table' => 'pg_catalog.pg_attribute',
                     'alias' => 'Attributes2',
                     'type' => 'INNER',
-                    'conditions' => [
-                        'Attributes2.attrelid = Classes.oid',
-                        'Attributes2.attnum = ANY(Constraints.confkey)',
-                    ],
+                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields('Attributes2.attrelid', 'Classes.oid')
+                        ->eq(
+                            'Attributes2.attnum',
+                            new FunctionExpression('ANY', [
+                                $query->identifier('Constraints.confkey'),
+                            ])
+                        ),
                 ],
             ])
             ->orderBy([
@@ -295,45 +303,48 @@ class PostgresTable extends Table
                     'table' => 'pg_catalog.pg_class',
                     'alias' => 'Classes',
                     'type' => 'INNER',
-                    'conditions' => [
-                        'Classes.oid = Indexes.indrelid',
-                        'Classes.relname' => $this->name,
-                    ],
+                    'conditions' => fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields('Classes.oid', 'Indexes.indrelid')
+                        ->eq('Classes.relname', $this->name),
                 ],
                 [
                     'table' => 'pg_catalog.pg_namespace',
                     'alias' => 'Namespaces',
                     'type' => 'INNER',
-                    'conditions' => [
-                        'Namespaces.oid = Classes.relnamespace',
-                        'Namespaces.nspname' => $connection->getSchema(),
-                    ],
+                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields('Namespaces.oid', 'Classes.relnamespace')
+                        ->eq('Namespaces.nspname', $connection->getSchema()),
                 ],
                 [
                     'table' => 'pg_catalog.pg_class',
                     'alias' => 'Classes2',
                     'type' => 'INNER',
-                    'conditions' => [
-                        'Classes2.oid = Indexes.indexrelid',
-                    ],
+                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields('Classes2.oid', 'Indexes.indexrelid'),
                 ],
                 [
                     'table' => 'pg_catalog.pg_attribute',
                     'alias' => 'Attributes',
                     'type' => 'INNER',
-                    'conditions' => [
-                        'Attributes.attrelid = Classes.oid',
-                        'Attributes.attrelid::regclass = Indexes.indrelid::regclass',
-                        'Attributes.attnum = ANY(Indexes.indkey)',
-                    ],
+                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields('Attributes.attrelid', 'Classes.oid')
+                        ->equalFields(
+                            $query->func()->cast('Attributes.attrelid', 'regclass'),
+                            $query->func()->cast('Indexes.indrelid', 'regclass')
+                        )
+                        ->eq(
+                            'Attributes.attnum',
+                            new FunctionExpression('ANY', [
+                                $query->identifier('Indexes.indkey'),
+                            ])
+                        ),
                 ],
                 [
                     'table' => 'pg_catalog.pg_am',
                     'alias' => 'AccessMethods',
                     'type' => 'INNER',
-                    'conditions' => [
-                        'AccessMethods.oid = Classes2.relam',
-                    ],
+                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields('AccessMethods.oid', 'Classes2.relam'),
                 ],
             ])
             ->orderBy([
@@ -372,15 +383,15 @@ class PostgresTable extends Table
      * - Sequence-backed defaults for serial columns (e.g. `nextval('seq'::regclass)`)
      *
      * This method attempts to normalize scalar defaults (string|int|float|bool|null). When the default is not a scalar
-     * expression, it is returned as a {@see QueryLiteral} to preserve the original SQL.
+     * expression, it is returned as a {@see LiteralExpression} to preserve the original SQL.
      *
-     * Note: {@see QueryLiteral} is raw SQL; values originate from database metadata and should not be user-supplied.
+     * Note: {@see LiteralExpression} is raw SQL; values originate from database metadata and should not be user-supplied.
      *
      * @param mixed $default The raw default value.
      * @param string $type The column type.
-     * @return bool|float|int|QueryLiteral|string|null The normalized default.
+     * @return bool|float|int|LiteralExpression|string|null The normalized default.
      */
-    protected static function parseDefaultValue(mixed $default, string $type): bool|float|int|QueryLiteral|string|null
+    protected static function parseDefaultValue(mixed $default, string $type): bool|float|int|LiteralExpression|string|null
     {
         if ($default === null || !is_string($default)) {
             return $default;
@@ -397,7 +408,7 @@ class PostgresTable extends Table
         $valueLower = strtolower($value);
 
         if (str_starts_with($valueLower, 'current_timestamp')) {
-            return new QueryLiteral('CURRENT_TIMESTAMP');
+            return new LiteralExpression('CURRENT_TIMESTAMP');
         }
 
         if (preg_match('/^\'(.*)\'$/s', $value, $matches)) {
@@ -422,6 +433,6 @@ class PostgresTable extends Table
                 break;
         }
 
-        return $result ?? new QueryLiteral($default);
+        return $result ?? new LiteralExpression($default);
     }
 }

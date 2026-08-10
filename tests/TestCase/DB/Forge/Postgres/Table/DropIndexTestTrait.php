@@ -29,7 +29,7 @@ trait DropIndexTestTrait
 
         $this->assertSame(
             [
-                'DROP INDEX id',
+                'DROP INDEX "id"',
             ],
             $this->forge
                 ->build('test')
@@ -42,7 +42,7 @@ trait DropIndexTestTrait
     {
         $this->assertSame(
             [
-                'CREATE TABLE test (id INTEGER NOT NULL)',
+                'CREATE TABLE "test" ("id" INTEGER NOT NULL)',
             ],
             $this->forge
                 ->build('test')

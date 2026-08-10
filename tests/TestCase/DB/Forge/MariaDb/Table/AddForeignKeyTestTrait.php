@@ -60,7 +60,7 @@ trait AddForeignKeyTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test ADD CONSTRAINT value_id FOREIGN KEY (value_id) REFERENCES test_values (id)',
+                'ALTER TABLE `test` ADD CONSTRAINT `value_id` FOREIGN KEY (`value_id`) REFERENCES `test_values` (`id`)',
             ],
             $this->forge
                 ->build('test')
@@ -76,7 +76,7 @@ trait AddForeignKeyTestTrait
     {
         $this->assertSame(
             [
-                'CREATE TABLE test (id INT(11) NOT NULL, value_id INT(11) NOT NULL, CONSTRAINT value_id FOREIGN KEY (value_id) REFERENCES test_values (id)) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
+                'CREATE TABLE `test` (`id` INT(11) NOT NULL, `value_id` INT(11) NOT NULL, CONSTRAINT `value_id` FOREIGN KEY (`value_id`) REFERENCES `test_values` (`id`)) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
             ],
             $this->forge
                 ->build('test')

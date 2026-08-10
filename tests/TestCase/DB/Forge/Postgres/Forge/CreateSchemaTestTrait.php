@@ -12,9 +12,9 @@ trait CreateSchemaTestTrait
         $this->assertCount(
             1,
             $this->db->select()
-                ->from('INFORMATION_SCHEMA.SCHEMATA')
+                ->from('information_schema.schemata')
                 ->where([
-                    'SCHEMA_NAME' => 'other',
+                    'schema_name' => 'other',
                 ])
                 ->execute()
                 ->all()

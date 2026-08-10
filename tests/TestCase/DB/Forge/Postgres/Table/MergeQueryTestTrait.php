@@ -25,9 +25,9 @@ trait MergeQueryTestTrait
 
         $this->assertSame(
             [
-                'DROP INDEX test_idx',
-                'ALTER TABLE test DROP COLUMN test, ALTER COLUMN id TYPE INTEGER USING CAST(id AS INTEGER), ADD COLUMN value INTEGER NOT NULL',
-                'CREATE INDEX id ON test USING BTREE (id)',
+                'DROP INDEX "test_idx"',
+                'ALTER TABLE "test" DROP COLUMN "test", ALTER COLUMN "id" TYPE INTEGER USING CAST("id" AS INTEGER), ADD COLUMN "value" INTEGER NOT NULL',
+                'CREATE INDEX "id" ON "test" USING BTREE ("id")',
             ],
             $this->forge
                 ->build('test')

@@ -9,6 +9,7 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\DB\Exceptions\DbException;
 use Fyre\DB\Exceptions\MissingConnectionException;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Queries\DeleteQuery;
 use Fyre\DB\Queries\InsertFromQuery;
 use Fyre\DB\Queries\InsertQuery;
@@ -36,9 +37,12 @@ use function is_int;
 use function is_resource;
 use function is_string;
 use function min;
+use function preg_match;
 use function preg_quote;
 use function preg_replace;
 use function sprintf;
+use function str_replace;
+use function trim;
 use function usort;
 
 use const FILTER_VALIDATE_FLOAT;
@@ -61,6 +65,10 @@ abstract class Connection
     protected static array $defaults = [
         'log' => false,
     ];
+
+    protected static string $identifierQuoteEnd = '"';
+
+    protected static string $identifierQuoteStart = '"';
 
     protected int|null $affectedRows = null;
 
@@ -455,11 +463,11 @@ abstract class Connection
     /**
      * Creates an InsertFromQuery.
      *
-     * @param Closure|QueryLiteral|SelectQuery|string $from The query.
+     * @param Closure|LiteralExpression|SelectQuery|string $from The query.
      * @param string[] $columns The columns.
      * @return InsertFromQuery The new InsertFromQuery instance.
      */
-    public function insertFrom(Closure|QueryLiteral|SelectQuery|string $from, array $columns = []): InsertFromQuery
+    public function insertFrom(Closure|LiteralExpression|SelectQuery|string $from, array $columns = []): InsertFromQuery
     {
         return new InsertFromQuery($this, $from, $columns);
     }
@@ -497,17 +505,6 @@ abstract class Connection
     }
 
     /**
-     * Creates a QueryLiteral.
-     *
-     * @param string $string The literal string.
-     * @return QueryLiteral The new QueryLiteral instance.
-     */
-    public function literal(string $string): QueryLiteral
-    {
-        return new QueryLiteral($string);
-    }
-
-    /**
      * Executes a SQL query.
      *
      * @param string $sql The SQL query.
@@ -533,6 +530,65 @@ abstract class Connection
         }
 
         return $this->pdo->quote($value);
+    }
+
+    /**
+     * Quotes an identifier for use in SQL queries.
+     *
+     * @param string $identifier The identifier to quote.
+     * @return string The quoted identifier.
+     */
+    public function quoteIdentifier(string $identifier): string
+    {
+        $identifier = trim($identifier);
+
+        if ($identifier === '' || $identifier === '*') {
+            return $identifier;
+        }
+
+        // column
+        if (preg_match('/^[a-z_]\w*\z/i', $identifier)) {
+            return $this->quoteIdentifierPart($identifier);
+        }
+
+        // table.column or table.*
+        if (preg_match('/^([a-z_]\w*)\.(\*|[a-z_]\w*)\z/i', $identifier, $matches)) {
+            return $this->quoteIdentifier($matches[1]).'.'.$this->quoteIdentifier($matches[2]);
+        }
+
+        // function(...)
+        if (preg_match('/^([a-z_]\w*)\(([a-z_]\w*(?:\.[a-z_]\w*)?|\*)\)\z/i', $identifier, $matches)) {
+            return $matches[1].'('.$this->quoteIdentifier($matches[2]).')';
+        }
+
+        // table.column AS alias
+        if (preg_match('/^([a-z_]\w*(?:\.[a-z_]\w*)?)\s+AS\s+([a-z_]\w*)\z/i', $identifier, $matches)) {
+            return $this->quoteIdentifier($matches[1]).' AS '.$this->quoteIdentifier($matches[2]);
+        }
+
+        // function(...) AS alias
+        if (preg_match('/^([a-z_]\w*\((?:[a-z_]\w*(?:\.[a-z_]\w*)?|\*)\))\s+AS\s+([a-z_]\w*)\z/i', $identifier, $matches)) {
+            return $this->quoteIdentifier($matches[1]).' AS '.$this->quoteIdentifier($matches[2]);
+        }
+
+        return $identifier;
+    }
+
+    /**
+     * Quotes an identifier part for use in SQL queries.
+     *
+     * @param string $identifier The identifier part to quote.
+     * @return string The quoted identifier part.
+     */
+    public function quoteIdentifierPart(string $identifier): string
+    {
+        $identifier = str_replace(
+            static::$identifierQuoteEnd,
+            static::$identifierQuoteEnd.static::$identifierQuoteEnd,
+            $identifier
+        );
+
+        return static::$identifierQuoteStart.$identifier.static::$identifierQuoteEnd;
     }
 
     /**

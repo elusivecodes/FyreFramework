@@ -66,7 +66,7 @@ trait DropForeignKeyTestTrait
     {
         $this->assertSame(
             [
-                'CREATE TABLE test (id INTEGER NOT NULL, value_id INTEGER NOT NULL)',
+                'CREATE TABLE "test" ("id" INTEGER NOT NULL, "value_id" INTEGER NOT NULL)',
             ],
             $this->forge
                 ->build('test')

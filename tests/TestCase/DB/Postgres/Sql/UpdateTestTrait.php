@@ -4,10 +4,10 @@ declare(strict_types=1);
 namespace Tests\TestCase\DB\Postgres\Sql;
 
 use BadMethodCallException;
-use Fyre\DB\Connection;
 use Fyre\DB\Exceptions\DbException;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Queries\SelectQuery;
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Query;
 use Fyre\Utility\DateTime\DateTime;
 
 trait UpdateTestTrait
@@ -15,7 +15,7 @@ trait UpdateTestTrait
     public function testUpdate(): void
     {
         $this->assertSame(
-            'UPDATE test SET value = 1',
+            'UPDATE "test" SET "value" = 1',
             $this->db->update('test')
                 ->set([
                     'value' => 1,
@@ -27,7 +27,7 @@ trait UpdateTestTrait
     public function testUpdateAlias(): void
     {
         $this->assertSame(
-            'UPDATE test AS alt SET value = 1',
+            'UPDATE "test" AS "alt" SET "value" = 1',
             $this->db->update([
                 'alt' => 'test',
             ])
@@ -40,16 +40,16 @@ trait UpdateTestTrait
 
     public function testUpdateClosure(): void
     {
+        $query = $this->db->select(['id'])
+            ->from('test')
+            ->limit(1);
+
         $this->assertSame(
-            'UPDATE test SET name = \'Test\', value = (SELECT id FROM test LIMIT 1) WHERE id = 1',
+            'UPDATE "test" SET "name" = \'Test\', "value" = (SELECT "id" FROM "test" LIMIT 1) WHERE "id" = 1',
             $this->db->update('test')
                 ->set([
                     'name' => 'Test',
-                    'value' => static function(Connection $db): SelectQuery {
-                        return $db->select(['id'])
-                            ->from('test')
-                            ->limit(1);
-                    },
+                    'value' => static fn(): SelectQuery => $query,
                 ])
                 ->where([
                     'id' => 1,
@@ -61,7 +61,7 @@ trait UpdateTestTrait
     public function testUpdateDateTime(): void
     {
         $this->assertSame(
-            'UPDATE test SET name = \'Test\', value = \'2020-01-01 00:00:00\' WHERE id = 1',
+            'UPDATE "test" SET "name" = \'Test\', "value" = \'2020-01-01 00:00:00\' WHERE "id" = 1',
             $this->db->update('test')
                 ->set([
                     'name' => 'Test',
@@ -77,7 +77,7 @@ trait UpdateTestTrait
     public function testUpdateFrom(): void
     {
         $this->assertSame(
-            'UPDATE test SET name = \'Test\', value = 1 FROM test2 WHERE test.id = test2.id AND test.name = \'test\'',
+            'UPDATE "test" SET "name" = \'Test\', "value" = 1 FROM "test2" WHERE test.id = test2.id AND "test"."name" = \'test\'',
             $this->db->update('test')
                 ->set([
                     'name' => 'Test',
@@ -95,7 +95,7 @@ trait UpdateTestTrait
     public function testUpdateFull(): void
     {
         $this->assertSame(
-            'UPDATE test SET name = \'Test\', value = 1 WHERE test.name = \'test\'',
+            'UPDATE "test" SET "name" = \'Test\', "value" = 1 WHERE "test"."name" = \'test\'',
             $this->db->update('test')
                 ->set([
                     'name' => 'Test',
@@ -131,12 +131,12 @@ trait UpdateTestTrait
     public function testUpdateLiteral(): void
     {
         $this->assertSame(
-            'UPDATE test SET name = \'Test\', value = 2 * 10 WHERE id = 1',
+            'UPDATE "test" SET "name" = \'Test\', "value" = 2 * 10 WHERE "id" = 1',
             $this->db->update('test')
                 ->set([
                     'name' => 'Test',
-                    'value' => static function(Connection $db): QueryLiteral {
-                        return $db->literal('2 * 10');
+                    'value' => static function(Query $query): LiteralExpression {
+                        return $query->literal('2 * 10');
                     },
                 ])
                 ->where([
@@ -149,7 +149,7 @@ trait UpdateTestTrait
     public function testUpdateMerge(): void
     {
         $this->assertSame(
-            'UPDATE test SET name = \'Test\', value = 1',
+            'UPDATE "test" SET "name" = \'Test\', "value" = 1',
             $this->db->update('test')
                 ->set([
                     'name' => 'Test',
@@ -175,7 +175,7 @@ trait UpdateTestTrait
     public function testUpdateOverwrite(): void
     {
         $this->assertSame(
-            'UPDATE test SET value = 1',
+            'UPDATE "test" SET "value" = 1',
             $this->db->update('test')
                 ->set([
                     'name' => 'Test',
@@ -190,7 +190,7 @@ trait UpdateTestTrait
     public function testUpdateSelectQuery(): void
     {
         $this->assertSame(
-            'UPDATE test SET name = \'Test\', value = (SELECT id FROM test LIMIT 1) WHERE id = 1',
+            'UPDATE "test" SET "name" = \'Test\', "value" = (SELECT "id" FROM "test" LIMIT 1) WHERE "id" = 1',
             $this->db->update('test')
                 ->set([
                     'name' => 'Test',
@@ -208,7 +208,7 @@ trait UpdateTestTrait
     public function testUpdateWhere(): void
     {
         $this->assertSame(
-            'UPDATE test SET name = \'Test\', value = 1 WHERE id = 1',
+            'UPDATE "test" SET "name" = \'Test\', "value" = 1 WHERE "id" = 1',
             $this->db->update('test')
                 ->set([
                     'name' => 'Test',

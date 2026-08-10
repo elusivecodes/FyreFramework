@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace Fyre\DB\Queries\Traits;
 
 use Closure;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Queries\SelectQuery;
 use Fyre\DB\Query;
-use Fyre\DB\QueryLiteral;
 
 /**
  * Adds UNION / UNION ALL support to queries.
@@ -23,11 +23,11 @@ trait UnionTrait
     /**
      * Adds an EXCEPT query.
      *
-     * @param Closure|QueryLiteral|SelectQuery|string $union The query.
+     * @param Closure|LiteralExpression|SelectQuery|string $union The query.
      * @param bool $overwrite Whether to overwrite the existing unions.
      * @return static The SelectQuery instance.
      */
-    public function except(Closure|QueryLiteral|SelectQuery|string $union, bool $overwrite = false): static
+    public function except(Closure|LiteralExpression|SelectQuery|string $union, bool $overwrite = false): static
     {
         return $this->union($union, $overwrite, 'except');
     }
@@ -45,11 +45,11 @@ trait UnionTrait
     /**
      * Adds an INTERSECT query.
      *
-     * @param Closure|QueryLiteral|SelectQuery|string $union The query.
+     * @param Closure|LiteralExpression|SelectQuery|string $union The query.
      * @param bool $overwrite Whether to overwrite the existing unions.
      * @return static The SelectQuery instance.
      */
-    public function intersect(Closure|QueryLiteral|SelectQuery|string $union, bool $overwrite = false): static
+    public function intersect(Closure|LiteralExpression|SelectQuery|string $union, bool $overwrite = false): static
     {
         return $this->union($union, $overwrite, 'intersect');
     }
@@ -57,12 +57,12 @@ trait UnionTrait
     /**
      * Adds a UNION DISTINCT query.
      *
-     * @param Closure|QueryLiteral|SelectQuery|string $union The query.
+     * @param Closure|LiteralExpression|SelectQuery|string $union The query.
      * @param bool $overwrite Whether to overwrite the existing unions.
      * @param string $type The union type.
      * @return static The SelectQuery instance.
      */
-    public function union(Closure|QueryLiteral|SelectQuery|string $union, bool $overwrite = false, string $type = 'distinct'): static
+    public function union(Closure|LiteralExpression|SelectQuery|string $union, bool $overwrite = false, string $type = 'distinct'): static
     {
         $union = [
             'type' => $type,
@@ -83,11 +83,11 @@ trait UnionTrait
     /**
      * Adds a UNION ALL query.
      *
-     * @param Closure|QueryLiteral|SelectQuery|string $union The query.
+     * @param Closure|LiteralExpression|SelectQuery|string $union The query.
      * @param bool $overwrite Whether to overwrite the existing unions.
      * @return static The SelectQuery instance.
      */
-    public function unionAll(Closure|QueryLiteral|SelectQuery|string $union, bool $overwrite = false): static
+    public function unionAll(Closure|LiteralExpression|SelectQuery|string $union, bool $overwrite = false): static
     {
         return $this->union($union, $overwrite, 'all');
     }

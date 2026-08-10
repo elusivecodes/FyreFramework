@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\MariaDb\Model;
 
+use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Query;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Exceptions\OrmException;
 use Tests\Mock\Entities\Item;
@@ -147,7 +149,7 @@ trait QueryTestTrait
     public function testFindOptionSql(): void
     {
         $this->assertSame(
-            'SELECT Items.id AS Items__id, CONCAT(Items.name, " ", Items2.name) AS title FROM items AS Items LEFT JOIN items AS Items2 ON Items2.id = Items.id WHERE Items.id = 1 GROUP BY Items.id HAVING title = \'Test Test\' ORDER BY Items.name DESC LIMIT 1 FOR UPDATE',
+            'SELECT `Items`.`id` AS `Items__id`, CONCAT(Items.name, " ", Items2.name) AS `title` FROM `items` AS `Items` LEFT JOIN `items` AS `Items2` ON `Items2`.`id` = `Items`.`id` WHERE `Items`.`id` = 1 GROUP BY `Items`.`id` HAVING `title` = \'Test Test\' ORDER BY `Items`.`name` DESC LIMIT 1 FOR UPDATE',
             $this->modelRegistry->use('Items')->find(
                 fields: [
                     'title' => 'CONCAT(Items.name, " ", Items2.name)',
@@ -156,23 +158,20 @@ trait QueryTestTrait
                     'Items2' => [
                         'table' => 'items',
                         'type' => 'LEFT',
-                        'conditions' => [
-                            'Items2.id = Items.id',
-                        ],
+                        'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                            ->equalFields('Items2.id', 'Items.id'),
                     ],
                 ],
-                conditions: [
-                    'Items.id' => 1,
-                ],
+                conditions: static fn(Query $query): ConditionExpression => $query->expr()
+                    ->eq('Items.id', 1),
                 groupBy: [
                     'Items.id',
                 ],
                 orderBy: [
                     'Items.name' => 'DESC',
                 ],
-                having: [
-                    'title' => 'Test Test',
-                ],
+                having: static fn(Query $query): ConditionExpression => $query->expr()
+                    ->eq('title', 'Test Test'),
                 limit: 1,
                 offset: 0,
                 epilog: 'FOR UPDATE',
@@ -185,17 +184,17 @@ trait QueryTestTrait
         $Items = $this->modelRegistry->use('Items');
 
         $this->assertSame(
-            'SELECT Items.id AS Items__id, (SELECT Users.name AS user_name FROM users AS Users INNER JOIN posts AS Posts ON Posts.user_id = Users.id WHERE Users.id = Items.id LIMIT 1) AS user_name FROM items AS Items',
+            'SELECT `Items`.`id` AS `Items__id`, (SELECT `Users`.`name` AS `user_name` FROM `users` AS `Users` INNER JOIN `posts` AS `Posts` ON `Posts`.`user_id` = `Users`.`id` WHERE `Users`.`id` = `Items`.`id` LIMIT 1) AS `user_name` FROM `items` AS `Items`',
             $Items->find(fields: [
                 'user_name' => $this->modelRegistry->use('Users')
-                    ->subquery()
+                    ->subquery(
+                        conditions: static fn(Query $query): ConditionExpression => $query->expr()
+                            ->equalFields('Users.id', 'Items.id')
+                    )
                     ->select([
                         'user_name' => 'Users.name',
                     ])
                     ->innerJoinWith('Posts')
-                    ->where([
-                        'Users.id = Items.id',
-                    ])
                     ->limit(1),
             ])->sql()
         );
@@ -206,7 +205,7 @@ trait QueryTestTrait
         $Items = $this->modelRegistry->use('Items');
 
         $this->assertSame(
-            'SELECT Items.id AS Items__id, (SELECT Alias.name AS user_name FROM users AS Alias INNER JOIN posts AS Posts ON Posts.user_id = Alias.id WHERE Alias.id = Items.id LIMIT 1) AS user_name FROM items AS Items',
+            'SELECT `Items`.`id` AS `Items__id`, (SELECT `Alias`.`name` AS `user_name` FROM `users` AS `Alias` INNER JOIN `posts` AS `Posts` ON `Posts`.`user_id` = `Alias`.`id` WHERE Alias.id = Items.id LIMIT 1) AS `user_name` FROM `items` AS `Items`',
             $Items->find(fields: [
                 'user_name' => $this->modelRegistry->use('Users')
                     ->subquery(alias: 'Alias')
@@ -239,7 +238,11 @@ trait QueryTestTrait
             $Items->saveMany($items)
         );
 
-        $item = $Items->get(2);
+        $item = $Items->get(
+            2,
+            conditions: static fn(Query $query): ConditionExpression => $query->expr()
+                ->eq('Items.name', 'Test 2')
+        );
 
         $this->assertInstanceOf(
             Item::class,

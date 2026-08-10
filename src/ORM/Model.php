@@ -4,11 +4,13 @@ declare(strict_types=1);
 namespace Fyre\ORM;
 
 use ArrayObject;
+use Closure;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\DB\Connection;
 use Fyre\DB\ConnectionManager;
+use Fyre\DB\Expressions\ConditionExpression;
 use Fyre\DB\QueryGenerator;
 use Fyre\DB\Schema\SchemaRegistry;
 use Fyre\DB\Schema\Table;
@@ -563,10 +565,10 @@ class Model implements EventListenerInterface
      * @param array<mixed>|string|null $fields The SELECT fields.
      * @param array<mixed>|string|null $contain The contain relationships.
      * @param array<array<string, mixed>>|null $join The JOIN tables.
-     * @param array<mixed>|string|null $conditions The WHERE conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string|null $conditions The WHERE conditions.
      * @param array<string>|string|null $orderBy The ORDER BY fields.
      * @param string|string[]|null $groupBy The GROUP BY fields.
-     * @param array<mixed>|string|null $having The HAVING conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string|null $having The HAVING conditions.
      * @param int|null $limit The LIMIT clause.
      * @param int|null $offset The OFFSET clause.
      * @param string|null $epilog The epilog.
@@ -580,10 +582,10 @@ class Model implements EventListenerInterface
         array|string|null $fields = null,
         array|string|null $contain = null,
         array|null $join = null,
-        array|string|null $conditions = null,
+        array|Closure|ConditionExpression|string|null $conditions = null,
         array|string|null $orderBy = null,
         array|string|null $groupBy = null,
-        array|string|null $having = null,
+        array|Closure|ConditionExpression|string|null $having = null,
         int|null $limit = null,
         int|null $offset = null,
         string|null $epilog = null,
@@ -617,10 +619,10 @@ class Model implements EventListenerInterface
      * @param array<mixed>|string|null $fields The SELECT fields.
      * @param array<mixed>|string|null $contain The contain relationships.
      * @param array<array<string, mixed>>|null $join The JOIN tables.
-     * @param array<mixed>|string|null $conditions The WHERE conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string|null $conditions The WHERE conditions.
      * @param array<string>|string|null $orderBy The ORDER BY fields.
      * @param string|string[]|null $groupBy The GROUP BY fields.
-     * @param array<mixed>|string|null $having The HAVING conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string|null $having The HAVING conditions.
      * @param int|null $limit The LIMIT clause.
      * @param int|null $offset The OFFSET clause.
      * @param string|null $epilog The epilog.
@@ -635,10 +637,10 @@ class Model implements EventListenerInterface
         array|string|null $fields = null,
         array|string|null $contain = null,
         array|null $join = null,
-        array|string|null $conditions = null,
+        array|Closure|ConditionExpression|string|null $conditions = null,
         array|string|null $orderBy = null,
         array|string|null $groupBy = null,
-        array|string|null $having = null,
+        array|Closure|ConditionExpression|string|null $having = null,
         int|null $limit = null,
         int|null $offset = null,
         string|null $epilog = null,
@@ -1546,10 +1548,10 @@ class Model implements EventListenerInterface
      * @param array<mixed>|string|null $fields The SELECT fields.
      * @param array<mixed>|string|null $contain The contain relationships.
      * @param array<array<string, mixed>>|null $join The JOIN tables.
-     * @param array<mixed>|string|null $conditions The WHERE conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string|null $conditions The WHERE conditions.
      * @param array<string>|string|null $orderBy The ORDER BY fields.
      * @param string|string[]|null $groupBy The GROUP BY fields.
-     * @param array<mixed>|string|null $having The HAVING conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string|null $having The HAVING conditions.
      * @param int|null $limit The LIMIT clause.
      * @param int|null $offset The OFFSET clause.
      * @param string|null $epilog The epilog.
@@ -1563,10 +1565,10 @@ class Model implements EventListenerInterface
         array|string|null $fields = null,
         array|string|null $contain = null,
         array|null $join = null,
-        array|string|null $conditions = null,
+        array|Closure|ConditionExpression|string|null $conditions = null,
         array|string|null $orderBy = null,
         array|string|null $groupBy = null,
-        array|string|null $having = null,
+        array|Closure|ConditionExpression|string|null $having = null,
         int|null $limit = null,
         int|null $offset = null,
         string|null $epilog = null,
@@ -1759,7 +1761,9 @@ class Model implements EventListenerInterface
     {
         $entity = $this->getEntityClass() |> $this->container->build(...);
 
-        return $this->getAlias() |> $entity->setModelAlias(...);
+        $this->getAlias() |> $entity->setModelAlias(...);
+
+        return $entity;
     }
 
     /**

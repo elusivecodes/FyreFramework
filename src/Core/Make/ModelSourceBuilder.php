@@ -664,12 +664,14 @@ class ModelSourceBuilder
             return '';
         }
 
-        return implode(PHP_EOL, array_map(
+        $lines = array_map(
             static fn(string $line): string => $line === '' ?
                 '' :
                 '        '.$line,
             $lines
-        )).PHP_EOL.PHP_EOL;
+        );
+
+        return implode(PHP_EOL, $lines).PHP_EOL.PHP_EOL;
     }
 
     /**
@@ -684,10 +686,12 @@ class ModelSourceBuilder
             return '';
         }
 
-        return implode(PHP_EOL, array_map(
+        $traits = array_map(
             static fn(string $trait): string => '    use '.new ReflectionClass($trait)->getShortName().';',
             $traits
-        )).PHP_EOL.PHP_EOL;
+        );
+
+        return implode(PHP_EOL, $traits).PHP_EOL.PHP_EOL;
     }
 
     /**
@@ -789,10 +793,12 @@ class ModelSourceBuilder
      */
     protected static function formatStringArray(array $values): string
     {
-        return '['.implode(', ', array_map(
+        $values = array_map(
             static fn(string $value): string => var_export($value, true),
             $values
-        )).']';
+        );
+
+        return '['.implode(', ', $values).']';
     }
 
     /**

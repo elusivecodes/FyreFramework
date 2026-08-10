@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Fyre\DB\Schema\Handlers\Sqlite;
 
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Schema\Column;
 use Fyre\DB\TypeParser;
 use Override;
@@ -57,7 +57,7 @@ class SqliteColumn extends Column
      * @param int|null $precision The column precision.
      * @param bool $nullable Whether the column is nullable.
      * @param bool $unsigned Whether the column is unsigned.
-     * @param bool|float|int|QueryLiteral|string|null $default The column default value.
+     * @param bool|float|int|LiteralExpression|string|null $default The column default value.
      * @param bool $autoIncrement Whether the column is auto-incrementing.
      * @param class-string<UnitEnum>|null $enumClass The enum class.
      */
@@ -72,7 +72,7 @@ class SqliteColumn extends Column
         int|null $fractionalSeconds = null,
         bool $nullable = false,
         bool $unsigned = false,
-        bool|float|int|QueryLiteral|string|null $default = null,
+        bool|float|int|LiteralExpression|string|null $default = null,
         bool $autoIncrement = false,
         string|null $enumClass = null,
     ) {

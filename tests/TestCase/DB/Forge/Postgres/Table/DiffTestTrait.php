@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Forge\Postgres\Table;
 
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Types\DateTimeType;
 use Fyre\DB\Types\IntegerType;
 use Fyre\DB\Types\JsonType;
@@ -43,7 +43,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test DROP CONSTRAINT value_id, ADD CONSTRAINT value_id FOREIGN KEY (value_id) REFERENCES test_values (id) ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE INITIALLY IMMEDIATE',
+                'ALTER TABLE "test" DROP CONSTRAINT "value_id", ADD CONSTRAINT "value_id" FOREIGN KEY ("value_id") REFERENCES "test_values" ("id") ON UPDATE CASCADE ON DELETE CASCADE DEFERRABLE INITIALLY IMMEDIATE',
             ],
             $this->forge
                 ->build('test')
@@ -79,8 +79,8 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'DROP INDEX value',
-                'ALTER TABLE test ADD CONSTRAINT value UNIQUE (value)',
+                'DROP INDEX "value"',
+                'ALTER TABLE "test" ADD CONSTRAINT "value" UNIQUE ("value")',
             ],
             $this->forge
                 ->build('test')
@@ -119,7 +119,7 @@ trait DiffTestTrait
             ],
             'point_default' => [
                 'type' => 'POINT',
-                'default' => new QueryLiteral('point((1)::double precision, (2)::double precision)'),
+                'default' => new LiteralExpression('point((1)::double precision, (2)::double precision)'),
             ],
             'created' => [
                 'type' => DateTimeType::class,
@@ -165,7 +165,7 @@ trait DiffTestTrait
                 ])
                 ->addColumn('point_default', [
                     'type' => 'POINT',
-                    'default' => new QueryLiteral('point((1)::double precision, (2)::double precision)'),
+                    'default' => new LiteralExpression('point((1)::double precision, (2)::double precision)'),
                 ])
                 ->addColumn('created', [
                     'type' => DateTimeType::class,
@@ -197,7 +197,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test ADD COLUMN value1 CHARACTER VARYING(80) NOT NULL',
+                'ALTER TABLE "test" ADD COLUMN "value1" CHARACTER VARYING(80) NOT NULL',
             ],
             $this->forge
                 ->build('test')
@@ -241,7 +241,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test ADD CONSTRAINT value_id FOREIGN KEY (value_id) REFERENCES test_values (id) DEFERRABLE INITIALLY IMMEDIATE',
+                'ALTER TABLE "test" ADD CONSTRAINT "value_id" FOREIGN KEY ("value_id") REFERENCES "test_values" ("id") DEFERRABLE INITIALLY IMMEDIATE',
             ],
             $this->forge
                 ->build('test')
@@ -274,7 +274,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'CREATE INDEX value ON test USING BTREE (value)',
+                'CREATE INDEX "value" ON "test" USING BTREE ("value")',
             ],
             $this->forge
                 ->build('test')
@@ -301,7 +301,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'COMMENT ON TABLE test IS \'This is the value\'',
+                'COMMENT ON TABLE "test" IS \'This is the value\'',
             ],
             $this->forge
                 ->build('test', [
@@ -328,7 +328,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test ALTER COLUMN value TYPE CHARACTER VARYING(255)',
+                'ALTER TABLE "test" ALTER COLUMN "value" TYPE CHARACTER VARYING(255)',
             ],
             $this->forge
                 ->build('test')
@@ -358,7 +358,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test DROP COLUMN value',
+                'ALTER TABLE "test" DROP COLUMN "value"',
             ],
             $this->forge
                 ->build('test')
@@ -401,7 +401,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test DROP CONSTRAINT value_id',
+                'ALTER TABLE "test" DROP CONSTRAINT "value_id"',
             ],
             $this->forge
                 ->build('test')
@@ -432,7 +432,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'DROP INDEX value',
+                'DROP INDEX "value"',
             ],
             $this->forge
                 ->build('test')
@@ -458,7 +458,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test ADD PRIMARY KEY (id)',
+                'ALTER TABLE "test" ADD PRIMARY KEY ("id")',
             ],
             $this->forge
                 ->build('test')

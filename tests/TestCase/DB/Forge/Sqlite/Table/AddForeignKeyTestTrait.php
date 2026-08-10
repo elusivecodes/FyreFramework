@@ -79,7 +79,7 @@ trait AddForeignKeyTestTrait
     {
         $this->assertSame(
             [
-                'CREATE TABLE test (id INTEGER NOT NULL, value_id INTEGER NOT NULL, CONSTRAINT test_value_id FOREIGN KEY (value_id) REFERENCES test_values (id))',
+                'CREATE TABLE "test" ("id" INTEGER NOT NULL, "value_id" INTEGER NOT NULL, CONSTRAINT "test_value_id" FOREIGN KEY ("value_id") REFERENCES "test_values" ("id"))',
             ],
             $this->forge
                 ->build('test')

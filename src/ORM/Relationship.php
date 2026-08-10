@@ -5,6 +5,7 @@ namespace Fyre\ORM;
 
 use Closure;
 use Fyre\Core\Traits\DebugTrait;
+use Fyre\DB\Expressions\ConditionExpression;
 use Fyre\DB\QueryGenerator;
 use Fyre\ORM\Queries\SelectQuery;
 use Fyre\Utility\Collection;
@@ -18,6 +19,7 @@ use function array_map;
 use function array_merge;
 use function count;
 use function in_array;
+use function is_array;
 use function is_numeric;
 use function sprintf;
 
@@ -163,6 +165,10 @@ abstract class Relationship
         $options['type'] ??= $this->joinType;
         $options['conditions'] ??= [];
 
+        if (!is_array($options['conditions'])) {
+            $options['conditions'] = [$options['conditions']];
+        }
+
         if ($this->isOwningSide()) {
             $sourceKey = $this->getBindingKey();
             $targetKey = $this->getForeignKey();
@@ -171,7 +177,10 @@ abstract class Relationship
             $targetKey = $this->getBindingKey();
         }
 
-        $joinCondition = $target->aliasField($targetKey, $options['alias']).' = '.$source->aliasField($sourceKey, $options['sourceAlias']);
+        $targetField = $target->aliasField($targetKey, $options['alias']);
+        $sourceField = $source->aliasField($sourceKey, $options['sourceAlias']);
+        $joinCondition = new ConditionExpression()
+            ->equalFields($targetField, $sourceField);
 
         return [
             $options['alias'] => [
@@ -189,7 +198,7 @@ abstract class Relationship
      * @param array<mixed>|string|null $fields The SELECT fields.
      * @param array<mixed>|string|null $contain The contain relationships.
      * @param array<array<string, mixed>>|null $join The JOIN tables.
-     * @param array<mixed>|string|null $conditions The WHERE conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string|null $conditions The WHERE conditions.
      * @param array<string>|string|null $orderBy The ORDER BY fields.
      * @param string|string[]|null $groupBy The GROUP BY fields.
      * @param array<mixed>|string|null $having The HAVING conditions.
@@ -207,7 +216,7 @@ abstract class Relationship
         array|string|null $fields = null,
         array|string|null $contain = null,
         array|null $join = null,
-        array|string|null $conditions = null,
+        array|Closure|ConditionExpression|string|null $conditions = null,
         array|string|null $orderBy = null,
         array|string|null $groupBy = null,
         array|string|null $having = null,
@@ -230,7 +239,7 @@ abstract class Relationship
                 $fields,
                 $contain,
                 $join,
-                array_merge((array) ($conditions ?? []), $this->conditions),
+                array_merge(static::normalizeConditions($conditions), $this->conditions),
                 $orderBy ?? (isset($this->sort) ? $this->sort : null),
                 $groupBy,
                 $having,
@@ -385,7 +394,7 @@ abstract class Relationship
      * @param array<mixed>|string|null $fields The SELECT fields.
      * @param array<mixed>|string|null $contain The contain relationships.
      * @param array<array<string, mixed>>|null $join The JOIN tables.
-     * @param array<mixed>|string|null $conditions The WHERE conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string|null $conditions The WHERE conditions.
      * @param array<string>|string|null $orderBy The ORDER BY fields.
      * @param string|string[]|null $groupBy The GROUP BY fields.
      * @param array<mixed>|string|null $having The HAVING conditions.
@@ -404,7 +413,7 @@ abstract class Relationship
         array|string|null $fields = null,
         array|string|null $contain = null,
         array|null $join = null,
-        array|string|null $conditions = null,
+        array|Closure|ConditionExpression|string|null $conditions = null,
         array|string|null $orderBy = null,
         array|string|null $groupBy = null,
         array|string|null $having = null,
@@ -462,7 +471,7 @@ abstract class Relationship
             $fields,
             $contain,
             $join,
-            array_merge((array) ($conditions ?? []), $this->conditions),
+            array_merge(static::normalizeConditions($conditions), $this->conditions),
             $orderBy ?? (isset($this->sort) ? $this->sort : null),
             $groupBy,
             $having,
@@ -802,15 +811,14 @@ abstract class Relationship
             $sourceField = $this->source->aliasField($sourceKey, $targetAlias);
             $newQuery
                 ->with([
-                    $targetAlias => '('.$query->sql().')',
+                    $targetAlias => $query,
                 ])
                 ->join([
                     [
                         'table' => $targetAlias,
                         'type' => 'INNER',
-                        'conditions' => [
-                            $sourceField.' = '.$targetField,
-                        ],
+                        'conditions' => $newQuery->expr()
+                            ->equalFields($sourceField, $targetField),
                     ],
                 ]);
         } else {
@@ -819,9 +827,8 @@ abstract class Relationship
                     'table' => $query,
                     'alias' => $alias,
                     'type' => 'INNER',
-                    'conditions' => [
-                        $sourceField.' = '.$targetField,
-                    ],
+                    'conditions' => $newQuery->expr()
+                        ->equalFields($sourceField, $targetField),
                 ],
             ]);
         }
@@ -922,5 +929,25 @@ abstract class Relationship
         return [
             'not' => QueryGenerator::normalizeConditions($primaryKeys, $preserveValues),
         ];
+    }
+
+    /**
+     * Normalizes query conditions.
+     *
+     * @param array<mixed>|Closure|ConditionExpression|string|null $conditions The conditions.
+     * @return array<mixed> The normalized conditions.
+     */
+    protected static function normalizeConditions(
+        array|Closure|ConditionExpression|string|null $conditions
+    ): array {
+        if ($conditions === null) {
+            return [];
+        }
+
+        if (!is_array($conditions)) {
+            return [$conditions];
+        }
+
+        return $conditions;
     }
 }

@@ -75,7 +75,7 @@ Most query types require a target table. If you forget to set one (for example, 
 
 `SelectQuery` is the main exception: it can compile without a `FROM` clause when you’re selecting expressions.
 
-Table aliases are provided using associative arrays like `['Users' => 'users']` (compiled as `users AS Users`), but alias maps are only supported by query types that enable them. In this package:
+Table aliases are provided using associative arrays like `['Users' => 'users']` (compiled as the driver-quoted equivalent of `users AS Users`), but alias maps are only supported by query types that enable them. In this package:
 
 - `SelectQuery`, `UpdateQuery`, `DeleteQuery`, and `UpdateBatchQuery` support table aliases.
 - `InsertQuery`, `UpsertQuery`, and `InsertFromQuery` accept a single table name (no alias map).
@@ -84,11 +84,16 @@ Table aliases are provided using associative arrays like `['Users' => 'users']` 
 
 Common query methods (available on all query types):
 
+- `case(mixed $value = null): CaseExpression`
 - `execute(ValueBinder|null $binder = null): ResultSet`
-- `sql(ValueBinder|null $binder = null): string`
-- `table(array|string $table, bool $overwrite = false): static`
+- `expr(string $conjunction = 'AND'): ConditionExpression`
+- `func(): FunctionBuilder`
 - `getConnection(): Connection`
 - `getTable(): array` (the normalized internal table representation)
+- `identifier(string $identifier): IdentifierExpression`
+- `literal(string $string): LiteralExpression`
+- `sql(ValueBinder|null $binder = null): string`
+- `table(array|string $table, bool $overwrite = false): static`
 
 ### Binding and expressions
 
@@ -100,12 +105,18 @@ Queries compile values into placeholders like `:p0`, and the binder stores the c
 
 The compiler also recognizes a few special value types:
 
-- `QueryLiteral` is emitted as raw SQL (no binding).
-- `Closure` values are invoked as `fn(Connection $connection, ValueBinder|null $binder): mixed` during compilation.
+- `LiteralExpression` is emitted as raw SQL (no binding).
+- `Closure` values are invoked as `fn(Query $query, ValueBinder|null $binder): mixed` during compilation.
 - `SelectQuery` values compile as subqueries.
 - `Fyre\Utility\DateTime\DateTime` values are converted via the connection’s type system.
 
-To embed a raw SQL fragment, create a literal with `$connection->literal()`.
+To embed a raw SQL fragment, create a literal with `$query->literal()`.
+
+Identifier strings that match the supported syntax are quoted using the current connection's rules. This includes columns, qualified columns, wildcards, simple single-argument functions, and optional `AS` aliases. More complex strings are left unchanged for compatibility with existing SQL expressions.
+
+Use `$query->identifier()` when a general expression value is specifically an identifier, and `$query->literal()` when it is deliberately raw SQL. Identifiers and raw fragments must be application-controlled; binding does not make user-supplied identifiers or SQL safe.
+
+For conditions, cases, functions, aggregates, and windows, see [Query expressions](expressions.md).
 
 Example compiling with an explicit binder:
 
@@ -125,9 +136,9 @@ $bindings = $binder->bindings();
 
 ### Condition arrays
 
-The query compiler supports a compact condition-array format (used by `where()` and `having()`). Both methods also accept a raw string, which is treated as a literal SQL fragment and bypasses the normal parameter binding path.
+The query compiler supports a compact condition-array format (used by `where()` and `having()`). Both methods also accept a `ConditionExpression`, a closure returning an expression, or a raw string. Raw strings are treated as literal SQL fragments and bypass the normal parameter binding path.
 
-- **Equality by default**: `['id' => 5]` compiles as `id = :p0`.
+- **Equality by default**: `['id' => 5]` compiles as the driver-quoted equivalent of `id = :p0`.
 - **Operator suffixes**: append an operator to the key (for example `>=`, `!=`, `LIKE`, `IN`, `IS NOT`).
 - `IN` / `NOT IN`: an array value compiles as `IN (...)` by default, or respects an explicit `IN` / `NOT IN` suffix.
 - **Logical groups**: use `['and' => [...]]`, `['or' => [...]]`, `['not' => [...]]` (nestable).
@@ -151,26 +162,43 @@ $rows = $db->select('*')
     ->all();
 ```
 
+A closure receives the current query, so it can build the condition with the query expression API:
+
+```php
+use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Query;
+
+$rows = $db->select('*')
+    ->from('users')
+    ->where(static fn(Query $query): ConditionExpression => $query->expr()
+        ->eq('active', true))
+    ->execute()
+    ->all();
+```
+
 ### Raw SQL fragments
 
 Raw fragments are supported, but they bypass value binding. Prefer bound values wherever possible.
 
 To embed raw SQL:
 
-- Use `$connection->literal()` to inject a safe, explicit `QueryLiteral` fragment (for expressions, column references, functions, etc.).
+- Use `$query->literal()` to inject a safe, explicit `LiteralExpression` fragment (for expressions, column references, functions, etc.).
 - Use numeric keys in condition/data arrays for full raw snippets (most flexible, least safe).
 
 Do not put untrusted user input into raw SQL fragments. If you need to compare against a user-provided value, pass it as a normal bound value (or use a binder explicitly) instead.
 
 ```php
+use Fyre\DB\Expressions\LiteralExpression;
+use Fyre\DB\Query;
+
 $rows = $db->select([
         'id',
         'created_at',
-        'created_date' => $db->literal('DATE(created_at)'),
+        'created_date' => static fn(Query $query): LiteralExpression => $query->literal('DATE(created_at)'),
     ])
     ->from('users')
     ->where([
-       'archived = 0',
+        'archived = 0',
     ])
     ->execute()
     ->all();
@@ -199,7 +227,7 @@ This query type compiles to a `SELECT` statement (optionally with `WITH`, `JOIN`
 
 `orderBy()` accepts either a string (for example `'id DESC'`) or an array (for example `['id' => 'desc']`). Use the array form when you want to consistently separate field names from sort direction.
 
-`from()` accepts either a plain table name (for example `'users'`) or an alias map (for example `['u' => 'users']`, which compiles to `users AS u`). Table aliases are only supported by query types that explicitly allow them.
+`from()` accepts either a plain table name (for example `'users'`) or an alias map (for example `['u' => 'users']`, which compiles as the driver-quoted equivalent of `users AS u`). Table aliases are only supported by query types that explicitly allow them.
 
 ```php
 $rows = $db->select(['id', 'email'])
@@ -223,21 +251,27 @@ Key methods you’ll use most often:
 - `table` (defaults to the alias key)
 - `type` (defaults to `INNER`)
 - `using` (string, optional)
-- `conditions` (array, used when `using` is not set)
+- `conditions` (array, `Closure`, or `ConditionExpression`; used when `using` is not set)
 
 Join definitions are normalized by alias. If you pass a numerically-indexed list of joins, include an `alias` field in each join (otherwise the alias defaults to `table`).
 
 ```php
+use Fyre\DB\Expressions\AggregateExpression;
+use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Query;
+
 $rows = $db->select([
         'order_id' => 'Orders.id',
-        'total' => 'SUM(Items.price)',
+        'total' => static fn(Query $query): AggregateExpression => $query->func()
+            ->sum('Items.price'),
     ])
     ->from(['Orders' => 'orders'])
     ->join([
         'Items' => [
             'table' => 'items',
             'type' => 'LEFT',
-            'conditions' => ['Items.order_id = Orders.id'],
+            'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                ->equalFields('Items.order_id', 'Orders.id'),
         ],
     ])
     ->groupBy('Orders.id')
@@ -487,6 +521,7 @@ Common `ResultSet` methods:
 A few behaviors are worth keeping in mind:
 
 - Casting a query to string uses `Query::__toString()` → `sql()` with no binder, so values are inlined/quoted instead of using placeholders.
+- Identifier strings are quoted only when they match the supported identifier forms; do not use query identifiers as a sanitization mechanism for user input.
 - Numeric keys in condition/data arrays are treated as raw SQL fragments and bypass value binding.
 - Passing a raw string to `where()` or `having()` is treated as a literal SQL fragment and bypasses binding.
 - For null comparisons, use `IS` / `IS NOT` in the condition key (for example `['deleted IS' => null]`).
@@ -496,5 +531,6 @@ A few behaviors are worth keeping in mind:
 ## Related
 
 - [Database connections](connections.md)
+- [Query expressions](expressions.md)
 - [Database types](types.md)
 - [Finding Data](../orm/finding.md)

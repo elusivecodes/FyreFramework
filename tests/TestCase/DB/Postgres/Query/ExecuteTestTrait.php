@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Postgres\Query;
 
+use Fyre\DB\Expressions\LiteralExpression;
+use Fyre\DB\Query;
+
 use function array_column;
 
 trait ExecuteTestTrait
@@ -44,7 +47,7 @@ trait ExecuteTestTrait
 
         $rows = $this->db->select([
             'name',
-            'total' => $this->db->literal('COUNT(*)'),
+            'total' => static fn(Query $query): LiteralExpression => $query->literal('COUNT(*)'),
         ])
             ->from('test')
             ->groupBy('name')

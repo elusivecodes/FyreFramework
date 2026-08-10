@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace Fyre\DB\Forge\Handlers\Mysql;
 
 use BackedEnum;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Forge\Column;
-use Fyre\DB\QueryLiteral;
 use Fyre\DB\Schema\Column as SchemaColumn;
 use Fyre\DB\Schema\Handlers\Mysql\MysqlColumn as MysqlSchemaColumn;
 use Fyre\DB\Types\BinaryType;
@@ -58,7 +58,7 @@ class MysqlColumn extends Column
      * @param int|null $precision The column precision.
      * @param bool $nullable Whether the column is nullable.
      * @param bool $unsigned Whether the column is unsigned.
-     * @param bool|float|int|QueryLiteral|string|null $default The column default value.
+     * @param bool|float|int|LiteralExpression|string|null $default The column default value.
      * @param string|null $comment The column comment.
      * @param bool $autoIncrement Whether the column is auto-incrementing.
      * @param class-string<UnitEnum>|string[]|null $values The column values or enum class.
@@ -75,7 +75,7 @@ class MysqlColumn extends Column
         int|null $fractionalSeconds = null,
         bool $nullable = false,
         bool $unsigned = false,
-        bool|float|int|QueryLiteral|string|null $default = null,
+        bool|float|int|LiteralExpression|string|null $default = null,
         string|null $comment = '',
         bool $autoIncrement = false,
         protected array|string|null $values = null,
@@ -318,7 +318,7 @@ class MysqlColumn extends Column
         $this->default = static::parseDefaultValue($this->default, $this->type, $this->precision);
 
         if ($this->type === 'timestamp') {
-            $this->default ??= new QueryLiteral('CURRENT_TIMESTAMP');
+            $this->default ??= new LiteralExpression('CURRENT_TIMESTAMP');
         }
     }
 
@@ -421,24 +421,24 @@ class MysqlColumn extends Column
      *
      * Normalizes a default value for DDL generation and comparisons.
      *
-     * - Leaves {@see QueryLiteral} defaults as-is.
-     * - Normalizes `CURRENT_TIMESTAMP*` strings to {@see QueryLiteral}(`CURRENT_TIMESTAMP`).
+     * - Leaves {@see LiteralExpression} defaults as-is.
+     * - Normalizes `CURRENT_TIMESTAMP*` strings to {@see LiteralExpression}(`CURRENT_TIMESTAMP`).
      * - Casts numeric/boolean-looking scalars to their native PHP type when the column type implies it.
      * - Treats `tinyint(1)` as boolean.
      *
-     * @param bool|float|int|QueryLiteral|string|null $default The default value.
+     * @param bool|float|int|LiteralExpression|string|null $default The default value.
      * @param string $type The column type.
      * @param int|null $precision The numeric precision/display width.
-     * @return bool|float|int|QueryLiteral|string|null The normalized default.
+     * @return bool|float|int|LiteralExpression|string|null The normalized default.
      */
-    protected static function parseDefaultValue(mixed $default, string $type, int|null $precision): bool|float|int|QueryLiteral|string|null
+    protected static function parseDefaultValue(mixed $default, string $type, int|null $precision): bool|float|int|LiteralExpression|string|null
     {
-        if ($default === null || $default instanceof QueryLiteral) {
+        if ($default === null || $default instanceof LiteralExpression) {
             return $default;
         }
 
         if (is_string($default) && str_starts_with(strtolower($default), 'current_timestamp')) {
-            return new QueryLiteral('CURRENT_TIMESTAMP');
+            return new LiteralExpression('CURRENT_TIMESTAMP');
         }
 
         if ($type === 'tinyint' && $precision === 1) {

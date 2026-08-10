@@ -55,7 +55,7 @@ trait DropForeignKeyTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test DROP CONSTRAINT value_id',
+                'ALTER TABLE "test" DROP CONSTRAINT "value_id"',
             ],
             $this->forge
                 ->build('test')
@@ -68,7 +68,7 @@ trait DropForeignKeyTestTrait
     {
         $this->assertSame(
             [
-                'CREATE TABLE test (id INTEGER NOT NULL, value_id INTEGER NOT NULL)',
+                'CREATE TABLE "test" ("id" INTEGER NOT NULL, "value_id" INTEGER NOT NULL)',
             ],
             $this->forge
                 ->build('test')

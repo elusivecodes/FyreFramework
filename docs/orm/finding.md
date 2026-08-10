@@ -90,6 +90,21 @@ $users = $Users->find(
 )->toArray();
 ```
 
+Condition callbacks receive the current query and can use the same expression API as database queries:
+
+```php
+use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Query;
+
+$users = $Users->find(
+    conditions: static fn(Query $query): ConditionExpression => $query->expr()
+        ->gte('Users.created', $since)
+        ->isNull('Users.deleted')
+)->toArray();
+```
+
+See [Query expressions](../database/expressions.md) for the available condition methods.
+
 ### Getting entities vs raw rows
 
 When you want hydrated entities, prefer `all()` / `getResult()` / `toArray()` over calling `execute()` directly:
@@ -226,7 +241,7 @@ To learn how to listen using `#[BeforeFind]` / `#[AfterFind]` attributes or even
 
 ## Method guide
 
-This is a quick reference for common query and result operations. For lower-level query builder details, see [Database queries](../database/queries.md).
+This is a quick reference for common query and result operations. For lower-level query builder details, see [Database queries](../database/queries.md) and [Query expressions](../database/expressions.md).
 
 ### `Model`
 
@@ -238,10 +253,10 @@ Arguments:
 - `$fields` (`array<mixed>|string|null`): the `SELECT` fields.
 - `$contain` (`array<mixed>|string|null`): relationships to load via `contain()`.
 - `$join` (`array<array<string, mixed>>|null`): tables or queries to join.
-- `$conditions` (`array<mixed>|string|null`): the `WHERE` conditions.
+- `$conditions` (`array<mixed>|Closure|ConditionExpression|string|null`): the `WHERE` conditions.
 - `$orderBy` (`array<string>|string|null`): the `ORDER BY` fields.
 - `$groupBy` (`string|string[]|null`): the `GROUP BY` fields.
-- `$having` (`array<mixed>|string|null`): the `HAVING` conditions.
+- `$having` (`array<mixed>|Closure|ConditionExpression|string|null`): the `HAVING` conditions.
 - `$limit` (`int|null`): the `LIMIT` clause.
 - `$offset` (`int|null`): the `OFFSET` clause.
 - `$epilog` (`string|null`): SQL appended to the generated query.
@@ -311,7 +326,7 @@ $query = $Users->find()->contain('Addresses');
 
 Arguments:
 - `$contain` (`string`): the relationship path.
-- `$conditions` (`array<mixed>`): extra join conditions.
+- `$conditions` (`array<mixed>|Closure|ConditionExpression|string`): extra join conditions.
 
 ```php
 $query = $Users->find()->matching('Posts', ['Posts.published' => 1]);
@@ -323,7 +338,7 @@ Exclude rows that have a related match (using a `NOT EXISTS (...)` subquery).
 
 Arguments:
 - `$contain` (`string`): the relationship path.
-- `$conditions` (`array<mixed>`): extra join conditions.
+- `$conditions` (`array<mixed>|Closure|ConditionExpression|string`): extra join conditions.
 
 ```php
 $query = $Users->find()->notMatching('Posts', ['Posts.published' => 0]);
@@ -335,7 +350,7 @@ $query = $Users->find()->notMatching('Posts', ['Posts.published' => 0]);
 
 Arguments:
 - `$contain` (`string`): the relationship path.
-- `$conditions` (`array<mixed>`): extra join conditions.
+- `$conditions` (`array<mixed>|Closure|ConditionExpression|string`): extra join conditions.
 
 ```php
 $query = $Users->find()->leftJoinWith('Posts');
@@ -347,7 +362,7 @@ $query = $Users->find()->leftJoinWith('Posts');
 
 Arguments:
 - `$contain` (`string`): the relationship path.
-- `$conditions` (`array<mixed>`): extra join conditions.
+- `$conditions` (`array<mixed>|Closure|ConditionExpression|string`): extra join conditions.
 
 ```php
 $query = $Users->find()->innerJoinWith('Posts');
@@ -416,3 +431,4 @@ A few behaviors are worth keeping in mind:
 - [ORM Relationships](relationships.md)
 - [ORM Events](events.md)
 - [Database queries](../database/queries.md)
+- [Query expressions](../database/expressions.md)

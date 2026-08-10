@@ -192,7 +192,7 @@ Create a new `SelectQuery` scoped to the model (table aliasing, relationship nam
 Arguments:
 - `$fields` (`array|string|null`): the `SELECT` fields.
 - `$contain` (`array|string|null`): relationships to contain.
-- `$conditions` (`array|string|null`): the `WHERE` conditions.
+- `$conditions` (`array|Closure|ConditionExpression|string|null`): the `WHERE` conditions.
 - `$orderBy` (`array|string|null`): the `ORDER BY` fields.
 - `$limit` (`int|null`): the LIMIT clause.
 - `$offset` (`int|null`): the OFFSET clause.

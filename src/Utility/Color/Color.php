@@ -494,7 +494,11 @@ abstract class Color implements Stringable
             $hex = $match[1];
 
             if (strlen($hex) <= 4) {
-                $hex = implode('', array_map(static fn(string $c): string => $c.$c, str_split($hex)));
+                $characters = array_map(
+                    static fn(string $character): string => $character.$character,
+                    str_split($hex)
+                );
+                $hex = implode('', $characters);
             }
 
             return new Hex(

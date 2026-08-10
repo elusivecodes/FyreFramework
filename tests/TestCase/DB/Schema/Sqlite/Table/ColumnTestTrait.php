@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Schema\Sqlite\Table;
 
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Schema\Column;
 use Fyre\Utility\Collection;
 use InvalidArgumentException;
@@ -198,7 +198,7 @@ trait ColumnTestTrait
                     'fractionalSeconds' => null,
                     'nullable' => false,
                     'unsigned' => false,
-                    'default' => new QueryLiteral('CURRENT_TIMESTAMP'),
+                    'default' => new LiteralExpression('CURRENT_TIMESTAMP'),
                     'comment' => null,
                     'autoIncrement' => false,
                     'enumClass' => null,
@@ -212,7 +212,7 @@ trait ColumnTestTrait
                     'fractionalSeconds' => null,
                     'nullable' => true,
                     'unsigned' => false,
-                    'default' => new QueryLiteral('CURRENT_TIMESTAMP'),
+                    'default' => new LiteralExpression('CURRENT_TIMESTAMP'),
                     'comment' => null,
                     'autoIncrement' => false,
                     'enumClass' => null,

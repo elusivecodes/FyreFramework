@@ -30,7 +30,7 @@ trait DropIndexTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test DROP INDEX id',
+                'ALTER TABLE `test` DROP INDEX `id`',
             ],
             $this->forge
                 ->build('test')
@@ -43,7 +43,7 @@ trait DropIndexTestTrait
     {
         $this->assertSame(
             [
-                'CREATE TABLE test (id INT(11) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
+                'CREATE TABLE `test` (`id` INT(11) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
             ],
             $this->forge
                 ->build('test')

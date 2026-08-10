@@ -36,7 +36,7 @@ trait AddIndexTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test ADD INDEX id (id) USING BTREE',
+                'ALTER TABLE `test` ADD INDEX `id` (`id`) USING BTREE',
             ],
             $this->forge
                 ->build('test')
@@ -49,7 +49,7 @@ trait AddIndexTestTrait
     {
         $this->assertSame(
             [
-                'CREATE TABLE test (id INT(11) NOT NULL, INDEX id (id) USING BTREE) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
+                'CREATE TABLE `test` (`id` INT(11) NOT NULL, INDEX `id` (`id`) USING BTREE) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
             ],
             $this->forge
                 ->build('test')

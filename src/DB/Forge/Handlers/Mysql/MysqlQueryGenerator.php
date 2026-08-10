@@ -97,7 +97,7 @@ class MysqlQueryGenerator extends QueryGenerator
     public function buildChangeColumn(Column $column, array $options = []): string
     {
         $sql = 'CHANGE COLUMN ';
-        $sql .= $options['name'] ?? $column->getName();
+        $sql .= $this->quoteIdentifier($options['name'] ?? $column->getName());
         $sql .= ' ';
         $sql .= $this->buildColumn($column, $options);
 
@@ -121,7 +121,7 @@ class MysqlQueryGenerator extends QueryGenerator
         $connection = $this->forge->getConnection();
         $type = $column->getType();
 
-        $sql = $column->getName();
+        $sql = $column->getName() |> $this->quoteIdentifier(...);
         $sql .= ' ';
         $sql .= strtoupper($type);
 
@@ -235,7 +235,7 @@ class MysqlQueryGenerator extends QueryGenerator
         }
 
         if ($options['after']) {
-            $sql .= ' AFTER '.$options['after'];
+            $sql .= ' AFTER '.$this->quoteIdentifier($options['after']);
         } else if ($options['first']) {
             $sql .= ' FIRST';
         }
@@ -266,7 +266,7 @@ class MysqlQueryGenerator extends QueryGenerator
             $sql .= 'IF NOT EXISTS ';
         }
 
-        $sql .= $schema;
+        $sql .= $this->quoteIdentifier($schema);
 
         if ($options['charset']) {
             $sql .= ' CHARACTER SET = '.$connection->quote($options['charset']);
@@ -316,7 +316,7 @@ class MysqlQueryGenerator extends QueryGenerator
             $sql .= 'IF NOT EXISTS ';
         }
 
-        $sql .= $table->getName();
+        $sql .= $table->getName() |> $this->quoteIdentifier(...);
 
         $sql .= ' (';
         $sql .= implode(', ', $definitions);
@@ -358,7 +358,7 @@ class MysqlQueryGenerator extends QueryGenerator
     public function buildDropForeignKey(string $foreignKey): string
     {
         $sql = 'DROP FOREIGN KEY ';
-        $sql .= $foreignKey;
+        $sql .= $this->quoteIdentifier($foreignKey);
 
         return $sql;
     }
@@ -390,7 +390,7 @@ class MysqlQueryGenerator extends QueryGenerator
             $sql .= 'IF EXISTS ';
         }
 
-        $sql .= $schema;
+        $sql .= $this->quoteIdentifier($schema);
 
         return $sql;
     }
@@ -405,7 +405,11 @@ class MysqlQueryGenerator extends QueryGenerator
      */
     public function buildIndex(Index $index): string
     {
-        $columns = implode(', ', $index->getColumns());
+        $columns = array_map(
+            $this->quoteIdentifier(...),
+            $index->getColumns()
+        );
+        $columns = implode(', ', $columns);
 
         $type = (string) $index->getType();
 
@@ -420,7 +424,7 @@ class MysqlQueryGenerator extends QueryGenerator
             return 'PRIMARY KEY ('.$columns.')';
         }
 
-        $name = $index->getName();
+        $name = $index->getName() |> $this->quoteIdentifier(...);
 
         if ($index->isUnique()) {
             return 'CONSTRAINT '.$name.' UNIQUE KEY ('.$columns.') USING '.strtoupper($type);

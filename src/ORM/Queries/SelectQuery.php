@@ -4,7 +4,9 @@ declare(strict_types=1);
 namespace Fyre\ORM\Queries;
 
 use ArrayObject;
+use Closure;
 use Fyre\Core\Traits\MacroTrait;
+use Fyre\DB\Expressions\ConditionExpression;
 use Fyre\DB\ValueBinder;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Exceptions\OrmException;
@@ -405,11 +407,13 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
      * Note: This is a convenience wrapper around {@see self::containJoin()} with an INNER join.
      *
      * @param string $contain The contain string.
-     * @param array<mixed> $conditions The JOIN conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string $conditions The JOIN conditions.
      * @return static The SelectQuery.
      */
-    public function innerJoinWith(string $contain, array $conditions = []): static
-    {
+    public function innerJoinWith(
+        string $contain,
+        array|Closure|ConditionExpression|string $conditions = []
+    ): static {
         return $this->containJoin($contain, $conditions, 'INNER');
     }
 
@@ -453,11 +457,13 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
      * Note: This is a convenience wrapper around {@see self::containJoin()} with a LEFT join.
      *
      * @param string $contain The contain string.
-     * @param array<mixed> $conditions The JOIN conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string $conditions The JOIN conditions.
      * @return static The SelectQuery.
      */
-    public function leftJoinWith(string $contain, array $conditions = []): static
-    {
+    public function leftJoinWith(
+        string $contain,
+        array|Closure|ConditionExpression|string $conditions = []
+    ): static {
         return $this->containJoin($contain, $conditions);
     }
 
@@ -468,11 +474,13 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
      * entities.
      *
      * @param string $contain The contain string.
-     * @param array<mixed> $conditions The JOIN conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string $conditions The JOIN conditions.
      * @return static The SelectQuery.
      */
-    public function matching(string $contain, array $conditions = []): static
-    {
+    public function matching(
+        string $contain,
+        array|Closure|ConditionExpression|string $conditions = []
+    ): static {
         return $this->containJoin($contain, $conditions, 'INNER', true);
     }
 
@@ -482,13 +490,15 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
      * Note: This uses a `NOT EXISTS (...)` subquery to exclude matching rows.
      *
      * @param string $contain The contain string.
-     * @param array<mixed> $conditions The JOIN conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string $conditions The JOIN conditions.
      * @return static The SelectQuery instance.
      *
      * @throws OrmException If a relationship is not valid.
      */
-    public function notMatching(string $contain, array $conditions = []): static
-    {
+    public function notMatching(
+        string $contain,
+        array|Closure|ConditionExpression|string $conditions = []
+    ): static {
         $contain = explode('.', $contain);
         $lastContain = array_key_last($contain);
 
@@ -538,9 +548,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
         }
 
         if ($query) {
-            $this->where([
-                'NOT EXISTS ('.$query->sql().')',
-            ]);
+            $this->expr()->notExists($query) |> $this->where(...);
         }
 
         return $this;
@@ -815,7 +823,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
                 ]);
 
                 $joinType = $join['type'] ?? $joinType;
-                $joinConditions = (array) ($join['conditions'] ?? []);
+                $joinConditions = $join['conditions'] ?? [];
                 $joins = $relationship->buildJoins([
                     'alias' => $name,
                     'sourceAlias' => $alias,
@@ -880,15 +888,19 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
      * Adds a relationship JOIN.
      *
      * @param string $contain The contain string.
-     * @param array<mixed> $conditions The JOIN conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string $conditions The JOIN conditions.
      * @param string $type The JOIN type.
      * @param bool|null $matching Whether this is a matching/noMatching join.
      * @return static The SelectQuery instance.
      *
      * @throws OrmException If a relationship is not valid or a join alias is not unique.
      */
-    protected function containJoin(string $contain, array $conditions, string $type = 'LEFT', bool|null $matching = null): static
-    {
+    protected function containJoin(
+        string $contain,
+        array|Closure|ConditionExpression|string $conditions,
+        string $type = 'LEFT',
+        bool|null $matching = null
+    ): static {
         $contain = explode('.', $contain);
         $lastContain = array_key_last($contain);
 
@@ -941,7 +953,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
                 ]);
 
                 $joinType = $join['type'] ?? $joinType;
-                $joinConditions = (array) ($join['conditions'] ?? []);
+                $joinConditions = $join['conditions'] ?? [];
             }
 
             $joins = $relationship->buildJoins([
@@ -980,10 +992,18 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
                 if ($matching === true) {
                     $this->matching[$alias] = $relationship;
                 } else if ($matching === false) {
-                    array_map(
-                        static fn(string $key): string => $model->aliasField($key, $alias).' IS NULL',
+                    $primaryKeys = array_map(
+                        static fn(string $primaryKey): string => $model->aliasField($primaryKey, $alias),
                         $model->getPrimaryKey()
-                    ) |> $this->where(...);
+                    );
+
+                    $primaryConditions = [];
+
+                    foreach ($primaryKeys as $primaryKey) {
+                        $primaryConditions[$primaryKey.' IS'] = null;
+                    }
+
+                    $this->where($primaryConditions);
                 }
             }
 

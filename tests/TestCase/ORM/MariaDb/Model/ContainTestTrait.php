@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\MariaDb\Model;
 
+use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Query;
 use Fyre\ORM\Exceptions\OrmException;
 use Tests\Mock\Entities\Comment;
 use Tests\Mock\Entities\Post;
@@ -290,6 +292,8 @@ trait ContainTestTrait
 
         $user = $Users->get(1, contain: [
             'Posts' => [
+                'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                    ->eq('Posts.title', 'Test 2'),
                 'orderBy' => [
                     'title' => 'DESC',
                 ],
@@ -302,7 +306,7 @@ trait ContainTestTrait
         );
 
         $this->assertSame(
-            [2, 1],
+            [2],
             array_map(
                 static fn(Post $post): int|null => $post->id,
                 $user->posts
@@ -313,11 +317,13 @@ trait ContainTestTrait
     public function testContainFindSql(): void
     {
         $this->assertSame(
-            'SELECT Posts.id AS Posts__id, Users.id AS Users__id, Addresses.id AS Addresses__id FROM posts AS Posts LEFT JOIN users AS Users ON Users.id = Posts.user_id LEFT JOIN addresses AS Addresses ON Addresses.user_id = Users.id',
+            'SELECT `Posts`.`id` AS `Posts__id`, `Users`.`id` AS `Users__id`, `Addresses`.`id` AS `Addresses__id` FROM `posts` AS `Posts` LEFT JOIN `users` AS `Users` ON `Users`.`id` = `Posts`.`user_id` AND `Users`.`name` = \'Test\' LEFT JOIN `addresses` AS `Addresses` ON `Addresses`.`user_id` = `Users`.`id`',
             $this->modelRegistry->use('Posts')
                 ->find(contain: [
                     'Users' => [
                         'Addresses',
+                        'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                            ->eq('Users.name', 'Test'),
                     ],
                 ])
                 ->disableAutoFields()

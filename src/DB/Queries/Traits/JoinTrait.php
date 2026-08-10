@@ -7,6 +7,7 @@ use Fyre\DB\Query;
 use InvalidArgumentException;
 
 use function array_merge;
+use function is_array;
 use function is_numeric;
 use function is_string;
 use function sprintf;
@@ -79,6 +80,10 @@ trait JoinTrait
             }
 
             $join['table'] ??= $alias;
+
+            if (isset($join['conditions']) && !is_array($join['conditions'])) {
+                $join['conditions'] = [$join['conditions']];
+            }
 
             $results[$alias] = $join;
         }

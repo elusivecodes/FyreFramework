@@ -79,8 +79,8 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'DROP INDEX value',
-                'CREATE UNIQUE INDEX value ON test (value)',
+                'DROP INDEX "value"',
+                'CREATE UNIQUE INDEX "value" ON "test" ("value")',
             ],
             $this->forge
                 ->build('test')
@@ -189,7 +189,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test ADD COLUMN value1 VARCHAR(80) NOT NULL',
+                'ALTER TABLE "test" ADD COLUMN "value1" VARCHAR(80) NOT NULL',
             ],
             $this->forge
                 ->build('test')
@@ -265,7 +265,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'CREATE INDEX value ON test (value)',
+                'CREATE INDEX "value" ON "test" ("value")',
             ],
             $this->forge
                 ->build('test')
@@ -323,7 +323,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test DROP COLUMN value',
+                'ALTER TABLE "test" DROP COLUMN "value"',
             ],
             $this->forge
                 ->build('test')
@@ -395,7 +395,7 @@ trait DiffTestTrait
 
         $this->assertSame(
             [
-                'DROP INDEX value',
+                'DROP INDEX "value"',
             ],
             $this->forge
                 ->build('test')

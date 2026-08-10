@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Schema\Postgres\Table;
 
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Schema\Column;
 use Fyre\DB\Schema\Handlers\Postgres\PostgresColumn;
 use Fyre\Utility\Collection;
@@ -215,7 +215,7 @@ trait ColumnTestTrait
                     'fractionalSeconds' => 6,
                     'nullable' => false,
                     'unsigned' => false,
-                    'default' => new QueryLiteral('CURRENT_TIMESTAMP'),
+                    'default' => new LiteralExpression('CURRENT_TIMESTAMP'),
                     'comment' => '',
                     'autoIncrement' => false,
                     'enumClass' => null,
@@ -229,7 +229,7 @@ trait ColumnTestTrait
                     'fractionalSeconds' => 6,
                     'nullable' => true,
                     'unsigned' => false,
-                    'default' => new QueryLiteral('CURRENT_TIMESTAMP'),
+                    'default' => new LiteralExpression('CURRENT_TIMESTAMP'),
                     'comment' => '',
                     'autoIncrement' => false,
                     'enumClass' => null,

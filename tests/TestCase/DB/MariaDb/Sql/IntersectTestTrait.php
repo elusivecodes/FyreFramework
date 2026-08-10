@@ -3,16 +3,16 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\MariaDb\Sql;
 
-use Fyre\DB\Connection;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Queries\SelectQuery;
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Query;
 
 trait IntersectTestTrait
 {
     public function testIntersect(): void
     {
         $this->assertSame(
-            '(SELECT * FROM test) INTERSECT (SELECT * FROM test2)',
+            '(SELECT * FROM `test`) INTERSECT (SELECT * FROM test2)',
             $this->db->select()
                 ->from('test')
                 ->intersect('(SELECT * FROM test2)')
@@ -25,14 +25,14 @@ trait IntersectTestTrait
         $query = $this->db->select()
             ->from('test2');
 
+        $query = $this->db->select()
+            ->from('test2');
+
         $this->assertSame(
-            '(SELECT * FROM test) INTERSECT (SELECT * FROM test2)',
+            '(SELECT * FROM `test`) INTERSECT (SELECT * FROM `test2`)',
             $this->db->select()
                 ->from('test')
-                ->intersect(static function(Connection $db): SelectQuery {
-                    return $db->select()
-                        ->from('test2');
-                })
+                ->intersect(static fn(): SelectQuery => $query)
                 ->sql()
         );
     }
@@ -43,11 +43,11 @@ trait IntersectTestTrait
             ->from('test2');
 
         $this->assertSame(
-            '(SELECT * FROM test) INTERSECT (SELECT * FROM test2)',
+            '(SELECT * FROM `test`) INTERSECT (SELECT * FROM test2)',
             $this->db->select()
                 ->from('test')
-                ->intersect(static function(Connection $db): QueryLiteral {
-                    return $db->literal('(SELECT * FROM test2)');
+                ->intersect(static function(Query $query): LiteralExpression {
+                    return $query->literal('(SELECT * FROM test2)');
                 })
                 ->sql()
         );
@@ -56,7 +56,7 @@ trait IntersectTestTrait
     public function testIntersectMerge(): void
     {
         $this->assertSame(
-            '(SELECT * FROM test) INTERSECT (SELECT * FROM test2) INTERSECT (SELECT * FROM test3)',
+            '(SELECT * FROM `test`) INTERSECT (SELECT * FROM test2) INTERSECT (SELECT * FROM test3)',
             $this->db->select()
                 ->from('test')
                 ->intersect('(SELECT * FROM test2)')
@@ -68,7 +68,7 @@ trait IntersectTestTrait
     public function testIntersectOverwrite(): void
     {
         $this->assertSame(
-            '(SELECT * FROM test) INTERSECT (SELECT * FROM test3)',
+            '(SELECT * FROM `test`) INTERSECT (SELECT * FROM test3)',
             $this->db->select()
                 ->from('test')
                 ->intersect('(SELECT * FROM test2)')
@@ -83,7 +83,7 @@ trait IntersectTestTrait
             ->from('test2');
 
         $this->assertSame(
-            '(SELECT * FROM test) INTERSECT (SELECT * FROM test2)',
+            '(SELECT * FROM `test`) INTERSECT (SELECT * FROM `test2`)',
             $this->db->select()
                 ->from('test')
                 ->intersect($query)

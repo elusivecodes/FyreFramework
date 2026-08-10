@@ -4,7 +4,9 @@ declare(strict_types=1);
 namespace Fyre\DB\Schema\Handlers\Mysql;
 
 use Fyre\Core\Container;
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Expressions\LiteralExpression;
+use Fyre\DB\Query;
 use Fyre\DB\Schema\Table;
 use Fyre\DB\ValueBinder;
 use Override;
@@ -234,11 +236,19 @@ class MysqlTable extends Table
                     'table' => 'INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS',
                     'alias' => 'ReferentialConstraints',
                     'type' => 'INNER',
-                    'conditions' => [
-                        'ReferentialConstraints.CONSTRAINT_SCHEMA = KeyColumns.CONSTRAINT_SCHEMA',
-                        'ReferentialConstraints.CONSTRAINT_NAME = KeyColumns.CONSTRAINT_NAME',
-                        'ReferentialConstraints.TABLE_NAME = KeyColumns.TABLE_NAME',
-                    ],
+                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields(
+                            'ReferentialConstraints.CONSTRAINT_SCHEMA',
+                            'KeyColumns.CONSTRAINT_SCHEMA'
+                        )
+                        ->equalFields(
+                            'ReferentialConstraints.CONSTRAINT_NAME',
+                            'KeyColumns.CONSTRAINT_NAME'
+                        )
+                        ->equalFields(
+                            'ReferentialConstraints.TABLE_NAME',
+                            'KeyColumns.TABLE_NAME'
+                        ),
                 ],
             ])
             ->where([
@@ -328,29 +338,29 @@ class MysqlTable extends Table
      *
      * The raw value comes from `INFORMATION_SCHEMA.COLUMNS.COLUMN_DEFAULT`, which is not consistently formatted across
      * MySQL/MariaDB. This method normalizes the raw default into either a scalar (string|int|float|bool|null) or a
-     * {@see QueryLiteral} for SQL expressions.
+     * {@see LiteralExpression} for SQL expressions.
      *
      * Supported patterns include:
      * - `NULL`/`null` (string) => `null`
-     * - `CURRENT_TIMESTAMP...` => {@see QueryLiteral}(`CURRENT_TIMESTAMP`)
+     * - `CURRENT_TIMESTAMP...` => {@see LiteralExpression}(`CURRENT_TIMESTAMP`)
      * - quoted strings: `'abc'` (MySQL escaping `''`) => `"abc"`
      * - charset introducers / optional collations (observed in metadata):
      *   - `_utf8mb4'abc'`
      *   - `_utf8mb4\\'abc\\'`
      *   - `_utf8mb4\\'{\"key\": \"value\"}\\' COLLATE utf8mb4_bin`
      *
-     * On MariaDB, defaults that cannot be safely interpreted as a scalar are returned as {@see QueryLiteral}. On MySQL,
+     * On MariaDB, defaults that cannot be safely interpreted as a scalar are returned as {@see LiteralExpression}. On MySQL,
      * unknown patterns are returned as the raw string to avoid misclassifying server-specific expressions.
      *
-     * Note: {@see QueryLiteral} is raw SQL; values originate from database metadata and should not be user-supplied.
+     * Note: {@see LiteralExpression} is raw SQL; values originate from database metadata and should not be user-supplied.
      *
      * @param mixed $default The raw default value.
      * @param string $type The column type.
      * @param int|null $precision The column precision.
      * @param bool $isMariaDb Whether the server is MariaDB.
-     * @return bool|float|int|QueryLiteral|string|null The normalized default.
+     * @return bool|float|int|LiteralExpression|string|null The normalized default.
      */
-    protected static function parseDefaultValue(mixed $default, string $type, int|null $precision, bool $isMariaDb): bool|float|int|QueryLiteral|string|null
+    protected static function parseDefaultValue(mixed $default, string $type, int|null $precision, bool $isMariaDb): bool|float|int|LiteralExpression|string|null
     {
         if ($default === null || !is_string($default)) {
             return $default;
@@ -363,7 +373,7 @@ class MysqlTable extends Table
         }
 
         if (str_starts_with($defaultLower, 'current_timestamp')) {
-            return new QueryLiteral('CURRENT_TIMESTAMP');
+            return new LiteralExpression('CURRENT_TIMESTAMP');
         }
 
         if (preg_match('/^(?:_[a-z0-9_]+)?(\\\\)?\'(.*?)\1?\'(?:\s+COLLATE\s+[a-z0-9_]+)?$/s', $default, $matches)) {
@@ -404,6 +414,6 @@ class MysqlTable extends Table
                 break;
         }
 
-        return $result ?? new QueryLiteral($default);
+        return $result ?? new LiteralExpression($default);
     }
 }

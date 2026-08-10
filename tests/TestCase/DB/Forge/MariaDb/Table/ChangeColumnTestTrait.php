@@ -31,7 +31,7 @@ trait ChangeColumnTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test CHANGE COLUMN id id INT(11) NOT NULL',
+                'ALTER TABLE `test` CHANGE COLUMN `id` `id` INT(11) NOT NULL',
             ],
             $this->forge
                 ->build('test')
@@ -46,7 +46,7 @@ trait ChangeColumnTestTrait
     {
         $this->assertSame(
             [
-                'CREATE TABLE test (id INT(11) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
+                'CREATE TABLE `test` (`id` INT(11) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
             ],
             $this->forge
                 ->build('test')

@@ -45,7 +45,7 @@ trait ChangeColumnTestTrait
     {
         $this->assertSame(
             [
-                'CREATE TABLE test (id INTEGER NOT NULL)',
+                'CREATE TABLE "test" ("id" INTEGER NOT NULL)',
             ],
             $this->forge
                 ->build('test')

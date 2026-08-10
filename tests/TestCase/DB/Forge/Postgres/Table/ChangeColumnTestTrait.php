@@ -31,7 +31,7 @@ trait ChangeColumnTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test ALTER COLUMN id TYPE INTEGER USING CAST(id AS INTEGER)',
+                'ALTER TABLE "test" ALTER COLUMN "id" TYPE INTEGER USING CAST("id" AS INTEGER)',
             ],
             $this->forge
                 ->build('test')
@@ -46,7 +46,7 @@ trait ChangeColumnTestTrait
     {
         $this->assertSame(
             [
-                'CREATE TABLE test (id INTEGER NOT NULL)',
+                'CREATE TABLE "test" ("id" INTEGER NOT NULL)',
             ],
             $this->forge
                 ->build('test')

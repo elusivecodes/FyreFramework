@@ -322,7 +322,8 @@ $users = $Users->find()
 
 For eager-loading strategies (`select`, `subquery`, `cte`), contain options are passed as named arguments to relationship loading:
 
-- `fields`, `conditions`, `orderBy`, `groupBy`, `having`, `limit`, `offset`, `epilog`
+- `fields`, `orderBy`, `groupBy`, `having`, `limit`, `offset`, `epilog`
+- `conditions` (an array, `Closure`, `ConditionExpression`, or raw string)
 - `contain` (nested relationships for the related query)
 - `strategy` (override the loader strategy for this contain path)
 - `autoFields` (control auto-field selection for the related query)
@@ -353,7 +354,7 @@ For join loading (`strategy` = `join`), the allowed option set is intentionally 
 
 - `strategy` (must be `join`)
 - `type` (join type, defaults to the relationship join type)
-- `conditions` (additional join conditions)
+- `conditions` (additional conditions as an array, `Closure`, `ConditionExpression`, or raw string)
 - `fields` (extra target fields to select)
 - `autoFields` (whether to auto-select target schema columns)
 - `contain` (nested contain)
@@ -430,10 +431,21 @@ When you need join semantics for filtering (and don’t necessarily want relatio
 
 Use these to add relationship joins to the query.
 
+The optional conditions argument accepts an array, `Closure`, `ConditionExpression`, or raw string.
+
 ```php
+use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Query;
+
 $query = $Users->find()
-    ->leftJoinWith('Posts', ['Posts.published' => true]);
+    ->leftJoinWith(
+        'Posts',
+        static fn(Query $query): ConditionExpression => $query->expr()
+            ->eq('Posts.published', true)
+    );
 ```
+
+See [Query expressions](../database/expressions.md) for the available condition methods.
 
 ### `matching()`
 
@@ -488,3 +500,4 @@ A few behaviors are worth keeping in mind:
 - [Finding Data](finding.md)
 - [Saving Data](saving.md)
 - [Deleting Data](deleting.md)
+- [Query expressions](../database/expressions.md)

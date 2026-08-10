@@ -11,7 +11,7 @@ trait DeleteTestTrait
     public function testDelete(): void
     {
         $this->assertSame(
-            'DELETE FROM test',
+            'DELETE FROM "test"',
             $this->db->delete()
                 ->from('test')
                 ->sql()
@@ -78,7 +78,7 @@ trait DeleteTestTrait
     public function testDeleteTables(): void
     {
         $this->assertSame(
-            'DELETE FROM test AS alt',
+            'DELETE FROM "test" AS "alt"',
             $this->db->delete()
                 ->from([
                     'alt' => 'test',
@@ -90,7 +90,7 @@ trait DeleteTestTrait
     public function testDeleteUsing(): void
     {
         $this->assertSame(
-            'DELETE FROM test USING test2 WHERE test.id = test2.id',
+            'DELETE FROM "test" USING "test2" WHERE test.id = test2.id',
             $this->db->delete()
                 ->from('test')
                 ->using('test2')
@@ -104,7 +104,7 @@ trait DeleteTestTrait
     public function testDeleteWhere(): void
     {
         $this->assertSame(
-            'DELETE FROM test WHERE id = 1',
+            'DELETE FROM "test" WHERE "id" = 1',
             $this->db->delete()
                 ->from('test')
                 ->where([

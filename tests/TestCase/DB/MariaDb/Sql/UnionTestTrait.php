@@ -3,16 +3,16 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\MariaDb\Sql;
 
-use Fyre\DB\Connection;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Queries\SelectQuery;
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Query;
 
 trait UnionTestTrait
 {
     public function testUnion(): void
     {
         $this->assertSame(
-            '(SELECT * FROM test) UNION DISTINCT (SELECT * FROM test2)',
+            '(SELECT * FROM `test`) UNION DISTINCT (SELECT * FROM test2)',
             $this->db->select()
                 ->from('test')
                 ->union('(SELECT * FROM test2)')
@@ -22,14 +22,14 @@ trait UnionTestTrait
 
     public function testUnionClosure(): void
     {
+        $query = $this->db->select()
+            ->from('test2');
+
         $this->assertSame(
-            '(SELECT * FROM test) UNION DISTINCT (SELECT * FROM test2)',
+            '(SELECT * FROM `test`) UNION DISTINCT (SELECT * FROM `test2`)',
             $this->db->select()
                 ->from('test')
-                ->union(static function(Connection $db): SelectQuery {
-                    return $db->select()
-                        ->from('test2');
-                })
+                ->union(static fn(): SelectQuery => $query)
                 ->sql()
         );
     }
@@ -37,11 +37,11 @@ trait UnionTestTrait
     public function testUnionLiteral(): void
     {
         $this->assertSame(
-            '(SELECT * FROM test) UNION DISTINCT (SELECT * FROM test2)',
+            '(SELECT * FROM `test`) UNION DISTINCT (SELECT * FROM test2)',
             $this->db->select()
                 ->from('test')
-                ->union(static function(Connection $db): QueryLiteral {
-                    return $db->literal('(SELECT * FROM test2)');
+                ->union(static function(Query $query): LiteralExpression {
+                    return $query->literal('(SELECT * FROM test2)');
                 })
                 ->sql()
         );
@@ -50,7 +50,7 @@ trait UnionTestTrait
     public function testUnionMerge(): void
     {
         $this->assertSame(
-            '(SELECT * FROM test) UNION DISTINCT (SELECT * FROM test2) UNION DISTINCT (SELECT * FROM test3)',
+            '(SELECT * FROM `test`) UNION DISTINCT (SELECT * FROM test2) UNION DISTINCT (SELECT * FROM test3)',
             $this->db->select()
                 ->from('test')
                 ->union('(SELECT * FROM test2)')
@@ -62,7 +62,7 @@ trait UnionTestTrait
     public function testUnionOverwrite(): void
     {
         $this->assertSame(
-            '(SELECT * FROM test) UNION DISTINCT (SELECT * FROM test3)',
+            '(SELECT * FROM `test`) UNION DISTINCT (SELECT * FROM test3)',
             $this->db->select()
                 ->from('test')
                 ->union('(SELECT * FROM test2)')
@@ -77,7 +77,7 @@ trait UnionTestTrait
             ->from('test2');
 
         $this->assertSame(
-            '(SELECT * FROM test) UNION DISTINCT (SELECT * FROM test2)',
+            '(SELECT * FROM `test`) UNION DISTINCT (SELECT * FROM `test2`)',
             $this->db->select()
                 ->from('test')
                 ->union($query)

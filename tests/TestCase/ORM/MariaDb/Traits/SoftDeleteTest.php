@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\MariaDb\Traits;
 
+use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Query;
 use Fyre\ORM\Entity;
 use Fyre\Utility\DateTime\DateTime;
 use Generator;
@@ -140,7 +142,10 @@ final class SoftDeleteTest extends TestCase
 
         $this->assertSame(
             [1],
-            $Users->findOnlyDeleted()
+            $Users->findOnlyDeleted(
+                conditions: static fn(Query $query): ConditionExpression => $query->expr()
+                    ->eq('Users.name', 'Test 1')
+            )
                 ->all()
                 ->map(static fn(Entity $item): int|null => $item->id)
                 ->toArray()
@@ -175,7 +180,10 @@ final class SoftDeleteTest extends TestCase
 
         $this->assertSame(
             [1, 2],
-            $Users->findWithDeleted()
+            $Users->findWithDeleted(
+                conditions: static fn(Query $query): ConditionExpression => $query->expr()
+                    ->gt('Users.id', 0)
+            )
                 ->orderBy(['id' => 'ASC'])
                 ->all()
                 ->map(static fn(Entity $item): int|null => $item->id)
@@ -310,7 +318,7 @@ final class SoftDeleteTest extends TestCase
 
         $this->assertSame(
             1,
-            substr_count($sql, 'Addresses.deleted IS NULL')
+            substr_count($sql, '`Addresses`.`deleted` IS NULL')
         );
     }
 

@@ -35,7 +35,7 @@ trait AddIndexTestTrait
 
         $this->assertSame(
             [
-                'CREATE INDEX id ON test (id)',
+                'CREATE INDEX "id" ON "test" ("id")',
             ],
             $this->forge
                 ->build('test')
@@ -48,8 +48,8 @@ trait AddIndexTestTrait
     {
         $this->assertSame(
             [
-                'CREATE TABLE test (id INTEGER NOT NULL)',
-                'CREATE INDEX id ON test (id)',
+                'CREATE TABLE "test" ("id" INTEGER NOT NULL)',
+                'CREATE INDEX "id" ON "test" ("id")',
             ],
             $this->forge
                 ->build('test')

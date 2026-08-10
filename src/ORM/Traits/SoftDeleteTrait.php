@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace Fyre\ORM\Traits;
 
 use ArrayObject;
+use Closure;
+use Fyre\DB\Expressions\ConditionExpression;
 use Fyre\Event\Event;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Events\BeforeDelete;
@@ -45,10 +47,10 @@ trait SoftDeleteTrait
      * @param array|string|null $fields The SELECT fields.
      * @param array|string|null $contain The contain relationships.
      * @param array<array<string, mixed>>|null $join The JOIN tables.
-     * @param array|string|null $conditions The WHERE conditions.
+     * @param array|Closure|ConditionExpression|string|null $conditions The WHERE conditions.
      * @param array|string|null $orderBy The ORDER BY fields.
      * @param array|string|null $groupBy The GROUP BY fields.
-     * @param array|string|null $having The HAVING conditions.
+     * @param array|Closure|ConditionExpression|string|null $having The HAVING conditions.
      * @param int|null $limit The LIMIT clause.
      * @param int|null $offset The OFFSET clause.
      * @param string|null $epilog The epilog.
@@ -62,10 +64,10 @@ trait SoftDeleteTrait
         array|string|null $fields = null,
         array|string|null $contain = null,
         array|null $join = null,
-        array|string|null $conditions = null,
+        array|Closure|ConditionExpression|string|null $conditions = null,
         array|string|null $orderBy = null,
         array|string|null $groupBy = null,
-        array|string|null $having = null,
+        array|Closure|ConditionExpression|string|null $having = null,
         int|null $limit = null,
         int|null $offset = null,
         string|null $epilog = null,
@@ -92,7 +94,7 @@ trait SoftDeleteTrait
             deleted: true
         )
             ->where([
-                $this->aliasField($this->deletedField).' IS NOT NULL',
+                $this->aliasField($this->deletedField).' IS NOT' => null,
             ]);
     }
 
@@ -102,10 +104,10 @@ trait SoftDeleteTrait
      * @param array|string|null $fields The SELECT fields.
      * @param array|string|null $contain The contain relationships.
      * @param array<array<string, mixed>>|null $join The JOIN tables.
-     * @param array|string|null $conditions The WHERE conditions.
+     * @param array|Closure|ConditionExpression|string|null $conditions The WHERE conditions.
      * @param array|string|null $orderBy The ORDER BY fields.
      * @param array|string|null $groupBy The GROUP BY fields.
-     * @param array|string|null $having The HAVING conditions.
+     * @param array|Closure|ConditionExpression|string|null $having The HAVING conditions.
      * @param int|null $limit The LIMIT clause.
      * @param int|null $offset The OFFSET clause.
      * @param string|null $epilog The epilog.
@@ -119,10 +121,10 @@ trait SoftDeleteTrait
         array|string|null $fields = null,
         array|string|null $contain = null,
         array|null $join = null,
-        array|string|null $conditions = null,
+        array|Closure|ConditionExpression|string|null $conditions = null,
         array|string|null $orderBy = null,
         array|string|null $groupBy = null,
-        array|string|null $having = null,
+        array|Closure|ConditionExpression|string|null $having = null,
         int|null $limit = null,
         int|null $offset = null,
         string|null $epilog = null,
@@ -184,8 +186,13 @@ trait SoftDeleteTrait
             return;
         }
 
-        $conditions = (array) ($join['conditions'] ?? []);
-        $conditions[] = $this->aliasField($this->deletedField, $alias).' IS NULL';
+        $conditions = $join['conditions'] ?? [];
+
+        if (!is_array($conditions)) {
+            $conditions = [$conditions];
+        }
+
+        $conditions[$this->aliasField($this->deletedField, $alias).' IS'] = null;
 
         $join['conditions'] = $conditions;
     }
@@ -210,7 +217,7 @@ trait SoftDeleteTrait
         }
 
         $query->where([
-            $this->aliasField($this->deletedField, $query->getAlias()).' IS NULL',
+            $this->aliasField($this->deletedField, $query->getAlias()).' IS' => null,
         ]);
     }
 
@@ -404,7 +411,7 @@ trait SoftDeleteTrait
                 $children = $relationship->findRelated(
                     $entities,
                     conditions : [
-                        $target->aliasField($this->deletedField).' IS NOT NULL',
+                        $target->aliasField($this->deletedField).' IS NOT' => null,
                     ],
                     deleted: true
                 )->toArray();

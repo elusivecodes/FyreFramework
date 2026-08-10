@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Sqlite\Sql;
 
-use Fyre\DB\Connection;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Queries\SelectQuery;
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Query;
 use Fyre\Utility\DateTime\DateTime;
 use InvalidArgumentException;
 
@@ -14,7 +14,7 @@ trait InsertTestTrait
     public function testInsert(): void
     {
         $this->assertSame(
-            'INSERT INTO test (name, value) VALUES (\'Test 1\', 1), (\'Test 2\', 2)',
+            'INSERT INTO "test" ("name", "value") VALUES (\'Test 1\', 1), (\'Test 2\', 2)',
             $this->db->insert()
                 ->into('test')
                 ->values([
@@ -33,26 +33,22 @@ trait InsertTestTrait
 
     public function testInsertClosure(): void
     {
+        $query = $this->db->select(['id'])
+            ->from('test')
+            ->limit(1);
+
         $this->assertSame(
-            'INSERT INTO test (name, value) VALUES (\'Test 1\', (SELECT id FROM test LIMIT 1)), (\'Test 2\', (SELECT id FROM test LIMIT 1))',
+            'INSERT INTO "test" ("name", "value") VALUES (\'Test 1\', (SELECT "id" FROM "test" LIMIT 1)), (\'Test 2\', (SELECT "id" FROM "test" LIMIT 1))',
             $this->db->insert()
                 ->into('test')
                 ->values([
                     [
                         'name' => 'Test 1',
-                        'value' => static function(Connection $db): SelectQuery {
-                            return $db->select(['id'])
-                                ->from('test')
-                                ->limit(1);
-                        },
+                        'value' => static fn(): SelectQuery => $query,
                     ],
                     [
                         'name' => 'Test 2',
-                        'value' => static function(Connection $db): SelectQuery {
-                            return $db->select(['id'])
-                                ->from('test')
-                                ->limit(1);
-                        },
+                        'value' => static fn(): SelectQuery => $query,
                     ],
                 ])
                 ->sql()
@@ -62,7 +58,7 @@ trait InsertTestTrait
     public function testInsertColumnOrder(): void
     {
         $this->assertSame(
-            'INSERT INTO test (name, value) VALUES (\'Test 1\', 1), (\'Test 2\', 2)',
+            'INSERT INTO "test" ("name", "value") VALUES (\'Test 1\', 1), (\'Test 2\', 2)',
             $this->db->insert()
                 ->into('test')
                 ->values([
@@ -82,7 +78,7 @@ trait InsertTestTrait
     public function testInsertDateTime(): void
     {
         $this->assertSame(
-            'INSERT INTO test (name, value) VALUES (\'Test 1\', \'2020-01-01 00:00:00\')',
+            'INSERT INTO "test" ("name", "value") VALUES (\'Test 1\', \'2020-01-01 00:00:00\')',
             $this->db->insert()
                 ->into('test')
                 ->values([
@@ -117,20 +113,20 @@ trait InsertTestTrait
     public function testInsertLiteral(): void
     {
         $this->assertSame(
-            'INSERT INTO test (name, value) VALUES (\'Test 1\', 2 * 10), (\'Test 2\', 2 * 20)',
+            'INSERT INTO "test" ("name", "value") VALUES (\'Test 1\', 2 * 10), (\'Test 2\', 2 * 20)',
             $this->db->insert()
                 ->into('test')
                 ->values([
                     [
                         'name' => 'Test 1',
-                        'value' => static function(Connection $db): QueryLiteral {
-                            return $db->literal('2 * 10');
+                        'value' => static function(Query $query): LiteralExpression {
+                            return $query->literal('2 * 10');
                         },
                     ],
                     [
                         'name' => 'Test 2',
-                        'value' => static function(Connection $db): QueryLiteral {
-                            return $db->literal('2 * 20');
+                        'value' => static function(Query $query): LiteralExpression {
+                            return $query->literal('2 * 20');
                         },
                     ],
                 ])
@@ -141,7 +137,7 @@ trait InsertTestTrait
     public function testInsertMerge(): void
     {
         $this->assertSame(
-            'INSERT INTO test (name, value) VALUES (\'Test 1\', 1), (\'Test 2\', 2)',
+            'INSERT INTO "test" ("name", "value") VALUES (\'Test 1\', 1), (\'Test 2\', 2)',
             $this->db->insert()
                 ->into('test')
                 ->values([
@@ -182,7 +178,7 @@ trait InsertTestTrait
     public function testInsertOverwrite(): void
     {
         $this->assertSame(
-            'INSERT INTO test (name, value) VALUES (\'Test 2\', 2)',
+            'INSERT INTO "test" ("name", "value") VALUES (\'Test 2\', 2)',
             $this->db->insert()
                 ->into('test')
                 ->values([
@@ -204,7 +200,7 @@ trait InsertTestTrait
     public function testInsertSelectQuery(): void
     {
         $this->assertSame(
-            'INSERT INTO test (name, value) VALUES (\'Test 1\', (SELECT id FROM test LIMIT 1)), (\'Test 2\', (SELECT id FROM test LIMIT 1))',
+            'INSERT INTO "test" ("name", "value") VALUES (\'Test 1\', (SELECT "id" FROM "test" LIMIT 1)), (\'Test 2\', (SELECT "id" FROM "test" LIMIT 1))',
             $this->db->insert()
                 ->into('test')
                 ->values([

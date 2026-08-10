@@ -3,9 +3,10 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Postgres\Sql;
 
-use Fyre\DB\Connection;
+use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Queries\SelectQuery;
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Query;
 use Fyre\Utility\DateTime\DateTime;
 use Tests\Mock\Enums\State;
 use Tests\Mock\Enums\Status;
@@ -15,7 +16,7 @@ trait WhereTestTrait
     public function testWhere(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE name IS NULL',
+            'SELECT * FROM "test" WHERE name IS NULL',
             $this->db->select()
                 ->from('test')
                 ->where('name IS NULL')
@@ -26,7 +27,7 @@ trait WhereTestTrait
     public function testWhereAnd(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE (value = 1 AND name = \'test\')',
+            'SELECT * FROM "test" WHERE ("value" = 1 AND "name" = \'test\')',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -42,7 +43,7 @@ trait WhereTestTrait
     public function testWhereArray(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE name = \'test\'',
+            'SELECT * FROM "test" WHERE "name" = \'test\'',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -55,7 +56,7 @@ trait WhereTestTrait
     public function testWhereBooleanFalse(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value = 0',
+            'SELECT * FROM "test" WHERE "value" = 0',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -68,7 +69,7 @@ trait WhereTestTrait
     public function testWhereBooleanTrue(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value = 1',
+            'SELECT * FROM "test" WHERE "value" = 1',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -81,14 +82,26 @@ trait WhereTestTrait
     public function testWhereClosure(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value IN (SELECT id FROM test)',
+            'SELECT * FROM "test" WHERE "value" = 1',
+            $this->db->select()
+                ->from('test')
+                ->where(static fn(Query $query): ConditionExpression => $query->expr()
+                    ->eq('value', 1))
+                ->sql()
+        );
+    }
+
+    public function testWhereClosureValue(): void
+    {
+        $query = $this->db->select(['id'])
+            ->from('test');
+
+        $this->assertSame(
+            'SELECT * FROM "test" WHERE "value" IN (SELECT "id" FROM "test")',
             $this->db->select()
                 ->from('test')
                 ->where([
-                    'value IN' => static function(Connection $db): SelectQuery {
-                        return $db->select(['id'])
-                            ->from('test');
-                    },
+                    'value IN' => static fn(): SelectQuery => $query,
                 ])
                 ->sql()
         );
@@ -97,7 +110,7 @@ trait WhereTestTrait
     public function testWhereDateTime(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value = \'2020-01-01 00:00:00\'',
+            'SELECT * FROM "test" WHERE "value" = \'2020-01-01 00:00:00\'',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -110,7 +123,7 @@ trait WhereTestTrait
     public function testWhereEnum(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE status = \'draft\' AND state = \'Published\'',
+            'SELECT * FROM "test" WHERE "status" = \'draft\' AND "state" = \'Published\'',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -124,7 +137,7 @@ trait WhereTestTrait
     public function testWhereEqual(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value = 1',
+            'SELECT * FROM "test" WHERE "value" = 1',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -137,7 +150,7 @@ trait WhereTestTrait
     public function testWhereFloat(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value = 1.25',
+            'SELECT * FROM "test" WHERE "value" = 1.25',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -150,7 +163,7 @@ trait WhereTestTrait
     public function testWhereGreaterThan(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value > 1',
+            'SELECT * FROM "test" WHERE "value" > 1',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -163,7 +176,7 @@ trait WhereTestTrait
     public function testWhereGreaterThanOrEqual(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value >= 1',
+            'SELECT * FROM "test" WHERE "value" >= 1',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -176,7 +189,7 @@ trait WhereTestTrait
     public function testWhereGroups(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE (value = 1 AND (name = \'test\' OR name IS NULL))',
+            'SELECT * FROM "test" WHERE ("value" = 1 AND ("name" = \'test\' OR name IS NULL))',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -195,7 +208,7 @@ trait WhereTestTrait
     public function testWhereIn(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value IN (1, 2, 3)',
+            'SELECT * FROM "test" WHERE "value" IN (1, 2, 3)',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -208,7 +221,7 @@ trait WhereTestTrait
     public function testWhereInteger(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE id = 1',
+            'SELECT * FROM "test" WHERE "id" = 1',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -221,7 +234,7 @@ trait WhereTestTrait
     public function testWhereIsNotNull(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value IS NOT NULL',
+            'SELECT * FROM "test" WHERE "value" IS NOT NULL',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -234,7 +247,7 @@ trait WhereTestTrait
     public function testWhereIsNull(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value IS NULL',
+            'SELECT * FROM "test" WHERE "value" IS NULL',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -247,7 +260,7 @@ trait WhereTestTrait
     public function testWhereLessThan(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value < 1',
+            'SELECT * FROM "test" WHERE "value" < 1',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -260,7 +273,7 @@ trait WhereTestTrait
     public function testWhereLessThanOrEqual(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value <= 1',
+            'SELECT * FROM "test" WHERE "value" <= 1',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -273,7 +286,7 @@ trait WhereTestTrait
     public function testWhereLike(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE name LIKE \'%test%\'',
+            'SELECT * FROM "test" WHERE "name" LIKE \'%test%\'',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -286,12 +299,12 @@ trait WhereTestTrait
     public function testWhereLiteral(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value = UPPER(test)',
+            'SELECT * FROM "test" WHERE "value" = UPPER(test)',
             $this->db->select()
                 ->from('test')
                 ->where([
-                    'value' => static function(Connection $db): QueryLiteral {
-                        return $db->literal('UPPER(test)');
+                    'value' => static function(Query $query): LiteralExpression {
+                        return $query->literal('UPPER(test)');
                     },
                 ])
                 ->sql()
@@ -301,7 +314,7 @@ trait WhereTestTrait
     public function testWhereMerge(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE name = \'test\' AND value = 1',
+            'SELECT * FROM "test" WHERE "name" = \'test\' AND "value" = 1',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -317,7 +330,7 @@ trait WhereTestTrait
     public function testWhereMultiple(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value = 1 AND name = \'test\'',
+            'SELECT * FROM "test" WHERE "value" = 1 AND "name" = \'test\'',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -331,7 +344,7 @@ trait WhereTestTrait
     public function testWhereNot(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE NOT (value = 1 AND name = \'test\')',
+            'SELECT * FROM "test" WHERE NOT ("value" = 1 AND "name" = \'test\')',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -347,7 +360,7 @@ trait WhereTestTrait
     public function testWhereNotEqual(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value != 1',
+            'SELECT * FROM "test" WHERE "value" != 1',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -360,7 +373,7 @@ trait WhereTestTrait
     public function testWhereNotIn(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value NOT IN (1, 2, 3)',
+            'SELECT * FROM "test" WHERE "value" NOT IN (1, 2, 3)',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -373,7 +386,7 @@ trait WhereTestTrait
     public function testWhereNotLike(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE name NOT LIKE \'%test%\'',
+            'SELECT * FROM "test" WHERE "name" NOT LIKE \'%test%\'',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -386,7 +399,7 @@ trait WhereTestTrait
     public function testWhereOr(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE (value = 1 OR name = \'test\')',
+            'SELECT * FROM "test" WHERE ("value" = 1 OR "name" = \'test\')',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -402,7 +415,7 @@ trait WhereTestTrait
     public function testWhereOverwrite(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value = 1',
+            'SELECT * FROM "test" WHERE "value" = 1',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -418,7 +431,7 @@ trait WhereTestTrait
     public function testWhereSelectQuery(): void
     {
         $this->assertSame(
-            'SELECT * FROM test WHERE value IN (SELECT id FROM test)',
+            'SELECT * FROM "test" WHERE "value" IN (SELECT "id" FROM "test")',
             $this->db->select()
                 ->from('test')
                 ->where([

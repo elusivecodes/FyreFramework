@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Fyre\DB\Schema\Handlers\Mysql;
 
+use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Query;
 use Fyre\DB\Schema\Schema;
 use Override;
 
@@ -47,9 +49,11 @@ class MysqlSchema extends Schema
                     'table' => 'INFORMATION_SCHEMA.COLLATION_CHARACTER_SET_APPLICABILITY',
                     'alias' => 'CollationCharacterSetApplicability',
                     'type' => 'INNER',
-                    'conditions' => [
-                        'CollationCharacterSetApplicability.COLLATION_NAME = Tables.TABLE_COLLATION',
-                    ],
+                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                        ->equalFields(
+                            'CollationCharacterSetApplicability.COLLATION_NAME',
+                            'Tables.TABLE_COLLATION'
+                        ),
                 ],
             ])
             ->where([

@@ -21,7 +21,7 @@ trait BelongsToTestTrait
         ]);
 
         $this->assertSame(
-            'SELECT Addresses.id AS Addresses__id, Users.id AS Users__id FROM addresses AS Addresses LEFT JOIN users AS Users ON Users.id = Addresses.user_id AND Users.name = \'test\'',
+            'SELECT "Addresses"."id" AS "Addresses__id", "Users"."id" AS "Users__id" FROM "addresses" AS "Addresses" LEFT JOIN "users" AS "Users" ON "Users"."id" = "Addresses"."user_id" AND "Users"."name" = \'test\'',
             $Addresses->find(contain: [
                 'Users',
             ])
@@ -37,7 +37,7 @@ trait BelongsToTestTrait
         $Addresses->Users->setJoinType('inner');
 
         $this->assertSame(
-            'SELECT Addresses.id AS Addresses__id, Users.id AS Users__id FROM addresses AS Addresses INNER JOIN users AS Users ON Users.id = Addresses.user_id',
+            'SELECT "Addresses"."id" AS "Addresses__id", "Users"."id" AS "Users__id" FROM "addresses" AS "Addresses" INNER JOIN "users" AS "Users" ON "Users"."id" = "Addresses"."user_id"',
             $Addresses->find(contain: [
                 'Users',
             ])
@@ -49,7 +49,7 @@ trait BelongsToTestTrait
     public function testBelongsToContainTypeJoinSql(): void
     {
         $this->assertSame(
-            'SELECT Addresses.id AS Addresses__id, Users.id AS Users__id FROM addresses AS Addresses INNER JOIN users AS Users ON Users.id = Addresses.user_id',
+            'SELECT "Addresses"."id" AS "Addresses__id", "Users"."id" AS "Users__id" FROM "addresses" AS "Addresses" INNER JOIN "users" AS "Users" ON "Users"."id" = "Addresses"."user_id"',
             $this->modelRegistry->use('Addresses')
                 ->find(contain: [
                     'Users' => [
@@ -240,7 +240,7 @@ trait BelongsToTestTrait
     public function testBelongsToFindSql(): void
     {
         $this->assertSame(
-            'SELECT Addresses.id AS Addresses__id, Users.id AS Users__id FROM addresses AS Addresses LEFT JOIN users AS Users ON Users.id = Addresses.user_id',
+            'SELECT "Addresses"."id" AS "Addresses__id", "Users"."id" AS "Users__id" FROM "addresses" AS "Addresses" LEFT JOIN "users" AS "Users" ON "Users"."id" = "Addresses"."user_id"',
             $this->modelRegistry->use('Addresses')
                 ->find(contain: [
                     'Users',
@@ -253,7 +253,7 @@ trait BelongsToTestTrait
     public function testBelongsToInnerJoinSql(): void
     {
         $this->assertSame(
-            'SELECT Addresses.id AS Addresses__id FROM addresses AS Addresses INNER JOIN users AS Users ON Users.id = Addresses.user_id',
+            'SELECT "Addresses"."id" AS "Addresses__id" FROM "addresses" AS "Addresses" INNER JOIN "users" AS "Users" ON "Users"."id" = "Addresses"."user_id"',
             $this->modelRegistry->use('Addresses')
                 ->find()
                 ->innerJoinWith('Users')
@@ -392,7 +392,7 @@ trait BelongsToTestTrait
     public function testBelongsToLeftJoinSql(): void
     {
         $this->assertSame(
-            'SELECT Addresses.id AS Addresses__id FROM addresses AS Addresses LEFT JOIN users AS Users ON Users.id = Addresses.user_id',
+            'SELECT "Addresses"."id" AS "Addresses__id" FROM "addresses" AS "Addresses" LEFT JOIN "users" AS "Users" ON "Users"."id" = "Addresses"."user_id"',
             $this->modelRegistry->use('Addresses')
                 ->find()
                 ->leftJoinWith('Users')
@@ -495,7 +495,7 @@ trait BelongsToTestTrait
     public function testBelongsToStrategyFindSql(): void
     {
         $this->assertSame(
-            'SELECT Addresses.id AS Addresses__id, Addresses.user_id AS Addresses__user_id FROM addresses AS Addresses',
+            'SELECT "Addresses"."id" AS "Addresses__id", "Addresses"."user_id" AS "Addresses__user_id" FROM "addresses" AS "Addresses"',
             $this->modelRegistry->use('Addresses')
                 ->find(contain: [
                     'Users' => [

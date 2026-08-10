@@ -17,7 +17,7 @@ trait TableTestTrait
 
         $this->assertSame(
             [
-                'COMMENT ON TABLE test IS \'This is the value\'',
+                'COMMENT ON TABLE "test" IS \'This is the value\'',
             ],
             $this->forge
                 ->build('test', [
@@ -31,8 +31,8 @@ trait TableTestTrait
     {
         $this->assertSame(
             [
-                'CREATE TABLE test (id INTEGER NOT NULL)',
-                'COMMENT ON TABLE test IS \'This is the value\'',
+                'CREATE TABLE "test" ("id" INTEGER NOT NULL)',
+                'COMMENT ON TABLE "test" IS \'This is the value\'',
             ],
             $this->forge
                 ->build('test', [

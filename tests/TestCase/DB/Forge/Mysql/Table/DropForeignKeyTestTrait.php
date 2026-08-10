@@ -54,7 +54,7 @@ trait DropForeignKeyTestTrait
 
         $this->assertSame(
             [
-                'ALTER TABLE test DROP FOREIGN KEY value_id',
+                'ALTER TABLE `test` DROP FOREIGN KEY `value_id`',
             ],
             $this->forge
                 ->build('test')
@@ -67,7 +67,7 @@ trait DropForeignKeyTestTrait
     {
         $this->assertSame(
             [
-                'CREATE TABLE test (id INT(11) NOT NULL, value_id INT(11) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
+                'CREATE TABLE `test` (`id` INT(11) NOT NULL, `value_id` INT(11) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
             ],
             $this->forge
                 ->build('test')

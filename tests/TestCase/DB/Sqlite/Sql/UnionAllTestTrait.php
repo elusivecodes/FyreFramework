@@ -3,16 +3,16 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Sqlite\Sql;
 
-use Fyre\DB\Connection;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Queries\SelectQuery;
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Query;
 
 trait UnionAllTestTrait
 {
     public function testUnionAll(): void
     {
         $this->assertSame(
-            '(SELECT * FROM test) UNION ALL (SELECT * FROM test2)',
+            '(SELECT * FROM "test") UNION ALL (SELECT * FROM test2)',
             $this->db->select()
                 ->from('test')
                 ->unionAll('(SELECT * FROM test2)')
@@ -22,14 +22,14 @@ trait UnionAllTestTrait
 
     public function testUnionAllClosure(): void
     {
+        $query = $this->db->select()
+            ->from('test2');
+
         $this->assertSame(
-            '(SELECT * FROM test) UNION ALL (SELECT * FROM test2)',
+            '(SELECT * FROM "test") UNION ALL (SELECT * FROM "test2")',
             $this->db->select()
                 ->from('test')
-                ->unionAll(static function(Connection $db): SelectQuery {
-                    return $db->select()
-                        ->from('test2');
-                })
+                ->unionAll(static fn(): SelectQuery => $query)
                 ->sql()
         );
     }
@@ -37,11 +37,11 @@ trait UnionAllTestTrait
     public function testUnionAllLiteral(): void
     {
         $this->assertSame(
-            '(SELECT * FROM test) UNION ALL (SELECT * FROM test2)',
+            '(SELECT * FROM "test") UNION ALL (SELECT * FROM test2)',
             $this->db->select()
                 ->from('test')
-                ->unionAll(static function(Connection $db): QueryLiteral {
-                    return $db->literal('(SELECT * FROM test2)');
+                ->unionAll(static function(Query $query): LiteralExpression {
+                    return $query->literal('(SELECT * FROM test2)');
                 })
                 ->sql()
         );
@@ -50,7 +50,7 @@ trait UnionAllTestTrait
     public function testUnionAllMerge(): void
     {
         $this->assertSame(
-            '(SELECT * FROM test) UNION ALL (SELECT * FROM test2) UNION ALL (SELECT * FROM test3)',
+            '(SELECT * FROM "test") UNION ALL (SELECT * FROM test2) UNION ALL (SELECT * FROM test3)',
             $this->db->select()
                 ->from('test')
                 ->unionAll('(SELECT * FROM test2)')
@@ -62,7 +62,7 @@ trait UnionAllTestTrait
     public function testUnionAllOverwrite(): void
     {
         $this->assertSame(
-            '(SELECT * FROM test) UNION ALL (SELECT * FROM test3)',
+            '(SELECT * FROM "test") UNION ALL (SELECT * FROM test3)',
             $this->db->select()
                 ->from('test')
                 ->unionAll('(SELECT * FROM test2)')
@@ -77,7 +77,7 @@ trait UnionAllTestTrait
             ->from('test2');
 
         $this->assertSame(
-            '(SELECT * FROM test) UNION ALL (SELECT * FROM test2)',
+            '(SELECT * FROM "test") UNION ALL (SELECT * FROM "test2")',
             $this->db->select()
                 ->from('test')
                 ->unionAll($query)

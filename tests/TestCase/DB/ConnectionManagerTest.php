@@ -10,6 +10,13 @@ use Fyre\Core\Traits\MacroTrait;
 use Fyre\DB\Connection;
 use Fyre\DB\ConnectionManager;
 use Fyre\DB\ConnectionRetry;
+use Fyre\DB\Expressions\CaseExpression;
+use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Expressions\FunctionBuilder;
+use Fyre\DB\Expressions\FunctionExpression;
+use Fyre\DB\Expressions\IdentifierExpression;
+use Fyre\DB\Expressions\LiteralExpression;
+use Fyre\DB\Expressions\WindowExpression;
 use Fyre\DB\Handlers\Mysql\MysqlConnection;
 use Fyre\DB\Queries\DeleteQuery;
 use Fyre\DB\Queries\InsertQuery;
@@ -18,7 +25,6 @@ use Fyre\DB\Queries\UpdateQuery;
 use Fyre\DB\Queries\UpsertQuery;
 use Fyre\DB\Query;
 use Fyre\DB\QueryGenerator;
-use Fyre\DB\QueryLiteral;
 use Fyre\DB\ResultSet;
 use Fyre\DB\TypeParser;
 use Fyre\DB\ValueBinder;
@@ -49,12 +55,32 @@ final class ConnectionManagerTest extends TestCase
     {
         $this->assertContains(
             DebugTrait::class,
+            class_uses(CaseExpression::class)
+        );
+
+        $this->assertContains(
+            DebugTrait::class,
             class_uses(ConnectionManager::class)
         );
 
         $this->assertContains(
             DebugTrait::class,
             class_uses(ConnectionRetry::class)
+        );
+
+        $this->assertContains(
+            DebugTrait::class,
+            class_uses(FunctionBuilder::class)
+        );
+
+        $this->assertContains(
+            DebugTrait::class,
+            class_uses(FunctionExpression::class)
+        );
+
+        $this->assertContains(
+            DebugTrait::class,
+            class_uses(IdentifierExpression::class)
         );
 
         $this->assertContains(
@@ -69,7 +95,17 @@ final class ConnectionManagerTest extends TestCase
 
         $this->assertContains(
             DebugTrait::class,
-            class_uses(QueryLiteral::class)
+            class_uses(ConditionExpression::class)
+        );
+
+        $this->assertContains(
+            DebugTrait::class,
+            class_uses(LiteralExpression::class)
+        );
+
+        $this->assertContains(
+            DebugTrait::class,
+            class_uses(WindowExpression::class)
         );
 
         $this->assertContains(

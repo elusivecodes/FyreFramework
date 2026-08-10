@@ -224,7 +224,7 @@ Prefer bound values wherever possible. Query builders bind values by default (vi
 - Use query builder methods and condition arrays for parameterized values (see [Binding and expressions](queries.md#binding-and-expressions)).
 - Use `Connection::execute()` when you need direct SQL with bound parameters.
 - Use `Connection::query()` when you need to run direct SQL and want the normal `ResultSet` wrapper.
-- Use `Connection::literal()` only for safe, deliberate SQL fragments (like functions or column expressions).
+- Use `Query::literal()` only for safe, deliberate SQL fragments (like functions or column expressions).
 - Use `Connection::rawQuery()` only when you specifically need the underlying `PDOStatement`.
 - Avoid embedding user input into literals or raw snippets; see [Raw SQL fragments](queries.md#raw-sql-fragments).
 
@@ -383,7 +383,7 @@ $db->insert()
 Creates an `InsertFromQuery` for inserting rows from another query.
 
 Arguments:
-- `$from` (`Closure|QueryLiteral|SelectQuery|string`): the select query (or other supported source) to insert from.
+- `$from` (`Closure|LiteralExpression|SelectQuery|string`): the select query (or other supported source) to insert from.
 - `$columns` (`string[]`): the target columns.
 
 ```php

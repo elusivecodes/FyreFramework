@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Fyre\DB\Forge;
 
 use Fyre\Core\Traits\DebugTrait;
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Schema\Column as SchemaColumn;
 use Fyre\DB\Types\StringType;
 
@@ -21,19 +21,19 @@ abstract class Column
      * Checks whether two default values are equivalent.
      *
      * This method is intended for schema/DDL diffing, where defaults are represented as either scalars
-     * (string|int|float|bool|null) or a {@see QueryLiteral} for raw SQL expressions.
+     * (string|int|float|bool|null) or a {@see LiteralExpression} for raw SQL expressions.
      *
      * - Scalars are compared strictly (no type juggling): e.g. `"1"` is not equal to `1`.
-     * - {@see QueryLiteral} instances are compared by their string value (case-insensitive only). No SQL parsing or
+     * - {@see LiteralExpression} instances are compared by their string value (case-insensitive only). No SQL parsing or
      *   canonicalization is performed (e.g. `CURRENT_TIMESTAMP` and `CURRENT_TIMESTAMP()` are not considered equal).
      *
-     * @param bool|float|int|QueryLiteral|string|null $a The first default value.
-     * @param bool|float|int|QueryLiteral|string|null $b The second default value.
+     * @param bool|float|int|LiteralExpression|string|null $a The first default value.
+     * @param bool|float|int|LiteralExpression|string|null $b The second default value.
      * @return bool Whether the defaults are equivalent.
      */
     public static function compareDefaultValues(mixed $a, mixed $b): bool
     {
-        if ($a instanceof QueryLiteral && $b instanceof QueryLiteral) {
+        if ($a instanceof LiteralExpression && $b instanceof LiteralExpression) {
             return strtolower((string) $a) === strtolower((string) $b);
         }
 
@@ -52,7 +52,7 @@ abstract class Column
      * @param int|null $fractionalSeconds The fractional seconds precision.
      * @param bool $nullable Whether the column is nullable.
      * @param bool $unsigned Whether the column is unsigned.
-     * @param bool|float|int|QueryLiteral|string|null $default The column default value.
+     * @param bool|float|int|LiteralExpression|string|null $default The column default value.
      * @param string|null $comment The column comment.
      * @param bool $autoIncrement Whether the column is auto-incrementing.
      */
@@ -66,7 +66,7 @@ abstract class Column
         protected int|null $fractionalSeconds = null,
         protected bool $nullable = false,
         protected bool $unsigned = false,
-        protected bool|float|int|QueryLiteral|string|null $default = null,
+        protected bool|float|int|LiteralExpression|string|null $default = null,
         protected string|null $comment = null,
         protected bool $autoIncrement = false,
     ) {}
@@ -104,9 +104,9 @@ abstract class Column
     /**
      * Returns the column default value.
      *
-     * @return bool|float|int|QueryLiteral|string|null The column default value.
+     * @return bool|float|int|LiteralExpression|string|null The column default value.
      */
-    public function getDefault(): bool|float|int|QueryLiteral|string|null
+    public function getDefault(): bool|float|int|LiteralExpression|string|null
     {
         return $this->default;
     }

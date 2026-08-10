@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace Fyre\DB\Forge\Handlers\Sqlite;
 
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Forge\Column;
-use Fyre\DB\QueryLiteral;
 use Fyre\DB\Types\BinaryType;
 use Fyre\DB\Types\BooleanType;
 use Fyre\DB\Types\DateTimeFractionalType;
@@ -48,7 +48,7 @@ class SqliteColumn extends Column
      * @param int|null $precision The column precision.
      * @param bool $nullable Whether the column is nullable.
      * @param bool $unsigned Whether the column is unsigned.
-     * @param bool|float|int|QueryLiteral|string|null $default The column default value.
+     * @param bool|float|int|LiteralExpression|string|null $default The column default value.
      * @param bool $autoIncrement Whether the column is auto-incrementing.
      *
      * @throws InvalidArgumentException If the column type is not supported.
@@ -63,7 +63,7 @@ class SqliteColumn extends Column
         int|null $fractionalSeconds = null,
         bool $nullable = false,
         bool $unsigned = false,
-        bool|float|int|QueryLiteral|string|null $default = null,
+        bool|float|int|LiteralExpression|string|null $default = null,
         bool $autoIncrement = false,
     ) {
         parent::__construct(
@@ -241,17 +241,17 @@ class SqliteColumn extends Column
      *
      * Normalizes a default value for DDL generation and comparisons.
      *
-     * - Leaves {@see QueryLiteral} defaults as-is.
-     * - Normalizes `CURRENT_TIMESTAMP*` strings to {@see QueryLiteral}(`CURRENT_TIMESTAMP`).
+     * - Leaves {@see LiteralExpression} defaults as-is.
+     * - Normalizes `CURRENT_TIMESTAMP*` strings to {@see LiteralExpression}(`CURRENT_TIMESTAMP`).
      * - Casts numeric/boolean-looking scalars to their native PHP type when the column type implies it.
      *
-     * @param bool|float|int|QueryLiteral|string|null $default The default value.
+     * @param bool|float|int|LiteralExpression|string|null $default The default value.
      * @param string $type The column type.
-     * @return bool|float|int|QueryLiteral|string|null The normalized default.
+     * @return bool|float|int|LiteralExpression|string|null The normalized default.
      */
-    protected static function parseDefaultValue(mixed $default, string $type): bool|float|int|QueryLiteral|string|null
+    protected static function parseDefaultValue(mixed $default, string $type): bool|float|int|LiteralExpression|string|null
     {
-        if ($default === null || $default instanceof QueryLiteral) {
+        if ($default === null || $default instanceof LiteralExpression) {
             return $default;
         }
 
@@ -260,7 +260,7 @@ class SqliteColumn extends Column
         }
 
         if (is_string($default) && str_starts_with(strtolower($default), 'current_timestamp')) {
-            return new QueryLiteral('CURRENT_TIMESTAMP');
+            return new LiteralExpression('CURRENT_TIMESTAMP');
         }
 
         return filter_var($default, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE) ??

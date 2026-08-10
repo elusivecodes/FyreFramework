@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Fyre\DB\Schema\Handlers\Postgres;
 
-use Fyre\DB\QueryLiteral;
+use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Schema\Column;
 use Fyre\DB\TypeParser;
 use Override;
@@ -47,7 +47,7 @@ class PostgresColumn extends Column
      * @param int|null $length The column length.
      * @param int|null $precision The column precision.
      * @param bool $nullable Whether the column is nullable.
-     * @param bool|float|int|QueryLiteral|string|null $default The column default value.
+     * @param bool|float|int|LiteralExpression|string|null $default The column default value.
      * @param string|null $comment The column comment.
      * @param bool $autoIncrement Whether the column is auto-incrementing.
      * @param class-string<UnitEnum>|null $enumClass The enum class.
@@ -62,7 +62,7 @@ class PostgresColumn extends Column
         int|null $scale = null,
         int|null $fractionalSeconds = null,
         bool $nullable = false,
-        bool|float|int|QueryLiteral|string|null $default = null,
+        bool|float|int|LiteralExpression|string|null $default = null,
         string|null $comment = '',
         bool $autoIncrement = false,
         string|null $enumClass = null,
