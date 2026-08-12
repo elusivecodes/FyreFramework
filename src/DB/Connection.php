@@ -30,6 +30,7 @@ use function array_is_list;
 use function array_keys;
 use function array_map;
 use function array_replace_recursive;
+use function explode;
 use function filter_var;
 use function implode;
 use function is_bool;
@@ -65,10 +66,6 @@ abstract class Connection
     protected static array $defaults = [
         'log' => false,
     ];
-
-    protected static string $identifierQuoteEnd = '"';
-
-    protected static string $identifierQuoteStart = '"';
 
     protected int|null $affectedRows = null;
 
@@ -546,28 +543,31 @@ abstract class Connection
             return $identifier;
         }
 
-        // column
-        if (preg_match('/^[a-z_]\w*\z/i', $identifier)) {
-            return $this->quoteIdentifierPart($identifier);
-        }
+        // identifier
+        if (preg_match('/^[a-z_]\w*(?:\.[a-z_]\w*)*(?:\.\*)?\z/i', $identifier)) {
+            $parts = explode('.', $identifier);
+            $parts = array_map(
+                fn(string $part): string => $part === '*' ?
+                    $part :
+                    $this->quoteIdentifierPart($part),
+                $parts
+            );
 
-        // table.column or table.*
-        if (preg_match('/^([a-z_]\w*)\.(\*|[a-z_]\w*)\z/i', $identifier, $matches)) {
-            return $this->quoteIdentifier($matches[1]).'.'.$this->quoteIdentifier($matches[2]);
+            return implode('.', $parts);
         }
 
         // function(...)
-        if (preg_match('/^([a-z_]\w*)\(([a-z_]\w*(?:\.[a-z_]\w*)?|\*)\)\z/i', $identifier, $matches)) {
+        if (preg_match('/^([a-z_]\w*)\((.*)\)\z/i', $identifier, $matches)) {
             return $matches[1].'('.$this->quoteIdentifier($matches[2]).')';
         }
 
-        // table.column AS alias
-        if (preg_match('/^([a-z_]\w*(?:\.[a-z_]\w*)?)\s+AS\s+([a-z_]\w*)\z/i', $identifier, $matches)) {
+        // identifier AS alias
+        if (preg_match('/^([a-z_]\w*(?:\.[a-z_]\w*)*)\s+AS\s+([a-z_]\w*)\z/i', $identifier, $matches)) {
             return $this->quoteIdentifier($matches[1]).' AS '.$this->quoteIdentifier($matches[2]);
         }
 
         // function(...) AS alias
-        if (preg_match('/^([a-z_]\w*\((?:[a-z_]\w*(?:\.[a-z_]\w*)?|\*)\))\s+AS\s+([a-z_]\w*)\z/i', $identifier, $matches)) {
+        if (preg_match('/^([a-z_]\w*\(.*\))\s+AS\s+([a-z_]\w*)\z/i', $identifier, $matches)) {
             return $this->quoteIdentifier($matches[1]).' AS '.$this->quoteIdentifier($matches[2]);
         }
 
@@ -582,13 +582,9 @@ abstract class Connection
      */
     public function quoteIdentifierPart(string $identifier): string
     {
-        $identifier = str_replace(
-            static::$identifierQuoteEnd,
-            static::$identifierQuoteEnd.static::$identifierQuoteEnd,
-            $identifier
-        );
+        $identifier = str_replace('"', '""', $identifier);
 
-        return static::$identifierQuoteStart.$identifier.static::$identifierQuoteEnd;
+        return '"'.$identifier.'"';
     }
 
     /**

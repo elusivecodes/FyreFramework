@@ -15,6 +15,7 @@ use PDOException;
 use function array_replace;
 use function class_exists;
 use function sprintf;
+use function str_replace;
 
 /**
  * Provides a MySQL {@see Connection} implementation.
@@ -42,12 +43,6 @@ class MysqlConnection extends Connection
         ],
         'flags' => [],
     ];
-
-    #[Override]
-    protected static string $identifierQuoteEnd = '`';
-
-    #[Override]
-    protected static string $identifierQuoteStart = '`';
 
     #[Override]
     #[SensitivePropertyArray([
@@ -190,6 +185,17 @@ class MysqlConnection extends Connection
     public function getCollation(): string
     {
         return (string) $this->rawQuery('SELECT @@collation_connection')->fetchColumn();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function quoteIdentifierPart(string $identifier): string
+    {
+        $identifier = str_replace('`', '``', $identifier);
+
+        return '`'.$identifier.'`';
     }
 
     /**

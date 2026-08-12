@@ -21,6 +21,14 @@ trait QuoteIdentifierTestTrait
         );
     }
 
+    public function testQuoteIdentifierAliasMultiple(): void
+    {
+        $this->assertSame(
+            '`a`.`b`.`c` AS `d`',
+            $this->db->quoteIdentifier('a.b.c AS d')
+        );
+    }
+
     public function testQuoteIdentifierEmpty(): void
     {
         $this->assertSame(
@@ -42,6 +50,14 @@ trait QuoteIdentifierTestTrait
         $this->assertSame(
             'X(`a`.`b`) AS `c`',
             $this->db->quoteIdentifier('X(a.b) AS c')
+        );
+    }
+
+    public function testQuoteIdentifierFunctionExpression(): void
+    {
+        $this->assertSame(
+            'X(DISTINCT a) AS `c`',
+            $this->db->quoteIdentifier('X(DISTINCT a) AS c')
         );
     }
 
@@ -85,11 +101,27 @@ trait QuoteIdentifierTestTrait
         );
     }
 
+    public function testQuoteIdentifierQualifiedMultiple(): void
+    {
+        $this->assertSame(
+            '`a`.`b`.`c`',
+            $this->db->quoteIdentifier('a.b.c')
+        );
+    }
+
+    public function testQuoteIdentifierQualifiedMultipleWildcard(): void
+    {
+        $this->assertSame(
+            '`a`.`b`.*',
+            $this->db->quoteIdentifier('a.b.*')
+        );
+    }
+
     public function testQuoteIdentifierUnmatched(): void
     {
         $this->assertSame(
-            'a.b.c',
-            $this->db->quoteIdentifier('a.b.c')
+            'a.*.b',
+            $this->db->quoteIdentifier('a.*.b')
         );
     }
 
