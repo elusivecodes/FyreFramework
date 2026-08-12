@@ -557,7 +557,7 @@ abstract class Connection
         }
 
         // function(...)
-        if (preg_match('/^([a-z_]\w*)\((.*)\)\z/i', $identifier, $matches)) {
+        if (preg_match('/^([a-z_]\w*(?:\.[a-z_]\w*)*)\((.*)\)\z/i', $identifier, $matches)) {
             return $matches[1].'('.$this->quoteIdentifier($matches[2]).')';
         }
 
@@ -567,7 +567,7 @@ abstract class Connection
         }
 
         // function(...) AS alias
-        if (preg_match('/^([a-z_]\w*\(.*\))\s+AS\s+([a-z_]\w*)\z/i', $identifier, $matches)) {
+        if (preg_match('/^([a-z_]\w*(?:\.[a-z_]\w*)*\(.*\))\s+AS\s+([a-z_]\w*)\z/i', $identifier, $matches)) {
             return $this->quoteIdentifier($matches[1]).' AS '.$this->quoteIdentifier($matches[2]);
         }
 

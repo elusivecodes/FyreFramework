@@ -61,6 +61,22 @@ trait QuoteIdentifierTestTrait
         );
     }
 
+    public function testQuoteIdentifierFunctionQualifiedName(): void
+    {
+        $this->assertSame(
+            'X.Y(`a`)',
+            $this->db->quoteIdentifier('X.Y(a)')
+        );
+    }
+
+    public function testQuoteIdentifierFunctionQualifiedNameAlias(): void
+    {
+        $this->assertSame(
+            'X.Y(`a`) AS `b`',
+            $this->db->quoteIdentifier('X.Y(a) AS b')
+        );
+    }
+
     public function testQuoteIdentifierFunctionWildcard(): void
     {
         $this->assertSame(
