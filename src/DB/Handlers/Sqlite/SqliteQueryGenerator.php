@@ -17,6 +17,7 @@ use function array_merge;
 use function array_unique;
 use function implode;
 use function in_array;
+use function sprintf;
 use function strtolower;
 
 /**
@@ -96,7 +97,10 @@ class SqliteQueryGenerator extends QueryGenerator
                     'second' => '%S',
                     'week' => '%W',
                     'year' => '%Y',
-                    default => throw new InvalidArgumentException('SQLite date part `'.$part.'` is not supported.'),
+                    default => throw new InvalidArgumentException(sprintf(
+                        'SQLite date part `%s` is not supported.',
+                        $part
+                    )),
                 };
                 $expression = $this->parseExpression($expression, $binder);
 

@@ -57,7 +57,7 @@ class Container implements ContainerInterface
     protected array $aliasStack = [];
 
     /**
-     * @var array<string, array{0: Closure|string, 1: bool}>
+     * @var array<string, array{Closure|string, bool}>
      */
     protected array $bindings = [];
 

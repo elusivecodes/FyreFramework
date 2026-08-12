@@ -73,9 +73,7 @@ abstract class QueryGenerator
     public static function combineConditions(array $fields, array $values): ConditionExpression
     {
         if (count($fields) !== count($values)) {
-            throw new InvalidArgumentException(
-                'Condition fields and values must contain the same number of elements.'
-            );
+            throw new InvalidArgumentException('Condition fields and values must contain the same number of elements.');
         }
 
         $fields = array_values($fields);
@@ -130,9 +128,7 @@ abstract class QueryGenerator
 
         foreach ($allValues as $row) {
             if (count($row) !== 1) {
-                throw new InvalidArgumentException(
-                    'Condition fields and values must contain the same number of elements.'
-                );
+                throw new InvalidArgumentException('Condition fields and values must contain the same number of elements.');
             }
 
             $value = array_first($row);

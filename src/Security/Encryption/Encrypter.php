@@ -14,6 +14,7 @@ use function hash_hmac;
 use function hash_hmac_algos;
 use function in_array;
 use function mb_substr;
+use function sprintf;
 use function strlen;
 use function strtolower;
 
@@ -52,7 +53,10 @@ abstract class Encrypter
         $this->config = array_replace(self::$defaults, static::$defaults, $options);
 
         if (!in_array(strtolower($this->config['digest']), hash_hmac_algos(), true)) {
-            throw new InvalidArgumentException('Encryption digest `'.$this->config['digest'].'` is not valid.');
+            throw new InvalidArgumentException(sprintf(
+                'Encryption digest `%s` is not valid.',
+                $this->config['digest']
+            ));
         }
     }
 

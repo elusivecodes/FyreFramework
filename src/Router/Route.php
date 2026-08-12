@@ -54,7 +54,7 @@ abstract class Route
      * Parses a route placeholder.
      *
      * @param string $placeholder The placeholder definition.
-     * @return array{0: string, 1: string|null, 2: bool} The name, binding field and optional flag.
+     * @return array{string, string|null, bool} The name, binding field and optional flag.
      */
     public static function parsePlaceholder(string $placeholder): array
     {
@@ -425,7 +425,7 @@ abstract class Route
      * Note: Static path segments are escaped and placeholders use generated named captures
      * so custom placeholder captures do not affect argument extraction.
      *
-     * @return array{0: string, 1: array<string, string>} The route path regular expression and captures.
+     * @return array{string, array<string, string>} The route path regular expression and captures.
      */
     protected function getPathRegExp(): array
     {

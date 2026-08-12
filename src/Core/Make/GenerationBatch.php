@@ -5,6 +5,8 @@ namespace Fyre\Core\Make;
 
 use InvalidArgumentException;
 
+use function sprintf;
+
 /**
  * Collects and saves generated files.
  */
@@ -41,9 +43,10 @@ class GenerationBatch
         $path = $generatedFile->getPath();
 
         if (isset($this->files[$path])) {
-            throw new InvalidArgumentException(
-                'Generated file destination collision: `'.$path.'`.'
-            );
+            throw new InvalidArgumentException(sprintf(
+                'Generated file destination collision: `%s`.',
+                $path
+            ));
         }
 
         $this->files[$path] = $generatedFile;

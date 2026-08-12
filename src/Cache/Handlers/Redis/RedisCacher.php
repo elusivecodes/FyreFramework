@@ -142,9 +142,7 @@ class RedisCacher extends Cacher
     {
         if (!$this->config['prefix']) {
             if (!$this->config['flushDatabase']) {
-                throw new CacheException(
-                    'Redis cache clear requires a non-empty prefix or flushDatabase enabled.'
-                );
+                throw new CacheException('Redis cache clear requires a non-empty prefix or flushDatabase enabled.');
             }
 
             return $this->connection->flushDB(false);

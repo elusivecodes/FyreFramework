@@ -16,6 +16,7 @@ use function openssl_encrypt;
 use function openssl_get_cipher_methods;
 use function openssl_random_pseudo_bytes;
 use function serialize;
+use function sprintf;
 use function strtolower;
 use function unserialize;
 
@@ -51,11 +52,17 @@ class OpenSSLEncrypter extends Encrypter
         $cipher = strtolower($this->config['cipher']);
 
         if (!in_array($cipher, openssl_get_cipher_methods(), true)) {
-            throw new InvalidArgumentException('OpenSSL cipher `'.$this->config['cipher'].'` is not valid.');
+            throw new InvalidArgumentException(sprintf(
+                'OpenSSL cipher `%s` is not valid.',
+                $this->config['cipher']
+            ));
         }
 
         if (openssl_cipher_iv_length($cipher) <= 0) {
-            throw new InvalidArgumentException('OpenSSL cipher `'.$this->config['cipher'].'` must use an initialization vector.');
+            throw new InvalidArgumentException(sprintf(
+                'OpenSSL cipher `%s` must use an initialization vector.',
+                $this->config['cipher']
+            ));
         }
     }
 

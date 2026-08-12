@@ -48,6 +48,7 @@ use function is_subclass_of;
 use function method_exists;
 use function natsort;
 use function preg_replace;
+use function sprintf;
 use function str_ends_with;
 use function str_starts_with;
 use function substr;
@@ -268,9 +269,12 @@ class ModelSourceBuilder
             $alias = $relationship['alias'];
 
             if (isset($usedAliases[$alias])) {
-                throw new InvalidArgumentException(
-                    'Relationship alias `'.$alias.'` collides between `'.$usedAliases[$alias].'` and `'.$origin.'`.'
-                );
+                throw new InvalidArgumentException(sprintf(
+                    'Relationship alias `%s` collides between `%s` and `%s`.',
+                    $alias,
+                    $usedAliases[$alias],
+                    $origin
+                ));
             }
 
             $usedAliases[$alias] = $origin;

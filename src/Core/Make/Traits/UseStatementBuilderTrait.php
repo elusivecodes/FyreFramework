@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use function array_key_exists;
 use function implode;
 use function ksort;
+use function sprintf;
 use function strrpos;
 use function substr;
 
@@ -53,9 +54,12 @@ trait UseStatementBuilderTrait
             $name = $aliases[$class] ?? $name;
 
             if (isset($importNames[$name]) && $importNames[$name] !== $class) {
-                throw new InvalidArgumentException(
-                    'Import name `'.$name.'` collides between `'.$importNames[$name].'` and `'.$class.'`.'
-                );
+                throw new InvalidArgumentException(sprintf(
+                    'Import name `%s` collides between `%s` and `%s`.',
+                    $name,
+                    $importNames[$name],
+                    $class
+                ));
             }
 
             $imports[$class] = $aliases[$class] ?? null;
