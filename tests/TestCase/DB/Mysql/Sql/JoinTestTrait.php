@@ -90,7 +90,7 @@ trait JoinTestTrait
     public function testJoinConditionsAnd(): void
     {
         $this->assertSame(
-            'SELECT * FROM `test` INNER JOIN `test2` ON (test2.id = test.id AND `test2`.`value` = 1)',
+            'SELECT * FROM `test` INNER JOIN `test2` ON test2.id = test.id AND `test2`.`value` = 1',
             $this->db->select()
                 ->from('test')
                 ->join([
@@ -295,7 +295,7 @@ trait JoinTestTrait
     public function testJoinConditionsGroups(): void
     {
         $this->assertSame(
-            'SELECT * FROM `test` INNER JOIN `test2` ON (test2.id = test.id AND (`test2`.`value` = 1 OR test2.value IS NULL))',
+            'SELECT * FROM `test` INNER JOIN `test2` ON test2.id = test.id AND (`test2`.`value` = 1 OR test2.value IS NULL)',
             $this->db->select()
                 ->from('test')
                 ->join([
@@ -583,7 +583,7 @@ trait JoinTestTrait
     public function testJoinConditionsOr(): void
     {
         $this->assertSame(
-            'SELECT * FROM `test` INNER JOIN `test2` ON (test2.id = test.id OR `test2`.`value` = 1)',
+            'SELECT * FROM `test` INNER JOIN `test2` ON test2.id = test.id OR `test2`.`value` = 1',
             $this->db->select()
                 ->from('test')
                 ->join([

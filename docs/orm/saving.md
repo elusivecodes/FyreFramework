@@ -229,7 +229,7 @@ if (!$Users->save($user)) {
 
 ## Bulk updates with `updateAll()`
 
-`updateAll(array $data, array $conditions): int` updates all rows matching the conditions and returns the number of rows affected.
+`updateAll(array $data, array|Closure|ConditionExpression|string $conditions): int` updates all rows matching the conditions and returns the number of rows affected.
 
 It is implemented using an ORM `UpdateQuery` wrapper over the database query builder, so it:
 
@@ -420,7 +420,7 @@ Updates all rows matching the conditions and returns the number of rows affected
 
 Arguments:
 - `$data` (`array<string, mixed>`): column values to set.
-- `$conditions` (`array<mixed>`): conditions to match.
+- `$conditions` (`array<mixed>|Closure|ConditionExpression|string`): conditions to match.
 
 ```php
 $affected = $Users->updateAll(

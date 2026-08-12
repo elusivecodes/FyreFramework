@@ -207,7 +207,7 @@ class RuleSet
                     $primaryKeys
                 );
 
-                $conditions['not'] = QueryGenerator::combineConditions($primaryKeys, $primaryValues);
+                QueryGenerator::combineConditions($primaryKeys, $primaryValues) |> $conditions->not(...);
             }
 
             $query = $model->find(

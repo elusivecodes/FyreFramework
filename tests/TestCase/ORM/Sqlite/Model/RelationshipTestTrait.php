@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\Sqlite\Model;
 
+use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Query;
 use Fyre\ORM\Model;
 use Fyre\ORM\Relationship;
 use Fyre\ORM\Relationships\HasMany;
@@ -78,7 +80,97 @@ trait RelationshipTestTrait
         );
 
         $this->assertSame(
-            'SELECT "Items"."id" AS "Items__id" FROM "items" AS "Items" LEFT JOIN "items" AS "Alias" ON "item_id" = "Items"."id" AND "Alias"."name" = \'Test\'',
+            'SELECT "Items"."id" AS "Items__id" FROM "items" AS "Items" LEFT JOIN "items" AS "Alias" ON ("item_id" = "Items"."id") AND "Alias"."name" = \'Test\'',
+            $Items->find()
+                ->disableAutoFields()
+                ->leftJoinWith('Alias')
+                ->sql()
+        );
+    }
+
+    public function testRelationshipConditionsCallback(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $conditions = static fn(Query $query): ConditionExpression => $query->expr()
+            ->eq('Alias.name', 'Test');
+
+        $Items->hasOne('Alias', [
+            'classAlias' => 'Items',
+        ])->setConditions($conditions);
+
+        $this->assertSame(
+            $conditions,
+            $Items->Alias->getConditions()
+        );
+
+        $this->assertSame(
+            'SELECT "Items"."id" AS "Items__id" FROM "items" AS "Items" LEFT JOIN "items" AS "Alias" ON ("item_id" = "Items"."id") AND ("Alias"."name" = \'Test\')',
+            $Items->find()
+                ->disableAutoFields()
+                ->leftJoinWith('Alias')
+                ->sql()
+        );
+    }
+
+    public function testRelationshipConditionsExpression(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $conditions = new ConditionExpression()
+            ->eq('Alias.name', 'Test');
+
+        $Items->hasOne('Alias', [
+            'classAlias' => 'Items',
+        ])->setConditions($conditions);
+
+        $this->assertSame(
+            $conditions,
+            $Items->Alias->getConditions()
+        );
+
+        $this->assertSame(
+            'SELECT "Items"."id" AS "Items__id" FROM "items" AS "Items" LEFT JOIN "items" AS "Alias" ON ("item_id" = "Items"."id") AND ("Alias"."name" = \'Test\')',
+            $Items->find()
+                ->disableAutoFields()
+                ->leftJoinWith('Alias')
+                ->sql()
+        );
+    }
+
+    public function testRelationshipConditionsNull(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $Items->hasOne('Alias', [
+            'classAlias' => 'Items',
+        ])->setConditions(null);
+
+        $this->assertNull($Items->Alias->getConditions());
+
+        $this->assertSame(
+            'SELECT "Items"."id" AS "Items__id" FROM "items" AS "Items" LEFT JOIN "items" AS "Alias" ON "item_id" = "Items"."id"',
+            $Items->find()
+                ->disableAutoFields()
+                ->leftJoinWith('Alias')
+                ->sql()
+        );
+    }
+
+    public function testRelationshipConditionsString(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $conditions = 'Alias.name IS NOT NULL';
+
+        $Items->hasOne('Alias', [
+            'classAlias' => 'Items',
+        ])->setConditions($conditions);
+
+        $this->assertSame(
+            $conditions,
+            $Items->Alias->getConditions()
+        );
+
+        $this->assertSame(
+            'SELECT "Items"."id" AS "Items__id" FROM "items" AS "Items" LEFT JOIN "items" AS "Alias" ON ("item_id" = "Items"."id") AND Alias.name IS NOT NULL',
             $Items->find()
                 ->disableAutoFields()
                 ->leftJoinWith('Alias')

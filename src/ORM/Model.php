@@ -448,10 +448,10 @@ class Model implements EventListenerInterface
     /**
      * Deletes all rows matching conditions.
      *
-     * @param array<mixed> $conditions The conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string $conditions The conditions.
      * @return int The number of rows affected.
      */
-    public function deleteAll(array $conditions): int
+    public function deleteAll(array|Closure|ConditionExpression|string $conditions): int
     {
         return $this->deleteQuery()
             ->where($conditions)
@@ -547,10 +547,10 @@ class Model implements EventListenerInterface
     /**
      * Checks whether matching rows exist.
      *
-     * @param array<mixed> $conditions The conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string $conditions The conditions.
      * @return bool Whether matching rows exist.
      */
-    public function exists(array $conditions): bool
+    public function exists(array|Closure|ConditionExpression|string $conditions): bool
     {
         return $this->find()
             ->disableAutoFields()
@@ -1623,11 +1623,13 @@ class Model implements EventListenerInterface
      * Updates all rows matching conditions.
      *
      * @param array<string, mixed> $data The data to update.
-     * @param array<mixed> $conditions The conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string $conditions The conditions.
      * @return int The number of rows affected.
      */
-    public function updateAll(array $data, array $conditions): int
-    {
+    public function updateAll(
+        array $data,
+        array|Closure|ConditionExpression|string $conditions
+    ): int {
         return $this->updateQuery()
             ->set($data)
             ->where($conditions)
@@ -2071,11 +2073,11 @@ class Model implements EventListenerInterface
      *
      * @param array<mixed> $primaryValues The primary key values.
      * @param bool $alias Whether to alias the primary key fields.
-     * @return array<mixed> The primary key conditions.
+     * @return ConditionExpression The primary key conditions.
      *
      * @throws OrmException If primary key values are null or missing.
      */
-    protected function primaryConditions(array $primaryValues, bool $alias = false): array
+    protected function primaryConditions(array $primaryValues, bool $alias = false): ConditionExpression
     {
         $primaryKeys = $this->getPrimaryKey();
         $primaryValues = array_values($primaryValues);
@@ -2297,6 +2299,9 @@ class Model implements EventListenerInterface
             $targetKeys
         );
 
+        /**
+         * @var ConditionExpression $targetConditions
+         */
         $targetConditions = QueryGenerator::normalizeConditions($targetKeys, $targetValues);
 
         $relations = $target->find()

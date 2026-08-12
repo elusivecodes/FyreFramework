@@ -782,16 +782,17 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
                 ));
             }
 
-            $data['conditions'] ??= [];
             $path = $pathPrefix.'.'.$name;
             $joinType = $data['type'] ?? $relationship->getJoinType();
-            $joinConditions = $data['conditions'];
+            $joinConditions = static::normalizeJoinConditions($data['conditions'] ?? []);
+
             $joins = $relationship->buildJoins([
                 'alias' => $name,
                 'sourceAlias' => $alias,
                 'type' => $joinType,
                 'conditions' => $joinConditions,
             ]);
+
             $joinPath = $pathPrefix;
             $joinExists = true;
 
@@ -823,7 +824,8 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
                 ]);
 
                 $joinType = $join['type'] ?? $joinType;
-                $joinConditions = $join['conditions'] ?? [];
+                $joinConditions = static::normalizeJoinConditions($joinConditions['conditions'] ?? []);
+
                 $joins = $relationship->buildJoins([
                     'alias' => $name,
                     'sourceAlias' => $alias,
@@ -932,7 +934,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
             $relationshipPath = $path.'.'.$alias;
             $joinType = $type;
             $joinConditions = $isLastContain ?
-                $conditions :
+                static::normalizeJoinConditions($conditions) :
                 [];
 
             if ($this->options['events']) {
@@ -953,7 +955,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
                 ]);
 
                 $joinType = $join['type'] ?? $joinType;
-                $joinConditions = $join['conditions'] ?? [];
+                $joinConditions = static::normalizeJoinConditions($join['conditions'] ?? []);
             }
 
             $joins = $relationship->buildJoins([
@@ -997,13 +999,13 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
                         $model->getPrimaryKey()
                     );
 
-                    $primaryConditions = [];
+                    $conditions = $this->expr();
 
                     foreach ($primaryKeys as $primaryKey) {
-                        $primaryConditions[$primaryKey.' IS'] = null;
+                        $conditions->isNull($primaryKey);
                     }
 
-                    $this->where($primaryConditions);
+                    $this->where($conditions);
                 }
             }
 

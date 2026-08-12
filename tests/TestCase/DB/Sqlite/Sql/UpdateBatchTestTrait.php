@@ -34,7 +34,7 @@ trait UpdateBatchTestTrait
     public function testUpdateBatchArray(): void
     {
         $this->assertSame(
-            'UPDATE "test" SET "name" = CASE WHEN "id" = 1 AND "value" = 1 THEN \'Test 1\' WHEN "id" = 2 AND "value" = 2 THEN \'Test 2\' END WHERE (("id" = 1 AND "value" = 1) OR ("id" = 2 AND "value" = 2))',
+            'UPDATE "test" SET "name" = CASE WHEN "id" = 1 AND "value" = 1 THEN \'Test 1\' WHEN "id" = 2 AND "value" = 2 THEN \'Test 2\' END WHERE ("id" = 1 AND "value" = 1) OR ("id" = 2 AND "value" = 2)',
             $this->db->updateBatch('test')
                 ->set([
                     [
@@ -55,7 +55,7 @@ trait UpdateBatchTestTrait
     public function testUpdateBatchArrayNull(): void
     {
         $this->assertSame(
-            'UPDATE "test" SET "name" = CASE WHEN "id" = 1 AND "value" = 1 THEN \'Test 1\' WHEN "id" = 2 AND "value" IS NULL THEN \'Test 2\' END WHERE (("id" = 1 AND "value" = 1) OR ("id" = 2 AND "value" IS NULL))',
+            'UPDATE "test" SET "name" = CASE WHEN "id" = 1 AND "value" = 1 THEN \'Test 1\' WHEN "id" = 2 AND "value" IS NULL THEN \'Test 2\' END WHERE ("id" = 1 AND "value" = 1) OR ("id" = 2 AND "value" IS NULL)',
             $this->db->updateBatch('test')
                 ->set([
                     [

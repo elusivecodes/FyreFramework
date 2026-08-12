@@ -31,7 +31,6 @@ use function array_first;
 use function array_key_exists;
 use function array_keys;
 use function array_map;
-use function array_slice;
 use function array_values;
 use function count;
 use function filter_var;
@@ -42,6 +41,7 @@ use function is_numeric;
 use function is_string;
 use function preg_match;
 use function preg_replace;
+use function sprintf;
 use function strtolower;
 use function strtoupper;
 use function trim;
@@ -65,25 +65,31 @@ abstract class QueryGenerator
      *
      * @param string[] $fields The fields.
      * @param array<mixed> $values The values.
-     * @return array<mixed> The combined conditions.
+     * @return ConditionExpression The combined conditions.
+     *
+     * @throws InvalidArgumentException If the number of fields and values does not match.
      */
-    public static function combineConditions(array $fields, array $values): array
+    public static function combineConditions(array $fields, array $values): ConditionExpression
     {
+        if (count($fields) !== count($values)) {
+            throw new InvalidArgumentException(
+                'Condition fields and values must contain the same number of elements.'
+            );
+        }
+
         $fields = array_values($fields);
         $values = array_values($values);
 
-        $fields = array_slice($fields, 0, count($values));
-
-        $conditions = [];
+        $conditions = new ConditionExpression();
 
         foreach ($fields as $i => $field) {
-            $value = $values[$i] ?? null;
+            $value = $values[$i];
 
             if ($value === null) {
-                $field .= ' IS';
+                $conditions->isNull($field);
+            } else {
+                $conditions->eq($field, $value);
             }
-
-            $conditions[$field] = $value;
         }
 
         return $conditions;
@@ -94,12 +100,14 @@ abstract class QueryGenerator
      *
      * @param string[] $fields The fields.
      * @param array<array<mixed>> $allValues The values.
-     * @return array<mixed> The normalized conditions.
+     * @return ConditionExpression|null The normalized conditions.
+     *
+     * @throws InvalidArgumentException If the number of fields and values does not match.
      */
-    public static function normalizeConditions(array $fields, array $allValues): array
+    public static function normalizeConditions(array $fields, array $allValues): ConditionExpression|null
     {
         if ($fields === [] || $allValues === []) {
-            return [];
+            return null;
         }
 
         if (count($allValues) === 1) {
@@ -107,20 +115,23 @@ abstract class QueryGenerator
         }
 
         if (count($fields) > 1) {
-            return [
-                'or' => array_map(
-                    static fn(array $values): array => static::combineConditions($fields, $values),
-                    $allValues
-                ),
-            ];
+            $conditions = new ConditionExpression('OR');
+
+            foreach ($allValues as $values) {
+                static::combineConditions($fields, $values) |> $conditions->add(...);
+            }
+
+            return $conditions;
         }
 
         $hasNull = false;
         $values = [];
 
         foreach ($allValues as $row) {
-            if ($row === []) {
-                continue;
+            if (count($row) !== 1) {
+                throw new InvalidArgumentException(
+                    'Condition fields and values must contain the same number of elements.'
+                );
             }
 
             $value = array_first($row);
@@ -134,23 +145,18 @@ abstract class QueryGenerator
 
         $valueCount = count($values);
 
-        $conditions = [];
-
         $field = array_first($fields);
+
+        $conditions = new ConditionExpression('OR');
+
         if ($valueCount === 1) {
-            $conditions[$field] = array_first($values);
+            $conditions->eq($field, array_first($values));
         } else if ($valueCount > 1) {
-            $conditions[$field.' IN'] = $values;
+            $conditions->in($field, $values);
         }
 
         if ($hasNull) {
-            $conditions[$field.' IS'] = null;
-        }
-
-        if (count($conditions) > 1) {
-            return [
-                'or' => $conditions,
-            ];
+            $conditions->isNull($field);
         }
 
         return $conditions;
@@ -365,7 +371,7 @@ abstract class QueryGenerator
      * @param ValueBinder|null $binder The value binder.
      * @return string The CASE expression.
      *
-     * @throws InvalidArgumentException If the case expression has no branches.
+     * @throws InvalidArgumentException If the case expression has no branches or an empty WHEN condition.
      */
     protected function buildCase(CaseExpression $case, ValueBinder|null $binder = null): string
     {
@@ -390,11 +396,16 @@ abstract class QueryGenerator
                     throw new InvalidArgumentException('Query simple CASE expression does not support array WHEN values.');
                 }
 
-                $query .= ' WHEN '.$this->buildConditions($branch['when'], $binder);
+                $when = $this->buildConditions($branch['when'], $binder);
             } else {
-                $query .= ' WHEN '.$this->parseExpression($branch['when'], $binder, $simple);
+                $when = $this->parseExpression($branch['when'], $binder, $simple);
             }
 
+            if ($when === null) {
+                throw new InvalidArgumentException('Query CASE WHEN condition must not be empty.');
+            }
+
+            $query .= ' WHEN '.$when;
             $query .= ' THEN '.$this->parseExpression($branch['then'], $binder);
         }
 
@@ -414,6 +425,8 @@ abstract class QueryGenerator
      * @param mixed $value The comparison value.
      * @param ValueBinder|null $binder The value binder.
      * @return string The comparison expression.
+     *
+     * @throws InvalidArgumentException If IN values are empty.
      */
     protected function buildComparison(
         ValueExpressionInterface $field,
@@ -432,6 +445,13 @@ abstract class QueryGenerator
         }
 
         if (in_array($operator, ['IN', 'NOT IN'], true) && is_array($value)) {
+            if ($value === []) {
+                throw new InvalidArgumentException(sprintf(
+                    'Condition expression %s values must not be empty.',
+                    $operator
+                ));
+            }
+
             $values = array_map(
                 fn(mixed $item): string => $this->parseExpression($item, $binder),
                 $value
@@ -448,37 +468,54 @@ abstract class QueryGenerator
      *
      * @param ConditionExpression $expression The condition expression.
      * @param ValueBinder|null $binder The value binder.
-     * @return string The condition expression.
+     * @return string|null The condition expression.
      */
-    protected function buildConditionExpression(ConditionExpression $expression, ValueBinder|null $binder = null): string
-    {
-        $conditions = array_map(
-            function(array|ConditionExpression $condition) use ($binder): string {
-                if ($condition instanceof ConditionExpression) {
-                    return '('.$this->buildConditionExpression($condition, $binder).')';
+    protected function buildConditionExpression(
+        ConditionExpression $expression,
+        ValueBinder|null $binder = null
+    ): string|null {
+        $groups = [];
+
+        $conditions = $expression->getConditions();
+
+        foreach ($conditions as $condition) {
+            if ($condition instanceof ConditionExpression) {
+                $condition = $this->buildConditionExpression($condition, $binder);
+
+                if ($condition !== null) {
+                    $groups[] = [$condition];
                 }
 
-                $operator = $condition['operator'];
+                continue;
+            }
 
-                if ($operator === 'EXISTS' || $operator === 'NOT EXISTS') {
-                    return $operator.' '.$this->parseExpression($condition['query'], $binder);
+            $operator = $condition['operator'];
+
+            if ($operator === 'EXISTS' || $operator === 'NOT EXISTS') {
+                $groups[] = $operator.' '.$this->parseExpression($condition['query'], $binder);
+
+                continue;
+            }
+
+            if ($operator === 'NOT') {
+                $condition = $this->buildConditionExpression($condition['condition'], $binder);
+
+                if ($condition !== null) {
+                    $groups[] = 'NOT ('.$condition.')';
                 }
 
-                if ($operator === 'NOT') {
-                    return 'NOT ('.$this->buildConditionExpression($condition['condition'], $binder).')';
-                }
+                continue;
+            }
 
-                return $this->buildComparison(
-                    $condition['field'],
-                    $operator,
-                    $condition['value'],
-                    $binder
-                );
-            },
-            $expression->getConditions()
-        );
+            $groups[] = $this->buildComparison(
+                $condition['field'],
+                $operator,
+                $condition['value'],
+                $binder
+            );
+        }
 
-        return implode(' '.$expression->getConjunction().' ', $conditions);
+        return static::buildConditionGroup($groups, $expression->getConjunction());
     }
 
     /**
@@ -487,20 +524,18 @@ abstract class QueryGenerator
      * @param array<mixed> $conditions The conditions.
      * @param ValueBinder|null $binder The value binder.
      * @param string $type The condition separator.
-     * @return string The conditions.
+     * @return string|null The conditions.
+     *
+     * @throws InvalidArgumentException If IN values are empty.
      */
     protected function buildConditions(
         array $conditions,
         ValueBinder|null $binder = null,
         string $type = 'AND'
-    ): string {
-        $query = '';
+    ): string|null {
+        $groups = [];
 
         foreach ($conditions as $field => $value) {
-            if ($query) {
-                $query .= ' '.$type.' ';
-            }
-
             if (is_array($value)) {
                 if (is_numeric($field)) {
                     $subType = 'AND';
@@ -509,52 +544,88 @@ abstract class QueryGenerator
                 }
 
                 if (in_array($subType, ['AND', 'OR'])) {
-                    $query .= '('.$this->buildConditions($value, $binder, $subType).')';
-                } else if ($subType === 'NOT') {
-                    $query .= 'NOT ('.$this->buildConditions($value, $binder).')';
-                } else {
-                    $field = trim((string) $field);
+                    $condition = $this->buildConditions($value, $binder, $subType);
 
-                    if (preg_match('/^(.+?)\s+((?:NOT\s+)?IN)$/i', $field, $match)) {
-                        $field = $match[1];
-                        $comparison = strtoupper($match[2]);
-                        $comparison = (string) preg_replace('/\s+/', ' ', $comparison);
-                    } else {
-                        $comparison = 'IN';
+                    if ($condition !== null) {
+                        $groups[] = [$condition];
                     }
-
-                    $field = $this->connection->quoteIdentifier($field);
-                    $value = array_map(fn(mixed $val): string => $this->parseExpression($val, $binder), $value);
-
-                    $query .= $field.' '.$comparison.' ('.implode(', ', $value).')';
-                }
-            } else if (is_numeric($field)) {
-                $query .= $this->parseExpression($value, $binder, false);
-
-            } else {
-                $field = trim($field);
-
-                if (preg_match('/^(.+?)\s+([\>\<]\=?|\!?\=|(?:NOT\s+)?(?:LIKE|IN)|IS(?:\s+NOT)?)$/i', $field, $match)) {
-                    $field = $match[1];
-                    $comparison = strtoupper($match[2]);
-                    $comparison = (string) preg_replace('/\s+/', ' ', $comparison);
-                } else {
-                    $comparison = '=';
-                }
-
-                $field = $this->connection->quoteIdentifier($field);
-
-                if ($value === null && in_array($comparison, ['IS', 'IS NOT'])) {
-                    $query .= $field.' '.$comparison.' NULL';
 
                     continue;
                 }
 
-                $query .= $field.' '.$comparison.' '.$this->parseExpression($value, $binder);
+                if ($subType === 'NOT') {
+                    $condition = $this->buildConditions($value, $binder);
+
+                    if ($condition !== null) {
+                        $groups[] = 'NOT ('.$condition.')';
+                    }
+
+                    continue;
+                }
+
+                $field = trim((string) $field);
+
+                if (preg_match('/^(.+?)\s+((?:NOT\s+)?IN)$/i', $field, $match)) {
+                    $field = $match[1];
+                    $comparison = strtoupper($match[2]);
+                    $comparison = (string) preg_replace('/\s+/', ' ', $comparison);
+                } else {
+                    $comparison = 'IN';
+                }
+
+                if ($value === []) {
+                    throw new InvalidArgumentException(sprintf(
+                        'Query condition %s values must not be empty.',
+                        $comparison
+                    ));
+                }
+
+                $field = $this->connection->quoteIdentifier($field);
+                $value = array_map(fn(mixed $val): string => $this->parseExpression($val, $binder), $value);
+
+                $groups[] = $field.' '.$comparison.' ('.implode(', ', $value).')';
+
+                continue;
+            }
+
+            if (is_numeric($field)) {
+                if ($value instanceof Closure) {
+                    $value = $value($this->currentQuery, $binder);
+                }
+
+                if ($value instanceof ConditionExpression) {
+                    $condition = $this->buildConditionExpression($value, $binder);
+
+                    if ($condition !== null) {
+                        $groups[] = [$condition];
+                    }
+                } else {
+                    $groups[] = $this->parseExpression($value, $binder, false);
+                }
+
+                continue;
+            }
+
+            $field = trim($field);
+
+            if (preg_match('/^(.+?)\s+([\>\<]\=?|\!?\=|(?:NOT\s+)?(?:LIKE|IN)|IS(?:\s+NOT)?)$/i', $field, $match)) {
+                $field = $match[1];
+                $comparison = strtoupper($match[2]);
+                $comparison = (string) preg_replace('/\s+/', ' ', $comparison);
+            } else {
+                $comparison = '=';
+            }
+
+            $field = $this->connection->quoteIdentifier($field);
+
+            if ($value === null && in_array($comparison, ['IS', 'IS NOT'])) {
+                $groups[] = $field.' '.$comparison.' NULL';
+            } else {
+                $groups[] = $field.' '.$comparison.' '.$this->parseExpression($value, $binder);
             }
         }
 
-        return $query;
+        return static::buildConditionGroup($groups, $type);
     }
 
     /**
@@ -728,10 +799,13 @@ abstract class QueryGenerator
             return '';
         }
 
-        $query = ' HAVING ';
-        $query .= $this->buildConditions($conditions, $binder);
+        $conditions = $this->buildConditions($conditions, $binder);
 
-        return $query;
+        if ($conditions === null) {
+            return '';
+        }
+
+        return ' HAVING '.$conditions;
     }
 
     /**
@@ -815,6 +889,8 @@ abstract class QueryGenerator
      * @param array<string, mixed>[] $joins The joins.
      * @param ValueBinder|null $binder The value binder.
      * @return string The query string.
+     *
+     * @throws InvalidArgumentException If JOIN conditions are empty.
      */
     protected function buildJoin(array $joins, ValueBinder|null $binder = null): string
     {
@@ -837,7 +913,13 @@ abstract class QueryGenerator
             if ($join['using']) {
                 $query .= ' USING ('.$this->connection->quoteIdentifier($join['using']).')';
             } else {
-                $query .= ' ON '.$this->buildConditions($join['conditions'], $binder);
+                $conditions = $this->buildConditions($join['conditions'], $binder);
+
+                if ($conditions === null) {
+                    throw new InvalidArgumentException('Query JOIN conditions must not be empty.');
+                }
+
+                $query .= ' ON '.$conditions;
             }
         }
 
@@ -1120,7 +1202,7 @@ abstract class QueryGenerator
                 }
 
                 $sql .= ' WHEN ';
-                $sql .= $this->buildConditions($allConditions[$j], $binder);
+                $sql .= $this->buildConditionExpression($allConditions[$j], $binder);
                 $sql .= ' THEN ';
                 $sql .= $this->parseExpression($values[$column], $binder);
             }
@@ -1148,20 +1230,27 @@ abstract class QueryGenerator
     /**
      * Generates the WHERE portion of the query.
      *
-     * @param array<mixed> $conditions The conditions.
+     * @param array<mixed>|ConditionExpression|null $conditions The conditions.
      * @param ValueBinder|null $binder The value binder.
      * @return string The query string.
      */
-    protected function buildWhere(array $conditions, ValueBinder|null $binder = null): string
-    {
-        if ($conditions === []) {
+    protected function buildWhere(
+        array|ConditionExpression|null $conditions,
+        ValueBinder|null $binder = null
+    ): string {
+        if ($conditions === null || $conditions === []) {
             return '';
         }
 
-        $query = ' WHERE ';
-        $query .= $this->buildConditions($conditions, $binder);
+        $conditions = $conditions instanceof ConditionExpression ?
+            $this->buildConditionExpression($conditions, $binder) :
+            $this->buildConditions($conditions, $binder);
 
-        return $query;
+        if ($conditions === null) {
+            return '';
+        }
+
+        return ' WHERE '.$conditions;
     }
 
     /**
@@ -1270,7 +1359,13 @@ abstract class QueryGenerator
         }
 
         if ($value instanceof ConditionExpression) {
-            return $this->buildConditionExpression($value, $binder);
+            $value = $this->buildConditionExpression($value, $binder);
+
+            if ($value === null) {
+                throw new InvalidArgumentException('Condition expression must not be empty.');
+            }
+
+            return $value;
         }
 
         if ($value instanceof WindowExpression) {
@@ -1343,5 +1438,36 @@ abstract class QueryGenerator
         } finally {
             $this->currentQuery = $previous;
         }
+    }
+
+    /**
+     * Builds a group of compiled conditions.
+     *
+     * @param array<array{string}|string> $groups The condition groups.
+     * @param string $type The condition separator.
+     * @return string|null The condition group.
+     */
+    protected static function buildConditionGroup(array $groups, string $type): string|null
+    {
+        if ($groups === []) {
+            return null;
+        }
+
+        $group = count($groups) > 1;
+
+        $conditions = array_map(
+            static function(array|string $condition) use ($group): string {
+                if (!is_array($condition)) {
+                    return $condition;
+                }
+
+                $condition = array_first($condition);
+
+                return $group ? '('.$condition.')' : $condition;
+            },
+            $groups
+        );
+
+        return implode(' '.$type.' ', $conditions);
     }
 }

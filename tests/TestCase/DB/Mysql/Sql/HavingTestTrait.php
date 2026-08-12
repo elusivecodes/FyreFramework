@@ -25,7 +25,7 @@ trait HavingTestTrait
     public function testHavingAnd(): void
     {
         $this->assertSame(
-            'SELECT * FROM `test` HAVING (`value` = 1 AND `name` = \'test\')',
+            'SELECT * FROM `test` HAVING `value` = 1 AND `name` = \'test\'',
             $this->db->select()
                 ->from('test')
                 ->having([
@@ -173,7 +173,7 @@ trait HavingTestTrait
     public function testHavingGroups(): void
     {
         $this->assertSame(
-            'SELECT * FROM `test` HAVING (`value` = 1 AND (`name` = \'test\' OR name IS NULL))',
+            'SELECT * FROM `test` HAVING `value` = 1 AND (`name` = \'test\' OR name IS NULL)',
             $this->db->select()
                 ->from('test')
                 ->having([
@@ -383,7 +383,7 @@ trait HavingTestTrait
     public function testHavingOr(): void
     {
         $this->assertSame(
-            'SELECT * FROM `test` HAVING (`value` = 1 OR `name` = \'test\')',
+            'SELECT * FROM `test` HAVING `value` = 1 OR `name` = \'test\'',
             $this->db->select()
                 ->from('test')
                 ->having([

@@ -76,7 +76,7 @@ trait SoftDeleteTrait
         bool|null $autoFields = null,
         mixed ...$options
     ): SelectQuery {
-        return $this->find(
+        $query = $this->find(
             $fields,
             $contain,
             $join,
@@ -92,10 +92,12 @@ trait SoftDeleteTrait
             $autoFields,
             ...$options,
             deleted: true
-        )
-            ->where([
-                $this->aliasField($this->deletedField).' IS NOT' => null,
-            ]);
+        );
+
+        $condition = $this->aliasField($this->deletedField, $alias)
+            |> $query->expr()->isNotNull(...);
+
+        return $query->where($condition);
     }
 
     /**
@@ -186,15 +188,8 @@ trait SoftDeleteTrait
             return;
         }
 
-        $conditions = $join['conditions'] ?? [];
-
-        if (!is_array($conditions)) {
-            $conditions = [$conditions];
-        }
-
-        $conditions[$this->aliasField($this->deletedField, $alias).' IS'] = null;
-
-        $join['conditions'] = $conditions;
+        $join['conditions'][] = $this->aliasField($this->deletedField, $alias)
+            |> $query->expr()->isNull(...);
     }
 
     /**
@@ -216,9 +211,9 @@ trait SoftDeleteTrait
             return;
         }
 
-        $query->where([
-            $this->aliasField($this->deletedField, $query->getAlias()).' IS' => null,
-        ]);
+        $this->aliasField($this->deletedField, $query->getAlias())
+            |> $query->expr()->isNull(...)
+            |> $query->where(...);
     }
 
     /**
@@ -408,11 +403,12 @@ trait SoftDeleteTrait
 
             foreach ($relationships as $relationship) {
                 $target = $relationship->getTarget();
+                $conditions = new ConditionExpression();
+                $target->aliasField($this->deletedField) |> $conditions->isNotNull(...);
+
                 $children = $relationship->findRelated(
                     $entities,
-                    conditions : [
-                        $target->aliasField($this->deletedField).' IS NOT' => null,
-                    ],
+                    conditions: $conditions,
                     deleted: true
                 )->toArray();
 

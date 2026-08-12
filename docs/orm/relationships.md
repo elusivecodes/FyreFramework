@@ -359,7 +359,7 @@ For join loading (`strategy` = `join`), the allowed option set is intentionally 
 - `autoFields` (whether to auto-select target schema columns)
 - `contain` (nested contain)
 
-If you need to adjust join-safe metadata dynamically for join loading, use the `ORM.buildJoin` event on the target model. Unlike eager-loading callbacks, this hook only exposes mutable join metadata (`type` and `conditions`).
+If you need to adjust join-safe metadata dynamically for join loading, use the `ORM.buildJoin` event on the target model. Unlike eager-loading callbacks, this hook only exposes mutable join metadata (`type` and `conditions`). The `conditions` value is normalized to an array before the event is dispatched.
 
 ### Contain callbacks
 

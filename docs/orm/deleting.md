@@ -69,7 +69,7 @@ For each relationship, the ORM calls `Relationship::unlinkAll()`:
 
 ## Bulk deletes with `deleteAll()`
 
-`deleteAll(array $conditions): int` deletes all rows matching the conditions and returns the number of rows affected.
+`deleteAll(array|Closure|ConditionExpression|string $conditions): int` deletes all rows matching the conditions and returns the number of rows affected.
 
 `deleteAll()` executes as a direct delete query, so it:
 

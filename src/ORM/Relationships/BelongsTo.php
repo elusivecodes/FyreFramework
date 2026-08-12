@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Fyre\ORM\Relationships;
 
+use Closure;
+use Fyre\DB\Expressions\ConditionExpression;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Model;
 use Fyre\ORM\Relationship;
@@ -123,7 +125,7 @@ class BelongsTo extends Relationship
         array|Traversable $entities,
         bool $cascade = true,
         bool $events = true,
-        array $conditions = [],
+        array|Closure|ConditionExpression|string|null $conditions = null,
         mixed ...$options
     ): bool {
         return true;

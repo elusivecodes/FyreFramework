@@ -167,7 +167,7 @@ class ManyToMany extends Relationship
                     $targetName => $contain ?? [],
                 ],
                 $join,
-                array_merge(static::normalizeConditions($conditions), $this->conditions),
+                static::reduceConditions($conditions, $this->conditions),
                 $orderBy ?? (isset($this->sort) ? $this->sort : null),
                 $groupBy,
                 $having,
@@ -346,7 +346,7 @@ class ManyToMany extends Relationship
             $fields,
             [$targetName => $contain ?? []],
             $join,
-            array_merge(static::normalizeConditions($conditions), $this->conditions),
+            static::reduceConditions($conditions, $this->conditions),
             $orderBy ?? (isset($this->sort) ? $this->sort : null),
             $groupBy,
             $having,
@@ -589,7 +589,7 @@ class ManyToMany extends Relationship
         array|Traversable $entities,
         bool $cascade = true,
         bool $events = true,
-        array $conditions = [],
+        array|Closure|ConditionExpression|string|null $conditions = null,
         mixed ...$options
     ): bool {
         return $this->getSourceRelationship()->unlinkAll($entities, $cascade, $events, $conditions, ...$options);

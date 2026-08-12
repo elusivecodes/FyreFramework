@@ -27,7 +27,7 @@ trait WhereTestTrait
     public function testWhereAnd(): void
     {
         $this->assertSame(
-            'SELECT * FROM "test" WHERE ("value" = 1 AND "name" = \'test\')',
+            'SELECT * FROM "test" WHERE "value" = 1 AND "name" = \'test\'',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -189,7 +189,7 @@ trait WhereTestTrait
     public function testWhereGroups(): void
     {
         $this->assertSame(
-            'SELECT * FROM "test" WHERE ("value" = 1 AND ("name" = \'test\' OR name IS NULL))',
+            'SELECT * FROM "test" WHERE "value" = 1 AND ("name" = \'test\' OR name IS NULL)',
             $this->db->select()
                 ->from('test')
                 ->where([
@@ -399,7 +399,7 @@ trait WhereTestTrait
     public function testWhereOr(): void
     {
         $this->assertSame(
-            'SELECT * FROM "test" WHERE ("value" = 1 OR "name" = \'test\')',
+            'SELECT * FROM "test" WHERE "value" = 1 OR "name" = \'test\'',
             $this->db->select()
                 ->from('test')
                 ->where([

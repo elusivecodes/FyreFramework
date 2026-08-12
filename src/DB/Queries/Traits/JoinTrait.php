@@ -6,6 +6,7 @@ namespace Fyre\DB\Queries\Traits;
 use Fyre\DB\Query;
 use InvalidArgumentException;
 
+use function array_key_exists;
 use function array_merge;
 use function is_array;
 use function is_numeric;
@@ -57,6 +58,25 @@ trait JoinTrait
     }
 
     /**
+     * Normalizes JOIN conditions.
+     *
+     * @param mixed $conditions The conditions.
+     * @return array<mixed> The normalized conditions.
+     */
+    protected static function normalizeJoinConditions(mixed $conditions): array
+    {
+        if ($conditions === null) {
+            return [];
+        }
+
+        if (!is_array($conditions)) {
+            return [$conditions];
+        }
+
+        return $conditions;
+    }
+
+    /**
      * Normalizes a joins array.
      *
      * @param array<array<string, mixed>> $joins The joins.
@@ -81,8 +101,8 @@ trait JoinTrait
 
             $join['table'] ??= $alias;
 
-            if (isset($join['conditions']) && !is_array($join['conditions'])) {
-                $join['conditions'] = [$join['conditions']];
+            if (array_key_exists('conditions', $join)) {
+                $join['conditions'] = static::normalizeJoinConditions($join['conditions']);
             }
 
             $results[$alias] = $join;

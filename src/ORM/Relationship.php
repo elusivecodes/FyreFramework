@@ -14,6 +14,7 @@ use InvalidArgumentException;
 use Traversable;
 
 use function array_all;
+use function array_filter;
 use function array_first;
 use function array_map;
 use function array_merge;
@@ -43,9 +44,9 @@ abstract class Relationship
     protected string $classAlias;
 
     /**
-     * @var array<mixed>
+     * @var array<mixed>|Closure|ConditionExpression|string|null
      */
-    protected array $conditions = [];
+    protected array|Closure|ConditionExpression|string|null $conditions = null;
 
     protected bool $dependent = false;
 
@@ -163,11 +164,7 @@ abstract class Relationship
         $options['alias'] ??= $target->getAlias();
         $options['sourceAlias'] ??= $source->getAlias();
         $options['type'] ??= $this->joinType;
-        $options['conditions'] ??= [];
-
-        if (!is_array($options['conditions'])) {
-            $options['conditions'] = [$options['conditions']];
-        }
+        $options['conditions'] ??= null;
 
         if ($this->isOwningSide()) {
             $sourceKey = $this->getBindingKey();
@@ -182,11 +179,23 @@ abstract class Relationship
         $joinCondition = new ConditionExpression()
             ->equalFields($targetField, $sourceField);
 
+        $conditions = static::reduceConditions(
+            $joinCondition,
+            $this->conditions,
+            $options['conditions']
+        );
+
+        if ($conditions === null) {
+            $conditions = [];
+        } else if (!is_array($conditions)) {
+            $conditions = [$conditions];
+        }
+
         return [
             $options['alias'] => [
                 'table' => $target->getTable(),
                 'type' => $options['type'],
-                'conditions' => array_merge([$joinCondition], $this->conditions, $options['conditions']),
+                'conditions' => $conditions,
             ],
         ];
     }
@@ -239,7 +248,7 @@ abstract class Relationship
                 $fields,
                 $contain,
                 $join,
-                array_merge(static::normalizeConditions($conditions), $this->conditions),
+                static::reduceConditions($conditions, $this->conditions),
                 $orderBy ?? (isset($this->sort) ? $this->sort : null),
                 $groupBy,
                 $having,
@@ -272,9 +281,9 @@ abstract class Relationship
     /**
      * Returns the conditions.
      *
-     * @return array<mixed> The conditions.
+     * @return array<mixed>|Closure|ConditionExpression|string|null The conditions.
      */
-    public function getConditions(): array
+    public function getConditions(): array|Closure|ConditionExpression|string|null
     {
         return $this->conditions;
     }
@@ -471,7 +480,7 @@ abstract class Relationship
             $fields,
             $contain,
             $join,
-            array_merge(static::normalizeConditions($conditions), $this->conditions),
+            static::reduceConditions($conditions, $this->conditions),
             $orderBy ?? (isset($this->sort) ? $this->sort : null),
             $groupBy,
             $having,
@@ -568,10 +577,10 @@ abstract class Relationship
     /**
      * Sets the conditions.
      *
-     * @param array<mixed> $conditions The conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string|null $conditions The conditions.
      * @return static The Relationship.
      */
-    public function setConditions(array $conditions): static
+    public function setConditions(array|Closure|ConditionExpression|string|null $conditions): static
     {
         $this->conditions = $conditions;
 
@@ -684,7 +693,7 @@ abstract class Relationship
      * @param iterable<template-type<TSource, Model, 'TEntity'>> $entities The entities.
      * @param bool $cascade Whether to delete related children.
      * @param bool $events Whether to trigger events.
-     * @param array<mixed> $conditions The WHERE conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string|null $conditions The WHERE conditions.
      * @param mixed ...$options The delete options.
      * @return bool Whether the unlink was successful.
      */
@@ -692,7 +701,7 @@ abstract class Relationship
         array|Traversable $entities,
         bool $cascade = true,
         bool $events = true,
-        array $conditions = [],
+        array|Closure|ConditionExpression|string|null $conditions = null,
         mixed ...$options
     ): bool {
         $relations = $this->findRelated($entities, ...$options, conditions: $conditions);
@@ -741,13 +750,15 @@ abstract class Relationship
         $target = $this->getTarget();
         $targetField = $target->aliasField($targetKey);
 
+        $conditions = $newQuery->expr();
+
         if (count($sourceValues) > 1) {
-            $containConditions = [$targetField.' IN' => $sourceValues];
+            $conditions->in($targetField, $sourceValues);
         } else {
-            $containConditions = [$targetField => $sourceValues[0]];
+            $conditions->eq($targetField, array_first($sourceValues));
         }
 
-        $newQuery->where($containConditions);
+        $newQuery->where($conditions);
     }
 
     /**
@@ -898,17 +909,17 @@ abstract class Relationship
      *
      * @param Model $model The Model.
      * @param Entity[] $entities The entities.
-     * @return array<string, mixed> The exclusion conditions.
+     * @return ConditionExpression|null The exclusion conditions.
      */
-    protected static function excludeConditions(Model $model, array $entities): array
+    protected static function excludeConditions(Model $model, array $entities): ConditionExpression|null
     {
         $primaryKeys = $model->getPrimaryKey();
-        $preserveValues = [];
 
         if ($primaryKeys === []) {
-            return [];
+            return null;
         }
 
+        $preserveValues = [];
         foreach ($entities as $entity) {
             if ($entity->isNew() || !array_all($primaryKeys, $entity->hasValue(...))) {
                 continue;
@@ -918,7 +929,7 @@ abstract class Relationship
         }
 
         if ($preserveValues === []) {
-            return [];
+            return null;
         }
 
         $primaryKeys = array_map(
@@ -926,28 +937,43 @@ abstract class Relationship
             $primaryKeys
         );
 
-        return [
-            'not' => QueryGenerator::normalizeConditions($primaryKeys, $preserveValues),
-        ];
+        /**
+         * @var ConditionExpression $conditions
+         */
+        $conditions = QueryGenerator::normalizeConditions($primaryKeys, $preserveValues);
+
+        return new ConditionExpression()->not($conditions);
     }
 
     /**
-     * Normalizes query conditions.
+     * Reduce query conditions.
      *
-     * @param array<mixed>|Closure|ConditionExpression|string|null $conditions The conditions.
-     * @return array<mixed> The normalized conditions.
+     * @param array<mixed>|Closure|ConditionExpression|string|null ...$conditions The conditions.
+     * @return array<mixed>|Closure|ConditionExpression|string|null The reduced conditions.
      */
-    protected static function normalizeConditions(
-        array|Closure|ConditionExpression|string|null $conditions
-    ): array {
-        if ($conditions === null) {
-            return [];
+    protected static function reduceConditions(
+        array|Closure|ConditionExpression|string|null ...$conditions
+    ): array|Closure|ConditionExpression|string|null {
+        $conditions = array_filter($conditions, static fn($value): bool => $value !== null);
+
+        if ($conditions === []) {
+            return null;
         }
 
-        if (!is_array($conditions)) {
-            return [$conditions];
+        if (count($conditions) === 1) {
+            return array_first($conditions);
         }
 
-        return $conditions;
+        $combined = [];
+
+        foreach ($conditions as $condition) {
+            if (is_array($condition)) {
+                $combined = array_merge($combined, $condition);
+            } else {
+                $combined[] = $condition;
+            }
+        }
+
+        return $combined;
     }
 }

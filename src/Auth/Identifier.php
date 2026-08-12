@@ -7,13 +7,13 @@ use Closure;
 use Fyre\Core\Config;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
+use Fyre\DB\Expressions\ConditionExpression;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Model;
 use Fyre\ORM\ModelRegistry;
 use Fyre\ORM\Queries\SelectQuery;
 
 use function array_replace;
-use function count;
 use function password_hash;
 use function password_needs_rehash;
 use function password_verify;
@@ -156,21 +156,18 @@ class Identifier
      */
     public function identify(string $identifier): Entity|null
     {
+        if ($this->identifierFields === []) {
+            return null;
+        }
+
         $Model = $this->getModel();
 
-        $orConditions = [];
-
+        $conditions = new ConditionExpression('OR');
         foreach ($this->identifierFields as $identifierField) {
-            $orConditions[$Model->aliasField($identifierField)] = $identifier;
+            $conditions->eq($Model->aliasField($identifierField), $identifier);
         }
 
-        $query = $Model->find();
-
-        if (count($orConditions) > 1) {
-            $query->where(['or' => $orConditions]);
-        } else {
-            $query->where($orConditions);
-        }
+        $query = $Model->find()->where($conditions);
 
         if ($this->queryCallback) {
             $query = ($this->queryCallback)($query);

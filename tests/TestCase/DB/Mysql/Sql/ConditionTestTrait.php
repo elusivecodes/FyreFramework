@@ -5,6 +5,7 @@ namespace Tests\TestCase\DB\Mysql\Sql;
 
 use Fyre\DB\Expressions\ConditionExpression;
 use Fyre\DB\Query;
+use InvalidArgumentException;
 
 trait ConditionTestTrait
 {
@@ -16,6 +17,31 @@ trait ConditionTestTrait
                 ->from('test')
                 ->where(static fn(Query $query): ConditionExpression => $query->expr()
                     ->between('value', 1, 5))
+                ->sql()
+        );
+    }
+
+    public function testConditionEmptyExpression(): void
+    {
+        $this->assertSame(
+            'SELECT * FROM `test`',
+            $this->db->select()
+                ->from('test')
+                ->where(static fn(Query $query): ConditionExpression => $query->expr())
+                ->sql()
+        );
+    }
+
+    public function testConditionEmptyExpressionWithArraySibling(): void
+    {
+        $this->assertSame(
+            'SELECT * FROM `test` WHERE `active` = 1',
+            $this->db->select()
+                ->from('test')
+                ->where([
+                    'active' => 1,
+                    static fn(Query $query): ConditionExpression => $query->expr(),
+                ])
                 ->sql()
         );
     }
@@ -74,6 +100,22 @@ trait ConditionTestTrait
         );
     }
 
+    public function testConditionExpressionWithArraySiblings(): void
+    {
+        $this->assertSame(
+            'SELECT * FROM `test` WHERE `active` = 1 AND (`status` = \'pending\' OR `status` = \'queued\')',
+            $this->db->select()
+                ->from('test')
+                ->where([
+                    'active' => 1,
+                    static fn(Query $query): ConditionExpression => $query->expr()->or()
+                        ->eq('status', 'pending')
+                        ->eq('status', 'queued'),
+                ])
+                ->sql()
+        );
+    }
+
     public function testConditionGreaterThan(): void
     {
         $this->assertSame(
@@ -110,10 +152,21 @@ trait ConditionTestTrait
         );
     }
 
+    public function testConditionInEmpty(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Query condition IN values must not be empty.');
+
+        $this->db->select()
+            ->from('test')
+            ->where(['value IN' => []])
+            ->sql();
+    }
+
     public function testConditionInOrNull(): void
     {
         $this->assertSame(
-            'SELECT * FROM `test` WHERE (`value` IN (1, 2) OR `value` IS NULL)',
+            'SELECT * FROM `test` WHERE `value` IN (1, 2) OR `value` IS NULL',
             $this->db->select()
                 ->from('test')
                 ->where(static fn(Query $query): ConditionExpression => $query->expr()
@@ -305,7 +358,7 @@ trait ConditionTestTrait
     public function testConditionNotInOrNull(): void
     {
         $this->assertSame(
-            'SELECT * FROM `test` WHERE (`value` NOT IN (1, 2) OR `value` IS NULL)',
+            'SELECT * FROM `test` WHERE `value` NOT IN (1, 2) OR `value` IS NULL',
             $this->db->select()
                 ->from('test')
                 ->where(static fn(Query $query): ConditionExpression => $query->expr()

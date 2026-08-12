@@ -134,7 +134,7 @@ $rows = $db->select('*')
 - field comparison: `equalFields()`
 - subqueries: `exists()`, `notExists()`
 
-`in()` and `notIn()` accept either a non-empty array or a `SelectQuery`. The `inOrNull()` and `notInOrNull()` variants add an `IS NULL` alternative.
+`in()` and `notIn()` accept either a non-empty array or a `SelectQuery`. Array-style `IN` and `NOT IN` conditions also reject empty arrays. The `inOrNull()` and `notInOrNull()` variants add an `IS NULL` alternative.
 
 Use `compare()` only when a named comparison helper does not fit. Its operator is inserted into the generated SQL, so it must be application-controlled.
 
@@ -154,6 +154,8 @@ $query->where(static fn(Query $query): ConditionExpression => $query->expr()
 ```
 
 Calling comparison methods on the same expression joins them using that expression's conjunction. `expr()` defaults to `AND`; pass `OR` or call `setConjunction()` to use a different default conjunction.
+
+An empty `ConditionExpression` contributes no predicate and is ignored in condition collections. A join without `using` still requires at least one remaining condition.
 
 ## Case expressions
 
