@@ -36,7 +36,7 @@ class SqliteForge extends Forge
     {
         /** @var SqliteQueryGenerator */
         return $this->generator ??= $this->container->build(SqliteQueryGenerator::class, [
-            'forge' => $this,
+            'connection' => $this->connection,
         ]);
     }
 }

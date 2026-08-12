@@ -44,7 +44,7 @@ class SqliteQueryGenerator extends QueryGenerator
     {
         $type = $column->getType();
 
-        $sql = $column->getName() |> $this->quoteIdentifier(...);
+        $sql = $column->getName() |> $this->connection->quoteIdentifierPart(...);
 
         if ($column->isUnsigned()) {
             $sql .= ' UNSIGNED';
@@ -112,7 +112,7 @@ class SqliteQueryGenerator extends QueryGenerator
             $sql .= ' DEFAULT ';
 
             if (is_string($default)) {
-                $sql .= $this->forge->getConnection()->quote($default);
+                $sql .= $this->connection->quote($default);
             } else if (is_bool($default)) {
                 $sql .= $default ? '1' : '0';
             } else {
@@ -136,7 +136,7 @@ class SqliteQueryGenerator extends QueryGenerator
         if ($index->isPrimary()) {
             $sql = 'PRIMARY';
         } else if ($index->isUnique()) {
-            $sql = $index->getName() |> $this->quoteIdentifier(...);
+            $sql = $index->getName() |> $this->connection->quoteIdentifierPart(...);
             $sql .= ' UNIQUE';
         } else {
             throw new InvalidArgumentException(sprintf(
@@ -147,7 +147,7 @@ class SqliteQueryGenerator extends QueryGenerator
 
         $sql .= ' KEY (';
         $columns = array_map(
-            $this->quoteIdentifier(...),
+            $this->connection->quoteIdentifierPart(...),
             $index->getColumns()
         );
         $sql .= implode(', ', $columns);
@@ -177,12 +177,12 @@ class SqliteQueryGenerator extends QueryGenerator
         }
 
         $sql .= 'INDEX ';
-        $sql .= $index->getName() |> $this->quoteIdentifier(...);
+        $sql .= $index->getName() |> $this->connection->quoteIdentifierPart(...);
         $sql .= ' ON ';
-        $sql .= $index->getTable()->getName() |> $this->quoteIdentifier(...);
+        $sql .= $index->getTable()->getName() |> $this->connection->quoteIdentifierPart(...);
         $sql .= ' (';
         $columns = array_map(
-            $this->quoteIdentifier(...),
+            $this->connection->quoteIdentifierPart(...),
             $index->getColumns()
         );
         $sql .= implode(', ', $columns);
@@ -230,7 +230,7 @@ class SqliteQueryGenerator extends QueryGenerator
             $sql .= 'IF NOT EXISTS ';
         }
 
-        $sql .= $table->getName() |> $this->quoteIdentifier(...);
+        $sql .= $table->getName() |> $this->connection->quoteIdentifierPart(...);
 
         $sql .= ' (';
         $sql .= implode(', ', $definitions);

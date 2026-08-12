@@ -75,7 +75,7 @@ class MysqlForge extends Forge
     {
         /** @var MysqlQueryGenerator */
         return $this->generator ??= $this->container->build(MysqlQueryGenerator::class, [
-            'forge' => $this,
+            'connection' => $this->connection,
         ]);
     }
 }

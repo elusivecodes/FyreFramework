@@ -75,7 +75,7 @@ class PostgresForge extends Forge
     {
         /** @var PostgresQueryGenerator */
         return $this->generator ??= $this->container->build(PostgresQueryGenerator::class, [
-            'forge' => $this,
+            'connection' => $this->connection,
         ]);
     }
 }

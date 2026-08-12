@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Fyre\DB\Forge;
 
 use Fyre\Core\Traits\DebugTrait;
+use Fyre\DB\Connection;
 
 use function array_map;
 use function implode;
@@ -19,10 +20,10 @@ abstract class QueryGenerator
     /**
      * Constructs a QueryGenerator.
      *
-     * @param Forge $forge The Forge.
+     * @param Connection $connection The Connection.
      */
     public function __construct(
-        protected Forge $forge
+        protected Connection $connection
     ) {}
 
     /**
@@ -49,7 +50,7 @@ abstract class QueryGenerator
     public function buildAlterTable(string $table, array $statements): string
     {
         $sql = 'ALTER TABLE ';
-        $sql .= $this->quoteIdentifier($table);
+        $sql .= $this->connection->quoteIdentifierPart($table);
         $sql .= ' ';
         $sql .= implode(', ', $statements);
 
@@ -90,7 +91,7 @@ abstract class QueryGenerator
             $sql .= 'IF EXISTS ';
         }
 
-        $sql .= $this->quoteIdentifier($column);
+        $sql .= $this->connection->quoteIdentifierPart($column);
 
         return $sql;
     }
@@ -104,7 +105,7 @@ abstract class QueryGenerator
     public function buildDropIndex(string $index): string
     {
         $sql = 'DROP INDEX ';
-        $sql .= $this->quoteIdentifier($index);
+        $sql .= $this->connection->quoteIdentifierPart($index);
 
         return $sql;
     }
@@ -126,7 +127,7 @@ abstract class QueryGenerator
             $sql .= 'IF EXISTS ';
         }
 
-        $sql .= $this->quoteIdentifier($table);
+        $sql .= $this->connection->quoteIdentifierPart($table);
 
         return $sql;
     }
@@ -143,20 +144,20 @@ abstract class QueryGenerator
         $onDelete = $foreignKey->getOnDelete();
 
         $sql = 'CONSTRAINT ';
-        $sql .= $foreignKey->getName() |> $this->quoteIdentifier(...);
+        $sql .= $foreignKey->getName() |> $this->connection->quoteIdentifierPart(...);
         $sql .= ' FOREIGN KEY ';
         $sql .= '(';
         $columns = array_map(
-            $this->quoteIdentifier(...),
+            $this->connection->quoteIdentifierPart(...),
             $foreignKey->getColumns()
         );
         $sql .= implode(', ', $columns);
         $sql .= ')';
         $sql .= ' REFERENCES ';
-        $sql .= $foreignKey->getReferencedTable() |> $this->quoteIdentifier(...);
+        $sql .= $foreignKey->getReferencedTable() |> $this->connection->quoteIdentifierPart(...);
         $sql .= ' (';
         $referencedColumns = array_map(
-            $this->quoteIdentifier(...),
+            $this->connection->quoteIdentifierPart(...),
             $foreignKey->getReferencedColumns()
         );
         $sql .= implode(', ', $referencedColumns);
@@ -185,9 +186,9 @@ abstract class QueryGenerator
     public function buildRenameColumn(string $column, string $newColumn): string
     {
         $sql = 'RENAME COLUMN ';
-        $sql .= $this->quoteIdentifier($column);
+        $sql .= $this->connection->quoteIdentifierPart($column);
         $sql .= ' TO ';
-        $sql .= $this->quoteIdentifier($newColumn);
+        $sql .= $this->connection->quoteIdentifierPart($newColumn);
 
         return $sql;
     }
@@ -201,19 +202,9 @@ abstract class QueryGenerator
     public function buildRenameTable(string $table): string
     {
         $sql = 'RENAME TO ';
-        $sql .= $this->quoteIdentifier($table);
+        $sql .= $this->connection->quoteIdentifierPart($table);
 
         return $sql;
     }
 
-    /**
-     * Quotes an identifier for use in a DDL query.
-     *
-     * @param string $identifier The identifier to quote.
-     * @return string The quoted identifier.
-     */
-    protected function quoteIdentifier(string $identifier): string
-    {
-        return $this->forge->getConnection()->quoteIdentifierPart($identifier);
-    }
 }

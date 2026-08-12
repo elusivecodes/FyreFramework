@@ -97,7 +97,7 @@ class MysqlQueryGenerator extends QueryGenerator
     public function buildChangeColumn(Column $column, array $options = []): string
     {
         $sql = 'CHANGE COLUMN ';
-        $sql .= $this->quoteIdentifier($options['name'] ?? $column->getName());
+        $sql .= $this->connection->quoteIdentifierPart($options['name'] ?? $column->getName());
         $sql .= ' ';
         $sql .= $this->buildColumn($column, $options);
 
@@ -118,10 +118,9 @@ class MysqlQueryGenerator extends QueryGenerator
 
         assert($column instanceof MysqlColumn);
 
-        $connection = $this->forge->getConnection();
         $type = $column->getType();
 
-        $sql = $column->getName() |> $this->quoteIdentifier(...);
+        $sql = $column->getName() |> $this->connection->quoteIdentifierPart(...);
         $sql .= ' ';
         $sql .= strtoupper($type);
 
@@ -173,7 +172,7 @@ class MysqlQueryGenerator extends QueryGenerator
                 $values = $column->getValues();
                 if ($values !== null) {
                     $values = array_map(
-                        static fn(mixed $value): string => $connection->quote((string) $value),
+                        fn(mixed $value): string => $this->connection->quote((string) $value),
                         $values
                     );
 
@@ -191,13 +190,13 @@ class MysqlQueryGenerator extends QueryGenerator
         $charset = $column->getCharset();
 
         if ($charset) {
-            $sql .= ' CHARACTER SET '.$connection->quote($charset);
+            $sql .= ' CHARACTER SET '.$this->connection->quote($charset);
         }
 
         $collation = $column->getCollation();
 
         if ($collation) {
-            $sql .= ' COLLATE '.$connection->quote($collation);
+            $sql .= ' COLLATE '.$this->connection->quote($collation);
         }
 
         if ($column->isNullable()) {
@@ -213,9 +212,9 @@ class MysqlQueryGenerator extends QueryGenerator
 
             if (is_string($default)) {
                 if (in_array($type, static::TEXT_TYPES, true)) {
-                    $sql .= '('.$connection->quote($default).')';
+                    $sql .= '('.$this->connection->quote($default).')';
                 } else {
-                    $sql .= $connection->quote($default);
+                    $sql .= $this->connection->quote($default);
                 }
             } else if (is_bool($default)) {
                 $sql .= $default ? '1' : '0';
@@ -231,11 +230,11 @@ class MysqlQueryGenerator extends QueryGenerator
         $comment = $column->getComment();
 
         if ($comment || $options['forceComment']) {
-            $sql .= ' COMMENT '.$connection->quote((string) $comment);
+            $sql .= ' COMMENT '.$this->connection->quote((string) $comment);
         }
 
         if ($options['after']) {
-            $sql .= ' AFTER '.$this->quoteIdentifier($options['after']);
+            $sql .= ' AFTER '.$this->connection->quoteIdentifierPart($options['after']);
         } else if ($options['first']) {
             $sql .= ' FIRST';
         }
@@ -252,7 +251,7 @@ class MysqlQueryGenerator extends QueryGenerator
      */
     public function buildCreateSchema(string $schema, array $options = []): string
     {
-        $connection = $this->forge->getConnection();
+        $connection = $this->connection;
 
         assert($connection instanceof MysqlConnection);
 
@@ -266,7 +265,7 @@ class MysqlQueryGenerator extends QueryGenerator
             $sql .= 'IF NOT EXISTS ';
         }
 
-        $sql .= $this->quoteIdentifier($schema);
+        $sql .= $this->connection->quoteIdentifierPart($schema);
 
         if ($options['charset']) {
             $sql .= ' CHARACTER SET = '.$connection->quote($options['charset']);
@@ -316,7 +315,7 @@ class MysqlQueryGenerator extends QueryGenerator
             $sql .= 'IF NOT EXISTS ';
         }
 
-        $sql .= $table->getName() |> $this->quoteIdentifier(...);
+        $sql .= $table->getName() |> $this->connection->quoteIdentifierPart(...);
 
         $sql .= ' (';
         $sql .= implode(', ', $definitions);
@@ -358,7 +357,7 @@ class MysqlQueryGenerator extends QueryGenerator
     public function buildDropForeignKey(string $foreignKey): string
     {
         $sql = 'DROP FOREIGN KEY ';
-        $sql .= $this->quoteIdentifier($foreignKey);
+        $sql .= $this->connection->quoteIdentifierPart($foreignKey);
 
         return $sql;
     }
@@ -390,7 +389,7 @@ class MysqlQueryGenerator extends QueryGenerator
             $sql .= 'IF EXISTS ';
         }
 
-        $sql .= $this->quoteIdentifier($schema);
+        $sql .= $this->connection->quoteIdentifierPart($schema);
 
         return $sql;
     }
@@ -406,7 +405,7 @@ class MysqlQueryGenerator extends QueryGenerator
     public function buildIndex(Index $index): string
     {
         $columns = array_map(
-            $this->quoteIdentifier(...),
+            $this->connection->quoteIdentifierPart(...),
             $index->getColumns()
         );
         $columns = implode(', ', $columns);
@@ -424,7 +423,7 @@ class MysqlQueryGenerator extends QueryGenerator
             return 'PRIMARY KEY ('.$columns.')';
         }
 
-        $name = $index->getName() |> $this->quoteIdentifier(...);
+        $name = $index->getName() |> $this->connection->quoteIdentifierPart(...);
 
         if ($index->isUnique()) {
             return 'CONSTRAINT '.$name.' UNIQUE KEY ('.$columns.') USING '.strtoupper($type);
@@ -448,7 +447,7 @@ class MysqlQueryGenerator extends QueryGenerator
      */
     public function buildTableCharset(string $charset): string
     {
-        return 'DEFAULT CHARSET = '.$this->forge->getConnection()->quote($charset);
+        return 'DEFAULT CHARSET = '.$this->connection->quote($charset);
     }
 
     /**
@@ -459,7 +458,7 @@ class MysqlQueryGenerator extends QueryGenerator
      */
     public function buildTableCollation(string $collation): string
     {
-        return 'COLLATE = '.$this->forge->getConnection()->quote($collation);
+        return 'COLLATE = '.$this->connection->quote($collation);
     }
 
     /**
@@ -470,7 +469,7 @@ class MysqlQueryGenerator extends QueryGenerator
      */
     public function buildTableComment(string $comment): string
     {
-        return 'COMMENT '.$this->forge->getConnection()->quote($comment);
+        return 'COMMENT '.$this->connection->quote($comment);
     }
 
     /**
