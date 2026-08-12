@@ -80,7 +80,7 @@ trait RelationshipTestTrait
         );
 
         $this->assertSame(
-            'SELECT "Items"."id" AS "Items__id" FROM "items" AS "Items" LEFT JOIN "items" AS "Alias" ON ("item_id" = "Items"."id") AND "Alias"."name" = \'Test\'',
+            'SELECT "Items"."id" AS "Items__id" FROM "items" AS "Items" LEFT JOIN "items" AS "Alias" ON "item_id" = "Items"."id" AND "Alias"."name" = \'Test\'',
             $Items->find()
                 ->disableAutoFields()
                 ->leftJoinWith('Alias')
@@ -104,7 +104,7 @@ trait RelationshipTestTrait
         );
 
         $this->assertSame(
-            'SELECT "Items"."id" AS "Items__id" FROM "items" AS "Items" LEFT JOIN "items" AS "Alias" ON ("item_id" = "Items"."id") AND ("Alias"."name" = \'Test\')',
+            'SELECT "Items"."id" AS "Items__id" FROM "items" AS "Items" LEFT JOIN "items" AS "Alias" ON "item_id" = "Items"."id" AND "Alias"."name" = \'Test\'',
             $Items->find()
                 ->disableAutoFields()
                 ->leftJoinWith('Alias')
@@ -128,7 +128,7 @@ trait RelationshipTestTrait
         );
 
         $this->assertSame(
-            'SELECT "Items"."id" AS "Items__id" FROM "items" AS "Items" LEFT JOIN "items" AS "Alias" ON ("item_id" = "Items"."id") AND ("Alias"."name" = \'Test\')',
+            'SELECT "Items"."id" AS "Items__id" FROM "items" AS "Items" LEFT JOIN "items" AS "Alias" ON "item_id" = "Items"."id" AND "Alias"."name" = \'Test\'',
             $Items->find()
                 ->disableAutoFields()
                 ->leftJoinWith('Alias')
@@ -170,7 +170,7 @@ trait RelationshipTestTrait
         );
 
         $this->assertSame(
-            'SELECT "Items"."id" AS "Items__id" FROM "items" AS "Items" LEFT JOIN "items" AS "Alias" ON ("item_id" = "Items"."id") AND Alias.name IS NOT NULL',
+            'SELECT "Items"."id" AS "Items__id" FROM "items" AS "Items" LEFT JOIN "items" AS "Alias" ON "item_id" = "Items"."id" AND Alias.name IS NOT NULL',
             $Items->find()
                 ->disableAutoFields()
                 ->leftJoinWith('Alias')

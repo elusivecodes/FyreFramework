@@ -824,7 +824,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
                 ]);
 
                 $joinType = $join['type'] ?? $joinType;
-                $joinConditions = static::normalizeJoinConditions($joinConditions['conditions'] ?? []);
+                $joinConditions = static::normalizeJoinConditions($join['conditions'] ?? []);
 
                 $joins = $relationship->buildJoins([
                     'alias' => $name,

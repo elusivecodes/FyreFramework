@@ -25,6 +25,7 @@ use Fyre\Utility\EnumHelper;
 use InvalidArgumentException;
 use UnitEnum;
 
+use function array_any;
 use function array_diff_key;
 use function array_filter;
 use function array_first;
@@ -597,7 +598,16 @@ abstract class QueryGenerator
                     $condition = $this->buildConditionExpression($value, $binder);
 
                     if ($condition !== null) {
-                        $groups[] = [$condition];
+                        $expressionConditions = $value->getConditions();
+                        $shouldGroup = count($expressionConditions) > 1 ||
+                            array_any(
+                                $expressionConditions,
+                                static fn(mixed $condition): bool => $condition instanceof ConditionExpression
+                            );
+
+                        $groups[] = $shouldGroup ?
+                            [$condition] :
+                            $condition;
                     }
                 } else {
                     $groups[] = $this->parseExpression($value, $binder, false);
