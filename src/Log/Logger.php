@@ -194,7 +194,7 @@ abstract class Logger extends AbstractLogger
             static function(array $match) use ($replacements): string {
                 $replaceKey = '{'.$match[2].'}';
 
-                if (($match[1] ?? '') !== '') {
+                if ($match[1] !== '') {
                     return $replaceKey;
                 }
 
