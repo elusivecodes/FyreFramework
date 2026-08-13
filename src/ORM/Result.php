@@ -83,15 +83,15 @@ class Result implements Countable, IteratorAggregate, JsonSerializable
     ) {
         $eagerLoad = $this->query->getEagerLoadPaths() !== [];
 
+        $this->parseRow(...) |> $this->result->decorate(...);
+
         $this->collection = new Collection(function() use ($eagerLoad, $buffer): Generator {
             while ($this->result->valid()) {
                 if ($this->freed) {
                     break;
                 }
 
-                $row = $this->result->current();
-
-                $entity = $this->parseRow($row) |> $this->buildEntity(...);
+                $entity = $this->result->current() |> $this->buildEntity(...);
 
                 if ($eagerLoad && !$buffer) {
                     static::loadContain([$entity], $this->query->getContain(), $this->query->getModel(), $this->query, $this->query->getAlias());
