@@ -10,6 +10,8 @@ use Fyre\DB\Handlers\Mysql\MysqlConnection;
 use Fyre\Event\Event;
 use PHPUnit\Framework\TestCase;
 
+use function file_get_contents;
+
 final class ConnectionTest extends TestCase
 {
     use MariaDbConnectionTrait;
@@ -179,6 +181,48 @@ final class ConnectionTest extends TestCase
 
         $this->db->select()
             ->hint('TEST()');
+    }
+
+    public function testQueryLogging(): void
+    {
+        $this->assertSame(
+            $this->db,
+            $this->db->enableQueryLogging()
+        );
+
+        $this->db->select([
+            'test.id',
+            'test.name',
+        ])
+            ->from('test')
+            ->where([
+                'test.name' => 'test',
+            ])
+            ->execute();
+
+        $this->assertSame(
+            $this->db,
+            $this->db->disableQueryLogging()
+        );
+
+        $this->assertStringContainsString(
+            'SELECT `test`.`id`, `test`.`name` FROM `test` WHERE `test`.`name` = \'test\'',
+            file_get_contents('log/queries-cli.log') ?: ''
+        );
+    }
+
+    public function testRawQueryLogging(): void
+    {
+        $this->db->enableQueryLogging();
+
+        $this->db->rawQuery('SELECT 1');
+
+        $this->db->disableQueryLogging();
+
+        $this->assertStringContainsString(
+            'SELECT 1',
+            file_get_contents('log/queries-cli.log') ?: ''
+        );
     }
 
     public function testTruncate(): void

@@ -3,10 +3,11 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Postgres\Sql;
 
+use Fyre\Core\Container;
+use Fyre\DB\Connection;
+use Override;
 use PHPUnit\Framework\TestCase;
-use Tests\TestCase\DB\Postgres\PostgresConnectionTrait;
-
-use function file_get_contents;
+use Tests\Mock\DB\TestPostgresConnection;
 
 final class SqlTest extends TestCase
 {
@@ -22,7 +23,6 @@ final class SqlTest extends TestCase
     use InsertTestTrait;
     use IntersectTestTrait;
     use JoinTestTrait;
-    use PostgresConnectionTrait;
     use SelectTestTrait;
     use UnionAllTestTrait;
     use UnionTestTrait;
@@ -33,54 +33,14 @@ final class SqlTest extends TestCase
     use WindowTestTrait;
     use WithTestTrait;
 
+    protected Connection $db;
+
     public function testGetConnection(): void
     {
         $this->assertSame(
             $this->db,
             $this->db->select()
                 ->getConnection()
-        );
-    }
-
-    public function testQueryLogging(): void
-    {
-        $this->assertSame(
-            $this->db,
-            $this->db->enableQueryLogging()
-        );
-
-        $this->db->select([
-            'test.id',
-            'test.name',
-        ])
-            ->from('test')
-            ->where([
-                'test.name' => 'test',
-            ])
-            ->execute();
-
-        $this->assertSame(
-            $this->db,
-            $this->db->disableQueryLogging()
-        );
-
-        $this->assertStringContainsString(
-            'SELECT "test"."id", "test"."name" FROM "test" WHERE "test"."name" = \'test\'',
-            file_get_contents('log/queries-cli.log') ?: ''
-        );
-    }
-
-    public function testRawQueryLogging(): void
-    {
-        $this->db->enableQueryLogging();
-
-        $this->db->rawQuery('SELECT 1');
-
-        $this->db->disableQueryLogging();
-
-        $this->assertStringContainsString(
-            'SELECT 1',
-            file_get_contents('log/queries-cli.log') ?: ''
         );
     }
 
@@ -91,5 +51,13 @@ final class SqlTest extends TestCase
             (string) $this->db->select()
                 ->from('test')
         );
+    }
+
+    #[Override]
+    protected function setUp(): void
+    {
+        $container = new Container();
+
+        $this->db = $container->build(TestPostgresConnection::class);
     }
 }

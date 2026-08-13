@@ -3,10 +3,11 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Sqlite\Sql;
 
+use Fyre\Core\Container;
+use Fyre\DB\Connection;
+use Override;
 use PHPUnit\Framework\TestCase;
-use Tests\TestCase\DB\Sqlite\SqliteConnectionTrait;
-
-use function file_get_contents;
+use Tests\Mock\DB\TestSqliteConnection;
 
 final class SqlTest extends TestCase
 {
@@ -23,7 +24,6 @@ final class SqlTest extends TestCase
     use IntersectTestTrait;
     use JoinTestTrait;
     use SelectTestTrait;
-    use SqliteConnectionTrait;
     use UnionAllTestTrait;
     use UnionTestTrait;
     use UpdateBatchTestTrait;
@@ -32,6 +32,8 @@ final class SqlTest extends TestCase
     use WhereTestTrait;
     use WindowTestTrait;
     use WithTestTrait;
+
+    protected Connection $db;
 
     public function testGetConnection(): void
     {
@@ -42,48 +44,6 @@ final class SqlTest extends TestCase
         );
     }
 
-    public function testQueryLogging(): void
-    {
-        $this->assertSame(
-            $this->db,
-            $this->db->enableQueryLogging()
-        );
-
-        $this->db->select([
-            'test.id',
-            'test.name',
-        ])
-            ->from('test')
-            ->where([
-                'test.name' => 'test',
-            ])
-            ->execute();
-
-        $this->assertSame(
-            $this->db,
-            $this->db->disableQueryLogging()
-        );
-
-        $this->assertStringContainsString(
-            'SELECT "test"."id", "test"."name" FROM "test" WHERE "test"."name" = \'test\'',
-            file_get_contents('log/queries-cli.log') ?: ''
-        );
-    }
-
-    public function testRawQueryLogging(): void
-    {
-        $this->db->enableQueryLogging();
-
-        $this->db->rawQuery('SELECT 1');
-
-        $this->db->disableQueryLogging();
-
-        $this->assertStringContainsString(
-            'SELECT 1',
-            file_get_contents('log/queries-cli.log') ?: ''
-        );
-    }
-
     public function testToString(): void
     {
         $this->assertSame(
@@ -91,5 +51,13 @@ final class SqlTest extends TestCase
             (string) $this->db->select()
                 ->from('test')
         );
+    }
+
+    #[Override]
+    protected function setUp(): void
+    {
+        $container = new Container();
+
+        $this->db = $container->build(TestSqliteConnection::class);
     }
 }
