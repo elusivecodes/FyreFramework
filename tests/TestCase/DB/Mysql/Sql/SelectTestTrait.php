@@ -231,6 +231,32 @@ trait SelectTestTrait
         );
     }
 
+    public function testSelectHint(): void
+    {
+        $this->assertSame(
+            'SELECT /*+ TEST1() TEST2() */ * FROM `test`',
+            $this->db->select()
+                ->from('test')
+                ->hint([
+                    'TEST1()',
+                    'TEST2()',
+                ])
+                ->sql()
+        );
+    }
+
+    public function testSelectHintOverwrite(): void
+    {
+        $this->assertSame(
+            'SELECT /*+ TEST2() */ * FROM `test`',
+            $this->db->select()
+                ->from('test')
+                ->hint('TEST1()')
+                ->hint('TEST2()', true)
+                ->sql()
+        );
+    }
+
     public function testSelectLimit(): void
     {
         $this->assertSame(

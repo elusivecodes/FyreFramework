@@ -17,6 +17,7 @@ enum DbFeature
     case DeleteOrderBy;
     case DeleteUsing;
     case InsertReturning;
+    case OptimizerHints;
     case UpdateFrom;
     case UpdateJoin;
     case UpdateMultipleTables;

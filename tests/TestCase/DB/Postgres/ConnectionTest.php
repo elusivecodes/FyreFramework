@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Postgres;
 
+use BadMethodCallException;
 use Fyre\DB\Exceptions\DbException;
 use Fyre\DB\Handlers\Postgres\PostgresConnection;
 use Fyre\Event\Event;
@@ -159,6 +160,15 @@ final class ConnectionTest extends TestCase
         );
 
         $this->db->commit();
+    }
+
+    public function testHintUnsupported(): void
+    {
+        $this->expectException(BadMethodCallException::class);
+        $this->expectExceptionMessage('Optimizer hints are not supported by this connection.');
+
+        $this->db->select()
+            ->hint('TEST()');
     }
 
     public function testTruncate(): void

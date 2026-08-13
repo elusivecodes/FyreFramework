@@ -70,6 +70,22 @@ trait InsertTestTrait
         );
     }
 
+    public function testInsertHint(): void
+    {
+        $this->assertSame(
+            'INSERT /*+ TEST() */ INTO `test` (`name`) VALUES (\'Test\')',
+            $this->db->insert()
+                ->into('test')
+                ->values([
+                    [
+                        'name' => 'Test',
+                    ],
+                ])
+                ->hint('TEST()')
+                ->sql()
+        );
+    }
+
     public function testInsertLiteral(): void
     {
         $this->assertSame(

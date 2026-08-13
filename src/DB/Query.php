@@ -10,6 +10,7 @@ use Fyre\DB\Expressions\ConditionExpression;
 use Fyre\DB\Expressions\FunctionBuilder;
 use Fyre\DB\Expressions\IdentifierExpression;
 use Fyre\DB\Expressions\LiteralExpression;
+use Fyre\DB\Queries\Traits\HintTrait;
 use Override;
 use Stringable;
 
@@ -26,6 +27,7 @@ use function is_string;
 abstract class Query implements Stringable
 {
     use DebugTrait;
+    use HintTrait;
 
     protected static bool $tableAliases = false;
 

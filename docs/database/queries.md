@@ -13,6 +13,7 @@ Start with a `Connection`, build the query you need, then call `execute()`.
   - [Binding and expressions](#binding-and-expressions)
   - [Condition arrays](#condition-arrays)
   - [Raw SQL fragments](#raw-sql-fragments)
+  - [Optimizer hints](#optimizer-hints)
   - [Tail SQL (`epilog()`)](#tail-sql-epilog)
 - [Select queries](#select-queries)
   - [Joins](#joins)
@@ -89,7 +90,9 @@ Common query methods (available on all query types):
 - `expr(string $conjunction = 'AND'): ConditionExpression`
 - `func(): FunctionBuilder`
 - `getConnection(): Connection`
+- `getHints(): array`
 - `getTable(): array` (the normalized internal table representation)
+- `hint(array|string $hints, bool $overwrite = false): static`
 - `identifier(string $identifier): IdentifierExpression`
 - `literal(string $string): LiteralExpression`
 - `sql(ValueBinder|null $binder = null): string`
@@ -203,6 +206,23 @@ $rows = $db->select([
     ->execute()
     ->all();
 ```
+
+### Optimizer hints
+
+Use `hint()` to add database-specific optimizer hints immediately after the statement keyword:
+
+```php
+$rows = $db->select('*')
+    ->from('users')
+    ->where(['active' => true])
+    ->hint('MAX_EXECUTION_TIME(1000)')
+    ->execute()
+    ->all();
+```
+
+Multiple hints are combined into one optimizer comment. Repeated calls merge hints by default; pass `true` as the second argument to overwrite them.
+
+Optimizer hints are supported by MySQL and MariaDB 12 or newer. Other connections throw a `BadMethodCallException`. Vendor-specific hint syntax is not validated by the query builder, so hints must be trusted, application-controlled strings.
 
 ### Tail SQL (`epilog()`)
 

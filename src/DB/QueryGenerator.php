@@ -181,7 +181,13 @@ abstract class QueryGenerator
     public function compileDelete(DeleteQuery $query, ValueBinder|null $binder = null): string
     {
         return $this->withQuery($query, function() use ($query, $binder): string {
-            $sql = $this->buildDelete($query->getTable(), $query->getAlias(), $query->getUsing() ?? [], $binder);
+            $sql = $this->buildDelete(
+                $query->getTable(),
+                $query->getAlias(),
+                $query->getUsing() ?? [],
+                $query->getHints(),
+                $binder
+            );
             $sql .= $this->buildJoin($query->getJoin(), $binder);
             $sql .= $this->buildWhere($query->getWhere(), $binder);
             $sql .= $this->buildOrderBy($query->getOrderBy());
@@ -209,7 +215,7 @@ abstract class QueryGenerator
                 $query->epilog('RETURNING *');
             }
 
-            $sql = $this->buildInsert($query->getTable(), $query->getValues(), $binder);
+            $sql = $this->buildInsert($query->getTable(), $query->getValues(), $query->getHints(), $binder);
             $sql .= $this->buildEpilog($query->getEpilog());
 
             return $sql;
@@ -233,7 +239,13 @@ abstract class QueryGenerator
                 $query->epilog('RETURNING *');
             }
 
-            $sql = $this->buildInsertFrom($query->getTable(), $query->getFrom(), $query->getColumns(), $binder);
+            $sql = $this->buildInsertFrom(
+                $query->getTable(),
+                $query->getFrom(),
+                $query->getColumns(),
+                $query->getHints(),
+                $binder
+            );
             $sql .= $this->buildEpilog($query->getEpilog());
 
             return $sql;
@@ -255,7 +267,13 @@ abstract class QueryGenerator
             }
 
             $sql = $this->buildWith($query->getWith(), $binder);
-            $sql .= $this->buildSelect($query->getTable(), $query->getSelect(), $query->getDistinct(), $binder);
+            $sql .= $this->buildSelect(
+                $query->getTable(),
+                $query->getSelect(),
+                $query->getDistinct(),
+                $query->getHints(),
+                $binder
+            );
             $sql .= $this->buildJoin($query->getJoin(), $binder);
             $sql .= $this->buildWhere($query->getWhere(), $binder);
 
@@ -285,7 +303,13 @@ abstract class QueryGenerator
     public function compileUpdate(UpdateQuery $query, ValueBinder|null $binder = null): string
     {
         return $this->withQuery($query, function() use ($query, $binder): string {
-            $sql = $this->buildUpdate($query->getTable(), $query->getData(), $query->getFrom() ?? [], $binder);
+            $sql = $this->buildUpdate(
+                $query->getTable(),
+                $query->getData(),
+                $query->getFrom() ?? [],
+                $query->getHints(),
+                $binder
+            );
             $sql .= $this->buildJoin($query->getJoin(), $binder);
             $sql .= $this->buildWhere($query->getWhere(), $binder);
             $sql .= $this->buildEpilog($query->getEpilog());
@@ -304,7 +328,13 @@ abstract class QueryGenerator
     public function compileUpdateBatch(UpdateBatchQuery $query, ValueBinder|null $binder = null): string
     {
         return $this->withQuery($query, function() use ($query, $binder): string {
-            $sql = $this->buildUpdateBatch($query->getTable(), $query->getData(), $query->getKeys(), $binder);
+            $sql = $this->buildUpdateBatch(
+                $query->getTable(),
+                $query->getData(),
+                $query->getKeys(),
+                $query->getHints(),
+                $binder
+            );
             $sql .= $this->buildEpilog($query->getEpilog());
 
             return $sql;
@@ -321,7 +351,7 @@ abstract class QueryGenerator
     public function compileUpsert(UpsertQuery $query, ValueBinder|null $binder = null): string
     {
         return $this->withQuery($query, function() use ($query, $binder): string {
-            $sql = $this->buildInsert($query->getTable(), $query->getValues(), $binder);
+            $sql = $this->buildInsert($query->getTable(), $query->getValues(), $query->getHints(), $binder);
             $sql .= $this->buildOnConflict($query->getConflictKeys(), $query->getValues(), $query->getExcludeUpdateKeys());
             $sql .= $this->buildEpilog($query->getEpilog());
 
@@ -645,11 +675,17 @@ abstract class QueryGenerator
      * @param string[] $tables The tables.
      * @param string[] $aliases The table aliases to delete.
      * @param array<mixed> $using The using tables.
+     * @param string[] $hints The optimizer hints.
      * @param ValueBinder|null $binder The value binder.
      * @return string The query string.
      */
-    protected function buildDelete(array $tables, array $aliases = [], array $using = [], ValueBinder|null $binder = null): string
-    {
+    protected function buildDelete(
+        array $tables,
+        array $aliases = [],
+        array $using = [],
+        array $hints = [],
+        ValueBinder|null $binder = null
+    ): string {
         if ($aliases === [] && count($tables) > 1) {
             $aliases = array_map(
                 function(int|string $alias, string $table): string {
@@ -670,6 +706,7 @@ abstract class QueryGenerator
         }
 
         $query = 'DELETE';
+        $query .= static::buildHints($hints);
 
         if ($aliases !== []) {
             $query .= ' ';
@@ -824,11 +861,16 @@ abstract class QueryGenerator
      *
      * @param array<mixed> $tables The tables.
      * @param array<string, mixed>[] $values The values.
+     * @param string[] $hints The optimizer hints.
      * @param ValueBinder|null $binder The value binder.
      * @return string The query string.
      */
-    protected function buildInsert(array $tables, array $values, ValueBinder|null $binder = null): string
-    {
+    protected function buildInsert(
+        array $tables,
+        array $values,
+        array $hints = [],
+        ValueBinder|null $binder = null
+    ): string {
         $firstRow = $values[0] ?? [];
         $columns = array_keys($firstRow);
 
@@ -853,7 +895,9 @@ abstract class QueryGenerator
             $values
         );
 
-        $query = 'INSERT INTO ';
+        $query = 'INSERT';
+        $query .= static::buildHints($hints);
+        $query .= ' INTO ';
         $query .= $this->buildTables($tables);
         $columns = array_map(
             $this->connection->quoteIdentifierPart(...),
@@ -872,12 +916,20 @@ abstract class QueryGenerator
      * @param array<mixed> $tables The tables.
      * @param Closure|LiteralExpression|SelectQuery|string $from The query.
      * @param string[] $columns The columns.
+     * @param string[] $hints The optimizer hints.
      * @param ValueBinder|null $binder The value binder.
      * @return string The query string.
      */
-    protected function buildInsertFrom(array $tables, Closure|LiteralExpression|SelectQuery|string $from, array $columns, ValueBinder|null $binder = null): string
-    {
-        $query = 'INSERT INTO ';
+    protected function buildInsertFrom(
+        array $tables,
+        Closure|LiteralExpression|SelectQuery|string $from,
+        array $columns,
+        array $hints = [],
+        ValueBinder|null $binder = null
+    ): string {
+        $query = 'INSERT';
+        $query .= static::buildHints($hints);
+        $query .= ' INTO ';
         $query .= $this->buildTables($tables);
 
         if ($columns !== []) {
@@ -1003,14 +1055,22 @@ abstract class QueryGenerator
      * @param array<mixed> $tables The tables.
      * @param array<mixed> $fields The fields.
      * @param bool $distinct Whether to use a DISTINCT clause.
+     * @param string[] $hints The optimizer hints.
      * @param ValueBinder|null $binder The value binder.
      * @return string The query string.
      */
-    protected function buildSelect(array $tables, array $fields, bool $distinct = false, ValueBinder|null $binder = null): string
-    {
+    protected function buildSelect(
+        array $tables,
+        array $fields,
+        bool $distinct = false,
+        array $hints = [],
+        ValueBinder|null $binder = null
+    ): string {
         $fields = $this->buildSelectFields($fields, $binder);
 
-        $query = 'SELECT ';
+        $query = 'SELECT';
+        $query .= static::buildHints($hints);
+        $query .= ' ';
 
         if ($distinct) {
             $query .= 'DISTINCT ';
@@ -1136,11 +1196,17 @@ abstract class QueryGenerator
      * @param array<mixed> $tables The tables.
      * @param array<mixed> $data The data.
      * @param array<mixed> $from The from tables.
+     * @param string[] $hints The optimizer hints.
      * @param ValueBinder|null $binder The value binder.
      * @return string The query string.
      */
-    protected function buildUpdate(array $tables, array $data, array $from = [], ValueBinder|null $binder = null): string
-    {
+    protected function buildUpdate(
+        array $tables,
+        array $data,
+        array $from = [],
+        array $hints = [],
+        ValueBinder|null $binder = null
+    ): string {
         $data = array_map(
             function(int|string $field, mixed $value) use ($binder): string {
                 if (is_numeric($field)) {
@@ -1153,7 +1219,9 @@ abstract class QueryGenerator
             $data
         );
 
-        $query = 'UPDATE ';
+        $query = 'UPDATE';
+        $query .= static::buildHints($hints);
+        $query .= ' ';
         $query .= $this->buildTables($tables);
 
         $query .= ' SET ';
@@ -1173,11 +1241,17 @@ abstract class QueryGenerator
      * @param array<mixed> $tables The tables.
      * @param array<string, mixed>[] $data The data.
      * @param string[] $keys The key to use for updating.
+     * @param string[] $hints The optimizer hints.
      * @param ValueBinder|null $binder The value binder.
      * @return string The query string.
      */
-    protected function buildUpdateBatch(array $tables, array $data, array $keys, ValueBinder|null $binder = null): string
-    {
+    protected function buildUpdateBatch(
+        array $tables,
+        array $data,
+        array $keys,
+        array $hints = [],
+        ValueBinder|null $binder = null
+    ): string {
         $columns = array_filter(
             array_keys($data[0] ?? []),
             static fn(int|string $column): bool => !in_array($column, $keys)
@@ -1227,7 +1301,9 @@ abstract class QueryGenerator
             $updateData[] = $sql;
         }
 
-        $query = 'UPDATE ';
+        $query = 'UPDATE';
+        $query .= static::buildHints($hints);
+        $query .= ' ';
         $query .= $this->buildTables($tables);
         $query .= ' SET ';
         $query .= implode(', ', $updateData);
@@ -1543,5 +1619,20 @@ abstract class QueryGenerator
         );
 
         return implode(' '.$type.' ', $conditions);
+    }
+
+    /**
+     * Generates the optimizer hints portion of the query.
+     *
+     * @param string[] $hints The optimizer hints.
+     * @return string The query string.
+     */
+    protected static function buildHints(array $hints): string
+    {
+        if ($hints === []) {
+            return '';
+        }
+
+        return ' /*+ '.implode(' ', $hints).' */';
     }
 }

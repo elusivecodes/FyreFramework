@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Sqlite;
 
+use BadMethodCallException;
 use Fyre\DB\ConnectionRetry;
 use Fyre\DB\Exceptions\DbException;
 use Fyre\DB\Handlers\Sqlite\SqliteConnection;
@@ -146,6 +147,15 @@ final class ConnectionTest extends TestCase
             1,
             $row['foreign_keys']
         );
+    }
+
+    public function testHintUnsupported(): void
+    {
+        $this->expectException(BadMethodCallException::class);
+        $this->expectExceptionMessage('Optimizer hints are not supported by this connection.');
+
+        $this->db->select()
+            ->hint('TEST()');
     }
 
     public function testTruncate(): void

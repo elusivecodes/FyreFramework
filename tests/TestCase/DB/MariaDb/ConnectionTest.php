@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\MariaDb;
 
+use BadMethodCallException;
+use Fyre\DB\DbFeature;
 use Fyre\DB\Exceptions\DbException;
 use Fyre\DB\Handlers\Mysql\MysqlConnection;
 use Fyre\Event\Event;
@@ -164,6 +166,19 @@ final class ConnectionTest extends TestCase
             1,
             $row['@@foreign_key_checks']
         );
+    }
+
+    public function testHintUnsupported(): void
+    {
+        if ($this->db->supports(DbFeature::OptimizerHints)) {
+            $this->markTestSkipped('Optimizer hints are supported by this connection.');
+        }
+
+        $this->expectException(BadMethodCallException::class);
+        $this->expectExceptionMessage('Optimizer hints are not supported by this connection.');
+
+        $this->db->select()
+            ->hint('TEST()');
     }
 
     public function testTruncate(): void

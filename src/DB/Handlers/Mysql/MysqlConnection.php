@@ -15,7 +15,9 @@ use PDOException;
 use function array_replace;
 use function class_exists;
 use function sprintf;
+use function str_contains;
 use function str_replace;
+use function version_compare;
 
 /**
  * Provides a MySQL {@see Connection} implementation.
@@ -204,6 +206,12 @@ class MysqlConnection extends Connection
     #[Override]
     public function supports(DbFeature $feature): bool
     {
+        if ($feature === DbFeature::OptimizerHints) {
+            $version = $this->version();
+
+            return !str_contains($version, 'MariaDB') || version_compare($version, '12.0', '>=');
+        }
+
         return match ($feature) {
             DbFeature::DeleteAlias,
             DbFeature::DeleteJoin,

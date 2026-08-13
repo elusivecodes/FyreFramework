@@ -119,6 +119,22 @@ trait UpdateBatchTestTrait
         );
     }
 
+    public function testUpdateBatchHint(): void
+    {
+        $this->assertSame(
+            'UPDATE /*+ TEST() */ `test` SET `name` = CASE WHEN `id` = 1 THEN \'Test\' END WHERE `id` = 1',
+            $this->db->updateBatch('test')
+                ->set([
+                    [
+                        'id' => 1,
+                        'name' => 'Test',
+                    ],
+                ], 'id')
+                ->hint('TEST()')
+                ->sql()
+        );
+    }
+
     public function testUpdateBatchLiteral(): void
     {
         $this->assertSame(

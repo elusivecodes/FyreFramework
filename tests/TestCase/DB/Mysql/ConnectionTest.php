@@ -6,6 +6,7 @@ namespace Tests\TestCase\DB\Mysql;
 use Fyre\DB\Exceptions\DbException;
 use Fyre\DB\Handlers\Mysql\MysqlConnection;
 use Fyre\Event\Event;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 final class ConnectionTest extends TestCase
@@ -164,6 +165,15 @@ final class ConnectionTest extends TestCase
             1,
             $row['@@foreign_key_checks']
         );
+    }
+
+    public function testHintInvalid(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Query optimizer hint is not valid.');
+
+        $this->db->select()
+            ->hint('TEST() */');
     }
 
     public function testTruncate(): void

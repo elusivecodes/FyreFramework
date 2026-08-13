@@ -105,6 +105,20 @@ trait GetTestTrait
         );
     }
 
+    public function testGetHints(): void
+    {
+        $this->assertSame(
+            [
+                'TEST1()',
+                'TEST2()',
+            ],
+            $this->db->select()
+                ->hint('TEST1()')
+                ->hint('TEST2()')
+                ->getHints()
+        );
+    }
+
     public function testGetInto(): void
     {
         $this->assertSame(
