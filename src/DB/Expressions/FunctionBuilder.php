@@ -70,7 +70,10 @@ class FunctionBuilder
             ));
         }
 
-        return $this->create('CAST', [$this->valueExpression($field), $dataType]);
+        return new FunctionExpression('CAST', [
+            $this->valueExpression($field),
+            $dataType,
+        ]);
     }
 
     /**
@@ -96,7 +99,7 @@ class FunctionBuilder
             throw new InvalidArgumentException('Query function COALESCE requires at least one argument.');
         }
 
-        return $this->create('COALESCE', $arguments);
+        return new FunctionExpression('COALESCE', $arguments);
     }
 
     /**
@@ -111,7 +114,7 @@ class FunctionBuilder
             throw new InvalidArgumentException('Query function CONCAT requires at least one argument.');
         }
 
-        return $this->create('CONCAT', $arguments);
+        return new FunctionExpression('CONCAT', $arguments);
     }
 
     /**
@@ -143,8 +146,11 @@ class FunctionBuilder
      * @param string $unit The date unit.
      * @return FunctionExpression The new FunctionExpression instance.
      */
-    public function dateAdd(string|ValueExpressionInterface $expression, int|string $value, string $unit): FunctionExpression
-    {
+    public function dateAdd(
+        string|ValueExpressionInterface $expression,
+        int|string $value,
+        string $unit
+    ): FunctionExpression {
         $unit = strtolower($unit);
 
         if (!in_array($unit, self::DATE_PARTS, true)) {
@@ -154,7 +160,11 @@ class FunctionBuilder
             ));
         }
 
-        return $this->create('DATE_ADD', [$this->valueExpression($expression), $value, $unit]);
+        return new FunctionExpression('DATE_ADD', [
+            $this->valueExpression($expression),
+            $value,
+            $unit,
+        ]);
     }
 
     /**
@@ -169,7 +179,7 @@ class FunctionBuilder
             throw new InvalidArgumentException('Query function DATE_DIFF requires two arguments.');
         }
 
-        return $this->create('DATE_DIFF', $arguments);
+        return new FunctionExpression('DATE_DIFF', $arguments);
     }
 
     /**
@@ -190,7 +200,10 @@ class FunctionBuilder
             ));
         }
 
-        return $this->create('DATE_PART', [$part, $this->valueExpression($expression)]);
+        return new FunctionExpression('DATE_PART', [
+            $part,
+            $this->valueExpression($expression),
+        ]);
     }
 
     /**
@@ -201,8 +214,11 @@ class FunctionBuilder
      * @param string $unit The date unit.
      * @return FunctionExpression The new FunctionExpression instance.
      */
-    public function dateSub(string|ValueExpressionInterface $expression, int|string $value, string $unit): FunctionExpression
-    {
+    public function dateSub(
+        string|ValueExpressionInterface $expression,
+        int|string $value,
+        string $unit
+    ): FunctionExpression {
         $unit = strtolower($unit);
 
         if (!in_array($unit, self::DATE_PARTS, true)) {
@@ -212,7 +228,11 @@ class FunctionBuilder
             ));
         }
 
-        return $this->create('DATE_SUB', [$this->valueExpression($expression), $value, $unit]);
+        return new FunctionExpression('DATE_SUB', [
+            $this->valueExpression($expression),
+            $value,
+            $unit,
+        ]);
     }
 
     /**
@@ -223,7 +243,9 @@ class FunctionBuilder
      */
     public function dayOfWeek(string|ValueExpressionInterface $expression): FunctionExpression
     {
-        return $this->create('DAY_OF_WEEK', [$this->valueExpression($expression)]);
+        return new FunctionExpression('DAY_OF_WEEK', [
+            $this->valueExpression($expression),
+        ]);
     }
 
     /**
@@ -254,7 +276,10 @@ class FunctionBuilder
             ));
         }
 
-        return $this->create('EXTRACT', [$part, $this->valueExpression($expression)]);
+        return new FunctionExpression('EXTRACT', [
+            $part,
+            $this->valueExpression($expression),
+        ]);
     }
 
     /**
@@ -265,7 +290,9 @@ class FunctionBuilder
      */
     public function firstValue(string|ValueExpressionInterface $expression): WindowExpression
     {
-        return $this->windowFunction('FIRST_VALUE', [$this->valueExpression($expression)]);
+        return $this->windowFunction('FIRST_VALUE', [
+            $this->valueExpression($expression),
+        ]);
     }
 
     /**
@@ -288,7 +315,10 @@ class FunctionBuilder
      */
     public function jsonValue(string|ValueExpressionInterface $expression, string $path): FunctionExpression
     {
-        return $this->create('JSON_VALUE', [$this->valueExpression($expression), $path]);
+        return new FunctionExpression('JSON_VALUE', [
+            $this->valueExpression($expression),
+            $path,
+        ]);
     }
 
     /**
@@ -299,8 +329,11 @@ class FunctionBuilder
      * @param mixed $default The default value.
      * @return WindowExpression The new WindowExpression instance.
      */
-    public function lag(string|ValueExpressionInterface $expression, int $offset = 1, mixed $default = null): WindowExpression
-    {
+    public function lag(
+        string|ValueExpressionInterface $expression,
+        int $offset = 1,
+        mixed $default = null
+    ): WindowExpression {
         if ($offset < 0) {
             throw new InvalidArgumentException('Query function LAG offset must not be negative.');
         }
@@ -319,7 +352,9 @@ class FunctionBuilder
      */
     public function lastValue(string|ValueExpressionInterface $expression): WindowExpression
     {
-        return $this->windowFunction('LAST_VALUE', [$this->valueExpression($expression)]);
+        return $this->windowFunction('LAST_VALUE', [
+            $this->valueExpression($expression),
+        ]);
     }
 
     /**
@@ -330,8 +365,11 @@ class FunctionBuilder
      * @param mixed $default The default value.
      * @return WindowExpression The new WindowExpression instance.
      */
-    public function lead(string|ValueExpressionInterface $expression, int $offset = 1, mixed $default = null): WindowExpression
-    {
+    public function lead(
+        string|ValueExpressionInterface $expression,
+        int $offset = 1,
+        mixed $default = null
+    ): WindowExpression {
         if ($offset < 0) {
             throw new InvalidArgumentException('Query function LEAD offset must not be negative.');
         }
@@ -403,7 +441,9 @@ class FunctionBuilder
             ));
         }
 
-        return $this->create('NOW', [$type]);
+        return new FunctionExpression('NOW', [
+            $type,
+        ]);
     }
 
     /**
@@ -419,7 +459,10 @@ class FunctionBuilder
             throw new InvalidArgumentException('Query function NTH_VALUE offset must be greater than zero.');
         }
 
-        return $this->windowFunction('NTH_VALUE', [$this->valueExpression($expression), $offset]);
+        return $this->windowFunction('NTH_VALUE', [
+            $this->valueExpression($expression),
+            $offset,
+        ]);
     }
 
     /**
@@ -434,7 +477,9 @@ class FunctionBuilder
             throw new InvalidArgumentException('Query function NTILE buckets must be greater than zero.');
         }
 
-        return $this->windowFunction('NTILE', [$buckets]);
+        return $this->windowFunction('NTILE', [
+            $buckets,
+        ]);
     }
 
     /**
@@ -446,7 +491,10 @@ class FunctionBuilder
      */
     public function nullIf(string|ValueExpressionInterface $expression, mixed $value): FunctionExpression
     {
-        return $this->create('NULLIF', [$this->valueExpression($expression), $value]);
+        return new FunctionExpression('NULLIF', [
+            $this->valueExpression($expression),
+            $value,
+        ]);
     }
 
     /**
@@ -477,9 +525,16 @@ class FunctionBuilder
      * @param mixed $replace The replacement value.
      * @return FunctionExpression The new FunctionExpression instance.
      */
-    public function replace(string|ValueExpressionInterface $expression, mixed $search, mixed $replace): FunctionExpression
-    {
-        return $this->create('REPLACE', [$this->valueExpression($expression), $search, $replace]);
+    public function replace(
+        string|ValueExpressionInterface $expression,
+        mixed $search,
+        mixed $replace
+    ): FunctionExpression {
+        return new FunctionExpression('REPLACE', [
+            $this->valueExpression($expression),
+            $search,
+            $replace,
+        ]);
     }
 
     /**
@@ -491,7 +546,10 @@ class FunctionBuilder
      */
     public function round(string|ValueExpressionInterface $expression, int $precision = 0): FunctionExpression
     {
-        return $this->create('ROUND', [$this->valueExpression($expression), $precision]);
+        return new FunctionExpression('ROUND', [
+            $this->valueExpression($expression),
+            $precision,
+        ]);
     }
 
     /**
@@ -525,13 +583,16 @@ class FunctionBuilder
             throw new InvalidArgumentException('Query function SUBSTRING length must not be negative.');
         }
 
-        $arguments = [$this->valueExpression($expression), $start];
+        $arguments = [
+            $this->valueExpression($expression),
+            $start,
+        ];
 
         if ($length !== null) {
             $arguments[] = $length;
         }
 
-        return $this->create('SUBSTRING', $arguments);
+        return new FunctionExpression('SUBSTRING', $arguments);
     }
 
     /**
@@ -575,7 +636,9 @@ class FunctionBuilder
      */
     public function weekDay(string|ValueExpressionInterface $expression): FunctionExpression
     {
-        return $this->create('WEEK_DAY', [$this->valueExpression($expression)]);
+        return new FunctionExpression('WEEK_DAY', [
+            $this->valueExpression($expression),
+        ]);
     }
 
     /**
@@ -588,18 +651,6 @@ class FunctionBuilder
     protected function aggregate(string $name, string|ValueExpressionInterface $field): AggregateExpression
     {
         return new AggregateExpression($name, $this->valueExpression($field));
-    }
-
-    /**
-     * Creates a FunctionExpression.
-     *
-     * @param string $name The function name.
-     * @param mixed[] $arguments The function arguments.
-     * @return FunctionExpression The new FunctionExpression instance.
-     */
-    protected function create(string $name, array $arguments = []): FunctionExpression
-    {
-        return new FunctionExpression($name, $arguments);
     }
 
     /**
@@ -624,7 +675,9 @@ class FunctionBuilder
      */
     protected function valueFunction(string $name, string|ValueExpressionInterface $expression): FunctionExpression
     {
-        return $this->create($name, [$this->valueExpression($expression)]);
+        return new FunctionExpression($name, [
+            $this->valueExpression($expression),
+        ]);
     }
 
     /**
@@ -636,7 +689,9 @@ class FunctionBuilder
      */
     protected function windowFunction(string $name, array $arguments = []): WindowExpression
     {
-        return new WindowExpression($this->create($name, $arguments));
+        return new WindowExpression(
+            new FunctionExpression($name, $arguments)
+        );
     }
 
     /**
@@ -652,7 +707,9 @@ class FunctionBuilder
         int $offset,
         mixed $default
     ): array {
-        $arguments = [$this->valueExpression($expression)];
+        $arguments = [
+            $this->valueExpression($expression),
+        ];
 
         if ($offset !== 1 || $default !== null) {
             $arguments[] = $offset;
