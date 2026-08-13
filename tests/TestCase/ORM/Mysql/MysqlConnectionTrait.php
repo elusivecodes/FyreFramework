@@ -16,7 +16,7 @@ use Fyre\ORM\EntityLocator;
 use Fyre\ORM\ModelRegistry;
 use Fyre\Utility\Inflector;
 use Fyre\Utility\Path;
-use Override;
+use Tests\TestCase\ORM\Traits\ConnectionTrait;
 
 use function getenv;
 
@@ -24,28 +24,21 @@ use const ROOT;
 
 trait MysqlConnectionTrait
 {
-    protected Container $container;
+    use ConnectionTrait;
 
-    protected Connection $db;
-
-    protected ModelRegistry $modelRegistry;
-
-    protected SchemaRegistry $schemaRegistry;
-
-    #[Override]
-    protected function setUp(): void
+    protected static function buildContainer(): Container
     {
-        $this->container = new Container();
-        $this->container->singleton(TypeParser::class);
-        $this->container->singleton(Config::class);
-        $this->container->singleton(Inflector::class);
-        $this->container->singleton(ConnectionManager::class);
-        $this->container->singleton(SchemaRegistry::class);
-        $this->container->singleton(ModelRegistry::class);
-        $this->container->singleton(EntityLocator::class);
-        $this->container->singleton(EventManager::class);
-        $this->container->singleton(Lang::class);
-        $this->container->use(Config::class)
+        $container = new Container();
+        $container->singleton(TypeParser::class);
+        $container->singleton(Config::class);
+        $container->singleton(Inflector::class);
+        $container->singleton(ConnectionManager::class);
+        $container->singleton(SchemaRegistry::class);
+        $container->singleton(ModelRegistry::class);
+        $container->singleton(EntityLocator::class);
+        $container->singleton(EventManager::class);
+        $container->singleton(Lang::class);
+        $container->use(Config::class)
             ->set('App.locale', 'en')
             ->set('Database', [
                 'default' => [
@@ -61,31 +54,15 @@ trait MysqlConnectionTrait
                 ],
             ]);
 
-        $this->container->use(Lang::class)
+        $container->use(Lang::class)
             ->addPath(Path::join(ROOT, 'lang'));
 
-        $this->schemaRegistry = $this->container->use(SchemaRegistry::class);
-        $this->modelRegistry = $this->container->use(ModelRegistry::class);
+        return $container;
+    }
 
-        $this->modelRegistry->addNamespace('Tests\Mock\Models\ORM');
-
-        $this->container->use(EntityLocator::class)->addNamespace('Tests\Mock\Entities');
-
-        $this->db = $this->container->use(ConnectionManager::class)->use();
-
-        $this->db->query('DROP TABLE IF EXISTS contains');
-        $this->db->query('DROP TABLE IF EXISTS composite_items');
-        $this->db->query('DROP TABLE IF EXISTS items');
-        $this->db->query('DROP TABLE IF EXISTS others');
-        $this->db->query('DROP TABLE IF EXISTS timestamps');
-        $this->db->query('DROP TABLE IF EXISTS users');
-        $this->db->query('DROP TABLE IF EXISTS addresses');
-        $this->db->query('DROP TABLE IF EXISTS posts');
-        $this->db->query('DROP TABLE IF EXISTS comments');
-        $this->db->query('DROP TABLE IF EXISTS tags');
-        $this->db->query('DROP TABLE IF EXISTS posts_tags');
-
-        $this->db->query(<<<'SQL'
+    protected static function createSchema(Connection $db): void
+    {
+        $db->query(<<<'SQL'
             CREATE TABLE items (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 name VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
@@ -93,7 +70,7 @@ trait MysqlConnectionTrait
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE composite_items (
                 tenant_id INT(10) UNSIGNED NOT NULL,
                 id INT(10) UNSIGNED NOT NULL,
@@ -102,7 +79,7 @@ trait MysqlConnectionTrait
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE contains (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 item_id INT(10) UNSIGNED NOT NULL,
@@ -111,7 +88,7 @@ trait MysqlConnectionTrait
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE others (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 value INT(10) UNSIGNED NOT NULL,
@@ -119,7 +96,7 @@ trait MysqlConnectionTrait
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE timestamps (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 created DATETIME NOT NULL,
@@ -128,7 +105,7 @@ trait MysqlConnectionTrait
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE users (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 name VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
@@ -137,7 +114,7 @@ trait MysqlConnectionTrait
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE addresses (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 user_id INT(10) UNSIGNED NOT NULL,
@@ -150,7 +127,7 @@ trait MysqlConnectionTrait
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE posts (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 user_id INT(10) UNSIGNED NULL DEFAULT NULL,
@@ -161,7 +138,7 @@ trait MysqlConnectionTrait
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE comments (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 user_id INT(10) UNSIGNED NULL DEFAULT NULL,
@@ -172,7 +149,7 @@ trait MysqlConnectionTrait
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE tags (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 tag VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
@@ -180,7 +157,7 @@ trait MysqlConnectionTrait
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE posts_tags (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 post_id INT(10) UNSIGNED NOT NULL,
@@ -189,23 +166,5 @@ trait MysqlConnectionTrait
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
         SQL);
-    }
-
-    #[Override]
-    protected function tearDown(): void
-    {
-        $this->db->query('DROP TABLE IF EXISTS contains');
-        $this->db->query('DROP TABLE IF EXISTS composite_items');
-        $this->db->query('DROP TABLE IF EXISTS items');
-        $this->db->query('DROP TABLE IF EXISTS others');
-        $this->db->query('DROP TABLE IF EXISTS timestamps');
-        $this->db->query('DROP TABLE IF EXISTS users');
-        $this->db->query('DROP TABLE IF EXISTS addresses');
-        $this->db->query('DROP TABLE IF EXISTS posts');
-        $this->db->query('DROP TABLE IF EXISTS comments');
-        $this->db->query('DROP TABLE IF EXISTS tags');
-        $this->db->query('DROP TABLE IF EXISTS posts_tags');
-
-        $this->db->disconnect();
     }
 }

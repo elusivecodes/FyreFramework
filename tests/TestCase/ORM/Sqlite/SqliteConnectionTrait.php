@@ -16,66 +16,48 @@ use Fyre\ORM\EntityLocator;
 use Fyre\ORM\ModelRegistry;
 use Fyre\Utility\Inflector;
 use Fyre\Utility\Path;
-use Override;
+use Tests\TestCase\ORM\Traits\ConnectionTrait;
 
 use const ROOT;
 
+use function str_replace;
+
 trait SqliteConnectionTrait
 {
-    protected Container $container;
+    use ConnectionTrait;
 
-    protected Connection $db;
-
-    protected ModelRegistry $modelRegistry;
-
-    protected SchemaRegistry $schemaRegistry;
-
-    #[Override]
-    protected function setUp(): void
+    protected static function buildContainer(): Container
     {
-        $this->container = new Container();
-        $this->container->singleton(TypeParser::class);
-        $this->container->singleton(Config::class);
-        $this->container->singleton(Inflector::class);
-        $this->container->singleton(ConnectionManager::class);
-        $this->container->singleton(SchemaRegistry::class);
-        $this->container->singleton(ModelRegistry::class);
-        $this->container->singleton(EntityLocator::class);
-        $this->container->singleton(EventManager::class);
-        $this->container->singleton(Lang::class);
-        $this->container->use(Config::class)
+        $container = new Container();
+        $container->singleton(TypeParser::class);
+        $container->singleton(Config::class);
+        $container->singleton(Inflector::class);
+        $container->singleton(ConnectionManager::class);
+        $container->singleton(SchemaRegistry::class);
+        $container->singleton(ModelRegistry::class);
+        $container->singleton(EntityLocator::class);
+        $container->singleton(EventManager::class);
+        $container->singleton(Lang::class);
+        $container->use(Config::class)
             ->set('App.locale', 'en')
             ->set('Database', [
                 'default' => [
                     'className' => SqliteConnection::class,
+                    'database' => 'orm_'.str_replace('\\', '_', static::class),
+                    'mode' => 'memory',
+                    'cache' => 'shared',
                 ],
             ]);
 
-        $this->container->use(Lang::class)
+        $container->use(Lang::class)
             ->addPath(Path::join(ROOT, 'lang'));
 
-        $this->schemaRegistry = $this->container->use(SchemaRegistry::class);
-        $this->modelRegistry = $this->container->use(ModelRegistry::class);
+        return $container;
+    }
 
-        $this->modelRegistry->addNamespace('Tests\Mock\Models\ORM');
-
-        $this->container->use(EntityLocator::class)->addNamespace('Tests\Mock\Entities');
-
-        $this->db = $this->container->use(ConnectionManager::class)->use();
-
-        $this->db->query('DROP TABLE IF EXISTS contains');
-        $this->db->query('DROP TABLE IF EXISTS composite_items');
-        $this->db->query('DROP TABLE IF EXISTS items');
-        $this->db->query('DROP TABLE IF EXISTS others');
-        $this->db->query('DROP TABLE IF EXISTS timestamps');
-        $this->db->query('DROP TABLE IF EXISTS users');
-        $this->db->query('DROP TABLE IF EXISTS addresses');
-        $this->db->query('DROP TABLE IF EXISTS posts');
-        $this->db->query('DROP TABLE IF EXISTS comments');
-        $this->db->query('DROP TABLE IF EXISTS tags');
-        $this->db->query('DROP TABLE IF EXISTS posts_tags');
-
-        $this->db->query(<<<'SQL'
+    protected static function createSchema(Connection $db): void
+    {
+        $db->query(<<<'SQL'
             CREATE TABLE items (
                 id INTEGER NOT NULL,
                 name VARCHAR(255) NULL DEFAULT NULL,
@@ -83,7 +65,7 @@ trait SqliteConnectionTrait
             )
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE composite_items (
                 tenant_id INTEGER NOT NULL,
                 id INTEGER NOT NULL,
@@ -92,7 +74,7 @@ trait SqliteConnectionTrait
             )
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE contains (
                 id INTEGER NOT NULL,
                 item_id INTEGER NOT NULL,
@@ -101,7 +83,7 @@ trait SqliteConnectionTrait
             )
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE others (
                 id INTEGER NOT NULL,
                 value INTEGER NOT NULL,
@@ -109,7 +91,7 @@ trait SqliteConnectionTrait
             )
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE timestamps (
                 id INTEGER NOT NULL,
                 created DATETIME NOT NULL,
@@ -118,7 +100,7 @@ trait SqliteConnectionTrait
             )
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE users (
                 id INTEGER NOT NULL,
                 name VARCHAR(255) NULL DEFAULT NULL,
@@ -127,7 +109,7 @@ trait SqliteConnectionTrait
             )
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE addresses (
                 id INTEGER NOT NULL,
                 user_id INTEGER NOT NULL,
@@ -140,7 +122,7 @@ trait SqliteConnectionTrait
             )
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE posts (
                 id INTEGER NOT NULL,
                 user_id INTEGER NULL DEFAULT NULL,
@@ -151,7 +133,7 @@ trait SqliteConnectionTrait
             )
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE comments (
                 id INTEGER NOT NULL,
                 user_id INTEGER NULL DEFAULT NULL,
@@ -162,7 +144,7 @@ trait SqliteConnectionTrait
             )
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE tags (
                 id INTEGER NOT NULL,
                 tag VARCHAR(255) NULL DEFAULT NULL,
@@ -170,7 +152,7 @@ trait SqliteConnectionTrait
             )
         SQL);
 
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE posts_tags (
                 id INTEGER NOT NULL,
                 post_id INTEGER NOT NULL,
@@ -179,23 +161,5 @@ trait SqliteConnectionTrait
                 PRIMARY KEY (id)
             )
         SQL);
-    }
-
-    #[Override]
-    protected function tearDown(): void
-    {
-        $this->db->query('DROP TABLE IF EXISTS contains');
-        $this->db->query('DROP TABLE IF EXISTS composite_items');
-        $this->db->query('DROP TABLE IF EXISTS items');
-        $this->db->query('DROP TABLE IF EXISTS others');
-        $this->db->query('DROP TABLE IF EXISTS timestamps');
-        $this->db->query('DROP TABLE IF EXISTS users');
-        $this->db->query('DROP TABLE IF EXISTS addresses');
-        $this->db->query('DROP TABLE IF EXISTS posts');
-        $this->db->query('DROP TABLE IF EXISTS comments');
-        $this->db->query('DROP TABLE IF EXISTS tags');
-        $this->db->query('DROP TABLE IF EXISTS posts_tags');
-
-        $this->db->disconnect();
     }
 }
