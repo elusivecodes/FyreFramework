@@ -16,6 +16,7 @@ final class SqlTest extends TestCase
     use DeleteTestTrait;
     use ExceptTestTrait;
     use FunctionTestTrait;
+    use GroupLimitTestTrait;
     use HavingTestTrait;
     use InsertFromTestTrait;
     use InsertTestTrait;

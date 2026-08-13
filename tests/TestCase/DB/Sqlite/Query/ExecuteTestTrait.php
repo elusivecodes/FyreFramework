@@ -66,6 +66,45 @@ trait ExecuteTestTrait
         $this->assertSame(['Test'], array_column($rows, 'name'));
     }
 
+    public function testExecuteGroupLimit(): void
+    {
+        $this->db->insert()
+            ->into('test')
+            ->values([
+                [
+                    'name' => 'Test',
+                ],
+                [
+                    'name' => 'Test',
+                ],
+                [
+                    'name' => 'Other',
+                ],
+            ])
+            ->execute();
+
+        $result = $this->db->select([
+            'id',
+            'name',
+        ])
+            ->from('test')
+            ->orderBy('id')
+            ->groupLimit(1, 'name')
+            ->execute();
+
+        $rows = array_column($result->all(), 'id', 'name');
+
+        $this->assertSame(
+            1,
+            $rows['Test']
+        );
+
+        $this->assertSame(
+            3,
+            $rows['Other']
+        );
+    }
+
     public function testExecuteNamed(): void
     {
         $this->db->insert()

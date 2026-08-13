@@ -435,6 +435,66 @@ trait HasManyTestTrait
         );
     }
 
+    public function testHasManyFindGroupLimit(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+
+        $users = $Users->newEntities([
+            [
+                'name' => 'Test 1',
+                'posts' => [
+                    [
+                        'title' => 'Test 1',
+                    ],
+                    [
+                        'title' => 'Test 2',
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Test 2',
+                'posts' => [
+                    [
+                        'title' => 'Test 3',
+                    ],
+                    [
+                        'title' => 'Test 4',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Users->saveMany($users)
+        );
+
+        $users = $Users->find(contain: [
+            'Posts' => [
+                'orderBy' => [
+                    'Posts.id' => 'DESC',
+                ],
+                'limit' => 1,
+                'offset' => 1,
+            ],
+        ])
+            ->orderBy('Users.id')
+            ->toArray();
+
+        $this->assertSame(
+            [
+                [1],
+                [3],
+            ],
+            array_map(
+                static fn(User $user): array => array_map(
+                    static fn(Post $post): int|null => $post->id,
+                    $user->posts
+                ),
+                $users
+            )
+        );
+    }
+
     public function testHasManyFindRelated(): void
     {
         $Users = $this->modelRegistry->use('Users');
@@ -482,6 +542,61 @@ trait HasManyTestTrait
         $this->assertInstanceOf(
             Post::class,
             $posts[1]
+        );
+    }
+
+    public function testHasManyFindRelatedGroupLimit(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+
+        $users = $Users->newEntities([
+            [
+                'name' => 'Test 1',
+                'posts' => [
+                    [
+                        'title' => 'Test 1',
+                    ],
+                    [
+                        'title' => 'Test 2',
+                    ],
+                ],
+            ],
+            [
+                'name' => 'Test 2',
+                'posts' => [
+                    [
+                        'title' => 'Test 3',
+                    ],
+                    [
+                        'title' => 'Test 4',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Users->saveMany($users)
+        );
+
+        $posts = $Users->Posts->findRelated(
+            $users,
+            orderBy: [
+                'Posts.id' => 'DESC',
+            ],
+            limit: 1,
+            offset: 1
+        )
+            ->indexBy('user_id')
+            ->toArray();
+
+        $this->assertSame(
+            1,
+            $posts[1]->id
+        );
+
+        $this->assertSame(
+            3,
+            $posts[2]->id
         );
     }
 

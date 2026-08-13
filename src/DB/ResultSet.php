@@ -3,10 +3,12 @@ declare(strict_types=1);
 
 namespace Fyre\DB;
 
+use Closure;
 use Countable;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Iterator;
+use LogicException;
 use OutOfBoundsException;
 use Override;
 use PDO;
@@ -49,6 +51,11 @@ abstract class ResultSet implements Countable, Iterator
 
     protected int|null $count = null;
 
+    /**
+     * @var array<Closure(array<string, mixed>): array<string, mixed>>
+     */
+    protected array $decorators = [];
+
     protected bool $freed = false;
 
     protected int $index = 0;
@@ -82,7 +89,7 @@ abstract class ResultSet implements Countable, Iterator
         $results = $this->result->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($results as $result) {
-            $this->buffer[] = $result;
+            $this->buffer[] = $this->decorateRow($result);
         }
 
         $this->free();
@@ -189,6 +196,25 @@ abstract class ResultSet implements Countable, Iterator
     }
 
     /**
+     * Adds a result row decorator.
+     *
+     * @param Closure(array<string, mixed>): array<string, mixed> $decorator The decorator callback.
+     * @return static The ResultSet instance.
+     *
+     * @throws LogicException If result buffering has already started.
+     */
+    public function decorate(Closure $decorator): static
+    {
+        if ($this->buffer !== []) {
+            throw new LogicException('Result decorators cannot be added after buffering has started.');
+        }
+
+        $this->decorators[] = $decorator;
+
+        return $this;
+    }
+
+    /**
      * Returns a result by index.
      *
      * @param int $index The index.
@@ -206,7 +232,7 @@ abstract class ResultSet implements Countable, Iterator
                 break;
             }
 
-            $this->buffer[] = $row;
+            $this->buffer[] = $this->decorateRow($row);
         }
 
         return $this->buffer[$index] ?? null;
@@ -321,6 +347,21 @@ abstract class ResultSet implements Countable, Iterator
     public function valid(): bool
     {
         return $this->fetch($this->index) !== null;
+    }
+
+    /**
+     * Decorates a result row.
+     *
+     * @param array<string, mixed> $row The result row.
+     * @return array<string, mixed> The decorated result row.
+     */
+    protected function decorateRow(array $row): array
+    {
+        foreach ($this->decorators as $decorator) {
+            $row = $decorator($row);
+        }
+
+        return $row;
     }
 
     /**

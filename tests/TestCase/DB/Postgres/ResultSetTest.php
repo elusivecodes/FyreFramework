@@ -12,6 +12,7 @@ use Fyre\DB\Types\FloatType;
 use Fyre\DB\Types\IntegerType;
 use Fyre\DB\Types\StringType;
 use Fyre\DB\Types\TimeType;
+use LogicException;
 use PHPUnit\Framework\TestCase;
 
 final class ResultSetTest extends TestCase
@@ -137,6 +138,61 @@ final class ResultSetTest extends TestCase
                 ->from('test')
                 ->execute()
                 ->count()
+        );
+    }
+
+    public function testDecorateAfterBuffering(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Result decorators cannot be added after buffering has started.');
+
+        $this->insert();
+
+        $result = $this->db->select()
+            ->from('test')
+            ->execute();
+
+        $result->all();
+        $result->decorate(static fn(array $row): array => $row);
+    }
+
+    public function testDecorateMultiple(): void
+    {
+        $this->insert();
+
+        $result = $this->db->select()
+            ->from('test')
+            ->execute()
+            ->decorate(static function(array $row): array {
+                $row['value'] = $row['id'];
+
+                return $row;
+            })
+            ->decorate(static function(array $row): array {
+                $row['value'] *= 2;
+
+                return $row;
+            });
+
+        $this->assertSame(
+            [
+                [
+                    'id' => 1,
+                    'name' => 'Test 1',
+                    'value' => 2,
+                ],
+                [
+                    'id' => 2,
+                    'name' => 'Test 2',
+                    'value' => 4,
+                ],
+                [
+                    'id' => 3,
+                    'name' => 'Test 3',
+                    'value' => 6,
+                ],
+            ],
+            $result->all()
         );
     }
 

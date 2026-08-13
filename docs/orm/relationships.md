@@ -330,7 +330,22 @@ For eager-loading strategies (`select`, `subquery`, `cte`), contain options are 
 - `connectionType` (connection type for the related query)
 - `callback` (a `Closure` that receives and returns a `SelectQuery`)
 
-`limit` and `offset` apply to the combined query used to load a contain path. When that query loads relationships for multiple source entities, these options apply to the combined related rows rather than separately to each source entity. For example, `limit: 10` while loading posts for several users loads at most ten posts in total. Per-source limits are not currently supported by eager loading.
+For `HasMany` and `ManyToMany` relationships, `limit` and its optional `offset` apply separately to each source entity. Use `orderBy` to determine which related rows are selected:
+
+```php
+$users = $Users->find()
+    ->contain([
+        'Posts' => [
+            'orderBy' => [
+                'Posts.id' => 'DESC',
+            ],
+            'limit' => 3,
+        ],
+    ])
+    ->toArray();
+```
+
+Each user in this example receives up to three posts. When several source entities are loaded together, the ORM applies the limit with a window query. `DISTINCT` and `UNION` queries cannot use per-source limits.
 
 Example:
 

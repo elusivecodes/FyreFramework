@@ -241,8 +241,30 @@ $rows = $db->select(['id', 'email'])
 
 Key methods you’ll use most often:
 
-- Core composition: `select()`, `distinct()`, `from()`, `join()`, `where()`, `groupBy()`, `having()`, `orderBy()`, `limit()`, `offset()`
+- Core composition: `select()`, `distinct()`, `from()`, `join()`, `where()`, `groupBy()`, `having()`, `orderBy()`, `limit()`, `offset()`, `groupLimit()`
 - CTEs and set operations: `with()`, `withRecursive()`, `union()`, `unionAll()`, `except()`, `intersect()`
+
+### Per-group limits
+
+Use `groupLimit()` to apply a limit and offset to each distinct value of a field. The query order determines which rows are selected from each group:
+
+```php
+$posts = $db->select([
+        'Posts.id',
+        'Posts.user_id',
+    ])
+    ->from([
+        'Posts' => 'posts',
+    ])
+    ->orderBy([
+        'Posts.id' => 'DESC',
+    ])
+    ->groupLimit(3, 'Posts.user_id')
+    ->execute()
+    ->all();
+```
+
+Call `groupLimit()` without arguments to clear the configuration. Per-group limits use a window query and cannot be combined with `DISTINCT` or `UNION` queries.
 
 ### Joins
 
@@ -511,10 +533,13 @@ Common `ResultSet` methods:
 - `last(): array|null`
 - `row(): array|null`
 - `fetch(int $index = 0): array|null`
+- `decorate(Closure $decorator): static`
 - `columns(): array`
 - `columnCount(): int`
 - `count(): int`
 - `free(): void`
+
+Decorators transform each row before it is added to the result buffer. Multiple decorators run in the order they were added. Add all decorators before calling a method that starts buffering rows. They do not change driver column metadata.
 
 ## Behavior notes
 

@@ -263,6 +263,20 @@ abstract class Relationship
 
         $this->findRelatedConditions($query, $sourceValues);
 
+        if (
+            $this->hasMultiple() &&
+            count($sourceValues) > 1 &&
+            $query->getLimit() !== null
+        ) {
+            $query
+                ->groupLimit(
+                    $query->getLimit(),
+                    ($query->getAlias() |> $this->aliasTargetField(...)),
+                    $query->getOffset()
+                )
+                ->limit(null, 0);
+        }
+
         $result = $query->getResult();
 
         return new Collection($result->toList());
@@ -503,6 +517,20 @@ abstract class Relationship
             $newQuery = $callback($newQuery);
         }
 
+        if (
+            $hasMultiple &&
+            count($sourceValues) > 1 &&
+            $newQuery->getLimit() !== null
+        ) {
+            $newQuery
+                ->groupLimit(
+                    $newQuery->getLimit(),
+                    ($newQuery->getAlias() |> $this->aliasTargetField(...)),
+                    $newQuery->getOffset()
+                )
+                ->limit(null, 0);
+        }
+
         $allChildren = $newQuery->toArray();
 
         foreach ($entities as $entity) {
@@ -734,6 +762,21 @@ abstract class Relationship
     }
 
     /**
+     * Returns an aliased target field used to match related entities.
+     *
+     * @param string $alias The table alias.
+     * @return string The target field.
+     */
+    protected function aliasTargetField(string $alias): string
+    {
+        $targetKey = $this->isOwningSide() ?
+            $this->getForeignKey() :
+            $this->getBindingKey();
+
+        return $this->getTarget()->aliasField($targetKey, $alias);
+    }
+
+    /**
      * Attaches the find related conditions to a query.
      *
      * @param SelectQuery<template-type<TTarget, Model, 'TEntity'>> $newQuery The new SelectQuery.
@@ -741,14 +784,7 @@ abstract class Relationship
      */
     protected function findRelatedConditions(SelectQuery $newQuery, array $sourceValues): void
     {
-        if ($this->isOwningSide()) {
-            $targetKey = $this->getForeignKey();
-        } else {
-            $targetKey = $this->getBindingKey();
-        }
-
-        $target = $this->getTarget();
-        $targetField = $target->aliasField($targetKey);
+        $targetField = $newQuery->getAlias() |> $this->aliasTargetField(...);
 
         $conditions = $newQuery->expr();
 

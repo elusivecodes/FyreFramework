@@ -21,6 +21,7 @@ use function array_filter;
 use function array_merge;
 use function array_values;
 use function assert;
+use function count;
 use function implode;
 use function in_array;
 use function is_array;
@@ -367,6 +368,19 @@ class ManyToMany extends Relationship
 
         if ($callback) {
             $newQuery = $callback($newQuery);
+        }
+
+        if (
+            count($sourceValues) > 1 &&
+            $newQuery->getLimit() !== null
+        ) {
+            $newQuery
+                ->groupLimit(
+                    $newQuery->getLimit(),
+                    $junction->aliasField($foreignKey, $newQuery->getAlias()),
+                    $newQuery->getOffset()
+                )
+                ->limit(null, 0);
         }
 
         $allChildren = $newQuery

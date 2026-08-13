@@ -533,9 +533,10 @@ abstract class Connection
      * Quotes an identifier for use in SQL queries.
      *
      * @param string $identifier The identifier to quote.
+     * @param bool $allowAlias Whether to allow an alias.
      * @return string The quoted identifier.
      */
-    public function quoteIdentifier(string $identifier): string
+    public function quoteIdentifier(string $identifier, bool $allowAlias = true): string
     {
         $identifier = trim($identifier);
 
@@ -558,17 +559,21 @@ abstract class Connection
 
         // function(...)
         if (preg_match('/^([a-z_]\w*(?:\.[a-z_]\w*)*)\((.*)\)\z/i', $identifier, $matches)) {
-            return $matches[1].'('.$this->quoteIdentifier($matches[2]).')';
+            return $matches[1].'('.$this->quoteIdentifier($matches[2], false).')';
+        }
+
+        if (!$allowAlias) {
+            return $identifier;
         }
 
         // identifier AS alias
         if (preg_match('/^([a-z_]\w*(?:\.[a-z_]\w*)*)\s+AS\s+([a-z_]\w*)\z/i', $identifier, $matches)) {
-            return $this->quoteIdentifier($matches[1]).' AS '.$this->quoteIdentifier($matches[2]);
+            return $this->quoteIdentifier($matches[1], false).' AS '.$this->quoteIdentifier($matches[2], false);
         }
 
         // function(...) AS alias
         if (preg_match('/^([a-z_]\w*(?:\.[a-z_]\w*)*\(.*\))\s+AS\s+([a-z_]\w*)\z/i', $identifier, $matches)) {
-            return $this->quoteIdentifier($matches[1]).' AS '.$this->quoteIdentifier($matches[2]);
+            return $this->quoteIdentifier($matches[1], false).' AS '.$this->quoteIdentifier($matches[2], false);
         }
 
         return $identifier;

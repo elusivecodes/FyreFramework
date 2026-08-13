@@ -33,6 +33,7 @@ use function array_key_exists;
 use function array_keys;
 use function array_map;
 use function array_values;
+use function assert;
 use function count;
 use function filter_var;
 use function implode;
@@ -249,6 +250,10 @@ abstract class QueryGenerator
     public function compileSelect(SelectQuery $query, ValueBinder|null $binder = null): string
     {
         return $this->withQuery($query, function() use ($query, $binder): string {
+            if ($query->getGroupLimit() !== null) {
+                return $this->compileGroupLimit($query, $binder);
+            }
+
             $sql = $this->buildWith($query->getWith(), $binder);
             $sql .= $this->buildSelect($query->getTable(), $query->getSelect(), $query->getDistinct(), $binder);
             $sql .= $this->buildJoin($query->getJoin(), $binder);
@@ -1333,6 +1338,69 @@ abstract class QueryGenerator
         $query .= ' ';
 
         return $query;
+    }
+
+    /**
+     * Compiles a grouped SelectQuery to SQL.
+     *
+     * @param SelectQuery $query The SelectQuery.
+     * @param ValueBinder|null $binder The ValueBinder.
+     * @return string The compiled query.
+     *
+     * @throws InvalidArgumentException If the query cannot use a per-group limit.
+     */
+    protected function compileGroupLimit(SelectQuery $query, ValueBinder|null $binder = null): string
+    {
+        if ($query->getDistinct()) {
+            throw new InvalidArgumentException('Query group limits cannot be used with DISTINCT.');
+        }
+
+        if ($query->getUnion() !== []) {
+            throw new InvalidArgumentException('Query group limits cannot be used with UNION queries.');
+        }
+
+        $groupLimit = $query->getGroupLimit();
+
+        assert($groupLimit !== null);
+
+        $row = SelectQuery::GROUP_LIMIT_ROW;
+        $inner = clone $query;
+
+        $rowNumber = $inner->func()
+            ->rowNumber()
+            ->partitionBy($groupLimit['field'])
+            ->orderBy($inner->getOrderBy());
+
+        $inner
+            ->groupLimit()
+            ->select([
+                $row => $rowNumber,
+            ])
+            ->orderBy([], true)
+            ->limit(null, 0)
+            ->epilog();
+
+        $conditions = $inner->expr();
+
+        if ($groupLimit['offset'] > 0) {
+            $conditions->between(
+                $row,
+                $groupLimit['offset'] + 1,
+                $groupLimit['offset'] + $groupLimit['limit']
+            );
+        } else {
+            $conditions->lte($row, $groupLimit['limit']);
+        }
+
+        return $this->connection
+            ->select()
+            ->from([
+                SelectQuery::GROUP_LIMIT_TABLE => $inner,
+            ])
+            ->where($conditions)
+            ->orderBy($row)
+            ->epilog($query->getEpilog())
+            ->sql($binder);
     }
 
     /**

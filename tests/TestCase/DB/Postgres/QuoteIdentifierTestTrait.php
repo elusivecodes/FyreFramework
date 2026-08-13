@@ -53,11 +53,27 @@ trait QuoteIdentifierTestTrait
         );
     }
 
+    public function testQuoteIdentifierFunctionCast(): void
+    {
+        $this->assertSame(
+            'CAST(LOCALTIMESTAMP(0) AS DATE)',
+            $this->db->quoteIdentifier('CAST(LOCALTIMESTAMP(0) AS DATE)')
+        );
+    }
+
     public function testQuoteIdentifierFunctionExpression(): void
     {
         $this->assertSame(
             'X(DISTINCT a) AS "c"',
             $this->db->quoteIdentifier('X(DISTINCT a) AS c')
+        );
+    }
+
+    public function testQuoteIdentifierFunctionNested(): void
+    {
+        $this->assertSame(
+            'X(Y("a"))',
+            $this->db->quoteIdentifier('X(Y(a))')
         );
     }
 
@@ -109,14 +125,6 @@ trait QuoteIdentifierTestTrait
         );
     }
 
-    public function testQuoteIdentifierQualifiedWildcard(): void
-    {
-        $this->assertSame(
-            '"a".*',
-            $this->db->quoteIdentifier('a.*')
-        );
-    }
-
     public function testQuoteIdentifierQualifiedMultiple(): void
     {
         $this->assertSame(
@@ -130,6 +138,14 @@ trait QuoteIdentifierTestTrait
         $this->assertSame(
             '"a"."b".*',
             $this->db->quoteIdentifier('a.b.*')
+        );
+    }
+
+    public function testQuoteIdentifierQualifiedWildcard(): void
+    {
+        $this->assertSame(
+            '"a".*',
+            $this->db->quoteIdentifier('a.*')
         );
     }
 

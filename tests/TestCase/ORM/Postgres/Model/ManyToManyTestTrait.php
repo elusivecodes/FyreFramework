@@ -397,6 +397,66 @@ trait ManyToManyTestTrait
         );
     }
 
+    public function testManyToManyFindGroupLimit(): void
+    {
+        $Posts = $this->modelRegistry->use('Posts');
+
+        $posts = $Posts->newEntities([
+            [
+                'title' => 'Test 1',
+                'tags' => [
+                    [
+                        'tag' => 'test1',
+                    ],
+                    [
+                        'tag' => 'test2',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Test 2',
+                'tags' => [
+                    [
+                        'tag' => 'test3',
+                    ],
+                    [
+                        'tag' => 'test4',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Posts->saveMany($posts)
+        );
+
+        $posts = $Posts->find(contain: [
+            'Tags' => [
+                'orderBy' => [
+                    'Tags.id' => 'DESC',
+                ],
+                'limit' => 1,
+                'offset' => 1,
+            ],
+        ])
+            ->orderBy('Posts.id')
+            ->toArray();
+
+        $this->assertSame(
+            [
+                [1],
+                [3],
+            ],
+            array_map(
+                static fn(Post $post): array => array_map(
+                    static fn(Tag $tag): int|null => $tag->id,
+                    $post->tags
+                ),
+                $posts
+            )
+        );
+    }
+
     public function testManyToManyFindRelated(): void
     {
         $Posts = $this->modelRegistry->use('Posts');
@@ -462,6 +522,61 @@ trait ManyToManyTestTrait
         $this->assertInstanceOf(
             Entity::class,
             $tags[1]->_joinData
+        );
+    }
+
+    public function testManyToManyFindRelatedGroupLimit(): void
+    {
+        $Posts = $this->modelRegistry->use('Posts');
+
+        $posts = $Posts->newEntities([
+            [
+                'title' => 'Test 1',
+                'tags' => [
+                    [
+                        'tag' => 'test1',
+                    ],
+                    [
+                        'tag' => 'test2',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Test 2',
+                'tags' => [
+                    [
+                        'tag' => 'test3',
+                    ],
+                    [
+                        'tag' => 'test4',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Posts->saveMany($posts)
+        );
+
+        $tags = $Posts->Tags->findRelated(
+            $posts,
+            orderBy: [
+                'Tags.id' => 'DESC',
+            ],
+            limit: 1,
+            offset: 1
+        )
+            ->indexBy('_joinData.post_id')
+            ->toArray();
+
+        $this->assertSame(
+            1,
+            $tags[1]->id
+        );
+
+        $this->assertSame(
+            3,
+            $tags[2]->id
         );
     }
 

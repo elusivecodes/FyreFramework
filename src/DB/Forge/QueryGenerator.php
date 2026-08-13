@@ -206,5 +206,4 @@ abstract class QueryGenerator
 
         return $sql;
     }
-
 }

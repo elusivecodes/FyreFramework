@@ -65,6 +65,20 @@ trait GetTestTrait
         );
     }
 
+    public function testGetGroupLimit(): void
+    {
+        $this->assertSame(
+            [
+                'field' => 'user_id',
+                'limit' => 2,
+                'offset' => 1,
+            ],
+            $this->db->select()
+                ->groupLimit(2, 'user_id', 1)
+                ->getGroupLimit()
+        );
+    }
+
     public function testGetHaving(): void
     {
         $this->assertSame(
