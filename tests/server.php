@@ -2,9 +2,6 @@
 declare(strict_types=1);
 
 switch ($_SERVER['SCRIPT_NAME']) {
-    case '/agent':
-        echo $_SERVER['HTTP_USER_AGENT'] ?? '';
-        break;
     case '/auth':
         $username = $_SERVER['PHP_AUTH_USER'] ?? '';
         $password = $_SERVER['PHP_AUTH_PW'] ?? '';
@@ -46,38 +43,9 @@ switch ($_SERVER['SCRIPT_NAME']) {
         }
 
         break;
-    case '/cookie':
-        header('Content-Type: application/json');
-        echo json_encode($_COOKIE);
-        break;
     case '/get':
         header('Content-Type: application/json');
         echo json_encode($_GET);
-        break;
-    case '/header':
-        echo $_SERVER['HTTP_ACCEPT'] ?? '';
-        break;
-    case '/json':
-        $input = file_get_contents('php://input') ?: '';
-        $data = json_decode($input, true);
-
-        header('Content-Type: application/json');
-        echo json_encode($data);
-        break;
-    case '/json-null':
-        header('Content-Type: application/json');
-        echo 'null';
-        break;
-    case '/json-true':
-        header('Content-Type: application/json');
-        echo 'true';
-        break;
-    case '/method':
-        echo $_SERVER['REQUEST_METHOD'];
-        break;
-    case '/post':
-        header('Content-Type: application/json');
-        echo json_encode($_POST);
         break;
     case '/proxy':
         $proxyAuth = $_SERVER['HTTP_PROXY_AUTHORIZATION'] ?? '';
@@ -86,60 +54,6 @@ switch ($_SERVER['SCRIPT_NAME']) {
             header('HTTP/1.1 401 Unauthorized');
             exit;
         }
-        break;
-    case '/redirect':
-        header('Location: /get?value=1', true, 302);
-        break;
-    case '/redirect-cross-origin':
-        if (($_COOKIE['source'] ?? '') !== 'value') {
-            header('HTTP/1.1 400 Bad Request');
-            break;
-        }
-
-        header('Location: http://127.0.0.1:8888/redirect-target', true, 302);
-        break;
-    case '/redirect-empty':
-        header('HTTP/1.1 302 Found');
-        break;
-    case '/redirect-invalid':
-        header('Location: mailto:test@example.com', true, 302);
-        break;
-    case '/redirect-loop-a':
-        header('Location: /redirect-loop-b', true, 302);
-        break;
-    case '/redirect-loop-b':
-        header('Location: /redirect-loop-a', true, 302);
-        break;
-    case '/redirect-method':
-        header('Location: /redirect-target?value=1', true, (int) ($_GET['status'] ?? 302));
-        break;
-    case '/redirect-private/start':
-        if (($_COOKIE['private'] ?? '') !== 'value') {
-            header('HTTP/1.1 400 Bad Request');
-            break;
-        }
-
-        header('Location: next', true, 302);
-        break;
-    case '/redirect-private/next':
-    case '/redirect-target':
-        header('Content-Type: application/json');
-        echo json_encode([
-            'method' => $_SERVER['REQUEST_METHOD'],
-            'body' => file_get_contents('php://input') ?: '',
-            'contentType' => $_SERVER['CONTENT_TYPE'] ?? '',
-            'requestUri' => $_SERVER['REQUEST_URI'],
-            'authorization' => $_SERVER['HTTP_AUTHORIZATION'] ?? '',
-            'proxyAuthorization' => $_SERVER['HTTP_PROXY_AUTHORIZATION'] ?? '',
-            'referer' => $_SERVER['HTTP_REFERER'] ?? '',
-            'apiKey' => $_SERVER['HTTP_X_API_KEY'] ?? '',
-            'cookies' => $_COOKIE,
-        ]);
-        break;
-    case '/set-cookie':
-        setcookie('test', 'value', [
-            'path' => '/',
-        ]);
         break;
     case '/upload':
         header('Content-Type: application/json');

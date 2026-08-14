@@ -1,13 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace Tests\TestCase\Http\Curl;
+namespace Tests\TestCase\Http\Client;
 
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Http\Client;
-use Fyre\Http\Client\Exceptions\NetworkException;
 use Fyre\Http\Client\Exceptions\RequestException;
+use Fyre\Http\Client\Handlers\MockHandler;
 use Fyre\Http\Client\Request;
 use Fyre\Http\Client\Response;
 use Fyre\Http\Cookie\Cookie;
@@ -15,13 +15,11 @@ use Fyre\Http\Stream;
 use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 
 use function class_uses;
-use function exec;
 use function fclose;
-use function fopen;
 use function fwrite;
-use function sleep;
 use function stream_socket_pair;
 
 use const STREAM_IPPROTO_IP;
@@ -30,13 +28,34 @@ use const STREAM_SOCK_STREAM;
 
 final class ClientTest extends TestCase
 {
-    protected static int $pid;
+    protected Client $client;
+
+    protected MockHandler $handler;
 
     public function testAgent(): void
     {
-        $response = new Client()->get('http://localhost:8888/agent', options: [
+        $agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36';
+        $mockResponse = new Response([
+            'body' => $agent,
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/agent',
+            $mockResponse,
+            function(RequestInterface $request) use ($agent): bool {
+                $this->assertSame(
+                    $agent,
+                    $request->getHeaderLine('User-Agent')
+                );
+
+                return true;
+            }
+        );
+
+        $response = $this->client->get('https://example.com/agent', options: [
             'headers' => [
-                'User-Agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36',
+                'User-Agent' => $agent,
             ],
         ]);
 
@@ -49,53 +68,29 @@ final class ClientTest extends TestCase
         );
 
         $this->assertSame(
-            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36',
+            $agent,
             $response->getBody()->getContents()
-        );
-    }
-
-    public function testAuthBasic(): void
-    {
-        $response = new Client([
-            'auth' => [
-                'username' => 'test',
-                'password' => 'password',
-            ],
-        ])->get('http://localhost:8888/auth');
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-    }
-
-    public function testAuthDigest(): void
-    {
-        $response = new Client([
-            'auth' => [
-                'type' => 'digest',
-                'username' => 'test',
-                'password' => 'password',
-            ],
-        ])->get('http://localhost:8888/auth-digest');
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
         );
     }
 
     public function testBaseUrl(): void
     {
-        $response = new Client([
-            'baseUrl' => 'http://localhost:8888/',
-        ])->get('get', [
+        $mockResponse = new Response([
+            'body' => '{"value":"1"}',
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/get?value=1',
+            $mockResponse
+        );
+
+        $client = new Client([
+            'handler' => $this->handler,
+            'baseUrl' => 'https://example.com/',
+        ]);
+
+        $response = $client->get('get', [
             'value' => 1,
         ]);
 
@@ -117,13 +112,30 @@ final class ClientTest extends TestCase
 
     public function testCookies(): void
     {
-        $client = new Client();
-        $client->addCookie(new Cookie('test', 'value'));
-        $client->addCookie(new Cookie('test', 'value', [
+        $mockResponse = new Response([
+            'body' => '{"test":"value"}',
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/cookie',
+            $mockResponse,
+            function(RequestInterface $request): bool {
+                $this->assertSame(
+                    'test=value',
+                    $request->getHeaderLine('Cookie')
+                );
+
+                return true;
+            }
+        );
+
+        $this->client->addCookie(new Cookie('test', 'value'));
+        $this->client->addCookie(new Cookie('test', 'value', [
             'path' => '/other',
         ]));
 
-        $response = $client->get('http://localhost:8888/cookie');
+        $response = $this->client->get('https://example.com/cookie');
 
         $this->assertTrue(
             $response->isOk()
@@ -143,9 +155,37 @@ final class ClientTest extends TestCase
 
     public function testCookiesPersist(): void
     {
-        $client = new Client();
+        $cookieResponse = new Response([
+            'headers' => [
+                'Set-Cookie' => 'test=value; Path=/',
+            ],
+        ]);
 
-        $response1 = $client->get('http://localhost:8888/set-cookie');
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/set-cookie',
+            $cookieResponse
+        );
+
+        $mockResponse = new Response([
+            'body' => '{"test":"value"}',
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/cookie',
+            $mockResponse,
+            function(RequestInterface $request): bool {
+                $this->assertSame(
+                    'test=value',
+                    $request->getHeaderLine('Cookie')
+                );
+
+                return true;
+            }
+        );
+
+        $response1 = $this->client->get('https://example.com/set-cookie');
 
         $this->assertTrue(
             $response1->isOk()
@@ -164,7 +204,7 @@ final class ClientTest extends TestCase
         $this->assertCount(1, $cookies);
         $this->assertSame($cookie, $cookies[0]);
 
-        $response2 = $client->get('http://localhost:8888/cookie');
+        $response2 = $this->client->get('https://example.com/cookie');
 
         $this->assertTrue(
             $response2->isOk()
@@ -192,7 +232,17 @@ final class ClientTest extends TestCase
 
     public function testDeleteMethod(): void
     {
-        $response = new Client()->delete('http://localhost:8888/method');
+        $mockResponse = new Response([
+            'body' => 'DELETE',
+        ]);
+
+        $this->handler->addResponse(
+            'DELETE',
+            'https://example.com/method',
+            $mockResponse
+        );
+
+        $response = $this->client->delete('https://example.com/method');
 
         $this->assertTrue(
             $response->isOk()
@@ -208,31 +258,19 @@ final class ClientTest extends TestCase
         );
     }
 
-    public function testGetData(): void
-    {
-        $response = new Client()->get('http://localhost:8888/get', [
-            'value' => 1,
-        ]);
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
-        $this->assertSame(
-            [
-                'value' => '1',
-            ],
-            $response->getJson()
-        );
-    }
-
     public function testGetJsonWithNull(): void
     {
-        $response = new Client()->get('http://localhost:8888/json-null');
+        $mockResponse = new Response([
+            'body' => 'null',
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/json-null',
+            $mockResponse
+        );
+
+        $response = $this->client->get('https://example.com/json-null');
 
         $this->assertTrue(
             $response->isOk()
@@ -243,7 +281,17 @@ final class ClientTest extends TestCase
 
     public function testGetJsonWithScalar(): void
     {
-        $response = new Client()->get('http://localhost:8888/json-true');
+        $mockResponse = new Response([
+            'body' => 'true',
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/json-true',
+            $mockResponse
+        );
+
+        $response = $this->client->get('https://example.com/json-true');
 
         $this->assertTrue(
             $response->isOk()
@@ -254,7 +302,17 @@ final class ClientTest extends TestCase
 
     public function testGetMethod(): void
     {
-        $response = new Client()->get('http://localhost:8888/method');
+        $mockResponse = new Response([
+            'body' => 'GET',
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/method',
+            $mockResponse
+        );
+
+        $response = $this->client->get('https://example.com/method');
 
         $this->assertTrue(
             $response->isOk()
@@ -272,7 +330,25 @@ final class ClientTest extends TestCase
 
     public function testHeader(): void
     {
-        $response = new Client()->get('http://localhost:8888/header', options: [
+        $mockResponse = new Response([
+            'body' => 'text/html',
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/header',
+            $mockResponse,
+            function(RequestInterface $request): bool {
+                $this->assertSame(
+                    'text/html',
+                    $request->getHeaderLine('Accept')
+                );
+
+                return true;
+            }
+        );
+
+        $response = $this->client->get('https://example.com/header', options: [
             'headers' => [
                 'Accept' => 'text/html',
             ],
@@ -294,7 +370,15 @@ final class ClientTest extends TestCase
 
     public function testHeadMethod(): void
     {
-        $response = new Client()->head('http://localhost:8888/method');
+        $mockResponse = new Response();
+
+        $this->handler->addResponse(
+            'HEAD',
+            'https://example.com/method',
+            $mockResponse
+        );
+
+        $response = $this->client->head('https://example.com/method');
 
         $this->assertTrue(
             $response->isOk()
@@ -335,7 +419,9 @@ final class ClientTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Client option `maxRedirectBodySize` must not be negative.');
 
-        new Client()->send(new Request('https://example.com'), [
+        $request = new Request('https://example.com');
+
+        $this->client->send($request, [
             'maxRedirectBodySize' => -1,
         ]);
     }
@@ -345,7 +431,9 @@ final class ClientTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Client option `maxRedirects` must not be negative.');
 
-        new Client()->send(new Request('https://example.com'), [
+        $request = new Request('https://example.com');
+
+        $this->client->send($request, [
             'maxRedirects' => -1,
         ]);
     }
@@ -355,7 +443,9 @@ final class ClientTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Client option `timeout` must not be negative.');
 
-        new Client()->send(new Request('https://example.com'), [
+        $request = new Request('https://example.com');
+
+        $this->client->send($request, [
             'timeout' => -1,
         ]);
     }
@@ -372,9 +462,32 @@ final class ClientTest extends TestCase
 
     public function testJsonData(): void
     {
-        $data = ['value' => 1];
+        $mockResponse = new Response([
+            'body' => '{"value":1}',
+        ]);
 
-        $response = new Client()->post('http://localhost:8888/json', $data, [
+        $this->handler->addResponse(
+            'POST',
+            'https://example.com/json',
+            $mockResponse,
+            function(RequestInterface $request): bool {
+                $this->assertSame(
+                    'application/json',
+                    $request->getHeaderLine('Content-Type')
+                );
+
+                $this->assertSame(
+                    '{"value":1}',
+                    (string) $request->getBody()
+                );
+
+                return true;
+            }
+        );
+
+        $response = $this->client->post('https://example.com/json', [
+            'value' => 1,
+        ], [
             'headers' => [
                 'Content-Type' => 'application/json',
             ],
@@ -416,7 +529,17 @@ final class ClientTest extends TestCase
 
     public function testOptionsMethod(): void
     {
-        $response = new Client()->options('http://localhost:8888/method');
+        $mockResponse = new Response([
+            'body' => 'OPTIONS',
+        ]);
+
+        $this->handler->addResponse(
+            'OPTIONS',
+            'https://example.com/method',
+            $mockResponse
+        );
+
+        $response = $this->client->options('https://example.com/method');
 
         $this->assertTrue(
             $response->isOk()
@@ -434,7 +557,30 @@ final class ClientTest extends TestCase
 
     public function testPatchData(): void
     {
-        $response = new Client()->patch('http://localhost:8888/json', [
+        $mockResponse = new Response([
+            'body' => '{"value":1}',
+        ]);
+
+        $this->handler->addResponse(
+            'PATCH',
+            'https://example.com/json',
+            $mockResponse,
+            function(RequestInterface $request): bool {
+                $this->assertSame(
+                    'application/json',
+                    $request->getHeaderLine('Content-Type')
+                );
+
+                $this->assertSame(
+                    '{"value":1}',
+                    (string) $request->getBody()
+                );
+
+                return true;
+            }
+        );
+
+        $response = $this->client->patch('https://example.com/json', [
             'value' => 1,
         ], [
             'headers' => [
@@ -460,7 +606,17 @@ final class ClientTest extends TestCase
 
     public function testPatchMethod(): void
     {
-        $response = new Client()->patch('http://localhost:8888/method');
+        $mockResponse = new Response([
+            'body' => 'PATCH',
+        ]);
+
+        $this->handler->addResponse(
+            'PATCH',
+            'https://example.com/method',
+            $mockResponse
+        );
+
+        $response = $this->client->patch('https://example.com/method');
 
         $this->assertTrue(
             $response->isOk()
@@ -478,7 +634,30 @@ final class ClientTest extends TestCase
 
     public function testPostData(): void
     {
-        $response = new Client()->post('http://localhost:8888/post', [
+        $mockResponse = new Response([
+            'body' => '{"value":"1"}',
+        ]);
+
+        $this->handler->addResponse(
+            'POST',
+            'https://example.com/post',
+            $mockResponse,
+            function(RequestInterface $request): bool {
+                $this->assertSame(
+                    'application/x-www-form-urlencoded',
+                    $request->getHeaderLine('Content-Type')
+                );
+
+                $this->assertSame(
+                    'value=1',
+                    (string) $request->getBody()
+                );
+
+                return true;
+            }
+        );
+
+        $response = $this->client->post('https://example.com/post', [
             'value' => 1,
         ]);
 
@@ -500,7 +679,17 @@ final class ClientTest extends TestCase
 
     public function testPostMethod(): void
     {
-        $response = new Client()->post('http://localhost:8888/method');
+        $mockResponse = new Response([
+            'body' => 'POST',
+        ]);
+
+        $this->handler->addResponse(
+            'POST',
+            'https://example.com/method',
+            $mockResponse
+        );
+
+        $response = $this->client->post('https://example.com/method');
 
         $this->assertTrue(
             $response->isOk()
@@ -516,47 +705,32 @@ final class ClientTest extends TestCase
         );
     }
 
-    public function testProtocolVersion(): void
-    {
-        $response = new Client()->get('http://localhost:8888/version', options: [
-            'protocolVersion' => '1.0',
-        ]);
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
-        $this->assertSame(
-            'HTTP/1.0',
-            $response->getBody()->getContents()
-        );
-    }
-
-    public function testProxy(): void
-    {
-        $response = new Client([
-            'proxy' => [
-                'username' => 'test',
-                'password' => 'password',
-            ],
-        ])->get('http://localhost:8888/proxy');
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-    }
-
     public function testPutData(): void
     {
-        $response = new Client()->put('http://localhost:8888/json', [
+        $mockResponse = new Response([
+            'body' => '{"value":1}',
+        ]);
+
+        $this->handler->addResponse(
+            'PUT',
+            'https://example.com/json',
+            $mockResponse,
+            function(RequestInterface $request): bool {
+                $this->assertSame(
+                    'application/json',
+                    $request->getHeaderLine('Content-Type')
+                );
+
+                $this->assertSame(
+                    '{"value":1}',
+                    (string) $request->getBody()
+                );
+
+                return true;
+            }
+        );
+
+        $response = $this->client->put('https://example.com/json', [
             'value' => 1,
         ], [
             'headers' => [
@@ -582,7 +756,17 @@ final class ClientTest extends TestCase
 
     public function testPutMethod(): void
     {
-        $response = new Client()->put('http://localhost:8888/method');
+        $mockResponse = new Response([
+            'body' => 'PUT',
+        ]);
+
+        $this->handler->addResponse(
+            'PUT',
+            'https://example.com/method',
+            $mockResponse
+        );
+
+        $response = $this->client->put('https://example.com/method');
 
         $this->assertTrue(
             $response->isOk()
@@ -600,7 +784,30 @@ final class ClientTest extends TestCase
 
     public function testRedirect(): void
     {
-        $response = new Client()->get('http://localhost:8888/redirect', options: [
+        $redirectResponse = new Response([
+            'statusCode' => 302,
+            'headers' => [
+                'Location' => '/get?value=1',
+            ],
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/redirect',
+            $redirectResponse
+        );
+
+        $mockResponse = new Response([
+            'body' => '{"value":"1"}',
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/get?value=1',
+            $mockResponse
+        );
+
+        $response = $this->client->get('https://example.com/redirect', options: [
             'maxRedirects' => 1,
         ]);
 
@@ -640,14 +847,14 @@ final class ClientTest extends TestCase
 
         $body = new Stream($reader);
         $request = new Request(
-            'http://localhost:8888/redirect-method?status=307',
+            'https://example.com/redirect',
             [
                 'method' => 'POST',
                 'body' => $body,
             ]
         );
 
-        new Client()->send($request, [
+        $this->client->send($request, [
             'maxRedirects' => 1,
             'maxRedirectBodySize' => 4,
         ]);
@@ -658,7 +865,17 @@ final class ClientTest extends TestCase
         $this->expectException(RequestException::class);
         $this->expectExceptionMessage('Redirect location is not valid.');
 
-        new Client()->get('http://localhost:8888/redirect-empty', options: [
+        $mockResponse = new Response([
+            'statusCode' => 302,
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/redirect-empty',
+            $mockResponse
+        );
+
+        $this->client->get('https://example.com/redirect-empty', options: [
             'maxRedirects' => 1,
         ]);
     }
@@ -668,7 +885,20 @@ final class ClientTest extends TestCase
         $this->expectException(RequestException::class);
         $this->expectExceptionMessage('Redirect location is not valid.');
 
-        new Client()->get('http://localhost:8888/redirect-invalid', options: [
+        $mockResponse = new Response([
+            'statusCode' => 302,
+            'headers' => [
+                'Location' => 'mailto:test@example.com',
+            ],
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/redirect-invalid',
+            $mockResponse
+        );
+
+        $this->client->get('https://example.com/redirect-invalid', options: [
             'maxRedirects' => 1,
         ]);
     }
@@ -678,7 +908,33 @@ final class ClientTest extends TestCase
         $this->expectException(RequestException::class);
         $this->expectExceptionMessage('Redirect loop detected.');
 
-        new Client()->get('http://localhost:8888/redirect-loop-a', options: [
+        $response1 = new Response([
+            'statusCode' => 302,
+            'headers' => [
+                'Location' => '/redirect-loop-b',
+            ],
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/redirect-loop-a',
+            $response1
+        );
+
+        $response2 = new Response([
+            'statusCode' => 302,
+            'headers' => [
+                'Location' => '/redirect-loop-a',
+            ],
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/redirect-loop-b',
+            $response2
+        );
+
+        $this->client->get('https://example.com/redirect-loop-a', options: [
             'maxRedirects' => 3,
         ]);
     }
@@ -694,8 +950,48 @@ final class ClientTest extends TestCase
         ];
 
         foreach ($cases as [$statusCode, $method, $expectedMethod, $expectedBody]) {
-            $response = new Client()->send(new Request(
-                'http://localhost:8888/redirect-method?status='.$statusCode,
+            $handler = new MockHandler();
+
+            $redirectResponse = new Response([
+                'statusCode' => $statusCode,
+                'headers' => [
+                    'Location' => '/redirect-target?value=1',
+                ],
+            ]);
+
+            $handler->addResponse(
+                $method,
+                'https://example.com/redirect-method?status='.$statusCode,
+                $redirectResponse
+            );
+
+            $mockResponse = new Response();
+
+            $handler->addResponse(
+                $expectedMethod,
+                'https://example.com/redirect-target?value=1',
+                $mockResponse,
+                function(RequestInterface $request) use ($expectedBody): bool {
+                    $this->assertSame(
+                        $expectedBody,
+                        (string) $request->getBody()
+                    );
+
+                    $this->assertSame(
+                        $expectedBody === '' ? '' : 'text/plain',
+                        $request->getHeaderLine('Content-Type')
+                    );
+
+                    return true;
+                }
+            );
+
+            $client = new Client([
+                'handler' => $handler,
+            ]);
+
+            $request = new Request(
+                'https://example.com/redirect-method?status='.$statusCode,
                 [
                     'method' => $method,
                     'body' => 'value',
@@ -704,36 +1000,47 @@ final class ClientTest extends TestCase
                         'Content-Type' => 'text/plain',
                     ],
                 ]
-            ), [
+            );
+
+            $response = $client->send($request, [
                 'maxRedirects' => 1,
             ]);
 
-            $data = $response->getJson();
-
-            $this->assertSame(
-                $expectedMethod,
-                $data['method']
-            );
-
-            $this->assertSame(
-                $expectedBody,
-                $data['body']
-            );
-
-            $this->assertSame(
-                '/redirect-target?value=1',
-                $data['requestUri']
-            );
-
-            $this->assertSame(
-                $expectedBody === '' ? '' : 'text/plain',
-                $data['contentType']
-            );
+            $this->assertSame($mockResponse, $response);
         }
     }
 
     public function testRedirectNonSeekableBody(): void
     {
+        $redirectResponse = new Response([
+            'statusCode' => 307,
+            'headers' => [
+                'Location' => '/redirect-target',
+            ],
+        ]);
+
+        $this->handler->addResponse(
+            'POST',
+            'https://example.com/redirect-method',
+            $redirectResponse
+        );
+
+        $mockResponse = new Response();
+
+        $this->handler->addResponse(
+            'POST',
+            'https://example.com/redirect-target',
+            $mockResponse,
+            function(RequestInterface $request): bool {
+                $this->assertSame(
+                    'value',
+                    (string) $request->getBody()
+                );
+
+                return true;
+            }
+        );
+
         $sockets = stream_socket_pair(
             STREAM_PF_UNIX,
             STREAM_SOCK_STREAM,
@@ -749,61 +1056,140 @@ final class ClientTest extends TestCase
 
         $body = new Stream($reader);
         $request = new Request(
-            'http://localhost:8888/redirect-method?status=307',
+            'https://example.com/redirect-method',
             [
                 'method' => 'POST',
                 'body' => $body,
             ]
         );
 
-        $response = new Client()->send($request, [
+        $response = $this->client->send($request, [
             'maxRedirects' => 1,
         ]);
 
         $body->close();
 
-        $this->assertSame(
-            'value',
-            $response->getJson()['body']
-        );
+        $this->assertSame($mockResponse, $response);
     }
 
     public function testRedirectRebuildsCookies(): void
     {
-        $client = new Client();
-        $client->addCookie(new Cookie('private', 'value', [
-            'domain' => 'localhost',
+        $redirectResponse = new Response([
+            'statusCode' => 302,
+            'headers' => [
+                'Location' => 'next',
+            ],
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/redirect-private/start',
+            $redirectResponse,
+            function(RequestInterface $request): bool {
+                $this->assertSame(
+                    'private=value',
+                    $request->getHeaderLine('Cookie')
+                );
+
+                return true;
+            }
+        );
+
+        $mockResponse = new Response();
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/redirect-private/next',
+            $mockResponse,
+            function(RequestInterface $request): bool {
+                $this->assertSame(
+                    '',
+                    $request->getHeaderLine('Cookie')
+                );
+
+                return true;
+            }
+        );
+
+        $this->client->addCookie(new Cookie('private', 'value', [
+            'domain' => 'example.com',
             'path' => '/redirect-private/start',
         ]));
 
-        $response = $client->get('http://localhost:8888/redirect-private/start', options: [
+        $response = $this->client->get('https://example.com/redirect-private/start', options: [
             'maxRedirects' => 1,
         ]);
 
-        $data = $response->getJson();
-
-        $this->assertSame(
-            '/redirect-private/next',
-            $data['requestUri']
-        );
-
-        $this->assertSame(
-            [],
-            $data['cookies']
-        );
+        $this->assertSame($mockResponse, $response);
     }
 
     public function testRedirectStripsCrossOriginCredentials(): void
     {
-        $client = new Client();
-        $client->addCookie(new Cookie('source', 'value', [
-            'domain' => 'localhost',
+        $redirectResponse = new Response([
+            'statusCode' => 302,
+            'headers' => [
+                'Location' => 'https://other.example.com/redirect-target',
+            ],
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://source.example.com/redirect-cross-origin',
+            $redirectResponse,
+            function(RequestInterface $request): bool {
+                $this->assertSame(
+                    'source=value',
+                    $request->getHeaderLine('Cookie')
+                );
+
+                return true;
+            }
+        );
+
+        $mockResponse = new Response();
+
+        $this->handler->addResponse(
+            'GET',
+            'https://other.example.com/redirect-target',
+            $mockResponse,
+            function(RequestInterface $request): bool {
+                $this->assertSame(
+                    '',
+                    $request->getHeaderLine('Authorization')
+                );
+
+                $this->assertSame(
+                    '',
+                    $request->getHeaderLine('Proxy-Authorization')
+                );
+
+                $this->assertSame(
+                    '',
+                    $request->getHeaderLine('Referer')
+                );
+
+                $this->assertSame(
+                    '',
+                    $request->getHeaderLine('X-Api-Key')
+                );
+
+                $this->assertSame(
+                    'target=value',
+                    $request->getHeaderLine('Cookie')
+                );
+
+                return true;
+            }
+        );
+
+        $this->client->addCookie(new Cookie('source', 'value', [
+            'domain' => 'source.example.com',
         ]));
-        $client->addCookie(new Cookie('target', 'value', [
-            'domain' => '127.0.0.1',
+        $this->client->addCookie(new Cookie('target', 'value', [
+            'domain' => 'other.example.com',
         ]));
 
-        $response = $client->get('http://localhost:8888/redirect-cross-origin', options: [
+        $response = $this->client->get('https://source.example.com/redirect-cross-origin', options: [
             'maxRedirects' => 1,
             'sensitiveHeaders' => [
                 'X-Api-Key',
@@ -812,47 +1198,44 @@ final class ClientTest extends TestCase
             'headers' => [
                 'Authorization' => 'Bearer secret',
                 'Proxy-Authorization' => 'Basic secret',
-                'Referer' => 'http://localhost:8888/private',
+                'Referer' => 'https://source.example.com/private',
                 'X-Api-Key' => 'secret',
             ],
         ]);
 
-        $data = $response->getJson();
-
-        $this->assertSame(
-            '',
-            $data['authorization']
-        );
-
-        $this->assertSame(
-            '',
-            $data['proxyAuthorization']
-        );
-
-        $this->assertSame(
-            '',
-            $data['referer']
-        );
-
-        $this->assertSame(
-            '',
-            $data['apiKey']
-        );
-
-        $this->assertSame(
-            [
-                'target' => 'value',
-            ],
-            $data['cookies']
-        );
+        $this->assertSame($mockResponse, $response);
     }
 
     public function testSendConfiguredOptions(): void
     {
+        $redirectResponse = new Response([
+            'statusCode' => 302,
+            'headers' => [
+                'Location' => '/get?value=1',
+            ],
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/redirect',
+            $redirectResponse
+        );
+
+        $mockResponse = new Response([
+            'body' => '{"value":"1"}',
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/get?value=1',
+            $mockResponse
+        );
+
         $client = new Client([
+            'handler' => $this->handler,
             'maxRedirects' => 1,
         ]);
-        $request = new Request('http://localhost:8888/redirect');
+        $request = new Request('https://example.com/redirect');
 
         $response = $client->send($request);
 
@@ -866,15 +1249,32 @@ final class ClientTest extends TestCase
 
     public function testSendCookies(): void
     {
-        $client = new Client();
-        $client->addCookie(new Cookie('test', 'value', [
-            'domain' => 'localhost',
+        $mockResponse = new Response([
+            'body' => '{"test":"value"}',
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/cookie',
+            $mockResponse,
+            function(RequestInterface $request): bool {
+                $this->assertSame(
+                    'test=value',
+                    $request->getHeaderLine('Cookie')
+                );
+
+                return true;
+            }
+        );
+
+        $this->client->addCookie(new Cookie('test', 'value', [
+            'domain' => 'example.com',
             'hostOnly' => true,
         ]));
 
-        $request = new Request('http://localhost:8888/cookie');
+        $request = new Request('https://example.com/cookie');
 
-        $response = $client->send($request);
+        $response = $this->client->send($request);
 
         $this->assertSame(
             [
@@ -884,80 +1284,12 @@ final class ClientTest extends TestCase
         );
     }
 
-    public function testSendNetworkException(): void
-    {
-        $this->expectException(NetworkException::class);
-
-        new Client()->get('http://127.0.0.1:1', options: [
-            'timeout' => 1,
-        ]);
-    }
-
-    public function testSendRequestException(): void
-    {
-        $this->expectException(RequestException::class);
-
-        new Client()->get('foo://example.com', options: [
-            'timeout' => 1,
-        ]);
-    }
-
-    public function testUpload(): void
-    {
-        $file = fopen('tests/assets/test.txt', 'r');
-
-        $response = new Client()->post('http://localhost:8888/upload', [
-            'deep' => [
-                'value' => $file,
-            ],
-        ]);
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
-        $data = $response->getJson();
-
-        unset($data['deep']['tmp_name']);
-
-        $this->assertSame(
-            [
-                'deep' => [
-                    'name' => [
-                        'value' => 'test.txt',
-                    ],
-                    'full_path' => [
-                        'value' => 'test.txt',
-                    ],
-                    'type' => [
-                        'value' => 'text/plain',
-                    ],
-                    'error' => [
-                        'value' => 0,
-                    ],
-                    'size' => [
-                        'value' => 15,
-                    ],
-                ],
-            ],
-            $data
-        );
-    }
-
     #[Override]
-    public static function setUpBeforeClass(): void
+    protected function setUp(): void
     {
-        self::$pid = (int) exec('nohup php -S 127.0.0.1:8888 tests/server.php >/dev/null 2>&1 & echo $!');
-        sleep(1);
-    }
-
-    #[Override]
-    public static function tearDownAfterClass(): void
-    {
-        exec('kill '.self::$pid.' 2>&1');
+        $this->handler = new MockHandler();
+        $this->client = new Client([
+            'handler' => $this->handler,
+        ]);
     }
 }

@@ -4,14 +4,60 @@ declare(strict_types=1);
 namespace Tests\TestCase\Http\Curl;
 
 use Closure;
+use Fyre\Http\Client;
+use Fyre\Http\Client\Exceptions\NetworkException;
+use Fyre\Http\Client\Exceptions\RequestException;
 use Fyre\Http\Client\Handlers\CurlHandler;
 use Fyre\Http\Client\Request;
+use Override;
 use PHPUnit\Framework\TestCase;
 
+use function exec;
+use function fopen;
+use function sleep;
 use function strlen;
 
 final class CurlHandlerTest extends TestCase
 {
+    protected static int $pid;
+
+    public function testAuthBasic(): void
+    {
+        $response = new Client([
+            'auth' => [
+                'username' => 'test',
+                'password' => 'password',
+            ],
+        ])->get('http://localhost:8888/auth');
+
+        $this->assertTrue(
+            $response->isOk()
+        );
+
+        $this->assertTrue(
+            $response->isSuccess()
+        );
+    }
+
+    public function testAuthDigest(): void
+    {
+        $response = new Client([
+            'auth' => [
+                'type' => 'digest',
+                'username' => 'test',
+                'password' => 'password',
+            ],
+        ])->get('http://localhost:8888/auth-digest');
+
+        $this->assertTrue(
+            $response->isOk()
+        );
+
+        $this->assertTrue(
+            $response->isSuccess()
+        );
+    }
+
     public function testBuildOptionsGetBodyAndSsl(): void
     {
         $request = new Request('https://example.com/test', [
@@ -136,5 +182,142 @@ final class CurlHandlerTest extends TestCase
             'body',
             $response->getBody()->getContents()
         );
+    }
+
+    public function testGetData(): void
+    {
+        $response = new Client()->get('http://localhost:8888/get', [
+            'value' => 1,
+        ]);
+
+        $this->assertTrue(
+            $response->isOk()
+        );
+
+        $this->assertTrue(
+            $response->isSuccess()
+        );
+
+        $this->assertSame(
+            [
+                'value' => '1',
+            ],
+            $response->getJson()
+        );
+    }
+
+    public function testProtocolVersion(): void
+    {
+        $response = new Client()->get('http://localhost:8888/version', options: [
+            'protocolVersion' => '1.0',
+        ]);
+
+        $this->assertTrue(
+            $response->isOk()
+        );
+
+        $this->assertTrue(
+            $response->isSuccess()
+        );
+
+        $this->assertSame(
+            'HTTP/1.0',
+            $response->getBody()->getContents()
+        );
+    }
+
+    public function testProxy(): void
+    {
+        $response = new Client([
+            'proxy' => [
+                'username' => 'test',
+                'password' => 'password',
+            ],
+        ])->get('http://localhost:8888/proxy');
+
+        $this->assertTrue(
+            $response->isOk()
+        );
+
+        $this->assertTrue(
+            $response->isSuccess()
+        );
+    }
+
+    public function testSendNetworkException(): void
+    {
+        $this->expectException(NetworkException::class);
+
+        new Client()->get('http://127.0.0.1:1', options: [
+            'timeout' => 1,
+        ]);
+    }
+
+    public function testSendRequestException(): void
+    {
+        $this->expectException(RequestException::class);
+
+        new Client()->get('foo://example.com', options: [
+            'timeout' => 1,
+        ]);
+    }
+
+    public function testUpload(): void
+    {
+        $file = fopen('tests/assets/test.txt', 'r');
+
+        $response = new Client()->post('http://localhost:8888/upload', [
+            'deep' => [
+                'value' => $file,
+            ],
+        ]);
+
+        $this->assertTrue(
+            $response->isOk()
+        );
+
+        $this->assertTrue(
+            $response->isSuccess()
+        );
+
+        $data = $response->getJson();
+
+        unset($data['deep']['tmp_name']);
+
+        $this->assertSame(
+            [
+                'deep' => [
+                    'name' => [
+                        'value' => 'test.txt',
+                    ],
+                    'full_path' => [
+                        'value' => 'test.txt',
+                    ],
+                    'type' => [
+                        'value' => 'text/plain',
+                    ],
+                    'error' => [
+                        'value' => 0,
+                    ],
+                    'size' => [
+                        'value' => 15,
+                    ],
+                ],
+            ],
+            $data
+        );
+    }
+
+    #[Override]
+    public static function setUpBeforeClass(): void
+    {
+        self::$pid = (int) exec('nohup php -S 127.0.0.1:8888 tests/server.php >/dev/null 2>&1 & echo $!');
+        sleep(1);
+    }
+
+    #[Override]
+    public static function tearDownAfterClass(): void
+    {
+        exec('kill '.self::$pid.' 2>&1');
     }
 }
