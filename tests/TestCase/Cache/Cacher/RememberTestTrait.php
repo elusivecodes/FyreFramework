@@ -6,8 +6,6 @@ namespace Tests\TestCase\Cache\Cacher;
 use Fyre\Cache\Cacher;
 use Fyre\Cache\Exceptions\InvalidArgumentException;
 
-use function sleep;
-
 /**
  * @property Cacher $cacher
  */
@@ -20,17 +18,6 @@ trait RememberTestTrait
         $this->assertSame(
             1,
             $this->cacher->remember('test', static fn(): int => 2)
-        );
-    }
-
-    public function testRememberExpiry(): void
-    {
-        $this->cacher->remember('test', static fn(): int => 2, 1);
-
-        sleep(2);
-
-        $this->assertNull(
-            $this->cacher->get('test')
         );
     }
 
@@ -56,6 +43,18 @@ trait RememberTestTrait
 
         $this->assertSame(
             2,
+            $this->cacher->get('test')
+        );
+    }
+
+    public function testRememberZeroExpiry(): void
+    {
+        $this->assertSame(
+            2,
+            $this->cacher->remember('test', static fn(): int => 2, 0)
+        );
+
+        $this->assertNull(
             $this->cacher->get('test')
         );
     }

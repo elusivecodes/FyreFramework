@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Queue;
 
+use Closure;
 use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
@@ -14,6 +15,7 @@ use Fyre\Queue\Worker;
 use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
+use Redis;
 use Tests\Mock\Jobs\MockJob;
 use Tests\Mock\Listeners\MockListener;
 
@@ -22,7 +24,7 @@ use function file_exists;
 use function getenv;
 use function mkdir;
 use function rmdir;
-use function sleep;
+use function time;
 use function unlink;
 
 final class WorkerTest extends TestCase
@@ -152,20 +154,20 @@ final class WorkerTest extends TestCase
             $this->queue->stats()
         );
 
-        $worker = $this->container->build(Worker::class, [
-            'options' => [
-                'maxJobs' => 1,
-                'maxRuntime' => 5,
-            ],
-        ]);
-
-        $worker->run();
-
-        $this->assertFalse(
-            file_exists('tmp/job')
+        $this->assertNull(
+            $this->queue->pop()
         );
 
-        sleep(5);
+        $connection = Closure::bind(function(): Redis {
+            return $this->connection;
+        }, $this->queue, RedisQueue::class)();
+
+        $key = 'queue:default:delayed';
+        $messages = $connection->zRange($key, 0, 0);
+
+        $this->assertCount(1, $messages);
+
+        $connection->zAdd($key, time() - 1, $messages[0]);
 
         $worker = $this->container->build(Worker::class, [
             'options' => [

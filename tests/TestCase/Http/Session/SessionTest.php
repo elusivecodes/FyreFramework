@@ -16,7 +16,7 @@ use Override;
 use PHPUnit\Framework\TestCase;
 
 use function class_uses;
-use function sleep;
+use function time;
 
 final class SessionTest extends TestCase
 {
@@ -200,7 +200,7 @@ final class SessionTest extends TestCase
             $this->session->has('test')
         );
 
-        sleep(2);
+        $_SESSION['_temp']['test'] = time() - 1;
 
         Closure::bind(function(): void {
             $this->clearTempData();

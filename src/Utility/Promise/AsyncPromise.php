@@ -83,6 +83,15 @@ class AsyncPromise extends Promise
             ));
         }
 
+        if (pcntl_waitpid($this->pid, $status) !== $this->pid) {
+            throw new RuntimeException(sprintf(
+                'Process `%d` could not be reaped.',
+                $this->pid
+            ));
+        }
+
+        socket_close($this->socket);
+
         $result = Promise::reject(new CancelledPromiseException($message));
 
         $this->settle($result);

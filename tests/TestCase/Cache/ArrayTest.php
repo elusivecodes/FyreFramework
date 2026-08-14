@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Cache;
 
+use Closure;
 use Fyre\Cache\CacheManager;
 use Fyre\Cache\Cacher;
 use Fyre\Cache\Handlers\Array\ArrayCacher;
@@ -18,8 +19,6 @@ use Tests\TestCase\Cache\Cacher\IncrementTestTrait;
 use Tests\TestCase\Cache\Cacher\LockTestTrait;
 use Tests\TestCase\Cache\Cacher\RememberTestTrait;
 use Tests\TestCase\Cache\Cacher\TagsTestTrait;
-
-use function sleep;
 
 final class ArrayTest extends TestCase
 {
@@ -54,6 +53,17 @@ final class ArrayTest extends TestCase
         );
     }
 
+    public function testExpiredValue(): void
+    {
+        Closure::bind(function(): void {
+            $this->setValue('prefix.test', 'value', -1);
+        }, $this->cacher, ArrayCacher::class)();
+
+        $this->assertNull(
+            $this->cacher->get('test')
+        );
+    }
+
     public function testTaggedInvalidationDoesNotExpire(): void
     {
         $cacher = new ArrayCacher([
@@ -65,7 +75,11 @@ final class ArrayTest extends TestCase
 
         $cacher->invalidateTag('users');
 
-        sleep(2);
+        $data = $cacher->__debugInfo();
+
+        $this->assertNull(
+            $data['cache']['__tag__.users']['expires']
+        );
 
         $this->assertNull(
             $usersCache->get('user.1')

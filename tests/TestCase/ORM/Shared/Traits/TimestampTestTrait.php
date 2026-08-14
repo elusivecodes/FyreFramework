@@ -6,8 +6,6 @@ namespace Tests\TestCase\ORM\Shared\Traits;
 use Fyre\Utility\DateTime\DateTime;
 use Tests\Mock\Entities\Timestamp;
 
-use function sleep;
-
 trait TimestampTestTrait
 {
     public function testTimestampsCreate(): void
@@ -60,11 +58,10 @@ trait TimestampTestTrait
             $timestamp->modified
         );
 
-        $originalModified = $timestamp->modified->toIsoString();
+        $originalModified = DateTime::now()->subSeconds(1);
 
+        $timestamp->set('modified', $originalModified);
         $timestamp->setDirty('created', true);
-
-        sleep(1);
 
         $this->assertTrue(
             $Timestamps->save($timestamp)
@@ -83,7 +80,7 @@ trait TimestampTestTrait
         );
 
         $this->assertNotSame(
-            $originalModified,
+            $originalModified->toIsoString(),
             $timestamp->modified->toIsoString()
         );
     }

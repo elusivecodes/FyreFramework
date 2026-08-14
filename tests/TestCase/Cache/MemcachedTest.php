@@ -21,6 +21,7 @@ use Tests\TestCase\Cache\Cacher\RememberTestTrait;
 use Tests\TestCase\Cache\Cacher\TagsTestTrait;
 
 use function getenv;
+use function sleep;
 
 final class MemcachedTest extends TestCase
 {
@@ -56,6 +57,17 @@ final class MemcachedTest extends TestCase
                 'connection' => '[Memcached]',
             ],
             $data
+        );
+    }
+
+    public function testExpiredValue(): void
+    {
+        $this->cacher->set('test', 'value', 1);
+
+        sleep(2);
+
+        $this->assertNull(
+            $this->cacher->get('test')
         );
     }
 

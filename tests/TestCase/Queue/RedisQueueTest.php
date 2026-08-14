@@ -17,7 +17,6 @@ use Redis;
 use Tests\Mock\Jobs\MockJob;
 
 use function getenv;
-use function sleep;
 use function time;
 
 final class RedisQueueTest extends TestCase
@@ -125,7 +124,16 @@ final class RedisQueueTest extends TestCase
 
         $this->assertInstanceOf(Message::class, $firstMessage);
 
-        sleep(2);
+        $connection = Closure::bind(function(): Redis {
+            return $this->connection;
+        }, $this->queue, RedisQueue::class)();
+
+        $key = 'queue:default:processing';
+        $reservations = $connection->zRange($key, 0, 0);
+
+        $this->assertCount(1, $reservations);
+
+        $connection->zAdd($key, time() - 1, $reservations[0]);
 
         $secondMessage = $this->queue->pop();
 

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Cache;
 
+use Closure;
 use Fyre\Cache\CacheManager;
 use Fyre\Cache\Cacher;
 use Fyre\Cache\Exceptions\CacheException;
@@ -10,6 +11,7 @@ use Fyre\Cache\Handlers\Redis\RedisCacher;
 use Fyre\Core\Container;
 use Override;
 use PHPUnit\Framework\TestCase;
+use Redis;
 use Tests\TestCase\Cache\Cacher\DecrementTestTrait;
 use Tests\TestCase\Cache\Cacher\DeleteTestTrait;
 use Tests\TestCase\Cache\Cacher\EmptyTestTrait;
@@ -100,6 +102,17 @@ final class RedisTest extends TestCase
         );
     }
 
+    public function testExpiredValue(): void
+    {
+        $this->cacher->set('test', 'value', 1);
+
+        sleep(2);
+
+        $this->assertNull(
+            $this->cacher->get('test')
+        );
+    }
+
     public function testInvalidAuth(): void
     {
         $this->expectException(CacheException::class);
@@ -131,7 +144,14 @@ final class RedisTest extends TestCase
         $this->cacher->set('test', 'value', 1);
         $this->cacher->set('test', 'new');
 
-        sleep(2);
+        $connection = Closure::bind(function(): Redis {
+            return $this->connection;
+        }, $this->cacher, RedisCacher::class)();
+
+        $this->assertSame(
+            -1,
+            $connection->ttl('prefix.test')
+        );
 
         $this->assertSame(
             'new',

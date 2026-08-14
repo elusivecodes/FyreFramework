@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Cache;
 
+use Closure;
 use Fyre\Cache\CacheManager;
 use Fyre\Cache\Cacher;
 use Fyre\Cache\Handlers\File\FileCacher;
@@ -108,6 +109,17 @@ final class FileTest extends TestCase
                 'path' => '[*****]',
             ],
             $data
+        );
+    }
+
+    public function testExpiredValue(): void
+    {
+        Closure::bind(function(): void {
+            $this->setValue('prefix.test', 'value', -1);
+        }, $this->cacher, FileCacher::class)();
+
+        $this->assertNull(
+            $this->cacher->get('test')
         );
     }
 

@@ -9,73 +9,112 @@ use Fyre\Utility\Promise\AsyncPromise;
 use Fyre\Utility\Promise\Exceptions\CancelledPromiseException;
 use Fyre\Utility\Promise\Promise;
 use Fyre\Utility\Promise\PromiseInterface;
-use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 use Throwable;
 
-use function microtime;
-use function sleep;
+use function socket_close;
+use function socket_create_pair;
+use function socket_read;
+use function socket_write;
+use function time;
+
+use const AF_UNIX;
+use const SOCK_STREAM;
 
 final class AsyncPromiseTest extends TestCase
 {
-    #[RunInSeparateProcess]
     public function testAllPreservesOrder(): void
     {
-        $promise1 = new AsyncPromise(static function(Closure $resolve): void {
-            sleep(1);
+        $sockets = [];
+
+        $result = socket_create_pair(
+            AF_UNIX,
+            SOCK_STREAM,
+            0,
+            $sockets
+        );
+
+        $this->assertTrue($result);
+
+        [$reader, $writer] = $sockets;
+
+        $promise1 = new AsyncPromise(static function(Closure $resolve) use ($reader): void {
+            socket_read($reader, 1);
             $resolve(1);
         });
 
-        $promise2 = new AsyncPromise(static function(Closure $resolve): void {
+        $promise2 = new AsyncPromise(static function(Closure $resolve) use ($writer): void {
             $resolve(2);
+            socket_write($writer, '1');
         });
 
-        Promise::all([
-            'first' => $promise1,
-            'second' => $promise2,
-        ])->then(function(array $values): void {
-            $this->assertSame(
-                [
-                    'first' => 1,
-                    'second' => 2,
-                ],
-                $values
-            );
-        });
+        try {
+            Promise::all([
+                'first' => $promise1,
+                'second' => $promise2,
+            ])->then(function(array $values): void {
+                $this->assertSame(
+                    [
+                        'first' => 1,
+                        'second' => 2,
+                    ],
+                    $values
+                );
+            });
+        } finally {
+            socket_close($reader);
+            socket_close($writer);
+        }
     }
 
-    #[RunInSeparateProcess]
     public function testAny(): void
     {
+        $sockets = [];
+
+        $result = socket_create_pair(
+            AF_UNIX,
+            SOCK_STREAM,
+            0,
+            $sockets
+        );
+
+        $this->assertTrue($result);
+
+        [$reader, $writer] = $sockets;
+
         $promise1 = new AsyncPromise(static function(Closure $resolve): void {
-            sleep(1);
             $resolve(1);
         });
 
-        $promise2 = new AsyncPromise(static function(Closure $resolve): void {
-            sleep(3);
+        $promise2 = new AsyncPromise(static function(Closure $resolve) use ($reader): void {
+            socket_read($reader, 1);
             $resolve(3);
         });
 
-        Promise::any([$promise1, $promise2])
-            ->then(function(int $value): void {
-                $this->assertSame(
-                    1,
-                    $value
-                );
-            });
+        try {
+            Promise::any([$promise1, $promise2])
+                ->then(function(int $value): void {
+                    $this->assertSame(
+                        1,
+                        $value
+                    );
+                });
+        } finally {
+            socket_write($writer, '1');
+            $promise2->wait();
+
+            socket_close($reader);
+            socket_close($writer);
+        }
     }
 
-    #[RunInSeparateProcess]
     public function testAnyReject(): void
     {
         $promise1 = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
-            sleep(1);
             $reject();
         });
 
         $promise2 = new AsyncPromise(static function(Closure $resolve): void {
-            sleep(3);
             $resolve(3);
         });
 
@@ -91,41 +130,57 @@ final class AsyncPromiseTest extends TestCase
             });
     }
 
-    #[RunInSeparateProcess]
     public function testAnyRejectAfter(): void
     {
+        $sockets = [];
+
+        $result = socket_create_pair(
+            AF_UNIX,
+            SOCK_STREAM,
+            0,
+            $sockets
+        );
+
+        $this->assertTrue($result);
+
+        [$reader, $writer] = $sockets;
+
         $promise1 = new AsyncPromise(static function(Closure $resolve): void {
-            sleep(1);
             $resolve(1);
         });
 
-        $promise2 = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
-            sleep(3);
+        $promise2 = new AsyncPromise(static function(Closure $resolve, Closure $reject) use ($reader): void {
+            socket_read($reader, 1);
             $reject();
         });
 
-        Promise::any([$promise1, $promise2])
-            ->then(function(int $value): void {
-                $this->assertSame(
-                    1,
-                    $value
-                );
-            })
-            ->catch(function(): void {
-                $this->fail();
-            });
+        try {
+            Promise::any([$promise1, $promise2])
+                ->then(function(int $value): void {
+                    $this->assertSame(
+                        1,
+                        $value
+                    );
+                })
+                ->catch(function(): void {
+                    $this->fail();
+                });
+        } finally {
+            socket_write($writer, '1');
+            $promise2->wait();
+
+            socket_close($reader);
+            socket_close($writer);
+        }
     }
 
-    #[RunInSeparateProcess]
     public function testAnyRejectAll(): void
     {
         $promise1 = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
-            sleep(1);
             $reject(new Exception('test1'));
         });
 
         $promise2 = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
-            sleep(3);
             $reject(new Exception('test2'));
         });
 
@@ -142,32 +197,49 @@ final class AsyncPromiseTest extends TestCase
         $this->assertTrue($called);
     }
 
-    #[RunInSeparateProcess]
     public function testAsync(): void
     {
-        $promise1 = new AsyncPromise(static function(Closure $resolve): void {
-            sleep(1);
-            $resolve();
+        $sockets = [];
+
+        $result = socket_create_pair(
+            AF_UNIX,
+            SOCK_STREAM,
+            0,
+            $sockets
+        );
+
+        $this->assertTrue($result);
+
+        [$parentSocket, $childSocket] = $sockets;
+
+        $promise1 = new AsyncPromise(static function(Closure $resolve) use ($childSocket): void {
+            socket_write($childSocket, '1');
+            socket_read($childSocket, 1);
+            $resolve(1);
         });
 
-        $promise2 = new AsyncPromise(static function(Closure $resolve): void {
-            sleep(1);
-            $resolve();
+        $promise2 = new AsyncPromise(static function(Closure $resolve) use ($childSocket): void {
+            socket_write($childSocket, '1');
+            socket_read($childSocket, 1);
+            $resolve(2);
         });
 
-        $start = microtime(true);
+        try {
+            $this->assertSame('1', socket_read($parentSocket, 1));
+            $this->assertSame('1', socket_read($parentSocket, 1));
 
-        Promise::all([$promise1, $promise2]);
+            socket_write($parentSocket, '11');
 
-        $finish = microtime(true);
-
-        $time = ($finish - $start) * 1000;
-
-        $this->assertGreaterThan(1000, $time);
-        $this->assertLessThan(2000, $time);
+            $this->assertSame(
+                [1, 2],
+                Promise::all([$promise1, $promise2]) |> Promise::await(...)
+            );
+        } finally {
+            socket_close($parentSocket);
+            socket_close($childSocket);
+        }
     }
 
-    #[RunInSeparateProcess]
     public function testAwait(): void
     {
         $promise = new AsyncPromise(static function(Closure $resolve): void {
@@ -180,7 +252,6 @@ final class AsyncPromiseTest extends TestCase
         );
     }
 
-    #[RunInSeparateProcess]
     public function testAwaitRejection(): void
     {
         $this->expectException(Exception::class);
@@ -193,23 +264,39 @@ final class AsyncPromiseTest extends TestCase
         Promise::await($promise);
     }
 
-    #[RunInSeparateProcess]
     public function testCancel(): void
     {
         $this->expectException(CancelledPromiseException::class);
         $this->expectExceptionMessage('test');
 
-        $promise = new AsyncPromise(static function(Closure $resolve): void {
-            sleep(3);
+        $sockets = [];
+
+        $result = socket_create_pair(
+            AF_UNIX,
+            SOCK_STREAM,
+            0,
+            $sockets
+        );
+
+        $this->assertTrue($result);
+
+        [$reader, $writer] = $sockets;
+
+        $promise = new AsyncPromise(static function(Closure $resolve) use ($reader): void {
+            socket_read($reader, 1);
             $resolve(1);
         });
 
-        $promise->cancel('test');
+        try {
+            $promise->cancel('test');
 
-        Promise::await($promise);
+            Promise::await($promise);
+        } finally {
+            socket_close($reader);
+            socket_close($writer);
+        }
     }
 
-    #[RunInSeparateProcess]
     public function testCancelSettled(): void
     {
         $promise = new AsyncPromise(static function(Closure $resolve): void {
@@ -225,26 +312,41 @@ final class AsyncPromiseTest extends TestCase
         );
     }
 
-    #[RunInSeparateProcess]
     public function testCancelTimeout(): void
     {
-        Closure::bind(static function(): void {
-            self::$maxRunTime = 0;
-            self::$waitTime = 1;
-        }, null, AsyncPromise::class)();
-
         $this->expectException(CancelledPromiseException::class);
         $this->expectExceptionMessage('Promise was cancelled.');
 
-        $promise = new AsyncPromise(static function(Closure $resolve): void {
-            sleep(1);
+        $sockets = [];
+
+        $result = socket_create_pair(
+            AF_UNIX,
+            SOCK_STREAM,
+            0,
+            $sockets
+        );
+
+        $this->assertTrue($result);
+
+        [$reader, $writer] = $sockets;
+
+        $promise = new AsyncPromise(static function(Closure $resolve) use ($reader): void {
+            socket_read($reader, 1);
             $resolve(1);
         });
 
-        Promise::await($promise);
+        Closure::bind(function(): void {
+            $this->startTime = time() - 301;
+        }, $promise, AsyncPromise::class)();
+
+        try {
+            Promise::await($promise);
+        } finally {
+            socket_close($reader);
+            socket_close($writer);
+        }
     }
 
-    #[RunInSeparateProcess]
     public function testCatch(): void
     {
         $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
@@ -262,7 +364,6 @@ final class AsyncPromiseTest extends TestCase
         $this->assertTrue($called);
     }
 
-    #[RunInSeparateProcess]
     public function testCatchReason(): void
     {
         $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
@@ -279,7 +380,6 @@ final class AsyncPromiseTest extends TestCase
         $promise->wait();
     }
 
-    #[RunInSeparateProcess]
     public function testCatchThen(): void
     {
         $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
@@ -298,7 +398,6 @@ final class AsyncPromiseTest extends TestCase
         $promise->wait();
     }
 
-    #[RunInSeparateProcess]
     public function testCatchThenCatch(): void
     {
         $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
@@ -317,7 +416,6 @@ final class AsyncPromiseTest extends TestCase
         $promise->wait();
     }
 
-    #[RunInSeparateProcess]
     public function testCatchThenPromise(): void
     {
         $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
@@ -336,7 +434,6 @@ final class AsyncPromiseTest extends TestCase
         $promise->wait();
     }
 
-    #[RunInSeparateProcess]
     public function testMultipleThen(): void
     {
         $promise = new AsyncPromise(static function(Closure $resolve): void {
@@ -361,76 +458,132 @@ final class AsyncPromiseTest extends TestCase
         );
     }
 
-    #[RunInSeparateProcess]
     public function testRace(): void
     {
+        $sockets = [];
+
+        $result = socket_create_pair(
+            AF_UNIX,
+            SOCK_STREAM,
+            0,
+            $sockets
+        );
+
+        $this->assertTrue($result);
+
+        [$reader, $writer] = $sockets;
+
         $promise1 = new AsyncPromise(static function(Closure $resolve): void {
-            sleep(1);
             $resolve(1);
         });
 
-        $promise2 = new AsyncPromise(static function(Closure $resolve): void {
-            sleep(3);
+        $promise2 = new AsyncPromise(static function(Closure $resolve) use ($reader): void {
+            socket_read($reader, 1);
             $resolve(3);
         });
 
-        Promise::race([$promise1, $promise2])
-            ->then(function(int $value): void {
-                $this->assertSame(
-                    1,
-                    $value
-                );
-            });
+        try {
+            Promise::race([$promise1, $promise2])
+                ->then(function(int $value): void {
+                    $this->assertSame(
+                        1,
+                        $value
+                    );
+                });
+        } finally {
+            socket_write($writer, '1');
+            $promise2->wait();
+
+            socket_close($reader);
+            socket_close($writer);
+        }
     }
 
-    #[RunInSeparateProcess]
     public function testRaceReject(): void
     {
+        $sockets = [];
+
+        $result = socket_create_pair(
+            AF_UNIX,
+            SOCK_STREAM,
+            0,
+            $sockets
+        );
+
+        $this->assertTrue($result);
+
+        [$reader, $writer] = $sockets;
+
         $promise1 = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
-            sleep(1);
             $reject(new Exception('test'));
         });
 
-        $promise2 = new AsyncPromise(static function(Closure $resolve): void {
-            sleep(3);
+        $promise2 = new AsyncPromise(static function(Closure $resolve) use ($reader): void {
+            socket_read($reader, 1);
             $resolve(3);
         });
 
-        Promise::race([$promise1, $promise2])
-            ->catch(function(Throwable $reason): void {
-                $this->assertSame(
-                    'test',
-                    $reason->getMessage()
-                );
-            });
+        try {
+            Promise::race([$promise1, $promise2])
+                ->catch(function(Throwable $reason): void {
+                    $this->assertSame(
+                        'test',
+                        $reason->getMessage()
+                    );
+                });
+        } finally {
+            socket_write($writer, '1');
+            $promise2->wait();
+
+            socket_close($reader);
+            socket_close($writer);
+        }
     }
 
-    #[RunInSeparateProcess]
     public function testRaceRejectAfter(): void
     {
+        $sockets = [];
+
+        $result = socket_create_pair(
+            AF_UNIX,
+            SOCK_STREAM,
+            0,
+            $sockets
+        );
+
+        $this->assertTrue($result);
+
+        [$reader, $writer] = $sockets;
+
         $promise1 = new AsyncPromise(static function(Closure $resolve): void {
-            sleep(1);
             $resolve(1);
         });
 
-        $promise2 = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
-            sleep(3);
+        $promise2 = new AsyncPromise(static function(Closure $resolve, Closure $reject) use ($reader): void {
+            socket_read($reader, 1);
             $reject();
         });
 
-        Promise::race([$promise1, $promise2])
-            ->then(function(int $value): void {
-                $this->assertSame(
-                    1,
-                    $value
-                );
-            })
-            ->catch(function(): void {
-                $this->fail();
-            });
+        try {
+            Promise::race([$promise1, $promise2])
+                ->then(function(int $value): void {
+                    $this->assertSame(
+                        1,
+                        $value
+                    );
+                })
+                ->catch(function(): void {
+                    $this->fail();
+                });
+        } finally {
+            socket_write($writer, '1');
+            $promise2->wait();
+
+            socket_close($reader);
+            socket_close($writer);
+        }
     }
 
-    #[RunInSeparateProcess]
     public function testThen(): void
     {
         $promise = new AsyncPromise(static function(Closure $resolve): void {
@@ -448,7 +601,6 @@ final class AsyncPromiseTest extends TestCase
         $this->assertTrue($called);
     }
 
-    #[RunInSeparateProcess]
     public function testThenResolve(): void
     {
         $promise = new AsyncPromise(static function(Closure $resolve): void {
@@ -465,7 +617,6 @@ final class AsyncPromiseTest extends TestCase
         $promise->wait();
     }
 
-    #[RunInSeparateProcess]
     public function testUncaughtException(): void
     {
         $this->expectException(Exception::class);
@@ -478,7 +629,6 @@ final class AsyncPromiseTest extends TestCase
         $promise->wait();
     }
 
-    #[RunInSeparateProcess]
     public function testWaitFinally(): void
     {
         $promise = new AsyncPromise(static function(Closure $resolve): void {
@@ -496,7 +646,6 @@ final class AsyncPromiseTest extends TestCase
         $this->assertTrue($called);
     }
 
-    #[RunInSeparateProcess]
     public function testWaitThen(): void
     {
         $promise = new AsyncPromise(static function(Closure $resolve): void {

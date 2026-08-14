@@ -6,8 +6,6 @@ namespace Tests\TestCase\Cache\Cacher;
 use Fyre\Cache\Cacher;
 use Fyre\Cache\Exceptions\CacheException;
 
-use function sleep;
-
 /**
  * @property Cacher $cacher
  */
@@ -27,17 +25,6 @@ trait GetSetTestTrait
         $this->expectExceptionMessage('Cache key `test/` is not valid.');
 
         $this->cacher->get('test/');
-    }
-
-    public function testSetExpiry(): void
-    {
-        $this->cacher->set('test', 'value', 1);
-
-        sleep(2);
-
-        $this->assertNull(
-            $this->cacher->get('test')
-        );
     }
 
     public function testSetGetArray(): void
