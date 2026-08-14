@@ -4,53 +4,49 @@ declare(strict_types=1);
 namespace Tests\TestCase\DB\Schema\Sqlite;
 
 use Fyre\Cache\CacheManager;
-use Fyre\Cache\Cacher;
 use Fyre\Cache\Handlers\File\FileCacher;
+use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\DB\Connection;
 use Fyre\DB\ConnectionManager;
 use Fyre\DB\Handlers\Sqlite\SqliteConnection;
-use Fyre\DB\Schema\Schema;
 use Fyre\DB\Schema\SchemaRegistry;
 use Fyre\DB\TypeParser;
-use Override;
-
-use function mkdir;
-use function rmdir;
-use function unlink;
+use Tests\TestCase\DB\Schema\Traits\ConnectionTrait;
 
 trait SqliteConnectionTrait
 {
-    protected Cacher $cacher;
+    use ConnectionTrait;
 
-    protected Connection $db;
-
-    protected Schema $schema;
-
-    #[Override]
-    protected function setUp(): void
+    protected static function buildContainer(): Container
     {
         $container = new Container();
         $container->singleton(TypeParser::class);
+        $container->singleton(Config::class);
         $container->singleton(CacheManager::class);
+        $container->singleton(ConnectionManager::class);
+        $container->singleton(SchemaRegistry::class);
         $container->use(CacheManager::class)->setConfig('_schema', [
             'className' => FileCacher::class,
             'path' => 'tmp',
             'prefix' => 'schema.',
             'expire' => 3600,
         ]);
-
-        $this->db = $container->use(ConnectionManager::class)->build([
-            'className' => SqliteConnection::class,
+        $container->use(Config::class)->set('Database', [
+            'default' => [
+                'className' => SqliteConnection::class,
+                'database' => ':memory:',
+                'mode' => 'memory',
+                'cache' => 'shared',
+            ],
         ]);
 
-        $this->schema = $container->use(SchemaRegistry::class)->use($this->db);
-        $this->cacher = $container->use(CacheManager::class)->use('_schema');
+        return $container;
+    }
 
-        $this->db->query('DROP TABLE IF EXISTS test_values');
-        $this->db->query('DROP TABLE IF EXISTS test');
-
-        $this->db->query(<<<'SQL'
+    protected static function createSchema(Connection $db): void
+    {
+        $db->query(<<<'SQL'
             CREATE TABLE test (
                 id UNSIGNED INTEGER NOT NULL,
                 name VARCHAR(255) NULL DEFAULT NULL,
@@ -63,13 +59,13 @@ trait SqliteConnectionTrait
                 PRIMARY KEY (id)
             )
         SQL);
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE INDEX name_value ON test (name, value)
         SQL);
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE UNIQUE INDEX name ON test (name)
         SQL);
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE TABLE test_values (
                 id UNSIGNED INTEGER NOT NULL,
                 test_id UNSIGNED INTEGER NOT NULL DEFAULT '0',
@@ -78,29 +74,11 @@ trait SqliteConnectionTrait
                 FOREIGN KEY (test_id) REFERENCES test (id) ON UPDATE CASCADE ON DELETE CASCADE
             )
         SQL);
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE INDEX test_values_test_id ON test_values (test_id)
         SQL);
-        $this->db->query(<<<'SQL'
+        $db->query(<<<'SQL'
             CREATE INDEX value ON test_values (value)
         SQL);
-
-        @mkdir('tmp');
-    }
-
-    #[Override]
-    protected function tearDown(): void
-    {
-        $this->db->query('DROP TABLE IF EXISTS test_values');
-        $this->db->query('DROP TABLE IF EXISTS test');
-
-        @unlink('tmp/schema._memory_.tables');
-        @unlink('tmp/schema._memory_.test.columns');
-        @unlink('tmp/schema._memory_.test.foreign_keys');
-        @unlink('tmp/schema._memory_.test.indexes');
-        @unlink('tmp/schema._memory_.test_values.columns');
-        @unlink('tmp/schema._memory_.test_values.foreign_keys');
-        @unlink('tmp/schema._memory_.test_values.indexes');
-        @rmdir('tmp');
     }
 }

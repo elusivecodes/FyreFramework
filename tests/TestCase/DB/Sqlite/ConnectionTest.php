@@ -49,14 +49,14 @@ final class ConnectionTest extends TestCase
         $this->assertSame(
             [
                 '[class]' => SqliteConnection::class,
-                'affectedRows' => 0,
+                'affectedRows' => null,
                 'afterCommitCallbacks' => [],
                 'config' => [
                     'log' => false,
                     'database' => '[*****]',
                     'mask' => 420,
-                    'cache' => null,
-                    'mode' => null,
+                    'cache' => 'shared',
+                    'mode' => 'memory',
                     'persist' => false,
                     'flags' => [],
                     'className' => SqliteConnection::class,
@@ -67,7 +67,6 @@ final class ConnectionTest extends TestCase
                 'logManager' => '[Fyre\Log\LogManager]',
                 'logQueries' => false,
                 'pdo' => '[Pdo\Sqlite]',
-                'retry' => '[Fyre\DB\ConnectionRetry]',
                 'savePointLevel' => 0,
                 'useSavePoints' => true,
                 'version' => null,

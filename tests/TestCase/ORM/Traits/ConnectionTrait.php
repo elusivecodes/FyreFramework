@@ -10,9 +10,12 @@ use Fyre\DB\Schema\SchemaRegistry;
 use Fyre\ORM\EntityLocator;
 use Fyre\ORM\ModelRegistry;
 use Override;
+use Tests\TestCase\Traits\DatabaseLifecycleTrait;
 
 trait ConnectionTrait
 {
+    use DatabaseLifecycleTrait;
+
     protected const TABLES = [
         'contains',
         'composite_items',
@@ -27,8 +30,6 @@ trait ConnectionTrait
         'posts_tags',
     ];
 
-    protected static Connection|null $schemaConnection = null;
-
     protected Container $container;
 
     protected Connection $db;
@@ -37,35 +38,12 @@ trait ConnectionTrait
 
     protected SchemaRegistry $schemaRegistry;
 
-    #[Override]
-    public static function setUpBeforeClass(): void
+    protected static function clearSchema(Connection $db): void
     {
-        $container = static::buildContainer();
-
-        static::$schemaConnection = $container->use(ConnectionManager::class)->use();
-
-        static::dropSchema(static::$schemaConnection);
-        static::createSchema(static::$schemaConnection);
-    }
-
-    #[Override]
-    public static function tearDownAfterClass(): void
-    {
-        if (static::$schemaConnection === null) {
-            return;
-        }
-
-        try {
-            static::dropSchema(static::$schemaConnection);
-        } finally {
-            static::$schemaConnection->disconnect();
-            static::$schemaConnection = null;
+        foreach (static::TABLES as $table) {
+            $db->query('DROP TABLE IF EXISTS '.$table);
         }
     }
-
-    abstract protected static function buildContainer(): Container;
-
-    abstract protected static function createSchema(Connection $db): void;
 
     #[Override]
     protected function setUp(): void
@@ -89,12 +67,5 @@ trait ConnectionTrait
     protected function tearDown(): void
     {
         $this->db->disconnect();
-    }
-
-    protected static function dropSchema(Connection $db): void
-    {
-        foreach (static::TABLES as $table) {
-            $db->query('DROP TABLE IF EXISTS '.$table);
-        }
     }
 }

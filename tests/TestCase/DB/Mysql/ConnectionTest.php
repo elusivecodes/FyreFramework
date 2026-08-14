@@ -26,6 +26,8 @@ final class ConnectionTest extends TestCase
 
     public function testCollation(): void
     {
+        $this->assertInstanceOf(MysqlConnection::class, $this->db);
+
         $this->assertSame(
             'utf8mb4_unicode_ci',
             $this->db->getCollation()
@@ -39,7 +41,7 @@ final class ConnectionTest extends TestCase
         $this->assertSame(
             [
                 '[class]' => 'Fyre\DB\Handlers\Mysql\MysqlConnection',
-                'affectedRows' => 0,
+                'affectedRows' => null,
                 'afterCommitCallbacks' => [],
                 'config' => [
                     'log' => false,
@@ -69,7 +71,6 @@ final class ConnectionTest extends TestCase
                 'logManager' => '[Fyre\Log\LogManager]',
                 'logQueries' => false,
                 'pdo' => '[Pdo\Mysql]',
-                'retry' => '[Fyre\DB\ConnectionRetry]',
                 'savePointLevel' => 0,
                 'useSavePoints' => true,
                 'version' => null,
@@ -117,13 +118,13 @@ final class ConnectionTest extends TestCase
         $this->expectException(DbException::class);
         $this->expectExceptionMessageMatches('/^Database connection error: /');
 
-        $this->connection->setConfig('invalid', [
+        $this->connectionManager->setConfig('invalid', [
             'className' => MysqlConnection::class,
             'username' => 'root',
             'database' => 'test',
         ]);
 
-        $this->connection->use('invalid');
+        $this->connectionManager->use('invalid');
     }
 
     public function testFailedQuery(): void

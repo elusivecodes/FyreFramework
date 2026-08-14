@@ -18,9 +18,9 @@ use Fyre\Utility\Inflector;
 use Fyre\Utility\Path;
 use Tests\TestCase\ORM\Traits\ConnectionTrait;
 
-use const ROOT;
-
 use function str_replace;
+
+use const ROOT;
 
 trait SqliteConnectionTrait
 {

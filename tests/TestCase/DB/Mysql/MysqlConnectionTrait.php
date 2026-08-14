@@ -5,24 +5,21 @@ namespace Tests\TestCase\DB\Mysql;
 
 use Fyre\Core\Config;
 use Fyre\Core\Container;
-use Fyre\DB\ConnectionManager;
+use Fyre\DB\Connection;
 use Fyre\DB\Handlers\Mysql\MysqlConnection;
 use Fyre\DB\TypeParser;
 use Fyre\Event\EventManager;
 use Fyre\Log\Handlers\FileLogger;
 use Fyre\Log\LogManager;
-use Override;
+use Tests\TestCase\DB\Traits\ConnectionTrait;
 
 use function getenv;
-use function mkdir;
-use function rmdir;
-use function unlink;
 
 trait MysqlConnectionTrait
 {
-    protected ConnectionManager $connection;
+    use ConnectionTrait;
 
-    protected MysqlConnection $db;
+    protected Connection $db;
 
     protected function insert(): void
     {
@@ -42,64 +39,48 @@ trait MysqlConnectionTrait
             ->execute();
     }
 
-    #[Override]
-    protected function setUp(): void
+    protected static function buildContainer(): Container
     {
         $container = new Container();
         $container->singleton(TypeParser::class);
         $container->singleton(Config::class);
         $container->singleton(EventManager::class);
         $container->singleton(LogManager::class);
-        $container->use(Config::class)->set('Database', [
-            'default' => [
-                'className' => MysqlConnection::class,
-                'host' => getenv('MYSQL_HOST'),
-                'username' => getenv('MYSQL_USERNAME'),
-                'password' => getenv('MYSQL_PASSWORD'),
-                'database' => getenv('MYSQL_DATABASE'),
-                'port' => getenv('MYSQL_PORT'),
-                'collation' => 'utf8mb4_unicode_ci',
-                'charset' => 'utf8mb4',
-                'compress' => true,
-                'persist' => true,
-            ],
-        ]);
-        $container->use(Config::class)->set('Log', [
-            'queries' => [
-                'className' => FileLogger::class,
-                'scopes' => ['queries'],
-                'path' => 'log',
-                'file' => 'queries',
-            ],
-        ]);
+        $container->use(Config::class)
+            ->set('Database', [
+                'default' => [
+                    'className' => MysqlConnection::class,
+                    'host' => getenv('MYSQL_HOST'),
+                    'username' => getenv('MYSQL_USERNAME'),
+                    'password' => getenv('MYSQL_PASSWORD'),
+                    'database' => getenv('MYSQL_DATABASE'),
+                    'port' => getenv('MYSQL_PORT'),
+                    'collation' => 'utf8mb4_unicode_ci',
+                    'charset' => 'utf8mb4',
+                    'compress' => true,
+                    'persist' => true,
+                ],
+            ])
+            ->set('Log', [
+                'queries' => [
+                    'className' => FileLogger::class,
+                    'scopes' => ['queries'],
+                    'path' => 'log',
+                    'file' => 'queries',
+                ],
+            ]);
 
-        @mkdir('log');
+        return $container;
+    }
 
-        $this->connection = $container->use(ConnectionManager::class);
-
-        $db = $this->connection->use();
-
-        $this->assertInstanceOf(MysqlConnection::class, $db);
-
-        $this->db = $db;
-
-        $this->db->query('DROP TABLE IF EXISTS test');
-
-        $this->db->query(<<<'SQL'
+    protected static function createSchema(Connection $db): void
+    {
+        $db->query(<<<'SQL'
             CREATE TABLE test (
                 id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 name VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
         SQL);
-    }
-
-    #[Override]
-    protected function tearDown(): void
-    {
-        $this->db->query('DROP TABLE IF EXISTS test');
-
-        @unlink('log/queries-cli.log');
-        @rmdir('log');
     }
 }
