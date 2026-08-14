@@ -11,16 +11,13 @@ use Fyre\DB\Handlers\Sqlite\SqliteConnection;
 use Fyre\DB\TypeParser;
 use Fyre\Http\Session\Handlers\DatabaseSessionHandler;
 use Fyre\Http\Session\Session;
-use Override;
 use PHPUnit\Framework\TestCase;
+
+use function str_replace;
 
 final class SqliteTest extends TestCase
 {
-    protected Connection $db;
-
-    protected DatabaseSessionHandler $handler;
-
-    protected Session $session;
+    use DatabaseConnectionTrait;
 
     public function testGc(): void
     {
@@ -153,8 +150,7 @@ final class SqliteTest extends TestCase
         );
     }
 
-    #[Override]
-    protected function setUp(): void
+    protected static function buildContainer(): Container
     {
         $container = new Container();
         $container->singleton(TypeParser::class);
@@ -164,6 +160,9 @@ final class SqliteTest extends TestCase
         $container->use(Config::class)->set('Database', [
             'default' => [
                 'className' => SqliteConnection::class,
+                'database' => 'session_'.str_replace('\\', '_', self::class),
+                'mode' => 'memory',
+                'cache' => 'shared',
             ],
         ]);
         $container->use(Config::class)->set('Session', [
@@ -172,11 +171,12 @@ final class SqliteTest extends TestCase
             ],
         ]);
 
-        $this->db = $container->use(ConnectionManager::class)->use();
+        return $container;
+    }
 
-        $this->db->query('DROP TABLE IF EXISTS sessions');
-
-        $this->db->query(<<<'SQL'
+    protected static function createSchema(Connection $db): void
+    {
+        $db->query(<<<'SQL'
             CREATE TABLE sessions (
                 id VARCHAR(40) NOT NULL,
                 data BLOB NULL DEFAULT NULL,
@@ -185,34 +185,5 @@ final class SqliteTest extends TestCase
                 PRIMARY KEY (id)
             )
         SQL);
-
-        $this->session = $container->use(Session::class);
-        $handler = $this->session->getHandler();
-
-        $this->assertInstanceOf(DatabaseSessionHandler::class, $handler);
-
-        $this->handler = $handler;
-
-        $this->session->start();
-
-        $this->assertTrue(
-            $this->handler->open('sessions', '')
-        );
-    }
-
-    #[Override]
-    protected function tearDown(): void
-    {
-        $id = $this->session->id();
-
-        $this->assertTrue(
-            $this->handler->destroy($id)
-        );
-
-        $this->assertTrue(
-            $this->handler->close()
-        );
-
-        $this->db->query('DROP TABLE IF EXISTS sessions');
     }
 }

@@ -28,11 +28,14 @@ use PHPUnit\Framework\TestCase;
 use Tests\Mock\Controllers\ItemsController;
 use Tests\Mock\Entities\Child;
 use Tests\Mock\Entities\Item;
+use Tests\TestCase\Shared\DatabaseLifecycleTrait;
 
 use function getenv;
 
 final class RouteModelParamsTest extends TestCase
 {
+    use DatabaseLifecycleTrait;
+
     protected Container $container;
 
     protected Connection $db;
@@ -389,19 +392,18 @@ final class RouteModelParamsTest extends TestCase
         );
     }
 
-    #[Override]
-    protected function setUp(): void
+    protected static function buildContainer(): Container
     {
-        $this->container = new Container();
-        $this->container->singleton(TypeParser::class);
-        $this->container->singleton(Config::class);
-        $this->container->singleton(Inflector::class);
-        $this->container->singleton(ConnectionManager::class);
-        $this->container->singleton(SchemaRegistry::class);
-        $this->container->singleton(ModelRegistry::class);
-        $this->container->singleton(EntityLocator::class);
-        $this->container->singleton(Router::class);
-        $this->container->use(Config::class)
+        $container = new Container();
+        $container->singleton(TypeParser::class);
+        $container->singleton(Config::class);
+        $container->singleton(Inflector::class);
+        $container->singleton(ConnectionManager::class);
+        $container->singleton(SchemaRegistry::class);
+        $container->singleton(ModelRegistry::class);
+        $container->singleton(EntityLocator::class);
+        $container->singleton(Router::class);
+        $container->use(Config::class)
             ->set('App.locale', 'en')
             ->set('Database', [
                 'default' => [
@@ -417,6 +419,40 @@ final class RouteModelParamsTest extends TestCase
                 ],
             ]);
 
+        return $container;
+    }
+
+    protected static function clearSchema(Connection $db): void
+    {
+        $db->query('DROP TABLE IF EXISTS children');
+        $db->query('DROP TABLE IF EXISTS items');
+    }
+
+    protected static function createSchema(Connection $db): void
+    {
+        $db->query(<<<'SQL'
+            CREATE TABLE items (
+                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                name VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+                PRIMARY KEY (id)
+            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
+        SQL);
+
+        $db->query(<<<'SQL'
+            CREATE TABLE children (
+                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                item_id INT(10) UNSIGNED NOT NULL,
+                value INT(10) UNSIGNED NOT NULL,
+                PRIMARY KEY (id)
+            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
+        SQL);
+    }
+
+    #[Override]
+    protected function setUp(): void
+    {
+        $this->container = self::buildContainer();
+
         $this->modelRegistry = $this->container->use(ModelRegistry::class);
         $this->modelRegistry->addNamespace('Tests\Mock\Models');
 
@@ -426,25 +462,8 @@ final class RouteModelParamsTest extends TestCase
 
         $this->router = $this->container->use(Router::class);
 
-        $this->db->query('DROP TABLE IF EXISTS items');
-        $this->db->query('DROP TABLE IF EXISTS children');
-
-        $this->db->query(<<<'SQL'
-            CREATE TABLE items (
-                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-                name VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-                PRIMARY KEY (id)
-            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        SQL);
-
-        $this->db->query(<<<'SQL'
-            CREATE TABLE children (
-                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-                item_id INT(10) UNSIGNED NOT NULL,
-                value INT(10) UNSIGNED NOT NULL,
-                PRIMARY KEY (id)
-            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        SQL);
+        $this->db->truncate('children');
+        $this->db->truncate('items');
 
         $Items = $this->modelRegistry->use('Items');
         $Children = $this->modelRegistry->use('Children');
@@ -472,9 +491,6 @@ final class RouteModelParamsTest extends TestCase
     #[Override]
     protected function tearDown(): void
     {
-        $this->db->query('DROP TABLE IF EXISTS items');
-        $this->db->query('DROP TABLE IF EXISTS children');
-
         $this->db->disconnect();
     }
 }

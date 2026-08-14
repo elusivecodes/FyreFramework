@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\TestSuite\Fixture;
 
 use Fyre\Core\Config;
+use Fyre\Core\Container;
 use Fyre\Core\ErrorHandler;
 use Fyre\Core\Loader;
 use Fyre\DB\Connection;
@@ -15,11 +16,17 @@ use Fyre\TestSuite\Fixture\Fixture;
 use Fyre\TestSuite\Fixture\FixtureRegistry;
 use Override;
 use Tests\Mock\Application;
+use Tests\TestCase\Shared\DatabaseLifecycleTrait;
 
 use function getenv;
 
 trait MysqlConnectionTrait
 {
+    use DatabaseLifecycleTrait {
+        setUpBeforeClass as private setUpDatabaseBeforeClass;
+        tearDownAfterClass as private tearDownDatabaseAfterClass;
+    }
+
     protected Fixture $associatedFixture;
 
     protected Connection $db;
@@ -32,6 +39,37 @@ trait MysqlConnectionTrait
 
     protected Fixture $nestedFixture;
 
+    protected static function buildContainer(): Container
+    {
+        return Application::getInstance();
+    }
+
+    protected static function clearSchema(Connection $db): void
+    {
+        $db->query('DROP TABLE IF EXISTS children');
+        $db->query('DROP TABLE IF EXISTS items');
+    }
+
+    protected static function createSchema(Connection $db): void
+    {
+        $db->query(<<<'SQL'
+            CREATE TABLE items (
+                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                name VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+                PRIMARY KEY (id)
+            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
+        SQL);
+
+        $db->query(<<<'SQL'
+            CREATE TABLE children (
+                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                item_id INT(10) UNSIGNED NULL DEFAULT NULL,
+                PRIMARY KEY (id),
+                CONSTRAINT fk_children_item FOREIGN KEY (item_id) REFERENCES items (id)
+            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
+        SQL);
+    }
+
     #[Override]
     public static function setUpBeforeClass(): void
     {
@@ -39,21 +77,6 @@ trait MysqlConnectionTrait
         $app = new Application($loader);
 
         Application::setInstance($app);
-    }
-
-    #[Override]
-    public static function tearDownAfterClass(): void
-    {
-        $app = Application::getInstance();
-
-        $app->use(ConnectionManager::class)->use()->disconnect();
-        $app->use(ErrorHandler::class)->unregister();
-    }
-
-    #[Override]
-    protected function setUp(): void
-    {
-        $app = Application::getInstance();
 
         $app->use(Config::class)
             ->set('App.locale', 'en')
@@ -71,6 +94,26 @@ trait MysqlConnectionTrait
                 ],
             ]);
 
+        static::setUpDatabaseBeforeClass();
+    }
+
+    #[Override]
+    public static function tearDownAfterClass(): void
+    {
+        $app = Application::getInstance();
+
+        try {
+            static::tearDownDatabaseAfterClass();
+        } finally {
+            $app->use(ErrorHandler::class)->unregister();
+        }
+    }
+
+    #[Override]
+    protected function setUp(): void
+    {
+        $app = Application::getInstance();
+
         $this->modelRegistry = $app->use(ModelRegistry::class);
         $this->modelRegistry->addNamespace('Tests\Mock\Models');
 
@@ -86,35 +129,9 @@ trait MysqlConnectionTrait
 
         $this->db = $app->use(ConnectionManager::class)->use();
 
-        $this->db->query('DROP TABLE IF EXISTS items');
-        $this->db->query('DROP TABLE IF EXISTS children');
-
-        $this->db->query(<<<'SQL'
-            CREATE TABLE items (
-                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-                name VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-                PRIMARY KEY (id)
-            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        SQL);
-
-        $this->db->query(<<<'SQL'
-            CREATE TABLE children (
-                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-                item_id INT(10) UNSIGNED NULL DEFAULT NULL,
-                PRIMARY KEY (id),
-                CONSTRAINT fk_children_item FOREIGN KEY (item_id) REFERENCES items (id)
-            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        SQL);
+        $this->db->truncate('children');
+        $this->db->truncate('items');
 
         parent::setUp();
-    }
-
-    #[Override]
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-
-        $this->db->query('DROP TABLE IF EXISTS children');
-        $this->db->query('DROP TABLE IF EXISTS items');
     }
 }

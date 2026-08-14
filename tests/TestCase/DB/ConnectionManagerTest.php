@@ -363,28 +363,5 @@ final class ConnectionManagerTest extends TestCase
         ]);
 
         $this->connectionManager = $container->use(ConnectionManager::class);
-
-        $db = $this->connectionManager->use();
-
-        $db->query('DROP TABLE IF EXISTS test');
-
-        $db->query(<<<'SQL'
-            CREATE TABLE test (
-                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-                name VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-                PRIMARY KEY (id)
-            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        SQL);
-    }
-
-    #[Override]
-    protected function tearDown(): void
-    {
-        if (!$this->connectionManager->hasConfig()) {
-            return;
-        }
-
-        $db = $this->connectionManager->use();
-        $db->query('DROP TABLE IF EXISTS test');
     }
 }
