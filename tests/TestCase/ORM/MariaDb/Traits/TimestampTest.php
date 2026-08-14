@@ -3,92 +3,12 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\MariaDb\Traits;
 
-use Fyre\Utility\DateTime\DateTime;
 use PHPUnit\Framework\TestCase;
-use Tests\Mock\Entities\Timestamp;
 use Tests\TestCase\ORM\MariaDb\MariaDbConnectionTrait;
-
-use function sleep;
+use Tests\TestCase\ORM\Shared\Traits\TimestampTestTrait;
 
 final class TimestampTest extends TestCase
 {
     use MariaDbConnectionTrait;
-
-    public function testTimestampsCreate(): void
-    {
-        $Timestamps = $this->modelRegistry->use('Timestamps');
-
-        $timestamp = $Timestamps->newEmptyEntity();
-
-        $this->assertTrue(
-            $Timestamps->save($timestamp)
-        );
-
-        $timestamp = $Timestamps->find()->first();
-
-        $this->assertInstanceOf(
-            Timestamp::class,
-            $timestamp
-        );
-
-        $this->assertInstanceOf(
-            DateTime::class,
-            $timestamp->created
-        );
-
-        $this->assertInstanceOf(
-            DateTime::class,
-            $timestamp->modified
-        );
-    }
-
-    public function testTimestampsUpdate(): void
-    {
-        $Timestamps = $this->modelRegistry->use('Timestamps');
-
-        $timestamp = $Timestamps->newEmptyEntity();
-
-        $this->assertTrue(
-            $Timestamps->save($timestamp)
-        );
-
-        $timestamp = $Timestamps->find()->first();
-
-        $this->assertInstanceOf(
-            Timestamp::class,
-            $timestamp
-        );
-
-        $this->assertInstanceOf(
-            DateTime::class,
-            $timestamp->modified
-        );
-
-        $originalModified = $timestamp->modified->toIsoString();
-
-        $timestamp->setDirty('created', true);
-
-        sleep(1);
-
-        $this->assertTrue(
-            $Timestamps->save($timestamp)
-        );
-
-        $timestamp = $Timestamps->find()->first();
-
-        $this->assertInstanceOf(
-            Timestamp::class,
-            $timestamp
-        );
-
-        $this->assertInstanceOf(
-            DateTime::class,
-            $timestamp->modified
-        );
-
-        $this->assertNotSame(
-            $originalModified,
-            $timestamp->modified->toIsoString()
-        );
-    }
+    use TimestampTestTrait;
 }

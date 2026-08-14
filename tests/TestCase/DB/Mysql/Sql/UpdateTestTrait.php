@@ -106,19 +106,6 @@ trait UpdateTestTrait
         );
     }
 
-    public function testUpdateHint(): void
-    {
-        $this->assertSame(
-            'UPDATE /*+ TEST() */ `test` SET `value` = 1',
-            $this->db->update('test')
-                ->set([
-                    'value' => 1,
-                ])
-                ->hint('TEST()')
-                ->sql()
-        );
-    }
-
     public function testUpdateJoin(): void
     {
         $this->assertSame(

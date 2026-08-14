@@ -125,17 +125,6 @@ trait DeleteTestTrait
         );
     }
 
-    public function testDeleteHint(): void
-    {
-        $this->assertSame(
-            'DELETE /*+ TEST() */ FROM `test`',
-            $this->db->delete()
-                ->from('test')
-                ->hint('TEST()')
-                ->sql()
-        );
-    }
-
     public function testDeleteJoin(): void
     {
         $this->assertSame(

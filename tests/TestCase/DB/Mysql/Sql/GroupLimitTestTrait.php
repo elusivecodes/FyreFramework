@@ -47,26 +47,6 @@ trait GroupLimitTestTrait
             ->groupLimit(1, '');
     }
 
-    public function testGroupLimitHint(): void
-    {
-        $this->assertSame(
-            'SELECT * FROM (SELECT /*+ TEST() */ `Posts`.`id`, `Posts`.`user_id`, ROW_NUMBER() OVER (PARTITION BY `Posts`.`user_id` ORDER BY `Posts`.`id` DESC) AS `__fyre_group_row` FROM `posts` AS `Posts`) AS `__fyre_group` WHERE `__fyre_group_row` <= 2 ORDER BY `__fyre_group_row`',
-            $this->db->select([
-                'Posts.id',
-                'Posts.user_id',
-            ])
-                ->from([
-                    'Posts' => 'posts',
-                ])
-                ->orderBy([
-                    'Posts.id' => 'DESC',
-                ])
-                ->groupLimit(2, 'Posts.user_id')
-                ->hint('TEST()')
-                ->sql()
-        );
-    }
-
     public function testGroupLimitInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);

@@ -9,6 +9,7 @@ use Fyre\DB\Exceptions\DbException;
 use Fyre\DB\Handlers\Mysql\MysqlConnection;
 use Fyre\Event\Event;
 use PHPUnit\Framework\TestCase;
+use Tests\TestCase\DB\Mysql\QuoteIdentifierTestTrait;
 
 use function file_get_contents;
 

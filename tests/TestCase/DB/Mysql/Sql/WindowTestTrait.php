@@ -69,29 +69,6 @@ trait WindowTestTrait
         );
     }
 
-    public function testWindowLagLead(): void
-    {
-        $this->assertSame(
-            'SELECT LAG(`test`.`value`, 1, 0) OVER (PARTITION BY `test`.`group_id` ORDER BY `test`.`id` ASC) AS `previous_value`, LEAD(`test`.`value`, 2) OVER (PARTITION BY `test`.`group_id` ORDER BY `test`.`id` ASC) AS `next_value` FROM `test`',
-            $this->db->select([
-                'previous_value' => static fn(Query $query): WindowExpression => $query->func()
-                    ->lag('test.value', default: 0)
-                    ->partitionBy('test.group_id')
-                    ->orderBy([
-                        'test.id' => 'ASC',
-                    ]),
-                'next_value' => static fn(Query $query): WindowExpression => $query->func()
-                    ->lead('test.value', 2)
-                    ->partitionBy('test.group_id')
-                    ->orderBy([
-                        'test.id' => 'ASC',
-                    ]),
-            ])
-                ->from('test')
-                ->sql()
-        );
-    }
-
     public function testWindowLastValue(): void
     {
         $this->assertSame(

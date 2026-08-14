@@ -5,15 +5,13 @@ namespace Tests\TestCase\DB\Postgres\Query;
 
 use PHPUnit\Framework\TestCase;
 use Tests\TestCase\DB\Postgres\PostgresConnectionTrait;
+use Tests\TestCase\DB\Shared\Query\QueryTestTrait;
 
 final class QueryTest extends TestCase
 {
-    use DeleteTestTrait;
     use ExecuteTestTrait;
-    use GetTestTrait;
     use InsertTestTrait;
     use PostgresConnectionTrait;
-    use TransactionTestTrait;
-    use UpdateTestTrait;
+    use QueryTestTrait;
     use UpsertTestTrait;
 }

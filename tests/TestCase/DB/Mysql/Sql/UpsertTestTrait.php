@@ -79,23 +79,6 @@ trait UpsertTestTrait
         );
     }
 
-    public function testUpsertHint(): void
-    {
-        $this->assertSame(
-            'INSERT /*+ TEST() */ INTO `test` (`id`, `name`) VALUES (1, \'Test\') ON DUPLICATE KEY UPDATE `name` = VALUES(`name`)',
-            $this->db->upsert('id')
-                ->into('test')
-                ->values([
-                    [
-                        'id' => 1,
-                        'name' => 'Test',
-                    ],
-                ])
-                ->hint('TEST()')
-                ->sql()
-        );
-    }
-
     public function testUpsertLiteral(): void
     {
         $this->assertSame(

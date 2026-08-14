@@ -70,17 +70,6 @@ trait InsertFromTestTrait
         );
     }
 
-    public function testInsertFromHint(): void
-    {
-        $this->assertSame(
-            'INSERT /*+ TEST() */ INTO `test` SELECT * FROM test2',
-            $this->db->insertFrom('SELECT * FROM test2')
-                ->into('test')
-                ->hint('TEST()')
-                ->sql()
-        );
-    }
-
     public function testInsertFromLiteral(): void
     {
         $this->assertSame(

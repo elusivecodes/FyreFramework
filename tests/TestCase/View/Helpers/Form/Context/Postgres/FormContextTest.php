@@ -18,7 +18,7 @@ use Fyre\View\CellRegistry;
 use Fyre\View\HelperRegistry;
 use Fyre\View\TemplateLocator;
 use PHPUnit\Framework\TestCase;
-use Tests\TestCase\View\Helpers\Form\Context\Traits\ConnectionTrait;
+use Tests\TestCase\View\Helpers\Form\Context\Shared\ConnectionTrait;
 
 use function getenv;
 

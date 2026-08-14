@@ -5,15 +5,12 @@ namespace Tests\TestCase\DB\Mysql\Query;
 
 use PHPUnit\Framework\TestCase;
 use Tests\TestCase\DB\Mysql\MysqlConnectionTrait;
+use Tests\TestCase\DB\Shared\Query\QueryTestTrait;
 
 final class QueryTest extends TestCase
 {
-    use DeleteTestTrait;
-    use ExecuteTestTrait;
-    use GetTestTrait;
-    use InsertTestTrait;
+    use HintTestTrait;
     use MysqlConnectionTrait;
-    use TransactionTestTrait;
-    use UpdateTestTrait;
-    use UpsertTestTrait;
+    use MysqlQueryTestTrait;
+    use QueryTestTrait;
 }

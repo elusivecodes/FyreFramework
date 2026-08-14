@@ -12,7 +12,7 @@ use Fyre\DB\ConnectionManager;
 use Fyre\DB\Handlers\Sqlite\SqliteConnection;
 use Fyre\DB\Schema\SchemaRegistry;
 use Fyre\DB\TypeParser;
-use Tests\TestCase\DB\Schema\Traits\ConnectionTrait;
+use Tests\TestCase\DB\Schema\Shared\ConnectionTrait;
 
 trait SqliteConnectionTrait
 {

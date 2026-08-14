@@ -1,0 +1,236 @@
+<?php
+declare(strict_types=1);
+
+namespace Tests\TestCase\ORM\Sqlite\Model;
+
+use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Query;
+use Tests\Mock\Entities\Address;
+use Tests\Mock\Entities\Tag;
+use Tests\Mock\Entities\User;
+
+trait MatchingSqlTestTrait
+{
+    public function testMatchingConditionsSql(): void
+    {
+        $this->assertSame(
+            'SELECT "Users"."id" AS "Users__id", "Tags"."id" AS "Tags__id" FROM "users" AS "Users" INNER JOIN "posts" AS "Posts" ON "Posts"."user_id" = "Users"."id" INNER JOIN "posts_tags" AS "PostsTags" ON "PostsTags"."post_id" = "Posts"."id" INNER JOIN "tags" AS "Tags" ON "Tags"."id" = "PostsTags"."tag_id" AND "Tags"."tag" = \'test\'',
+            $this->modelRegistry->use('Users')
+                ->find()
+                ->matching(
+                    'Posts.Tags',
+                    static fn(Query $query): ConditionExpression => $query->expr()
+                        ->eq('Tags.tag', 'test')
+                )
+                ->disableAutoFields()
+                ->sql()
+        );
+    }
+
+    public function testMatchingData(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+
+        $user = $Users->newEntity([
+            'name' => 'Test',
+            'posts' => [
+                [
+                    'title' => 'Test 1',
+                    'content' => 'This is the content.',
+                    'tags' => [
+                        [
+                            'tag' => 'test1',
+                        ],
+                        [
+                            'tag' => 'test2',
+                        ],
+                    ],
+                ],
+                [
+                    'title' => 'Test 2',
+                    'content' => 'This is the content.',
+                    'tags' => [
+                        [
+                            'tag' => 'test3',
+                        ],
+                        [
+                            'tag' => 'test4',
+                        ],
+                    ],
+                ],
+            ],
+        ], associated: [
+            'Posts.Tags',
+        ]);
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+
+        $user = $Users
+            ->find()
+            ->matching('Posts.Tags', [
+                'Tags.tag' => 'test4',
+            ])
+            ->first();
+
+        $this->assertInstanceOf(
+            User::class,
+            $user
+        );
+
+        $this->assertInstanceOf(
+            Tag::class,
+            $user->_matchingData['Tags']
+        );
+
+        $this->assertSame(
+            'test4',
+            $user->_matchingData['Tags']->tag
+        );
+    }
+
+    public function testMatchingDataMultiple(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+
+        $user = $Users->newEntity([
+            'name' => 'Test',
+            'posts' => [
+                [
+                    'title' => 'Test 1',
+                    'content' => 'This is the content.',
+                    'tags' => [
+                        [
+                            'tag' => 'test1',
+                        ],
+                        [
+                            'tag' => 'test2',
+                        ],
+                    ],
+                ],
+                [
+                    'title' => 'Test 2',
+                    'content' => 'This is the content.',
+                    'tags' => [
+                        [
+                            'tag' => 'test3',
+                        ],
+                        [
+                            'tag' => 'test4',
+                        ],
+                    ],
+                ],
+            ],
+            'address' => [
+                'suburb' => 'Test',
+            ],
+        ], associated: [
+            'Posts.Tags',
+            'Addresses',
+        ]);
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+
+        $user = $Users
+            ->find()
+            ->matching('Addresses')
+            ->matching('Posts.Tags', [
+                'Tags.tag' => 'test4',
+            ])
+            ->first();
+
+        $this->assertInstanceOf(
+            User::class,
+            $user
+        );
+
+        $this->assertInstanceOf(
+            Address::class,
+            $user->_matchingData['Addresses']
+        );
+
+        $this->assertSame(
+            'Test',
+            $user->_matchingData['Addresses']->suburb
+        );
+
+        $this->assertInstanceOf(
+            Tag::class,
+            $user->_matchingData['Tags']
+        );
+
+        $this->assertSame(
+            'test4',
+            $user->_matchingData['Tags']->tag
+        );
+    }
+
+    public function testMatchingMerge(): void
+    {
+        $this->assertSame(
+            'SELECT "Users"."id" AS "Users__id", "Addresses"."id" AS "Addresses__id", "Tags"."id" AS "Tags__id" FROM "users" AS "Users" INNER JOIN "addresses" AS "Addresses" ON "Addresses"."user_id" = "Users"."id" INNER JOIN "posts" AS "Posts" ON "Posts"."user_id" = "Users"."id" INNER JOIN "posts_tags" AS "PostsTags" ON "PostsTags"."post_id" = "Posts"."id" INNER JOIN "tags" AS "Tags" ON "Tags"."id" = "PostsTags"."tag_id"',
+            $this->modelRegistry->use('Users')
+                ->find()
+                ->matching('Addresses')
+                ->matching('Posts.Tags')
+                ->disableAutoFields()
+                ->sql()
+        );
+    }
+
+    public function testMatchingSql(): void
+    {
+        $this->assertSame(
+            'SELECT "Users"."id" AS "Users__id", "Tags"."id" AS "Tags__id" FROM "users" AS "Users" INNER JOIN "posts" AS "Posts" ON "Posts"."user_id" = "Users"."id" INNER JOIN "posts_tags" AS "PostsTags" ON "PostsTags"."post_id" = "Posts"."id" INNER JOIN "tags" AS "Tags" ON "Tags"."id" = "PostsTags"."tag_id"',
+            $this->modelRegistry->use('Users')
+                ->find()
+                ->matching('Posts.Tags')
+                ->disableAutoFields()
+                ->sql()
+        );
+    }
+
+    public function testNotMatchingConditionsSql(): void
+    {
+        $this->assertSame(
+            'SELECT "Users"."id" AS "Users__id" FROM "users" AS "Users" WHERE NOT EXISTS (SELECT * FROM "posts" AS "Posts" INNER JOIN "posts_tags" AS "PostsTags" ON "PostsTags"."post_id" = "Posts"."id" INNER JOIN "tags" AS "Tags" ON "Tags"."id" = "PostsTags"."tag_id" AND "Tags"."tag" = \'test\' WHERE "Posts"."user_id" = "Users"."id")',
+            $this->modelRegistry->use('Users')
+                ->find()
+                ->notMatching(
+                    'Posts.Tags',
+                    static fn(Query $query): ConditionExpression => $query->expr()
+                        ->eq('Tags.tag', 'test')
+                )
+                ->disableAutoFields()
+                ->sql()
+        );
+    }
+
+    public function testNotMatchingMerge(): void
+    {
+        $this->assertSame(
+            'SELECT "Users"."id" AS "Users__id" FROM "users" AS "Users" WHERE NOT EXISTS (SELECT * FROM "addresses" AS "Addresses" WHERE "Addresses"."user_id" = "Users"."id") AND NOT EXISTS (SELECT * FROM "posts" AS "Posts" INNER JOIN "posts_tags" AS "PostsTags" ON "PostsTags"."post_id" = "Posts"."id" INNER JOIN "tags" AS "Tags" ON "Tags"."id" = "PostsTags"."tag_id" WHERE "Posts"."user_id" = "Users"."id")',
+            $this->modelRegistry->use('Users')
+                ->find()
+                ->notMatching('Addresses')
+                ->notMatching('Posts.Tags')
+                ->disableAutoFields()
+                ->sql()
+        );
+    }
+
+    public function testNotMatchingSql(): void
+    {
+        $this->assertSame(
+            'SELECT "Users"."id" AS "Users__id" FROM "users" AS "Users" WHERE NOT EXISTS (SELECT * FROM "posts" AS "Posts" INNER JOIN "posts_tags" AS "PostsTags" ON "PostsTags"."post_id" = "Posts"."id" INNER JOIN "tags" AS "Tags" ON "Tags"."id" = "PostsTags"."tag_id" WHERE "Posts"."user_id" = "Users"."id")',
+            $this->modelRegistry->use('Users')
+                ->find()
+                ->notMatching('Posts.Tags')
+                ->disableAutoFields()
+                ->sql()
+        );
+    }
+}

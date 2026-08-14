@@ -3,62 +3,10 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Sqlite\Query;
 
-use Fyre\DB\Exceptions\DbException;
 use InvalidArgumentException;
 
 trait DeleteTestTrait
 {
-    public function testDelete(): void
-    {
-        $this->db->insert()
-            ->into('test')
-            ->values([
-                [
-                    'name' => 'Test',
-                ],
-            ])
-            ->execute();
-
-        $this->db->delete()
-            ->from('test')
-            ->where([
-                'id' => 1,
-            ])
-            ->execute();
-
-        $this->assertSame(
-            [],
-            $this->db->select()
-                ->from('test')
-                ->execute()
-                ->all()
-        );
-    }
-
-    public function testDeleteAffectedRows(): void
-    {
-        $this->db->insert()
-            ->into('test')
-            ->values([
-                [
-                    'name' => 'Test 1',
-                ],
-                [
-                    'name' => 'Test 2',
-                ],
-            ])
-            ->execute();
-
-        $this->db->delete()
-            ->from('test')
-            ->execute();
-
-        $this->assertSame(
-            2,
-            $this->db->affectedRows()
-        );
-    }
-
     public function testDeleteInvalidLimit(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -66,17 +14,5 @@ trait DeleteTestTrait
 
         $this->db->delete()
             ->limit(-1);
-    }
-
-    public function testDeleteVirtualTables(): void
-    {
-        $this->expectException(DbException::class);
-        $this->expectExceptionMessage('Virtual tables are not supported for this query.');
-
-        $this->db->delete()
-            ->from([
-                'alt' => $this->db->select()
-                    ->from('test'),
-            ]);
     }
 }

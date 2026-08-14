@@ -11,7 +11,7 @@ use Fyre\DB\TypeParser;
 use Fyre\Event\EventManager;
 use Fyre\Log\Handlers\FileLogger;
 use Fyre\Log\LogManager;
-use Tests\TestCase\DB\Traits\ConnectionTrait;
+use Tests\TestCase\DB\Shared\ConnectionTrait;
 
 trait SqliteConnectionTrait
 {

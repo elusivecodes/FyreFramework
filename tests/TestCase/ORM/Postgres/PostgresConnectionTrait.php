@@ -16,7 +16,7 @@ use Fyre\ORM\EntityLocator;
 use Fyre\ORM\ModelRegistry;
 use Fyre\Utility\Inflector;
 use Fyre\Utility\Path;
-use Tests\TestCase\ORM\Traits\ConnectionTrait;
+use Tests\TestCase\ORM\Shared\ConnectionTrait;
 
 use function getenv;
 
