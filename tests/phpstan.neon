@@ -20,6 +20,7 @@ services:
             modelNamespacesOverrides:
                 -
                     classes:
+                        - Tests\Mock\PhpStan\ModelRegistryOverride
                         - Tests\TestCase\Auth\AccessTest
                         - Tests\TestCase\Auth\AuthMiddlewareTest
                         - Tests\TestCase\Auth\AuthTest

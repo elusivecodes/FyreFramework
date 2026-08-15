@@ -9,7 +9,9 @@ use Fyre\Utility\Promise\AsyncPromise;
 use Fyre\Utility\Promise\Exceptions\CancelledPromiseException;
 use Fyre\Utility\Promise\Promise;
 use Fyre\Utility\Promise\PromiseInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Throwable;
 
 use function socket_close;
@@ -17,12 +19,69 @@ use function socket_create_pair;
 use function socket_read;
 use function socket_write;
 use function time;
+use function unserialize;
 
 use const AF_UNIX;
 use const SOCK_STREAM;
 
 final class AsyncPromiseTest extends TestCase
 {
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    public static function childCallbackProvider(): array
+    {
+        return [
+            'resolve' => [
+                'callback' => static function(Closure $resolve): void {
+                    $resolve('test');
+                },
+                'expected' => [
+                    'reason' => null,
+                    'value' => 'test',
+                ],
+            ],
+            'reject' => [
+                'callback' => static function(Closure $resolve, Closure $reject): void {
+                    $reject(new Exception('test'));
+                },
+                'expected' => [
+                    'reason' => [Exception::class, 'test'],
+                    'value' => null,
+                ],
+            ],
+            'reject without reason' => [
+                'callback' => static function(Closure $resolve, Closure $reject): void {
+                    $reject();
+                },
+                'expected' => [
+                    'reason' => [RuntimeException::class, ''],
+                    'value' => null,
+                ],
+            ],
+            'throw' => [
+                'callback' => static function(): void {
+                    throw new Exception('test');
+                },
+                'expected' => [
+                    'reason' => [Exception::class, 'test'],
+                    'value' => null,
+                ],
+            ],
+            'settle once' => [
+                'callback' => static function(Closure $resolve, Closure $reject): void {
+                    $resolve(1);
+                    $resolve(2);
+                    $reject(new Exception());
+                },
+                'expected' => [
+                    'reason' => null,
+                    'value' => 1,
+                ],
+            ],
+        ];
+    }
+
     public function testAllPreservesOrder(): void
     {
         $sockets = [];
@@ -433,6 +492,55 @@ final class AsyncPromiseTest extends TestCase
         });
 
         $promise->wait();
+    }
+
+    /**
+     * @param array<string, mixed> $expected The expected result.
+     */
+    #[DataProvider('childCallbackProvider')]
+    public function testChildCallback(Closure $callback, array $expected): void
+    {
+        $sockets = [];
+
+        $result = socket_create_pair(
+            AF_UNIX,
+            SOCK_STREAM,
+            0,
+            $sockets
+        );
+
+        $this->assertTrue($result);
+
+        [$reader, $writer] = $sockets;
+
+        Closure::bind(static function() use ($callback, $writer): void {
+            AsyncPromise::runChild($callback, $writer);
+        }, null, AsyncPromise::class)();
+
+        $data = '';
+        do {
+            $chunk = socket_read($reader, 4096);
+
+            $this->assertIsString($chunk);
+
+            $data .= $chunk;
+        } while ($chunk !== '');
+
+        socket_close($reader);
+
+        [$reason, $value] = unserialize($data);
+
+        $actual = [
+            'reason' => $reason instanceof Throwable ?
+                [$reason::class, $reason->getMessage()] :
+                null,
+            'value' => $value,
+        ];
+
+        $this->assertSame(
+            $expected,
+            $actual
+        );
     }
 
     public function testMultipleThen(): void

@@ -138,53 +138,8 @@ class AsyncPromise extends Promise
             // child
             socket_close($childSocket);
 
-            $reflection = new ReflectionFunction($callback);
-            $paramCount = $reflection->getNumberOfParameters();
-
-            $settle = static function(Throwable|null $reason, mixed $value = null) use ($parentSocket): void {
-                $data = serialize([$reason, $value]);
-
-                $length = strlen($data);
-                $offset = 0;
-                while ($offset < $length) {
-                    $written = socket_write($parentSocket, substr($data, $offset));
-                    if ($written === false) {
-                        break;
-                    }
-                    $offset += $written;
-                }
-
-                socket_close($parentSocket);
-            };
-
             try {
-                if ($paramCount === 0) {
-                    $callback();
-                } else {
-                    $callback(
-                        static function(mixed $value = null) use (&$settle): void {
-                            if (!$settle) {
-                                return;
-                            }
-
-                            $settle(null, $value);
-                            $settle = null;
-                        },
-                        static function(Throwable|null $reason = null) use (&$settle): void {
-                            if (!$settle) {
-                                return;
-                            }
-
-                            $settle($reason ?? new RuntimeException());
-                            $settle = null;
-                        }
-                    );
-                }
-            } catch (Throwable $e) {
-                if ($settle !== null) {
-                    $settle($e);
-                    $settle = null;
-                }
+                static::runChild($callback, $parentSocket);
             } finally {
                 exit;
             }
@@ -261,5 +216,62 @@ class AsyncPromise extends Promise
         $this->settle($result);
 
         return true;
+    }
+
+    /**
+     * Executes the Promise callback in the child process.
+     *
+     * @param Closure $callback The callback.
+     * @param Socket $socket The socket.
+     */
+    protected static function runChild(Closure $callback, Socket $socket): void
+    {
+        $reflection = new ReflectionFunction($callback);
+        $paramCount = $reflection->getNumberOfParameters();
+
+        $settle = static function(Throwable|null $reason, mixed $value = null) use ($socket): void {
+            $data = serialize([$reason, $value]);
+
+            $length = strlen($data);
+            $offset = 0;
+            while ($offset < $length) {
+                $written = socket_write($socket, substr($data, $offset));
+                if ($written === false) {
+                    break;
+                }
+                $offset += $written;
+            }
+
+            socket_close($socket);
+        };
+
+        try {
+            if ($paramCount === 0) {
+                $callback();
+            } else {
+                $callback(
+                    static function(mixed $value = null) use (&$settle): void {
+                        if (!$settle) {
+                            return;
+                        }
+
+                        $settle(null, $value);
+                        $settle = null;
+                    },
+                    static function(Throwable|null $reason = null) use (&$settle): void {
+                        if (!$settle) {
+                            return;
+                        }
+
+                        $settle($reason ?? new RuntimeException());
+                        $settle = null;
+                    }
+                );
+            }
+        } catch (Throwable $e) {
+            if ($settle !== null) {
+                $settle($e);
+            }
+        }
     }
 }
