@@ -4,9 +4,55 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\FormBuilder;
 
 use BadMethodCallException;
+use PHPUnit\Framework\Attributes\DataProvider;
 
+/**
+ * @phpstan-type InputMethod 'checkbox'|'color'|'date'|'datetime'|'email'|'file'|'hidden'|'image'|'month'|'number'|'password'|'radio'|'range'|'reset'|'search'|'submit'|'tel'|'text'|'time'|'url'|'week'
+ */
 trait InputTypeTestTrait
 {
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function inputTypeProvider(): array
+    {
+        return [
+            'checkbox' => ['checkbox', 'checkbox'],
+            'color' => ['color', 'color'],
+            'date' => ['date', 'date'],
+            'date time local' => ['datetime', 'datetime-local'],
+            'email' => ['email', 'email'],
+            'file' => ['file', 'file'],
+            'hidden' => ['hidden', 'hidden'],
+            'image' => ['image', 'image'],
+            'month' => ['month', 'month'],
+            'number' => ['number', 'number'],
+            'password' => ['password', 'password'],
+            'radio' => ['radio', 'radio'],
+            'range' => ['range', 'range'],
+            'reset' => ['reset', 'reset'],
+            'search' => ['search', 'search'],
+            'submit' => ['submit', 'submit'],
+            'telephone' => ['tel', 'tel'],
+            'text' => ['text', 'text'],
+            'time' => ['time', 'time'],
+            'url' => ['url', 'url'],
+            'week' => ['week', 'week'],
+        ];
+    }
+
+    /**
+     * @param InputMethod $method
+     */
+    #[DataProvider('inputTypeProvider')]
+    public function testInputType(string $method, string $type): void
+    {
+        $this->assertSame(
+            '<input type="'.$type.'" />',
+            $this->form->$method()
+        );
+    }
+
     public function testInputTypeAttributes(): void
     {
         $this->assertSame(
@@ -18,70 +64,6 @@ trait InputTypeTestTrait
         );
     }
 
-    public function testInputTypeCheckbox(): void
-    {
-        $this->assertSame(
-            '<input type="checkbox" />',
-            $this->form->checkbox()
-        );
-    }
-
-    public function testInputTypeColor(): void
-    {
-        $this->assertSame(
-            '<input type="color" />',
-            $this->form->color()
-        );
-    }
-
-    public function testInputTypeDate(): void
-    {
-        $this->assertSame(
-            '<input type="date" />',
-            $this->form->date()
-        );
-    }
-
-    public function testInputTypeDateTimeLocal(): void
-    {
-        $this->assertSame(
-            '<input type="datetime-local" />',
-            $this->form->datetime()
-        );
-    }
-
-    public function testInputTypeEmail(): void
-    {
-        $this->assertSame(
-            '<input type="email" />',
-            $this->form->email()
-        );
-    }
-
-    public function testInputTypeFile(): void
-    {
-        $this->assertSame(
-            '<input type="file" />',
-            $this->form->file()
-        );
-    }
-
-    public function testInputTypeHidden(): void
-    {
-        $this->assertSame(
-            '<input type="hidden" />',
-            $this->form->hidden()
-        );
-    }
-
-    public function testInputTypeImage(): void
-    {
-        $this->assertSame(
-            '<input type="image" />',
-            $this->form->image()
-        );
-    }
-
     public function testInputTypeInvalid(): void
     {
         $this->expectException(BadMethodCallException::class);
@@ -90,115 +72,11 @@ trait InputTypeTestTrait
         $this->form->__call('invalid', []);
     }
 
-    public function testInputTypeMonth(): void
-    {
-        $this->assertSame(
-            '<input type="month" />',
-            $this->form->month()
-        );
-    }
-
     public function testInputTypeName(): void
     {
         $this->assertSame(
             '<input name="number" type="number" />',
             $this->form->number('number')
-        );
-    }
-
-    public function testInputTypeNumber(): void
-    {
-        $this->assertSame(
-            '<input type="number" />',
-            $this->form->number()
-        );
-    }
-
-    public function testInputTypePassword(): void
-    {
-        $this->assertSame(
-            '<input type="password" />',
-            $this->form->password()
-        );
-    }
-
-    public function testInputTypeRadio(): void
-    {
-        $this->assertSame(
-            '<input type="radio" />',
-            $this->form->radio()
-        );
-    }
-
-    public function testInputTypeRange(): void
-    {
-        $this->assertSame(
-            '<input type="range" />',
-            $this->form->range()
-        );
-    }
-
-    public function testInputTypeReset(): void
-    {
-        $this->assertSame(
-            '<input type="reset" />',
-            $this->form->reset()
-        );
-    }
-
-    public function testInputTypeSearch(): void
-    {
-        $this->assertSame(
-            '<input type="search" />',
-            $this->form->search()
-        );
-    }
-
-    public function testInputTypeSubmit(): void
-    {
-        $this->assertSame(
-            '<input type="submit" />',
-            $this->form->submit()
-        );
-    }
-
-    public function testInputTypeTel(): void
-    {
-        $this->assertSame(
-            '<input type="tel" />',
-            $this->form->tel()
-        );
-    }
-
-    public function testInputTypeText(): void
-    {
-        $this->assertSame(
-            '<input type="text" />',
-            $this->form->text()
-        );
-    }
-
-    public function testInputTypeTime(): void
-    {
-        $this->assertSame(
-            '<input type="time" />',
-            $this->form->time()
-        );
-    }
-
-    public function testInputTypeUrl(): void
-    {
-        $this->assertSame(
-            '<input type="url" />',
-            $this->form->url()
-        );
-    }
-
-    public function testInputTypeWeek(): void
-    {
-        $this->assertSame(
-            '<input type="week" />',
-            $this->form->week()
         );
     }
 }

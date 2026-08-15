@@ -4,1147 +4,285 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\DateTime\DateTime;
 
 use Fyre\Utility\DateTime\DateTime;
+use PHPUnit\Framework\Attributes\DataProvider;
 
+/**
+ * @phpstan-type IsAfterMethod 'isAfter'|'isAfterDay'|'isAfterHour'|'isAfterMinute'|'isAfterMonth'|'isAfterSecond'|'isAfterYear'
+ * @phpstan-type IsBeforeMethod 'isBefore'|'isBeforeDay'|'isBeforeHour'|'isBeforeMinute'|'isBeforeMonth'|'isBeforeSecond'|'isBeforeYear'
+ * @phpstan-type IsBetweenMethod 'isBetween'|'isBetweenDay'|'isBetweenHour'|'isBetweenMinute'|'isBetweenMonth'|'isBetweenSecond'|'isBetweenYear'
+ * @phpstan-type IsSameMethod 'isSame'|'isSameDay'|'isSameHour'|'isSameMinute'|'isSameMonth'|'isSameSecond'|'isSameYear'
+ * @phpstan-type IsSameOrAfterMethod 'isSameOrAfter'|'isSameOrAfterDay'|'isSameOrAfterHour'|'isSameOrAfterMinute'|'isSameOrAfterMonth'|'isSameOrAfterSecond'|'isSameOrAfterYear'
+ * @phpstan-type IsSameOrBeforeMethod 'isSameOrBefore'|'isSameOrBeforeDay'|'isSameOrBeforeHour'|'isSameOrBeforeMinute'|'isSameOrBeforeMonth'|'isSameOrBeforeSecond'|'isSameOrBeforeYear'
+ */
 trait ComparisonsTestTrait
 {
-    public function testIsAfterAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 2, 2]);
-
-        $this->assertFalse(
-            $date1->isAfter($date2)
-        );
-    }
-
-    public function testIsAfterBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isAfter($date2)
-        );
-    }
-
-    public function testIsAfterDayAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 2, 2]);
-
-        $this->assertFalse(
-            $date1->isAfterDay($date2)
-        );
-    }
-
-    public function testIsAfterDayBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isAfterDay($date2)
-        );
-    }
-
-    public function testIsAfterHourAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 2, 2]);
-
-        $this->assertFalse(
-            $date1->isAfterHour($date2)
-        );
-    }
-
-    public function testIsAfterHourBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isAfterHour($date2)
-        );
-    }
-
-    public function testIsAfterMinuteAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 2, 2]);
-
-        $this->assertFalse(
-            $date1->isAfterMinute($date2)
-        );
-    }
-
-    public function testIsAfterMinuteBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isAfterMinute($date2)
-        );
-    }
-
-    public function testIsAfterMonthAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 2, 2]);
-
-        $this->assertFalse(
-            $date1->isAfterMonth($date2)
-        );
-    }
-
-    public function testIsAfterMonthBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isAfterMonth($date2)
-        );
-    }
-
-    public function testIsAfterSecondAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2, 2]);
-
-        $this->assertFalse(
-            $date1->isAfterSecond($date2)
-        );
-    }
-
-    public function testIsAfterSecondBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isAfterSecond($date2)
-        );
-    }
-
-    public function testIsAfterYearAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1]);
-        $date2 = DateTime::createFromArray([2019, 2]);
-
-        $this->assertFalse(
-            $date1->isAfterYear($date2)
-        );
-    }
-
-    public function testIsAfterYearBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2019, 2]);
-        $date2 = DateTime::createFromArray([2018, 1]);
-
-        $this->assertTrue(
-            $date1->isAfterYear($date2)
-        );
-    }
-
-    public function testIsBeforeAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 2, 2]);
-
-        $this->assertTrue(
-            $date1->isBefore($date2)
-        );
-    }
-
-    public function testIsBeforeBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertFalse(
-            $date1->isBefore($date2)
-        );
-    }
-
-    public function testIsBeforeDayAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 2, 2]);
-
-        $this->assertTrue(
-            $date1->isBeforeDay($date2)
-        );
-    }
-
-    public function testIsBeforeDayBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1]);
-
-        $this->assertFalse(
-            $date1->isBeforeDay($date2)
-        );
-    }
-
-    public function testIsBeforeHourAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 2, 2]);
-
-        $this->assertTrue(
-            $date1->isBeforeHour($date2)
-        );
-    }
-
-    public function testIsBeforeHourBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1]);
-
-        $this->assertFalse(
-            $date1->isBeforeHour($date2)
-        );
-    }
-
-    public function testIsBeforeMinuteAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 2, 2]);
-
-        $this->assertTrue(
-            $date1->isBeforeMinute($date2)
-        );
-    }
-
-    public function testIsBeforeMinuteBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertFalse(
-            $date1->isBeforeMinute($date2)
-        );
-    }
-
-    public function testIsBeforeMonthAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 2, 2]);
-
-        $this->assertTrue(
-            $date1->isBeforeMonth($date2)
-        );
-    }
-
-    public function testIsBeforeMonthBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1]);
-
-        $this->assertFalse(
-            $date1->isBeforeMonth($date2)
-        );
-    }
-
-    public function testIsBeforeSecondAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2, 2]);
-
-        $this->assertTrue(
-            $date1->isBeforeSecond($date2)
-        );
-    }
-
-    public function testIsBeforeSecondBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1, 1]);
-
-        $this->assertFalse(
-            $date1->isBeforeSecond($date2)
-        );
-    }
-
-    public function testIsBeforeYearAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1]);
-        $date2 = DateTime::createFromArray([2019, 2]);
-
-        $this->assertTrue(
-            $date1->isBeforeYear($date2)
-        );
-    }
-
-    public function testIsBeforeYearBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2019, 2]);
-        $date2 = DateTime::createFromArray([2018, 1]);
-
-        $this->assertFalse(
-            $date1->isBeforeYear($date2)
-        );
-    }
-
-    public function testIsBetweenAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1, 2]);
-        $date3 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1, 4]);
-
-        $this->assertFalse(
-            $date1->isBetween($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1, 5]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1, 2]);
-        $date3 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1, 4]);
-
-        $this->assertFalse(
-            $date1->isBetween($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenBetween(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1, 3]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1, 2]);
-        $date3 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1, 4]);
-
-        $this->assertTrue(
-            $date1->isBetween($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenDayAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 2]);
-        $date3 = DateTime::createFromArray([2018, 1, 4]);
-
-        $this->assertFalse(
-            $date1->isBetweenDay($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenDayBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 5]);
-        $date2 = DateTime::createFromArray([2018, 1, 2]);
-        $date3 = DateTime::createFromArray([2018, 1, 4]);
-
-        $this->assertFalse(
-            $date1->isBetweenDay($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenDayBetween(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 3]);
-        $date2 = DateTime::createFromArray([2018, 1, 2]);
-        $date3 = DateTime::createFromArray([2018, 1, 4]);
-
-        $this->assertTrue(
-            $date1->isBetweenDay($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenHourAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 2]);
-        $date3 = DateTime::createFromArray([2018, 1, 1, 4]);
-
-        $this->assertFalse(
-            $date1->isBetweenHour($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenHourBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 5]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 2]);
-        $date3 = DateTime::createFromArray([2018, 1, 1, 4]);
-
-        $this->assertFalse(
-            $date1->isBetweenHour($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenHourBetween(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 3]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 2]);
-        $date3 = DateTime::createFromArray([2018, 1, 1, 4]);
-
-        $this->assertTrue(
-            $date1->isBetweenHour($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenMinuteAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 2]);
-        $date3 = DateTime::createFromArray([2018, 1, 1, 1, 4]);
-
-        $this->assertFalse(
-            $date1->isBetweenMinute($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenMinuteBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 5]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 2]);
-        $date3 = DateTime::createFromArray([2018, 1, 1, 1, 4]);
-
-        $this->assertFalse(
-            $date1->isBetweenMinute($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenMinuteBetween(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 3]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 2]);
-        $date3 = DateTime::createFromArray([2018, 1, 1, 1, 4]);
-
-        $this->assertTrue(
-            $date1->isBetweenMinute($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenMonthAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1]);
-        $date2 = DateTime::createFromArray([2018, 2]);
-        $date3 = DateTime::createFromArray([2018, 4]);
-
-        $this->assertFalse(
-            $date1->isBetweenMonth($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenMonthBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 5]);
-        $date2 = DateTime::createFromArray([2018, 2]);
-        $date3 = DateTime::createFromArray([2018, 4]);
-
-        $this->assertFalse(
-            $date1->isBetweenMonth($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenMonthBetween(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 3]);
-        $date2 = DateTime::createFromArray([2018, 2]);
-        $date3 = DateTime::createFromArray([2018, 4]);
-
-        $this->assertTrue(
-            $date1->isBetweenMonth($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenSecondAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-        $date3 = DateTime::createFromArray([2018, 1, 1, 1, 1, 4]);
-
-        $this->assertFalse(
-            $date1->isBetweenSecond($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenSecondBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 5]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-        $date3 = DateTime::createFromArray([2018, 1, 1, 1, 1, 4]);
-
-        $this->assertFalse(
-            $date1->isBetweenSecond($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenSecondBetween(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 3]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-        $date3 = DateTime::createFromArray([2018, 1, 1, 1, 1, 4]);
-
-        $this->assertTrue(
-            $date1->isBetweenSecond($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenYearAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2017]);
-        $date2 = DateTime::createFromArray([2018]);
-        $date3 = DateTime::createFromArray([2020]);
-
-        $this->assertFalse(
-            $date1->isBetweenYear($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenYearBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2021]);
-        $date2 = DateTime::createFromArray([2018]);
-        $date3 = DateTime::createFromArray([2020]);
-
-        $this->assertFalse(
-            $date1->isBetweenYear($date2, $date3)
-        );
-    }
-
-    public function testIsBetweenYearBetween(): void
-    {
-        $date1 = DateTime::createFromArray([2019]);
-        $date2 = DateTime::createFromArray([2018]);
-        $date3 = DateTime::createFromArray([2020]);
-
-        $this->assertTrue(
-            $date1->isBetweenYear($date2, $date3)
-        );
-    }
-
-    public function testIsSameAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-
-        $this->assertFalse(
-            $date1->isSame($date2)
-        );
-    }
-
-    public function testIsSameBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertFalse(
-            $date1->isSame($date2)
-        );
-    }
-
-    public function testIsSameDayAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 2, 1]);
-
-        $this->assertFalse(
-            $date1->isSameDay($date2)
-        );
-    }
-
-    public function testIsSameDayBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1]);
-
-        $this->assertFalse(
-            $date1->isSameDay($date2)
-        );
-    }
-
-    public function testIsSameDaySame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameDay($date2)
-        );
-    }
-
-    public function testIsSameHourAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 2, 1]);
-
-        $this->assertFalse(
-            $date1->isSameHour($date2)
-        );
-    }
-
-    public function testIsSameHourBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1]);
-
-        $this->assertFalse(
-            $date1->isSameHour($date2)
-        );
-    }
-
-    public function testIsSameHourSame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameHour($date2)
-        );
-    }
-
-    public function testIsSameMinuteAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 2, 1]);
-
-        $this->assertFalse(
-            $date1->isSameMinute($date2)
-        );
-    }
-
-    public function testIsSameMinuteBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertFalse(
-            $date1->isSameMinute($date2)
-        );
-    }
-
-    public function testIsSameMinuteSame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameMinute($date2)
-        );
-    }
-
-    public function testIsSameMonthAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 2, 1]);
-
-        $this->assertFalse(
-            $date1->isSameMonth($date2)
-        );
-    }
-
-    public function testIsSameMonthBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1]);
-
-        $this->assertFalse(
-            $date1->isSameMonth($date2)
-        );
-    }
-
-    public function testIsSameMonthSame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameMonth($date2)
-        );
-    }
-
-    public function testIsSameOrAfterAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-
-        $this->assertFalse(
-            $date1->isSameOrAfter($date2)
-        );
-    }
-
-    public function testIsSameOrAfterBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrAfter($date2)
-        );
-    }
-
-    public function testIsSameOrAfterDayAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 2, 1]);
-
-        $this->assertFalse(
-            $date1->isSameOrAfterDay($date2)
-        );
-    }
-
-    public function testIsSameOrAfterDayBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrAfterDay($date2)
-        );
-    }
-
-    public function testIsSameOrAfterDaySame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrAfterDay($date2)
-        );
-    }
-
-    public function testIsSameOrAfterHourAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 2, 1]);
-
-        $this->assertFalse(
-            $date1->isSameOrAfterHour($date2)
-        );
-    }
-
-    public function testIsSameOrAfterHourBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrAfterHour($date2)
-        );
-    }
-
-    public function testIsSameOrAfterHourSame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrAfterHour($date2)
-        );
-    }
-
-    public function testIsSameOrAfterMinuteAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 2, 1]);
-
-        $this->assertFalse(
-            $date1->isSameOrAfterMinute($date2)
-        );
-    }
-
-    public function testIsSameOrAfterMinuteBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrAfterMinute($date2)
-        );
-    }
-
-    public function testIsSameOrAfterMinuteSame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrAfterMinute($date2)
-        );
-    }
-
-    public function testIsSameOrAfterMonthAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 2, 1]);
-
-        $this->assertFalse(
-            $date1->isSameOrAfterMonth($date2)
-        );
-    }
-
-    public function testIsSameOrAfterMonthBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrAfterMonth($date2)
-        );
-    }
-
-    public function testIsSameOrAfterMonthSame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrAfterMonth($date2)
-        );
-    }
-
-    public function testIsSameOrAfterSame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrAfter($date2)
-        );
-    }
-
-    public function testIsSameOrAfterSecondAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-
-        $this->assertFalse(
-            $date1->isSameOrAfterSecond($date2)
-        );
-    }
-
-    public function testIsSameOrAfterSecondBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrAfterSecond($date2)
-        );
-    }
-
-    public function testIsSameOrAfterSecondSame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrAfterSecond($date2)
-        );
-    }
-
-    public function testIsSameOrAfterYearAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 2]);
-        $date2 = DateTime::createFromArray([2019, 1]);
-
-        $this->assertFalse(
-            $date1->isSameOrAfterYear($date2)
-        );
-    }
-
-    public function testIsSameOrAfterYearBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 2]);
-        $date2 = DateTime::createFromArray([2017, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrAfterYear($date2)
-        );
-    }
-
-    public function testIsSameOrAfterYearSame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 2]);
-        $date2 = DateTime::createFromArray([2018, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrAfterYear($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-
-        $this->assertTrue(
-            $date1->isSameOrBefore($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertFalse(
-            $date1->isSameOrBefore($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeDayAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 2, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrBeforeDay($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeDayBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1]);
-
-        $this->assertFalse(
-            $date1->isSameOrBeforeDay($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeDaySame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrBeforeDay($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeHourAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 2, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrBeforeHour($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeHourBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1]);
-
-        $this->assertFalse(
-            $date1->isSameOrBeforeHour($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeHourSame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrBeforeHour($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeMinuteAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 2, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrBeforeMinute($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeMinuteBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertFalse(
-            $date1->isSameOrBeforeMinute($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeMinuteSame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrBeforeMinute($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeMonthAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 2, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrBeforeMonth($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeMonthBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 2, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1]);
-
-        $this->assertFalse(
-            $date1->isSameOrBeforeMonth($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeMonthSame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrBeforeMonth($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeSame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrBefore($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeSecondAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-
-        $this->assertTrue(
-            $date1->isSameOrBeforeSecond($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeSecondBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertFalse(
-            $date1->isSameOrBeforeSecond($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeSecondSame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrBeforeSecond($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeYearAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 2]);
-        $date2 = DateTime::createFromArray([2019, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrBeforeYear($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeYearBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 2]);
-        $date2 = DateTime::createFromArray([2017, 1]);
-
-        $this->assertFalse(
-            $date1->isSameOrBeforeYear($date2)
-        );
-    }
-
-    public function testIsSameOrBeforeYearSame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 2]);
-        $date2 = DateTime::createFromArray([2018, 1]);
-
-        $this->assertTrue(
-            $date1->isSameOrBeforeYear($date2)
-        );
-    }
-
-    public function testIsSameSame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSame($date2)
-        );
-    }
-
-    public function testIsSameSecondAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-
-        $this->assertFalse(
-            $date1->isSameSecond($date2)
-        );
-    }
-
-    public function testIsSameSecondBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 2]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertFalse(
-            $date1->isSameSecond($date2)
-        );
-    }
-
-    public function testIsSameSecondSame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-        $date2 = DateTime::createFromArray([2018, 1, 1, 1, 1, 1]);
-
-        $this->assertTrue(
-            $date1->isSameSecond($date2)
-        );
-    }
-
-    public function testIsSameYearAfter(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 2]);
-        $date2 = DateTime::createFromArray([2019, 1]);
-
-        $this->assertFalse(
-            $date1->isSameYear($date2)
-        );
-    }
-
-    public function testIsSameYearBefore(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 2]);
-        $date2 = DateTime::createFromArray([2017, 1]);
-
-        $this->assertFalse(
-            $date1->isSameYear($date2)
-        );
-    }
-
-    public function testIsSameYearSame(): void
-    {
-        $date1 = DateTime::createFromArray([2018, 2]);
-        $date2 = DateTime::createFromArray([2018, 1]);
-
-        $this->assertTrue(
-            $date1->isSameYear($date2)
+    /**
+     * @return array<string, array{string, int[], int[], bool}>
+     */
+    public static function isAfterProvider(): array
+    {
+        return [
+            'after' => ['isAfter', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 2, 2], false],
+            'before' => ['isAfter', [2018, 1, 1, 1, 2, 2], [2018, 1, 1, 1, 1, 1], true],
+            'day after' => ['isAfterDay', [2018, 1, 1, 1], [2018, 1, 2, 2], false],
+            'day before' => ['isAfterDay', [2018, 1, 2, 2], [2018, 1, 1, 1], true],
+            'hour after' => ['isAfterHour', [2018, 1, 1, 1, 1], [2018, 1, 1, 2, 2], false],
+            'hour before' => ['isAfterHour', [2018, 1, 1, 2, 2], [2018, 1, 1, 1, 1], true],
+            'minute after' => ['isAfterMinute', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 2, 2], false],
+            'minute before' => ['isAfterMinute', [2018, 1, 1, 1, 2, 2], [2018, 1, 1, 1, 1, 1], true],
+            'month after' => ['isAfterMonth', [2018, 1, 1], [2018, 2, 2], false],
+            'month before' => ['isAfterMonth', [2018, 2, 2], [2018, 1, 1], true],
+            'second after' => ['isAfterSecond', [2018, 1, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 2, 2], false],
+            'second before' => ['isAfterSecond', [2018, 1, 1, 1, 1, 2, 2], [2018, 1, 1, 1, 1, 1, 1], true],
+            'year after' => ['isAfterYear', [2018, 1], [2019, 2], false],
+            'year before' => ['isAfterYear', [2019, 2], [2018, 1], true],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, int[], int[], bool}>
+     */
+    public static function isBeforeProvider(): array
+    {
+        return [
+            'after' => ['isBefore', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 2, 2], true],
+            'before' => ['isBefore', [2018, 1, 1, 1, 2, 2], [2018, 1, 1, 1, 1, 1], false],
+            'day after' => ['isBeforeDay', [2018, 1, 1, 1], [2018, 1, 2, 2], true],
+            'day before' => ['isBeforeDay', [2018, 1, 2, 2], [2018, 1, 1, 1], false],
+            'hour after' => ['isBeforeHour', [2018, 1, 1, 1, 1], [2018, 1, 1, 2, 2], true],
+            'hour before' => ['isBeforeHour', [2018, 1, 1, 2, 2], [2018, 1, 1, 1, 1], false],
+            'minute after' => ['isBeforeMinute', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 2, 2], true],
+            'minute before' => ['isBeforeMinute', [2018, 1, 1, 1, 2, 2], [2018, 1, 1, 1, 1, 1], false],
+            'month after' => ['isBeforeMonth', [2018, 1, 1], [2018, 2, 2], true],
+            'month before' => ['isBeforeMonth', [2018, 2, 2], [2018, 1, 1], false],
+            'second after' => ['isBeforeSecond', [2018, 1, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 2, 2], true],
+            'second before' => ['isBeforeSecond', [2018, 1, 1, 1, 1, 2, 2], [2018, 1, 1, 1, 1, 1, 1], false],
+            'year after' => ['isBeforeYear', [2018, 1], [2019, 2], true],
+            'year before' => ['isBeforeYear', [2019, 2], [2018, 1], false],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, int[], int[], int[], bool}>
+     */
+    public static function isBetweenProvider(): array
+    {
+        return [
+            'after' => ['isBetween', [2018, 1, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 1, 4], false],
+            'before' => ['isBetween', [2018, 1, 1, 1, 1, 1, 5], [2018, 1, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 1, 4], false],
+            'between' => ['isBetween', [2018, 1, 1, 1, 1, 1, 3], [2018, 1, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 1, 4], true],
+            'day after' => ['isBetweenDay', [2018, 1, 1], [2018, 1, 2], [2018, 1, 4], false],
+            'day before' => ['isBetweenDay', [2018, 1, 5], [2018, 1, 2], [2018, 1, 4], false],
+            'day between' => ['isBetweenDay', [2018, 1, 3], [2018, 1, 2], [2018, 1, 4], true],
+            'hour after' => ['isBetweenHour', [2018, 1, 1, 1], [2018, 1, 1, 2], [2018, 1, 1, 4], false],
+            'hour before' => ['isBetweenHour', [2018, 1, 1, 5], [2018, 1, 1, 2], [2018, 1, 1, 4], false],
+            'hour between' => ['isBetweenHour', [2018, 1, 1, 3], [2018, 1, 1, 2], [2018, 1, 1, 4], true],
+            'minute after' => ['isBetweenMinute', [2018, 1, 1, 1, 1], [2018, 1, 1, 1, 2], [2018, 1, 1, 1, 4], false],
+            'minute before' => ['isBetweenMinute', [2018, 1, 1, 1, 5], [2018, 1, 1, 1, 2], [2018, 1, 1, 1, 4], false],
+            'minute between' => ['isBetweenMinute', [2018, 1, 1, 1, 3], [2018, 1, 1, 1, 2], [2018, 1, 1, 1, 4], true],
+            'month after' => ['isBetweenMonth', [2018, 1], [2018, 2], [2018, 4], false],
+            'month before' => ['isBetweenMonth', [2018, 5], [2018, 2], [2018, 4], false],
+            'month between' => ['isBetweenMonth', [2018, 3], [2018, 2], [2018, 4], true],
+            'second after' => ['isBetweenSecond', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 4], false],
+            'second before' => ['isBetweenSecond', [2018, 1, 1, 1, 1, 5], [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 4], false],
+            'second between' => ['isBetweenSecond', [2018, 1, 1, 1, 1, 3], [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 4], true],
+            'year after' => ['isBetweenYear', [2017], [2018], [2020], false],
+            'year before' => ['isBetweenYear', [2021], [2018], [2020], false],
+            'year between' => ['isBetweenYear', [2019], [2018], [2020], true],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, int[], int[], bool}>
+     */
+    public static function isSameOrAfterProvider(): array
+    {
+        return [
+            'after' => ['isSameOrAfter', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 2], false],
+            'before' => ['isSameOrAfter', [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 1], true],
+            'day after' => ['isSameOrAfterDay', [2018, 1, 1, 2], [2018, 1, 2, 1], false],
+            'day before' => ['isSameOrAfterDay', [2018, 1, 2, 2], [2018, 1, 1, 1], true],
+            'day same' => ['isSameOrAfterDay', [2018, 1, 1, 2], [2018, 1, 1, 1], true],
+            'hour after' => ['isSameOrAfterHour', [2018, 1, 1, 1, 2], [2018, 1, 1, 2, 1], false],
+            'hour before' => ['isSameOrAfterHour', [2018, 1, 1, 2, 2], [2018, 1, 1, 1, 1], true],
+            'hour same' => ['isSameOrAfterHour', [2018, 1, 1, 1, 2], [2018, 1, 1, 1, 1], true],
+            'minute after' => ['isSameOrAfterMinute', [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 2, 1], false],
+            'minute before' => ['isSameOrAfterMinute', [2018, 1, 1, 1, 2, 2], [2018, 1, 1, 1, 1, 1], true],
+            'minute same' => ['isSameOrAfterMinute', [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 1], true],
+            'month after' => ['isSameOrAfterMonth', [2018, 1, 2], [2018, 2, 1], false],
+            'month before' => ['isSameOrAfterMonth', [2018, 2, 2], [2018, 1, 1], true],
+            'month same' => ['isSameOrAfterMonth', [2018, 1, 2], [2018, 1, 1], true],
+            'same' => ['isSameOrAfter', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 1], true],
+            'second after' => ['isSameOrAfterSecond', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 2], false],
+            'second before' => ['isSameOrAfterSecond', [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 1], true],
+            'second same' => ['isSameOrAfterSecond', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 1], true],
+            'year after' => ['isSameOrAfterYear', [2018, 2], [2019, 1], false],
+            'year before' => ['isSameOrAfterYear', [2018, 2], [2017, 1], true],
+            'year same' => ['isSameOrAfterYear', [2018, 2], [2018, 1], true],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, int[], int[], bool}>
+     */
+    public static function isSameOrBeforeProvider(): array
+    {
+        return [
+            'after' => ['isSameOrBefore', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 2], true],
+            'before' => ['isSameOrBefore', [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 1], false],
+            'day after' => ['isSameOrBeforeDay', [2018, 1, 1, 2], [2018, 1, 2, 1], true],
+            'day before' => ['isSameOrBeforeDay', [2018, 1, 2, 2], [2018, 1, 1, 1], false],
+            'day same' => ['isSameOrBeforeDay', [2018, 1, 1, 2], [2018, 1, 1, 1], true],
+            'hour after' => ['isSameOrBeforeHour', [2018, 1, 1, 1, 2], [2018, 1, 1, 2, 1], true],
+            'hour before' => ['isSameOrBeforeHour', [2018, 1, 1, 2, 2], [2018, 1, 1, 1, 1], false],
+            'hour same' => ['isSameOrBeforeHour', [2018, 1, 1, 1, 2], [2018, 1, 1, 1, 1], true],
+            'minute after' => ['isSameOrBeforeMinute', [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 2, 1], true],
+            'minute before' => ['isSameOrBeforeMinute', [2018, 1, 1, 1, 2, 2], [2018, 1, 1, 1, 1, 1], false],
+            'minute same' => ['isSameOrBeforeMinute', [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 1], true],
+            'month after' => ['isSameOrBeforeMonth', [2018, 1, 2], [2018, 2, 1], true],
+            'month before' => ['isSameOrBeforeMonth', [2018, 2, 2], [2018, 1, 1], false],
+            'month same' => ['isSameOrBeforeMonth', [2018, 1, 2], [2018, 1, 1], true],
+            'same' => ['isSameOrBefore', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 1], true],
+            'second after' => ['isSameOrBeforeSecond', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 2], true],
+            'second before' => ['isSameOrBeforeSecond', [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 1], false],
+            'second same' => ['isSameOrBeforeSecond', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 1], true],
+            'year after' => ['isSameOrBeforeYear', [2018, 2], [2019, 1], true],
+            'year before' => ['isSameOrBeforeYear', [2018, 2], [2017, 1], false],
+            'year same' => ['isSameOrBeforeYear', [2018, 2], [2018, 1], true],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, int[], int[], bool}>
+     */
+    public static function isSameProvider(): array
+    {
+        return [
+            'after' => ['isSame', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 2], false],
+            'before' => ['isSame', [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 1], false],
+            'day after' => ['isSameDay', [2018, 1, 1, 2], [2018, 1, 2, 1], false],
+            'day before' => ['isSameDay', [2018, 1, 2, 2], [2018, 1, 1, 1], false],
+            'day same' => ['isSameDay', [2018, 1, 1, 2], [2018, 1, 1, 1], true],
+            'hour after' => ['isSameHour', [2018, 1, 1, 1, 2], [2018, 1, 1, 2, 1], false],
+            'hour before' => ['isSameHour', [2018, 1, 1, 2, 2], [2018, 1, 1, 1, 1], false],
+            'hour same' => ['isSameHour', [2018, 1, 1, 1, 2], [2018, 1, 1, 1, 1], true],
+            'minute after' => ['isSameMinute', [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 2, 1], false],
+            'minute before' => ['isSameMinute', [2018, 1, 1, 1, 2, 2], [2018, 1, 1, 1, 1, 1], false],
+            'minute same' => ['isSameMinute', [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 1], true],
+            'month after' => ['isSameMonth', [2018, 1, 2], [2018, 2, 1], false],
+            'month before' => ['isSameMonth', [2018, 2, 2], [2018, 1, 1], false],
+            'month same' => ['isSameMonth', [2018, 1, 2], [2018, 1, 1], true],
+            'same' => ['isSame', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 1], true],
+            'second after' => ['isSameSecond', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 2], false],
+            'second before' => ['isSameSecond', [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 1], false],
+            'second same' => ['isSameSecond', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 1], true],
+            'year after' => ['isSameYear', [2018, 2], [2019, 1], false],
+            'year before' => ['isSameYear', [2018, 2], [2017, 1], false],
+            'year same' => ['isSameYear', [2018, 2], [2018, 1], true],
+        ];
+    }
+
+    /**
+     * @param IsAfterMethod $method
+     * @param int[] $date1
+     * @param int[] $date2
+     */
+    #[DataProvider('isAfterProvider')]
+    public function testIsAfter(string $method, array $date1, array $date2, bool $expected): void
+    {
+        $first = DateTime::createFromArray($date1);
+        $second = DateTime::createFromArray($date2);
+
+        $this->assertSame(
+            $expected,
+            $first->$method($second)
+        );
+    }
+
+    /**
+     * @param IsBeforeMethod $method
+     * @param int[] $date1
+     * @param int[] $date2
+     */
+    #[DataProvider('isBeforeProvider')]
+    public function testIsBefore(string $method, array $date1, array $date2, bool $expected): void
+    {
+        $first = DateTime::createFromArray($date1);
+        $second = DateTime::createFromArray($date2);
+
+        $this->assertSame(
+            $expected,
+            $first->$method($second)
+        );
+    }
+
+    /**
+     * @param IsBetweenMethod $method
+     * @param int[] $date1
+     * @param int[] $date2
+     * @param int[] $date3
+     */
+    #[DataProvider('isBetweenProvider')]
+    public function testIsBetween(string $method, array $date1, array $date2, array $date3, bool $expected): void
+    {
+        $first = DateTime::createFromArray($date1);
+        $second = DateTime::createFromArray($date2);
+        $third = DateTime::createFromArray($date3);
+
+        $this->assertSame(
+            $expected,
+            $first->$method($second, $third)
+        );
+    }
+
+    /**
+     * @param IsSameMethod $method
+     * @param int[] $date1
+     * @param int[] $date2
+     */
+    #[DataProvider('isSameProvider')]
+    public function testIsSame(string $method, array $date1, array $date2, bool $expected): void
+    {
+        $first = DateTime::createFromArray($date1);
+        $second = DateTime::createFromArray($date2);
+
+        $this->assertSame(
+            $expected,
+            $first->$method($second)
+        );
+    }
+
+    /**
+     * @param IsSameOrAfterMethod $method
+     * @param int[] $date1
+     * @param int[] $date2
+     */
+    #[DataProvider('isSameOrAfterProvider')]
+    public function testIsSameOrAfter(string $method, array $date1, array $date2, bool $expected): void
+    {
+        $first = DateTime::createFromArray($date1);
+        $second = DateTime::createFromArray($date2);
+
+        $this->assertSame(
+            $expected,
+            $first->$method($second)
+        );
+    }
+
+    /**
+     * @param IsSameOrBeforeMethod $method
+     * @param int[] $date1
+     * @param int[] $date2
+     */
+    #[DataProvider('isSameOrBeforeProvider')]
+    public function testIsSameOrBefore(string $method, array $date1, array $date2, bool $expected): void
+    {
+        $first = DateTime::createFromArray($date1);
+        $second = DateTime::createFromArray($date2);
+
+        $this->assertSame(
+            $expected,
+            $first->$method($second)
         );
     }
 }

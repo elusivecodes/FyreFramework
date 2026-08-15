@@ -7,6 +7,7 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Utility\Inflector;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use function class_uses;
@@ -14,6 +15,34 @@ use function class_uses;
 final class InflectorTest extends TestCase
 {
     protected Inflector $inflector;
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function pluralizeProvider(): array
+    {
+        return [
+            'regular' => ['country', 'countries'],
+            'irregular' => ['person', 'people'],
+            'title' => ['Country', 'Countries'],
+            'uncountable' => ['sheep', 'sheep'],
+            'uncountable title' => ['Sheep', 'Sheep'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function singularizeProvider(): array
+    {
+        return [
+            'regular' => ['countries', 'country'],
+            'irregular' => ['people', 'person'],
+            'title' => ['Countries', 'Country'],
+            'uncountable' => ['sheep', 'sheep'],
+            'uncountable title' => ['Sheep', 'Sheep'],
+        ];
+    }
 
     public function testCamelize(): void
     {
@@ -87,83 +116,21 @@ final class InflectorTest extends TestCase
         );
     }
 
-    public function testPluralize(): void
+    #[DataProvider('pluralizeProvider')]
+    public function testPluralize(string $value, string $expected): void
     {
         $this->assertSame(
-            'countries',
-            $this->inflector->pluralize('country')
+            $expected,
+            $this->inflector->pluralize($value)
         );
     }
 
-    public function testPluralizeIrregular(): void
+    #[DataProvider('singularizeProvider')]
+    public function testSingularize(string $value, string $expected): void
     {
         $this->assertSame(
-            'people',
-            $this->inflector->pluralize('person')
-        );
-    }
-
-    public function testPluralizeTitle(): void
-    {
-        $this->assertSame(
-            'Countries',
-            $this->inflector->pluralize('Country')
-        );
-    }
-
-    public function testPluralizeUncountable(): void
-    {
-        $this->assertSame(
-            'sheep',
-            $this->inflector->pluralize('sheep')
-        );
-    }
-
-    public function testPluralizeUncountableTitle(): void
-    {
-        $this->assertSame(
-            'Sheep',
-            $this->inflector->pluralize('Sheep')
-        );
-    }
-
-    public function testSingularize(): void
-    {
-        $this->assertSame(
-            'country',
-            $this->inflector->singularize('countries')
-        );
-    }
-
-    public function testSingularizeIrregular(): void
-    {
-        $this->assertSame(
-            'person',
-            $this->inflector->singularize('people')
-        );
-    }
-
-    public function testSingularizeTitle(): void
-    {
-        $this->assertSame(
-            'Country',
-            $this->inflector->singularize('Countries')
-        );
-    }
-
-    public function testSingularizeUncountable(): void
-    {
-        $this->assertSame(
-            'sheep',
-            $this->inflector->singularize('sheep')
-        );
-    }
-
-    public function testSingularizeUncountableTitle(): void
-    {
-        $this->assertSame(
-            'Sheep',
-            $this->inflector->singularize('Sheep')
+            $expected,
+            $this->inflector->singularize($value)
         );
     }
 

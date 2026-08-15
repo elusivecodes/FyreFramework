@@ -3,173 +3,88 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\TypeParser;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use stdClass;
 
 trait JsonTestTrait
 {
-    public function testJsonFromDatabase(): void
+    /**
+     * @return array<string, array{mixed, mixed}>
+     */
+    public static function jsonFromDatabaseProvider(): array
+    {
+        return [
+            'string' => ['"test"', 'test'],
+            'array' => ['[1,2,3]', [1, 2, 3]],
+            'false' => ['false', false],
+            'null' => [null, null],
+            'number' => ['33.3', 33.3],
+            'object' => ['{"a":1}', ['a' => 1]],
+            'true' => ['true', true],
+        ];
+    }
+
+    /**
+     * @return array<string, array{mixed, mixed}>
+     */
+    public static function jsonParseProvider(): array
+    {
+        $object = new stdClass();
+
+        return [
+            'string' => ['test', 'test'],
+            'array' => [[1, 2, 3], [1, 2, 3]],
+            'false' => [false, false],
+            'null' => [null, null],
+            'number' => [33.3, 33.3],
+            'object' => [$object, $object],
+            'true' => [true, true],
+        ];
+    }
+
+    /**
+     * @return array<string, array{mixed, mixed}>
+     */
+    public static function jsonToDatabaseProvider(): array
+    {
+        $object = new stdClass();
+        $object->a = 1;
+
+        return [
+            'string' => ['test', '"test"'],
+            'array' => [[1, 2, 3], '[1,2,3]'],
+            'false' => [false, 'false'],
+            'null' => [null, null],
+            'number' => [33.3, '33.3'],
+            'object' => [$object, '{"a":1}'],
+            'true' => [true, 'true'],
+        ];
+    }
+
+    #[DataProvider('jsonFromDatabaseProvider')]
+    public function testJsonFromDatabase(mixed $value, mixed $expected): void
     {
         $this->assertSame(
-            'test',
-            $this->type->use('json')->fromDatabase('"test"')
+            $expected,
+            $this->type->use('json')->fromDatabase($value)
         );
     }
 
-    public function testJsonFromDatabaseArray(): void
+    #[DataProvider('jsonParseProvider')]
+    public function testJsonParse(mixed $value, mixed $expected): void
     {
         $this->assertSame(
-            [1, 2, 3],
-            $this->type->use('json')->fromDatabase('[1,2,3]')
+            $expected,
+            $this->type->use('json')->parse($value)
         );
     }
 
-    public function testJsonFromDatabaseFalse(): void
-    {
-        $this->assertFalse(
-            $this->type->use('json')->fromDatabase('false')
-        );
-    }
-
-    public function testJsonFromDatabaseNull(): void
-    {
-        $this->assertNull(
-            $this->type->use('json')->fromDatabase(null)
-        );
-    }
-
-    public function testJsonFromDatabaseNumber(): void
+    #[DataProvider('jsonToDatabaseProvider')]
+    public function testJsonToDatabase(mixed $value, mixed $expected): void
     {
         $this->assertSame(
-            33.3,
-            $this->type->use('json')->fromDatabase('33.3')
-        );
-    }
-
-    public function testJsonFromDatabaseObject(): void
-    {
-        $this->assertSame(
-            ['a' => 1],
-            $this->type->use('json')->fromDatabase('{"a":1}')
-        );
-    }
-
-    public function testJsonFromDatabaseTrue(): void
-    {
-        $this->assertTrue(
-            $this->type->use('json')->fromDatabase('true')
-        );
-    }
-
-    public function testJsonParse(): void
-    {
-        $this->assertSame(
-            'test',
-            $this->type->use('json')->parse('test')
-        );
-    }
-
-    public function testJsonParseArray(): void
-    {
-        $this->assertSame(
-            [1, 2, 3],
-            $this->type->use('json')->parse([1, 2, 3])
-        );
-    }
-
-    public function testJsonParseFalse(): void
-    {
-        $this->assertFalse(
-            $this->type->use('json')->parse(false)
-        );
-    }
-
-    public function testJsonParseNull(): void
-    {
-        $this->assertNull(
-            $this->type->use('json')->parse(null)
-        );
-    }
-
-    public function testJsonParseNumber(): void
-    {
-        $this->assertSame(
-            33.3,
-            $this->type->use('json')->parse(33.3)
-        );
-    }
-
-    public function testJsonParseObject(): void
-    {
-        $obj = new stdClass();
-
-        $this->assertSame(
-            $obj,
-            $this->type->use('json')->parse($obj)
-        );
-    }
-
-    public function testJsonParseTrue(): void
-    {
-        $this->assertTrue(
-            $this->type->use('json')->parse(true)
-        );
-    }
-
-    public function testJsonToDatabase(): void
-    {
-        $this->assertSame(
-            '"test"',
-            $this->type->use('json')->toDatabase('test')
-        );
-    }
-
-    public function testJsonToDatabaseArray(): void
-    {
-        $this->assertSame(
-            '[1,2,3]',
-            $this->type->use('json')->toDatabase([1, 2, 3])
-        );
-    }
-
-    public function testJsonToDatabaseFalse(): void
-    {
-        $this->assertSame(
-            'false',
-            $this->type->use('json')->toDatabase(false)
-        );
-    }
-
-    public function testJsonToDatabaseNull(): void
-    {
-        $this->assertNull(
-            $this->type->use('json')->toDatabase(null)
-        );
-    }
-
-    public function testJsonToDatabaseNumber(): void
-    {
-        $this->assertSame(
-            '33.3',
-            $this->type->use('json')->toDatabase(33.3)
-        );
-    }
-
-    public function testJsonToDatabaseObject(): void
-    {
-        $obj = new stdClass();
-        $obj->a = 1;
-
-        $this->assertSame(
-            '{"a":1}',
-            $this->type->use('json')->toDatabase($obj)
-        );
-    }
-
-    public function testJsonToDatabaseTrue(): void
-    {
-        $this->assertSame(
-            'true',
-            $this->type->use('json')->toDatabase(true)
+            $expected,
+            $this->type->use('json')->toDatabase($value)
         );
     }
 }
