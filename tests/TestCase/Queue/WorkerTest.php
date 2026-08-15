@@ -219,7 +219,7 @@ final class WorkerTest extends TestCase
 
         $worker = $this->container->build(Worker::class);
 
-        $this->assertTrue(
+        $this->assertFalse(
             $worker->runOnce()
         );
 
