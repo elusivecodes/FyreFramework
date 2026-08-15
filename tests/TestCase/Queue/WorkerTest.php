@@ -217,14 +217,11 @@ final class WorkerTest extends TestCase
             $this->queue->stats()
         );
 
-        $worker = $this->container->build(Worker::class, [
-            'options' => [
-                'maxJobs' => 1,
-                'maxRuntime' => 5,
-            ],
-        ]);
+        $worker = $this->container->build(Worker::class);
 
-        $worker->run();
+        $this->assertTrue(
+            $worker->runOnce()
+        );
 
         $this->assertFileDoesNotExist('tmp/job');
     }
@@ -257,26 +254,23 @@ final class WorkerTest extends TestCase
             $this->queue->stats('test')
         );
 
-        $worker = $this->container->build(Worker::class, [
-            'options' => [
-                'maxJobs' => 1,
-                'maxRuntime' => 5,
-            ],
-        ]);
+        $worker = $this->container->build(Worker::class);
 
-        $worker->run();
+        $this->assertFalse(
+            $worker->runOnce()
+        );
 
         $this->assertFileDoesNotExist('tmp/job');
 
         $worker = $this->container->build(Worker::class, [
             'options' => [
                 'queue' => 'test',
-                'maxJobs' => 1,
-                'maxRuntime' => 5,
             ],
         ]);
 
-        $worker->run();
+        $this->assertTrue(
+            $worker->runOnce()
+        );
 
         $this->assertSame(
             [

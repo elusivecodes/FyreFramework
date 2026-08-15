@@ -128,11 +128,7 @@ class Worker
                     break;
                 }
 
-                $message = $this->queue->pop($this->config['queue']);
-
-                if ($message) {
-                    $this->process($message);
-
+                if ($this->runOnce()) {
                     usleep($this->config['rest']);
                 } else {
                     usleep($this->config['sleep']);
@@ -144,6 +140,24 @@ class Worker
 
             $this->start = null;
         }
+    }
+
+    /**
+     * Processes the next available Message.
+     *
+     * @return bool Whether a Message was found.
+     */
+    public function runOnce(): bool
+    {
+        $message = $this->queue->pop($this->config['queue']);
+
+        if (!$message) {
+            return false;
+        }
+
+        $this->process($message);
+
+        return true;
     }
 
     /**

@@ -13,9 +13,11 @@ use Override;
 use PHPUnit\Framework\TestCase;
 
 use function exec;
+use function fclose;
 use function fopen;
-use function sleep;
+use function fsockopen;
 use function strlen;
+use function usleep;
 
 final class CurlHandlerTest extends TestCase
 {
@@ -312,7 +314,22 @@ final class CurlHandlerTest extends TestCase
     public static function setUpBeforeClass(): void
     {
         self::$pid = (int) exec('nohup php -S 127.0.0.1:8888 tests/server.php >/dev/null 2>&1 & echo $!');
-        sleep(1);
+
+        for ($i = 0; $i < 500; $i++) {
+            $socket = @fsockopen('127.0.0.1', 8888);
+
+            if ($socket) {
+                fclose($socket);
+
+                return;
+            }
+
+            usleep(10_000);
+        }
+
+        exec('kill '.self::$pid.' 2>&1');
+
+        self::fail('cURL test server did not become ready.');
     }
 
     #[Override]

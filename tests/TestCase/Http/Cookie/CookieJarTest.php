@@ -9,6 +9,7 @@ use Fyre\Http\Cookie\Cookie;
 use Fyre\Http\Cookie\CookieJar;
 use Fyre\Http\Uri;
 use PHPUnit\Framework\TestCase;
+use Tests\Mock\Http\TestCookieJar;
 
 use function class_uses;
 use function explode;
@@ -50,9 +51,9 @@ final class CookieJarTest extends TestCase
 
     public function testAddMaximumCookies(): void
     {
-        $cookieJar = new CookieJar();
+        $cookieJar = new TestCookieJar();
 
-        for ($i = 0; $i < 3000; $i++) {
+        for ($i = 0; $i < 3; $i++) {
             $cookie = new Cookie('test', 'value', [
                 'domain' => 'example'.$i.'.com',
             ]);
@@ -64,7 +65,7 @@ final class CookieJarTest extends TestCase
             'domain' => 'example0.com',
         ]);
         $newCookie = new Cookie('test', 'value', [
-            'domain' => 'example3000.com',
+            'domain' => 'example3.com',
         ]);
 
         $cookieJar->add($updatedCookie);
@@ -84,7 +85,7 @@ final class CookieJarTest extends TestCase
             $cookieJar->getHeader($secondUri)
         );
 
-        $lastUri = new Uri('https://example3000.com');
+        $lastUri = new Uri('https://example3.com');
 
         $this->assertSame(
             'test=value',
@@ -111,9 +112,9 @@ final class CookieJarTest extends TestCase
 
     public function testAddMaximumCookiesPerDomain(): void
     {
-        $cookieJar = new CookieJar();
+        $cookieJar = new TestCookieJar();
 
-        for ($i = 0; $i <= 180; $i++) {
+        for ($i = 0; $i <= 3; $i++) {
             $cookie = new Cookie('test'.$i, 'value', [
                 'domain' => 'example.com',
             ]);
@@ -126,7 +127,7 @@ final class CookieJarTest extends TestCase
 
         $this->assertStringNotContainsString('test0=value', $header);
         $this->assertStringContainsString('test1=value', $header);
-        $this->assertStringContainsString('test180=value', $header);
+        $this->assertStringContainsString('test3=value', $header);
     }
 
     public function testDebug(): void

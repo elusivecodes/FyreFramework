@@ -45,7 +45,7 @@ $commandRunner->handle(['app', 'queue:worker']);
 $commandRunner->handle(['app', 'queue:worker', '--queue', 'emails', '--max-runtime', '3600']);
 ```
 
-`Worker` requires the `pcntl` extension for signal handling, whether it is started directly or through `queue:worker`.
+`Worker::run()` requires the `pcntl` extension for signal handling, whether it is started directly or through `queue:worker`.
 
 Recommended production setup:
 
@@ -165,11 +165,20 @@ $worker = new Worker($container, $queueManager, $eventManager, [
 $worker->run();
 ```
 
+Use `runOnce()` to poll and process at most one available message without sleeping or installing signal handlers. It returns `true` when a message was found, including an invalid or expired message, and `false` when the configured queue was empty.
+
+```php
+if (!$worker->runOnce()) {
+    // No message was available.
+}
+```
+
 ## Behavior notes
 
 A few behaviors are worth keeping in mind:
 
 - `Worker::run()` is not re-entrant, so calling it again on the same instance while it is already running does nothing.
+- `Worker::runOnce()` does not apply `maxJobs`, `maxRuntime`, `rest`, or `sleep`.
 - Stop signals are handled gracefully: the worker finishes the current job and then exits the loop.
 - `maxJobs` counts only jobs that actually reach execution. Invalid and expired messages do not increment the counter.
 - Retries mean a job may run more than once, so design queue jobs to be idempotent.

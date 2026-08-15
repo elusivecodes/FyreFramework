@@ -316,14 +316,11 @@ final class ListenerTest extends TestCase
             $this->queue->stats()
         );
 
-        $worker = $this->container->build(Worker::class, [
-            'options' => [
-                'maxJobs' => 1,
-                'maxRuntime' => 5,
-            ],
-        ]);
+        $worker = $this->container->build(Worker::class);
 
-        $worker->run();
+        $this->assertTrue(
+            $worker->runOnce()
+        );
 
         $this->assertSame(
             [
