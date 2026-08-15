@@ -105,7 +105,7 @@ trait TimeTestTrait
 
     public function testTimeIdPrefix(): void
     {
-        $this->view->Form->open(null, idPrefix: 'test');
+        $this->view->Form->open(idPrefix: 'test');
 
         $this->assertSame(
             '<input id="test-time" name="time" type="time" />',

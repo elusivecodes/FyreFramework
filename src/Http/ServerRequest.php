@@ -137,7 +137,7 @@ class ServerRequest extends Request implements ServerRequestInterface
         );
         $options['body'] ??= Stream::createFromFile('php://input');
 
-        parent::__construct(null, $options);
+        parent::__construct(options: $options);
 
         $scheme = $this->isSecure() ?
             'https' :

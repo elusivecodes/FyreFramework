@@ -103,7 +103,7 @@ trait SelectTestTrait
 
     public function testSelectIdPrefix(): void
     {
-        $this->view->Form->open(null, idPrefix: 'test');
+        $this->view->Form->open(idPrefix: 'test');
 
         $this->assertSame(
             '<select id="test-select" name="select"></select>',

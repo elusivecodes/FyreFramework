@@ -25,7 +25,7 @@ trait OpenMultipartTestTrait
     {
         $this->assertSame(
             '<form data-test="[1,2]" method="post" enctype="multipart/form-data" accept-charset="UTF-8">',
-            $this->form->openMultipart(null, [
+            $this->form->openMultipart(attributes: [
                 'data-test' => [1, 2],
             ])
         );
@@ -35,7 +35,7 @@ trait OpenMultipartTestTrait
     {
         $this->assertSame(
             '<form data-test="&lt;test&gt;" method="post" enctype="multipart/form-data" accept-charset="UTF-8">',
-            $this->form->openMultipart(null, [
+            $this->form->openMultipart(attributes: [
                 'data-test' => '<test>',
             ])
         );
@@ -45,7 +45,7 @@ trait OpenMultipartTestTrait
     {
         $this->assertSame(
             '<form class="test" method="post" enctype="multipart/form-data" accept-charset="UTF-8">',
-            $this->form->openMultipart(null, [
+            $this->form->openMultipart(attributes: [
                 '*class*' => 'test',
             ])
         );
@@ -55,7 +55,7 @@ trait OpenMultipartTestTrait
     {
         $this->assertSame(
             '<form class="test" id="form" method="post" enctype="multipart/form-data" accept-charset="UTF-8">',
-            $this->form->openMultipart(null, [
+            $this->form->openMultipart(attributes: [
                 'class' => 'test',
                 'id' => 'form',
             ])
@@ -66,7 +66,7 @@ trait OpenMultipartTestTrait
     {
         $this->assertSame(
             '<form class="test" id="form" method="post" enctype="multipart/form-data" accept-charset="UTF-8">',
-            $this->form->openMultipart(null, [
+            $this->form->openMultipart(attributes: [
                 'id' => 'form',
                 'class' => 'test',
             ])

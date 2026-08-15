@@ -103,7 +103,7 @@ trait TextareaTestTrait
 
     public function testTextareaIdPrefix(): void
     {
-        $this->view->Form->open(null, idPrefix: 'test');
+        $this->view->Form->open(idPrefix: 'test');
 
         $this->assertSame(
             '<textarea id="test-textarea" name="textarea" placeholder="Textarea"></textarea>',

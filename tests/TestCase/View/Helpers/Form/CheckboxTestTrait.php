@@ -151,7 +151,7 @@ trait CheckboxTestTrait
 
     public function testCheckboxIdPrefix(): void
     {
-        $this->view->Form->open(null, idPrefix: 'test');
+        $this->view->Form->open(idPrefix: 'test');
 
         $this->assertSame(
             '<input name="checkbox" type="hidden" value="0" /><input id="test-checkbox" name="checkbox" type="checkbox" value="1" />',

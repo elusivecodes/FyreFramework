@@ -105,7 +105,7 @@ trait DateTimeTestTrait
 
     public function testDateTimeIdPrefix(): void
     {
-        $this->view->Form->open(null, idPrefix: 'test');
+        $this->view->Form->open(idPrefix: 'test');
 
         $this->assertSame(
             '<input id="test-datetime" name="datetime" type="datetime-local" />',

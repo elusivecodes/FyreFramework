@@ -11,7 +11,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             11,
-            DateTime::createFromFormat('K', '١١', null, 'ar-eg')->getHours()
+            DateTime::createFromFormat('K', '١١', locale: 'ar-eg')->getHours()
         );
     }
 
@@ -19,7 +19,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             0,
-            DateTime::createFromFormat('K', '٠', null, 'ar-eg')->getHours()
+            DateTime::createFromFormat('K', '٠', locale: 'ar-eg')->getHours()
         );
     }
 
@@ -27,7 +27,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             11,
-            DateTime::createFromFormat('KK', '١١', null, 'ar-eg')->getHours()
+            DateTime::createFromFormat('KK', '١١', locale: 'ar-eg')->getHours()
         );
     }
 
@@ -35,7 +35,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             00,
-            DateTime::createFromFormat('KK', '٠٠', null, 'ar-eg')->getHours()
+            DateTime::createFromFormat('KK', '٠٠', locale: 'ar-eg')->getHours()
         );
     }
 
@@ -43,7 +43,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             0,
-            DateTime::createFromFormat('h', '١٢', null, 'ar-eg')->getHours()
+            DateTime::createFromFormat('h', '١٢', locale: 'ar-eg')->getHours()
         );
     }
 
@@ -51,7 +51,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('h', '١', null, 'ar-eg')->getHours()
+            DateTime::createFromFormat('h', '١', locale: 'ar-eg')->getHours()
         );
     }
 
@@ -59,7 +59,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             0,
-            DateTime::createFromFormat('hh', '١٢', null, 'ar-eg')->getHours()
+            DateTime::createFromFormat('hh', '١٢', locale: 'ar-eg')->getHours()
         );
     }
 
@@ -67,7 +67,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('hh', '٠١', null, 'ar-eg')->getHours()
+            DateTime::createFromFormat('hh', '٠١', locale: 'ar-eg')->getHours()
         );
     }
 
@@ -75,7 +75,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             23,
-            DateTime::createFromFormat('H', '٢٣', null, 'ar-eg')->getHours()
+            DateTime::createFromFormat('H', '٢٣', locale: 'ar-eg')->getHours()
         );
     }
 
@@ -83,7 +83,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             0,
-            DateTime::createFromFormat('H', '٠', null, 'ar-eg')->getHours()
+            DateTime::createFromFormat('H', '٠', locale: 'ar-eg')->getHours()
         );
     }
 
@@ -91,7 +91,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             23,
-            DateTime::createFromFormat('HH', '٢٣', null, 'ar-eg')->getHours()
+            DateTime::createFromFormat('HH', '٢٣', locale: 'ar-eg')->getHours()
         );
     }
 
@@ -99,7 +99,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             0,
-            DateTime::createFromFormat('HH', '٠٠', null, 'ar-eg')->getHours()
+            DateTime::createFromFormat('HH', '٠٠', locale: 'ar-eg')->getHours()
         );
     }
 
@@ -107,7 +107,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             0,
-            DateTime::createFromFormat('k', '٢٤', null, 'ar-eg')->getHours()
+            DateTime::createFromFormat('k', '٢٤', locale: 'ar-eg')->getHours()
         );
     }
 
@@ -115,7 +115,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('k', '١', null, 'ar-eg')->getHours()
+            DateTime::createFromFormat('k', '١', locale: 'ar-eg')->getHours()
         );
     }
 
@@ -123,7 +123,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             0,
-            DateTime::createFromFormat('kk', '٢٤', null, 'ar-eg')->getHours()
+            DateTime::createFromFormat('kk', '٢٤', locale: 'ar-eg')->getHours()
         );
     }
 
@@ -131,7 +131,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('kk', '٠١', null, 'ar-eg')->getHours()
+            DateTime::createFromFormat('kk', '٠١', locale: 'ar-eg')->getHours()
         );
     }
 
@@ -139,7 +139,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             5,
-            DateTime::createFromFormat('EEEE', 'пятница', null, 'ru')->getWeekDay()
+            DateTime::createFromFormat('EEEE', 'пятница', locale: 'ru')->getWeekDay()
         );
     }
 
@@ -147,7 +147,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             5,
-            DateTime::createFromFormat('EEE', 'пт', null, 'ru')->getWeekDay()
+            DateTime::createFromFormat('EEE', 'пт', locale: 'ru')->getWeekDay()
         );
     }
 
@@ -155,7 +155,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('d', '١', null, 'ar-eg')->getDate()
+            DateTime::createFromFormat('d', '١', locale: 'ar-eg')->getDate()
         );
     }
 
@@ -163,7 +163,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             21,
-            DateTime::createFromFormat('d', '٢١', null, 'ar-eg')->getDate()
+            DateTime::createFromFormat('d', '٢١', locale: 'ar-eg')->getDate()
         );
     }
 
@@ -171,7 +171,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('dd', '٠١', null, 'ar-eg')->getDate()
+            DateTime::createFromFormat('dd', '٠١', locale: 'ar-eg')->getDate()
         );
     }
 
@@ -179,7 +179,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             21,
-            DateTime::createFromFormat('dd', '٢١', null, 'ar-eg')->getDate()
+            DateTime::createFromFormat('dd', '٢١', locale: 'ar-eg')->getDate()
         );
     }
 
@@ -187,7 +187,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             3,
-            DateTime::createFromFormat('F', '٣', null, 'ar-eg')->getWeekDayInMonth()
+            DateTime::createFromFormat('F', '٣', locale: 'ar-eg')->getWeekDayInMonth()
         );
     }
 
@@ -195,7 +195,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('D', '١', null, 'ar-eg')->getDayOfYear()
+            DateTime::createFromFormat('D', '١', locale: 'ar-eg')->getDayOfYear()
         );
     }
 
@@ -203,7 +203,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             152,
-            DateTime::createFromFormat('D', '١٥٢', null, 'ar-eg')->getDayOfYear()
+            DateTime::createFromFormat('D', '١٥٢', locale: 'ar-eg')->getDayOfYear()
         );
     }
 
@@ -211,7 +211,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('DD', '٠١', null, 'ar-eg')->getDayOfYear()
+            DateTime::createFromFormat('DD', '٠١', locale: 'ar-eg')->getDayOfYear()
         );
     }
 
@@ -219,7 +219,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             152,
-            DateTime::createFromFormat('DD', '١٥٢', null, 'ar-eg')->getDayOfYear()
+            DateTime::createFromFormat('DD', '١٥٢', locale: 'ar-eg')->getDayOfYear()
         );
     }
 
@@ -227,7 +227,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('DDD', '٠٠١', null, 'ar-eg')->getDayOfYear()
+            DateTime::createFromFormat('DDD', '٠٠١', locale: 'ar-eg')->getDayOfYear()
         );
     }
 
@@ -235,7 +235,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             152,
-            DateTime::createFromFormat('DDD', '١٥٢', null, 'ar-eg')->getDayOfYear()
+            DateTime::createFromFormat('DDD', '١٥٢', locale: 'ar-eg')->getDayOfYear()
         );
     }
 
@@ -243,7 +243,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             0,
-            DateTime::createFromFormat('aaaa', '上午', null, 'zh')->getHours()
+            DateTime::createFromFormat('aaaa', '上午', locale: 'zh')->getHours()
         );
     }
 
@@ -251,7 +251,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             12,
-            DateTime::createFromFormat('aaaa', '下午', null, 'zh')->getHours()
+            DateTime::createFromFormat('aaaa', '下午', locale: 'zh')->getHours()
         );
     }
 
@@ -259,7 +259,7 @@ trait FromFormatLocaleTestTrait
     // {
     //     $this->assertSame(
     //         1,
-    //         DateTime::createFromFormat('ccccc', 'П', null, 'ru')->getWeekDay()
+    //         DateTime::createFromFormat('ccccc', 'П', locale: 'ru')->getWeekDay()
     //     );
     // }
 
@@ -267,7 +267,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             0,
-            DateTime::createFromFormat('aaa', '上午', null, 'zh')->getHours()
+            DateTime::createFromFormat('aaa', '上午', locale: 'zh')->getHours()
         );
     }
 
@@ -275,7 +275,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             12,
-            DateTime::createFromFormat('aaa', '下午', null, 'zh')->getHours()
+            DateTime::createFromFormat('aaa', '下午', locale: 'zh')->getHours()
         );
     }
 
@@ -283,7 +283,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1970,
-            DateTime::createFromFormat('yyyy GGGG', '1970 от Рождества Христова', null, 'ru')->getYear()
+            DateTime::createFromFormat('yyyy GGGG', '1970 от Рождества Христова', locale: 'ru')->getYear()
         );
     }
 
@@ -291,7 +291,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             -1970,
-            DateTime::createFromFormat('yyyy GGGG', '1970 до Рождества Христова', null, 'ru')->getYear()
+            DateTime::createFromFormat('yyyy GGGG', '1970 до Рождества Христова', locale: 'ru')->getYear()
         );
     }
 
@@ -299,7 +299,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1970,
-            DateTime::createFromFormat('yyyy GGGGG', '1970 н.э.', null, 'ru')->getYear()
+            DateTime::createFromFormat('yyyy GGGGG', '1970 н.э.', locale: 'ru')->getYear()
         );
     }
 
@@ -307,7 +307,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             -1970,
-            DateTime::createFromFormat('yyyy GGGGG', '1970 до н.э.', null, 'ru')->getYear()
+            DateTime::createFromFormat('yyyy GGGGG', '1970 до н.э.', locale: 'ru')->getYear()
         );
     }
 
@@ -315,7 +315,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1970,
-            DateTime::createFromFormat('yyyy GGG', '1970 н. э.', null, 'ru')->getYear()
+            DateTime::createFromFormat('yyyy GGG', '1970 н. э.', locale: 'ru')->getYear()
         );
     }
 
@@ -323,7 +323,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             -1970,
-            DateTime::createFromFormat('yyyy GGG', '1970 до н. э.', null, 'ru')->getYear()
+            DateTime::createFromFormat('yyyy GGG', '1970 до н. э.', locale: 'ru')->getYear()
         );
     }
 
@@ -331,7 +331,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             0,
-            DateTime::createFromFormat('SSS', '١٢٣', null, 'ar-eg')->getMilliseconds()
+            DateTime::createFromFormat('SSS', '١٢٣', locale: 'ar-eg')->getMilliseconds()
         );
     }
 
@@ -339,7 +339,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             25,
-            DateTime::createFromFormat('m', '٢٥', null, 'ar-eg')->getMinutes()
+            DateTime::createFromFormat('m', '٢٥', locale: 'ar-eg')->getMinutes()
         );
     }
 
@@ -347,7 +347,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('m', '١', null, 'ar-eg')->getMinutes()
+            DateTime::createFromFormat('m', '١', locale: 'ar-eg')->getMinutes()
         );
     }
 
@@ -355,7 +355,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             25,
-            DateTime::createFromFormat('mm', '٢٥', null, 'ar-eg')->getMinutes()
+            DateTime::createFromFormat('mm', '٢٥', locale: 'ar-eg')->getMinutes()
         );
     }
 
@@ -363,7 +363,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('mm', '٠١', null, 'ar-eg')->getMinutes()
+            DateTime::createFromFormat('mm', '٠١', locale: 'ar-eg')->getMinutes()
         );
     }
 
@@ -371,7 +371,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('M', '١', null, 'ar-eg')->getMonth()
+            DateTime::createFromFormat('M', '١', locale: 'ar-eg')->getMonth()
         );
     }
 
@@ -379,7 +379,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             10,
-            DateTime::createFromFormat('M', '١٠', null, 'ar-eg')->getMonth()
+            DateTime::createFromFormat('M', '١٠', locale: 'ar-eg')->getMonth()
         );
     }
 
@@ -387,7 +387,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('MM', '٠١', null, 'ar-eg')->getMonth()
+            DateTime::createFromFormat('MM', '٠١', locale: 'ar-eg')->getMonth()
         );
     }
 
@@ -395,7 +395,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             10,
-            DateTime::createFromFormat('MM', '١٠', null, 'ar-eg')->getMonth()
+            DateTime::createFromFormat('MM', '١٠', locale: 'ar-eg')->getMonth()
         );
     }
 
@@ -403,7 +403,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             10,
-            DateTime::createFromFormat('MMMM', 'октября', null, 'ru')->getMonth()
+            DateTime::createFromFormat('MMMM', 'октября', locale: 'ru')->getMonth()
         );
     }
 
@@ -411,7 +411,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             10,
-            DateTime::createFromFormat('MMM', 'окт.', null, 'ru')->getMonth()
+            DateTime::createFromFormat('MMM', 'окт.', locale: 'ru')->getMonth()
         );
     }
 
@@ -419,7 +419,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             3,
-            DateTime::createFromFormat('q', '٣', null, 'ar-eg')->getQuarter()
+            DateTime::createFromFormat('q', '٣', locale: 'ar-eg')->getQuarter()
         );
     }
 
@@ -427,7 +427,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             3,
-            DateTime::createFromFormat('qq', '٠٣', null, 'ar-eg')->getQuarter()
+            DateTime::createFromFormat('qq', '٠٣', locale: 'ar-eg')->getQuarter()
         );
     }
 
@@ -435,7 +435,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             25,
-            DateTime::createFromFormat('s', '٢٥', null, 'ar-eg')->getSeconds()
+            DateTime::createFromFormat('s', '٢٥', locale: 'ar-eg')->getSeconds()
         );
     }
 
@@ -443,7 +443,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('s', '١', null, 'ar-eg')->getSeconds()
+            DateTime::createFromFormat('s', '١', locale: 'ar-eg')->getSeconds()
         );
     }
 
@@ -451,7 +451,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             25,
-            DateTime::createFromFormat('ss', '٢٥', null, 'ar-eg')->getSeconds()
+            DateTime::createFromFormat('ss', '٢٥', locale: 'ar-eg')->getSeconds()
         );
     }
 
@@ -459,7 +459,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('ss', '٠١', null, 'ar-eg')->getSeconds()
+            DateTime::createFromFormat('ss', '٠١', locale: 'ar-eg')->getSeconds()
         );
     }
 
@@ -467,7 +467,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('L', '١', null, 'ar-eg')->getMonth()
+            DateTime::createFromFormat('L', '١', locale: 'ar-eg')->getMonth()
         );
     }
 
@@ -475,7 +475,7 @@ trait FromFormatLocaleTestTrait
     // {
     //     $this->assertSame(
     //         10,
-    //         DateTime::createFromFormat('MMMMM', 'О', null, 'ru')->getMonth()
+    //         DateTime::createFromFormat('MMMMM', 'О', locale: 'ru')->getMonth()
     //     );
     // }
 
@@ -483,7 +483,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             10,
-            DateTime::createFromFormat('L', '١٠', null, 'ar-eg')->getMonth()
+            DateTime::createFromFormat('L', '١٠', locale: 'ar-eg')->getMonth()
         );
     }
 
@@ -491,7 +491,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('LL', '٠١', null, 'ar-eg')->getMonth()
+            DateTime::createFromFormat('LL', '٠١', locale: 'ar-eg')->getMonth()
         );
     }
 
@@ -499,7 +499,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             10,
-            DateTime::createFromFormat('LL', '١٠', null, 'ar-eg')->getMonth()
+            DateTime::createFromFormat('LL', '١٠', locale: 'ar-eg')->getMonth()
         );
     }
 
@@ -507,7 +507,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             10,
-            DateTime::createFromFormat('LLLL', 'октябрь', null, 'ru')->getMonth()
+            DateTime::createFromFormat('LLLL', 'октябрь', locale: 'ru')->getMonth()
         );
     }
 
@@ -515,7 +515,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             10,
-            DateTime::createFromFormat('LLL', 'окт.', null, 'ru')->getMonth()
+            DateTime::createFromFormat('LLL', 'окт.', locale: 'ru')->getMonth()
         );
     }
 
@@ -523,7 +523,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             3,
-            DateTime::createFromFormat('Q', '٣', null, 'ar-eg')->getQuarter()
+            DateTime::createFromFormat('Q', '٣', locale: 'ar-eg')->getQuarter()
         );
     }
 
@@ -531,7 +531,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             3,
-            DateTime::createFromFormat('QQ', '٠٣', null, 'ar-eg')->getQuarter()
+            DateTime::createFromFormat('QQ', '٠٣', locale: 'ar-eg')->getQuarter()
         );
     }
 
@@ -539,7 +539,7 @@ trait FromFormatLocaleTestTrait
     // {
     //     $this->assertSame(
     //         1,
-    //         DateTime::createFromFormat('eeeee', 'П', null, 'ru')->getWeekDay()
+    //         DateTime::createFromFormat('eeeee', 'П', locale: 'ru')->getWeekDay()
     //     );
     // }
 
@@ -547,7 +547,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             5,
-            DateTime::createFromFormat('c', '٥', null, 'ar-eg')->getWeekDay()
+            DateTime::createFromFormat('c', '٥', locale: 'ar-eg')->getWeekDay()
         );
     }
 
@@ -555,7 +555,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             5,
-            DateTime::createFromFormat('cc', '٠٥', null, 'ar-eg')->getWeekDay()
+            DateTime::createFromFormat('cc', '٠٥', locale: 'ar-eg')->getWeekDay()
         );
     }
 
@@ -563,7 +563,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             5,
-            DateTime::createFromFormat('cccc', 'пятница', null, 'ru')->getWeekDay()
+            DateTime::createFromFormat('cccc', 'пятница', locale: 'ru')->getWeekDay()
         );
     }
 
@@ -571,7 +571,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             5,
-            DateTime::createFromFormat('ccc', 'пт', null, 'ru')->getWeekDay()
+            DateTime::createFromFormat('ccc', 'пт', locale: 'ru')->getWeekDay()
         );
     }
 
@@ -579,7 +579,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss xx', '01/01/2019 00:00:00 +0000', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss xx', '01/01/2019 00:00:00 +0000', locale: 'ru')->toIsoString()
         );
     }
 
@@ -587,7 +587,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZ', '01/01/2019 00:00:00 +0000', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZ', '01/01/2019 00:00:00 +0000', locale: 'ru')->toIsoString()
         );
     }
 
@@ -595,7 +595,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZ', '01/01/2019 00:00:00 +1000', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZ', '01/01/2019 00:00:00 +1000', locale: 'ru')->toIsoString()
         );
     }
 
@@ -603,7 +603,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss x', '01/01/2019 00:00:00 +00', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss x', '01/01/2019 00:00:00 +00', locale: 'ru')->toIsoString()
         );
     }
 
@@ -611,7 +611,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss x', '01/01/2019 00:00:00 +10', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss x', '01/01/2019 00:00:00 +10', locale: 'ru')->toIsoString()
         );
     }
 
@@ -619,7 +619,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss X', '01/01/2019 00:00:00 Z', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss X', '01/01/2019 00:00:00 Z', locale: 'ru')->toIsoString()
         );
     }
 
@@ -627,7 +627,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss X', '01/01/2019 00:00:00 +10', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss X', '01/01/2019 00:00:00 +10', locale: 'ru')->toIsoString()
         );
     }
 
@@ -635,7 +635,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss xx', '01/01/2019 00:00:00 +1000', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss xx', '01/01/2019 00:00:00 +1000', locale: 'ru')->toIsoString()
         );
     }
 
@@ -643,7 +643,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss XX', '01/01/2019 00:00:00 Z', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss XX', '01/01/2019 00:00:00 Z', locale: 'ru')->toIsoString()
         );
     }
 
@@ -651,7 +651,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss XX', '01/01/2019 00:00:00 +1000', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss XX', '01/01/2019 00:00:00 +1000', locale: 'ru')->toIsoString()
         );
     }
 
@@ -659,7 +659,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss xxx', '01/01/2019 00:00:00 +00:00', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss xxx', '01/01/2019 00:00:00 +00:00', locale: 'ru')->toIsoString()
         );
     }
 
@@ -667,7 +667,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZZZ', '01/01/2019 00:00:00 +00:00', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZZZ', '01/01/2019 00:00:00 +00:00', locale: 'ru')->toIsoString()
         );
     }
 
@@ -675,7 +675,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZZZ', '01/01/2019 00:00:00 +10:00', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZZZ', '01/01/2019 00:00:00 +10:00', locale: 'ru')->toIsoString()
         );
     }
 
@@ -683,7 +683,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss xxx', '01/01/2019 00:00:00 +10:00', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss xxx', '01/01/2019 00:00:00 +10:00', locale: 'ru')->toIsoString()
         );
     }
 
@@ -691,7 +691,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss XXX', '01/01/2019 00:00:00 Z', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss XXX', '01/01/2019 00:00:00 Z', locale: 'ru')->toIsoString()
         );
     }
 
@@ -699,7 +699,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss XXX', '01/01/2019 00:00:00 +10:00', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss XXX', '01/01/2019 00:00:00 +10:00', locale: 'ru')->toIsoString()
         );
     }
 
@@ -707,7 +707,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZZ', '01/01/2019 00:00:00 GMT+00:00', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZZ', '01/01/2019 00:00:00 GMT+00:00', locale: 'ru')->toIsoString()
         );
     }
 
@@ -715,7 +715,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZZ', '01/01/2019 00:00:00 GMT+10:00', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZZ', '01/01/2019 00:00:00 GMT+10:00', locale: 'ru')->toIsoString()
         );
     }
 
@@ -723,7 +723,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss OOOO', '01/01/2019 00:00:00 GMT+00:00', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss OOOO', '01/01/2019 00:00:00 GMT+00:00', locale: 'ru')->toIsoString()
         );
     }
 
@@ -731,7 +731,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss OOOO', '01/01/2019 00:00:00 GMT+10:00', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss OOOO', '01/01/2019 00:00:00 GMT+10:00', locale: 'ru')->toIsoString()
         );
     }
 
@@ -739,7 +739,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss VV', '01/01/2019 00:00:00 UTC', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss VV', '01/01/2019 00:00:00 UTC', locale: 'ru')->toIsoString()
         );
     }
 
@@ -747,7 +747,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss VV', '01/01/2019 00:00:00 Australia/Brisbane', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss VV', '01/01/2019 00:00:00 Australia/Brisbane', locale: 'ru')->toIsoString()
         );
     }
 
@@ -755,7 +755,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss O', '01/01/2019 00:00:00 GMT+00', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss O', '01/01/2019 00:00:00 GMT+00', locale: 'ru')->toIsoString()
         );
     }
 
@@ -763,7 +763,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss O', '01/01/2019 00:00:00 GMT+10', null, 'ru')->toIsoString()
+            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss O', '01/01/2019 00:00:00 GMT+10', locale: 'ru')->toIsoString()
         );
     }
 
@@ -771,7 +771,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('w', '١', null, 'ar-eg')->getWeek()
+            DateTime::createFromFormat('w', '١', locale: 'ar-eg')->getWeek()
         );
     }
 
@@ -779,7 +779,7 @@ trait FromFormatLocaleTestTrait
     // {
     //     $this->assertSame(
     //         10,
-    //         DateTime::createFromFormat('LLLLL', 'О', null, 'ru')->getMonth()
+    //         DateTime::createFromFormat('LLLLL', 'О', locale: 'ru')->getMonth()
     //     );
     // }
 
@@ -787,7 +787,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             22,
-            DateTime::createFromFormat('w', '٢٢', null, 'ar-eg')->getWeek()
+            DateTime::createFromFormat('w', '٢٢', locale: 'ar-eg')->getWeek()
         );
     }
 
@@ -795,7 +795,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1,
-            DateTime::createFromFormat('ww', '٠١', null, 'ar-eg')->getWeek()
+            DateTime::createFromFormat('ww', '٠١', locale: 'ar-eg')->getWeek()
         );
     }
 
@@ -803,7 +803,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             22,
-            DateTime::createFromFormat('ww', '٢٢', null, 'ar-eg')->getWeek()
+            DateTime::createFromFormat('ww', '٢٢', locale: 'ar-eg')->getWeek()
         );
     }
 
@@ -811,7 +811,7 @@ trait FromFormatLocaleTestTrait
     // {
     //     $this->assertSame(
     //         1,
-    //         DateTime::createFromFormat('EEEEE', 'П', null, 'ru')->getWeekDay()
+    //         DateTime::createFromFormat('EEEEE', 'П', locale: 'ru')->getWeekDay()
     //     );
     // }
 
@@ -819,7 +819,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             5,
-            DateTime::createFromFormat('e', '٥', null, 'ar-eg')->getWeekDay()
+            DateTime::createFromFormat('e', '٥', locale: 'ar-eg')->getWeekDay()
         );
     }
 
@@ -827,7 +827,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             5,
-            DateTime::createFromFormat('ee', '٠٥', null, 'ar-eg')->getWeekDay()
+            DateTime::createFromFormat('ee', '٠٥', locale: 'ar-eg')->getWeekDay()
         );
     }
 
@@ -835,7 +835,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             5,
-            DateTime::createFromFormat('eeee', 'пятница', null, 'ru')->getWeekDay()
+            DateTime::createFromFormat('eeee', 'пятница', locale: 'ru')->getWeekDay()
         );
     }
 
@@ -843,7 +843,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             5,
-            DateTime::createFromFormat('eee', 'пт', null, 'ru')->getWeekDay()
+            DateTime::createFromFormat('eee', 'пт', locale: 'ru')->getWeekDay()
         );
     }
 
@@ -851,7 +851,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             3,
-            DateTime::createFromFormat('W', '٣', null, 'ar-eg')->getWeekOfMonth()
+            DateTime::createFromFormat('W', '٣', locale: 'ar-eg')->getWeekOfMonth()
         );
     }
 
@@ -859,7 +859,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             5,
-            DateTime::createFromFormat('Y w e', '٥ ١ ١', null, 'ar-eg')->getWeekYear()
+            DateTime::createFromFormat('Y w e', '٥ ١ ١', locale: 'ar-eg')->getWeekYear()
         );
     }
 
@@ -867,7 +867,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             2018,
-            DateTime::createFromFormat('Y w e', '٢٠١٨ ١ ٣', null, 'ar-eg')->getWeekYear()
+            DateTime::createFromFormat('Y w e', '٢٠١٨ ١ ٣', locale: 'ar-eg')->getWeekYear()
         );
     }
 
@@ -875,7 +875,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1988,
-            DateTime::createFromFormat('YY w e', '٨٨ ١ ٦', null, 'ar-eg')->getWeekYear()
+            DateTime::createFromFormat('YY w e', '٨٨ ١ ٦', locale: 'ar-eg')->getWeekYear()
         );
     }
 
@@ -883,7 +883,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             2018,
-            DateTime::createFromFormat('YY w e', '٢٠١٨ ١ ٣', null, 'ar-eg')->getWeekYear()
+            DateTime::createFromFormat('YY w e', '٢٠١٨ ١ ٣', locale: 'ar-eg')->getWeekYear()
         );
     }
 
@@ -891,7 +891,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             88,
-            DateTime::createFromFormat('YYY w e', '٠٨٨ ١ ٦', null, 'ar-eg')->getWeekYear()
+            DateTime::createFromFormat('YYY w e', '٠٨٨ ١ ٦', locale: 'ar-eg')->getWeekYear()
         );
     }
 
@@ -899,7 +899,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             2018,
-            DateTime::createFromFormat('YYY w e', '٢٠١٨ ١ ٣', null, 'ar-eg')->getWeekYear()
+            DateTime::createFromFormat('YYY w e', '٢٠١٨ ١ ٣', locale: 'ar-eg')->getWeekYear()
         );
     }
 
@@ -907,7 +907,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             88,
-            DateTime::createFromFormat('YYYY w e', '٠٠٨٨ ١ ٦', null, 'ar-eg')->getWeekYear()
+            DateTime::createFromFormat('YYYY w e', '٠٠٨٨ ١ ٦', locale: 'ar-eg')->getWeekYear()
         );
     }
 
@@ -915,7 +915,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             2018,
-            DateTime::createFromFormat('YYYY w e', '٢٠١٨ ١ ٣', null, 'ar-eg')->getWeekYear()
+            DateTime::createFromFormat('YYYY w e', '٢٠١٨ ١ ٣', locale: 'ar-eg')->getWeekYear()
         );
     }
 
@@ -923,7 +923,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             5,
-            DateTime::createFromFormat('y', '٥', null, 'ar-eg')->getYear()
+            DateTime::createFromFormat('y', '٥', locale: 'ar-eg')->getYear()
         );
     }
 
@@ -931,7 +931,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             2018,
-            DateTime::createFromFormat('y', '٢٠١٨', null, 'ar-eg')->getYear()
+            DateTime::createFromFormat('y', '٢٠١٨', locale: 'ar-eg')->getYear()
         );
     }
 
@@ -939,7 +939,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             1988,
-            DateTime::createFromFormat('yy', '٨٨', null, 'ar-eg')->getYear()
+            DateTime::createFromFormat('yy', '٨٨', locale: 'ar-eg')->getYear()
         );
     }
 
@@ -947,7 +947,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             2018,
-            DateTime::createFromFormat('yy', '٢٠١٨', null, 'ar-eg')->getYear()
+            DateTime::createFromFormat('yy', '٢٠١٨', locale: 'ar-eg')->getYear()
         );
     }
 
@@ -955,7 +955,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             88,
-            DateTime::createFromFormat('yyy', '٠٨٨', null, 'ar-eg')->getYear()
+            DateTime::createFromFormat('yyy', '٠٨٨', locale: 'ar-eg')->getYear()
         );
     }
 
@@ -963,7 +963,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             2018,
-            DateTime::createFromFormat('yyy', '٢٠١٨', null, 'ar-eg')->getYear()
+            DateTime::createFromFormat('yyy', '٢٠١٨', locale: 'ar-eg')->getYear()
         );
     }
 
@@ -971,7 +971,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             88,
-            DateTime::createFromFormat('yyyy', '٠٠٨٨', null, 'ar-eg')->getYear()
+            DateTime::createFromFormat('yyyy', '٠٠٨٨', locale: 'ar-eg')->getYear()
         );
     }
 
@@ -979,7 +979,7 @@ trait FromFormatLocaleTestTrait
     {
         $this->assertSame(
             2018,
-            DateTime::createFromFormat('yyyy', '٢٠١٨', null, 'ar-eg')->getYear()
+            DateTime::createFromFormat('yyyy', '٢٠١٨', locale: 'ar-eg')->getYear()
         );
     }
 }

@@ -17,7 +17,7 @@ trait TextareaTestTrait
     {
         $this->assertSame(
             '<textarea data-test="[1,2]"></textarea>',
-            $this->form->textarea(null, [
+            $this->form->textarea(attributes: [
                 'data-test' => [1, 2],
             ])
         );
@@ -27,7 +27,7 @@ trait TextareaTestTrait
     {
         $this->assertSame(
             '<textarea data-test="&lt;test&gt;"></textarea>',
-            $this->form->textarea(null, [
+            $this->form->textarea(attributes: [
                 'data-test' => '<test>',
             ])
         );
@@ -37,7 +37,7 @@ trait TextareaTestTrait
     {
         $this->assertSame(
             '<textarea class="test"></textarea>',
-            $this->form->textarea(null, [
+            $this->form->textarea(attributes: [
                 '*class*' => 'test',
             ])
         );
@@ -47,7 +47,7 @@ trait TextareaTestTrait
     {
         $this->assertSame(
             '<textarea class="test" id="textarea"></textarea>',
-            $this->form->textarea(null, [
+            $this->form->textarea(attributes: [
                 'class' => 'test',
                 'id' => 'textarea',
             ])
@@ -58,7 +58,7 @@ trait TextareaTestTrait
     {
         $this->assertSame(
             '<textarea class="test" id="textarea"></textarea>',
-            $this->form->textarea(null, [
+            $this->form->textarea(attributes: [
                 'id' => 'textarea',
                 'class' => 'test',
             ])
@@ -77,7 +77,7 @@ trait TextareaTestTrait
     {
         $this->assertSame(
             '<textarea>Test</textarea>',
-            $this->form->textarea(null, [
+            $this->form->textarea(attributes: [
                 'value' => 'Test',
             ])
         );
@@ -87,7 +87,7 @@ trait TextareaTestTrait
     {
         $this->assertSame(
             '<textarea>&lt;test&gt;</textarea>',
-            $this->form->textarea(null, [
+            $this->form->textarea(attributes: [
                 'value' => '<test>',
             ])
         );

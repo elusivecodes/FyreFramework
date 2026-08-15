@@ -103,7 +103,7 @@ trait InputTestTrait
 
     public function testInputIdPrefix(): void
     {
-        $this->view->Form->open(null, idPrefix: 'test');
+        $this->view->Form->open(idPrefix: 'test');
 
         $this->assertSame(
             '<input id="test-input" name="input" type="text" placeholder="Input" />',

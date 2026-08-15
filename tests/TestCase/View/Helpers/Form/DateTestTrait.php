@@ -105,7 +105,7 @@ trait DateTestTrait
 
     public function testDateIdPrefix(): void
     {
-        $this->view->Form->open(null, idPrefix: 'test');
+        $this->view->Form->open(idPrefix: 'test');
 
         $this->assertSame(
             '<input id="test-date" name="date" type="date" />',

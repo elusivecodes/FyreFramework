@@ -111,7 +111,7 @@ trait SelectMultiTestTrait
 
     public function testSelectMultiIdPrefix(): void
     {
-        $this->view->Form->open(null, idPrefix: 'test');
+        $this->view->Form->open(idPrefix: 'test');
 
         $this->assertSame(
             '<input name="select" type="hidden" value="" /><select id="test-select" name="select[]" multiple></select>',

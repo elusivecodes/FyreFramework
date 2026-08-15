@@ -49,7 +49,7 @@ class Hex extends Rgb
         }
 
         if ($name && $this->alpha >= 1) {
-            $hex = $this->getHex(false, false);
+            $hex = $this->getHex(shortenHex: false);
             $colorName = array_search('#'.$hex, static::CSS_COLORS, true);
 
             if ($colorName !== false) {

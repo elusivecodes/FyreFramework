@@ -396,7 +396,7 @@ final class RateLimiterMiddlewareTest extends TestCase
         $limiter = $this->container->build(FixedWindowRateLimiter::class);
         $request = $this->container->build(ServerRequest::class);
 
-        $limiter->checkLimit($request, null, 0);
+        $limiter->checkLimit($request, window: 0);
     }
 
     public function testIpIdentifierIgnoresForwardedHeaderByDefault(): void

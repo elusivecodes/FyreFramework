@@ -17,7 +17,7 @@ trait InputTestTrait
     {
         $this->assertSame(
             '<input data-test="[1,2]" type="text" />',
-            $this->form->input(null, [
+            $this->form->input(attributes: [
                 'data-test' => [1, 2],
             ])
         );
@@ -27,7 +27,7 @@ trait InputTestTrait
     {
         $this->assertSame(
             '<input data-test="&lt;test&gt;" type="text" />',
-            $this->form->input(null, [
+            $this->form->input(attributes: [
                 'data-test' => '<test>',
             ])
         );
@@ -37,7 +37,7 @@ trait InputTestTrait
     {
         $this->assertSame(
             '<input class="test" type="text" />',
-            $this->form->input(null, [
+            $this->form->input(attributes: [
                 '*class*' => 'test',
             ])
         );
@@ -47,7 +47,7 @@ trait InputTestTrait
     {
         $this->assertSame(
             '<input class="test" id="input" type="text" />',
-            $this->form->input(null, [
+            $this->form->input(attributes: [
                 'class' => 'test',
                 'id' => 'input',
             ])
@@ -58,7 +58,7 @@ trait InputTestTrait
     {
         $this->assertSame(
             '<input class="test" id="input" type="text" />',
-            $this->form->input(null, [
+            $this->form->input(attributes: [
                 'id' => 'input',
                 'class' => 'test',
             ])

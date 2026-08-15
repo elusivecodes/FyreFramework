@@ -289,7 +289,7 @@ class EventManager implements EventDispatcherInterface, ListenerProviderInterfac
      */
     public function trigger(string $name, mixed ...$args): Event
     {
-        return (new Event($name, null, $args)) |> $this->dispatch(...);
+        return (new Event($name, data: $args)) |> $this->dispatch(...);
     }
 
     /**

@@ -17,7 +17,7 @@ trait SelectTestTrait
     {
         $this->assertSame(
             '<select data-test="[1,2]"></select>',
-            $this->form->select(null, [
+            $this->form->select(attributes: [
                 'data-test' => [1, 2],
             ])
         );
@@ -27,7 +27,7 @@ trait SelectTestTrait
     {
         $this->assertSame(
             '<select data-test="&lt;test&gt;"></select>',
-            $this->form->select(null, [
+            $this->form->select(attributes: [
                 'data-test' => '<test>',
             ])
         );
@@ -37,7 +37,7 @@ trait SelectTestTrait
     {
         $this->assertSame(
             '<select class="test"></select>',
-            $this->form->select(null, [
+            $this->form->select(attributes: [
                 '*class*' => 'test',
             ])
         );
@@ -47,7 +47,7 @@ trait SelectTestTrait
     {
         $this->assertSame(
             '<select class="test" id="select"></select>',
-            $this->form->select(null, [
+            $this->form->select(attributes: [
                 'class' => 'test',
                 'id' => 'select',
             ])
@@ -58,7 +58,7 @@ trait SelectTestTrait
     {
         $this->assertSame(
             '<select class="test" id="select"></select>',
-            $this->form->select(null, [
+            $this->form->select(attributes: [
                 'id' => 'select',
                 'class' => 'test',
             ])
@@ -165,9 +165,9 @@ trait SelectTestTrait
     {
         $this->assertSame(
             '<select><option value="0">A</option><option value="1" selected>B</option></select>',
-            $this->form->select(null, [
+            $this->form->select(attributes: [
                 'value' => 1,
-            ], [
+            ], options: [
                 'A',
                 'B',
             ])

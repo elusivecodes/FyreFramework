@@ -1149,7 +1149,10 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
     public function sort(Closure|int $callback = self::SORT_NATURAL, bool $descending = false): static
     {
         if (is_int($callback)) {
-            return $this->sortBy(null, $callback, $descending);
+            return $this->sortBy(
+                sort: $callback,
+                descending: $descending
+            );
         }
 
         $items = $this->toArray();

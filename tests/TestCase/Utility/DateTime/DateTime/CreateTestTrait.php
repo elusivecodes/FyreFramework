@@ -63,7 +63,7 @@ trait CreateTestTrait
     {
         $this->assertSame(
             'الثلاثاء يناير ٠١ ٢٠١٩ ٠٠:٠٠:٠٠ +0000 (UTC)',
-            new DateTime('January 1, 2019 00:00:00', null, 'ar-eg')->toString()
+            new DateTime('January 1, 2019 00:00:00', locale: 'ar-eg')->toString()
         );
     }
 
@@ -159,7 +159,7 @@ trait CreateTestTrait
     {
         $this->assertSame(
             'الثلاثاء يناير ٠١ ٢٠١٩ ٠٠:٠٠:٠٠ +0000 (UTC)',
-            DateTime::createFromArray([2019, 1, 1, 0, 0, 0], null, 'ar-eg')->toString()
+            DateTime::createFromArray([2019, 1, 1, 0, 0, 0], locale: 'ar-eg')->toString()
         );
     }
 
@@ -199,7 +199,7 @@ trait CreateTestTrait
     {
         $this->assertSame(
             'الثلاثاء يناير ٠١ ٢٠١٩ ٠٠:٠٠:٠٠ +0000 (UTC)',
-            DateTime::createFromIsoString('2019-01-01T00:00:00.000+00:00', null, 'ar-eg')->toString()
+            DateTime::createFromIsoString('2019-01-01T00:00:00.000+00:00', locale: 'ar-eg')->toString()
         );
     }
 
@@ -243,7 +243,7 @@ trait CreateTestTrait
         $date = new \DateTime('@1546300800');
         $this->assertSame(
             'الثلاثاء يناير ٠١ ٢٠١٩ ٠٠:٠٠:٠٠ +0000 (GMT)',
-            DateTime::createFromNativeDateTime($date, null, 'ar-eg')->toString()
+            DateTime::createFromNativeDateTime($date, locale: 'ar-eg')->toString()
         );
     }
 
@@ -276,7 +276,7 @@ trait CreateTestTrait
     {
         $this->assertSame(
             'الثلاثاء يناير ٠١ ٢٠١٩ ٠٠:٠٠:٠٠ +0000 (UTC)',
-            DateTime::createFromTimestamp(1546300800, null, 'ar-eg')->toString()
+            DateTime::createFromTimestamp(1546300800, locale: 'ar-eg')->toString()
         );
     }
 
@@ -317,7 +317,7 @@ trait CreateTestTrait
     {
         $this->assertSame(
             'ar-eg',
-            DateTime::now(null, 'ar-eg')->getLocale()
+            DateTime::now(locale: 'ar-eg')->getLocale()
         );
     }
 

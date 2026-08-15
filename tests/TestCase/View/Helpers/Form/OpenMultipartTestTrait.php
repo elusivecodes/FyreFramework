@@ -19,7 +19,7 @@ trait OpenMultipartTestTrait
     {
         $this->assertSame(
             '<form action="/test/test-method" method="post" enctype="multipart/form-data" accept-charset="UTF-8">',
-            $this->view->Form->openMultipart(null, [
+            $this->view->Form->openMultipart(attributes: [
                 'action' => '/test/test-method',
             ])
         );
@@ -29,7 +29,7 @@ trait OpenMultipartTestTrait
     {
         $this->assertSame(
             '<form data-test="[1,2]" action="/test" method="post" enctype="multipart/form-data" accept-charset="UTF-8">',
-            $this->view->Form->openMultipart(null, [
+            $this->view->Form->openMultipart(attributes: [
                 'data-test' => [1, 2],
             ])
         );
@@ -39,7 +39,7 @@ trait OpenMultipartTestTrait
     {
         $this->assertSame(
             '<form data-test="&lt;test&gt;" action="/test" method="post" enctype="multipart/form-data" accept-charset="UTF-8">',
-            $this->view->Form->openMultipart(null, [
+            $this->view->Form->openMultipart(attributes: [
                 'data-test' => '<test>',
             ])
         );
@@ -49,7 +49,7 @@ trait OpenMultipartTestTrait
     {
         $this->assertSame(
             '<form class="test" action="/test" method="post" enctype="multipart/form-data" accept-charset="UTF-8">',
-            $this->view->Form->openMultipart(null, [
+            $this->view->Form->openMultipart(attributes: [
                 '*class*' => 'test',
             ])
         );
@@ -59,7 +59,7 @@ trait OpenMultipartTestTrait
     {
         $this->assertSame(
             '<form class="test" id="form" action="/test" method="post" enctype="multipart/form-data" accept-charset="UTF-8">',
-            $this->view->Form->openMultipart(null, [
+            $this->view->Form->openMultipart(attributes: [
                 'class' => 'test',
                 'id' => 'form',
             ])
@@ -70,7 +70,7 @@ trait OpenMultipartTestTrait
     {
         $this->assertSame(
             '<form class="test" id="form" action="/test" method="post" enctype="multipart/form-data" accept-charset="UTF-8">',
-            $this->view->Form->openMultipart(null, [
+            $this->view->Form->openMultipart(attributes: [
                 'id' => 'form',
                 'class' => 'test',
             ])

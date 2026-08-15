@@ -162,7 +162,7 @@ trait RadioTestTrait
 
     public function testRadioIdPrefix(): void
     {
-        $this->view->Form->open(null, idPrefix: 'test');
+        $this->view->Form->open(idPrefix: 'test');
 
         $this->assertSame(
             '<input id="test-radio" name="radio" type="radio" value="1" />',
