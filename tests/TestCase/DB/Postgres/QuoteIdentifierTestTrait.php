@@ -3,101 +3,44 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Postgres;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+
 trait QuoteIdentifierTestTrait
 {
-    public function testQuoteIdentifier(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function quoteIdentifierProvider(): array
     {
-        $this->assertSame(
-            '"a"',
-            $this->db->quoteIdentifier('a')
-        );
+        return [
+            'basic' => ['a', '"a"'],
+            'alias' => ['a.b AS c', '"a"."b" AS "c"'],
+            'alias multiple' => ['a.b.c AS d', '"a"."b"."c" AS "d"'],
+            'empty' => ['', ''],
+            'function' => ['X(a)', 'X("a")'],
+            'function alias' => ['X(a.b) AS c', 'X("a"."b") AS "c"'],
+            'function cast' => ['CAST(LOCALTIMESTAMP(0) AS DATE)', 'CAST(LOCALTIMESTAMP(0) AS DATE)'],
+            'function expression' => ['X(DISTINCT a) AS c', 'X(DISTINCT a) AS "c"'],
+            'function nested' => ['X(Y(a))', 'X(Y("a"))'],
+            'function qualified name' => ['X.Y(a)', 'X.Y("a")'],
+            'function qualified name alias' => ['X.Y(a) AS b', 'X.Y("a") AS "b"'],
+            'function wildcard' => ['X(*)', 'X(*)'],
+            'qualified' => ['a.b', '"a"."b"'],
+            'qualified function' => ['X(a.b)', 'X("a"."b")'],
+            'qualified multiple' => ['a.b.c', '"a"."b"."c"'],
+            'qualified multiple wildcard' => ['a.b.*', '"a"."b".*'],
+            'qualified wildcard' => ['a.*', '"a".*'],
+            'unmatched' => ['a.*.b', 'a.*.b'],
+            'wildcard' => ['*', '*'],
+        ];
     }
 
-    public function testQuoteIdentifierAlias(): void
+    #[DataProvider('quoteIdentifierProvider')]
+    public function testQuoteIdentifier(string $identifier, string $expected): void
     {
         $this->assertSame(
-            '"a"."b" AS "c"',
-            $this->db->quoteIdentifier('a.b AS c')
-        );
-    }
-
-    public function testQuoteIdentifierAliasMultiple(): void
-    {
-        $this->assertSame(
-            '"a"."b"."c" AS "d"',
-            $this->db->quoteIdentifier('a.b.c AS d')
-        );
-    }
-
-    public function testQuoteIdentifierEmpty(): void
-    {
-        $this->assertSame(
-            '',
-            $this->db->quoteIdentifier('')
-        );
-    }
-
-    public function testQuoteIdentifierFunction(): void
-    {
-        $this->assertSame(
-            'X("a")',
-            $this->db->quoteIdentifier('X(a)')
-        );
-    }
-
-    public function testQuoteIdentifierFunctionAlias(): void
-    {
-        $this->assertSame(
-            'X("a"."b") AS "c"',
-            $this->db->quoteIdentifier('X(a.b) AS c')
-        );
-    }
-
-    public function testQuoteIdentifierFunctionCast(): void
-    {
-        $this->assertSame(
-            'CAST(LOCALTIMESTAMP(0) AS DATE)',
-            $this->db->quoteIdentifier('CAST(LOCALTIMESTAMP(0) AS DATE)')
-        );
-    }
-
-    public function testQuoteIdentifierFunctionExpression(): void
-    {
-        $this->assertSame(
-            'X(DISTINCT a) AS "c"',
-            $this->db->quoteIdentifier('X(DISTINCT a) AS c')
-        );
-    }
-
-    public function testQuoteIdentifierFunctionNested(): void
-    {
-        $this->assertSame(
-            'X(Y("a"))',
-            $this->db->quoteIdentifier('X(Y(a))')
-        );
-    }
-
-    public function testQuoteIdentifierFunctionQualifiedName(): void
-    {
-        $this->assertSame(
-            'X.Y("a")',
-            $this->db->quoteIdentifier('X.Y(a)')
-        );
-    }
-
-    public function testQuoteIdentifierFunctionQualifiedNameAlias(): void
-    {
-        $this->assertSame(
-            'X.Y("a") AS "b"',
-            $this->db->quoteIdentifier('X.Y(a) AS b')
-        );
-    }
-
-    public function testQuoteIdentifierFunctionWildcard(): void
-    {
-        $this->assertSame(
-            'X(*)',
-            $this->db->quoteIdentifier('X(*)')
+            $expected,
+            $this->db->quoteIdentifier($identifier)
         );
     }
 
@@ -106,62 +49,6 @@ trait QuoteIdentifierTestTrait
         $this->assertSame(
             '"a""b"',
             $this->db->quoteIdentifierPart('a"b')
-        );
-    }
-
-    public function testQuoteIdentifierQualified(): void
-    {
-        $this->assertSame(
-            '"a"."b"',
-            $this->db->quoteIdentifier('a.b')
-        );
-    }
-
-    public function testQuoteIdentifierQualifiedFunction(): void
-    {
-        $this->assertSame(
-            'X("a"."b")',
-            $this->db->quoteIdentifier('X(a.b)')
-        );
-    }
-
-    public function testQuoteIdentifierQualifiedMultiple(): void
-    {
-        $this->assertSame(
-            '"a"."b"."c"',
-            $this->db->quoteIdentifier('a.b.c')
-        );
-    }
-
-    public function testQuoteIdentifierQualifiedMultipleWildcard(): void
-    {
-        $this->assertSame(
-            '"a"."b".*',
-            $this->db->quoteIdentifier('a.b.*')
-        );
-    }
-
-    public function testQuoteIdentifierQualifiedWildcard(): void
-    {
-        $this->assertSame(
-            '"a".*',
-            $this->db->quoteIdentifier('a.*')
-        );
-    }
-
-    public function testQuoteIdentifierUnmatched(): void
-    {
-        $this->assertSame(
-            'a.*.b',
-            $this->db->quoteIdentifier('a.*.b')
-        );
-    }
-
-    public function testQuoteIdentifierWildcard(): void
-    {
-        $this->assertSame(
-            '*',
-            $this->db->quoteIdentifier('*')
         );
     }
 }

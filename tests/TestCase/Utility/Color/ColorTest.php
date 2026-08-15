@@ -24,565 +24,164 @@ use Fyre\Utility\Color\Colors\SrgbLinear;
 use Fyre\Utility\Color\Colors\XyzD50;
 use Fyre\Utility\Color\Colors\XyzD65;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use function array_diff;
 use function class_uses;
 use function serialize;
+use function sprintf;
 use function unserialize;
 
+/**
+ * @phpstan-type FactoryMethod 'createFromA98Rgb'|'createFromDisplayP3'|'createFromDisplayP3Linear'|'createFromHsl'|'createFromHwb'|'createFromLab'|'createFromLch'|'createFromOkLab'|'createFromOkLch'|'createFromProPhotoRgb'|'createFromRec2020'|'createFromRgb'|'createFromSrgb'|'createFromSrgbLinear'|'createFromXyzD50'|'createFromXyzD65'
+ */
 final class ColorTest extends TestCase
 {
-    public function testCreateFromA98Rgb(): void
+    /**
+     * @return array<string, array{string, (float|int)[], class-string<Color>, string}>
+     */
+    public static function factoryProvider(): array
     {
-        $color = Color::createFromA98Rgb(0.9, 0.9, 0.98);
-
-        $this->assertInstanceOf(A98Rgb::class, $color);
-        $this->assertSame('color(a98-rgb 0.9 0.9 0.98)', $color->toString());
+        return [
+            'a 98 rgb' => ['createFromA98Rgb', [0.9, 0.9, 0.98], A98Rgb::class, 'color(a98-rgb 0.9 0.9 0.98)'],
+            'display p 3' => ['createFromDisplayP3', [0.9, 0.9, 0.97], DisplayP3::class, 'color(display-p3 0.9 0.9 0.97)'],
+            'display p 3 linear' => ['createFromDisplayP3Linear', [0.79, 0.79, 0.94], DisplayP3Linear::class, 'color(display-p3-linear 0.79 0.79 0.94)'],
+            'hsl' => ['createFromHsl', [240, 66.67, 94.12], Hsl::class, 'hsl(240deg 66.67% 94.12%)'],
+            'hwb' => ['createFromHwb', [120, 90.2, 1.96], Hwb::class, 'hwb(120deg 90.2% 1.96%)'],
+            'lab' => ['createFromLab', [91.74, 2.78, -9.72], Lab::class, 'lab(91.74% 2.78 -9.72)'],
+            'lch' => ['createFromLch', [91.74, 10.11, 285.93], Lch::class, 'lch(91.74% 10.11 285.93deg)'],
+            'ok lab' => ['createFromOkLab', [0.93, 0.01, -0.03], OkLab::class, 'oklab(0.93 0.01 -0.03)'],
+            'ok lch' => ['createFromOkLch', [0.93, 0.03, 285.8], OkLch::class, 'oklch(0.93 0.03 285.8deg)'],
+            'pro photo rgb' => ['createFromProPhotoRgb', [0.89, 0.88, 0.96], ProPhotoRgb::class, 'color(prophoto-rgb 0.89 0.88 0.96)'],
+            'rec 2020' => ['createFromRec2020', [0.89, 0.89, 0.97], Rec2020::class, 'color(rec2020 0.89 0.89 0.97)'],
+            'rgb' => ['createFromRgb', [230, 230, 250], Rgb::class, 'rgb(230 230 250)'],
+            'srgb' => ['createFromSrgb', [0.9, 0.9, 0.98], Srgb::class, 'color(srgb 0.9 0.9 0.98)'],
+            'srgb linear' => ['createFromSrgbLinear', [0.79, 0.79, 0.96], SrgbLinear::class, 'color(srgb-linear 0.79 0.79 0.96)'],
+            'xyz d 50' => ['createFromXyzD50', [0.79, 0.8, 0.77], XyzD50::class, 'color(xyz-d50 0.79 0.8 0.77)'],
+            'xyz d 65' => ['createFromXyzD65', [0.78, 0.8, 1.02], XyzD65::class, 'color(xyz-d65 0.78 0.8 1.02)'],
+        ];
     }
 
-    public function testCreateFromDisplayP3(): void
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function invalidStringProvider(): array
     {
-        $color = Color::createFromDisplayP3(0.9, 0.9, 0.97);
-
-        $this->assertInstanceOf(DisplayP3::class, $color);
-        $this->assertSame('color(display-p3 0.9 0.9 0.97)', $color->toString());
+        return [
+            'invalid' => ['invalid'],
+            'hex length' => ['#12345'],
+            'hex length with alpha' => ['#1234567'],
+        ];
     }
 
-    public function testCreateFromDisplayP3Linear(): void
+    /**
+     * @return array<string, array{string, class-string<Color>, string}>
+     */
+    public static function stringProvider(): array
     {
-        $color = Color::createFromDisplayP3Linear(0.79, 0.79, 0.94);
-
-        $this->assertInstanceOf(DisplayP3Linear::class, $color);
-        $this->assertSame('color(display-p3-linear 0.79 0.79 0.94)', $color->toString());
+        return [
+            'a 98 rgb' => ['color(a98-rgb 0.9 0.9 0.98)', A98Rgb::class, 'color(a98-rgb 0.9 0.9 0.98)'],
+            'a 98 rgb percent' => ['color(a98-rgb 90% 90% 98%)', A98Rgb::class, 'color(a98-rgb 0.9 0.9 0.98)'],
+            'color percent mapping' => ['color(display-p3 25% 50% 75%)', DisplayP3::class, 'color(display-p3 0.25 0.5 0.75)'],
+            'display p 3' => ['color(display-p3 0.9 0.9 0.97)', DisplayP3::class, 'color(display-p3 0.9 0.9 0.97)'],
+            'display p 3 linear' => ['color(display-p3-linear 0.79 0.79 0.94)', DisplayP3Linear::class, 'color(display-p3-linear 0.79 0.79 0.94)'],
+            'display p 3 linear percent' => ['color(display-p3-linear 79% 79% 94%)', DisplayP3Linear::class, 'color(display-p3-linear 0.79 0.79 0.94)'],
+            'display p 3 percent' => ['color(display-p3 90% 90% 97%)', DisplayP3::class, 'color(display-p3 0.9 0.9 0.97)'],
+            'hex' => ['#e6e6fa', Rgb::class, '#e6e6fa'],
+            'hex short' => ['#f00', Rgb::class, '#f00'],
+            'hex short with alpha' => ['#f008', Rgb::class, '#f008'],
+            'hex with alpha' => ['#e6e6fa80', Rgb::class, '#e6e6fa80'],
+            'hsl' => ['hsl(240deg 66.67% 94.12%)', Hsl::class, 'hsl(240deg 66.67% 94.12%)'],
+            'hsl grad' => ['hsl(266.6667grad 66.67% 94.12%)', Hsl::class, 'hsl(240deg 66.67% 94.12%)'],
+            'hsl legacy' => ['hsl(240, 66.67%, 94.12%)', Hsl::class, 'hsl(240deg 66.67% 94.12%)'],
+            'hsl legacy with alpha' => ['hsla(240, 66.67%, 94.12%, 0.5)', Hsl::class, 'hsl(240deg 66.67% 94.12% / 50%)'],
+            'hsl percent' => ['hsl(66.667% 66.67% 94.12%)', Hsl::class, 'hsl(240deg 66.67% 94.12%)'],
+            'hsl percent alpha' => ['hsl(240deg 66.67% 94.12% / 50%)', Hsl::class, 'hsl(240deg 66.67% 94.12% / 50%)'],
+            'hsl rad' => ['hsl(4.18879rad 66.67% 94.12%)', Hsl::class, 'hsl(240deg 66.67% 94.12%)'],
+            'hsl turn' => ['hsl(0.66667turn 66.67% 94.12%)', Hsl::class, 'hsl(240deg 66.67% 94.12%)'],
+            'hsl with alpha' => ['hsl(240deg 66.67% 94.12% / 50%)', Hsl::class, 'hsl(240deg 66.67% 94.12% / 50%)'],
+            'hwb' => ['hwb(240deg 90.2% 1.96%)', Hwb::class, 'hwb(240deg 90.2% 1.96%)'],
+            'hwb legacy' => ['hwb(240, 90.2%, 1.96%)', Hwb::class, 'hwb(240deg 90.2% 1.96%)'],
+            'hwb with alpha' => ['hwb(240deg 90.2% 1.96% / 0.5)', Hwb::class, 'hwb(240deg 90.2% 1.96% / 50%)'],
+            'lab' => ['lab(91.74 2.78 -9.72)', Lab::class, 'lab(91.74% 2.78 -9.72)'],
+            'lab percent' => ['lab(91.74% 2.224% -7.776%)', Lab::class, 'lab(91.74% 2.78 -9.72)'],
+            'lab percent mapping' => ['lab(50% 100% -100%)', Lab::class, 'lab(50% 125 -125)'],
+            'lch' => ['lch(91.74 10.11 285.93)', Lch::class, 'lch(91.74% 10.11 285.93deg)'],
+            'lch negative chroma' => ['lch(50% -10 120)', Lch::class, 'lch(50% 0 120deg)'],
+            'lch percent' => ['lch(91.74% 6.74% 285.93)', Lch::class, 'lch(91.74% 10.11 285.93deg)'],
+            'lch percent mapping' => ['lch(50% 100% 120)', Lch::class, 'lch(50% 150 120deg)'],
+            'name' => ['red', Rgb::class, '#f00'],
+            'ok lab' => ['oklab(0.93 0.01 -0.03)', OkLab::class, 'oklab(0.93 0.01 -0.03)'],
+            'ok lab percent' => ['oklab(93% 25% -75%)', OkLab::class, 'oklab(0.93 0.1 -0.3)'],
+            'ok lab percent mapping' => ['oklab(50% 100% -100%)', OkLab::class, 'oklab(0.5 0.4 -0.4)'],
+            'ok lch' => ['oklch(0.93 0.03 285.8)', OkLch::class, 'oklch(0.93 0.03 285.8deg)'],
+            'ok lch negative chroma' => ['oklch(50% -10% 120)', OkLch::class, 'oklch(0.5 0 120deg)'],
+            'ok lch percent' => ['oklch(93% 75% 285.8)', OkLch::class, 'oklch(0.93 0.3 285.8deg)'],
+            'ok lch percent mapping' => ['oklch(50% 100% 120)', OkLch::class, 'oklch(0.5 0.4 120deg)'],
+            'out of range color function' => ['color(srgb 1.2 0 0)', Srgb::class, 'color(srgb 1.2 0 0)'],
+            'out of range rgb' => ['rgb(300 0 0)', Rgb::class, 'rgb(300 0 0)'],
+            'pro photo rgb' => ['color(prophoto-rgb 0.89 0.88 0.96)', ProPhotoRgb::class, 'color(prophoto-rgb 0.89 0.88 0.96)'],
+            'pro photo rgb percent' => ['color(prophoto-rgb 89% 88% 96%)', ProPhotoRgb::class, 'color(prophoto-rgb 0.89 0.88 0.96)'],
+            'rec 2020' => ['color(rec2020 0.89 0.89 0.97)', Rec2020::class, 'color(rec2020 0.89 0.89 0.97)'],
+            'rec 2020 percent' => ['color(rec2020 89% 89% 97%)', Rec2020::class, 'color(rec2020 0.89 0.89 0.97)'],
+            'rgb' => ['rgb(230 230 250)', Rgb::class, 'rgb(230 230 250)'],
+            'rgba legacy' => ['rgba(230, 230, 250, 0.5)', Rgb::class, 'rgb(230 230 250 / 50%)'],
+            'rgb legacy' => ['rgb(230, 230, 250)', Rgb::class, 'rgb(230 230 250)'],
+            'rgb with alpha' => ['rgb(230 230 250 / 50%)', Rgb::class, 'rgb(230 230 250 / 50%)'],
+            'srgb' => ['color(srgb 0.9 0.9 0.98)', Srgb::class, 'color(srgb 0.9 0.9 0.98)'],
+            'srgb linear' => ['color(srgb-linear 0.79 0.79 0.96)', SrgbLinear::class, 'color(srgb-linear 0.79 0.79 0.96)'],
+            'srgb linear percent' => ['color(srgb-linear 79% 79% 96%)', SrgbLinear::class, 'color(srgb-linear 0.79 0.79 0.96)'],
+            'srgb percent' => ['color(srgb 90% 90% 98%)', Srgb::class, 'color(srgb 0.9 0.9 0.98)'],
+            'xyz' => ['color(xyz 0.78 0.8 1.02)', XyzD65::class, 'color(xyz-d65 0.78 0.8 1.02)'],
+            'xyz d 50' => ['color(xyz-d50 0.79 0.8 0.77)', XyzD50::class, 'color(xyz-d50 0.79 0.8 0.77)'],
+            'xyz d 50 percent' => ['color(xyz-d50 79% 80% 77%)', XyzD50::class, 'color(xyz-d50 0.79 0.8 0.77)'],
+            'xyz d 65' => ['color(xyz-d65 0.78 0.8 1.02)', XyzD65::class, 'color(xyz-d65 0.78 0.8 1.02)'],
+            'xyz d 65 percent' => ['color(xyz-d65 78% 80% 102%)', XyzD65::class, 'color(xyz-d65 0.78 0.8 1.02)'],
+            'xyz percent' => ['color(xyz 78% 80% 102%)', XyzD65::class, 'color(xyz-d65 0.78 0.8 1.02)'],
+        ];
     }
 
-    public function testCreateFromHsl(): void
-    {
-        $color = Color::createFromHsl(240, 66.67, 94.12);
+    /**
+     * @param FactoryMethod $method
+     * @param (float|int)[] $arguments
+     * @param class-string<Color> $expectedClass
+     */
+    #[DataProvider('factoryProvider')]
+    public function testCreateFromFactory(
+        string $method,
+        array $arguments,
+        string $expectedClass,
+        string $expected
+    ): void {
+        $color = Color::$method(...$arguments);
 
-        $this->assertInstanceOf(Hsl::class, $color);
-        $this->assertSame('hsl(240deg 66.67% 94.12%)', $color->toString());
+        $this->assertInstanceOf($expectedClass, $color);
+        $this->assertSame($expected, $color->toString());
     }
 
-    public function testCreateFromHwb(): void
+    /**
+     * @param class-string<Color> $expectedClass
+     */
+    #[DataProvider('stringProvider')]
+    public function testCreateFromString(string $value, string $expectedClass, string $expected): void
     {
-        $color = Color::createFromHwb(120, 90.2, 1.96);
+        $color = Color::createFromString($value);
 
-        $this->assertInstanceOf(Hwb::class, $color);
-        $this->assertSame('hwb(120deg 90.2% 1.96%)', $color->toString());
+        $this->assertInstanceOf($expectedClass, $color);
+        $this->assertSame($expected, $color->toString());
     }
 
-    public function testCreateFromLab(): void
-    {
-        $color = Color::createFromLab(91.74, 2.78, -9.72);
-
-        $this->assertInstanceOf(Lab::class, $color);
-        $this->assertSame('lab(91.74% 2.78 -9.72)', $color->toString());
-    }
-
-    public function testCreateFromLch(): void
-    {
-        $color = Color::createFromLch(91.74, 10.11, 285.93);
-
-        $this->assertInstanceOf(Lch::class, $color);
-        $this->assertSame('lch(91.74% 10.11 285.93deg)', $color->toString());
-    }
-
-    public function testCreateFromOkLab(): void
-    {
-        $color = Color::createFromOkLab(0.93, 0.01, -0.03);
-
-        $this->assertInstanceOf(OkLab::class, $color);
-        $this->assertSame('oklab(0.93 0.01 -0.03)', $color->toString());
-    }
-
-    public function testCreateFromOkLch(): void
-    {
-        $color = Color::createFromOkLch(0.93, 0.03, 285.8);
-
-        $this->assertInstanceOf(OkLch::class, $color);
-        $this->assertSame('oklch(0.93 0.03 285.8deg)', $color->toString());
-    }
-
-    public function testCreateFromProPhotoRgb(): void
-    {
-        $color = Color::createFromProPhotoRgb(0.89, 0.88, 0.96);
-
-        $this->assertInstanceOf(ProPhotoRgb::class, $color);
-        $this->assertSame('color(prophoto-rgb 0.89 0.88 0.96)', $color->toString());
-    }
-
-    public function testCreateFromRec2020(): void
-    {
-        $color = Color::createFromRec2020(0.89, 0.89, 0.97);
-
-        $this->assertInstanceOf(Rec2020::class, $color);
-        $this->assertSame('color(rec2020 0.89 0.89 0.97)', $color->toString());
-    }
-
-    public function testCreateFromRgb(): void
-    {
-        $color = Color::createFromRgb(230, 230, 250);
-
-        $this->assertInstanceOf(Rgb::class, $color);
-        $this->assertSame('rgb(230 230 250)', $color->toString());
-    }
-
-    public function testCreateFromSrgb(): void
-    {
-        $color = Color::createFromSrgb(0.9, 0.9, 0.98);
-
-        $this->assertInstanceOf(Srgb::class, $color);
-        $this->assertSame('color(srgb 0.9 0.9 0.98)', $color->toString());
-    }
-
-    public function testCreateFromSrgbLinear(): void
-    {
-        $color = Color::createFromSrgbLinear(0.79, 0.79, 0.96);
-
-        $this->assertInstanceOf(SrgbLinear::class, $color);
-        $this->assertSame('color(srgb-linear 0.79 0.79 0.96)', $color->toString());
-    }
-
-    public function testCreateFromStringA98Rgb(): void
-    {
-        $color = Color::createFromString('color(a98-rgb 0.9 0.9 0.98)');
-
-        $this->assertInstanceOf(A98Rgb::class, $color);
-        $this->assertSame('color(a98-rgb 0.9 0.9 0.98)', $color->toString());
-    }
-
-    public function testCreateFromStringA98RgbPercent(): void
-    {
-        $color = Color::createFromString('color(a98-rgb 90% 90% 98%)');
-
-        $this->assertInstanceOf(A98Rgb::class, $color);
-        $this->assertSame('color(a98-rgb 0.9 0.9 0.98)', $color->toString());
-    }
-
-    public function testCreateFromStringColorPercentMapping(): void
-    {
-        $color = Color::createFromString('color(display-p3 25% 50% 75%)');
-
-        $this->assertInstanceOf(DisplayP3::class, $color);
-        $this->assertSame('color(display-p3 0.25 0.5 0.75)', $color->toString());
-    }
-
-    public function testCreateFromStringDisplayP3(): void
-    {
-        $color = Color::createFromString('color(display-p3 0.9 0.9 0.97)');
-
-        $this->assertInstanceOf(DisplayP3::class, $color);
-        $this->assertSame('color(display-p3 0.9 0.9 0.97)', $color->toString());
-    }
-
-    public function testCreateFromStringDisplayP3Linear(): void
-    {
-        $color = Color::createFromString('color(display-p3-linear 0.79 0.79 0.94)');
-
-        $this->assertInstanceOf(DisplayP3Linear::class, $color);
-        $this->assertSame('color(display-p3-linear 0.79 0.79 0.94)', $color->toString());
-    }
-
-    public function testCreateFromStringDisplayP3LinearPercent(): void
-    {
-        $color = Color::createFromString('color(display-p3-linear 79% 79% 94%)');
-
-        $this->assertInstanceOf(DisplayP3Linear::class, $color);
-        $this->assertSame('color(display-p3-linear 0.79 0.79 0.94)', $color->toString());
-    }
-
-    public function testCreateFromStringDisplayP3Percent(): void
-    {
-        $color = Color::createFromString('color(display-p3 90% 90% 97%)');
-
-        $this->assertInstanceOf(DisplayP3::class, $color);
-        $this->assertSame('color(display-p3 0.9 0.9 0.97)', $color->toString());
-    }
-
-    public function testCreateFromStringHex(): void
-    {
-        $color = Color::createFromString('#e6e6fa');
-
-        $this->assertInstanceOf(Rgb::class, $color);
-        $this->assertSame('#e6e6fa', $color->toString());
-    }
-
-    public function testCreateFromStringHexShort(): void
-    {
-        $color = Color::createFromString('#f00');
-
-        $this->assertInstanceOf(Rgb::class, $color);
-        $this->assertSame('#f00', $color->toString());
-    }
-
-    public function testCreateFromStringHexShortWithAlpha(): void
-    {
-        $color = Color::createFromString('#f008');
-
-        $this->assertInstanceOf(Rgb::class, $color);
-        $this->assertSame('#f008', $color->toString());
-    }
-
-    public function testCreateFromStringHexWithAlpha(): void
-    {
-        $color = Color::createFromString('#e6e6fa80');
-
-        $this->assertInstanceOf(Rgb::class, $color);
-        $this->assertSame('#e6e6fa80', $color->toString());
-    }
-
-    public function testCreateFromStringHsl(): void
-    {
-        $color = Color::createFromString('hsl(240deg 66.67% 94.12%)');
-
-        $this->assertInstanceOf(Hsl::class, $color);
-        $this->assertSame('hsl(240deg 66.67% 94.12%)', $color->toString());
-    }
-
-    public function testCreateFromStringHslGrad(): void
-    {
-        $color = Color::createFromString('hsl(266.6667grad 66.67% 94.12%)');
-
-        $this->assertInstanceOf(Hsl::class, $color);
-        $this->assertSame('hsl(240deg 66.67% 94.12%)', $color->toString());
-    }
-
-    public function testCreateFromStringHslLegacy(): void
-    {
-        $color = Color::createFromString('hsl(240, 66.67%, 94.12%)');
-
-        $this->assertInstanceOf(Hsl::class, $color);
-        $this->assertSame('hsl(240deg 66.67% 94.12%)', $color->toString());
-    }
-
-    public function testCreateFromStringHslLegacyWithAlpha(): void
-    {
-        $color = Color::createFromString('hsla(240, 66.67%, 94.12%, 0.5)');
-
-        $this->assertInstanceOf(Hsl::class, $color);
-        $this->assertSame('hsl(240deg 66.67% 94.12% / 50%)', $color->toString());
-    }
-
-    public function testCreateFromStringHslPercent(): void
-    {
-        $color = Color::createFromString('hsl(66.667% 66.67% 94.12%)');
-
-        $this->assertInstanceOf(Hsl::class, $color);
-        $this->assertSame('hsl(240deg 66.67% 94.12%)', $color->toString());
-    }
-
-    public function testCreateFromStringHslPercentAlpha(): void
-    {
-        $color = Color::createFromString('hsl(240deg 66.67% 94.12% / 50%)');
-
-        $this->assertInstanceOf(Hsl::class, $color);
-        $this->assertSame('hsl(240deg 66.67% 94.12% / 50%)', $color->toString());
-    }
-
-    public function testCreateFromStringHslRad(): void
-    {
-        $color = Color::createFromString('hsl(4.18879rad 66.67% 94.12%)');
-
-        $this->assertInstanceOf(Hsl::class, $color);
-        $this->assertSame('hsl(240deg 66.67% 94.12%)', $color->toString());
-    }
-
-    public function testCreateFromStringHslTurn(): void
-    {
-        $color = Color::createFromString('hsl(0.66667turn 66.67% 94.12%)');
-
-        $this->assertInstanceOf(Hsl::class, $color);
-        $this->assertSame('hsl(240deg 66.67% 94.12%)', $color->toString());
-    }
-
-    public function testCreateFromStringHslWithAlpha(): void
-    {
-        $color = Color::createFromString('hsl(240deg 66.67% 94.12% / 50%)');
-
-        $this->assertInstanceOf(Hsl::class, $color);
-        $this->assertSame('hsl(240deg 66.67% 94.12% / 50%)', $color->toString());
-    }
-
-    public function testCreateFromStringHwb(): void
-    {
-        $color = Color::createFromString('hwb(240deg 90.2% 1.96%)');
-
-        $this->assertInstanceOf(Hwb::class, $color);
-        $this->assertSame('hwb(240deg 90.2% 1.96%)', $color->toString());
-    }
-
-    public function testCreateFromStringHwbLegacy(): void
-    {
-        $color = Color::createFromString('hwb(240, 90.2%, 1.96%)');
-
-        $this->assertInstanceOf(Hwb::class, $color);
-        $this->assertSame('hwb(240deg 90.2% 1.96%)', $color->toString());
-    }
-
-    public function testCreateFromStringHwbWithAlpha(): void
-    {
-        $color = Color::createFromString('hwb(240deg 90.2% 1.96% / 0.5)');
-
-        $this->assertInstanceOf(Hwb::class, $color);
-        $this->assertSame('hwb(240deg 90.2% 1.96% / 50%)', $color->toString());
-    }
-
-    public function testCreateFromStringInvalid(): void
+    #[DataProvider('invalidStringProvider')]
+    public function testCreateFromStringInvalid(string $value): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Color string `invalid` is not valid.');
+        $this->expectExceptionMessage(sprintf(
+            'Color string `%s` is not valid.',
+            $value
+        ));
 
-        Color::createFromString('invalid');
-    }
-
-    public function testCreateFromStringInvalidHexLength(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Color string `#12345` is not valid.');
-
-        Color::createFromString('#12345');
-    }
-
-    public function testCreateFromStringInvalidHexLengthWithAlpha(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Color string `#1234567` is not valid.');
-
-        Color::createFromString('#1234567');
-    }
-
-    public function testCreateFromStringLab(): void
-    {
-        $color = Color::createFromString('lab(91.74 2.78 -9.72)');
-
-        $this->assertInstanceOf(Lab::class, $color);
-        $this->assertSame('lab(91.74% 2.78 -9.72)', $color->toString());
-    }
-
-    public function testCreateFromStringLabPercent(): void
-    {
-        $color = Color::createFromString('lab(91.74% 2.224% -7.776%)');
-
-        $this->assertInstanceOf(Lab::class, $color);
-        $this->assertSame('lab(91.74% 2.78 -9.72)', $color->toString());
-    }
-
-    public function testCreateFromStringLabPercentMapping(): void
-    {
-        $color = Color::createFromString('lab(50% 100% -100%)');
-
-        $this->assertInstanceOf(Lab::class, $color);
-        $this->assertSame('lab(50% 125 -125)', $color->toString());
-    }
-
-    public function testCreateFromStringLch(): void
-    {
-        $color = Color::createFromString('lch(91.74 10.11 285.93)');
-
-        $this->assertInstanceOf(Lch::class, $color);
-        $this->assertSame('lch(91.74% 10.11 285.93deg)', $color->toString());
-    }
-
-    public function testCreateFromStringLchNegativeChroma(): void
-    {
-        $color = Color::createFromString('lch(50% -10 120)');
-
-        $this->assertInstanceOf(Lch::class, $color);
-        $this->assertSame('lch(50% 0 120deg)', $color->toString());
-    }
-
-    public function testCreateFromStringLchPercent(): void
-    {
-        $color = Color::createFromString('lch(91.74% 6.74% 285.93)');
-
-        $this->assertInstanceOf(Lch::class, $color);
-        $this->assertSame('lch(91.74% 10.11 285.93deg)', $color->toString());
-    }
-
-    public function testCreateFromStringLchPercentMapping(): void
-    {
-        $color = Color::createFromString('lch(50% 100% 120)');
-
-        $this->assertInstanceOf(Lch::class, $color);
-        $this->assertSame('lch(50% 150 120deg)', $color->toString());
-    }
-
-    public function testCreateFromStringName(): void
-    {
-        $color = Color::createFromString('red');
-
-        $this->assertInstanceOf(Rgb::class, $color);
-        $this->assertSame('#f00', $color->toString());
-    }
-
-    public function testCreateFromStringOkLab(): void
-    {
-        $color = Color::createFromString('oklab(0.93 0.01 -0.03)');
-
-        $this->assertInstanceOf(OkLab::class, $color);
-        $this->assertSame('oklab(0.93 0.01 -0.03)', $color->toString());
-    }
-
-    public function testCreateFromStringOkLabPercent(): void
-    {
-        $color = Color::createFromString('oklab(93% 25% -75%)');
-
-        $this->assertInstanceOf(OkLab::class, $color);
-        $this->assertSame('oklab(0.93 0.1 -0.3)', $color->toString());
-    }
-
-    public function testCreateFromStringOkLabPercentMapping(): void
-    {
-        $color = Color::createFromString('oklab(50% 100% -100%)');
-
-        $this->assertInstanceOf(OkLab::class, $color);
-        $this->assertSame('oklab(0.5 0.4 -0.4)', $color->toString());
-    }
-
-    public function testCreateFromStringOkLch(): void
-    {
-        $color = Color::createFromString('oklch(0.93 0.03 285.8)');
-
-        $this->assertInstanceOf(OkLch::class, $color);
-        $this->assertSame('oklch(0.93 0.03 285.8deg)', $color->toString());
-    }
-
-    public function testCreateFromStringOkLchNegativeChroma(): void
-    {
-        $color = Color::createFromString('oklch(50% -10% 120)');
-
-        $this->assertInstanceOf(OkLch::class, $color);
-        $this->assertSame('oklch(0.5 0 120deg)', $color->toString());
-    }
-
-    public function testCreateFromStringOkLchPercent(): void
-    {
-        $color = Color::createFromString('oklch(93% 75% 285.8)');
-
-        $this->assertInstanceOf(OkLch::class, $color);
-        $this->assertSame('oklch(0.93 0.3 285.8deg)', $color->toString());
-    }
-
-    public function testCreateFromStringOkLchPercentMapping(): void
-    {
-        $color = Color::createFromString('oklch(50% 100% 120)');
-
-        $this->assertInstanceOf(OkLch::class, $color);
-        $this->assertSame('oklch(0.5 0.4 120deg)', $color->toString());
-    }
-
-    public function testCreateFromStringOutOfRangeColorFunction(): void
-    {
-        $color = Color::createFromString('color(srgb 1.2 0 0)');
-
-        $this->assertInstanceOf(Srgb::class, $color);
-        $this->assertSame('color(srgb 1.2 0 0)', $color->toString());
-    }
-
-    public function testCreateFromStringOutOfRangeRgb(): void
-    {
-        $color = Color::createFromString('rgb(300 0 0)');
-
-        $this->assertInstanceOf(Rgb::class, $color);
-        $this->assertSame('rgb(300 0 0)', $color->toString());
-    }
-
-    public function testCreateFromStringProPhotoRgb(): void
-    {
-        $color = Color::createFromString('color(prophoto-rgb 0.89 0.88 0.96)');
-
-        $this->assertInstanceOf(ProPhotoRgb::class, $color);
-        $this->assertSame('color(prophoto-rgb 0.89 0.88 0.96)', $color->toString());
-    }
-
-    public function testCreateFromStringProPhotoRgbPercent(): void
-    {
-        $color = Color::createFromString('color(prophoto-rgb 89% 88% 96%)');
-
-        $this->assertInstanceOf(ProPhotoRgb::class, $color);
-        $this->assertSame('color(prophoto-rgb 0.89 0.88 0.96)', $color->toString());
-    }
-
-    public function testCreateFromStringRec2020(): void
-    {
-        $color = Color::createFromString('color(rec2020 0.89 0.89 0.97)');
-
-        $this->assertInstanceOf(Rec2020::class, $color);
-        $this->assertSame('color(rec2020 0.89 0.89 0.97)', $color->toString());
-    }
-
-    public function testCreateFromStringRec2020Percent(): void
-    {
-        $color = Color::createFromString('color(rec2020 89% 89% 97%)');
-
-        $this->assertInstanceOf(Rec2020::class, $color);
-        $this->assertSame('color(rec2020 0.89 0.89 0.97)', $color->toString());
-    }
-
-    public function testCreateFromStringRgb(): void
-    {
-        $color = Color::createFromString('rgb(230 230 250)');
-
-        $this->assertInstanceOf(Rgb::class, $color);
-        $this->assertSame('rgb(230 230 250)', $color->toString());
-    }
-
-    public function testCreateFromStringRgbaLegacy(): void
-    {
-        $color = Color::createFromString('rgba(230, 230, 250, 0.5)');
-
-        $this->assertInstanceOf(Rgb::class, $color);
-        $this->assertSame('rgb(230 230 250 / 50%)', $color->toString());
-    }
-
-    public function testCreateFromStringRgbLegacy(): void
-    {
-        $color = Color::createFromString('rgb(230, 230, 250)');
-
-        $this->assertInstanceOf(Rgb::class, $color);
-        $this->assertSame('rgb(230 230 250)', $color->toString());
-    }
-
-    public function testCreateFromStringRgbWithAlpha(): void
-    {
-        $color = Color::createFromString('rgb(230 230 250 / 50%)');
-
-        $this->assertInstanceOf(Rgb::class, $color);
-        $this->assertSame('rgb(230 230 250 / 50%)', $color->toString());
-    }
-
-    public function testCreateFromStringSrgb(): void
-    {
-        $color = Color::createFromString('color(srgb 0.9 0.9 0.98)');
-
-        $this->assertInstanceOf(Srgb::class, $color);
-        $this->assertSame('color(srgb 0.9 0.9 0.98)', $color->toString());
-    }
-
-    public function testCreateFromStringSrgbLinear(): void
-    {
-        $color = Color::createFromString('color(srgb-linear 0.79 0.79 0.96)');
-
-        $this->assertInstanceOf(SrgbLinear::class, $color);
-        $this->assertSame('color(srgb-linear 0.79 0.79 0.96)', $color->toString());
-    }
-
-    public function testCreateFromStringSrgbLinearPercent(): void
-    {
-        $color = Color::createFromString('color(srgb-linear 79% 79% 96%)');
-
-        $this->assertInstanceOf(SrgbLinear::class, $color);
-        $this->assertSame('color(srgb-linear 0.79 0.79 0.96)', $color->toString());
-    }
-
-    public function testCreateFromStringSrgbPercent(): void
-    {
-        $color = Color::createFromString('color(srgb 90% 90% 98%)');
-
-        $this->assertInstanceOf(Srgb::class, $color);
-        $this->assertSame('color(srgb 0.9 0.9 0.98)', $color->toString());
+        Color::createFromString($value);
     }
 
     public function testCreateFromStringTransparent(): void
@@ -591,70 +190,6 @@ final class ColorTest extends TestCase
 
         $this->assertInstanceOf(Rgb::class, $color);
         $this->assertSame('transparent', $color->toString(name: true));
-    }
-
-    public function testCreateFromStringXyz(): void
-    {
-        $color = Color::createFromString('color(xyz 0.78 0.8 1.02)');
-
-        $this->assertInstanceOf(XyzD65::class, $color);
-        $this->assertSame('color(xyz-d65 0.78 0.8 1.02)', $color->toString());
-    }
-
-    public function testCreateFromStringXyzD50(): void
-    {
-        $color = Color::createFromString('color(xyz-d50 0.79 0.8 0.77)');
-
-        $this->assertInstanceOf(XyzD50::class, $color);
-        $this->assertSame('color(xyz-d50 0.79 0.8 0.77)', $color->toString());
-    }
-
-    public function testCreateFromStringXyzD50Percent(): void
-    {
-        $color = Color::createFromString('color(xyz-d50 79% 80% 77%)');
-
-        $this->assertInstanceOf(XyzD50::class, $color);
-        $this->assertSame('color(xyz-d50 0.79 0.8 0.77)', $color->toString());
-    }
-
-    public function testCreateFromStringXyzD65(): void
-    {
-        $color = Color::createFromString('color(xyz-d65 0.78 0.8 1.02)');
-
-        $this->assertInstanceOf(XyzD65::class, $color);
-        $this->assertSame('color(xyz-d65 0.78 0.8 1.02)', $color->toString());
-    }
-
-    public function testCreateFromStringXyzD65Percent(): void
-    {
-        $color = Color::createFromString('color(xyz-d65 78% 80% 102%)');
-
-        $this->assertInstanceOf(XyzD65::class, $color);
-        $this->assertSame('color(xyz-d65 0.78 0.8 1.02)', $color->toString());
-    }
-
-    public function testCreateFromStringXyzPercent(): void
-    {
-        $color = Color::createFromString('color(xyz 78% 80% 102%)');
-
-        $this->assertInstanceOf(XyzD65::class, $color);
-        $this->assertSame('color(xyz-d65 0.78 0.8 1.02)', $color->toString());
-    }
-
-    public function testCreateFromXyzD50(): void
-    {
-        $color = Color::createFromXyzD50(0.79, 0.8, 0.77);
-
-        $this->assertInstanceOf(XyzD50::class, $color);
-        $this->assertSame('color(xyz-d50 0.79 0.8 0.77)', $color->toString());
-    }
-
-    public function testCreateFromXyzD65(): void
-    {
-        $color = Color::createFromXyzD65(0.78, 0.8, 1.02);
-
-        $this->assertInstanceOf(XyzD65::class, $color);
-        $this->assertSame('color(xyz-d65 0.78 0.8 1.02)', $color->toString());
     }
 
     public function testDebug(): void

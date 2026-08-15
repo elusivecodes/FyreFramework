@@ -29,14 +29,14 @@ class ModelRegistryUseReturnTypeExtension implements DynamicMethodReturnTypeExte
     protected array $modelNamespaces;
 
     /**
-     * @var list<array{classes: string[], modelNamespaces: string[]}>
+     * @var array<array{classes: string[], modelNamespaces: string[]}>
      */
     protected array $modelNamespacesOverrides;
 
     /**
      * @param ReflectionProvider $reflectionProvider The reflection provider.
      * @param string[] $modelNamespaces The model namespaces.
-     * @param list<array{classes: string[], modelNamespaces: string[]}> $modelNamespacesOverrides The model namespace overrides.
+     * @param array<array{classes: string[], modelNamespaces: string[]}> $modelNamespacesOverrides The model namespace overrides.
      */
     public function __construct(
         protected ReflectionProvider $reflectionProvider,

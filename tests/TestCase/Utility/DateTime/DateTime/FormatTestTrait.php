@@ -4,1078 +4,180 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\DateTime\DateTime;
 
 use Fyre\Utility\DateTime\DateTime;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait FormatTestTrait
 {
-    public function testFormat11Hour1Digit(): void
-    {
-        $this->assertSame(
-            '11',
-            DateTime::createFromArray([2018, 1, 1, 23])->format('K')
-        );
-    }
-
-    public function testFormat11Hour1DigitPadding(): void
-    {
-        $this->assertSame(
-            '0',
-            DateTime::createFromArray([2018, 1, 1, 0])->format('K')
-        );
-    }
-
-    public function testFormat11Hour2Digits(): void
-    {
-        $this->assertSame(
-            '11',
-            DateTime::createFromArray([2018, 1, 1, 23])->format('KK')
-        );
-    }
-
-    public function testFormat11Hour2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '00',
-            DateTime::createFromArray([2018, 1, 1, 0])->format('KK')
-        );
-    }
-
-    public function testFormat12Hour1Digit(): void
-    {
-        $this->assertSame(
-            '12',
-            DateTime::createFromArray([2018, 1, 1, 12])->format('h')
-        );
-    }
-
-    public function testFormat12Hour1DigitPadding(): void
-    {
-        $this->assertSame(
-            '1',
-            DateTime::createFromArray([2018, 1, 1, 1])->format('h')
-        );
-    }
-
-    public function testFormat12Hour2Digits(): void
-    {
-        $this->assertSame(
-            '11',
-            DateTime::createFromArray([2018, 1, 1, 23])->format('hh')
-        );
-    }
-
-    public function testFormat12Hour2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '01',
-            DateTime::createFromArray([2018, 1, 1, 1])->format('hh')
-        );
-    }
-
-    public function testFormat23Hour1Digit(): void
-    {
-        $this->assertSame(
-            '23',
-            DateTime::createFromArray([2018, 1, 1, 23])->format('H')
-        );
-    }
-
-    public function testFormat23Hour1DigitPadding(): void
-    {
-        $this->assertSame(
-            '0',
-            DateTime::createFromArray([2018, 1, 1, 0])->format('H')
-        );
-    }
-
-    public function testFormat23Hour2Digits(): void
-    {
-        $this->assertSame(
-            '23',
-            DateTime::createFromArray([2018, 1, 1, 23])->format('HH')
-        );
-    }
-
-    public function testFormat23Hour2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '00',
-            DateTime::createFromArray([2018, 1, 1, 0])->format('HH')
-        );
-    }
-
-    public function testFormat24Hour1Digit(): void
-    {
-        $this->assertSame(
-            '24',
-            DateTime::createFromArray([2018, 1, 1, 0])->format('k')
-        );
-    }
-
-    public function testFormat24Hour1DigitPadding(): void
-    {
-        $this->assertSame(
-            '1',
-            DateTime::createFromArray([2018, 1, 1, 1])->format('k')
-        );
-    }
-
-    public function testFormat24Hour2Digits(): void
-    {
-        $this->assertSame(
-            '24',
-            DateTime::createFromArray([2018, 1, 1, 0])->format('kk')
-        );
-    }
-
-    public function testFormat24Hour2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '01',
-            DateTime::createFromArray([2018, 1, 1, 1])->format('kk')
-        );
-    }
-
-    public function testFormatAltWeekDayLong(): void
-    {
-        $this->assertSame(
-            'Friday',
-            DateTime::createFromArray([2018, 6, 1])->format('EEEE')
-        );
-    }
-
-    public function testFormatAltWeekDayNarrow(): void
-    {
-        $this->assertSame(
-            'F',
-            DateTime::createFromArray([2018, 6, 1])->format('EEEEE')
-        );
-    }
-
-    public function testFormatAltWeekDayShort(): void
-    {
-        $this->assertSame(
-            'Fri',
-            DateTime::createFromArray([2018, 6, 1])->format('EEE')
-        );
-    }
-
-    public function testFormatDayOfMonth1Digit(): void
-    {
-        $this->assertSame(
-            '21',
-            DateTime::createFromArray([2018, 1, 21])->format('d')
-        );
-    }
-
-    public function testFormatDayOfMonth1DigitPadding(): void
-    {
-        $this->assertSame(
-            '1',
-            DateTime::createFromArray([2018, 1, 1])->format('d')
-        );
-    }
-
-    public function testFormatDayOfMonth2Digits(): void
-    {
-        $this->assertSame(
-            '21',
-            DateTime::createFromArray([2018, 1, 21])->format('dd')
-        );
-    }
-
-    public function testFormatDayOfMonth2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '01',
-            DateTime::createFromArray([2018, 1, 1])->format('dd')
-        );
-    }
-
-    public function testFormatDayOfWeekInMonth(): void
-    {
-        $this->assertSame(
-            '1',
-            DateTime::createFromArray([2018, 6, 1])->format('F')
-        );
-    }
-
-    public function testFormatDayOfWeekInMonthCurrentWeek(): void
-    {
-        $this->assertSame(
-            '1',
-            DateTime::createFromArray([2018, 6, 7])->format('F')
-        );
-    }
-
-    public function testFormatDayOfYear1Digit(): void
-    {
-        $this->assertSame(
-            '152',
-            DateTime::createFromArray([2018, 6, 1])->format('D')
-        );
-    }
-
-    public function testFormatDayOfYear1DigitPadding(): void
-    {
-        $this->assertSame(
-            '1',
-            DateTime::createFromArray([2018, 1, 1])->format('D')
-        );
-    }
-
-    public function testFormatDayOfYear2Digits(): void
-    {
-        $this->assertSame(
-            '152',
-            DateTime::createFromArray([2018, 6, 1])->format('DD')
-        );
-    }
-
-    public function testFormatDayOfYear2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '01',
-            DateTime::createFromArray([2018, 1, 1])->format('DD')
-        );
-    }
-
-    public function testFormatDayOfYear3Digits(): void
-    {
-        $this->assertSame(
-            '152',
-            DateTime::createFromArray([2018, 6, 1])->format('DDD')
-        );
-    }
-
-    public function testFormatDayOfYear3DigitsPadding(): void
-    {
-        $this->assertSame(
-            '001',
-            DateTime::createFromArray([2018, 1, 1])->format('DDD')
-        );
-    }
-
-    public function testFormatDayPeriodLongAm(): void
-    {
-        $this->assertSame(
-            'AM',
-            DateTime::createFromArray([2018, 1, 1, 0])->format('aaaa')
-        );
-    }
-
-    public function testFormatDayPeriodLongPm(): void
-    {
-        $this->assertSame(
-            'PM',
-            DateTime::createFromArray([2018, 1, 1, 12])->format('aaaa')
-        );
-    }
-
-    public function testFormatDayPeriodShortAm(): void
-    {
-        $this->assertSame(
-            'AM',
-            DateTime::createFromArray([2018, 1, 1, 0])->format('aaa')
-        );
-    }
-
-    public function testFormatDayPeriodShortPm(): void
-    {
-        $this->assertSame(
-            'PM',
-            DateTime::createFromArray([2018, 1, 1, 12])->format('aaa')
-        );
-    }
-
-    public function testFormatEraLong(): void
-    {
-        $this->assertSame(
-            'Anno Domini',
-            DateTime::createFromArray([2018])->format('GGGG')
-        );
-    }
-
-    public function testFormatEraLongBc(): void
-    {
-        $this->assertSame(
-            'Before Christ',
-            DateTime::createFromArray([-5])->format('GGGG')
-        );
-    }
-
-    public function testFormatEraNarrow(): void
-    {
-        $this->assertSame(
-            'A',
-            DateTime::createFromArray([2018])->format('GGGGG')
-        );
-    }
-
-    public function testFormatEraNarrowBc(): void
-    {
-        $this->assertSame(
-            'B',
-            DateTime::createFromArray([-5])->format('GGGGG')
-        );
-    }
-
-    public function testFormatEraShort(): void
-    {
-        $this->assertSame(
-            'AD',
-            DateTime::createFromArray([2018])->format('GGG')
-        );
-    }
-
-    public function testFormatEraShortBc(): void
-    {
-        $this->assertSame(
-            'BC',
-            DateTime::createFromArray([-5])->format('GGG')
-        );
-    }
-
-    public function testFormatFractional(): void
-    {
-        $this->assertSame(
-            '123',
-            DateTime::createFromArray([2018, 1, 1, 0, 0, 0, 123])->format('SSS')
-        );
-    }
-
-    public function testFormatFractionalPadding(): void
-    {
-        $this->assertSame(
-            '123000',
-            DateTime::createFromArray([2018, 1, 1, 0, 0, 0, 123])->format('SSSSSS')
-        );
-    }
-
-    public function testFormatFractionalTruncate(): void
-    {
-        $this->assertSame(
-            '1',
-            DateTime::createFromArray([2018, 1, 1, 0, 0, 0, 123])->format('S')
-        );
-    }
-
-    public function testFormatMinute1Digit(): void
-    {
-        $this->assertSame(
-            '25',
-            DateTime::createFromArray([2018, 1, 1, 0, 25])->format('m')
-        );
-    }
-
-    public function testFormatMinute1DigitPadding(): void
-    {
-        $this->assertSame(
-            '1',
-            DateTime::createFromArray([2018, 1, 1, 0, 1])->format('m')
-        );
-    }
-
-    public function testFormatMinute2Digits(): void
-    {
-        $this->assertSame(
-            '25',
-            DateTime::createFromArray([2018, 1, 1, 0, 25])->format('mm')
-        );
-    }
-
-    public function testFormatMinute2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '01',
-            DateTime::createFromArray([2018, 1, 1, 0, 1])->format('mm')
-        );
-    }
-
-    public function testFormatMonth1Digit(): void
-    {
-        $this->assertSame(
-            '10',
-            DateTime::createFromArray([2018, 10])->format('M')
-        );
-    }
-
-    public function testFormatMonth1DigitPadding(): void
-    {
-        $this->assertSame(
-            '1',
-            DateTime::createFromArray([2018, 1])->format('M')
-        );
-    }
-
-    public function testFormatMonth2Digits(): void
-    {
-        $this->assertSame(
-            '10',
-            DateTime::createFromArray([2018, 10])->format('MM')
-        );
-    }
-
-    public function testFormatMonth2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '01',
-            DateTime::createFromArray([2018, 1])->format('MM')
-        );
-    }
-
-    public function testFormatMonthLong(): void
-    {
-        $this->assertSame(
-            'October',
-            DateTime::createFromArray([2018, 10])->format('MMMM')
-        );
-    }
-
-    public function testFormatMonthNarrow(): void
-    {
-        $this->assertSame(
-            'O',
-            DateTime::createFromArray([2018, 10])->format('MMMMM')
-        );
-    }
-
-    public function testFormatMonthShort(): void
-    {
-        $this->assertSame(
-            'Oct',
-            DateTime::createFromArray([2018, 10])->format('MMM')
-        );
-    }
-
-    public function testFormatQuarter1Digit(): void
-    {
-        $this->assertSame(
-            '3',
-            DateTime::createFromArray([2018, 8])->format('q')
-        );
-    }
-
-    public function testFormatQuarter2Digits(): void
-    {
-        $this->assertSame(
-            '03',
-            DateTime::createFromArray([2018, 8])->format('qq')
-        );
-    }
-
-    public function testFormatSecond1Digit(): void
-    {
-        $this->assertSame(
-            '25',
-            DateTime::createFromArray([2018, 1, 1, 0, 0, 25])->format('s')
-        );
-    }
-
-    public function testFormatSecond1DigitPadding(): void
-    {
-        $this->assertSame(
-            '1',
-            DateTime::createFromArray([2018, 1, 1, 0, 0, 1])->format('s')
-        );
-    }
-
-    public function testFormatSecond2Digits(): void
-    {
-        $this->assertSame(
-            '25',
-            DateTime::createFromArray([2018, 1, 1, 0, 0, 25])->format('ss')
-        );
-    }
-
-    public function testFormatSecond2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '01',
-            DateTime::createFromArray([2018, 1, 1, 0, 0, 1])->format('ss')
-        );
-    }
-
-    public function testFormatStandaloneMonth1Digit(): void
-    {
-        $this->assertSame(
-            '10',
-            DateTime::createFromArray([2018, 10])->format('L')
-        );
-    }
-
-    public function testFormatStandaloneMonth1DigitPadding(): void
-    {
-        $this->assertSame(
-            '1',
-            DateTime::createFromArray([2018, 1])->format('L')
-        );
-    }
-
-    public function testFormatStandaloneMonth2Digits(): void
-    {
-        $this->assertSame(
-            '10',
-            DateTime::createFromArray([2018, 10])->format('LL')
-        );
-    }
-
-    public function testFormatStandaloneMonth2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '01',
-            DateTime::createFromArray([2018, 1])->format('LL')
-        );
-    }
-
-    public function testFormatStandaloneMonthLong(): void
-    {
-        $this->assertSame(
-            'October',
-            DateTime::createFromArray([2018, 10])->format('LLLL')
-        );
-    }
-
-    public function testFormatStandaloneMonthNarrow(): void
-    {
-        $this->assertSame(
-            'O',
-            DateTime::createFromArray([2018, 10])->format('LLLLL')
-        );
-    }
-
-    public function testFormatStandaloneMonthShort(): void
-    {
-        $this->assertSame(
-            'Oct',
-            DateTime::createFromArray([2018, 10])->format('LLL')
-        );
-    }
-
-    public function testFormatStandaloneQuarter1Digit(): void
-    {
-        $this->assertSame(
-            '3',
-            DateTime::createFromArray([2018, 8])->format('Q')
-        );
-    }
-
-    public function testFormatStandaloneQuarter2Digits(): void
-    {
-        $this->assertSame(
-            '03',
-            DateTime::createFromArray([2018, 8])->format('QQ')
-        );
-    }
-
-    public function testFormatStandaloneWeekDay1Digit(): void
-    {
-        $this->assertSame(
-            '6',
-            DateTime::createFromArray([2018, 6, 1])->format('c')
-        );
-    }
-
-    public function testFormatStandaloneWeekDay2Digits(): void
-    {
-        $this->assertSame(
-            '6',
-            DateTime::createFromArray([2018, 6, 1])->format('cc')
-        );
-    }
-
-    public function testFormatStandaloneWeekDayLong(): void
-    {
-        $this->assertSame(
-            'Friday',
-            DateTime::createFromArray([2018, 6, 1])->format('cccc')
-        );
-    }
-
-    public function testFormatStandaloneWeekDayNarrow(): void
-    {
-        $this->assertSame(
-            'F',
-            DateTime::createFromArray([2018, 6, 1])->format('ccccc')
-        );
-    }
-
-    public function testFormatStandaloneWeekDayShort(): void
-    {
-        $this->assertSame(
-            'Fri',
-            DateTime::createFromArray([2018, 6, 1])->format('ccc')
-        );
-    }
-
-    public function testFormatTimeZoneIso8601Basic(): void
-    {
-        $this->assertSame(
-            '+0000',
-            DateTime::now()->format('xx')
-        );
-    }
-
-    public function testFormatTimeZoneIso8601BasicAlt(): void
-    {
-        $this->assertSame(
-            '+0000',
-            DateTime::now()->format('ZZZ')
-        );
-    }
-
-    public function testFormatTimeZoneIso8601BasicAltTimeZone(): void
-    {
-        $this->assertSame(
-            '+1000',
-            DateTime::now('Australia/Brisbane')->format('ZZZ')
-        );
-    }
-
-    public function testFormatTimeZoneIso8601BasicShort(): void
-    {
-        $this->assertSame(
-            '+00',
-            DateTime::now()->format('x')
-        );
-    }
-
-    public function testFormatTimeZoneIso8601BasicShortTimeZone(): void
-    {
-        $this->assertSame(
-            '+10',
-            DateTime::now('Australia/Brisbane')->format('x')
-        );
-    }
-
-    public function testFormatTimeZoneIso8601BasicShortZ(): void
-    {
-        $this->assertSame(
-            'Z',
-            DateTime::now()->format('X')
-        );
-    }
-
-    public function testFormatTimeZoneIso8601BasicShortZTimeZone(): void
-    {
-        $this->assertSame(
-            '+10',
-            DateTime::now('Australia/Brisbane')->format('X')
-        );
-    }
-
-    public function testFormatTimeZoneIso8601BasicTimeZone(): void
-    {
-        $this->assertSame(
-            '+1000',
-            DateTime::now('Australia/Brisbane')->format('xx')
-        );
-    }
-
-    public function testFormatTimeZoneIso8601BasicZ(): void
-    {
-        $this->assertSame(
-            'Z',
-            DateTime::now()->format('XX')
-        );
-    }
-
-    public function testFormatTimeZoneIso8601BasicZTimeZone(): void
-    {
-        $this->assertSame(
-            '+1000',
-            DateTime::now('Australia/Brisbane')->format('XX')
-        );
-    }
-
-    public function testFormatTimeZoneIso8601Extended(): void
-    {
-        $this->assertSame(
-            '+00:00',
-            DateTime::now()->format('xxx')
-        );
-    }
-
-    public function testFormatTimeZoneIso8601ExtendedAlt(): void
-    {
-        $this->assertSame(
-            'Z',
-            DateTime::now()->format('ZZZZZ')
-        );
-    }
-
-    public function testFormatTimeZoneIso8601ExtendedAltTimeZone(): void
-    {
-        $this->assertSame(
-            '+10:00',
-            DateTime::now('Australia/Brisbane')->format('ZZZZZ')
-        );
-    }
-
-    public function testFormatTimeZoneIso8601ExtendedTimeZone(): void
-    {
-        $this->assertSame(
-            '+10:00',
-            DateTime::now('Australia/Brisbane')->format('xxx')
-        );
-    }
-
-    public function testFormatTimeZoneIso8601ExtendedZ(): void
-    {
-        $this->assertSame(
-            'Z',
-            DateTime::now()->format('XXX')
-        );
-    }
-
-    public function testFormatTimeZoneIso8601ExtendedZTimeZone(): void
-    {
-        $this->assertSame(
-            '+10:00',
-            DateTime::now('Australia/Brisbane')->format('XXX')
-        );
-    }
-
-    public function testFormatTimeZoneLongBasic(): void
-    {
-        $this->assertSame(
-            'GMT',
-            DateTime::now()->format('ZZZZ')
-        );
-    }
-
-    public function testFormatTimeZoneLongBasicTimeZone(): void
-    {
-        $this->assertSame(
-            'GMT+10:00',
-            DateTime::now('Australia/Brisbane')->format('ZZZZ')
-        );
-    }
-
-    public function testFormatTimeZoneLongLocalized(): void
-    {
-        $this->assertSame(
-            'GMT',
-            DateTime::now()->format('OOOO')
-        );
-    }
-
-    public function testFormatTimeZoneLongLocalizedTimeZone(): void
-    {
-        $this->assertSame(
-            'GMT+10:00',
-            DateTime::now('Australia/Brisbane')->format('OOOO')
-        );
-    }
-
-    public function testFormatTimeZoneLongNonLocation(): void
-    {
-        $this->assertSame(
-            'Coordinated Universal Time',
-            DateTime::now()->format('zzzz')
-        );
-    }
-
-    public function testFormatTimeZoneLongNonLocationTimeZone(): void
-    {
-        $this->assertSame(
-            'Australian Eastern Standard Time',
-            DateTime::now('Australia/Brisbane')->format('zzzz')
-        );
-    }
-
-    public function testFormatTimeZoneLongTimeZoneId(): void
-    {
-        $this->assertSame(
-            'UTC',
-            DateTime::now()->format('VV')
-        );
-    }
-
-    public function testFormatTimeZoneLongTimeZoneIdTimeZone(): void
-    {
-        $this->assertSame(
-            'Australia/Brisbane',
-            DateTime::now('Australia/Brisbane')->format('VV')
-        );
-    }
-
-    public function testFormatTimeZoneShortLocalized(): void
-    {
-        $this->assertSame(
-            'GMT',
-            DateTime::now()->format('O')
-        );
-    }
-
-    public function testFormatTimeZoneShortLocalizedTimeZone(): void
-    {
-        $this->assertSame(
-            'GMT+10',
-            DateTime::now('Australia/Brisbane')->format('O')
-        );
-    }
-
-    public function testFormatTimeZoneShortNonLocation(): void
-    {
-        $this->assertSame(
-            'UTC',
-            DateTime::now()->format('zzz')
-        );
-    }
-
-    public function testFormatTimeZoneShortNonLocationTimeZone(): void
-    {
-        $this->assertSame(
-            'GMT+10',
-            DateTime::now('Australia/Brisbane')->format('zzz')
-        );
-    }
-
-    public function testFormatWeekDay1Digit(): void
-    {
-        $this->assertSame(
-            '6',
-            DateTime::createFromArray([2018, 6, 1])->format('e')
-        );
-    }
-
-    public function testFormatWeekDay2Digits(): void
-    {
-        $this->assertSame(
-            '06',
-            DateTime::createFromArray([2018, 6, 1])->format('ee')
-        );
-    }
-
-    public function testFormatWeekDayLong(): void
-    {
-        $this->assertSame(
-            'Friday',
-            DateTime::createFromArray([2018, 6, 1])->format('eeee')
-        );
-    }
-
-    public function testFormatWeekDayNarrow(): void
-    {
-        $this->assertSame(
-            'F',
-            DateTime::createFromArray([2018, 6, 1])->format('eeeee')
-        );
-    }
-
-    public function testFormatWeekDayShort(): void
-    {
-        $this->assertSame(
-            'Fri',
-            DateTime::createFromArray([2018, 6, 1])->format('eee')
-        );
-    }
-
-    public function testFormatWeekOfMonth(): void
-    {
-        $this->assertSame(
-            '1',
-            DateTime::createFromArray([2018, 6, 1])->format('W')
-        );
-    }
-
-    public function testFormatWeekOfMonthCurrentWeek(): void
-    {
-        $this->assertSame(
-            '2',
-            DateTime::createFromArray([2018, 6, 3])->format('W')
-        );
-    }
-
-    public function testFormatWeekOfYear1Digit(): void
-    {
-        $this->assertSame(
-            '22',
-            DateTime::createFromArray([2018, 6])->format('w')
-        );
-    }
-
-    public function testFormatWeekOfYear1DigitPadding(): void
-    {
-        $this->assertSame(
-            '1',
-            DateTime::createFromArray([2018, 1])->format('w')
-        );
-    }
-
-    public function testFormatWeekOfYear2Digits(): void
-    {
-        $this->assertSame(
-            '22',
-            DateTime::createFromArray([2018, 6])->format('ww')
-        );
-    }
-
-    public function testFormatWeekOfYear2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '01',
-            DateTime::createFromArray([2018, 1])->format('ww')
-        );
-    }
-
-    public function testFormatWeekYear1Digit(): void
-    {
-        $this->assertSame(
-            '2018',
-            DateTime::createFromArray([2018])->format('Y')
-        );
-    }
-
-    public function testFormatWeekYear1DigitCurrentWeek(): void
-    {
-        $this->assertSame(
-            '2020',
-            DateTime::createFromArray([2019, 12, 30])->format('Y')
-        );
-    }
-
-    public function testFormatWeekYear1DigitPadding(): void
-    {
-        $this->assertSame(
-            '5',
-            DateTime::createFromArray([5])->format('Y')
-        );
-    }
-
-    public function testFormatWeekYear2Digits(): void
-    {
-        $this->assertSame(
-            '18',
-            DateTime::createFromArray([2018])->format('YY')
-        );
-    }
-
-    public function testFormatWeekYear2DigitsCurrentWeek(): void
-    {
-        $this->assertSame(
-            '20',
-            DateTime::createFromArray([2019, 12, 30])->format('YY')
-        );
-    }
-
-    public function testFormatWeekYear2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '05',
-            DateTime::createFromArray([5])->format('YY')
-        );
-    }
-
-    public function testFormatWeekYear3Digits(): void
-    {
-        $this->assertSame(
-            '2018',
-            DateTime::createFromArray([2018])->format('YYY')
-        );
-    }
-
-    public function testFormatWeekYear3DigitsCurrentWeek(): void
-    {
-        $this->assertSame(
-            '2020',
-            DateTime::createFromArray([2019, 12, 30])->format('YYY')
-        );
-    }
-
-    public function testFormatWeekYear3DigitsPadding(): void
-    {
-        $this->assertSame(
-            '005',
-            DateTime::createFromArray([5])->format('YYY')
-        );
-    }
-
-    public function testFormatWeekYear4Digits(): void
-    {
-        $this->assertSame(
-            '2018',
-            DateTime::createFromArray([2018])->format('YYYY')
-        );
-    }
-
-    public function testFormatWeekYear4DigitsCurrentWeek(): void
-    {
-        $this->assertSame(
-            '2020',
-            DateTime::createFromArray([2019, 12, 30])->format('YYYY')
-        );
-    }
-
-    public function testFormatWeekYear4DigitsPadding(): void
-    {
-        $this->assertSame(
-            '0005',
-            DateTime::createFromArray([5])->format('YYYY')
-        );
-    }
-
-    public function testFormatYear1Digit(): void
-    {
-        $this->assertSame(
-            '2018',
-            DateTime::createFromArray([2018])->format('y')
-        );
-    }
-
-    public function testFormatYear1DigitPadding(): void
-    {
-        $this->assertSame(
-            '5',
-            DateTime::createFromArray([5])->format('y')
-        );
-    }
-
-    public function testFormatYear2Digits(): void
-    {
-        $this->assertSame(
-            '18',
-            DateTime::createFromArray([2018])->format('yy')
-        );
-    }
-
-    public function testFormatYear2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '05',
-            DateTime::createFromArray([5])->format('yy')
-        );
-    }
-
-    public function testFormatYear3Digits(): void
-    {
-        $this->assertSame(
-            '2018',
-            DateTime::createFromArray([2018])->format('yyy')
-        );
-    }
-
-    public function testFormatYear3DigitsPadding(): void
-    {
-        $this->assertSame(
-            '005',
-            DateTime::createFromArray([5])->format('yyy')
-        );
-    }
-
-    public function testFormatYear4Digits(): void
-    {
-        $this->assertSame(
-            '2018',
-            DateTime::createFromArray([2018])->format('yyyy')
-        );
-    }
-
-    public function testFormatYear4DigitsPadding(): void
-    {
-        $this->assertSame(
-            '0005',
-            DateTime::createFromArray([5])->format('yyyy')
+    /**
+     * @return array<string, array{int[], string, string}>
+     */
+    public static function formatProvider(): array
+    {
+        return [
+            '11 hour 1 digit' => [[2018, 1, 1, 23], 'K', '11'],
+            '11 hour 1 digit padding' => [[2018, 1, 1, 0], 'K', '0'],
+            '11 hour 2 digits' => [[2018, 1, 1, 23], 'KK', '11'],
+            '11 hour 2 digits padding' => [[2018, 1, 1, 0], 'KK', '00'],
+            '12 hour 1 digit' => [[2018, 1, 1, 12], 'h', '12'],
+            '12 hour 1 digit padding' => [[2018, 1, 1, 1], 'h', '1'],
+            '12 hour 2 digits' => [[2018, 1, 1, 23], 'hh', '11'],
+            '12 hour 2 digits padding' => [[2018, 1, 1, 1], 'hh', '01'],
+            '23 hour 1 digit' => [[2018, 1, 1, 23], 'H', '23'],
+            '23 hour 1 digit padding' => [[2018, 1, 1, 0], 'H', '0'],
+            '23 hour 2 digits' => [[2018, 1, 1, 23], 'HH', '23'],
+            '23 hour 2 digits padding' => [[2018, 1, 1, 0], 'HH', '00'],
+            '24 hour 1 digit' => [[2018, 1, 1, 0], 'k', '24'],
+            '24 hour 1 digit padding' => [[2018, 1, 1, 1], 'k', '1'],
+            '24 hour 2 digits' => [[2018, 1, 1, 0], 'kk', '24'],
+            '24 hour 2 digits padding' => [[2018, 1, 1, 1], 'kk', '01'],
+            'alt week day long' => [[2018, 6, 1], 'EEEE', 'Friday'],
+            'alt week day narrow' => [[2018, 6, 1], 'EEEEE', 'F'],
+            'alt week day short' => [[2018, 6, 1], 'EEE', 'Fri'],
+            'day of month 1 digit' => [[2018, 1, 21], 'd', '21'],
+            'day of month 1 digit padding' => [[2018, 1, 1], 'd', '1'],
+            'day of month 2 digits' => [[2018, 1, 21], 'dd', '21'],
+            'day of month 2 digits padding' => [[2018, 1, 1], 'dd', '01'],
+            'day of week in month' => [[2018, 6, 1], 'F', '1'],
+            'day of week in month current week' => [[2018, 6, 7], 'F', '1'],
+            'day of year 1 digit' => [[2018, 6, 1], 'D', '152'],
+            'day of year 1 digit padding' => [[2018, 1, 1], 'D', '1'],
+            'day of year 2 digits' => [[2018, 6, 1], 'DD', '152'],
+            'day of year 2 digits padding' => [[2018, 1, 1], 'DD', '01'],
+            'day of year 3 digits' => [[2018, 6, 1], 'DDD', '152'],
+            'day of year 3 digits padding' => [[2018, 1, 1], 'DDD', '001'],
+            'day period long am' => [[2018, 1, 1, 0], 'aaaa', 'AM'],
+            'day period long pm' => [[2018, 1, 1, 12], 'aaaa', 'PM'],
+            'day period short am' => [[2018, 1, 1, 0], 'aaa', 'AM'],
+            'day period short pm' => [[2018, 1, 1, 12], 'aaa', 'PM'],
+            'era long' => [[2018], 'GGGG', 'Anno Domini'],
+            'era long bc' => [[-5], 'GGGG', 'Before Christ'],
+            'era narrow' => [[2018], 'GGGGG', 'A'],
+            'era narrow bc' => [[-5], 'GGGGG', 'B'],
+            'era short' => [[2018], 'GGG', 'AD'],
+            'era short bc' => [[-5], 'GGG', 'BC'],
+            'fractional' => [[2018, 1, 1, 0, 0, 0, 123], 'SSS', '123'],
+            'fractional padding' => [[2018, 1, 1, 0, 0, 0, 123], 'SSSSSS', '123000'],
+            'fractional truncate' => [[2018, 1, 1, 0, 0, 0, 123], 'S', '1'],
+            'minute 1 digit' => [[2018, 1, 1, 0, 25], 'm', '25'],
+            'minute 1 digit padding' => [[2018, 1, 1, 0, 1], 'm', '1'],
+            'minute 2 digits' => [[2018, 1, 1, 0, 25], 'mm', '25'],
+            'minute 2 digits padding' => [[2018, 1, 1, 0, 1], 'mm', '01'],
+            'month 1 digit' => [[2018, 10], 'M', '10'],
+            'month 1 digit padding' => [[2018, 1], 'M', '1'],
+            'month 2 digits' => [[2018, 10], 'MM', '10'],
+            'month 2 digits padding' => [[2018, 1], 'MM', '01'],
+            'month long' => [[2018, 10], 'MMMM', 'October'],
+            'month narrow' => [[2018, 10], 'MMMMM', 'O'],
+            'month short' => [[2018, 10], 'MMM', 'Oct'],
+            'quarter 1 digit' => [[2018, 8], 'q', '3'],
+            'quarter 2 digits' => [[2018, 8], 'qq', '03'],
+            'second 1 digit' => [[2018, 1, 1, 0, 0, 25], 's', '25'],
+            'second 1 digit padding' => [[2018, 1, 1, 0, 0, 1], 's', '1'],
+            'second 2 digits' => [[2018, 1, 1, 0, 0, 25], 'ss', '25'],
+            'second 2 digits padding' => [[2018, 1, 1, 0, 0, 1], 'ss', '01'],
+            'standalone month 1 digit' => [[2018, 10], 'L', '10'],
+            'standalone month 1 digit padding' => [[2018, 1], 'L', '1'],
+            'standalone month 2 digits' => [[2018, 10], 'LL', '10'],
+            'standalone month 2 digits padding' => [[2018, 1], 'LL', '01'],
+            'standalone month long' => [[2018, 10], 'LLLL', 'October'],
+            'standalone month narrow' => [[2018, 10], 'LLLLL', 'O'],
+            'standalone month short' => [[2018, 10], 'LLL', 'Oct'],
+            'standalone quarter 1 digit' => [[2018, 8], 'Q', '3'],
+            'standalone quarter 2 digits' => [[2018, 8], 'QQ', '03'],
+            'standalone week day 1 digit' => [[2018, 6, 1], 'c', '6'],
+            'standalone week day 2 digits' => [[2018, 6, 1], 'cc', '6'],
+            'standalone week day long' => [[2018, 6, 1], 'cccc', 'Friday'],
+            'standalone week day narrow' => [[2018, 6, 1], 'ccccc', 'F'],
+            'standalone week day short' => [[2018, 6, 1], 'ccc', 'Fri'],
+            'week day 1 digit' => [[2018, 6, 1], 'e', '6'],
+            'week day 2 digits' => [[2018, 6, 1], 'ee', '06'],
+            'week day long' => [[2018, 6, 1], 'eeee', 'Friday'],
+            'week day narrow' => [[2018, 6, 1], 'eeeee', 'F'],
+            'week day short' => [[2018, 6, 1], 'eee', 'Fri'],
+            'week of month' => [[2018, 6, 1], 'W', '1'],
+            'week of month current week' => [[2018, 6, 3], 'W', '2'],
+            'week of year 1 digit' => [[2018, 6], 'w', '22'],
+            'week of year 1 digit padding' => [[2018, 1], 'w', '1'],
+            'week of year 2 digits' => [[2018, 6], 'ww', '22'],
+            'week of year 2 digits padding' => [[2018, 1], 'ww', '01'],
+            'week year 1 digit' => [[2018], 'Y', '2018'],
+            'week year 1 digit current week' => [[2019, 12, 30], 'Y', '2020'],
+            'week year 1 digit padding' => [[5], 'Y', '5'],
+            'week year 2 digits' => [[2018], 'YY', '18'],
+            'week year 2 digits current week' => [[2019, 12, 30], 'YY', '20'],
+            'week year 2 digits padding' => [[5], 'YY', '05'],
+            'week year 3 digits' => [[2018], 'YYY', '2018'],
+            'week year 3 digits current week' => [[2019, 12, 30], 'YYY', '2020'],
+            'week year 3 digits padding' => [[5], 'YYY', '005'],
+            'week year 4 digits' => [[2018], 'YYYY', '2018'],
+            'week year 4 digits current week' => [[2019, 12, 30], 'YYYY', '2020'],
+            'week year 4 digits padding' => [[5], 'YYYY', '0005'],
+            'year 1 digit' => [[2018], 'y', '2018'],
+            'year 1 digit padding' => [[5], 'y', '5'],
+            'year 2 digits' => [[2018], 'yy', '18'],
+            'year 2 digits padding' => [[5], 'yy', '05'],
+            'year 3 digits' => [[2018], 'yyy', '2018'],
+            'year 3 digits padding' => [[5], 'yyy', '005'],
+            'year 4 digits' => [[2018], 'yyyy', '2018'],
+            'year 4 digits padding' => [[5], 'yyyy', '0005'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string|null, string, string}>
+     */
+    public static function timeZoneFormatProvider(): array
+    {
+        return [
+            'ISO 8601 basic' => [null, 'xx', '+0000'],
+            'ISO 8601 basic alt' => [null, 'ZZZ', '+0000'],
+            'ISO 8601 basic alt time zone' => ['Australia/Brisbane', 'ZZZ', '+1000'],
+            'ISO 8601 basic short' => [null, 'x', '+00'],
+            'ISO 8601 basic short time zone' => ['Australia/Brisbane', 'x', '+10'],
+            'ISO 8601 basic short Z' => [null, 'X', 'Z'],
+            'ISO 8601 basic short Z time zone' => ['Australia/Brisbane', 'X', '+10'],
+            'ISO 8601 basic time zone' => ['Australia/Brisbane', 'xx', '+1000'],
+            'ISO 8601 basic Z' => [null, 'XX', 'Z'],
+            'ISO 8601 basic Z time zone' => ['Australia/Brisbane', 'XX', '+1000'],
+            'ISO 8601 extended' => [null, 'xxx', '+00:00'],
+            'ISO 8601 extended alt' => [null, 'ZZZZZ', 'Z'],
+            'ISO 8601 extended alt time zone' => ['Australia/Brisbane', 'ZZZZZ', '+10:00'],
+            'ISO 8601 extended time zone' => ['Australia/Brisbane', 'xxx', '+10:00'],
+            'ISO 8601 extended Z' => [null, 'XXX', 'Z'],
+            'ISO 8601 extended Z time zone' => ['Australia/Brisbane', 'XXX', '+10:00'],
+            'long basic' => [null, 'ZZZZ', 'GMT'],
+            'long basic time zone' => ['Australia/Brisbane', 'ZZZZ', 'GMT+10:00'],
+            'long localized' => [null, 'OOOO', 'GMT'],
+            'long localized time zone' => ['Australia/Brisbane', 'OOOO', 'GMT+10:00'],
+            'long non-location' => [null, 'zzzz', 'Coordinated Universal Time'],
+            'long non-location time zone' => ['Australia/Brisbane', 'zzzz', 'Australian Eastern Standard Time'],
+            'long time zone ID' => [null, 'VV', 'UTC'],
+            'long time zone ID time zone' => ['Australia/Brisbane', 'VV', 'Australia/Brisbane'],
+            'short localized' => [null, 'O', 'GMT'],
+            'short localized time zone' => ['Australia/Brisbane', 'O', 'GMT+10'],
+            'short non-location' => [null, 'zzz', 'UTC'],
+            'short non-location time zone' => ['Australia/Brisbane', 'zzz', 'GMT+10'],
+        ];
+    }
+
+    /**
+     * @param int[] $parts
+     */
+    #[DataProvider('formatProvider')]
+    public function testFormat(array $parts, string $format, string $expected): void
+    {
+        $this->assertSame(
+            $expected,
+            DateTime::createFromArray($parts)->format($format)
+        );
+    }
+
+    #[DataProvider('timeZoneFormatProvider')]
+    public function testFormatTimeZone(string|null $timeZone, string $format, string $expected): void
+    {
+        $this->assertSame(
+            $expected,
+            DateTime::now($timeZone)->format($format)
         );
     }
 }

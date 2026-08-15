@@ -8,81 +8,86 @@ use Fyre\DB\Expressions\CaseExpression;
 use Fyre\DB\Expressions\FunctionBuilder;
 use Fyre\DB\Expressions\LiteralExpression;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use function class_uses;
 
+/**
+ * @phpstan-type FunctionMethod 'abs'|'avg'|'ceil'|'count'|'floor'|'length'|'lower'|'max'|'min'|'nullIf'|'replace'|'round'|'substring'|'sum'|'trim'|'upper'
+ * @phpstan-type InvalidMethod 'cast'|'coalesce'|'concat'|'dateAdd'|'dateDiff'|'datePart'|'dateSub'|'extract'|'lag'|'lead'|'now'|'nthValue'|'ntile'|'substring'
+ * @phpstan-type WindowFunctionMethod 'cumeDist'|'denseRank'|'firstValue'|'lastValue'|'nthValue'|'ntile'|'percentRank'|'rank'
+ */
 final class FunctionBuilderTest extends TestCase
 {
-    public function testAbs(): void
+    /**
+     * @return array<string, array{string, mixed[], string}>
+     */
+    public static function functionNameProvider(): array
     {
-        $builder = new FunctionBuilder();
-        $function = $builder->abs('value');
-
-        $this->assertSame(
-            'ABS',
-            $function->getName()
-        );
+        return [
+            'absolute value' => ['abs', ['value'], 'ABS'],
+            'average' => ['avg', ['value'], 'AVG'],
+            'ceiling' => ['ceil', ['value'], 'CEIL'],
+            'count' => ['count', [], 'COUNT'],
+            'floor' => ['floor', ['value'], 'FLOOR'],
+            'length' => ['length', ['value'], 'LENGTH'],
+            'lowercase' => ['lower', ['value'], 'LOWER'],
+            'maximum' => ['max', ['value'], 'MAX'],
+            'minimum' => ['min', ['value'], 'MIN'],
+            'null if' => ['nullIf', ['value', null], 'NULLIF'],
+            'replace' => ['replace', ['value', 'a', 'b'], 'REPLACE'],
+            'round' => ['round', ['value'], 'ROUND'],
+            'substring' => ['substring', ['value', 1], 'SUBSTRING'],
+            'sum' => ['sum', ['value'], 'SUM'],
+            'trim' => ['trim', ['value'], 'TRIM'],
+            'uppercase' => ['upper', ['value'], 'UPPER'],
+        ];
     }
 
-    public function testAvg(): void
+    /**
+     * @return array<string, array{string, mixed[], string}>
+     */
+    public static function invalidProvider(): array
     {
-        $builder = new FunctionBuilder();
-        $function = $builder->avg('value');
-
-        $this->assertSame(
-            'AVG',
-            $function->getName()
-        );
+        return [
+            'cast data type' => [
+                'cast',
+                ['value', 'CHAR); DROP TABLE test'],
+                'Query function data type `CHAR); DROP TABLE test` is not valid.',
+            ],
+            'coalesce arguments' => ['coalesce', [[]], 'Query function COALESCE requires at least one argument.'],
+            'concat arguments' => ['concat', [[]], 'Query function CONCAT requires at least one argument.'],
+            'date add unit' => ['dateAdd', ['created', 1, 'invalid'], 'Query function DATE_ADD unit `invalid` is not valid.'],
+            'date diff arguments' => ['dateDiff', [['created']], 'Query function DATE_DIFF requires two arguments.'],
+            'date part' => ['datePart', ['invalid', 'created'], 'Query function DATE_PART part `invalid` is not valid.'],
+            'date sub unit' => ['dateSub', ['created', 1, 'invalid'], 'Query function DATE_SUB unit `invalid` is not valid.'],
+            'extract part' => ['extract', ['invalid', 'created'], 'Query function EXTRACT part `invalid` is not valid.'],
+            'lag offset' => ['lag', ['value', -1], 'Query function LAG offset must not be negative.'],
+            'lead offset' => ['lead', ['value', -1], 'Query function LEAD offset must not be negative.'],
+            'now type' => ['now', ['invalid'], 'Query function NOW type `invalid` is not valid.'],
+            'nth value offset' => ['nthValue', ['value', 0], 'Query function NTH_VALUE offset must be greater than zero.'],
+            'ntile buckets' => ['ntile', [0], 'Query function NTILE buckets must be greater than zero.'],
+            'substring length' => ['substring', ['value', 1, -1], 'Query function SUBSTRING length must not be negative.'],
+            'substring start' => ['substring', ['value', 0], 'Query function SUBSTRING start must be greater than zero.'],
+        ];
     }
 
-    public function testCastInvalidDataType(): void
+    /**
+     * @return array<string, array{string, mixed[], string}>
+     */
+    public static function windowFunctionNameProvider(): array
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query function data type `CHAR); DROP TABLE test` is not valid.');
-
-        $builder = new FunctionBuilder();
-        $builder->cast('value', 'CHAR); DROP TABLE test');
-    }
-
-    public function testCeil(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->ceil('value');
-
-        $this->assertSame(
-            'CEIL',
-            $function->getName()
-        );
-    }
-
-    public function testCoalesceEmpty(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query function COALESCE requires at least one argument.');
-
-        $builder = new FunctionBuilder();
-        $builder->coalesce([]);
-    }
-
-    public function testConcatEmpty(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query function CONCAT requires at least one argument.');
-
-        $builder = new FunctionBuilder();
-        $builder->concat([]);
-    }
-
-    public function testCount(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->count();
-
-        $this->assertSame(
-            'COUNT',
-            $function->getName()
-        );
+        return [
+            'cumulative distribution' => ['cumeDist', [], 'CUME_DIST'],
+            'dense rank' => ['denseRank', [], 'DENSE_RANK'],
+            'first value' => ['firstValue', ['value'], 'FIRST_VALUE'],
+            'last value' => ['lastValue', ['value'], 'LAST_VALUE'],
+            'nth value' => ['nthValue', ['value', 2], 'NTH_VALUE'],
+            'ntile' => ['ntile', [4], 'NTILE'],
+            'percent rank' => ['percentRank', [], 'PERCENT_RANK'],
+            'rank' => ['rank', [], 'RANK'],
+        ];
     }
 
     public function testCountLiteralExpression(): void
@@ -97,144 +102,34 @@ final class FunctionBuilderTest extends TestCase
         );
     }
 
-    public function testCumeDist(): void
+    /**
+     * @param FunctionMethod $method
+     * @param mixed[] $arguments
+     */
+    #[DataProvider('functionNameProvider')]
+    public function testFunctionName(string $method, array $arguments, string $expected): void
     {
         $builder = new FunctionBuilder();
-        $function = $builder->cumeDist()->getFunction();
+        $function = $builder->$method(...$arguments);
 
         $this->assertSame(
-            'CUME_DIST',
+            $expected,
             $function->getName()
         );
     }
 
-    public function testDateAddInvalidUnit(): void
+    /**
+     * @param InvalidMethod $method
+     * @param mixed[] $arguments
+     */
+    #[DataProvider('invalidProvider')]
+    public function testInvalid(string $method, array $arguments, string $message): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query function DATE_ADD unit `invalid` is not valid.');
+        $this->expectExceptionMessage($message);
 
         $builder = new FunctionBuilder();
-        $builder->dateAdd('created', 1, 'invalid');
-    }
-
-    public function testDateDiffInvalidArguments(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query function DATE_DIFF requires two arguments.');
-
-        $builder = new FunctionBuilder();
-        $builder->dateDiff(['created']);
-    }
-
-    public function testDatePartInvalidPart(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query function DATE_PART part `invalid` is not valid.');
-
-        $builder = new FunctionBuilder();
-        $builder->datePart('invalid', 'created');
-    }
-
-    public function testDateSubInvalidUnit(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query function DATE_SUB unit `invalid` is not valid.');
-
-        $builder = new FunctionBuilder();
-        $builder->dateSub('created', 1, 'invalid');
-    }
-
-    public function testDenseRank(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->denseRank()->getFunction();
-
-        $this->assertSame(
-            'DENSE_RANK',
-            $function->getName()
-        );
-    }
-
-    public function testExtractInvalidPart(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query function EXTRACT part `invalid` is not valid.');
-
-        $builder = new FunctionBuilder();
-        $builder->extract('invalid', 'created');
-    }
-
-    public function testFirstValue(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->firstValue('value')->getFunction();
-
-        $this->assertSame(
-            'FIRST_VALUE',
-            $function->getName()
-        );
-    }
-
-    public function testFloor(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->floor('value');
-
-        $this->assertSame(
-            'FLOOR',
-            $function->getName()
-        );
-    }
-
-    public function testLagInvalidOffset(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query function LAG offset must not be negative.');
-
-        $builder = new FunctionBuilder();
-        $builder->lag('value', -1);
-    }
-
-    public function testLastValue(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->lastValue('value')->getFunction();
-
-        $this->assertSame(
-            'LAST_VALUE',
-            $function->getName()
-        );
-    }
-
-    public function testLeadInvalidOffset(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query function LEAD offset must not be negative.');
-
-        $builder = new FunctionBuilder();
-        $builder->lead('value', -1);
-    }
-
-    public function testLength(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->length('value');
-
-        $this->assertSame(
-            'LENGTH',
-            $function->getName()
-        );
-    }
-
-    public function testLower(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->lower('value');
-
-        $this->assertSame(
-            'LOWER',
-            $function->getName()
-        );
+        $builder->$method(...$arguments);
     }
 
     public function testMacro(): void
@@ -242,172 +137,6 @@ final class FunctionBuilderTest extends TestCase
         $this->assertContains(
             MacroTrait::class,
             class_uses(FunctionBuilder::class)
-        );
-    }
-
-    public function testMax(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->max('value');
-
-        $this->assertSame(
-            'MAX',
-            $function->getName()
-        );
-    }
-
-    public function testMin(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->min('value');
-
-        $this->assertSame(
-            'MIN',
-            $function->getName()
-        );
-    }
-
-    public function testNowInvalidType(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query function NOW type `invalid` is not valid.');
-
-        $builder = new FunctionBuilder();
-        $builder->now('invalid');
-    }
-
-    public function testNthValue(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->nthValue('value', 2)->getFunction();
-
-        $this->assertSame(
-            'NTH_VALUE',
-            $function->getName()
-        );
-    }
-
-    public function testNthValueInvalidOffset(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query function NTH_VALUE offset must be greater than zero.');
-
-        $builder = new FunctionBuilder();
-        $builder->nthValue('value', 0);
-    }
-
-    public function testNtile(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->ntile(4)->getFunction();
-
-        $this->assertSame(
-            'NTILE',
-            $function->getName()
-        );
-    }
-
-    public function testNtileInvalidBuckets(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query function NTILE buckets must be greater than zero.');
-
-        $builder = new FunctionBuilder();
-        $builder->ntile(0);
-    }
-
-    public function testNullIf(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->nullIf('value', null);
-
-        $this->assertSame(
-            'NULLIF',
-            $function->getName()
-        );
-    }
-
-    public function testPercentRank(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->percentRank()->getFunction();
-
-        $this->assertSame(
-            'PERCENT_RANK',
-            $function->getName()
-        );
-    }
-
-    public function testRank(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->rank()->getFunction();
-
-        $this->assertSame(
-            'RANK',
-            $function->getName()
-        );
-    }
-
-    public function testReplace(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->replace('value', 'a', 'b');
-
-        $this->assertSame(
-            'REPLACE',
-            $function->getName()
-        );
-    }
-
-    public function testRound(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->round('value');
-
-        $this->assertSame(
-            'ROUND',
-            $function->getName()
-        );
-    }
-
-    public function testSubstring(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->substring('value', 1);
-
-        $this->assertSame(
-            'SUBSTRING',
-            $function->getName()
-        );
-    }
-
-    public function testSubstringInvalidLength(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query function SUBSTRING length must not be negative.');
-
-        $builder = new FunctionBuilder();
-        $builder->substring('value', 1, -1);
-    }
-
-    public function testSubstringInvalidStart(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query function SUBSTRING start must be greater than zero.');
-
-        $builder = new FunctionBuilder();
-        $builder->substring('value', 0);
-    }
-
-    public function testSum(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->sum('value');
-
-        $this->assertSame(
-            'SUM',
-            $function->getName()
         );
     }
 
@@ -423,24 +152,18 @@ final class FunctionBuilderTest extends TestCase
         );
     }
 
-    public function testTrim(): void
+    /**
+     * @param WindowFunctionMethod $method
+     * @param mixed[] $arguments
+     */
+    #[DataProvider('windowFunctionNameProvider')]
+    public function testWindowFunctionName(string $method, array $arguments, string $expected): void
     {
         $builder = new FunctionBuilder();
-        $function = $builder->trim('value');
+        $function = $builder->$method(...$arguments)->getFunction();
 
         $this->assertSame(
-            'TRIM',
-            $function->getName()
-        );
-    }
-
-    public function testUpper(): void
-    {
-        $builder = new FunctionBuilder();
-        $function = $builder->upper('value');
-
-        $this->assertSame(
-            'UPPER',
+            $expected,
             $function->getName()
         );
     }

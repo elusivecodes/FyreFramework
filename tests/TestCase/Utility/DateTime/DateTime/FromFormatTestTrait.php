@@ -5,334 +5,159 @@ namespace Tests\TestCase\Utility\DateTime\DateTime;
 
 use DateMalformedStringException;
 use Fyre\Utility\DateTime\DateTime;
+use PHPUnit\Framework\Attributes\DataProvider;
 
+/**
+ * @phpstan-type FromFormatAccessor 'getDate'|'getDayOfYear'|'getHours'|'getMilliseconds'|'getMinutes'|'getMonth'|'getQuarter'|'getSeconds'|'getWeek'|'getWeekDay'|'getWeekDayInMonth'|'getWeekOfMonth'|'getWeekYear'|'getYear'|'toIsoString'
+ */
 trait FromFormatTestTrait
 {
-    public function testCreateFromFormat11Hour1Digit(): void
+    /**
+     * @return array<string, array{string, string, string, int|string}>
+     */
+    public static function fromFormatProvider(): array
     {
-        $this->assertSame(
-            11,
-            DateTime::createFromFormat('K', '11')->getHours()
-        );
+        return [
+            '11 hour 1 digit' => ['K', '11', 'getHours', 11],
+            '11 hour 1 digit padding' => ['K', '0', 'getHours', 0],
+            '11 hour 2 digits' => ['KK', '11', 'getHours', 11],
+            '11 hour 2 digits padding' => ['KK', '00', 'getHours', 00],
+            '12 hour 1 digit' => ['h', '12', 'getHours', 0],
+            '12 hour 1 digit padding' => ['h', '1', 'getHours', 1],
+            '12 hour 2 digits' => ['hh', '12', 'getHours', 0],
+            '12 hour 2 digits padding' => ['hh', '01', 'getHours', 1],
+            '23 hour 1 digit' => ['H', '23', 'getHours', 23],
+            '23 hour 1 digit padding' => ['H', '0', 'getHours', 0],
+            '23 hour 2 digits' => ['HH', '23', 'getHours', 23],
+            '23 hour 2 digits padding' => ['HH', '00', 'getHours', 0],
+            '24 hour 1 digit' => ['k', '24', 'getHours', 0],
+            '24 hour 1 digit padding' => ['k', '1', 'getHours', 1],
+            '24 hour 2 digits' => ['kk', '24', 'getHours', 0],
+            '24 hour 2 digits padding' => ['kk', '01', 'getHours', 1],
+            'alt week day long' => ['EEEE', 'Friday', 'getWeekDay', 6],
+            'alt week day short' => ['EEE', 'Fri', 'getWeekDay', 6],
+            'day of month 1 digit' => ['d', '1', 'getDate', 1],
+            'day of month 1 digit full' => ['d', '21', 'getDate', 21],
+            'day of month 2 digits' => ['dd', '01', 'getDate', 1],
+            'day of month 2 digits full' => ['dd', '21', 'getDate', 21],
+            'day of week in month month' => ['F', '3', 'getWeekDayInMonth', 3],
+            'day of year 1 digit' => ['D', '1', 'getDayOfYear', 1],
+            'day of year 1 digit full' => ['D', '152', 'getDayOfYear', 152],
+            'day of year 2 digits' => ['DD', '01', 'getDayOfYear', 1],
+            'day of year 2 digits full' => ['DD', '152', 'getDayOfYear', 152],
+            'day of year 3 digits' => ['DDD', '001', 'getDayOfYear', 1],
+            'day of year 3 digits full' => ['DDD', '152', 'getDayOfYear', 152],
+            'day period long' => ['aaaa', 'AM', 'getHours', 0],
+            'day period long pm' => ['aaaa', 'PM', 'getHours', 12],
+            // 'standalone week day narrow' => ['ccccc', 'F', 'getWeekDay', 6],
+            'day period short' => ['aaa', 'AM', 'getHours', 0],
+            'day period short pm' => ['aaa', 'PM', 'getHours', 12],
+            'era long' => ['yyyy GGGG', '1970 Anno Domini', 'getYear', 1970],
+            'era long bc' => ['yyyy GGGG', '1970 Before Christ', 'getYear', -1970],
+            'era narrow' => ['yyyy GGGGG', '1970 A', 'getYear', 1970],
+            'era narrow bc' => ['yyyy GGGGG', '1970 B', 'getYear', -1970],
+            'era short' => ['yyyy GGG', '1970 AD', 'getYear', 1970],
+            'era short bc' => ['yyyy GGG', '1970 BC', 'getYear', -1970],
+            'fractional' => ['SSS', '123', 'getMilliseconds', 0],
+            'minute 1 digit' => ['m', '25', 'getMinutes', 25],
+            'minute 1 digit padding' => ['m', '1', 'getMinutes', 1],
+            'minute 2 digits' => ['mm', '25', 'getMinutes', 25],
+            'minute 2 digits padding' => ['mm', '01', 'getMinutes', 1],
+            'month 1 digit' => ['M', '1', 'getMonth', 1],
+            'month 1 digit full' => ['M', '10', 'getMonth', 10],
+            'month 2 digits' => ['MM', '01', 'getMonth', 1],
+            'month 2 digits full' => ['MM', '10', 'getMonth', 10],
+            'month long' => ['MMMM', 'October', 'getMonth', 10],
+            'month short' => ['MMM', 'Oct', 'getMonth', 10],
+            'quarter 1 digit' => ['q', '3', 'getQuarter', 3],
+            'quarter 2 digits' => ['qq', '03', 'getQuarter', 3],
+            'second 1 digit' => ['s', '25', 'getSeconds', 25],
+            'second 1 digit padding' => ['s', '1', 'getSeconds', 1],
+            'second 2 digits' => ['ss', '25', 'getSeconds', 25],
+            'second 2 digits padding' => ['ss', '01', 'getSeconds', 1],
+            'standalone month 1 digit' => ['L', '1', 'getMonth', 1],
+            // 'month narrow' => ['MMMMM', 'O', 'getMonth', 10],
+            'standalone month 1 digit full' => ['L', '10', 'getMonth', 10],
+            'standalone month 2 digits' => ['LL', '01', 'getMonth', 1],
+            'standalone month 2 digits full' => ['LL', '10', 'getMonth', 10],
+            'standalone month long' => ['LLLL', 'October', 'getMonth', 10],
+            'standalone month short' => ['LLL', 'Oct', 'getMonth', 10],
+            'standalone quarter 1 digit' => ['Q', '3', 'getQuarter', 3],
+            'standalone quarter 2 digits' => ['QQ', '03', 'getQuarter', 3],
+            // 'week day narrow' => ['eeeee', 'F', 'getWeekDay', 6],
+            'standalone week day 1 digit' => ['c', '6', 'getWeekDay', 6],
+            'standalone week day 2 digits' => ['cc', '06', 'getWeekDay', 6],
+            'standalone week day long' => ['cccc', 'Friday', 'getWeekDay', 6],
+            'standalone week day short' => ['ccc', 'Fri', 'getWeekDay', 6],
+            'time zone ISO 8601 basic' => ['dd/MM/yyyy HH:mm:ss xx', '01/01/2019 00:00:00 +0000', 'toIsoString', '2019-01-01T00:00:00.000+00:00'],
+            'time zone ISO 8601 basic alt' => ['dd/MM/yyyy HH:mm:ss ZZZ', '01/01/2019 00:00:00 +0000', 'toIsoString', '2019-01-01T00:00:00.000+00:00'],
+            'time zone ISO 8601 basic alt time zone' => ['dd/MM/yyyy HH:mm:ss ZZZ', '01/01/2019 00:00:00 +1000', 'toIsoString', '2018-12-31T14:00:00.000+00:00'],
+            'time zone ISO 8601 basic short' => ['dd/MM/yyyy HH:mm:ss x', '01/01/2019 00:00:00 +00', 'toIsoString', '2019-01-01T00:00:00.000+00:00'],
+            'time zone ISO 8601 basic short time zone' => ['dd/MM/yyyy HH:mm:ss x', '01/01/2019 00:00:00 +10', 'toIsoString', '2018-12-31T14:00:00.000+00:00'],
+            'time zone ISO 8601 basic short z' => ['dd/MM/yyyy HH:mm:ss X', '01/01/2019 00:00:00 Z', 'toIsoString', '2019-01-01T00:00:00.000+00:00'],
+            'time zone ISO 8601 basic short z time zone' => ['dd/MM/yyyy HH:mm:ss X', '01/01/2019 00:00:00 +10', 'toIsoString', '2018-12-31T14:00:00.000+00:00'],
+            'time zone ISO 8601 basic time zone' => ['dd/MM/yyyy HH:mm:ss xx', '01/01/2019 00:00:00 +1000', 'toIsoString', '2018-12-31T14:00:00.000+00:00'],
+            'time zone ISO 8601 basic z' => ['dd/MM/yyyy HH:mm:ss XX', '01/01/2019 00:00:00 Z', 'toIsoString', '2019-01-01T00:00:00.000+00:00'],
+            'time zone ISO 8601 basic z time zone' => ['dd/MM/yyyy HH:mm:ss XX', '01/01/2019 00:00:00 +1000', 'toIsoString', '2018-12-31T14:00:00.000+00:00'],
+            'time zone ISO 8601 extended' => ['dd/MM/yyyy HH:mm:ss xxx', '01/01/2019 00:00:00 +00:00', 'toIsoString', '2019-01-01T00:00:00.000+00:00'],
+            'time zone ISO 8601 extended alt' => ['dd/MM/yyyy HH:mm:ss ZZZZZ', '01/01/2019 00:00:00 +00:00', 'toIsoString', '2019-01-01T00:00:00.000+00:00'],
+            'time zone ISO 8601 extended alt time zone' => ['dd/MM/yyyy HH:mm:ss ZZZZZ', '01/01/2019 00:00:00 +10:00', 'toIsoString', '2018-12-31T14:00:00.000+00:00'],
+            'time zone ISO 8601 extended time zone' => ['dd/MM/yyyy HH:mm:ss xxx', '01/01/2019 00:00:00 +10:00', 'toIsoString', '2018-12-31T14:00:00.000+00:00'],
+            'time zone ISO 8601 extended z' => ['dd/MM/yyyy HH:mm:ss XXX', '01/01/2019 00:00:00 Z', 'toIsoString', '2019-01-01T00:00:00.000+00:00'],
+            'time zone ISO 8601 extended z time zone' => ['dd/MM/yyyy HH:mm:ss XXX', '01/01/2019 00:00:00 +10:00', 'toIsoString', '2018-12-31T14:00:00.000+00:00'],
+            'time zone long basic' => ['dd/MM/yyyy HH:mm:ss ZZZZ', '01/01/2019 00:00:00 GMT+00:00', 'toIsoString', '2019-01-01T00:00:00.000+00:00'],
+            'time zone long basic time zone' => ['dd/MM/yyyy HH:mm:ss ZZZZ', '01/01/2019 00:00:00 GMT+10:00', 'toIsoString', '2018-12-31T14:00:00.000+00:00'],
+            'time zone long localized' => ['dd/MM/yyyy HH:mm:ss OOOO', '01/01/2019 00:00:00 GMT+00:00', 'toIsoString', '2019-01-01T00:00:00.000+00:00'],
+            'time zone long localized time zone' => ['dd/MM/yyyy HH:mm:ss OOOO', '01/01/2019 00:00:00 GMT+10:00', 'toIsoString', '2018-12-31T14:00:00.000+00:00'],
+            'time zone long time zone ID' => ['dd/MM/yyyy HH:mm:ss VV', '01/01/2019 00:00:00 UTC', 'toIsoString', '2019-01-01T00:00:00.000+00:00'],
+            'time zone long time zone ID time zone' => ['dd/MM/yyyy HH:mm:ss VV', '01/01/2019 00:00:00 Australia/Brisbane', 'toIsoString', '2018-12-31T14:00:00.000+00:00'],
+            'time zone short localized' => ['dd/MM/yyyy HH:mm:ss O', '01/01/2019 00:00:00 GMT+00', 'toIsoString', '2019-01-01T00:00:00.000+00:00'],
+            'time zone short localized time zone' => ['dd/MM/yyyy HH:mm:ss O', '01/01/2019 00:00:00 GMT+10', 'toIsoString', '2018-12-31T14:00:00.000+00:00'],
+            'week 1 digit' => ['w', '1', 'getWeek', 1],
+            // 'standalone month narrow' => ['LLLLL', 'O', 'getMonth', 10],
+            'week 1 digit full' => ['w', '22', 'getWeek', 22],
+            'week 2 digits' => ['ww', '01', 'getWeek', 1],
+            'week 2 digits full' => ['ww', '22', 'getWeek', 22],
+            // 'alt week day narrow' => ['EEEEE', 'F', 'getWeekDay', 6],
+            'week day 1 digit' => ['e', '6', 'getWeekDay', 6],
+            'week day 2 digits' => ['ee', '06', 'getWeekDay', 6],
+            'week day long' => ['eeee', 'Friday', 'getWeekDay', 6],
+            'week day short' => ['eee', 'Fri', 'getWeekDay', 6],
+            'week of month' => ['W', '3', 'getWeekOfMonth', 3],
+            'week year 1 digit' => ['Y w e', '5 1 1', 'getWeekYear', 5],
+            'week year 1 digit full' => ['Y w e', '2018 1 1', 'getWeekYear', 2018],
+            'week year 2 digits' => ['YY w e', '88 1 1', 'getWeekYear', 1988],
+            'week year 2 digits full' => ['YY w e', '2018 1 1', 'getWeekYear', 2018],
+            'week year 3 digits' => ['YYY w e', '088 1 1', 'getWeekYear', 88],
+            'week year 3 digits full' => ['YYY w e', '2018 1 1', 'getWeekYear', 2018],
+            'week year 4 digits' => ['YYYY w e', '0088 1 1', 'getWeekYear', 88],
+            'week year 4 digits full' => ['YYYY w e', '2018 1 1', 'getWeekYear', 2018],
+            'year 1 digit' => ['y', '5', 'getYear', 5],
+            'year 1 digit full' => ['y', '2018', 'getYear', 2018],
+            'year 2 digits' => ['yy', '88', 'getYear', 1988],
+            'year 2 digits full' => ['yy', '2018', 'getYear', 2018],
+            'year 3 digits' => ['yyy', '088', 'getYear', 88],
+            'year 3 digits full' => ['yyy', '2018', 'getYear', 2018],
+            'year 4 digits' => ['yyyy', '0088', 'getYear', 88],
+            'year 4 digits full' => ['yyyy', '2018', 'getYear', 2018],
+        ];
     }
 
-    public function testCreateFromFormat11Hour1DigitPadding(): void
-    {
-        $this->assertSame(
-            0,
-            DateTime::createFromFormat('K', '0')->getHours()
-        );
-    }
+    /**
+     * @param FromFormatAccessor $accessor
+     */
+    #[DataProvider('fromFormatProvider')]
+    public function testCreateFromFormat(
+        string $format,
+        string $value,
+        string $accessor,
+        int|string $expected
+    ): void {
+        $date = DateTime::createFromFormat($format, $value);
 
-    public function testCreateFromFormat11Hour2Digits(): void
-    {
         $this->assertSame(
-            11,
-            DateTime::createFromFormat('KK', '11')->getHours()
-        );
-    }
-
-    public function testCreateFromFormat11Hour2DigitsPadding(): void
-    {
-        $this->assertSame(
-            00,
-            DateTime::createFromFormat('KK', '00')->getHours()
-        );
-    }
-
-    public function testCreateFromFormat12Hour1Digit(): void
-    {
-        $this->assertSame(
-            0,
-            DateTime::createFromFormat('h', '12')->getHours()
-        );
-    }
-
-    public function testCreateFromFormat12Hour1DigitPadding(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('h', '1')->getHours()
-        );
-    }
-
-    public function testCreateFromFormat12Hour2Digits(): void
-    {
-        $this->assertSame(
-            0,
-            DateTime::createFromFormat('hh', '12')->getHours()
-        );
-    }
-
-    public function testCreateFromFormat12Hour2DigitsPadding(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('hh', '01')->getHours()
-        );
-    }
-
-    public function testCreateFromFormat23Hour1Digit(): void
-    {
-        $this->assertSame(
-            23,
-            DateTime::createFromFormat('H', '23')->getHours()
-        );
-    }
-
-    public function testCreateFromFormat23Hour1DigitPadding(): void
-    {
-        $this->assertSame(
-            0,
-            DateTime::createFromFormat('H', '0')->getHours()
-        );
-    }
-
-    public function testCreateFromFormat23Hour2Digits(): void
-    {
-        $this->assertSame(
-            23,
-            DateTime::createFromFormat('HH', '23')->getHours()
-        );
-    }
-
-    public function testCreateFromFormat23Hour2DigitsPadding(): void
-    {
-        $this->assertSame(
-            0,
-            DateTime::createFromFormat('HH', '00')->getHours()
-        );
-    }
-
-    public function testCreateFromFormat24Hour1Digit(): void
-    {
-        $this->assertSame(
-            0,
-            DateTime::createFromFormat('k', '24')->getHours()
-        );
-    }
-
-    public function testCreateFromFormat24Hour1DigitPadding(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('k', '1')->getHours()
-        );
-    }
-
-    public function testCreateFromFormat24Hour2Digits(): void
-    {
-        $this->assertSame(
-            0,
-            DateTime::createFromFormat('kk', '24')->getHours()
-        );
-    }
-
-    public function testCreateFromFormat24Hour2DigitsPadding(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('kk', '01')->getHours()
-        );
-    }
-
-    public function testCreateFromFormatAltWeekDayLong(): void
-    {
-        $this->assertSame(
-            6,
-            DateTime::createFromFormat('EEEE', 'Friday')->getWeekDay()
-        );
-    }
-
-    public function testCreateFromFormatAltWeekDayShort(): void
-    {
-        $this->assertSame(
-            6,
-            DateTime::createFromFormat('EEE', 'Fri')->getWeekDay()
-        );
-    }
-
-    public function testCreateFromFormatDayOfMonth1Digit(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('d', '1')->getDate()
-        );
-    }
-
-    public function testCreateFromFormatDayOfMonth1DigitFull(): void
-    {
-        $this->assertSame(
-            21,
-            DateTime::createFromFormat('d', '21')->getDate()
-        );
-    }
-
-    public function testCreateFromFormatDayOfMonth2Digits(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('dd', '01')->getDate()
-        );
-    }
-
-    public function testCreateFromFormatDayOfMonth2DigitsFull(): void
-    {
-        $this->assertSame(
-            21,
-            DateTime::createFromFormat('dd', '21')->getDate()
-        );
-    }
-
-    public function testCreateFromFormatDayOfWeekInMonthMonth(): void
-    {
-        $this->assertSame(
-            3,
-            DateTime::createFromFormat('F', '3')->getWeekDayInMonth()
-        );
-    }
-
-    public function testCreateFromFormatDayOfYear1Digit(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('D', '1')->getDayOfYear()
-        );
-    }
-
-    public function testCreateFromFormatDayOfYear1DigitFull(): void
-    {
-        $this->assertSame(
-            152,
-            DateTime::createFromFormat('D', '152')->getDayOfYear()
-        );
-    }
-
-    public function testCreateFromFormatDayOfYear2Digits(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('DD', '01')->getDayOfYear()
-        );
-    }
-
-    public function testCreateFromFormatDayOfYear2DigitsFull(): void
-    {
-        $this->assertSame(
-            152,
-            DateTime::createFromFormat('DD', '152')->getDayOfYear()
-        );
-    }
-
-    public function testCreateFromFormatDayOfYear3Digits(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('DDD', '001')->getDayOfYear()
-        );
-    }
-
-    public function testCreateFromFormatDayOfYear3DigitsFull(): void
-    {
-        $this->assertSame(
-            152,
-            DateTime::createFromFormat('DDD', '152')->getDayOfYear()
-        );
-    }
-
-    public function testCreateFromFormatDayPeriodLong(): void
-    {
-        $this->assertSame(
-            0,
-            DateTime::createFromFormat('aaaa', 'AM')->getHours()
-        );
-    }
-
-    public function testCreateFromFormatDayPeriodLongPm(): void
-    {
-        $this->assertSame(
-            12,
-            DateTime::createFromFormat('aaaa', 'PM')->getHours()
-        );
-    }
-
-    // public function testCreateFromFormatStandaloneWeekDayNarrow(): void
-    // {
-    //     $this->assertSame(
-    //         6,
-    //         DateTime::createFromFormat('ccccc', 'F')->getWeekDay()
-    //     );
-    // }
-
-    public function testCreateFromFormatDayPeriodShort(): void
-    {
-        $this->assertSame(
-            0,
-            DateTime::createFromFormat('aaa', 'AM')->getHours()
-        );
-    }
-
-    public function testCreateFromFormatDayPeriodShortPm(): void
-    {
-        $this->assertSame(
-            12,
-            DateTime::createFromFormat('aaa', 'PM')->getHours()
-        );
-    }
-
-    public function testCreateFromFormatEraLong(): void
-    {
-        $this->assertSame(
-            1970,
-            DateTime::createFromFormat('yyyy GGGG', '1970 Anno Domini')->getYear()
-        );
-    }
-
-    public function testCreateFromFormatEraLongBc(): void
-    {
-        $this->assertSame(
-            -1970,
-            DateTime::createFromFormat('yyyy GGGG', '1970 Before Christ')->getYear()
-        );
-    }
-
-    public function testCreateFromFormatEraNarrow(): void
-    {
-        $this->assertSame(
-            1970,
-            DateTime::createFromFormat('yyyy GGGGG', '1970 A')->getYear()
-        );
-    }
-
-    public function testCreateFromFormatEraNarrowBc(): void
-    {
-        $this->assertSame(
-            -1970,
-            DateTime::createFromFormat('yyyy GGGGG', '1970 B')->getYear()
-        );
-    }
-
-    public function testCreateFromFormatEraShort(): void
-    {
-        $this->assertSame(
-            1970,
-            DateTime::createFromFormat('yyyy GGG', '1970 AD')->getYear()
-        );
-    }
-
-    public function testCreateFromFormatEraShortBc(): void
-    {
-        $this->assertSame(
-            -1970,
-            DateTime::createFromFormat('yyyy GGG', '1970 BC')->getYear()
-        );
-    }
-
-    public function testCreateFromFormatFractional(): void
-    {
-        $this->assertSame(
-            0,
-            DateTime::createFromFormat('SSS', '123')->getMilliseconds()
+            $expected,
+            $date->$accessor()
         );
     }
 
@@ -343,653 +168,5 @@ trait FromFormatTestTrait
         $this->expectExceptionCode(9);
 
         DateTime::createFromFormat('yyyy', 'a');
-    }
-
-    public function testCreateFromFormatMinute1Digit(): void
-    {
-        $this->assertSame(
-            25,
-            DateTime::createFromFormat('m', '25')->getMinutes()
-        );
-    }
-
-    public function testCreateFromFormatMinute1DigitPadding(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('m', '1')->getMinutes()
-        );
-    }
-
-    public function testCreateFromFormatMinute2Digits(): void
-    {
-        $this->assertSame(
-            25,
-            DateTime::createFromFormat('mm', '25')->getMinutes()
-        );
-    }
-
-    public function testCreateFromFormatMinute2DigitsPadding(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('mm', '01')->getMinutes()
-        );
-    }
-
-    public function testCreateFromFormatMonth1Digit(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('M', '1')->getMonth()
-        );
-    }
-
-    public function testCreateFromFormatMonth1DigitFull(): void
-    {
-        $this->assertSame(
-            10,
-            DateTime::createFromFormat('M', '10')->getMonth()
-        );
-    }
-
-    public function testCreateFromFormatMonth2Digits(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('MM', '01')->getMonth()
-        );
-    }
-
-    public function testCreateFromFormatMonth2DigitsFull(): void
-    {
-        $this->assertSame(
-            10,
-            DateTime::createFromFormat('MM', '10')->getMonth()
-        );
-    }
-
-    public function testCreateFromFormatMonthLong(): void
-    {
-        $this->assertSame(
-            10,
-            DateTime::createFromFormat('MMMM', 'October')->getMonth()
-        );
-    }
-
-    public function testCreateFromFormatMonthShort(): void
-    {
-        $this->assertSame(
-            10,
-            DateTime::createFromFormat('MMM', 'Oct')->getMonth()
-        );
-    }
-
-    public function testCreateFromFormatQuarter1Digit(): void
-    {
-        $this->assertSame(
-            3,
-            DateTime::createFromFormat('q', '3')->getQuarter()
-        );
-    }
-
-    public function testCreateFromFormatQuarter2Digits(): void
-    {
-        $this->assertSame(
-            3,
-            DateTime::createFromFormat('qq', '03')->getQuarter()
-        );
-    }
-
-    public function testCreateFromFormatSecond1Digit(): void
-    {
-        $this->assertSame(
-            25,
-            DateTime::createFromFormat('s', '25')->getSeconds()
-        );
-    }
-
-    public function testCreateFromFormatSecond1DigitPadding(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('s', '1')->getSeconds()
-        );
-    }
-
-    public function testCreateFromFormatSecond2Digits(): void
-    {
-        $this->assertSame(
-            25,
-            DateTime::createFromFormat('ss', '25')->getSeconds()
-        );
-    }
-
-    public function testCreateFromFormatSecond2DigitsPadding(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('ss', '01')->getSeconds()
-        );
-    }
-
-    public function testCreateFromFormatStandaloneMonth1Digit(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('L', '1')->getMonth()
-        );
-    }
-
-    // public function testCreateFromFormatMonthNarrow(): void
-    // {
-    //     $this->assertSame(
-    //         10,
-    //         DateTime::createFromFormat('MMMMM', 'O')->getMonth()
-    //     );
-    // }
-
-    public function testCreateFromFormatStandaloneMonth1DigitFull(): void
-    {
-        $this->assertSame(
-            10,
-            DateTime::createFromFormat('L', '10')->getMonth()
-        );
-    }
-
-    public function testCreateFromFormatStandaloneMonth2Digits(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('LL', '01')->getMonth()
-        );
-    }
-
-    public function testCreateFromFormatStandaloneMonth2DigitsFull(): void
-    {
-        $this->assertSame(
-            10,
-            DateTime::createFromFormat('LL', '10')->getMonth()
-        );
-    }
-
-    public function testCreateFromFormatStandaloneMonthLong(): void
-    {
-        $this->assertSame(
-            10,
-            DateTime::createFromFormat('LLLL', 'October')->getMonth()
-        );
-    }
-
-    public function testCreateFromFormatStandaloneMonthShort(): void
-    {
-        $this->assertSame(
-            10,
-            DateTime::createFromFormat('LLL', 'Oct')->getMonth()
-        );
-    }
-
-    public function testCreateFromFormatStandaloneQuarter1Digit(): void
-    {
-        $this->assertSame(
-            3,
-            DateTime::createFromFormat('Q', '3')->getQuarter()
-        );
-    }
-
-    public function testCreateFromFormatStandaloneQuarter2Digits(): void
-    {
-        $this->assertSame(
-            3,
-            DateTime::createFromFormat('QQ', '03')->getQuarter()
-        );
-    }
-
-    // public function testCreateFromFormatWeekDayNarrow(): void
-    // {
-    //     $this->assertSame(
-    //         6,
-    //         DateTime::createFromFormat('eeeee', 'F')->getWeekDay()
-    //     );
-    // }
-
-    public function testCreateFromFormatStandaloneWeekDay1Digit(): void
-    {
-        $this->assertSame(
-            6,
-            DateTime::createFromFormat('c', '6')->getWeekDay()
-        );
-    }
-
-    public function testCreateFromFormatStandaloneWeekDay2Digits(): void
-    {
-        $this->assertSame(
-            6,
-            DateTime::createFromFormat('cc', '06')->getWeekDay()
-        );
-    }
-
-    public function testCreateFromFormatStandaloneWeekDayLong(): void
-    {
-        $this->assertSame(
-            6,
-            DateTime::createFromFormat('cccc', 'Friday')->getWeekDay()
-        );
-    }
-
-    public function testCreateFromFormatStandaloneWeekDayShort(): void
-    {
-        $this->assertSame(
-            6,
-            DateTime::createFromFormat('ccc', 'Fri')->getWeekDay()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneIso8601Basic(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss xx', '01/01/2019 00:00:00 +0000')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneIso8601BasicAlt(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZ', '01/01/2019 00:00:00 +0000')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneIso8601BasicAltTimeZone(): void
-    {
-        $this->assertSame(
-            '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZ', '01/01/2019 00:00:00 +1000')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneIso8601BasicShort(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss x', '01/01/2019 00:00:00 +00')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneIso8601BasicShortTimeZone(): void
-    {
-        $this->assertSame(
-            '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss x', '01/01/2019 00:00:00 +10')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneIso8601BasicShortZ(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss X', '01/01/2019 00:00:00 Z')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneIso8601BasicShortZTimeZone(): void
-    {
-        $this->assertSame(
-            '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss X', '01/01/2019 00:00:00 +10')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneIso8601BasicTimeZone(): void
-    {
-        $this->assertSame(
-            '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss xx', '01/01/2019 00:00:00 +1000')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneIso8601BasicZ(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss XX', '01/01/2019 00:00:00 Z')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneIso8601BasicZTimeZone(): void
-    {
-        $this->assertSame(
-            '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss XX', '01/01/2019 00:00:00 +1000')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneIso8601Extended(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss xxx', '01/01/2019 00:00:00 +00:00')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneIso8601ExtendedAlt(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZZZ', '01/01/2019 00:00:00 +00:00')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneIso8601ExtendedAltTimeZone(): void
-    {
-        $this->assertSame(
-            '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZZZ', '01/01/2019 00:00:00 +10:00')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneIso8601ExtendedTimeZone(): void
-    {
-        $this->assertSame(
-            '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss xxx', '01/01/2019 00:00:00 +10:00')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneIso8601ExtendedZ(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss XXX', '01/01/2019 00:00:00 Z')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneIso8601ExtendedZTimeZone(): void
-    {
-        $this->assertSame(
-            '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss XXX', '01/01/2019 00:00:00 +10:00')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneLongBasic(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZZ', '01/01/2019 00:00:00 GMT+00:00')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneLongBasicTimeZone(): void
-    {
-        $this->assertSame(
-            '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZZ', '01/01/2019 00:00:00 GMT+10:00')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneLongLocalized(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss OOOO', '01/01/2019 00:00:00 GMT+00:00')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneLongLocalizedTimeZone(): void
-    {
-        $this->assertSame(
-            '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss OOOO', '01/01/2019 00:00:00 GMT+10:00')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneLongTimeZoneId(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss VV', '01/01/2019 00:00:00 UTC')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneLongTimeZoneIdTimeZone(): void
-    {
-        $this->assertSame(
-            '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss VV', '01/01/2019 00:00:00 Australia/Brisbane')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneShortLocalized(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss O', '01/01/2019 00:00:00 GMT+00')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatTimeZoneShortLocalizedTimeZone(): void
-    {
-        $this->assertSame(
-            '2018-12-31T14:00:00.000+00:00',
-            DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss O', '01/01/2019 00:00:00 GMT+10')->toIsoString()
-        );
-    }
-
-    public function testCreateFromFormatWeek1Digit(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('w', '1')->getWeek()
-        );
-    }
-
-    // public function testCreateFromFormatStandaloneMonthNarrow(): void
-    // {
-    //     $this->assertSame(
-    //         10,
-    //         DateTime::createFromFormat('LLLLL', 'O')->getMonth()
-    //     );
-    // }
-
-    public function testCreateFromFormatWeek1DigitFull(): void
-    {
-        $this->assertSame(
-            22,
-            DateTime::createFromFormat('w', '22')->getWeek()
-        );
-    }
-
-    public function testCreateFromFormatWeek2Digits(): void
-    {
-        $this->assertSame(
-            1,
-            DateTime::createFromFormat('ww', '01')->getWeek()
-        );
-    }
-
-    public function testCreateFromFormatWeek2DigitsFull(): void
-    {
-        $this->assertSame(
-            22,
-            DateTime::createFromFormat('ww', '22')->getWeek()
-        );
-    }
-
-    // public function testCreateFromFormatAltWeekDayNarrow(): void
-    // {
-    //     $this->assertSame(
-    //         6,
-    //         DateTime::createFromFormat('EEEEE', 'F')->getWeekDay()
-    //     );
-    // }
-
-    public function testCreateFromFormatWeekDay1Digit(): void
-    {
-        $this->assertSame(
-            6,
-            DateTime::createFromFormat('e', '6')->getWeekDay()
-        );
-    }
-
-    public function testCreateFromFormatWeekDay2Digits(): void
-    {
-        $this->assertSame(
-            6,
-            DateTime::createFromFormat('ee', '06')->getWeekDay()
-        );
-    }
-
-    public function testCreateFromFormatWeekDayLong(): void
-    {
-        $this->assertSame(
-            6,
-            DateTime::createFromFormat('eeee', 'Friday')->getWeekDay()
-        );
-    }
-
-    public function testCreateFromFormatWeekDayShort(): void
-    {
-        $this->assertSame(
-            6,
-            DateTime::createFromFormat('eee', 'Fri')->getWeekDay()
-        );
-    }
-
-    public function testCreateFromFormatWeekOfMonth(): void
-    {
-        $this->assertSame(
-            3,
-            DateTime::createFromFormat('W', '3')->getWeekOfMonth()
-        );
-    }
-
-    public function testCreateFromFormatWeekYear1Digit(): void
-    {
-        $this->assertSame(
-            5,
-            DateTime::createFromFormat('Y w e', '5 1 1')->getWeekYear()
-        );
-    }
-
-    public function testCreateFromFormatWeekYear1DigitFull(): void
-    {
-        $this->assertSame(
-            2018,
-            DateTime::createFromFormat('Y w e', '2018 1 1')->getWeekYear()
-        );
-    }
-
-    public function testCreateFromFormatWeekYear2Digits(): void
-    {
-        $this->assertSame(
-            1988,
-            DateTime::createFromFormat('YY w e', '88 1 1')->getWeekYear()
-        );
-    }
-
-    public function testCreateFromFormatWeekYear2DigitsFull(): void
-    {
-        $this->assertSame(
-            2018,
-            DateTime::createFromFormat('YY w e', '2018 1 1')->getWeekYear()
-        );
-    }
-
-    public function testCreateFromFormatWeekYear3Digits(): void
-    {
-        $this->assertSame(
-            88,
-            DateTime::createFromFormat('YYY w e', '088 1 1')->getWeekYear()
-        );
-    }
-
-    public function testCreateFromFormatWeekYear3DigitsFull(): void
-    {
-        $this->assertSame(
-            2018,
-            DateTime::createFromFormat('YYY w e', '2018 1 1')->getWeekYear()
-        );
-    }
-
-    public function testCreateFromFormatWeekYear4Digits(): void
-    {
-        $this->assertSame(
-            88,
-            DateTime::createFromFormat('YYYY w e', '0088 1 1')->getWeekYear()
-        );
-    }
-
-    public function testCreateFromFormatWeekYear4DigitsFull(): void
-    {
-        $this->assertSame(
-            2018,
-            DateTime::createFromFormat('YYYY w e', '2018 1 1')->getWeekYear()
-        );
-    }
-
-    public function testCreateFromFormatYear1Digit(): void
-    {
-        $this->assertSame(
-            5,
-            DateTime::createFromFormat('y', '5')->getYear()
-        );
-    }
-
-    public function testCreateFromFormatYear1DigitFull(): void
-    {
-        $this->assertSame(
-            2018,
-            DateTime::createFromFormat('y', '2018')->getYear()
-        );
-    }
-
-    public function testCreateFromFormatYear2Digits(): void
-    {
-        $this->assertSame(
-            1988,
-            DateTime::createFromFormat('yy', '88')->getYear()
-        );
-    }
-
-    public function testCreateFromFormatYear2DigitsFull(): void
-    {
-        $this->assertSame(
-            2018,
-            DateTime::createFromFormat('yy', '2018')->getYear()
-        );
-    }
-
-    public function testCreateFromFormatYear3Digits(): void
-    {
-        $this->assertSame(
-            88,
-            DateTime::createFromFormat('yyy', '088')->getYear()
-        );
-    }
-
-    public function testCreateFromFormatYear3DigitsFull(): void
-    {
-        $this->assertSame(
-            2018,
-            DateTime::createFromFormat('yyy', '2018')->getYear()
-        );
-    }
-
-    public function testCreateFromFormatYear4Digits(): void
-    {
-        $this->assertSame(
-            88,
-            DateTime::createFromFormat('yyyy', '0088')->getYear()
-        );
-    }
-
-    public function testCreateFromFormatYear4DigitsFull(): void
-    {
-        $this->assertSame(
-            2018,
-            DateTime::createFromFormat('yyyy', '2018')->getYear()
-        );
     }
 }

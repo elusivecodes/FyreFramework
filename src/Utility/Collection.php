@@ -1290,7 +1290,7 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
     /**
      * Returns the values in the collection as an array.
      *
-     * @return list<TValue> The collection values.
+     * @return TValue[] The collection values.
      */
     public function toList(): array
     {

@@ -4,1078 +4,184 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\DateTime\DateTime;
 
 use Fyre\Utility\DateTime\DateTime;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait FormatLocaleTestTrait
 {
-    public function testFormatLocale11Hour1Digit(): void
-    {
-        $this->assertSame(
-            '١١',
-            DateTime::createFromArray([2018, 1, 1, 23], locale: 'ar-eg')->format('K')
-        );
-    }
-
-    public function testFormatLocale11Hour1DigitPadding(): void
-    {
-        $this->assertSame(
-            '٠',
-            DateTime::createFromArray([2018, 1, 1, 0], locale: 'ar-eg')->format('K')
-        );
-    }
-
-    public function testFormatLocale11Hour2Digits(): void
-    {
-        $this->assertSame(
-            '١١',
-            DateTime::createFromArray([2018, 1, 1, 23], locale: 'ar-eg')->format('KK')
-        );
-    }
-
-    public function testFormatLocale11Hour2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '٠٠',
-            DateTime::createFromArray([2018, 1, 1, 0], locale: 'ar-eg')->format('KK')
-        );
-    }
-
-    public function testFormatLocale12Hour1Digit(): void
-    {
-        $this->assertSame(
-            '١٢',
-            DateTime::createFromArray([2018, 1, 1, 12], locale: 'ar-eg')->format('h')
-        );
-    }
-
-    public function testFormatLocale12Hour1DigitPadding(): void
-    {
-        $this->assertSame(
-            '١',
-            DateTime::createFromArray([2018, 1, 1, 1], locale: 'ar-eg')->format('h')
-        );
-    }
-
-    public function testFormatLocale12Hour2Digits(): void
-    {
-        $this->assertSame(
-            '١١',
-            DateTime::createFromArray([2018, 1, 1, 23], locale: 'ar-eg')->format('hh')
-        );
-    }
-
-    public function testFormatLocale12Hour2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '٠١',
-            DateTime::createFromArray([2018, 1, 1, 1], locale: 'ar-eg')->format('hh')
-        );
-    }
-
-    public function testFormatLocale23Hour1Digit(): void
-    {
-        $this->assertSame(
-            '٢٣',
-            DateTime::createFromArray([2018, 1, 1, 23], locale: 'ar-eg')->format('H')
-        );
-    }
-
-    public function testFormatLocale23Hour1DigitPadding(): void
-    {
-        $this->assertSame(
-            '٠',
-            DateTime::createFromArray([2018, 1, 1, 0], locale: 'ar-eg')->format('H')
-        );
-    }
-
-    public function testFormatLocale23Hour2Digits(): void
-    {
-        $this->assertSame(
-            '٢٣',
-            DateTime::createFromArray([2018, 1, 1, 23], locale: 'ar-eg')->format('HH')
-        );
-    }
-
-    public function testFormatLocale23Hour2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '٠٠',
-            DateTime::createFromArray([2018, 1, 1, 0], locale: 'ar-eg')->format('HH')
-        );
-    }
-
-    public function testFormatLocale24Hour1Digit(): void
-    {
-        $this->assertSame(
-            '٢٤',
-            DateTime::createFromArray([2018, 1, 1, 0], locale: 'ar-eg')->format('k')
-        );
-    }
-
-    public function testFormatLocale24Hour1DigitPadding(): void
-    {
-        $this->assertSame(
-            '١',
-            DateTime::createFromArray([2018, 1, 1, 1], locale: 'ar-eg')->format('k')
-        );
-    }
-
-    public function testFormatLocale24Hour2Digits(): void
-    {
-        $this->assertSame(
-            '٢٤',
-            DateTime::createFromArray([2018, 1, 1, 0], locale: 'ar-eg')->format('kk')
-        );
-    }
-
-    public function testFormatLocale24Hour2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '٠١',
-            DateTime::createFromArray([2018, 1, 1, 1], locale: 'ar-eg')->format('kk')
-        );
-    }
-
-    public function testFormatLocaleAltWeekDayLong(): void
-    {
-        $this->assertSame(
-            'пятница',
-            DateTime::createFromArray([2018, 6, 1], locale: 'ru')->format('EEEE')
-        );
-    }
-
-    public function testFormatLocaleAltWeekDayShort(): void
-    {
-        $this->assertSame(
-            'пт',
-            DateTime::createFromArray([2018, 6, 1], locale: 'ru')->format('EEE')
-        );
-    }
-
-    public function testFormatLocaleDayOfMonth1Digit(): void
-    {
-        $this->assertSame(
-            '٢١',
-            DateTime::createFromArray([2019, 1, 21], locale: 'ar-eg')->format('d')
-        );
-    }
-
-    public function testFormatLocaleDayOfMonth1DigitPadding(): void
-    {
-        $this->assertSame(
-            '١',
-            DateTime::createFromArray([2019, 1, 1], locale: 'ar-eg')->format('d')
-        );
-    }
-
-    public function testFormatLocaleDayOfMonth2Digits(): void
-    {
-        $this->assertSame(
-            '٢١',
-            DateTime::createFromArray([2019, 1, 21], locale: 'ar-eg')->format('dd')
-        );
-    }
-
-    public function testFormatLocaleDayOfMonth2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '٠١',
-            DateTime::createFromArray([2019, 1, 1], locale: 'ar-eg')->format('dd')
-        );
-    }
-
-    public function testFormatLocaleDayOfWeekInMonth(): void
-    {
-        $this->assertSame(
-            '١',
-            DateTime::createFromArray([2019, 1, 1], locale: 'ar-eg')->format('F')
-        );
-    }
-
-    public function testFormatLocaleDayOfWeekInMonthCurrentWeek(): void
-    {
-        $this->assertSame(
-            '١',
-            DateTime::createFromArray([2019, 6, 7], locale: 'ar-eg')->format('F')
-        );
-    }
-
-    public function testFormatLocaleDayOfYear1Digit(): void
-    {
-        $this->assertSame(
-            '١٥٢',
-            DateTime::createFromArray([2019, 6, 1], locale: 'ar-eg')->format('D')
-        );
-    }
-
-    public function testFormatLocaleDayOfYear1DigitPadding(): void
-    {
-        $this->assertSame(
-            '١',
-            DateTime::createFromArray([2019, 1, 1], locale: 'ar-eg')->format('D')
-        );
-    }
-
-    public function testFormatLocaleDayOfYear2Digits(): void
-    {
-        $this->assertSame(
-            '١٥٢',
-            DateTime::createFromArray([2019, 6, 1], locale: 'ar-eg')->format('DD')
-        );
-    }
-
-    public function testFormatLocaleDayOfYear2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '٠١',
-            DateTime::createFromArray([2019, 1, 1], locale: 'ar-eg')->format('DD')
-        );
-    }
-
-    public function testFormatLocaleDayOfYear3Digits(): void
-    {
-        $this->assertSame(
-            '١٥٢',
-            DateTime::createFromArray([2019, 6, 1], locale: 'ar-eg')->format('DDD')
-        );
-    }
-
-    public function testFormatLocaleDayOfYear3DigitsPadding(): void
-    {
-        $this->assertSame(
-            '٠٠١',
-            DateTime::createFromArray([2019, 1, 1], locale: 'ar-eg')->format('DDD')
-        );
-    }
-
-    public function testFormatLocaleDayPeriodLongAm(): void
-    {
-        $this->assertSame(
-            '上午',
-            DateTime::createFromArray([2018, 1, 1, 0], locale: 'zh')->format('aaaa')
-        );
-    }
-
-    public function testFormatLocaleDayPeriodLongPm(): void
-    {
-        $this->assertSame(
-            '下午',
-            DateTime::createFromArray([2018, 1, 1, 12], locale: 'zh')->format('aaaa')
-        );
-    }
-
-    public function testFormatLocaleDayPeriodShortAm(): void
-    {
-        $this->assertSame(
-            '上午',
-            DateTime::createFromArray([2018, 1, 1, 0], locale: 'zh')->format('aaa')
-        );
-    }
-
-    public function testFormatLocaleDayPeriodShortPm(): void
-    {
-        $this->assertSame(
-            '下午',
-            DateTime::createFromArray([2018, 1, 1, 12], locale: 'zh')->format('aaa')
-        );
-    }
-
-    public function testFormatLocaleEraLong(): void
-    {
-        $this->assertSame(
-            'от Рождества Христова',
-            DateTime::createFromArray([2018], locale: 'ru')->format('GGGG')
-        );
-    }
-
-    public function testFormatLocaleEraLongBc(): void
-    {
-        $this->assertSame(
-            'до Рождества Христова',
-            DateTime::createFromArray([-5], locale: 'ru')->format('GGGG')
-        );
-    }
-
-    public function testFormatLocaleEraNarrow(): void
-    {
-        $this->assertSame(
-            'н.э.',
-            DateTime::createFromArray([2018], locale: 'ru')->format('GGGGG')
-        );
-    }
-
-    public function testFormatLocaleEraNarrowBc(): void
-    {
-        $this->assertSame(
-            'до н.э.',
-            DateTime::createFromArray([-5], locale: 'ru')->format('GGGGG')
-        );
-    }
-
-    public function testFormatLocaleEraShort(): void
-    {
-        $this->assertSame(
-            'н. э.',
-            DateTime::createFromArray([2018], locale: 'ru')->format('GGG')
-        );
-    }
-
-    public function testFormatLocaleEraShortBc(): void
-    {
-        $this->assertSame(
-            'до н. э.',
-            DateTime::createFromArray([-5], locale: 'ru')->format('GGG')
-        );
-    }
-
-    public function testFormatLocaleFractional(): void
-    {
-        $this->assertSame(
-            '١٢٣',
-            DateTime::createFromArray([2018, 1, 1, 0, 0, 0, 123], locale: 'ar-eg')->format('SSS')
-        );
-    }
-
-    public function testFormatLocaleFractionalPadding(): void
-    {
-        $this->assertSame(
-            '١٢٣٠٠٠',
-            DateTime::createFromArray([2018, 1, 1, 0, 0, 0, 123], locale: 'ar-eg')->format('SSSSSS')
-        );
-    }
-
-    public function testFormatLocaleFractionalTruncate(): void
-    {
-        $this->assertSame(
-            '١',
-            DateTime::createFromArray([2018, 1, 1, 0, 0, 0, 123], locale: 'ar-eg')->format('S')
-        );
-    }
-
-    public function testFormatLocaleMinute1Digit(): void
-    {
-        $this->assertSame(
-            '٢٥',
-            DateTime::createFromArray([2018, 1, 1, 0, 25], locale: 'ar-eg')->format('m')
-        );
-    }
-
-    public function testFormatLocaleMinute1DigitPadding(): void
-    {
-        $this->assertSame(
-            '١',
-            DateTime::createFromArray([2018, 1, 1, 0, 1], locale: 'ar-eg')->format('m')
-        );
-    }
-
-    public function testFormatLocaleMinute2Digits(): void
-    {
-        $this->assertSame(
-            '٢٥',
-            DateTime::createFromArray([2018, 1, 1, 0, 25], locale: 'ar-eg')->format('mm')
-        );
-    }
-
-    public function testFormatLocaleMinute2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '٠١',
-            DateTime::createFromArray([2018, 1, 1, 0, 1], locale: 'ar-eg')->format('mm')
-        );
-    }
-
-    public function testFormatLocaleMonth1Digit(): void
-    {
-        $this->assertSame(
-            '١٠',
-            DateTime::createFromArray([2018, 10], locale: 'ar-eg')->format('M')
-        );
-    }
-
-    public function testFormatLocaleMonth1DigitPadding(): void
-    {
-        $this->assertSame(
-            '١',
-            DateTime::createFromArray([2018, 1], locale: 'ar-eg')->format('M')
-        );
-    }
-
-    public function testFormatLocaleMonth2Digits(): void
-    {
-        $this->assertSame(
-            '١٠',
-            DateTime::createFromArray([2018, 10], locale: 'ar-eg')->format('MM')
-        );
-    }
-
-    public function testFormatLocaleMonth2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '٠١',
-            DateTime::createFromArray([2018, 1], locale: 'ar-eg')->format('MM')
-        );
-    }
-
-    public function testFormatLocaleMonthLong(): void
-    {
-        $this->assertSame(
-            'октября',
-            DateTime::createFromArray([2018, 10], locale: 'ru')->format('MMMM')
-        );
-    }
-
-    public function testFormatLocaleMonthNarrow(): void
-    {
-        $this->assertSame(
-            'О',
-            DateTime::createFromArray([2018, 10], locale: 'ru')->format('MMMMM')
-        );
-    }
-
-    public function testFormatLocaleMonthShort(): void
-    {
-        $this->assertSame(
-            'окт.',
-            DateTime::createFromArray([2018, 10], locale: 'ru')->format('MMM')
-        );
-    }
-
-    public function testFormatLocaleQuarter1Digit(): void
-    {
-        $this->assertSame(
-            '٣',
-            DateTime::createFromArray([2018, 8], locale: 'ar-eg')->format('q')
-        );
-    }
-
-    public function testFormatLocaleQuarter2Digits(): void
-    {
-        $this->assertSame(
-            '٠٣',
-            DateTime::createFromArray([2018, 8], locale: 'ar-eg')->format('qq')
-        );
-    }
-
-    public function testFormatLocaleSecond1Digit(): void
-    {
-        $this->assertSame(
-            '٢٥',
-            DateTime::createFromArray([2018, 1, 1, 0, 0, 25], locale: 'ar-eg')->format('s')
-        );
-    }
-
-    public function testFormatLocaleSecond1DigitPadding(): void
-    {
-        $this->assertSame(
-            '١',
-            DateTime::createFromArray([2018, 1, 1, 0, 0, 1], locale: 'ar-eg')->format('s')
-        );
-    }
-
-    public function testFormatLocaleSecond2Digits(): void
-    {
-        $this->assertSame(
-            '٢٥',
-            DateTime::createFromArray([2018, 1, 1, 0, 0, 25], locale: 'ar-eg')->format('ss')
-        );
-    }
-
-    public function testFormatLocaleSecond2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '٠١',
-            DateTime::createFromArray([2018, 1, 1, 0, 0, 1], locale: 'ar-eg')->format('ss')
-        );
-    }
-
-    public function testFormatLocaleStandaloneMonth1Digit(): void
-    {
-        $this->assertSame(
-            '١٠',
-            DateTime::createFromArray([2018, 10], locale: 'ar-eg')->format('L')
-        );
-    }
-
-    public function testFormatLocaleStandaloneMonth1DigitPadding(): void
-    {
-        $this->assertSame(
-            '١',
-            DateTime::createFromArray([2018, 1], locale: 'ar-eg')->format('L')
-        );
-    }
-
-    public function testFormatLocaleStandaloneMonth2Digits(): void
-    {
-        $this->assertSame(
-            '١٠',
-            DateTime::createFromArray([2018, 10], locale: 'ar-eg')->format('LL')
-        );
-    }
-
-    public function testFormatLocaleStandaloneMonth2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '٠١',
-            DateTime::createFromArray([2018, 1], locale: 'ar-eg')->format('LL')
-        );
-    }
-
-    public function testFormatLocaleStandaloneMonthLong(): void
-    {
-        $this->assertSame(
-            'октябрь',
-            DateTime::createFromArray([2018, 10], locale: 'ru')->format('LLLL')
-        );
-    }
-
-    public function testFormatLocaleStandaloneMonthNarrow(): void
-    {
-        $this->assertSame(
-            'О',
-            DateTime::createFromArray([2018, 10], locale: 'ru')->format('LLLLL')
-        );
-    }
-
-    public function testFormatLocaleStandaloneMonthShort(): void
-    {
-        $this->assertSame(
-            'окт.',
-            DateTime::createFromArray([2018, 10], locale: 'ru')->format('LLL')
-        );
-    }
-
-    public function testFormatLocaleStandaloneQuarter1Digit(): void
-    {
-        $this->assertSame(
-            '٣',
-            DateTime::createFromArray([2018, 8], locale: 'ar-eg')->format('Q')
-        );
-    }
-
-    public function testFormatLocaleStandaloneQuarter2Digits(): void
-    {
-        $this->assertSame(
-            '٠٣',
-            DateTime::createFromArray([2018, 8], locale: 'ar-eg')->format('QQ')
-        );
-    }
-
-    // public function testFormatLocaleWeekDayNarrow(): void
-    // {
-    //     $this->assertSame(
-    //         'П',
-    //         DateTime::createFromArray([2018, 6, 1], locale: 'ru')->format('eeeee')
-    //     );
-    // }
-
-    public function testFormatLocaleStandaloneWeekDay1Digit(): void
-    {
-        $this->assertSame(
-            '٧',
-            DateTime::createFromArray([2018, 6, 1], locale: 'ar-eg')->format('c')
-        );
-    }
-
-    public function testFormatLocaleStandaloneWeekDay2Digits(): void
-    {
-        $this->assertSame(
-            '٧',
-            DateTime::createFromArray([2018, 6, 1], locale: 'ar-eg')->format('cc')
-        );
-    }
-
-    public function testFormatLocaleStandaloneWeekDayLong(): void
-    {
-        $this->assertSame(
-            'пятница',
-            DateTime::createFromArray([2018, 6, 1], locale: 'ru')->format('cccc')
-        );
-    }
-
-    public function testFormatLocaleStandaloneWeekDayNarrow(): void
-    {
-        $this->assertSame(
-            'П',
-            DateTime::createFromArray([2018, 6, 1], locale: 'ru')->format('ccccc')
-        );
-    }
-
-    public function testFormatLocaleStandaloneWeekDayShort(): void
-    {
-        $this->assertSame(
-            'пт',
-            DateTime::createFromArray([2018, 6, 1], locale: 'ru')->format('ccc')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneIso8601Basic(): void
-    {
-        $this->assertSame(
-            '+0000',
-            DateTime::now(locale: 'ru')->format('xx')
-        );
-    }
-
-    // public function testFormatLocaleTimeZoneLongNonLocationTimeZone(): void
-    // {
-    //     $this->assertSame(
-    //         'Восточная Австралия, стандартное время',
-    //         DateTime::now('Australia/Brisbane', locale: 'ru')->format('zzzz')
-    //     );
-    // }
-
-    public function testFormatLocaleTimeZoneIso8601BasicAlt(): void
-    {
-        $this->assertSame(
-            '+0000',
-            DateTime::now(locale: 'ru')->format('ZZZ')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneIso8601BasicAltTimeZone(): void
-    {
-        $this->assertSame(
-            '+1000',
-            DateTime::now('Australia/Brisbane', 'ru')->format('ZZZ')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneIso8601BasicShort(): void
-    {
-        $this->assertSame(
-            '+00',
-            DateTime::now(locale: 'ru')->format('x')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneIso8601BasicShortTimeZone(): void
-    {
-        $this->assertSame(
-            '+10',
-            DateTime::now('Australia/Brisbane', 'ru')->format('x')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneIso8601BasicShortZ(): void
-    {
-        $this->assertSame(
-            'Z',
-            DateTime::now(locale: 'ru')->format('X')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneIso8601BasicShortZTimeZone(): void
-    {
-        $this->assertSame(
-            '+10',
-            DateTime::now('Australia/Brisbane', 'ru')->format('X')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneIso8601BasicTimeZone(): void
-    {
-        $this->assertSame(
-            '+1000',
-            DateTime::now('Australia/Brisbane', 'ru')->format('xx')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneIso8601BasicZ(): void
-    {
-        $this->assertSame(
-            'Z',
-            DateTime::now(locale: 'ru')->format('XX')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneIso8601BasicZTimeZone(): void
-    {
-        $this->assertSame(
-            '+1000',
-            DateTime::now('Australia/Brisbane', 'ru')->format('XX')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneIso8601Extended(): void
-    {
-        $this->assertSame(
-            '+00:00',
-            DateTime::now(locale: 'ru')->format('xxx')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneIso8601ExtendedAlt(): void
-    {
-        $this->assertSame(
-            'Z',
-            DateTime::now(locale: 'ru')->format('ZZZZZ')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneIso8601ExtendedAltTimeZone(): void
-    {
-        $this->assertSame(
-            '+10:00',
-            DateTime::now('Australia/Brisbane', 'ru')->format('ZZZZZ')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneIso8601ExtendedTimeZone(): void
-    {
-        $this->assertSame(
-            '+10:00',
-            DateTime::now('Australia/Brisbane', 'ru')->format('xxx')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneIso8601ExtendedZ(): void
-    {
-        $this->assertSame(
-            'Z',
-            DateTime::now(locale: 'ru')->format('XXX')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneIso8601ExtendedZTimeZone(): void
-    {
-        $this->assertSame(
-            '+10:00',
-            DateTime::now('Australia/Brisbane', 'ru')->format('XXX')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneLongBasic(): void
-    {
-        $this->assertSame(
-            'GMT',
-            DateTime::now(locale: 'ru')->format('ZZZZ')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneLongBasicTimeZone(): void
-    {
-        $this->assertSame(
-            'GMT+10:00',
-            DateTime::now('Australia/Brisbane', 'ru')->format('ZZZZ')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneLongLocalized(): void
-    {
-        $this->assertSame(
-            'GMT',
-            DateTime::now(locale: 'ru')->format('OOOO')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneLongLocalizedTimeZone(): void
-    {
-        $this->assertSame(
-            'GMT+10:00',
-            DateTime::now('Australia/Brisbane', 'ru')->format('OOOO')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneLongNonLocation(): void
-    {
-        $this->assertSame(
-            'Всемирное координированное время',
-            DateTime::now(locale: 'ru')->format('zzzz')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneLongTimeZoneId(): void
-    {
-        $this->assertSame(
-            'UTC',
-            DateTime::now(locale: 'ru')->format('VV')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneLongTimeZoneIdTimeZone(): void
-    {
-        $this->assertSame(
-            'Australia/Brisbane',
-            DateTime::now('Australia/Brisbane', 'ru')->format('VV')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneShortLocalized(): void
-    {
-        $this->assertSame(
-            'GMT',
-            DateTime::now(locale: 'ru')->format('O')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneShortLocalizedTimeZone(): void
-    {
-        $this->assertSame(
-            'GMT+10',
-            DateTime::now('Australia/Brisbane', 'ru')->format('O')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneShortNonLocation(): void
-    {
-        $this->assertSame(
-            'UTC',
-            DateTime::now(locale: 'ru')->format('zzz')
-        );
-    }
-
-    public function testFormatLocaleTimeZoneShortNonLocationTimeZone(): void
-    {
-        $this->assertSame(
-            'GMT+10',
-            DateTime::now('Australia/Brisbane', 'ru')->format('zzz')
-        );
-    }
-
-    // public function testFormatLocaleAltWeekDayNarrow(): void
-    // {
-    //     $this->assertSame(
-    //         'П',
-    //         DateTime::createFromArray([2018, 6, 1], locale: 'ru')->format('EEEEE')
-    //     );
-    // }
-
-    public function testFormatLocaleWeekDay1Digit(): void
-    {
-        $this->assertSame(
-            '٧',
-            DateTime::createFromArray([2018, 6, 1], locale: 'ar-eg')->format('e')
-        );
-    }
-
-    public function testFormatLocaleWeekDay2Digits(): void
-    {
-        $this->assertSame(
-            '٠٧',
-            DateTime::createFromArray([2018, 6, 1], locale: 'ar-eg')->format('ee')
-        );
-    }
-
-    public function testFormatLocaleWeekDayLong(): void
-    {
-        $this->assertSame(
-            'пятница',
-            DateTime::createFromArray([2018, 6, 1], locale: 'ru')->format('eeee')
-        );
-    }
-
-    public function testFormatLocaleWeekDayShort(): void
-    {
-        $this->assertSame(
-            'пт',
-            DateTime::createFromArray([2018, 6, 1], locale: 'ru')->format('eee')
-        );
-    }
-
-    public function testFormatLocaleWeekOfMonth(): void
-    {
-        $this->assertSame(
-            '١',
-            DateTime::createFromArray([2019, 6, 1], locale: 'ar-eg')->format('W')
-        );
-    }
-
-    public function testFormatLocaleWeekOfMonthCurrentWeek(): void
-    {
-        $this->assertSame(
-            '٢',
-            DateTime::createFromArray([2019, 6, 8], locale: 'ar-eg')->format('W')
-        );
-    }
-
-    public function testFormatLocaleWeekOfYear1Digit(): void
-    {
-        $this->assertSame(
-            '٢٢',
-            DateTime::createFromArray([2018, 6], locale: 'ar-eg')->format('w')
-        );
-    }
-
-    public function testFormatLocaleWeekOfYear1DigitPadding(): void
-    {
-        $this->assertSame(
-            '١',
-            DateTime::createFromArray([2018, 1], locale: 'ar-eg')->format('w')
-        );
-    }
-
-    public function testFormatLocaleWeekOfYear2Digits(): void
-    {
-        $this->assertSame(
-            '٢٢',
-            DateTime::createFromArray([2018, 6], locale: 'ar-eg')->format('ww')
-        );
-    }
-
-    public function testFormatLocaleWeekOfYear2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '٠١',
-            DateTime::createFromArray([2018, 1], locale: 'ar-eg')->format('ww')
-        );
-    }
-
-    public function testFormatLocaleWeekYear1Digit(): void
-    {
-        $this->assertSame(
-            '٢٠١٨',
-            DateTime::createFromArray([2018], locale: 'ar-eg')->format('Y')
-        );
-    }
-
-    public function testFormatLocaleWeekYear1DigitCurrentWeek(): void
-    {
-        $this->assertSame(
-            '٢٠٢٠',
-            DateTime::createFromArray([2019, 12, 30], locale: 'ar-eg')->format('Y')
-        );
-    }
-
-    public function testFormatLocaleWeekYear1DigitPadding(): void
-    {
-        $this->assertSame(
-            '٥',
-            DateTime::createFromArray([5, 2], locale: 'ar-eg')->format('Y')
-        );
-    }
-
-    public function testFormatLocaleWeekYear2Digits(): void
-    {
-        $this->assertSame(
-            '١٨',
-            DateTime::createFromArray([2018], locale: 'ar-eg')->format('YY')
-        );
-    }
-
-    public function testFormatLocaleWeekYear2DigitsCurrentWeek(): void
-    {
-        $this->assertSame(
-            '٢٠',
-            DateTime::createFromArray([2019, 12, 30], locale: 'ar-eg')->format('YY')
-        );
-    }
-
-    public function testFormatLocaleWeekYear2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '٠٥',
-            DateTime::createFromArray([5, 2], locale: 'ar-eg')->format('YY')
-        );
-    }
-
-    public function testFormatLocaleWeekYear3Digits(): void
-    {
-        $this->assertSame(
-            '٢٠١٨',
-            DateTime::createFromArray([2018], locale: 'ar-eg')->format('YYY')
-        );
-    }
-
-    public function testFormatLocaleWeekYear3DigitsCurrentWeek(): void
-    {
-        $this->assertSame(
-            '٢٠٢٠',
-            DateTime::createFromArray([2019, 12, 30], locale: 'ar-eg')->format('YYY')
-        );
-    }
-
-    public function testFormatLocaleWeekYear3DigitsPadding(): void
-    {
-        $this->assertSame(
-            '٠٠٥',
-            DateTime::createFromArray([5], locale: 'ar-eg')->format('YYY')
-        );
-    }
-
-    public function testFormatLocaleWeekYear4Digits(): void
-    {
-        $this->assertSame(
-            '٢٠١٨',
-            DateTime::createFromArray([2018], locale: 'ar-eg')->format('YYYY')
-        );
-    }
-
-    public function testFormatLocaleWeekYear4DigitsCurrentWeek(): void
-    {
-        $this->assertSame(
-            '٢٠٢٠',
-            DateTime::createFromArray([2019, 12, 30], locale: 'ar-eg')->format('YYYY')
-        );
-    }
-
-    public function testFormatLocaleWeekYear4DigitsPadding(): void
-    {
-        $this->assertSame(
-            '٠٠٠٥',
-            DateTime::createFromArray([5], locale: 'ar-eg')->format('YYYY')
-        );
-    }
-
-    public function testFormatLocaleYear1Digit(): void
-    {
-        $this->assertSame(
-            '٢٠١٨',
-            DateTime::createFromArray([2018], locale: 'ar-eg')->format('y')
-        );
-    }
-
-    public function testFormatLocaleYear1DigitPadding(): void
-    {
-        $this->assertSame(
-            '٥',
-            DateTime::createFromArray([5], locale: 'ar-eg')->format('y')
-        );
-    }
-
-    public function testFormatLocaleYear2Digits(): void
-    {
-        $this->assertSame(
-            '١٨',
-            DateTime::createFromArray([2018], locale: 'ar-eg')->format('yy')
-        );
-    }
-
-    public function testFormatLocaleYear2DigitsPadding(): void
-    {
-        $this->assertSame(
-            '٠٥',
-            DateTime::createFromArray([5], locale: 'ar-eg')->format('yy')
-        );
-    }
-
-    public function testFormatLocaleYear3Digits(): void
-    {
-        $this->assertSame(
-            '٢٠١٨',
-            DateTime::createFromArray([2018], locale: 'ar-eg')->format('yyy')
-        );
-    }
-
-    public function testFormatLocaleYear3DigitsPadding(): void
-    {
-        $this->assertSame(
-            '٠٠٥',
-            DateTime::createFromArray([5], locale: 'ar-eg')->format('yyy')
-        );
-    }
-
-    public function testFormatLocaleYear4Digits(): void
-    {
-        $this->assertSame(
-            '٢٠١٨',
-            DateTime::createFromArray([2018], locale: 'ar-eg')->format('yyyy')
-        );
-    }
-
-    public function testFormatLocaleYear4DigitsPadding(): void
-    {
-        $this->assertSame(
-            '٠٠٠٥',
-            DateTime::createFromArray([5], locale: 'ar-eg')->format('yyyy')
+    /**
+     * @return array<string, array{int[], string, string, string}>
+     */
+    public static function formatLocaleProvider(): array
+    {
+        return [
+            '11 hour 1 digit' => [[2018, 1, 1, 23], 'ar-eg', 'K', '١١'],
+            '11 hour 1 digit padding' => [[2018, 1, 1, 0], 'ar-eg', 'K', '٠'],
+            '11 hour 2 digits' => [[2018, 1, 1, 23], 'ar-eg', 'KK', '١١'],
+            '11 hour 2 digits padding' => [[2018, 1, 1, 0], 'ar-eg', 'KK', '٠٠'],
+            '12 hour 1 digit' => [[2018, 1, 1, 12], 'ar-eg', 'h', '١٢'],
+            '12 hour 1 digit padding' => [[2018, 1, 1, 1], 'ar-eg', 'h', '١'],
+            '12 hour 2 digits' => [[2018, 1, 1, 23], 'ar-eg', 'hh', '١١'],
+            '12 hour 2 digits padding' => [[2018, 1, 1, 1], 'ar-eg', 'hh', '٠١'],
+            '23 hour 1 digit' => [[2018, 1, 1, 23], 'ar-eg', 'H', '٢٣'],
+            '23 hour 1 digit padding' => [[2018, 1, 1, 0], 'ar-eg', 'H', '٠'],
+            '23 hour 2 digits' => [[2018, 1, 1, 23], 'ar-eg', 'HH', '٢٣'],
+            '23 hour 2 digits padding' => [[2018, 1, 1, 0], 'ar-eg', 'HH', '٠٠'],
+            '24 hour 1 digit' => [[2018, 1, 1, 0], 'ar-eg', 'k', '٢٤'],
+            '24 hour 1 digit padding' => [[2018, 1, 1, 1], 'ar-eg', 'k', '١'],
+            '24 hour 2 digits' => [[2018, 1, 1, 0], 'ar-eg', 'kk', '٢٤'],
+            '24 hour 2 digits padding' => [[2018, 1, 1, 1], 'ar-eg', 'kk', '٠١'],
+            'alt week day long' => [[2018, 6, 1], 'ru', 'EEEE', 'пятница'],
+            'alt week day short' => [[2018, 6, 1], 'ru', 'EEE', 'пт'],
+            'day of month 1 digit' => [[2019, 1, 21], 'ar-eg', 'd', '٢١'],
+            'day of month 1 digit padding' => [[2019, 1, 1], 'ar-eg', 'd', '١'],
+            'day of month 2 digits' => [[2019, 1, 21], 'ar-eg', 'dd', '٢١'],
+            'day of month 2 digits padding' => [[2019, 1, 1], 'ar-eg', 'dd', '٠١'],
+            'day of week in month' => [[2019, 1, 1], 'ar-eg', 'F', '١'],
+            'day of week in month current week' => [[2019, 6, 7], 'ar-eg', 'F', '١'],
+            'day of year 1 digit' => [[2019, 6, 1], 'ar-eg', 'D', '١٥٢'],
+            'day of year 1 digit padding' => [[2019, 1, 1], 'ar-eg', 'D', '١'],
+            'day of year 2 digits' => [[2019, 6, 1], 'ar-eg', 'DD', '١٥٢'],
+            'day of year 2 digits padding' => [[2019, 1, 1], 'ar-eg', 'DD', '٠١'],
+            'day of year 3 digits' => [[2019, 6, 1], 'ar-eg', 'DDD', '١٥٢'],
+            'day of year 3 digits padding' => [[2019, 1, 1], 'ar-eg', 'DDD', '٠٠١'],
+            'day period long am' => [[2018, 1, 1, 0], 'zh', 'aaaa', '上午'],
+            'day period long pm' => [[2018, 1, 1, 12], 'zh', 'aaaa', '下午'],
+            'day period short am' => [[2018, 1, 1, 0], 'zh', 'aaa', '上午'],
+            'day period short pm' => [[2018, 1, 1, 12], 'zh', 'aaa', '下午'],
+            'era long' => [[2018], 'ru', 'GGGG', 'от Рождества Христова'],
+            'era long bc' => [[-5], 'ru', 'GGGG', 'до Рождества Христова'],
+            'era narrow' => [[2018], 'ru', 'GGGGG', 'н.э.'],
+            'era narrow bc' => [[-5], 'ru', 'GGGGG', 'до н.э.'],
+            'era short' => [[2018], 'ru', 'GGG', 'н. э.'],
+            'era short bc' => [[-5], 'ru', 'GGG', 'до н. э.'],
+            'fractional' => [[2018, 1, 1, 0, 0, 0, 123], 'ar-eg', 'SSS', '١٢٣'],
+            'fractional padding' => [[2018, 1, 1, 0, 0, 0, 123], 'ar-eg', 'SSSSSS', '١٢٣٠٠٠'],
+            'fractional truncate' => [[2018, 1, 1, 0, 0, 0, 123], 'ar-eg', 'S', '١'],
+            'minute 1 digit' => [[2018, 1, 1, 0, 25], 'ar-eg', 'm', '٢٥'],
+            'minute 1 digit padding' => [[2018, 1, 1, 0, 1], 'ar-eg', 'm', '١'],
+            'minute 2 digits' => [[2018, 1, 1, 0, 25], 'ar-eg', 'mm', '٢٥'],
+            'minute 2 digits padding' => [[2018, 1, 1, 0, 1], 'ar-eg', 'mm', '٠١'],
+            'month 1 digit' => [[2018, 10], 'ar-eg', 'M', '١٠'],
+            'month 1 digit padding' => [[2018, 1], 'ar-eg', 'M', '١'],
+            'month 2 digits' => [[2018, 10], 'ar-eg', 'MM', '١٠'],
+            'month 2 digits padding' => [[2018, 1], 'ar-eg', 'MM', '٠١'],
+            'month long' => [[2018, 10], 'ru', 'MMMM', 'октября'],
+            'month narrow' => [[2018, 10], 'ru', 'MMMMM', 'О'],
+            'month short' => [[2018, 10], 'ru', 'MMM', 'окт.'],
+            'quarter 1 digit' => [[2018, 8], 'ar-eg', 'q', '٣'],
+            'quarter 2 digits' => [[2018, 8], 'ar-eg', 'qq', '٠٣'],
+            'second 1 digit' => [[2018, 1, 1, 0, 0, 25], 'ar-eg', 's', '٢٥'],
+            'second 1 digit padding' => [[2018, 1, 1, 0, 0, 1], 'ar-eg', 's', '١'],
+            'second 2 digits' => [[2018, 1, 1, 0, 0, 25], 'ar-eg', 'ss', '٢٥'],
+            'second 2 digits padding' => [[2018, 1, 1, 0, 0, 1], 'ar-eg', 'ss', '٠١'],
+            'standalone month 1 digit' => [[2018, 10], 'ar-eg', 'L', '١٠'],
+            'standalone month 1 digit padding' => [[2018, 1], 'ar-eg', 'L', '١'],
+            'standalone month 2 digits' => [[2018, 10], 'ar-eg', 'LL', '١٠'],
+            'standalone month 2 digits padding' => [[2018, 1], 'ar-eg', 'LL', '٠١'],
+            'standalone month long' => [[2018, 10], 'ru', 'LLLL', 'октябрь'],
+            'standalone month narrow' => [[2018, 10], 'ru', 'LLLLL', 'О'],
+            'standalone month short' => [[2018, 10], 'ru', 'LLL', 'окт.'],
+            'standalone quarter 1 digit' => [[2018, 8], 'ar-eg', 'Q', '٣'],
+            'standalone quarter 2 digits' => [[2018, 8], 'ar-eg', 'QQ', '٠٣'],
+            // 'week day narrow' => [[2018, 6, 1], 'ru', 'eeeee', 'П'],
+            'standalone week day 1 digit' => [[2018, 6, 1], 'ar-eg', 'c', '٧'],
+            'standalone week day 2 digits' => [[2018, 6, 1], 'ar-eg', 'cc', '٧'],
+            'standalone week day long' => [[2018, 6, 1], 'ru', 'cccc', 'пятница'],
+            'standalone week day narrow' => [[2018, 6, 1], 'ru', 'ccccc', 'П'],
+            'standalone week day short' => [[2018, 6, 1], 'ru', 'ccc', 'пт'],
+            // 'alt week day narrow' => [[2018, 6, 1], 'ru', 'EEEEE', 'П'],
+            'week day 1 digit' => [[2018, 6, 1], 'ar-eg', 'e', '٧'],
+            'week day 2 digits' => [[2018, 6, 1], 'ar-eg', 'ee', '٠٧'],
+            'week day long' => [[2018, 6, 1], 'ru', 'eeee', 'пятница'],
+            'week day short' => [[2018, 6, 1], 'ru', 'eee', 'пт'],
+            'week of month' => [[2019, 6, 1], 'ar-eg', 'W', '١'],
+            'week of month current week' => [[2019, 6, 8], 'ar-eg', 'W', '٢'],
+            'week of year 1 digit' => [[2018, 6], 'ar-eg', 'w', '٢٢'],
+            'week of year 1 digit padding' => [[2018, 1], 'ar-eg', 'w', '١'],
+            'week of year 2 digits' => [[2018, 6], 'ar-eg', 'ww', '٢٢'],
+            'week of year 2 digits padding' => [[2018, 1], 'ar-eg', 'ww', '٠١'],
+            'week year 1 digit' => [[2018], 'ar-eg', 'Y', '٢٠١٨'],
+            'week year 1 digit current week' => [[2019, 12, 30], 'ar-eg', 'Y', '٢٠٢٠'],
+            'week year 1 digit padding' => [[5, 2], 'ar-eg', 'Y', '٥'],
+            'week year 2 digits' => [[2018], 'ar-eg', 'YY', '١٨'],
+            'week year 2 digits current week' => [[2019, 12, 30], 'ar-eg', 'YY', '٢٠'],
+            'week year 2 digits padding' => [[5, 2], 'ar-eg', 'YY', '٠٥'],
+            'week year 3 digits' => [[2018], 'ar-eg', 'YYY', '٢٠١٨'],
+            'week year 3 digits current week' => [[2019, 12, 30], 'ar-eg', 'YYY', '٢٠٢٠'],
+            'week year 3 digits padding' => [[5], 'ar-eg', 'YYY', '٠٠٥'],
+            'week year 4 digits' => [[2018], 'ar-eg', 'YYYY', '٢٠١٨'],
+            'week year 4 digits current week' => [[2019, 12, 30], 'ar-eg', 'YYYY', '٢٠٢٠'],
+            'week year 4 digits padding' => [[5], 'ar-eg', 'YYYY', '٠٠٠٥'],
+            'year 1 digit' => [[2018], 'ar-eg', 'y', '٢٠١٨'],
+            'year 1 digit padding' => [[5], 'ar-eg', 'y', '٥'],
+            'year 2 digits' => [[2018], 'ar-eg', 'yy', '١٨'],
+            'year 2 digits padding' => [[5], 'ar-eg', 'yy', '٠٥'],
+            'year 3 digits' => [[2018], 'ar-eg', 'yyy', '٢٠١٨'],
+            'year 3 digits padding' => [[5], 'ar-eg', 'yyy', '٠٠٥'],
+            'year 4 digits' => [[2018], 'ar-eg', 'yyyy', '٢٠١٨'],
+            'year 4 digits padding' => [[5], 'ar-eg', 'yyyy', '٠٠٠٥'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string|null, string, string, string}>
+     */
+    public static function timeZoneFormatLocaleProvider(): array
+    {
+        return [
+            'ISO 8601 basic' => [null, 'ru', 'xx', '+0000'],
+            'ISO 8601 basic alt' => [null, 'ru', 'ZZZ', '+0000'],
+            'ISO 8601 basic alt time zone' => ['Australia/Brisbane', 'ru', 'ZZZ', '+1000'],
+            'ISO 8601 basic short' => [null, 'ru', 'x', '+00'],
+            'ISO 8601 basic short time zone' => ['Australia/Brisbane', 'ru', 'x', '+10'],
+            'ISO 8601 basic short z' => [null, 'ru', 'X', 'Z'],
+            'ISO 8601 basic short z time zone' => ['Australia/Brisbane', 'ru', 'X', '+10'],
+            'ISO 8601 basic time zone' => ['Australia/Brisbane', 'ru', 'xx', '+1000'],
+            'ISO 8601 basic z' => [null, 'ru', 'XX', 'Z'],
+            'ISO 8601 basic z time zone' => ['Australia/Brisbane', 'ru', 'XX', '+1000'],
+            'ISO 8601 extended' => [null, 'ru', 'xxx', '+00:00'],
+            'ISO 8601 extended alt' => [null, 'ru', 'ZZZZZ', 'Z'],
+            'ISO 8601 extended alt time zone' => ['Australia/Brisbane', 'ru', 'ZZZZZ', '+10:00'],
+            'ISO 8601 extended time zone' => ['Australia/Brisbane', 'ru', 'xxx', '+10:00'],
+            'ISO 8601 extended z' => [null, 'ru', 'XXX', 'Z'],
+            'ISO 8601 extended z time zone' => ['Australia/Brisbane', 'ru', 'XXX', '+10:00'],
+            'long basic' => [null, 'ru', 'ZZZZ', 'GMT'],
+            'long basic time zone' => ['Australia/Brisbane', 'ru', 'ZZZZ', 'GMT+10:00'],
+            'long localized' => [null, 'ru', 'OOOO', 'GMT'],
+            'long localized time zone' => ['Australia/Brisbane', 'ru', 'OOOO', 'GMT+10:00'],
+            'long non location' => [null, 'ru', 'zzzz', 'Всемирное координированное время'],
+            // 'long non-location time zone' => ['Australia/Brisbane', 'ru', 'zzzz', 'Восточная Австралия, стандартное время'],
+            'long time zone ID' => [null, 'ru', 'VV', 'UTC'],
+            'long time zone ID time zone' => ['Australia/Brisbane', 'ru', 'VV', 'Australia/Brisbane'],
+            'short localized' => [null, 'ru', 'O', 'GMT'],
+            'short localized time zone' => ['Australia/Brisbane', 'ru', 'O', 'GMT+10'],
+            'short non location' => [null, 'ru', 'zzz', 'UTC'],
+            'short non location time zone' => ['Australia/Brisbane', 'ru', 'zzz', 'GMT+10'],
+        ];
+    }
+
+    /**
+     * @param int[] $parts
+     */
+    #[DataProvider('formatLocaleProvider')]
+    public function testFormatLocale(array $parts, string $locale, string $format, string $expected): void
+    {
+        $this->assertSame(
+            $expected,
+            DateTime::createFromArray($parts, locale: $locale)->format($format)
+        );
+    }
+
+    #[DataProvider('timeZoneFormatLocaleProvider')]
+    public function testFormatLocaleTimeZone(
+        string|null $timeZone,
+        string $locale,
+        string $format,
+        string $expected
+    ): void {
+        $this->assertSame(
+            $expected,
+            DateTime::now($timeZone, $locale)->format($format)
         );
     }
 }
