@@ -20,7 +20,7 @@ final class ModelRegistryUseReturnTypeExtensionTest extends TypeInferenceTestCas
     public function testReturnTypes(): void
     {
         // Data providers run before PHPUnit starts coverage.
-        $assertions = static::gatherAssertTypes(ROOT.'/tests/Mock/PhpStan/ModelRegistryUse.php');
+        $assertions = self::gatherAssertTypes(ROOT.'/tests/Mock/PhpStan/ModelRegistryUse.php');
 
         foreach ($assertions as $assertion) {
             $this->assertFileAsserts(...$assertion);
