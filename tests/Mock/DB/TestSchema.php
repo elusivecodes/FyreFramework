@@ -19,6 +19,6 @@ class TestSchema extends Schema
     #[Override]
     protected function readTables(): array
     {
-        throw new InvalidArgumentException('Not used.');
+        return [];
     }
 }

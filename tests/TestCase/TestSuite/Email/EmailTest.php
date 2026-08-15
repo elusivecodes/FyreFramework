@@ -22,6 +22,11 @@ final class EmailTest extends TestCase
     use MailSubjectContainsTrait;
     use NoMailSentTrait;
 
+    public function testGetMessagesInvalid(): void
+    {
+        $this->assertSame([], $this->getMessages(1));
+    }
+
     #[Override]
     public static function setUpBeforeClass(): void
     {

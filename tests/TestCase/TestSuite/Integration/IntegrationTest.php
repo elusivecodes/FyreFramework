@@ -25,6 +25,7 @@ final class IntegrationTest extends TestCase
     use RedirectEqualsTrait;
     use RedirectTrait;
     use RequestDataTrait;
+    use RequestMethodTrait;
     use ResponseCodeTrait;
     use ResponseContainsTrait;
     use ResponseEmptyTrait;

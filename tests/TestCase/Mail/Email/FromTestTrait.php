@@ -54,6 +54,18 @@ trait FromTestTrait
         );
     }
 
+    public function testHeaderFromSpecialName(): void
+    {
+        $this->email->setFrom('test1@test.com', 'Test, User');
+
+        $headers = $this->email->getFullHeaders();
+
+        $this->assertSame(
+            '"Test, User" <test1@test.com>',
+            $headers['From']
+        );
+    }
+
     public function testSetFrom(): void
     {
         $this->assertSame(

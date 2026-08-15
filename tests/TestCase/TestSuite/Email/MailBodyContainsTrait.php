@@ -9,6 +9,60 @@ use PHPUnit\Framework\AssertionFailedError;
 
 trait MailBodyContainsTrait
 {
+    public function testMailContains(): void
+    {
+        $this->app->use(MailManager::class)
+            ->use()
+            ->email()
+            ->setFrom('test1@test.com')
+            ->setTo('test2@test.com')
+            ->setBodyText('This is a test')
+            ->send();
+
+        $this->assertMailContains('This is a test');
+    }
+
+    public function testMailContainsAt(): void
+    {
+        $this->app->use(MailManager::class)
+            ->use()
+            ->email()
+            ->setFrom('test1@test.com')
+            ->setTo('test2@test.com')
+            ->setBodyText('This is a test')
+            ->send();
+
+        $this->assertMailContainsAt('This is a test', 1);
+    }
+
+    public function testMailContainsHtml(): void
+    {
+        $this->app->use(MailManager::class)
+            ->use()
+            ->email()
+            ->setFrom('test1@test.com')
+            ->setTo('test2@test.com')
+            ->setBodyHtml('<b>This is a test</b>')
+            ->setFormat(Email::HTML)
+            ->send();
+
+        $this->assertMailContainsHtml('This is a test');
+    }
+
+    public function testMailContainsHtmlAt(): void
+    {
+        $this->app->use(MailManager::class)
+            ->use()
+            ->email()
+            ->setFrom('test1@test.com')
+            ->setTo('test2@test.com')
+            ->setBodyHtml('<b>This is a test</b>')
+            ->setFormat(Email::HTML)
+            ->send();
+
+        $this->assertMailContainsHtmlAt('This is a test', 1);
+    }
+
     public function testMailContainsText(): void
     {
         $this->app->use(MailManager::class)

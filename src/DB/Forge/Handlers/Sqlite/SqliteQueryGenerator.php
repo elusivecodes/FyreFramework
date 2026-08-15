@@ -23,20 +23,6 @@ use function strtoupper;
 class SqliteQueryGenerator extends QueryGenerator
 {
     /**
-     * Generates SQL for adding a constraint.
-     *
-     * @param Index $index The Index.
-     * @return string The SQL query.
-     */
-    public function buildAddConstraint(Index $index)
-    {
-        $sql = 'ADD CONSTRAINT ';
-        $sql .= $this->buildConstraint($index);
-
-        return $sql;
-    }
-
-    /**
      * {@inheritDoc}
      */
     #[Override]

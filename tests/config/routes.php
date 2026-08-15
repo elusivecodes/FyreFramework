@@ -24,6 +24,18 @@ $router->get('cookie', static function(): ClientResponse {
     return response()->withCookie('key', 'value');
 });
 
+$router->get('request-cookie', static function(ServerRequest $request): string {
+    return (string) ($request->getCookieParams()['key'] ?? '');
+});
+
+$router->connect(
+    'method',
+    static function(ServerRequest $request): ClientResponse {
+        return response()->withHeader('Request-Method', $request->getMethod());
+    },
+    methods: ['DELETE', 'HEAD', 'OPTIONS', 'PATCH']
+);
+
 $router->post('csrf', static function(ServerRequest $request): string {
     return (string) $request->getParsedBody()['value'];
 });

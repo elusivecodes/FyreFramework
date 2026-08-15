@@ -9,6 +9,32 @@ use PHPUnit\Framework\AssertionFailedError;
 
 trait MailSentWithTrait
 {
+    public function testMailSentWithBcc(): void
+    {
+        $this->app->use(MailManager::class)
+            ->use()
+            ->email()
+            ->setFrom('test1@test.com')
+            ->setTo('test2@test.com')
+            ->setBcc('test3@test.com')
+            ->send();
+
+        $this->assertMailSentWithBcc('test3@test.com');
+    }
+
+    public function testMailSentWithBccAt(): void
+    {
+        $this->app->use(MailManager::class)
+            ->use()
+            ->email()
+            ->setFrom('test1@test.com')
+            ->setTo('test2@test.com')
+            ->setBcc('test3@test.com')
+            ->send();
+
+        $this->assertMailSentWithBccAt('test3@test.com', 1);
+    }
+
     public function testMailSentWithCc(): void
     {
         $this->app->use(MailManager::class)
@@ -121,5 +147,57 @@ trait MailSentWithTrait
             ->send();
 
         $this->assertMailSentWithCc('invalid@test.com');
+    }
+
+    public function testMailSentWithReplyTo(): void
+    {
+        $this->app->use(MailManager::class)
+            ->use()
+            ->email()
+            ->setFrom('test1@test.com')
+            ->setTo('test2@test.com')
+            ->setReplyTo('test3@test.com')
+            ->send();
+
+        $this->assertMailSentWithReplyTo('test3@test.com');
+    }
+
+    public function testMailSentWithReplyToAt(): void
+    {
+        $this->app->use(MailManager::class)
+            ->use()
+            ->email()
+            ->setFrom('test1@test.com')
+            ->setTo('test2@test.com')
+            ->setReplyTo('test3@test.com')
+            ->send();
+
+        $this->assertMailSentWithReplyToAt('test3@test.com', 1);
+    }
+
+    public function testMailSentWithSender(): void
+    {
+        $this->app->use(MailManager::class)
+            ->use()
+            ->email()
+            ->setFrom('test1@test.com')
+            ->setTo('test2@test.com')
+            ->setSender('test3@test.com')
+            ->send();
+
+        $this->assertMailSentWithSender('test3@test.com');
+    }
+
+    public function testMailSentWithSenderAt(): void
+    {
+        $this->app->use(MailManager::class)
+            ->use()
+            ->email()
+            ->setFrom('test1@test.com')
+            ->setTo('test2@test.com')
+            ->setSender('test3@test.com')
+            ->send();
+
+        $this->assertMailSentWithSenderAt('test3@test.com', 1);
     }
 }

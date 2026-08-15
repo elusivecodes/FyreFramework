@@ -73,6 +73,23 @@ trait GapTestTrait
         $period1->gap($period2);
     }
 
+    public function testGapOtherStartsFirst(): void
+    {
+        $period1 = new Period('2022-01-15', '2022-01-20');
+        $period2 = new Period('2022-01-01', '2022-01-10');
+        $period3 = $period1->gap($period2);
+
+        $this->assertInstanceOf(
+            Period::class,
+            $period3
+        );
+
+        $this->assertSame(
+            '2022-01-11T00:00:00.000+00:00',
+            $period3->start()->toIsoString()
+        );
+    }
+
     public function testGapOverlap(): void
     {
         $period1 = new Period('2022-01-01', '2022-01-15');
@@ -129,6 +146,16 @@ trait GapTestTrait
     {
         $period1 = new Period('2022-01-01', '2022-01-10');
         $period2 = new Period('2022-01-10', '2022-01-20');
+
+        $this->assertNull(
+            $period1->gap($period2)
+        );
+    }
+
+    public function testGapWithoutCompleteUnit(): void
+    {
+        $period1 = new Period('2022-01-01', '2022-01-10');
+        $period2 = new Period('2022-01-11', '2022-01-20');
 
         $this->assertNull(
             $period1->gap($period2)

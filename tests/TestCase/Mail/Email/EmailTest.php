@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Mail\Email;
 
+use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
@@ -55,8 +56,10 @@ final class EmailTest extends TestCase
     #[Override]
     protected function setUp(): void
     {
-        $this->email = new Container()
-            ->use(MailManager::class)
+        $container = new Container();
+        $container->use(Config::class)->set('App.charset', 'utf-8');
+
+        $this->email = $container->use(MailManager::class)
             ->build([
                 'className' => SendmailMailer::class,
             ])

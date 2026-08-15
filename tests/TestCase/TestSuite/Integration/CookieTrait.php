@@ -31,4 +31,12 @@ trait CookieTrait
 
         $this->assertCookie('value', 'key');
     }
+
+    public function testCookieRequest(): void
+    {
+        $this->cookie('key', 'value');
+        $this->get('/request-cookie');
+
+        $this->assertResponseEquals('value');
+    }
 }

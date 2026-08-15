@@ -24,6 +24,7 @@ final class PeriodTest extends TestCase
     use EndsBeforeTestTrait;
     use EqualsTestTrait;
     use GapTestTrait;
+    use GranularityTestTrait;
     use IncludesTestTrait;
     use OverlapAllTestTrait;
     use OverlapAnyTestTrait;
@@ -334,6 +335,17 @@ final class PeriodTest extends TestCase
             ],
             $dates
         );
+    }
+
+    public function testKey(): void
+    {
+        $period = new Period('2022-01-01', '2022-01-02');
+
+        $this->assertSame(0, $period->key());
+
+        $period->next();
+
+        $this->assertSame(1, $period->key());
     }
 
     public function testLength(): void

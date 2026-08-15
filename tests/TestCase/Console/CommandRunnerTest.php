@@ -17,6 +17,8 @@ use Override;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Commands\ArgumentsCommand;
 use Tests\Mock\Commands\BoolOptionsCommand;
+use Tests\Mock\Commands\MissingRunCommand;
+use Tests\Mock\Commands\OptionalOptionsCommand;
 use Tests\Mock\Commands\OptionsCommand;
 use Tests\Mock\Commands\StringOptionsCommand;
 use Tests\Mock\Commands\TestCommand;
@@ -72,6 +74,30 @@ final class CommandRunnerTest extends TestCase
                         ],
                     ],
                     'className' => BoolOptionsCommand::class,
+                ],
+                'missing_run' => [
+                    'description' => '',
+                    'options' => [],
+                    'className' => MissingRunCommand::class,
+                ],
+                'optional_options' => [
+                    'description' => '',
+                    'options' => [
+                        'choice' => [
+                            'values' => [
+                                'a' => 'Option A',
+                                'b' => 'Option B',
+                            ],
+                            'default' => 'a',
+                        ],
+                        'enabled' => [
+                            'as' => 'boolean',
+                        ],
+                        'value' => [
+                            'default' => 'value',
+                        ],
+                    ],
+                    'className' => OptionalOptionsCommand::class,
                 ],
                 'options' => [
                     'description' => '',
@@ -214,7 +240,7 @@ final class CommandRunnerTest extends TestCase
     {
         $this->assertSame(
             Command::CODE_ERROR,
-            $this->runner->handle(['', 'bool_options', '--test', '--other', 'value'])
+            $this->runner->handle(['', 'bool_options', '--test', '--other=value'])
         );
 
         rewind($this->output);
@@ -311,6 +337,21 @@ final class CommandRunnerTest extends TestCase
         );
     }
 
+    public function testHandleCommandList(): void
+    {
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->runner->handle([''])
+        );
+
+        rewind($this->output);
+
+        $this->assertStringContainsString(
+            'This is a test command.',
+            stream_get_contents($this->output)
+        );
+    }
+
     public function testHandleCommandOption(): void
     {
         fwrite($this->input, 'a'.PHP_EOL);
@@ -329,6 +370,14 @@ final class CommandRunnerTest extends TestCase
         );
     }
 
+    public function testHandleCommandOptionalOptions(): void
+    {
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->runner->handle(['', 'optional_options'])
+        );
+    }
+
     public function testHandleCommandOptionDefault(): void
     {
         fwrite($this->input, PHP_EOL);
@@ -343,6 +392,23 @@ final class CommandRunnerTest extends TestCase
         $this->assertSame(
             "\033[0;33mWhich do you want?\033[0m".PHP_EOL.
             " (\033[1;36ma\033[0m/\033[2;36mb\033[0m/\033[2;36mc\033[0m)".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
+    public function testHandleCommandOptionInvalidValue(): void
+    {
+        fwrite($this->input, 'a'.PHP_EOL);
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->runner->handle(['', 'options', 'invalid'])
+        );
+
+        rewind($this->output);
+
+        $this->assertStringContainsString(
+            'Invalid option value for: value',
             stream_get_contents($this->output)
         );
     }
@@ -377,6 +443,23 @@ final class CommandRunnerTest extends TestCase
 
         $this->assertSame(
             "\033[0;33mPlease enter a value (value)\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
+    public function testHandleCommandPromptInvalidValue(): void
+    {
+        fwrite($this->input, 'value'.PHP_EOL);
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->runner->handle(['', 'arguments', '--value'])
+        );
+
+        rewind($this->output);
+
+        $this->assertStringContainsString(
+            'Invalid value for: value',
             stream_get_contents($this->output)
         );
     }
@@ -460,6 +543,36 @@ final class CommandRunnerTest extends TestCase
         $this->assertSame(
             0,
             $this->runner->run('arguments', ['value'])
+        );
+    }
+
+    public function testRunInvalid(): void
+    {
+        $this->assertSame(
+            Command::CODE_ERROR,
+            $this->runner->run('invalid')
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;31mInvalid command: invalid\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
+    public function testRunMissingMethod(): void
+    {
+        $this->assertSame(
+            Command::CODE_ERROR,
+            $this->runner->run('missing_run')
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;31mMissing run method: missing_run\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
         );
     }
 

@@ -39,4 +39,14 @@ trait SessionTrait
 
         $this->assertSession('value', 'key');
     }
+
+    public function testSessionRequest(): void
+    {
+        $this->session([
+            'key' => 'value',
+        ]);
+        $this->get('/response');
+
+        $this->assertSession('value', 'key');
+    }
 }

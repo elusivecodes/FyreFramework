@@ -8,6 +8,7 @@ use Fyre\DB\Forge\ForeignKey;
 use Fyre\DB\Forge\Index;
 use Fyre\DB\Types\IntegerType;
 use Fyre\DB\Types\StringType;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Tests\TestCase\DB\Forge\Sqlite\SqliteConnectionTrait;
 
@@ -59,6 +60,16 @@ final class TableTest extends TestCase
             $table->column('id')
                 ->toArray()
         );
+    }
+
+    public function testColumnInvalid(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Table column `test.invalid` does not exist.');
+
+        $this->forge
+            ->build('test')
+            ->column('invalid');
     }
 
     public function testColumnNames(): void
@@ -163,6 +174,16 @@ final class TableTest extends TestCase
             $table->foreignKey('value_id')
                 ->toArray()
         );
+    }
+
+    public function testForeignKeyInvalid(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Table foreign key `test.invalid` does not exist.');
+
+        $this->forge
+            ->build('test')
+            ->foreignKey('invalid');
     }
 
     public function testForeignKeys(): void
@@ -358,6 +379,31 @@ final class TableTest extends TestCase
                 static fn(Index $index): array => $index->toArray(),
                 $table->indexes()
             )
+        );
+    }
+
+    public function testIndexInvalid(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Table index `test.invalid` does not exist.');
+
+        $this->forge
+            ->build('test')
+            ->index('invalid');
+    }
+
+    public function testToArray(): void
+    {
+        $this->assertSame(
+            [
+                'name' => 'test',
+                'comment' => 'Test',
+            ],
+            $this->forge
+                ->build('test', [
+                    'comment' => 'Test',
+                ])
+                ->toArray()
         );
     }
 }

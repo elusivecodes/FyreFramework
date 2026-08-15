@@ -31,4 +31,29 @@ trait RedirectContainsTrait
 
         $this->assertRedirectContains('test');
     }
+
+    public function testRedirectNotContains(): void
+    {
+        $this->get('/redirect');
+
+        $this->assertRedirectNotContains('invalid');
+    }
+
+    public function testRedirectNotContainsFail(): void
+    {
+        $this->expectException(AssertionFailedError::class);
+        $this->expectExceptionMessage('Failed asserting that header "Location" value does not contain "test".');
+
+        $this->get('/redirect');
+
+        $this->assertRedirectNotContains('test');
+    }
+
+    public function testRedirectNotContainsNoResponse(): void
+    {
+        $this->expectException(AssertionFailedError::class);
+        $this->expectExceptionMessage('No response has been set.');
+
+        $this->assertRedirectNotContains('test');
+    }
 }
