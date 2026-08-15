@@ -22,10 +22,7 @@ use function getenv;
 
 trait MysqlConnectionTrait
 {
-    use DatabaseLifecycleTrait {
-        setUpBeforeClass as private setUpDatabaseBeforeClass;
-        tearDownAfterClass as private tearDownDatabaseAfterClass;
-    }
+    use DatabaseLifecycleTrait;
 
     protected Fixture $associatedFixture;
 
@@ -94,7 +91,7 @@ trait MysqlConnectionTrait
                 ],
             ]);
 
-        static::setUpDatabaseBeforeClass();
+        static::setUpSchema();
     }
 
     #[Override]
@@ -103,7 +100,7 @@ trait MysqlConnectionTrait
         $app = Application::getInstance();
 
         try {
-            static::tearDownDatabaseAfterClass();
+            static::tearDownSchema();
         } finally {
             $app->use(ErrorHandler::class)->unregister();
         }
@@ -129,8 +126,14 @@ trait MysqlConnectionTrait
 
         $this->db = $app->use(ConnectionManager::class)->use();
 
-        $this->db->truncate('children');
-        $this->db->truncate('items');
+        $this->db->disableForeignKeys();
+
+        try {
+            $this->db->truncate('children');
+            $this->db->truncate('items');
+        } finally {
+            $this->db->enableForeignKeys();
+        }
 
         parent::setUp();
     }

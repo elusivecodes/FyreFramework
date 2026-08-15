@@ -18,8 +18,7 @@ trait DatabaseLifecycleTrait
 
     abstract protected static function createSchema(Connection $db): void;
 
-    #[Override]
-    public static function setUpBeforeClass(): void
+    protected static function setUpSchema(): void
     {
         $container = static::buildContainer();
         $connection = $container->use(ConnectionManager::class)->use();
@@ -30,8 +29,7 @@ trait DatabaseLifecycleTrait
         static::createSchema($connection);
     }
 
-    #[Override]
-    public static function tearDownAfterClass(): void
+    protected static function tearDownSchema(): void
     {
         $connection = static::$schemaConnection;
 
@@ -45,5 +43,17 @@ trait DatabaseLifecycleTrait
             $connection->disconnect();
             static::$schemaConnection = null;
         }
+    }
+
+    #[Override]
+    public static function setUpBeforeClass(): void
+    {
+        static::setUpSchema();
+    }
+
+    #[Override]
+    public static function tearDownAfterClass(): void
+    {
+        static::tearDownSchema();
     }
 }
