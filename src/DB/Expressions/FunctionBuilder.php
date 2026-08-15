@@ -153,7 +153,7 @@ class FunctionBuilder
     ): FunctionExpression {
         $unit = strtolower($unit);
 
-        if (!in_array($unit, self::DATE_PARTS, true)) {
+        if (!in_array($unit, static::DATE_PARTS, true)) {
             throw new InvalidArgumentException(sprintf(
                 'Query function DATE_ADD unit `%s` is not valid.',
                 $unit
@@ -193,7 +193,7 @@ class FunctionBuilder
     {
         $part = strtolower($part);
 
-        if (!in_array($part, self::DATE_PARTS, true)) {
+        if (!in_array($part, static::DATE_PARTS, true)) {
             throw new InvalidArgumentException(sprintf(
                 'Query function DATE_PART part `%s` is not valid.',
                 $part
@@ -221,7 +221,7 @@ class FunctionBuilder
     ): FunctionExpression {
         $unit = strtolower($unit);
 
-        if (!in_array($unit, self::DATE_PARTS, true)) {
+        if (!in_array($unit, static::DATE_PARTS, true)) {
             throw new InvalidArgumentException(sprintf(
                 'Query function DATE_SUB unit `%s` is not valid.',
                 $unit
@@ -269,7 +269,7 @@ class FunctionBuilder
     {
         $part = strtolower($part);
 
-        if (!in_array($part, self::DATE_PARTS, true)) {
+        if (!in_array($part, static::DATE_PARTS, true)) {
             throw new InvalidArgumentException(sprintf(
                 'Query function EXTRACT part `%s` is not valid.',
                 $part

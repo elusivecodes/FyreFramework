@@ -29,7 +29,7 @@ class BodyContains extends Constraint
         protected string $needle,
         protected bool $ignoreCase = false
     ) {
-        $this->needle = self::normalizeLineEndings($needle);
+        $this->needle = static::normalizeLineEndings($needle);
     }
 
     /**
@@ -69,7 +69,7 @@ class BodyContains extends Constraint
     protected function matches(mixed $other): bool
     {
         $contents = (string) $other->getBody();
-        $haystack = self::normalizeLineEndings($contents);
+        $haystack = static::normalizeLineEndings($contents);
 
         if ($this->ignoreCase) {
             return mb_stripos($haystack, $this->needle, 0, 'UTF-8') !== false;

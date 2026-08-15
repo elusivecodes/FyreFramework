@@ -316,7 +316,7 @@ class ModelSourceBuilder
         }
 
         return [
-            'type' => self::BELONGS_TO,
+            'type' => static::BELONGS_TO,
             'alias' => $alias,
             'targetModel' => $targetAlias.'Model',
             'foreignKey' => $columns,
@@ -353,7 +353,7 @@ class ModelSourceBuilder
             static fn(Index $index): bool => $index->isUnique() &&
                 static::columnsMatch($index->getColumns(), $columns)
         );
-        $type = $hasUniqueIndex ? self::HAS_ONE : self::HAS_MANY;
+        $type = $hasUniqueIndex ? static::HAS_ONE : static::HAS_MANY;
         $sourcePrimary = $source->primaryKey() ?? [];
         $options = [];
 
@@ -511,7 +511,7 @@ class ModelSourceBuilder
         }
 
         return [
-            'type' => self::MANY_TO_MANY,
+            'type' => static::MANY_TO_MANY,
             'alias' => $targetAlias,
             'targetModel' => $targetAlias.'Model',
             'foreignKey' => $sourceColumns,
@@ -562,9 +562,9 @@ class ModelSourceBuilder
 
         foreach ($relationships as $relationship) {
             $attributeClass = match ($relationship['type']) {
-                self::BELONGS_TO => BelongsTo::class,
-                self::HAS_ONE => HasOne::class,
-                self::MANY_TO_MANY => ManyToMany::class,
+                static::BELONGS_TO => BelongsTo::class,
+                static::HAS_ONE => HasOne::class,
+                static::MANY_TO_MANY => ManyToMany::class,
                 default => HasMany::class,
             };
             $attribute = new ReflectionClass($attributeClass)->getShortName();
@@ -608,9 +608,9 @@ class ModelSourceBuilder
 
         foreach ($relationships as $relationship) {
             $relationshipAlias = match ($relationship['type']) {
-                self::BELONGS_TO => 'BelongsToRelationship',
-                self::HAS_ONE => 'HasOneRelationship',
-                self::MANY_TO_MANY => 'ManyToManyRelationship',
+                static::BELONGS_TO => 'BelongsToRelationship',
+                static::HAS_ONE => 'HasOneRelationship',
+                static::MANY_TO_MANY => 'ManyToManyRelationship',
                 default => 'HasManyRelationship',
             };
             $lines[] = ' * @property '.$relationshipAlias.
@@ -745,17 +745,17 @@ class ModelSourceBuilder
 
         foreach ($relationships as $relationship) {
             [$attribute, $relationshipClass, $relationshipAlias] = match ($relationship['type']) {
-                self::BELONGS_TO => [
+                static::BELONGS_TO => [
                     BelongsTo::class,
                     BelongsToRelationship::class,
                     'BelongsToRelationship',
                 ],
-                self::HAS_ONE => [
+                static::HAS_ONE => [
                     HasOne::class,
                     HasOneRelationship::class,
                     'HasOneRelationship',
                 ],
-                self::MANY_TO_MANY => [
+                static::MANY_TO_MANY => [
                     ManyToMany::class,
                     ManyToManyRelationship::class,
                     'ManyToManyRelationship',
@@ -817,7 +817,7 @@ class ModelSourceBuilder
         $existsInRules = [];
 
         foreach ($relationships as $relationship) {
-            if ($relationship['type'] !== self::BELONGS_TO) {
+            if ($relationship['type'] !== static::BELONGS_TO) {
                 continue;
             }
 

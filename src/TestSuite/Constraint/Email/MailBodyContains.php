@@ -34,7 +34,7 @@ class MailBodyContains extends Constraint
         protected string|null $bodyType = null,
         protected int|null $at = null
     ) {
-        $this->needle = self::normalizeLineEndings($needle);
+        $this->needle = static::normalizeLineEndings($needle);
     }
 
     /**
@@ -92,7 +92,7 @@ class MailBodyContains extends Constraint
         return array_any(
             $other,
             fn(Email $email): bool => str_contains(
-                self::normalizeLineEndings($email->$method()),
+                static::normalizeLineEndings($email->$method()),
                 $this->needle
             )
         );

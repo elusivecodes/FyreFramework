@@ -25,7 +25,7 @@ class BodyEquals extends Constraint
     public function __construct(
         protected string $string
     ) {
-        $this->string = self::normalizeLineEndings($string);
+        $this->string = static::normalizeLineEndings($string);
     }
 
     /**
@@ -60,7 +60,7 @@ class BodyEquals extends Constraint
     {
         $contents = (string) $other->getBody();
 
-        return self::normalizeLineEndings($contents) === $this->string;
+        return static::normalizeLineEndings($contents) === $this->string;
     }
 
     /**
