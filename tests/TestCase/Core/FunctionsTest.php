@@ -36,6 +36,7 @@ use Fyre\Security\Encryption\EncryptionManager;
 use Fyre\Utility\Collection;
 use Fyre\Utility\DateTime\DateTime;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use Tests\Mock\Jobs\MockJob;
@@ -75,6 +76,22 @@ final class FunctionsTest extends TestCase
 {
     protected Engine $app;
 
+    /**
+     * @return array<string, array{int, class-string<Throwable>}>
+     */
+    public static function abortCodeProvider(): array
+    {
+        return [
+            'bad request' => [400, BadRequestException::class],
+            'unauthorized' => [401, UnauthorizedException::class],
+            'method not allowed' => [405, MethodNotAllowedException::class],
+            'not acceptable' => [406, NotAcceptableException::class],
+            'conflict' => [409, ConflictException::class],
+            'not implemented' => [501, NotImplementedException::class],
+            'service unavailable' => [503, ServiceUnavailableException::class],
+        ];
+    }
+
     public function testAbort(): void
     {
         $this->expectException(InternalServerException::class);
@@ -92,35 +109,16 @@ final class FunctionsTest extends TestCase
         abort(410);
     }
 
-    public function testAbortCodes(): void
+    /**
+     * @param class-string<Throwable> $exceptionClass
+     */
+    #[DataProvider('abortCodeProvider')]
+    public function testAbortCodes(int $code, string $exceptionClass): void
     {
-        $cases = [
-            400 => BadRequestException::class,
-            401 => UnauthorizedException::class,
-            405 => MethodNotAllowedException::class,
-            406 => NotAcceptableException::class,
-            409 => ConflictException::class,
-            501 => NotImplementedException::class,
-            503 => ServiceUnavailableException::class,
-        ];
+        $this->expectException($exceptionClass);
+        $this->expectExceptionCode($code);
 
-        foreach ($cases as $code => $exceptionClass) {
-            try {
-                abort($code);
-
-                $this->fail('Expected exception was not thrown.');
-            } catch (Throwable $exception) {
-                $this->assertInstanceOf(
-                    $exceptionClass,
-                    $exception
-                );
-
-                $this->assertSame(
-                    $code,
-                    $exception->getCode()
-                );
-            }
-        }
+        abort($code);
     }
 
     public function testAbortMessage(): void
