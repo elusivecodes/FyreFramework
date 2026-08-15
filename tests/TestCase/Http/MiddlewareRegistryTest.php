@@ -6,6 +6,7 @@ namespace Tests\TestCase\Http;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Http\MiddlewareRegistry;
+use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Server\MiddlewareInterface;
@@ -17,6 +18,19 @@ use function class_uses;
 final class MiddlewareRegistryTest extends TestCase
 {
     protected MiddlewareRegistry $middlewareRegistry;
+
+    public function testClear(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid middleware: mock');
+
+        $this->middlewareRegistry->map('mock', MockMiddleware::class);
+        $this->middlewareRegistry->use('mock');
+
+        $this->middlewareRegistry->clear();
+
+        $this->middlewareRegistry->use('mock');
+    }
 
     public function testDebug(): void
     {

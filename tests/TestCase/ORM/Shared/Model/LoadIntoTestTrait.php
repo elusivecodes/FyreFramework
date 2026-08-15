@@ -105,6 +105,21 @@ trait LoadIntoTestTrait
         );
     }
 
+    public function testLoadIntoMissing(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $user = $Users->newEntity([
+            'id' => 999,
+        ], validate: false, new: false);
+
+        $this->assertSame(
+            $user,
+            $Users->loadInto($user, [
+                'Posts',
+            ])
+        );
+    }
+
     public function testLoadIntoOverwrites(): void
     {
         $Users = $this->modelRegistry->use('Users');

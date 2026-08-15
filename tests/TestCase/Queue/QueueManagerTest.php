@@ -13,6 +13,7 @@ use Fyre\Queue\QueueManager;
 use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
+use Tests\Mock\Queue\TestQueue;
 
 use function class_uses;
 use function getenv;
@@ -43,6 +44,20 @@ final class QueueManagerTest extends TestCase
         $this->queueManager->build([
             'className' => 'Invalid',
         ]);
+    }
+
+    public function testClear(): void
+    {
+        $this->queueManager->clear();
+        $this->queueManager->setConfig('default', [
+            'className' => TestQueue::class,
+        ]);
+        $this->queueManager->use();
+
+        $this->queueManager->clear();
+
+        $this->assertFalse($this->queueManager->isLoaded());
+        $this->assertFalse($this->queueManager->hasConfig());
     }
 
     public function testDebug(): void

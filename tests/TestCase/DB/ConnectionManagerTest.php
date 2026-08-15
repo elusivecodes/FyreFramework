@@ -33,6 +33,7 @@ use Fyre\Log\LogManager;
 use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
+use Tests\Mock\DB\TestMysqlConnection;
 
 use function class_uses;
 use function getenv;
@@ -49,6 +50,20 @@ final class ConnectionManagerTest extends TestCase
         $this->connectionManager->build([
             'className' => 'Invalid',
         ]);
+    }
+
+    public function testClear(): void
+    {
+        $this->connectionManager->clear();
+        $this->connectionManager->setConfig('default', [
+            'className' => TestMysqlConnection::class,
+        ]);
+        $this->connectionManager->use();
+
+        $this->connectionManager->clear();
+
+        $this->assertFalse($this->connectionManager->isLoaded());
+        $this->assertFalse($this->connectionManager->hasConfig());
     }
 
     public function testDebug(): void

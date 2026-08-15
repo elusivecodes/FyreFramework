@@ -545,6 +545,17 @@ trait HasManyTestTrait
         );
     }
 
+    public function testHasManyFindRelatedEmpty(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $user = $Users->newEmptyEntity();
+
+        $this->assertSame(
+            [],
+            $Users->Posts->findRelated([$user])->toArray()
+        );
+    }
+
     public function testHasManyFindRelatedGroupLimit(): void
     {
         $Users = $this->modelRegistry->use('Users');
@@ -788,6 +799,26 @@ trait HasManyTestTrait
         $this->assertFalse(
             $users[1]->posts[1]->isDirty()
         );
+    }
+
+    public function testHasManyLoadRelatedEmpty(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $user = $Users->newEmptyEntity();
+
+        $Users->Posts->loadRelated([$user]);
+
+        $this->assertSame([], $user->posts);
+    }
+
+    public function testHasManyLoadRelatedEmptyClean(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $user = $Users->newEmptyEntity();
+
+        $Users->Posts->loadRelated([$user]);
+
+        $this->assertFalse($user->isDirty('posts'));
     }
 
     public function testHasManyOnlyIds(): void

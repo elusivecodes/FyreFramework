@@ -51,6 +51,27 @@ trait IntTestTrait
         );
     }
 
+    public function testIntExistingEntityDefaultValue(): void
+    {
+        $this->db->query(<<<'SQL'
+            CREATE TABLE contexts (
+                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                value INT NOT NULL DEFAULT 999,
+                PRIMARY KEY (id)
+            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
+        SQL);
+
+        $entity = $this->model->newEmptyEntity()
+            ->setNew(false);
+
+        $this->view->Form->open($entity);
+
+        $this->assertSame(
+            '<input id="value" name="value" type="number" placeholder="Value" min="-2147483648" max="2147483647" step="1" />',
+            $this->view->Form->input('value')
+        );
+    }
+
     public function testIntGreaterThanOrEqualsValidation(): void
     {
         $this->db->query(<<<'SQL'

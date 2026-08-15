@@ -21,6 +21,16 @@ final class EncryptionManagerTest extends TestCase
 {
     protected EncryptionManager $encryptionManager;
 
+    public function testClear(): void
+    {
+        $this->encryptionManager->use();
+
+        $this->encryptionManager->clear();
+
+        $this->assertFalse($this->encryptionManager->isLoaded());
+        $this->assertFalse($this->encryptionManager->hasConfig());
+    }
+
     public function testDebug(): void
     {
         $this->assertContains(

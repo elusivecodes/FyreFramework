@@ -19,6 +19,22 @@ final class PolicyRegistryTest extends TestCase
 {
     protected PolicyRegistry $policyRegistry;
 
+    public function testClear(): void
+    {
+        $this->policyRegistry->use('Posts');
+
+        $this->policyRegistry->clear();
+
+        $this->assertSame(
+            [],
+            $this->policyRegistry->getNamespaces()
+        );
+
+        $this->assertNull(
+            $this->policyRegistry->use('Posts')
+        );
+    }
+
     public function testDebug(): void
     {
         $this->assertContains(
@@ -92,6 +108,21 @@ final class PolicyRegistryTest extends TestCase
         $this->assertSame(
             $this->policyRegistry,
             $this->policyRegistry->removeNamespace('Tests\Invalid')
+        );
+    }
+
+    public function testUnload(): void
+    {
+        $policy = $this->policyRegistry->use('Posts');
+
+        $this->assertSame(
+            $this->policyRegistry,
+            $this->policyRegistry->unload('Posts')
+        );
+
+        $this->assertNotSame(
+            $policy,
+            $this->policyRegistry->use('Posts')
         );
     }
 

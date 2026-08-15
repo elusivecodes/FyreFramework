@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\Entity;
 
+use Fyre\Http\Uri;
 use Fyre\ORM\Entity;
 use Fyre\Utility\DateTime\DateTime;
 use Tests\Mock\Entities\MagicEntity;
@@ -308,6 +309,35 @@ trait MagicTestTrait
                 ],
             ],
             $parent->toArray()
+        );
+    }
+
+    public function testToArrayNestedValues(): void
+    {
+        $entity = new Entity([
+            'values' => [1, 2],
+        ]);
+
+        $this->assertSame(
+            [
+                'values' => [1, 2],
+            ],
+            $entity->toArray()
+        );
+    }
+
+    public function testToArrayStringable(): void
+    {
+        $uri = new Uri('https://example.com');
+        $entity = new Entity([
+            'uri' => $uri,
+        ]);
+
+        $this->assertSame(
+            [
+                'uri' => 'https://example.com',
+            ],
+            $entity->toArray(true)
         );
     }
 

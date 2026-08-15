@@ -16,6 +16,7 @@ use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
+use stdClass;
 
 use function class_uses;
 use function fclose;
@@ -258,6 +259,14 @@ final class ClientTest extends TestCase
         );
     }
 
+    public function testGetHandler(): void
+    {
+        $this->assertSame(
+            $this->handler,
+            $this->client->getHandler()
+        );
+    }
+
     public function testGetJsonWithNull(): void
     {
         $mockResponse = new Response([
@@ -328,6 +337,22 @@ final class ClientTest extends TestCase
         );
     }
 
+    public function testGetQueryString(): void
+    {
+        $mockResponse = new Response();
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/get?value=1',
+            $mockResponse
+        );
+
+        $this->assertSame(
+            $mockResponse,
+            $this->client->get('https://example.com/get', 'value=1')
+        );
+    }
+
     public function testHeader(): void
     {
         $mockResponse = new Response([
@@ -392,6 +417,16 @@ final class ClientTest extends TestCase
             '',
             $response->getBody()->getContents()
         );
+    }
+
+    public function testInvalidHandler(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Client handler `stdClass` must extend `Fyre\Http\Client\ClientHandler`.');
+
+        new Client([
+            'handler' => new stdClass(),
+        ]);
     }
 
     public function testInvalidMaxRedirectBodySize(): void
@@ -705,6 +740,30 @@ final class ClientTest extends TestCase
         );
     }
 
+    public function testPostRawData(): void
+    {
+        $mockResponse = new Response();
+
+        $this->handler->addResponse(
+            'POST',
+            'https://example.com/post',
+            $mockResponse,
+            function(RequestInterface $request): bool {
+                $this->assertSame(
+                    'This is a test.',
+                    (string) $request->getBody()
+                );
+
+                return true;
+            }
+        );
+
+        $this->assertSame(
+            $mockResponse,
+            $this->client->post('https://example.com/post', 'This is a test.')
+        );
+    }
+
     public function testPutData(): void
     {
         $mockResponse = new Response([
@@ -936,6 +995,29 @@ final class ClientTest extends TestCase
 
         $this->client->get('https://example.com/redirect-loop-a', options: [
             'maxRedirects' => 3,
+        ]);
+    }
+
+    public function testRedirectMalformedLocation(): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Redirect location is not valid.');
+
+        $mockResponse = new Response([
+            'statusCode' => 302,
+            'headers' => [
+                'Location' => '%',
+            ],
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/redirect-invalid',
+            $mockResponse
+        );
+
+        $this->client->get('https://example.com/redirect-invalid', options: [
+            'maxRedirects' => 1,
         ]);
     }
 
@@ -1281,6 +1363,22 @@ final class ClientTest extends TestCase
                 'test' => 'value',
             ],
             $response->getJson()
+        );
+    }
+
+    public function testTraceMethod(): void
+    {
+        $mockResponse = new Response();
+
+        $this->handler->addResponse(
+            'TRACE',
+            'https://example.com/trace',
+            $mockResponse
+        );
+
+        $this->assertSame(
+            $mockResponse,
+            $this->client->trace('https://example.com/trace')
         );
     }
 

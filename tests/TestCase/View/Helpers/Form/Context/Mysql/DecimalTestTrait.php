@@ -159,6 +159,46 @@ trait DecimalTestTrait
         );
     }
 
+    public function testDecimalPrecisionEqualScale(): void
+    {
+        $this->db->query(<<<'SQL'
+            CREATE TABLE contexts (
+                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                value DECIMAL(2,2) NULL DEFAULT NULL,
+                PRIMARY KEY (id)
+            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
+        SQL);
+
+        $entity = $this->model->newEmptyEntity();
+
+        $this->view->Form->open($entity);
+
+        $this->assertSame(
+            '<input id="value" name="value" type="number" placeholder="Value" min="-0.99" max="0.99" step="0.01" />',
+            $this->view->Form->input('value')
+        );
+    }
+
+    public function testDecimalPrecisionOverflow(): void
+    {
+        $this->db->query(<<<'SQL'
+            CREATE TABLE contexts (
+                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                value DECIMAL(30,0) NULL DEFAULT NULL,
+                PRIMARY KEY (id)
+            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
+        SQL);
+
+        $entity = $this->model->newEmptyEntity();
+
+        $this->view->Form->open($entity);
+
+        $this->assertSame(
+            '<input id="value" name="value" type="number" placeholder="Value" step="1" />',
+            $this->view->Form->input('value')
+        );
+    }
+
     public function testDecimalRequiredValidation(): void
     {
         $this->db->query(<<<'SQL'
@@ -177,6 +217,26 @@ trait DecimalTestTrait
 
         $this->assertSame(
             '<input id="value" name="value" type="number" placeholder="Value" min="-99999999.99" max="99999999.99" step="0.01" required />',
+            $this->view->Form->input('value')
+        );
+    }
+
+    public function testDecimalScaleZero(): void
+    {
+        $this->db->query(<<<'SQL'
+            CREATE TABLE contexts (
+                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                value DECIMAL(10,0) NULL DEFAULT NULL,
+                PRIMARY KEY (id)
+            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
+        SQL);
+
+        $entity = $this->model->newEmptyEntity();
+
+        $this->view->Form->open($entity);
+
+        $this->assertSame(
+            '<input id="value" name="value" type="number" placeholder="Value" min="-9999999999" max="9999999999" step="1" />',
             $this->view->Form->input('value')
         );
     }

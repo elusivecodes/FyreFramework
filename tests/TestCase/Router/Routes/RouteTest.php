@@ -363,6 +363,60 @@ final class RouteTest extends TestCase
         );
     }
 
+    public function testSetMethods(): void
+    {
+        $route = $this->container->build(ControllerRoute::class, [
+            'destination' => [TestController::class, 'test'],
+        ]);
+
+        $request = $this->container->build(ServerRequest::class);
+
+        $this->assertSame(
+            $route,
+            $route->setMethods(['POST'])
+        );
+
+        $this->assertNull(
+            $route->parseRequest($request)
+        );
+    }
+
+    public function testSetMiddleware(): void
+    {
+        $route = $this->container->build(ControllerRoute::class, [
+            'destination' => [TestController::class, 'test'],
+        ]);
+
+        $this->assertSame(
+            $route,
+            $route->setMiddleware(['test'])
+        );
+
+        $this->assertSame(
+            ['test'],
+            $route->getMiddleware()
+        );
+    }
+
+    public function testSetPlaceholder(): void
+    {
+        $route = $this->container->build(ControllerRoute::class, [
+            'destination' => [TestController::class, 'test'],
+        ]);
+
+        $this->assertSame(
+            $route,
+            $route->setPlaceholder('id', '\\d+')
+        );
+
+        $this->assertSame(
+            [
+                'id' => '\\d+',
+            ],
+            $route->getPlaceholders()
+        );
+    }
+
     public function testSetPort(): void
     {
         $route = $this->container->build(ControllerRoute::class, [
@@ -401,6 +455,23 @@ final class RouteTest extends TestCase
             'destination' => [TestController::class, 'test'],
             'port' => 65536,
         ]);
+    }
+
+    public function testSetScheme(): void
+    {
+        $route = $this->container->build(ControllerRoute::class, [
+            'destination' => [TestController::class, 'test'],
+        ]);
+
+        $this->assertSame(
+            $route,
+            $route->setScheme('https')
+        );
+
+        $this->assertSame(
+            'https',
+            $route->getScheme()
+        );
     }
 
     #[Override]

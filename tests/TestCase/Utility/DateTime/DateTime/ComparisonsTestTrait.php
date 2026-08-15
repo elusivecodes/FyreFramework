@@ -7,12 +7,12 @@ use Fyre\Utility\DateTime\DateTime;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
- * @phpstan-type IsAfterMethod 'isAfter'|'isAfterDay'|'isAfterHour'|'isAfterMinute'|'isAfterMonth'|'isAfterSecond'|'isAfterYear'
- * @phpstan-type IsBeforeMethod 'isBefore'|'isBeforeDay'|'isBeforeHour'|'isBeforeMinute'|'isBeforeMonth'|'isBeforeSecond'|'isBeforeYear'
- * @phpstan-type IsBetweenMethod 'isBetween'|'isBetweenDay'|'isBetweenHour'|'isBetweenMinute'|'isBetweenMonth'|'isBetweenSecond'|'isBetweenYear'
- * @phpstan-type IsSameMethod 'isSame'|'isSameDay'|'isSameHour'|'isSameMinute'|'isSameMonth'|'isSameSecond'|'isSameYear'
- * @phpstan-type IsSameOrAfterMethod 'isSameOrAfter'|'isSameOrAfterDay'|'isSameOrAfterHour'|'isSameOrAfterMinute'|'isSameOrAfterMonth'|'isSameOrAfterSecond'|'isSameOrAfterYear'
- * @phpstan-type IsSameOrBeforeMethod 'isSameOrBefore'|'isSameOrBeforeDay'|'isSameOrBeforeHour'|'isSameOrBeforeMinute'|'isSameOrBeforeMonth'|'isSameOrBeforeSecond'|'isSameOrBeforeYear'
+ * @phpstan-type IsAfterMethod 'isAfter'|'isAfterDay'|'isAfterHour'|'isAfterMinute'|'isAfterMonth'|'isAfterSecond'|'isAfterWeek'|'isAfterYear'
+ * @phpstan-type IsBeforeMethod 'isBefore'|'isBeforeDay'|'isBeforeHour'|'isBeforeMinute'|'isBeforeMonth'|'isBeforeSecond'|'isBeforeWeek'|'isBeforeYear'
+ * @phpstan-type IsBetweenMethod 'isBetween'|'isBetweenDay'|'isBetweenHour'|'isBetweenMinute'|'isBetweenMonth'|'isBetweenSecond'|'isBetweenWeek'|'isBetweenYear'
+ * @phpstan-type IsSameMethod 'isSame'|'isSameDay'|'isSameHour'|'isSameMinute'|'isSameMonth'|'isSameSecond'|'isSameWeek'|'isSameYear'
+ * @phpstan-type IsSameOrAfterMethod 'isSameOrAfter'|'isSameOrAfterDay'|'isSameOrAfterHour'|'isSameOrAfterMinute'|'isSameOrAfterMonth'|'isSameOrAfterSecond'|'isSameOrAfterWeek'|'isSameOrAfterYear'
+ * @phpstan-type IsSameOrBeforeMethod 'isSameOrBefore'|'isSameOrBeforeDay'|'isSameOrBeforeHour'|'isSameOrBeforeMinute'|'isSameOrBeforeMonth'|'isSameOrBeforeSecond'|'isSameOrBeforeWeek'|'isSameOrBeforeYear'
  */
 trait ComparisonsTestTrait
 {
@@ -34,6 +34,8 @@ trait ComparisonsTestTrait
             'month before' => ['isAfterMonth', [2018, 2, 2], [2018, 1, 1], true],
             'second after' => ['isAfterSecond', [2018, 1, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 2, 2], false],
             'second before' => ['isAfterSecond', [2018, 1, 1, 1, 1, 2, 2], [2018, 1, 1, 1, 1, 1, 1], true],
+            'week after' => ['isAfterWeek', [2018, 1, 1], [2018, 1, 9], false],
+            'week before' => ['isAfterWeek', [2018, 1, 9], [2018, 1, 1], true],
             'year after' => ['isAfterYear', [2018, 1], [2019, 2], false],
             'year before' => ['isAfterYear', [2019, 2], [2018, 1], true],
         ];
@@ -57,6 +59,8 @@ trait ComparisonsTestTrait
             'month before' => ['isBeforeMonth', [2018, 2, 2], [2018, 1, 1], false],
             'second after' => ['isBeforeSecond', [2018, 1, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 2, 2], true],
             'second before' => ['isBeforeSecond', [2018, 1, 1, 1, 1, 2, 2], [2018, 1, 1, 1, 1, 1, 1], false],
+            'week after' => ['isBeforeWeek', [2018, 1, 1], [2018, 1, 9], true],
+            'week before' => ['isBeforeWeek', [2018, 1, 9], [2018, 1, 1], false],
             'year after' => ['isBeforeYear', [2018, 1], [2019, 2], true],
             'year before' => ['isBeforeYear', [2019, 2], [2018, 1], false],
         ];
@@ -86,6 +90,9 @@ trait ComparisonsTestTrait
             'second after' => ['isBetweenSecond', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 4], false],
             'second before' => ['isBetweenSecond', [2018, 1, 1, 1, 1, 5], [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 4], false],
             'second between' => ['isBetweenSecond', [2018, 1, 1, 1, 1, 3], [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 4], true],
+            'week after' => ['isBetweenWeek', [2018, 1, 1], [2018, 1, 9], [2018, 1, 25], false],
+            'week before' => ['isBetweenWeek', [2018, 2, 2], [2018, 1, 9], [2018, 1, 25], false],
+            'week between' => ['isBetweenWeek', [2018, 1, 17], [2018, 1, 1], [2018, 2, 2], true],
             'year after' => ['isBetweenYear', [2017], [2018], [2020], false],
             'year before' => ['isBetweenYear', [2021], [2018], [2020], false],
             'year between' => ['isBetweenYear', [2019], [2018], [2020], true],
@@ -116,6 +123,9 @@ trait ComparisonsTestTrait
             'second after' => ['isSameOrAfterSecond', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 2], false],
             'second before' => ['isSameOrAfterSecond', [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 1], true],
             'second same' => ['isSameOrAfterSecond', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 1], true],
+            'week after' => ['isSameOrAfterWeek', [2018, 1, 1], [2018, 1, 9], false],
+            'week before' => ['isSameOrAfterWeek', [2018, 1, 9], [2018, 1, 1], true],
+            'week same' => ['isSameOrAfterWeek', [2018, 1, 4], [2018, 1, 1], true],
             'year after' => ['isSameOrAfterYear', [2018, 2], [2019, 1], false],
             'year before' => ['isSameOrAfterYear', [2018, 2], [2017, 1], true],
             'year same' => ['isSameOrAfterYear', [2018, 2], [2018, 1], true],
@@ -146,6 +156,9 @@ trait ComparisonsTestTrait
             'second after' => ['isSameOrBeforeSecond', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 2], true],
             'second before' => ['isSameOrBeforeSecond', [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 1], false],
             'second same' => ['isSameOrBeforeSecond', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 1], true],
+            'week after' => ['isSameOrBeforeWeek', [2018, 1, 1], [2018, 1, 9], true],
+            'week before' => ['isSameOrBeforeWeek', [2018, 1, 9], [2018, 1, 1], false],
+            'week same' => ['isSameOrBeforeWeek', [2018, 1, 4], [2018, 1, 1], true],
             'year after' => ['isSameOrBeforeYear', [2018, 2], [2019, 1], true],
             'year before' => ['isSameOrBeforeYear', [2018, 2], [2017, 1], false],
             'year same' => ['isSameOrBeforeYear', [2018, 2], [2018, 1], true],
@@ -176,6 +189,9 @@ trait ComparisonsTestTrait
             'second after' => ['isSameSecond', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 2], false],
             'second before' => ['isSameSecond', [2018, 1, 1, 1, 1, 2], [2018, 1, 1, 1, 1, 1], false],
             'second same' => ['isSameSecond', [2018, 1, 1, 1, 1, 1], [2018, 1, 1, 1, 1, 1], true],
+            'week after' => ['isSameWeek', [2018, 1, 1], [2018, 1, 9], false],
+            'week before' => ['isSameWeek', [2018, 1, 9], [2018, 1, 1], false],
+            'week same' => ['isSameWeek', [2018, 1, 4], [2018, 1, 1], true],
             'year after' => ['isSameYear', [2018, 2], [2019, 1], false],
             'year before' => ['isSameYear', [2018, 2], [2017, 1], false],
             'year same' => ['isSameYear', [2018, 2], [2018, 1], true],

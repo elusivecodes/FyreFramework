@@ -3,9 +3,11 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\Shared\Model;
 
+use Fyre\ORM\Exceptions\OrmException;
 use Fyre\ORM\Model;
 use Fyre\ORM\Relationship;
 use Fyre\ORM\Relationships\HasMany;
+use InvalidArgumentException;
 
 trait RelationshipTestTrait
 {
@@ -23,6 +25,29 @@ trait RelationshipTestTrait
         );
     }
 
+    public function testRelationshipDuplicate(): void
+    {
+        $this->expectException(OrmException::class);
+        $this->expectExceptionMessage('Model `Items` already has a relationship to `Alias`.');
+
+        $Items = $this->modelRegistry->use('Items');
+
+        $Items->hasOne('Alias', [
+            'classAlias' => 'Items',
+        ]);
+        $Items->hasOne('Alias', [
+            'classAlias' => 'Items',
+        ]);
+    }
+
+    public function testRelationshipInvalid(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Model `Items` does not have a relationship to `Invalid`.');
+
+        $this->modelRegistry->use('Items')->__get('Invalid');
+    }
+
     public function testRelationshipJoinType(): void
     {
         $Items = $this->modelRegistry->use('Items');
@@ -37,6 +62,26 @@ trait RelationshipTestTrait
         );
 
         $this->assertSame('inner', $Items->Alias->getJoinType());
+    }
+
+    public function testRelationshipLoadRelatedEmpty(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $user = $Users->newEmptyEntity();
+
+        $Users->Addresses->loadRelated([$user]);
+
+        $this->assertNull($user->address);
+    }
+
+    public function testRelationshipLoadRelatedEmptyClean(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $user = $Users->newEmptyEntity();
+
+        $Users->Addresses->loadRelated([$user]);
+
+        $this->assertFalse($user->isDirty('address'));
     }
 
     public function testRelationshipModelProperty(): void
@@ -74,6 +119,17 @@ trait RelationshipTestTrait
             'alias',
             $relationship->getProperty()
         );
+    }
+
+    public function testRelationshipPropertyNameConflict(): void
+    {
+        $this->expectException(OrmException::class);
+        $this->expectExceptionMessage('Model `Items` relationship `Alias` property conflicts with table column `name`.');
+
+        $this->modelRegistry->use('Items')->hasOne('Alias', [
+            'classAlias' => 'Items',
+            'propertyName' => 'name',
+        ]);
     }
 
     public function testRelationshipSort(): void
@@ -137,6 +193,31 @@ trait RelationshipTestTrait
         $this->assertSame(
             'subquery',
             $Items->Alias->getStrategy()
+        );
+    }
+
+    public function testRelationshipStrategyInvalid(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Relationship strategy `invalid` is not valid.');
+
+        $Items = $this->modelRegistry->use('Items');
+
+        $Items->hasMany('Alias', [
+            'classAlias' => 'Items',
+        ])->setStrategy('invalid');
+    }
+
+    public function testRelationshipStrategyOption(): void
+    {
+        $relationship = $this->modelRegistry->use('Items')->hasMany('Alias', [
+            'classAlias' => 'Items',
+            'strategy' => 'subquery',
+        ]);
+
+        $this->assertSame(
+            'subquery',
+            $relationship->getStrategy()
         );
     }
 

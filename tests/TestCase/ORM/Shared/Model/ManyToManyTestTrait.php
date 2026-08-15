@@ -5,6 +5,7 @@ namespace Tests\TestCase\ORM\Shared\Model;
 
 use Fyre\ORM\Entity;
 use Fyre\ORM\Queries\SelectQuery;
+use InvalidArgumentException;
 use Tests\Mock\Entities\Post;
 use Tests\Mock\Entities\Tag;
 
@@ -525,6 +526,17 @@ trait ManyToManyTestTrait
         );
     }
 
+    public function testManyToManyFindRelatedEmpty(): void
+    {
+        $Posts = $this->modelRegistry->use('Posts');
+        $post = $Posts->newEmptyEntity();
+
+        $this->assertSame(
+            [],
+            $Posts->Tags->findRelated([$post])->toArray()
+        );
+    }
+
     public function testManyToManyFindRelatedGroupLimit(): void
     {
         $Posts = $this->modelRegistry->use('Posts');
@@ -748,6 +760,14 @@ trait ManyToManyTestTrait
         );
     }
 
+    public function testManyToManyInvalidSaveStrategy(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Relationship save strategy `invalid` is not valid.');
+
+        $this->modelRegistry->use('Posts')->Tags->setSaveStrategy('invalid');
+    }
+
     public function testManyToManyJoinData(): void
     {
         $Posts = $this->modelRegistry->use('Posts');
@@ -858,6 +878,43 @@ trait ManyToManyTestTrait
         $this->assertFalse(
             $post->tags[1]->_joinData->isNew()
         );
+    }
+
+    public function testManyToManyJunction(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $Others = $this->modelRegistry->use('Others');
+
+        $relationship = $Items->manyToMany('Alias', [
+            'classAlias' => 'Items',
+        ]);
+
+        $relationship->setJunction($Others);
+
+        $this->assertSame(
+            $Others,
+            $relationship->getJunction()
+        );
+    }
+
+    public function testManyToManyLoadRelatedEmpty(): void
+    {
+        $Posts = $this->modelRegistry->use('Posts');
+        $post = $Posts->newEmptyEntity();
+
+        $Posts->Tags->loadRelated([$post]);
+
+        $this->assertSame([], $post->tags);
+    }
+
+    public function testManyToManyLoadRelatedEmptyClean(): void
+    {
+        $Posts = $this->modelRegistry->use('Posts');
+        $post = $Posts->newEmptyEntity();
+
+        $Posts->Tags->loadRelated([$post]);
+
+        $this->assertFalse($post->isDirty('tags'));
     }
 
     public function testManyToManyOnlyIds(): void
@@ -1116,6 +1173,19 @@ trait ManyToManyTestTrait
         );
     }
 
+    public function testManyToManySaveStrategyOption(): void
+    {
+        $relationship = $this->modelRegistry->use('Items')->manyToMany('Alias', [
+            'classAlias' => 'Items',
+            'saveStrategy' => 'append',
+        ]);
+
+        $this->assertSame(
+            'append',
+            $relationship->getSaveStrategy()
+        );
+    }
+
     public function testManyToManySort(): void
     {
         $Posts = $this->modelRegistry->use('Posts');
@@ -1215,6 +1285,19 @@ trait ManyToManyTestTrait
 
         $this->assertFalse(
             $post->tags[1]->_joinData->isNew()
+        );
+    }
+
+    public function testManyToManySortOption(): void
+    {
+        $relationship = $this->modelRegistry->use('Items')->manyToMany('Alias', [
+            'classAlias' => 'Items',
+            'sort' => 'Alias.name',
+        ]);
+
+        $this->assertSame(
+            'Alias.name',
+            $relationship->getSort()
         );
     }
 

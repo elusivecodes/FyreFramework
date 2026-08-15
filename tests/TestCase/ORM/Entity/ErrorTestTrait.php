@@ -122,6 +122,35 @@ trait ErrorTestTrait
         );
     }
 
+    public function testGetErrorNestedField(): void
+    {
+        $child = new Entity();
+        $child->setError('test', 'error');
+
+        $parent = new Entity([
+            'children' => [$child, null],
+        ]);
+
+        $this->assertSame(
+            [
+                [
+                    'error',
+                ],
+            ],
+            $parent->getError('children.test')
+        );
+    }
+
+    public function testGetErrorNestedInvalid(): void
+    {
+        $entity = new Entity();
+
+        $this->assertSame(
+            [],
+            $entity->getError('child.test')
+        );
+    }
+
     public function testGetErrors(): void
     {
         $entity = new Entity();
@@ -227,6 +256,20 @@ trait ErrorTestTrait
 
         $this->assertTrue(
             $parent->hasErrors()
+        );
+    }
+
+    public function testHasErrorsWithoutNested(): void
+    {
+        $child = new Entity();
+        $child->setError('test', 'error');
+
+        $parent = new Entity([
+            'child' => $child,
+        ]);
+
+        $this->assertFalse(
+            $parent->hasErrors(false)
         );
     }
 

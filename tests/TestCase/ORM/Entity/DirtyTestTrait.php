@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\ORM\Entity;
 
 use Fyre\ORM\Entity;
+use stdClass;
 
 trait DirtyTestTrait
 {
@@ -64,6 +65,24 @@ trait DirtyTestTrait
                 'test2' => 2,
             ],
             $entity->extractDirty(['test2', 'test3'])
+        );
+    }
+
+    public function testIsDirtyFalseSetEqualObject(): void
+    {
+        $value = new stdClass();
+        $value->test = 1;
+
+        $entity = new Entity([
+            'test' => $value,
+        ]);
+
+        $newValue = new stdClass();
+        $newValue->test = 1;
+        $entity->set('test', $newValue);
+
+        $this->assertFalse(
+            $entity->isDirty('test')
         );
     }
 

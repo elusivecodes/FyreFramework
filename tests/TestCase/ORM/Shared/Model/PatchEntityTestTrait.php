@@ -9,6 +9,30 @@ use Tests\Mock\Entities\Tag;
 
 trait PatchEntityTestTrait
 {
+    public function testPatchEntitiesMissingData(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $items = $Items->newEntities([
+            [
+                'name' => 'Test 1',
+            ],
+            [
+                'name' => 'Test 2',
+            ],
+        ]);
+
+        $Items->patchEntities($items, [
+            [
+                'name' => 'Updated',
+            ],
+        ]);
+
+        $this->assertSame(
+            ['Updated', 'Test 2'],
+            [$items[0]->name, $items[1]->name]
+        );
+    }
+
     public function testPatchEntity(): void
     {
         $Items = $this->modelRegistry->use('Items');

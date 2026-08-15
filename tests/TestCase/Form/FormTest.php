@@ -11,6 +11,7 @@ use Fyre\DB\TypeParser;
 use Fyre\Event\Event;
 use Fyre\Form\Form;
 use Fyre\Form\Rule;
+use Fyre\Form\Schema;
 use Fyre\Form\Validator;
 use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\Path;
@@ -197,6 +198,19 @@ final class FormTest extends TestCase
         );
     }
 
+    public function testGetError(): void
+    {
+        $form = $this->container->build(TestForm::class);
+        $form->validate([]);
+
+        $this->assertSame(
+            [
+                'The title is required.',
+            ],
+            $form->getError('title')
+        );
+    }
+
     public function testSet(): void
     {
         $form = $this->container->build(TestForm::class);
@@ -236,6 +250,38 @@ final class FormTest extends TestCase
                 'bool' => '1',
             ],
             $form->getData()
+        );
+    }
+
+    public function testSetSchema(): void
+    {
+        $form = $this->container->build(TestForm::class);
+        $schema = $this->container->build(Schema::class);
+
+        $this->assertSame(
+            $form,
+            $form->setSchema($schema)
+        );
+
+        $this->assertSame(
+            $schema,
+            $form->getSchema()
+        );
+    }
+
+    public function testSetValidator(): void
+    {
+        $form = $this->container->build(TestForm::class);
+        $validator = $this->container->build(Validator::class);
+
+        $this->assertSame(
+            $form,
+            $form->setValidator($validator)
+        );
+
+        $this->assertSame(
+            $validator,
+            $form->getValidator()
         );
     }
 

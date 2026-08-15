@@ -88,4 +88,18 @@ trait TextTestTrait
             $this->view->Form->input('value')
         );
     }
+
+    public function testTextWithoutLength(): void
+    {
+        $this->schema->addField('value', [
+            'type' => 'text',
+        ]);
+
+        $this->view->Form->open($this->form);
+
+        $this->assertSame(
+            '<textarea id="value" name="value" placeholder="Value"></textarea>',
+            $this->view->Form->input('value')
+        );
+    }
 }

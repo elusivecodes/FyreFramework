@@ -88,4 +88,14 @@ trait StringTestTrait
             $this->view->Form->input('value')
         );
     }
+
+    public function testStringUnknownField(): void
+    {
+        $this->view->Form->open($this->form);
+
+        $this->assertSame(
+            '<input id="invalid" name="invalid" type="text" placeholder="Invalid" />',
+            $this->view->Form->input('invalid')
+        );
+    }
 }

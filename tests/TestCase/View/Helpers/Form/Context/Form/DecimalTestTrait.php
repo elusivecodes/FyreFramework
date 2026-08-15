@@ -131,6 +131,38 @@ trait DecimalTestTrait
         );
     }
 
+    public function testDecimalPrecisionEqualScale(): void
+    {
+        $this->schema->addField('value', [
+            'type' => 'decimal',
+            'precision' => 2,
+            'scale' => 2,
+        ]);
+
+        $this->view->Form->open($this->form);
+
+        $this->assertSame(
+            '<input id="value" name="value" type="number" placeholder="Value" min="-0.99" max="0.99" step="0.01" />',
+            $this->view->Form->input('value')
+        );
+    }
+
+    public function testDecimalPrecisionOverflow(): void
+    {
+        $this->schema->addField('value', [
+            'type' => 'decimal',
+            'precision' => 30,
+            'scale' => 0,
+        ]);
+
+        $this->view->Form->open($this->form);
+
+        $this->assertSame(
+            '<input id="value" name="value" type="number" placeholder="Value" step="1" />',
+            $this->view->Form->input('value')
+        );
+    }
+
     public function testDecimalRequiredValidation(): void
     {
         $this->schema->addField('value', [
@@ -145,6 +177,22 @@ trait DecimalTestTrait
 
         $this->assertSame(
             '<input id="value" name="value" type="number" placeholder="Value" min="-99999999.99" max="99999999.99" step="0.01" required />',
+            $this->view->Form->input('value')
+        );
+    }
+
+    public function testDecimalScaleZero(): void
+    {
+        $this->schema->addField('value', [
+            'type' => 'decimal',
+            'precision' => 10,
+            'scale' => 0,
+        ]);
+
+        $this->view->Form->open($this->form);
+
+        $this->assertSame(
+            '<input id="value" name="value" type="number" placeholder="Value" min="-9999999999" max="9999999999" step="1" />',
             $this->view->Form->input('value')
         );
     }

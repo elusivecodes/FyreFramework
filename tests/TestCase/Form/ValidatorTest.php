@@ -82,6 +82,18 @@ final class ValidatorTest extends TestCase
         );
     }
 
+    public function testClear(): void
+    {
+        $this->validator->add('test', Rule::required());
+
+        $this->validator->clear();
+
+        $this->assertSame(
+            [],
+            $this->validator->getFieldRules('test')
+        );
+    }
+
     public function testDebug(): void
     {
         $this->assertContains(

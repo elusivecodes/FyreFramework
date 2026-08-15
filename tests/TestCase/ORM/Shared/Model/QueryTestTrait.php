@@ -78,6 +78,13 @@ trait QueryTestTrait
         );
     }
 
+    public function testDeleteManyEmpty(): void
+    {
+        $this->assertTrue(
+            $this->modelRegistry->use('Items')->deleteMany([])
+        );
+    }
+
     public function testExists(): void
     {
         $Items = $this->modelRegistry->use('Items');
@@ -457,6 +464,25 @@ trait QueryTestTrait
         $item = $Posts->resolveRouteBinding(2, 'id', $user);
 
         $this->assertNull($item);
+    }
+
+    public function testSaveManyErrors(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $items = $Items->newEntities([
+            [
+                'name' => 'Test 1',
+            ],
+            [
+                'name' => 'Test 2',
+            ],
+        ]);
+
+        $items[1]->setError('name', 'Invalid value.');
+
+        $this->assertFalse(
+            $Items->saveMany($items)
+        );
     }
 
     public function testUpdate(): void

@@ -85,4 +85,17 @@ trait TemporaryTestTrait
             $entity->getTemporaryFields()
         );
     }
+
+    public function testSetTemporaryFieldsOverwrite(): void
+    {
+        $entity = new Entity();
+        $entity->setTemporaryFields(['test1']);
+
+        $entity->setTemporaryFields(['test2'], true);
+
+        $this->assertSame(
+            ['test2'],
+            $entity->getTemporaryFields()
+        );
+    }
 }

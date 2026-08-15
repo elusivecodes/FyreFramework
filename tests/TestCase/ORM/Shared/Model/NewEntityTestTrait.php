@@ -957,4 +957,16 @@ trait NewEntityTestTrait
             ])
         );
     }
+
+    public function testToDatabaseSchemaUnknownField(): void
+    {
+        $this->assertSame(
+            [
+                'unknown' => 'value',
+            ],
+            $this->modelRegistry->use('Items')->toDatabaseSchema([
+                'unknown' => 'value',
+            ])
+        );
+    }
 }

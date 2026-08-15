@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\ORM\Entity;
 
 use Fyre\ORM\Entity;
+use InvalidArgumentException;
 
 trait OriginalTestTrait
 {
@@ -135,6 +136,23 @@ trait OriginalTestTrait
         );
     }
 
+    public function testGetOriginalAll(): void
+    {
+        $entity = new Entity([
+            'test1' => 1,
+            'test2' => 2,
+        ]);
+        $entity->set('test2', 3);
+
+        $this->assertSame(
+            [
+                'test1' => 1,
+                'test2' => 2,
+            ],
+            $entity->getOriginal()
+        );
+    }
+
     public function testGetOriginalFallback(): void
     {
         $entity = new Entity([
@@ -181,6 +199,16 @@ trait OriginalTestTrait
         $this->assertNull(
             $entity->getOriginal('invalid')
         );
+    }
+
+    public function testGetOriginalInvalidWithoutFallback(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('No original value exists for the `invalid` field.');
+
+        $entity = new Entity();
+
+        $entity->getOriginal('invalid', false);
     }
 
     public function testGetOriginalMultipleSet(): void

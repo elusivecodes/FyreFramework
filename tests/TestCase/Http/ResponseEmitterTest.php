@@ -7,12 +7,20 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\Http\ClientResponse;
 use Fyre\Http\Cookie\Cookie;
 use Fyre\Http\ResponseEmitter;
+use Fyre\Http\Stream;
 use Override;
 use PHPUnit\Framework\TestCase;
 
 use function class_uses;
+use function fclose;
+use function fwrite;
 use function ob_get_clean;
 use function ob_start;
+use function stream_socket_pair;
+
+use const STREAM_IPPROTO_IP;
+use const STREAM_PF_UNIX;
+use const STREAM_SOCK_STREAM;
 
 final class ResponseEmitterTest extends TestCase
 {
@@ -71,6 +79,35 @@ final class ResponseEmitterTest extends TestCase
             ],
             self::$cookies
         );
+
+        $this->assertSame(
+            'This is a test.',
+            $output
+        );
+    }
+
+    public function testEmitNonSeekable(): void
+    {
+        $sockets = stream_socket_pair(
+            STREAM_PF_UNIX,
+            STREAM_SOCK_STREAM,
+            STREAM_IPPROTO_IP
+        );
+
+        $this->assertNotFalse($sockets);
+
+        [$reader, $writer] = $sockets;
+
+        fwrite($writer, 'This is a test.');
+        fclose($writer);
+
+        $response = new ClientResponse([
+            'body' => new Stream($reader),
+        ]);
+
+        ob_start();
+        $this->emitter->emit($response);
+        $output = ob_get_clean();
 
         $this->assertSame(
             'This is a test.',
@@ -137,6 +174,38 @@ final class ResponseEmitterTest extends TestCase
 
         $this->assertSame(
             'This is a test.',
+            $output
+        );
+    }
+
+    public function testEmitRangeNonSeekable(): void
+    {
+        $sockets = stream_socket_pair(
+            STREAM_PF_UNIX,
+            STREAM_SOCK_STREAM,
+            STREAM_IPPROTO_IP
+        );
+
+        $this->assertNotFalse($sockets);
+
+        [$reader, $writer] = $sockets;
+
+        fwrite($writer, 'This is a test.');
+        fclose($writer);
+
+        $response = new ClientResponse([
+            'body' => new Stream($reader),
+            'headers' => [
+                'Content-Range' => 'bytes 5-10/15',
+            ],
+        ]);
+
+        ob_start();
+        $this->emitter->emit($response);
+        $output = ob_get_clean();
+
+        $this->assertSame(
+            'is a t',
             $output
         );
     }

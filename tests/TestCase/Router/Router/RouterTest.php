@@ -8,6 +8,7 @@ use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Http\MiddlewareRegistry;
+use Fyre\Router\Exceptions\RouterException;
 use Fyre\Router\Route;
 use Fyre\Router\RouteHandler;
 use Fyre\Router\Router;
@@ -37,6 +38,19 @@ final class RouterTest extends TestCase
     use UrlTestTrait;
 
     protected Container $container;
+
+    public function testClear(): void
+    {
+        $this->expectException(RouterException::class);
+        $this->expectExceptionMessage('Route alias `test` does not exist.');
+
+        $router = $this->container->use(Router::class);
+        $router->get('test', static function(): void {}, as: 'test');
+
+        $router->clear();
+
+        $router->url('test');
+    }
 
     public function testDebug(): void
     {

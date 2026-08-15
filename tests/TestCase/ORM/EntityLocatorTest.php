@@ -17,6 +17,23 @@ final class EntityLocatorTest extends TestCase
 {
     protected EntityLocator $locator;
 
+    public function testClear(): void
+    {
+        $this->locator->find('MockEntity');
+
+        $this->locator->clear();
+
+        $this->assertSame(
+            [],
+            $this->locator->getNamespaces()
+        );
+
+        $this->assertSame(
+            Entity::class,
+            $this->locator->find('MockEntity')
+        );
+    }
+
     public function testDebug(): void
     {
         $this->assertContains(
@@ -124,6 +141,19 @@ final class EntityLocatorTest extends TestCase
         $this->assertSame(
             $this->locator,
             $this->locator->removeNamespace('Tests\Invalid')
+        );
+    }
+
+    public function testSetDefaultEntityClass(): void
+    {
+        $this->assertSame(
+            $this->locator,
+            $this->locator->setDefaultEntityClass(MockEntity::class)
+        );
+
+        $this->assertSame(
+            MockEntity::class,
+            $this->locator->find('Invalid')
         );
     }
 

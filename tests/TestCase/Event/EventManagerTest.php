@@ -113,6 +113,17 @@ final class EventManagerTest extends TestCase
         );
     }
 
+    public function testClear(): void
+    {
+        $this->eventManager->on('test', static function(): void {});
+
+        $this->eventManager->clear();
+
+        $this->assertFalse(
+            $this->eventManager->has('test')
+        );
+    }
+
     public function testDebug(): void
     {
         $this->assertContains(

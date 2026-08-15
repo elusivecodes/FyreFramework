@@ -95,6 +95,15 @@ final class PeriodCollectionTest extends TestCase
         );
     }
 
+    public function testOffsetExists(): void
+    {
+        $period = new Period('2022-01-01', '2022-01-10');
+        $collection = new PeriodCollection($period);
+
+        $this->assertTrue(isset($collection[0]));
+        $this->assertFalse(isset($collection[1]));
+    }
+
     public function testOffsetGet(): void
     {
         $period1 = new Period('2022-01-01', '2022-01-10');
@@ -125,6 +134,16 @@ final class PeriodCollectionTest extends TestCase
             $period3,
             $collection[1]
         );
+    }
+
+    public function testOffsetUnset(): void
+    {
+        $period = new Period('2022-01-01', '2022-01-10');
+        $collection = new PeriodCollection($period);
+
+        unset($collection[0]);
+
+        $this->assertFalse(isset($collection[0]));
     }
 
     public function testSort(): void

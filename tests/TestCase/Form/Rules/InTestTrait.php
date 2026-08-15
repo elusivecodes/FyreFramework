@@ -7,7 +7,7 @@ use Fyre\Form\Rule;
 
 trait InTestTrait
 {
-    public function TestIn(): void
+    public function testIn(): void
     {
         $this->validator->add('test', Rule::in(['test', 'other']));
 
@@ -19,7 +19,7 @@ trait InTestTrait
         );
     }
 
-    public function TestInEmpty(): void
+    public function testInEmpty(): void
     {
         $this->validator->add('test', Rule::in(['test', 'other']));
 
@@ -31,13 +31,13 @@ trait InTestTrait
         );
     }
 
-    public function TestInInvalid(): void
+    public function testInInvalid(): void
     {
         $this->validator->add('test', Rule::in(['test', 'other']));
 
         $this->assertSame(
             [
-                'test' => ['invalid'],
+                'test' => ['The test must be one of the values: test, other'],
             ],
             $this->validator->validate([
                 'test' => 'invalid',
@@ -45,7 +45,7 @@ trait InTestTrait
         );
     }
 
-    public function TestInMissing(): void
+    public function testInMissing(): void
     {
         $this->validator->add('test', Rule::in(['test', 'other']));
 

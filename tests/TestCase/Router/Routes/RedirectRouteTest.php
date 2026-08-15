@@ -26,6 +26,18 @@ final class RedirectRouteTest extends TestCase
         );
     }
 
+    public function testGetParameters(): void
+    {
+        $route = $this->container->build(RedirectRoute::class, [
+            'destination' => 'https://test.com/',
+        ]);
+
+        $this->assertSame(
+            [],
+            $route->getParameters()
+        );
+    }
+
     public function testRoute(): void
     {
         $route = $this->container->build(RedirectRoute::class, [

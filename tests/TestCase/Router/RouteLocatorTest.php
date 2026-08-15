@@ -211,6 +211,21 @@ final class RouteLocatorTest extends TestCase
         );
     }
 
+    public function testClear(): void
+    {
+        $this->routeLocator->discover([
+            'Tests\Mock\Controllers\Locate',
+        ]);
+
+        $this->routeLocator->clear();
+
+        $this->assertNull(
+            $this->container->use(CacheManager::class)
+                ->use('_routes')
+                ->get('Tests.Mock.Controllers.Locate')
+        );
+    }
+
     public function testDiscover(): void
     {
         $routes = $this->routeLocator->discover([

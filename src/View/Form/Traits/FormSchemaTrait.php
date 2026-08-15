@@ -14,7 +14,6 @@ use Fyre\DB\Types\StringType;
 use Fyre\DB\Types\TextType;
 use Fyre\DB\Types\TimeType;
 use Fyre\Form\Schema;
-use Fyre\Utility\EnumHelper;
 
 use function pow;
 
@@ -25,28 +24,6 @@ use function pow;
  */
 trait FormSchemaTrait
 {
-    /**
-     * Returns the default value.
-     *
-     * @param Schema $schema The Schema.
-     * @param string $field The field name.
-     * @return mixed The parsed default value.
-     */
-    public static function getSchemaDefaultValue(Schema $schema, string $field): mixed
-    {
-        if (!$schema->hasField($field)) {
-            return null;
-        }
-
-        $formField = $schema->field($field);
-        $value = $formField->getDefault() |> $formField->type()->parse(...);
-        $enumClass = $formField->getEnumClass();
-
-        return $enumClass ?
-            EnumHelper::parseValue($enumClass, $value) :
-            $value;
-    }
-
     /**
      * Returns the maximum value.
      *
