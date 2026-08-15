@@ -18,7 +18,6 @@ use function fclose;
 use function fopen;
 use function fwrite;
 use function rewind;
-use function str_contains;
 
 final class SmtpMailerTest extends TestCase
 {
@@ -45,6 +44,7 @@ final class SmtpMailerTest extends TestCase
         ];
 
         Closure::bind(function(): void {
+            /** @var SmtpMailer $this */
             $this->authenticate();
         }, $this->mailer, SmtpMailer::class)();
 
@@ -68,6 +68,7 @@ final class SmtpMailerTest extends TestCase
             $socket = fopen('php://temp', 'r+');
             TestCase::assertIsResource($socket);
 
+            /** @var SmtpMailer $this */
             $this->socket = $socket;
             $this->authenticate();
         }, $this->mailer, SmtpMailer::class)();
@@ -93,6 +94,7 @@ final class SmtpMailerTest extends TestCase
             $socket = fopen('php://temp', 'r+');
             TestCase::assertIsResource($socket);
 
+            /** @var SmtpMailer $this */
             $this->socket = $socket;
             $this->authenticate();
         }, $this->mailer, SmtpMailer::class)();
@@ -116,6 +118,7 @@ final class SmtpMailerTest extends TestCase
             $socket = fopen('php://temp', 'r+');
             TestCase::assertIsResource($socket);
 
+            /** @var SmtpMailer $this */
             $this->socket = $socket;
             $this->__destruct();
         }, $this->mailer, SmtpMailer::class)();
@@ -129,6 +132,7 @@ final class SmtpMailerTest extends TestCase
 
         $this->assertNull(
             Closure::bind(function(): mixed {
+                /** @var SmtpMailer $this */
                 return $this->socket;
             }, $this->mailer, SmtpMailer::class)()
         );
@@ -166,6 +170,7 @@ final class SmtpMailerTest extends TestCase
             $socket = fopen('php://temp', 'r+');
             TestCase::assertIsResource($socket);
 
+            /** @var SmtpMailer $this */
             $this->socket = $socket;
             $this->end();
         }, $mailer, SmtpMailer::class)();
@@ -178,6 +183,7 @@ final class SmtpMailerTest extends TestCase
         );
 
         Closure::bind(function(): void {
+            /** @var SmtpMailer $this */
             $this->socket = null;
         }, $mailer, SmtpMailer::class)();
     }
@@ -219,6 +225,7 @@ final class SmtpMailerTest extends TestCase
             $socket = fopen('php://temp', 'r+');
             TestCase::assertIsResource($socket);
 
+            /** @var SmtpMailer $this */
             $this->socket = $socket;
 
             try {
@@ -267,6 +274,7 @@ final class SmtpMailerTest extends TestCase
             $socket = fopen('php://temp', 'r+');
             TestCase::assertIsResource($socket);
 
+            /** @var SmtpMailer $this */
             $this->socket = $socket;
         }, $mailer, SmtpMailer::class)();
 
@@ -299,8 +307,9 @@ final class SmtpMailerTest extends TestCase
             $sent[3]
         );
 
-        $this->assertTrue(
-            str_contains($sent[4], "\r\n\r\n..Test\r\n\r\n")
+        $this->assertStringContainsString(
+            "\r\n\r\n..Test\r\n\r\n",
+            $sent[4]
         );
 
         $this->assertStringNotContainsString(
@@ -319,6 +328,7 @@ final class SmtpMailerTest extends TestCase
         );
 
         Closure::bind(function(): void {
+            /** @var SmtpMailer $this */
             $this->socket = null;
         }, $mailer, SmtpMailer::class)();
     }
@@ -356,6 +366,7 @@ final class SmtpMailerTest extends TestCase
             $socket = fopen('php://temp', 'r+');
             TestCase::assertIsResource($socket);
 
+            /** @var SmtpMailer $this */
             $this->socket = $socket;
             $this->sendCommand('hello');
         }, $mailer, SmtpMailer::class)();
@@ -368,6 +379,7 @@ final class SmtpMailerTest extends TestCase
         );
 
         Closure::bind(function(): void {
+            /** @var SmtpMailer $this */
             $this->socket = null;
         }, $mailer, SmtpMailer::class)();
     }
@@ -381,6 +393,7 @@ final class SmtpMailerTest extends TestCase
             $socket = fopen('php://temp', 'r+');
             TestCase::assertIsResource($socket);
 
+            /** @var SmtpMailer $this */
             $this->socket = $socket;
             $this->sendCommand('invalid');
         }, $this->mailer, SmtpMailer::class)();
@@ -399,6 +412,7 @@ final class SmtpMailerTest extends TestCase
             $socket = fopen('php://temp', 'r+');
             TestCase::assertIsResource($socket);
 
+            /** @var SmtpMailer $this */
             $this->socket = $socket;
             $this->sendCommand('data');
         }, $this->mailer, SmtpMailer::class)();
@@ -436,6 +450,7 @@ final class SmtpMailerTest extends TestCase
             $socket = fopen('php://temp', 'r+');
             TestCase::assertIsResource($socket);
 
+            /** @var SmtpMailer $this */
             $this->socket = $socket;
             $this->sendCommand('to', 'to@example.com');
         }, $mailer, SmtpMailer::class)();
@@ -448,6 +463,7 @@ final class SmtpMailerTest extends TestCase
         );
 
         Closure::bind(function(): void {
+            /** @var SmtpMailer $this */
             $this->socket = null;
         }, $mailer, SmtpMailer::class)();
     }
@@ -458,12 +474,14 @@ final class SmtpMailerTest extends TestCase
             $socket = fopen('php://temp', 'r+');
             TestCase::assertIsResource($socket);
 
+            /** @var SmtpMailer $this */
             $this->socket = $socket;
             $this->__wakeup();
         }, $this->mailer, SmtpMailer::class)();
 
         $this->assertNull(
             Closure::bind(function(): mixed {
+                /** @var SmtpMailer $this */
                 return $this->socket;
             }, $this->mailer, SmtpMailer::class)()
         );
@@ -502,6 +520,7 @@ final class SmtpMailerTest extends TestCase
     protected function tearDown(): void
     {
         Closure::bind(function(): void {
+            /** @var SmtpMailer $this */
             $this->socket = null;
         }, $this->mailer, SmtpMailer::class)();
     }

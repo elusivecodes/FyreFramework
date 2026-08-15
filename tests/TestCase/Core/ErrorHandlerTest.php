@@ -72,8 +72,9 @@ final class ErrorHandlerTest extends TestCase
         $this->errorHandler->__destruct();
 
         $registered = Closure::bind(function(): bool {
+            /** @var ErrorHandler $this */
             return $this->registered;
-        }, $this->errorHandler, $this->errorHandler)();
+        }, $this->errorHandler, ErrorHandler::class)();
 
         $this->assertFalse($registered);
     }
@@ -86,8 +87,9 @@ final class ErrorHandlerTest extends TestCase
         );
 
         $cli = Closure::bind(function(): bool {
+            /** @var ErrorHandler $this */
             return $this->cli;
-        }, $this->errorHandler, $this->errorHandler)();
+        }, $this->errorHandler, ErrorHandler::class)();
 
         $this->assertTrue($cli);
     }
@@ -255,16 +257,18 @@ final class ErrorHandlerTest extends TestCase
         $this->errorHandler->register();
 
         $registered = Closure::bind(function(): bool {
+            /** @var ErrorHandler $this */
             return $this->registered;
-        }, $this->errorHandler, $this->errorHandler)();
+        }, $this->errorHandler, ErrorHandler::class)();
 
         $this->assertTrue($registered);
 
         $this->errorHandler->unregister();
 
         $registered = Closure::bind(function(): bool {
+            /** @var ErrorHandler $this */
             return $this->registered;
-        }, $this->errorHandler, $this->errorHandler)();
+        }, $this->errorHandler, ErrorHandler::class)();
 
         $this->assertFalse($registered);
     }

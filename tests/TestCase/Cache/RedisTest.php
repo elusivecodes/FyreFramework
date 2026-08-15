@@ -145,6 +145,7 @@ final class RedisTest extends TestCase
         $this->cacher->set('test', 'new');
 
         $connection = Closure::bind(function(): Redis {
+            /** @var RedisCacher $this */
             return $this->connection;
         }, $this->cacher, RedisCacher::class)();
 

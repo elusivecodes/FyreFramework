@@ -141,8 +141,7 @@ trait JsonTestTrait
 
     public function testJsonToDatabaseNull(): void
     {
-        $this->assertSame(
-            null,
+        $this->assertNull(
             $this->type->use('json')->toDatabase(null)
         );
     }

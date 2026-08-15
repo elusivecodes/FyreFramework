@@ -21,8 +21,7 @@ trait GetTestTrait
 
     public function testGetDistinct(): void
     {
-        $this->assertSame(
-            true,
+        $this->assertTrue(
             $this->db->select()
                 ->distinct()
                 ->getDistinct()

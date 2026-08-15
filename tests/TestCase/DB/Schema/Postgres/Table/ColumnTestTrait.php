@@ -54,8 +54,7 @@ trait ColumnTestTrait
             $column->isUnsigned()
         );
 
-        $this->assertSame(
-            null,
+        $this->assertNull(
             $column->getDefault()
         );
 

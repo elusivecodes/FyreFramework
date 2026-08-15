@@ -336,6 +336,7 @@ final class AsyncPromiseTest extends TestCase
         });
 
         Closure::bind(function(): void {
+            /** @var AsyncPromise $this */
             $this->startTime = time() - 301;
         }, $promise, AsyncPromise::class)();
 

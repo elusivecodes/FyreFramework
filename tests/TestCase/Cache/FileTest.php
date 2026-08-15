@@ -115,6 +115,7 @@ final class FileTest extends TestCase
     public function testExpiredValue(): void
     {
         Closure::bind(function(): void {
+            /** @var FileCacher $this */
             $this->setValue('prefix.test', 'value', -1);
         }, $this->cacher, FileCacher::class)();
 

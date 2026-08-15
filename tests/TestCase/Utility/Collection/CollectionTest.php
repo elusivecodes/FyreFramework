@@ -12,7 +12,6 @@ use PHPUnit\Framework\TestCase;
 
 use function array_diff;
 use function class_uses;
-use function count;
 use function json_encode;
 use function serialize;
 use function unserialize;
@@ -82,9 +81,9 @@ final class CollectionTest extends TestCase
     {
         $collection = new Collection([1, 2, 3, 4]);
 
-        $this->assertSame(
+        $this->assertCount(
             4,
-            count($collection)
+            $collection
         );
     }
 

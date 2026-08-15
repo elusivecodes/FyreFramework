@@ -175,9 +175,10 @@ final class SessionTest extends TestCase
         );
 
         Closure::bind(function(): void {
+            /** @var Session $this */
             $this->rotateFlashData();
             $this->clearTempData();
-        }, $this->session, $this->session)();
+        }, $this->session, Session::class)();
 
         $this->assertFalse(
             $this->session->has('test')
@@ -193,8 +194,9 @@ final class SessionTest extends TestCase
         );
 
         Closure::bind(function(): void {
+            /** @var Session $this */
             $this->clearTempData();
-        }, $this->session, $this->session)();
+        }, $this->session, Session::class)();
 
         $this->assertTrue(
             $this->session->has('test')
@@ -203,8 +205,9 @@ final class SessionTest extends TestCase
         $_SESSION['_temp']['test'] = time() - 1;
 
         Closure::bind(function(): void {
+            /** @var Session $this */
             $this->clearTempData();
-        }, $this->session, $this->session)();
+        }, $this->session, Session::class)();
 
         $this->assertFalse(
             $this->session->has('test')

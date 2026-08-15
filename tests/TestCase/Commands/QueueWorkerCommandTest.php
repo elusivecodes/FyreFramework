@@ -22,7 +22,6 @@ use PHPUnit\Framework\TestCase;
 use Tests\Mock\Jobs\MockJob;
 
 use function fclose;
-use function file_exists;
 use function fopen;
 use function getenv;
 use function mkdir;
@@ -88,9 +87,7 @@ final class QueueWorkerCommandTest extends TestCase
             stream_get_contents($this->error)
         );
 
-        $this->assertTrue(
-            file_exists('tmp/job')
-        );
+        $this->assertFileExists('tmp/job');
 
         $this->assertStringEqualsFile(
             'tmp/job',

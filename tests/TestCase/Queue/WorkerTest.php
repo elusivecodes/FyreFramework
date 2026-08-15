@@ -20,7 +20,6 @@ use Tests\Mock\Jobs\MockJob;
 use Tests\Mock\Listeners\MockListener;
 
 use function class_uses;
-use function file_exists;
 use function getenv;
 use function mkdir;
 use function rmdir;
@@ -159,6 +158,7 @@ final class WorkerTest extends TestCase
         );
 
         $connection = Closure::bind(function(): Redis {
+            /** @var RedisQueue $this */
             return $this->connection;
         }, $this->queue, RedisQueue::class)();
 
@@ -226,9 +226,7 @@ final class WorkerTest extends TestCase
 
         $worker->run();
 
-        $this->assertFalse(
-            file_exists('tmp/job')
-        );
+        $this->assertFileDoesNotExist('tmp/job');
     }
 
     public function testWorkerJobWithQueue(): void
@@ -268,9 +266,7 @@ final class WorkerTest extends TestCase
 
         $worker->run();
 
-        $this->assertFalse(
-            file_exists('tmp/job')
-        );
+        $this->assertFileDoesNotExist('tmp/job');
 
         $worker = $this->container->build(Worker::class, [
             'options' => [

@@ -17,8 +17,7 @@ trait LastTestTrait
 
     public function testLastEmpty(): void
     {
-        $this->assertSame(
-            null,
+        $this->assertNull(
             Arr::last([])
         );
     }

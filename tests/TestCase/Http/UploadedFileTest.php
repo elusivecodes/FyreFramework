@@ -216,6 +216,7 @@ final class UploadedFileTest extends TestCase
         );
 
         Closure::bind(function(): void {
+            /** @var UploadedFile $this */
             $this->hasMoved = true;
         }, $file, UploadedFile::class)();
 

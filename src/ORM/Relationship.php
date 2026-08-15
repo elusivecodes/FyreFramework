@@ -841,7 +841,10 @@ abstract class Relationship
         }
 
         // disable auto alias
-        Closure::bind(function(): void { $this->autoAlias = false; }, $query, $query)();
+        Closure::bind(function(): void {
+            /** @var SelectQuery $this */
+            $this->autoAlias = false;
+        }, $query, SelectQuery::class)();
 
         $query
             ->select($fields, true)

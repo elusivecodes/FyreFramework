@@ -99,6 +99,7 @@ final class RedisQueueTest extends TestCase
     public function testMalformedMessage(): void
     {
         $connection = Closure::bind(function(): Redis {
+            /** @var RedisQueue $this */
             return $this->connection;
         }, $this->queue, RedisQueue::class)();
 
@@ -125,6 +126,7 @@ final class RedisQueueTest extends TestCase
         $this->assertInstanceOf(Message::class, $firstMessage);
 
         $connection = Closure::bind(function(): Redis {
+            /** @var RedisQueue $this */
             return $this->connection;
         }, $this->queue, RedisQueue::class)();
 

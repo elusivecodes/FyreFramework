@@ -247,8 +247,7 @@ final class CookieTest extends TestCase
     {
         $cookie = new Cookie('test', 'value');
 
-        $this->assertSame(
-            null,
+        $this->assertNull(
             $cookie->getExpires()
         );
     }

@@ -17,8 +17,7 @@ trait FirstTestTrait
 
     public function testFirstEmpty(): void
     {
-        $this->assertSame(
-            null,
+        $this->assertNull(
             Arr::first([])
         );
     }
