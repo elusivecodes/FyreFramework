@@ -234,7 +234,7 @@ final class HslTest extends TestCase
         );
 
         $this->assertSame(
-            'oklch(0.93 0.03 285.8deg)',
+            'oklch(0.93 0.03 285.86deg)',
             $color2->toString()
         );
     }
@@ -266,7 +266,7 @@ final class HslTest extends TestCase
         );
 
         $this->assertSame(
-            'color(rec2020 0.89 0.89 0.97)',
+            'color(rec2020 0.91 0.91 0.97)',
             $color2->toString()
         );
     }

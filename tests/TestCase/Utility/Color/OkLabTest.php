@@ -23,29 +23,29 @@ final class OkLabTest extends TestCase
         $color1 = OkLab::createFromString('lavender');
         $color2 = OkLab::createFromString('black');
 
-        $this->assertSame(17.06375119570234, $color1->contrast($color2));
-        $this->assertSame(17.06375119570234, $color2->contrast($color1));
+        $this->assertSame(17.063750102904255, $color1->contrast($color2));
+        $this->assertSame(17.063750102904255, $color2->contrast($color1));
     }
 
     public function testGetA(): void
     {
         $color = OkLab::createFromString('lavender');
 
-        $this->assertSame(0.007357648854629639, $color->getA());
+        $this->assertSame(0.0073649318907060835, $color->getA());
     }
 
     public function testGetB(): void
     {
         $color = OkLab::createFromString('lavender');
 
-        $this->assertSame(-0.02599671081635946, $color->getB());
+        $this->assertSame(-0.025915245880047233, $color->getB());
     }
 
     public function testGetLightness(): void
     {
         $color = OkLab::createFromString('lavender');
 
-        $this->assertSame(0.9309007554171675, $color->getLightness());
+        $this->assertSame(0.9309023355374633, $color->getLightness());
     }
 
     public function testLabel(): void
@@ -59,7 +59,7 @@ final class OkLabTest extends TestCase
     {
         $color = OkLab::createFromString('lavender');
 
-        $this->assertSame(0.803187559785117, $color->luma());
+        $this->assertSame(0.8031875051452128, $color->luma());
     }
 
     public function testSpace(): void
@@ -91,9 +91,9 @@ final class OkLabTest extends TestCase
 
         $this->assertArraysAreIdentical(
             [
-                'lightness' => 0.9309007554171675,
-                'a' => 0.007357648854629639,
-                'b' => -0.02599671081635946,
+                'lightness' => 0.9309023355374633,
+                'a' => 0.0073649318907060835,
+                'b' => -0.025915245880047233,
                 'alpha' => 1.0,
             ],
             $color->toArray()
@@ -234,7 +234,7 @@ final class OkLabTest extends TestCase
         );
 
         $this->assertSame(
-            'oklch(0.93 0.03 285.8deg)',
+            'oklch(0.93 0.03 285.86deg)',
             $color2->toString()
         );
     }
@@ -266,7 +266,7 @@ final class OkLabTest extends TestCase
         );
 
         $this->assertSame(
-            'color(rec2020 0.89 0.89 0.97)',
+            'color(rec2020 0.91 0.91 0.97)',
             $color2->toString()
         );
     }

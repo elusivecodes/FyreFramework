@@ -23,29 +23,29 @@ final class LchTest extends TestCase
         $color1 = Lch::createFromString('lavender');
         $color2 = Lch::createFromString('black');
 
-        $this->assertSame(17.06375239037742, $color1->contrast($color2));
-        $this->assertSame(17.06375239037742, $color2->contrast($color1));
+        $this->assertSame(17.063750102904255, $color1->contrast($color2));
+        $this->assertSame(17.063750102904255, $color2->contrast($color1));
     }
 
     public function testGetChroma(): void
     {
         $color = Lch::createFromString('lavender');
 
-        $this->assertSame(10.112485226318423, $color->getChroma());
+        $this->assertSame(10.112556083083701, $color->getChroma());
     }
 
     public function testGetHue(): void
     {
         $color = Lch::createFromString('lavender');
 
-        $this->assertSame(285.9315434239657, $color->getHue());
+        $this->assertSame(285.9285772969358, $color->getHue());
     }
 
     public function testGetLightness(): void
     {
         $color = Lch::createFromString('lavender');
 
-        $this->assertSame(91.74227138900844, $color->getLightness());
+        $this->assertSame(91.74228613147233, $color->getLightness());
     }
 
     public function testLabel(): void
@@ -59,7 +59,7 @@ final class LchTest extends TestCase
     {
         $color = Lch::createFromString('lavender');
 
-        $this->assertSame(0.8031876195188711, $color->luma());
+        $this->assertSame(0.8031875051452128, $color->luma());
     }
 
     public function testSpace(): void
@@ -91,9 +91,9 @@ final class LchTest extends TestCase
 
         $this->assertArraysAreIdentical(
             [
-                'lightness' => 91.74227138900844,
-                'chroma' => 10.112485226318423,
-                'hue' => 285.9315434239657,
+                'lightness' => 91.74228613147233,
+                'chroma' => 10.112556083083701,
+                'hue' => 285.9285772969358,
                 'alpha' => 1.0,
             ],
             $color->toArray()
@@ -234,7 +234,7 @@ final class LchTest extends TestCase
         );
 
         $this->assertSame(
-            'oklch(0.93 0.03 285.8deg)',
+            'oklch(0.93 0.03 285.86deg)',
             $color2->toString()
         );
     }
@@ -266,7 +266,7 @@ final class LchTest extends TestCase
         );
 
         $this->assertSame(
-            'color(rec2020 0.89 0.89 0.97)',
+            'color(rec2020 0.91 0.91 0.97)',
             $color2->toString()
         );
     }

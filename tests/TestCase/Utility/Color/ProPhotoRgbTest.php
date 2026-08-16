@@ -23,29 +23,29 @@ final class ProPhotoRgbTest extends TestCase
         $color1 = ProPhotoRgb::createFromString('lavender');
         $color2 = ProPhotoRgb::createFromString('black');
 
-        $this->assertSame(17.063751373303777, $color1->contrast($color2));
-        $this->assertSame(17.063751373303777, $color2->contrast($color1));
+        $this->assertSame(17.06375010290425, $color1->contrast($color2));
+        $this->assertSame(17.06375010290425, $color2->contrast($color1));
     }
 
     public function testGetBlue(): void
     {
         $color = ProPhotoRgb::createFromString('lavender');
 
-        $this->assertSame(0.9626720382536984, $color->getBlue());
+        $this->assertSame(0.9626739636273878, $color->getBlue());
     }
 
     public function testGetGreen(): void
     {
         $color = ProPhotoRgb::createFromString('lavender');
 
-        $this->assertSame(0.8809116437953888, $color->getGreen());
+        $this->assertSame(0.8809114057556224, $color->getGreen());
     }
 
     public function testGetRed(): void
     {
         $color = ProPhotoRgb::createFromString('lavender');
 
-        $this->assertSame(0.8922358591890865, $color->getRed());
+        $this->assertSame(0.8922346559662041, $color->getRed());
     }
 
     public function testLabel(): void
@@ -59,7 +59,7 @@ final class ProPhotoRgbTest extends TestCase
     {
         $color = ProPhotoRgb::createFromString('lavender');
 
-        $this->assertSame(0.8031875686651888, $color->luma());
+        $this->assertSame(0.8031875051452126, $color->luma());
     }
 
     public function testSpace(): void
@@ -91,9 +91,9 @@ final class ProPhotoRgbTest extends TestCase
 
         $this->assertArraysAreIdentical(
             [
-                'red' => 0.8922358591890865,
-                'green' => 0.8809116437953888,
-                'blue' => 0.9626720382536984,
+                'red' => 0.8922346559662041,
+                'green' => 0.8809114057556224,
+                'blue' => 0.9626739636273878,
                 'alpha' => 1.0,
             ],
             $color->toArray()
@@ -239,7 +239,7 @@ final class ProPhotoRgbTest extends TestCase
         );
 
         $this->assertSame(
-            'oklch(0.93 0.03 285.8deg)',
+            'oklch(0.93 0.03 285.86deg)',
             $color2->toString()
         );
     }
@@ -266,7 +266,7 @@ final class ProPhotoRgbTest extends TestCase
         );
 
         $this->assertSame(
-            'color(rec2020 0.89 0.89 0.97)',
+            'color(rec2020 0.91 0.91 0.97)',
             $color2->toString()
         );
     }

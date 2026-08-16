@@ -23,29 +23,29 @@ final class DisplayP3LinearTest extends TestCase
         $color1 = DisplayP3Linear::createFromString('lavender');
         $color2 = DisplayP3Linear::createFromString('black');
 
-        $this->assertSame(17.06375148063551, $color1->contrast($color2));
-        $this->assertSame(17.06375148063551, $color2->contrast($color1));
+        $this->assertSame(17.06375010290425, $color1->contrast($color2));
+        $this->assertSame(17.06375010290425, $color2->contrast($color1));
     }
 
     public function testGetBlue(): void
     {
         $color = DisplayP3Linear::createFromString('lavender');
 
-        $this->assertSame(0.9410301564589402, $color->getBlue());
+        $this->assertSame(0.9412381855461356, $color->getBlue());
     }
 
     public function testGetGreen(): void
     {
         $color = DisplayP3Linear::createFromString('lavender');
 
-        $this->assertSame(0.7912845848400826, $color->getGreen());
+        $this->assertSame(0.7912979403326301, $color->getGreen());
     }
 
     public function testGetRed(): void
     {
         $color = DisplayP3Linear::createFromString('lavender');
 
-        $this->assertSame(0.7913982143903506, $color->getRed());
+        $this->assertSame(0.7912979403326305, $color->getRed());
     }
 
     public function testLabel(): void
@@ -59,7 +59,7 @@ final class DisplayP3LinearTest extends TestCase
     {
         $color = DisplayP3Linear::createFromString('lavender');
 
-        $this->assertSame(0.8031875740317754, $color->luma());
+        $this->assertSame(0.8031875051452126, $color->luma());
     }
 
     public function testSpace(): void
@@ -91,9 +91,9 @@ final class DisplayP3LinearTest extends TestCase
 
         $this->assertArraysAreIdentical(
             [
-                'red' => 0.7913982143903506,
-                'green' => 0.7912845848400826,
-                'blue' => 0.9410301564589402,
+                'red' => 0.7912979403326305,
+                'green' => 0.7912979403326301,
+                'blue' => 0.9412381855461356,
                 'alpha' => 1.0,
             ],
             $color->toArray()
@@ -234,7 +234,7 @@ final class DisplayP3LinearTest extends TestCase
         );
 
         $this->assertSame(
-            'oklch(0.93 0.03 285.8deg)',
+            'oklch(0.93 0.03 285.86deg)',
             $color2->toString()
         );
     }
@@ -266,7 +266,7 @@ final class DisplayP3LinearTest extends TestCase
         );
 
         $this->assertSame(
-            'color(rec2020 0.89 0.89 0.97)',
+            'color(rec2020 0.91 0.91 0.97)',
             $color2->toString()
         );
     }

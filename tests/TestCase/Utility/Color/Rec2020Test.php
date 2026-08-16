@@ -23,29 +23,29 @@ final class Rec2020Test extends TestCase
         $color1 = Rec2020::createFromString('lavender');
         $color2 = Rec2020::createFromString('black');
 
-        $this->assertSame(17.06375148063551, $color1->contrast($color2));
-        $this->assertSame(17.06375148063551, $color2->contrast($color1));
+        $this->assertSame(17.06375010290425, $color1->contrast($color2));
+        $this->assertSame(17.06375010290425, $color2->contrast($color1));
     }
 
     public function testGetBlue(): void
     {
         $color = Rec2020::createFromString('lavender');
 
-        $this->assertSame(0.9687847030822043, $color->getBlue());
+        $this->assertSame(0.9740210670993709, $color->getBlue());
     }
 
     public function testGetGreen(): void
     {
         $color = Rec2020::createFromString('lavender');
 
-        $this->assertSame(0.8901273645875314, $color->getGreen());
+        $this->assertSame(0.9079649060658369, $color->getGreen());
     }
 
     public function testGetRed(): void
     {
         $color = Rec2020::createFromString('lavender');
 
-        $this->assertSame(0.8931460651448258, $color->getRed());
+        $this->assertSame(0.9104696523917976, $color->getRed());
     }
 
     public function testLabel(): void
@@ -59,7 +59,7 @@ final class Rec2020Test extends TestCase
     {
         $color = Rec2020::createFromString('lavender');
 
-        $this->assertSame(0.8031875740317754, $color->luma());
+        $this->assertSame(0.8031875051452125, $color->luma());
     }
 
     public function testSpace(): void
@@ -91,9 +91,9 @@ final class Rec2020Test extends TestCase
 
         $this->assertArraysAreIdentical(
             [
-                'red' => 0.8931460651448258,
-                'green' => 0.8901273645875314,
-                'blue' => 0.9687847030822043,
+                'red' => 0.9104696523917976,
+                'green' => 0.9079649060658369,
+                'blue' => 0.9740210670993709,
                 'alpha' => 1.0,
             ],
             $color->toArray()
@@ -239,7 +239,7 @@ final class Rec2020Test extends TestCase
         );
 
         $this->assertSame(
-            'oklch(0.93 0.03 285.8deg)',
+            'oklch(0.93 0.03 285.86deg)',
             $color2->toString()
         );
     }
@@ -324,12 +324,12 @@ final class Rec2020Test extends TestCase
         $color = Rec2020::createFromString('lavender');
 
         $this->assertSame(
-            'color(rec2020 0.89 0.89 0.97)',
+            'color(rec2020 0.91 0.91 0.97)',
             $color->toString()
         );
 
         $this->assertSame(
-            'color(rec2020 0.89 0.89 0.97)',
+            'color(rec2020 0.91 0.91 0.97)',
             (string) $color
         );
     }
@@ -339,7 +339,7 @@ final class Rec2020Test extends TestCase
         $color = Rec2020::createFromString('lavender')->withAlpha(0.5);
 
         $this->assertSame(
-            'color(rec2020 0.89 0.89 0.97 / 0.5)',
+            'color(rec2020 0.91 0.91 0.97 / 0.5)',
             $color->toString()
         );
     }
@@ -387,7 +387,7 @@ final class Rec2020Test extends TestCase
         );
 
         $this->assertSame(
-            'color(rec2020 0.89 0.89 0.5)',
+            'color(rec2020 0.91 0.91 0.5)',
             $color2->toString()
         );
     }
@@ -403,7 +403,7 @@ final class Rec2020Test extends TestCase
         );
 
         $this->assertSame(
-            'color(rec2020 0.89 0.5 0.97)',
+            'color(rec2020 0.91 0.5 0.97)',
             $color2->toString()
         );
     }
@@ -419,7 +419,7 @@ final class Rec2020Test extends TestCase
         );
 
         $this->assertSame(
-            'color(rec2020 0.5 0.89 0.97)',
+            'color(rec2020 0.5 0.91 0.97)',
             $color2->toString()
         );
     }

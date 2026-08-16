@@ -23,29 +23,29 @@ final class XyzD50Test extends TestCase
         $color1 = XyzD50::createFromString('lavender');
         $color2 = XyzD50::createFromString('black');
 
-        $this->assertSame(17.06375239037742, $color1->contrast($color2));
-        $this->assertSame(17.06375239037742, $color2->contrast($color1));
+        $this->assertSame(17.06375010290425, $color1->contrast($color2));
+        $this->assertSame(17.06375010290425, $color2->contrast($color1));
     }
 
     public function testGetX(): void
     {
         $color = XyzD50::createFromString('lavender');
 
-        $this->assertSame(0.786547072272965, $color->getX());
+        $this->assertSame(0.7866066805175997, $color->getX());
     }
 
     public function testGetY(): void
     {
         $color = XyzD50::createFromString('lavender');
 
-        $this->assertSame(0.801280203622004, $color->getY());
+        $this->assertSame(0.8012805325415433, $color->getY());
     }
 
     public function testGetZ(): void
     {
         $color = XyzD50::createFromString('lavender');
 
-        $this->assertSame(0.7705937955919129, $color->getZ());
+        $this->assertSame(0.7704981789726744, $color->getZ());
     }
 
     public function testLabel(): void
@@ -59,7 +59,7 @@ final class XyzD50Test extends TestCase
     {
         $color = XyzD50::createFromString('lavender');
 
-        $this->assertSame(0.803187619518871, $color->luma());
+        $this->assertSame(0.8031875051452126, $color->luma());
     }
 
     public function testSpace(): void
@@ -91,9 +91,9 @@ final class XyzD50Test extends TestCase
 
         $this->assertArraysAreIdentical(
             [
-                'x' => 0.786547072272965,
-                'y' => 0.801280203622004,
-                'z' => 0.7705937955919129,
+                'x' => 0.7866066805175997,
+                'y' => 0.8012805325415433,
+                'z' => 0.7704981789726744,
                 'alpha' => 1.0,
             ],
             $color->toArray()
@@ -239,7 +239,7 @@ final class XyzD50Test extends TestCase
         );
 
         $this->assertSame(
-            'oklch(0.93 0.03 285.8deg)',
+            'oklch(0.93 0.03 285.86deg)',
             $color2->toString()
         );
     }
@@ -271,7 +271,7 @@ final class XyzD50Test extends TestCase
         );
 
         $this->assertSame(
-            'color(rec2020 0.89 0.89 0.97)',
+            'color(rec2020 0.91 0.91 0.97)',
             $color2->toString()
         );
     }

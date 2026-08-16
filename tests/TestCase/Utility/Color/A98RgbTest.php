@@ -23,29 +23,29 @@ final class A98RgbTest extends TestCase
         $color1 = A98Rgb::createFromString('lavender');
         $color2 = A98Rgb::createFromString('black');
 
-        $this->assertSame(17.06380639860504, $color1->contrast($color2));
-        $this->assertSame(17.06380639860504, $color2->contrast($color1));
+        $this->assertSame(17.06375010290425, $color1->contrast($color2));
+        $this->assertSame(17.06375010290425, $color2->contrast($color1));
     }
 
     public function testGetBlue(): void
     {
         $color = A98Rgb::createFromString('lavender');
 
-        $this->assertSame(0.9765693317985756, $color->getBlue());
+        $this->assertSame(0.9765699600542911, $color->getBlue());
     }
 
     public function testGetGreen(): void
     {
         $color = A98Rgb::createFromString('lavender');
 
-        $this->assertSame(0.8990307350513126, $color->getGreen());
+        $this->assertSame(0.8990306743531586, $color->getGreen());
     }
 
     public function testGetRed(): void
     {
         $color = A98Rgb::createFromString('lavender');
 
-        $this->assertSame(0.8990306480521724, $color->getRed());
+        $this->assertSame(0.8990306743531589, $color->getRed());
     }
 
     public function testLabel(): void
@@ -59,7 +59,7 @@ final class A98RgbTest extends TestCase
     {
         $color = A98Rgb::createFromString('lavender');
 
-        $this->assertSame(0.8031903199302519, $color->luma());
+        $this->assertSame(0.8031875051452125, $color->luma());
     }
 
     public function testSpace(): void
@@ -86,9 +86,9 @@ final class A98RgbTest extends TestCase
 
         $this->assertArraysAreIdentical(
             [
-                'red' => 0.8990306480521724,
-                'green' => 0.8990307350513126,
-                'blue' => 0.9765693317985756,
+                'red' => 0.8990306743531589,
+                'green' => 0.8990306743531586,
+                'blue' => 0.9765699600542911,
                 'alpha' => 1.0,
             ],
             $color->toArray()
@@ -154,7 +154,7 @@ final class A98RgbTest extends TestCase
         );
 
         $this->assertSame(
-            'hsl(239.94deg 66.83% 94.12%)',
+            'hsl(240deg 66.67% 94.12%)',
             $color2->toString()
         );
     }
@@ -170,7 +170,7 @@ final class A98RgbTest extends TestCase
         );
 
         $this->assertSame(
-            'hwb(239.94deg 90.19% 1.95%)',
+            'hwb(240deg 90.2% 1.96%)',
             $color2->toString()
         );
     }
@@ -186,7 +186,7 @@ final class A98RgbTest extends TestCase
         );
 
         $this->assertSame(
-            'lab(91.74% 2.77 -9.74)',
+            'lab(91.74% 2.78 -9.72)',
             $color2->toString()
         );
     }
@@ -202,7 +202,7 @@ final class A98RgbTest extends TestCase
         );
 
         $this->assertSame(
-            'lch(91.74% 10.13 285.89deg)',
+            'lch(91.74% 10.11 285.93deg)',
             $color2->toString()
         );
     }
@@ -234,7 +234,7 @@ final class A98RgbTest extends TestCase
         );
 
         $this->assertSame(
-            'oklch(0.93 0.03 285.76deg)',
+            'oklch(0.93 0.03 285.86deg)',
             $color2->toString()
         );
     }
@@ -266,7 +266,7 @@ final class A98RgbTest extends TestCase
         );
 
         $this->assertSame(
-            'color(rec2020 0.89 0.89 0.97)',
+            'color(rec2020 0.91 0.91 0.97)',
             $color2->toString()
         );
     }
@@ -282,7 +282,7 @@ final class A98RgbTest extends TestCase
         );
 
         $this->assertSame(
-            'rgb(229.98 230 250.03)',
+            'rgb(230 230 250)',
             $color2->toString()
         );
     }

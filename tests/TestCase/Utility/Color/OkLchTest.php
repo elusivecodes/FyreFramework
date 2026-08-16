@@ -23,29 +23,29 @@ final class OkLchTest extends TestCase
         $color1 = OkLch::createFromString('lavender');
         $color2 = OkLch::createFromString('black');
 
-        $this->assertSame(17.06375119570234, $color1->contrast($color2));
-        $this->assertSame(17.06375119570234, $color2->contrast($color1));
+        $this->assertSame(17.063750102904255, $color1->contrast($color2));
+        $this->assertSame(17.063750102904255, $color2->contrast($color1));
     }
 
     public function testGetChroma(): void
     {
         $color = OkLch::createFromString('lavender');
 
-        $this->assertSame(0.027017845397763564, $color->getChroma());
+        $this->assertSame(0.02694145858668466, $color->getChroma());
     }
 
     public function testGetHue(): void
     {
         $color = OkLch::createFromString('lavender');
 
-        $this->assertSame(285.80269594678555, $color->getHue());
+        $this->assertSame(285.86477952157645, $color->getHue());
     }
 
     public function testGetLightness(): void
     {
         $color = OkLch::createFromString('lavender');
 
-        $this->assertSame(0.9309007554171675, $color->getLightness());
+        $this->assertSame(0.9309023355374633, $color->getLightness());
     }
 
     public function testLabel(): void
@@ -59,7 +59,7 @@ final class OkLchTest extends TestCase
     {
         $color = OkLch::createFromString('lavender');
 
-        $this->assertSame(0.803187559785117, $color->luma());
+        $this->assertSame(0.8031875051452128, $color->luma());
     }
 
     public function testSpace(): void
@@ -91,9 +91,9 @@ final class OkLchTest extends TestCase
 
         $this->assertArraysAreIdentical(
             [
-                'lightness' => 0.9309007554171675,
-                'chroma' => 0.027017845397763564,
-                'hue' => 285.80269594678555,
+                'lightness' => 0.9309023355374633,
+                'chroma' => 0.02694145858668466,
+                'hue' => 285.86477952157645,
                 'alpha' => 1.0,
             ],
             $color->toArray()
@@ -266,7 +266,7 @@ final class OkLchTest extends TestCase
         );
 
         $this->assertSame(
-            'color(rec2020 0.89 0.89 0.97)',
+            'color(rec2020 0.91 0.91 0.97)',
             $color2->toString()
         );
     }
@@ -324,12 +324,12 @@ final class OkLchTest extends TestCase
         $color = OkLch::createFromString('lavender');
 
         $this->assertSame(
-            'oklch(0.93 0.03 285.8deg)',
+            'oklch(0.93 0.03 285.86deg)',
             $color->toString()
         );
 
         $this->assertSame(
-            'oklch(0.93 0.03 285.8deg)',
+            'oklch(0.93 0.03 285.86deg)',
             (string) $color
         );
     }
@@ -339,7 +339,7 @@ final class OkLchTest extends TestCase
         $color = OkLch::createFromString('lavender')->withAlpha(0.5);
 
         $this->assertSame(
-            'oklch(0.93 0.03 285.8deg / 0.5)',
+            'oklch(0.93 0.03 285.86deg / 0.5)',
             $color->toString()
         );
     }
@@ -387,7 +387,7 @@ final class OkLchTest extends TestCase
         );
 
         $this->assertSame(
-            'oklch(0.93 0.2 285.8deg)',
+            'oklch(0.93 0.2 285.86deg)',
             $color2->toString()
         );
     }
@@ -419,7 +419,7 @@ final class OkLchTest extends TestCase
         );
 
         $this->assertSame(
-            'oklch(0.5 0.03 285.8deg)',
+            'oklch(0.5 0.03 285.86deg)',
             $color2->toString()
         );
     }
