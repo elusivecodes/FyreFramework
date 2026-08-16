@@ -35,7 +35,7 @@ final class CSPTest extends TestCase
         );
 
         $this->assertMatchesRegularExpression(
-            '/^[a-f0-9]{40}$/',
+            '/^[a-f0-9]{40}\z/',
             $nonce
         );
 
@@ -80,7 +80,7 @@ final class CSPTest extends TestCase
         );
 
         $this->assertMatchesRegularExpression(
-            '/^[a-f0-9]{40}$/',
+            '/^[a-f0-9]{40}\z/',
             $nonce
         );
 

@@ -79,7 +79,7 @@ abstract class Fixture
      */
     public function getClassAlias(): string
     {
-        return $this->classAlias ??= (string) preg_replace('/Fixture$/', '', new ReflectionClass(static::class)->getShortName());
+        return $this->classAlias ??= (string) preg_replace('/Fixture\z/', '', new ReflectionClass(static::class)->getShortName());
     }
 
     /**

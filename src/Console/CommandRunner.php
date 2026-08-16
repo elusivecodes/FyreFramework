@@ -338,7 +338,7 @@ class CommandRunner
                     $alias = $reflection->getProperty('alias')->getDefaultValue();
 
                     if (!$alias) {
-                        $alias = ((string) preg_replace('/Command$/', '', $reflection->getShortName()))
+                        $alias = ((string) preg_replace('/Command\z/', '', $reflection->getShortName()))
                             |> $this->inflector->underscore(...);
                     }
 

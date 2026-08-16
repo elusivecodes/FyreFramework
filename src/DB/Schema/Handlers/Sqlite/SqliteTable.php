@@ -357,7 +357,7 @@ class SqliteTable extends Table
             return new LiteralExpression('CURRENT_TIMESTAMP');
         }
 
-        if (preg_match('/^\'(.*)\'$/s', $default, $matches)) {
+        if (preg_match('/^\'(.*)\'\z/s', $default, $matches)) {
             return str_replace("''", "'", $matches[1]);
         }
 

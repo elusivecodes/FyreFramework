@@ -714,7 +714,7 @@ class Model implements EventListenerInterface
      */
     public function getClassAlias(): string
     {
-        return $this->classAlias ??= (string) preg_replace('/Model$/', '', new ReflectionClass($this)->getShortName());
+        return $this->classAlias ??= (string) preg_replace('/Model\z/', '', new ReflectionClass($this)->getShortName());
     }
 
     /**

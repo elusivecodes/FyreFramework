@@ -229,7 +229,7 @@ abstract class Negotiate
             $parameters = [];
 
             foreach ($pairs as $pair) {
-                if (!preg_match('/^(.+?)=(["\']?)(.*?)(?:\2)$/', $pair, $match)) {
+                if (!preg_match('/^(.+?)=(["\']?)(.*?)(?:\2)\z/', $pair, $match)) {
                     continue;
                 }
 

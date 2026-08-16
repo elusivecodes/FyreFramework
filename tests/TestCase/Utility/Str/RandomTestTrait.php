@@ -18,7 +18,7 @@ trait RandomTestTrait
         for ($i = 0; $i < 1000; $i++) {
             $string = Str::random();
             $this->assertMatchesRegularExpression(
-                '/^[0-9a-zA-Z]{16}$/',
+                '/^[0-9a-zA-Z]{16}\z/',
                 $string
             );
             $strings[] = $string;
@@ -39,7 +39,7 @@ trait RandomTestTrait
         for ($i = 0; $i < 1000; $i++) {
             $string = Str::random(8, Str::ALPHA);
             $this->assertMatchesRegularExpression(
-                '/^[a-zA-Z]{8}$/',
+                '/^[a-zA-Z]{8}\z/',
                 $string
             );
             $strings[] = $string;
@@ -76,7 +76,7 @@ trait RandomTestTrait
         for ($i = 0; $i < 1000; $i++) {
             $string = Str::random(24);
             $this->assertMatchesRegularExpression(
-                '/^[0-9a-zA-Z]{24}$/',
+                '/^[0-9a-zA-Z]{24}\z/',
                 $string
             );
             $strings[] = $string;
@@ -97,7 +97,7 @@ trait RandomTestTrait
         for ($i = 0; $i < 1000; $i++) {
             $string = Str::random(8, Str::NUMERIC);
             $this->assertMatchesRegularExpression(
-                '/^[0-9]{8}$/',
+                '/^[0-9]{8}\z/',
                 $string
             );
             $strings[] = $string;

@@ -597,7 +597,7 @@ abstract class QueryGenerator
 
                 $field = trim((string) $field);
 
-                if (preg_match('/^(.+?)\s+((?:NOT\s+)?IN)$/i', $field, $match)) {
+                if (preg_match('/^(.+?)\s+((?:NOT\s+)?IN)\z/i', $field, $match)) {
                     $field = $match[1];
                     $comparison = strtoupper($match[2]);
                     $comparison = (string) preg_replace('/\s+/', ' ', $comparison);
@@ -649,7 +649,7 @@ abstract class QueryGenerator
 
             $field = trim($field);
 
-            if (preg_match('/^(.+?)\s+([\>\<]\=?|\!?\=|(?:NOT\s+)?(?:LIKE|IN)|IS(?:\s+NOT)?)$/i', $field, $match)) {
+            if (preg_match('/^(.+?)\s+([\>\<]\=?|\!?\=|(?:NOT\s+)?(?:LIKE|IN)|IS(?:\s+NOT)?)\z/i', $field, $match)) {
                 $field = $match[1];
                 $comparison = strtoupper($match[2]);
                 $comparison = (string) preg_replace('/\s+/', ' ', $comparison);

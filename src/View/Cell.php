@@ -102,7 +102,7 @@ abstract class Cell
      */
     public function render(): string
     {
-        $cell = (string) preg_replace('/Cell$/', '', new ReflectionClass(static::class)->getShortName());
+        $cell = (string) preg_replace('/Cell\z/', '', new ReflectionClass(static::class)->getShortName());
 
         if (!method_exists($this, $this->action)) {
             throw new RuntimeException(sprintf(

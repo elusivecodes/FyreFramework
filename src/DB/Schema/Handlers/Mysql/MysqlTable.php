@@ -172,7 +172,7 @@ class MysqlTable extends Table
                 $precision = (int) $match[1];
             } else if (preg_match('/^(?:datetime|time|timestamp)\(([0-9]+)\)/', $result['col_type'], $match)) {
                 $fractionalSeconds = (int) $match[1];
-            } else if (preg_match('/^(?:enum|set)\((.*)\)$/', $result['col_type'], $match)) {
+            } else if (preg_match('/^(?:enum|set)\((.*)\)\z/', $result['col_type'], $match)) {
                 $values = array_map(
                     static fn(string $value): string => substr($value, 1, -1),
                     explode(',', $match[1])
@@ -376,7 +376,7 @@ class MysqlTable extends Table
             return new LiteralExpression('CURRENT_TIMESTAMP');
         }
 
-        if (preg_match('/^(?:_[a-z0-9_]+)?(\\\\)?\'(.*?)\1?\'(?:\s+COLLATE\s+[a-z0-9_]+)?$/s', $default, $matches)) {
+        if (preg_match('/^(?:_[a-z0-9_]+)?(\\\\)?\'(.*?)\1?\'(?:\s+COLLATE\s+[a-z0-9_]+)?\z/s', $default, $matches)) {
             return $matches[1] ?
                 str_replace(['\\\\', "\\'"], ['\\', "'"], $matches[2]) :
                 str_replace("''", "'", $matches[2]);

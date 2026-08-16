@@ -129,7 +129,7 @@ final class RedisTest extends TestCase
     {
         $this->expectException(CacheException::class);
         $this->expectExceptionMessageMatches(
-            '/^Redis cache connection error: (?:Connection refused|Connection timed out)$/'
+            '/^Redis cache connection error: (?:Connection refused|Connection timed out)\z/'
         );
 
         $this->cacheManager->build([

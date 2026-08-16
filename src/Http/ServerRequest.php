@@ -145,7 +145,7 @@ class ServerRequest extends Request implements ServerRequestInterface
         $host = $this->getHeaderLine('Host');
         $port = null;
 
-        if ($host && preg_match('/^(.*)\:(\d+)$/', $host, $match)) {
+        if ($host && preg_match('/^(.*)\:(\d+)\z/', $host, $match)) {
             $host = $match[1];
             $port = (int) $match[2];
         } else if (!$host) {

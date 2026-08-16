@@ -504,6 +504,6 @@ class MakeModelCommand extends Command
      */
     protected static function inferNamespace(string $namespace, string $to): string
     {
-        return preg_replace('/\\\\Models$/', '\\'.$to, $namespace) ?? $namespace;
+        return preg_replace('/\\\\Models\z/', '\\'.$to, $namespace) ?? $namespace;
     }
 }

@@ -138,7 +138,7 @@ class PolicyRegistry
                 $reflectProperty = $reflection->getProperty('alias');
                 $resolvedAlias = $reflectProperty->hasDefaultValue() ?
                     $reflectProperty->getDefaultValue() :
-                    (string) preg_replace('/Model$/', '', $reflection->getShortName());
+                    (string) preg_replace('/Model\z/', '', $reflection->getShortName());
             }
         } else {
             $resolvedAlias = $alias;

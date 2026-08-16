@@ -104,36 +104,36 @@ class Inflector
      * @var array<string, string>
      */
     protected array $plural = [
-        '/([ml])ouse$/i' => '$1ice',
-        '/([^aeiouy]|qu)y$/i' => '$1ies',
-        '/(?:([^f])fe|([lre])f)$/i' => '$1$2ves',
-        '/(?<!s)sis$/i' => 'ses',
-        '/([ti])um$/i' => '$1a',
-        '/(?<!u)man$/i' => 'men',
-        '/(buffal|tomat)o$/i' => '$1oes',
-        '/(alumn|bacill|cact|foc|fung|nucle|radi|stimul|syllab|termin)us$/i' => '$1i',
-        '/us$/i' => 'uses',
-        '/(x|ch|ss|sh)$/i' => '$1es',
-        '/s$/' => 's',
-        '/^$/' => '',
-        '/$/' => 's',
+        '/([ml])ouse\z/i' => '$1ice',
+        '/([^aeiouy]|qu)y\z/i' => '$1ies',
+        '/(?:([^f])fe|([lre])f)\z/i' => '$1$2ves',
+        '/(?<!s)sis\z/i' => 'ses',
+        '/([ti])um\z/i' => '$1a',
+        '/(?<!u)man\z/i' => 'men',
+        '/(buffal|tomat)o\z/i' => '$1oes',
+        '/(alumn|bacill|cact|foc|fung|nucle|radi|stimul|syllab|termin)us\z/i' => '$1i',
+        '/us\z/i' => 'uses',
+        '/(x|ch|ss|sh)\z/i' => '$1es',
+        '/s\z/' => 's',
+        '/^\z/' => '',
+        '/\z/' => 's',
     ];
 
     /**
      * @var array<string, string>
      */
     protected array $singular = [
-        '/([ml])ice$/i' => '$1ouse',
-        '/([^aeiouy]|qu)ies$/i' => '$1y',
-        '/([lre])ves$/i' => '$1f',
-        '/([^f])ves$/i' => '$1fe',
-        '/(?<!s)ses$/i' => 'sis',
-        '/([ti])a$/i' => '$1um',
-        '/(?<!u)men$/i' => 'man',
-        '/oes$/i' => 'o',
-        '/(alumn|bacill|cact|foc|fung|nucle|radi|stimul|syllab|termin|viri?)i$/i' => '$1us',
-        '/(x|ch|ss|sh)es$/i' => '$1',
-        '/s$/i' => '',
+        '/([ml])ice\z/i' => '$1ouse',
+        '/([^aeiouy]|qu)ies\z/i' => '$1y',
+        '/([lre])ves\z/i' => '$1f',
+        '/([^f])ves\z/i' => '$1fe',
+        '/(?<!s)ses\z/i' => 'sis',
+        '/([ti])a\z/i' => '$1um',
+        '/(?<!u)men\z/i' => 'man',
+        '/oes\z/i' => 'o',
+        '/(alumn|bacill|cact|foc|fung|nucle|radi|stimul|syllab|termin|viri?)i\z/i' => '$1us',
+        '/(x|ch|ss|sh)es\z/i' => '$1',
+        '/s\z/i' => '',
     ];
 
     /**
@@ -253,12 +253,12 @@ class Inflector
                 array_keys($this->irregular)
             );
 
-            if (preg_match('/('.implode('|', $keys).')$/i', $string, $match)) {
+            if (preg_match('/('.implode('|', $keys).')\z/i', $string, $match)) {
                 $key = $match[1];
                 $value = $this->irregular[strtolower($key)];
 
                 return (string) preg_replace(
-                    '/'.preg_quote($key, '/').'$/i',
+                    '/'.preg_quote($key, '/').'\z/i',
                     $value,
                     $string
                 );
@@ -330,11 +330,11 @@ class Inflector
                 $this->irregular
             );
 
-            if (preg_match('/('.implode('|', $values).')$/i', $string, $match)) {
+            if (preg_match('/('.implode('|', $values).')\z/i', $string, $match)) {
                 $value = $match[1];
                 $key = (string) array_search(strtolower($value), $this->irregular, true);
 
-                return (string) preg_replace('/'.$match[1].'$/i', $key, $string);
+                return (string) preg_replace('/'.$match[1].'\z/i', $key, $string);
             }
 
             foreach ($this->singular as $pattern => $replace) {
@@ -429,6 +429,6 @@ class Inflector
      */
     protected function isUncountable(string $string): bool
     {
-        return preg_match('/^('.implode('|', $this->uncountable).')$/i', $string) === 1;
+        return preg_match('/^('.implode('|', $this->uncountable).')\z/i', $string) === 1;
     }
 }

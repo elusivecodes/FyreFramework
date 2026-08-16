@@ -389,7 +389,7 @@ class ModelSourceBuilder
             return $targetAlias;
         }
 
-        return (preg_replace('/_id$/', '', $foreignKey) ?? $foreignKey)
+        return (preg_replace('/_id\z/', '', $foreignKey) ?? $foreignKey)
             |> $this->inflector->classify(...);
     }
 
