@@ -67,6 +67,19 @@ final class ColorTest extends TestCase
     }
 
     /**
+     * @return array<string, array{(float|int)[], string}>
+     */
+    public static function fitGamutProvider(): array
+    {
+        return [
+            'black' => [[-1, 0.2, 30, 0.5], 'oklch(0 0 30deg / 0.5)'],
+            'large chroma' => [[0.5, 1e8, 30], 'oklch(0.5 0.2 30deg)'],
+            'out of gamut' => [[0.5, 0.4, 30], 'oklch(0.5 0.2 30deg)'],
+            'white' => [[2, 0.2, 30, 0.5], 'oklch(1 0 30deg / 0.5)'],
+        ];
+    }
+
+    /**
      * @return array<string, array{FactoryMethod, (float|int)[]}>
      */
     public static function invalidFactoryProvider(): array
@@ -263,19 +276,23 @@ final class ColorTest extends TestCase
         );
     }
 
-    public function testFitGamut(): void
+    /**
+     * @param (float|int)[] $values
+     */
+    #[DataProvider('fitGamutProvider')]
+    public function testFitGamut(array $values, string $expected): void
     {
-        $color = Color::createFromXyzD65(1, 0, 0);
-        $source = $color->toSrgbLinear();
-        $fitted = $color->fitGamut('srgb-linear')->toSrgbLinear();
+        $color = Color::createFromOkLch(...$values);
+        $result = $color->fitGamut();
+        $srgb = $result->toSrgb();
 
-        $this->assertLessThan(0, $source->getGreen());
-        $this->assertGreaterThanOrEqual(0, $fitted->getRed());
-        $this->assertLessThanOrEqual(1, $fitted->getRed());
-        $this->assertGreaterThanOrEqual(0, $fitted->getGreen());
-        $this->assertLessThanOrEqual(1, $fitted->getGreen());
-        $this->assertGreaterThanOrEqual(0, $fitted->getBlue());
-        $this->assertLessThanOrEqual(1, $fitted->getBlue());
+        $this->assertSame($expected, $result->toString());
+        $this->assertGreaterThanOrEqual(-1e-12, $srgb->getRed());
+        $this->assertLessThanOrEqual(1 + 1e-12, $srgb->getRed());
+        $this->assertGreaterThanOrEqual(-1e-12, $srgb->getGreen());
+        $this->assertLessThanOrEqual(1 + 1e-12, $srgb->getGreen());
+        $this->assertGreaterThanOrEqual(-1e-12, $srgb->getBlue());
+        $this->assertLessThanOrEqual(1 + 1e-12, $srgb->getBlue());
     }
 
     public function testGetAlpha(): void

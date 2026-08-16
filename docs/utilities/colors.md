@@ -151,6 +151,8 @@ Convenience methods also exist for common conversions, such as `toHex()`, `toRgb
 
 Use `fitGamut()` to fit the color into a target space’s gamut by reducing OKLCH chroma. The returned color is in the current color space.
 
+Colors at or beyond the OKLCH lightness boundaries are fitted to black or white.
+
 Use this when you have a wide-gamut color (for example `display-p3`) but you need to output CSS for a smaller target gamut (most commonly `srgb`).
 
 ```php

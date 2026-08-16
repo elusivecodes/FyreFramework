@@ -243,6 +243,8 @@ abstract class Color implements Stringable
 
     protected const CSS_NUMBER_PATTERN = '[+-]?(?:\d+|\d*\.\d+)(?:e[+-]?\d+)?';
 
+    protected const FIT_GAMUT_PRECISION = 0.0001;
+
     protected const FIT_GAMUT_RANGES = [
         'a98-rgb' => [0.0, 1.0],
         'display-p3' => [0.0, 1.0],
@@ -715,33 +717,29 @@ abstract class Color implements Stringable
         }
 
         $okLch = $this->toOkLch();
+        $lightness = $okLch->getLightness();
+
+        if ($lightness <= 0 || $lightness >= 1) {
+            $fitted = $okLch->withLightness(static::clamp($lightness))->withChroma(0);
+
+            return $fitted |> static::toStaticColor(...);
+        }
+
         $low = 0.0;
         $high = max(0.0, $okLch->getChroma());
-        $best = new OkLch(
-            $okLch->getLightness(),
-            0,
-            $okLch->getHue(),
-            $okLch->getAlpha(),
-        );
 
-        for ($i = 0; $i < 24; $i++) {
+        while ($high - $low > static::FIT_GAMUT_PRECISION) {
             $mid = ($low + $high) / 2;
-            $candidate = new OkLch(
-                $okLch->getLightness(),
-                $mid,
-                $okLch->getHue(),
-                $okLch->getAlpha(),
-            );
+            $candidate = $okLch->withChroma($mid);
 
             if (static::isInGamut($candidate->to($space), $space)) {
-                $best = $candidate;
                 $low = $mid;
             } else {
                 $high = $mid;
             }
         }
 
-        return $best |> static::toStaticColor(...);
+        return $okLch->withChroma($low) |> static::toStaticColor(...);
     }
 
     /**
@@ -1107,10 +1105,11 @@ abstract class Color implements Stringable
     protected static function isInGamut(self $color, string $space): bool
     {
         [$min, $max] = static::FIT_GAMUT_RANGES[$space];
+        $epsilon = ($max - $min) * 1e-12;
         $values = $color->toArray() |> array_values(...);
 
         foreach ([$values[0], $values[1], $values[2]] as $value) {
-            if (!is_finite($value) || $value < $min || $value > $max) {
+            if (!is_finite($value) || $value < $min - $epsilon || $value > $max + $epsilon) {
                 return false;
             }
         }
@@ -1152,27 +1151,25 @@ abstract class Color implements Stringable
      */
     protected static function parseCssArguments(string $value, bool $allowCommas = false): array
     {
+        $parts = [];
+
         if (str_contains($value, ',')) {
-            if (!$allowCommas || str_contains($value, '/')) {
-                throw new UnexpectedValueException();
-            }
+            if ($allowCommas && str_contains($value, '/')) {
+                $parts = explode(',', $value);
+                $parts = array_map(trim(...), $parts);
 
-            $parts = explode(',', $value);
-            $parts = array_map(trim(...), $parts);
-
-            if (count($parts) === 3) {
-                $parts[] = '1';
+                if (count($parts) === 3) {
+                    $parts[] = '1';
+                }
             }
         } else {
             $groups = explode('/', $value);
             $groups = array_map(trim(...), $groups);
 
-            if (count($groups) > 2) {
-                throw new UnexpectedValueException();
+            if (count($groups) <= 2) {
+                $parts = explode(' ', $groups[0]);
+                $parts[] = $groups[1] ?? '1';
             }
-
-            $parts = explode(' ', $groups[0]);
-            $parts[] = $groups[1] ?? '1';
         }
 
         if (count($parts) !== 4 || in_array('', $parts, true)) {
