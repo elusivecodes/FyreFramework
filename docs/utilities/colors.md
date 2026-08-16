@@ -324,6 +324,19 @@ $c = Color::createFromString('#0ea5e9');
 $semi = $c->withAlpha(0.5);
 ```
 
+#### **Composite over a background** (`composite()`)
+
+Composites this color over a background color using source-over alpha compositing in sRGB. The result uses the foreground color's concrete class.
+
+Arguments:
+- `$background` (`Color`): the background color.
+
+```php
+$foreground = Color::createFromString('rgb(255 255 255 / 50%)');
+$background = Color::createFromString('#000');
+$result = $foreground->composite($background);
+```
+
 #### **Relative luminance** (`luma()`)
 
 Returns the relative luminance, computed via sRGB.

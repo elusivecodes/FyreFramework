@@ -677,6 +677,39 @@ abstract class Color implements Stringable
     }
 
     /**
+     * Composites this Color over a background Color using source-over alpha compositing in sRGB.
+     *
+     * @param Color $background The background Color.
+     * @return static The composited Color.
+     */
+    public function composite(Color $background): static
+    {
+        $foreground = $this->toSrgb();
+        $background = $background->toSrgb();
+
+        $foregroundAlpha = $foreground->getAlpha();
+        $backgroundAlpha = $background->getAlpha();
+        $backgroundContribution = $backgroundAlpha * (1 - $foregroundAlpha);
+        $alpha = $foregroundAlpha + $backgroundContribution;
+
+        if ($alpha === 0.0) {
+            return $this;
+        }
+
+        $foregroundWeight = $foregroundAlpha / $alpha;
+        $backgroundWeight = $backgroundContribution / $alpha;
+
+        $red = ($foreground->getRed() * $foregroundWeight) +
+            ($background->getRed() * $backgroundWeight);
+        $green = ($foreground->getGreen() * $foregroundWeight) +
+            ($background->getGreen() * $backgroundWeight);
+        $blue = ($foreground->getBlue() * $foregroundWeight) +
+            ($background->getBlue() * $backgroundWeight);
+
+        return static::createFromSrgb($red, $green, $blue, $alpha);
+    }
+
+    /**
      * Calculates the contrast between this and another Color.
      *
      * @param Color $other The other Color.

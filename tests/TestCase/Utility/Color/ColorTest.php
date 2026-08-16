@@ -43,6 +43,21 @@ use const NAN;
 final class ColorTest extends TestCase
 {
     /**
+     * @return array<string, array{string, string, string}>
+     */
+    public static function compositeProvider(): array
+    {
+        return [
+            'opaque background' => ['color(srgb 1 0 0 / 0.5)', 'color(srgb 0 0 1)', 'color(srgb 0.5 0 0.5)'],
+            'opaque foreground' => ['rgb(255 0 0)', 'rgb(0 0 255 / 50%)', 'rgb(255 0 0)'],
+            'translucent colors' => ['rgb(255 0 0 / 50%)', 'rgb(0 0 255 / 50%)', 'rgb(170 0 85 / 75%)'],
+            'transparent background' => ['rgb(255 0 0 / 50%)', 'rgb(0 0 255 / 0%)', 'rgb(255 0 0 / 50%)'],
+            'transparent colors' => ['rgb(255 0 0 / 0%)', 'rgb(0 0 255 / 0%)', 'rgb(255 0 0 / 0%)'],
+            'transparent foreground' => ['rgb(255 0 0 / 0%)', 'rgb(0 0 255)', 'rgb(0 0 255)'],
+        ];
+    }
+
+    /**
      * @return array<string, array{string, (float|int)[], class-string<Color>, string}>
      */
     public static function factoryProvider(): array
@@ -207,6 +222,17 @@ final class ColorTest extends TestCase
             'xyz percent' => ['color(xyz 78% 80% 102%)', XyzD65::class, 'color(xyz-d65 0.78 0.8 1.02)'],
             'whitespace and case' => [' RGB( 230   230  250 / 50% ) ', Rgb::class, 'rgb(230 230 250 / 50%)'],
         ];
+    }
+
+    #[DataProvider('compositeProvider')]
+    public function testComposite(string $foregroundValue, string $backgroundValue, string $expected): void
+    {
+        $foreground = Color::createFromString($foregroundValue);
+        $background = Color::createFromString($backgroundValue);
+        $result = $foreground->composite($background);
+
+        $this->assertSame($foreground::class, $result::class);
+        $this->assertSame($expected, $result->toString());
     }
 
     #[DataProvider('invalidContrastProvider')]
