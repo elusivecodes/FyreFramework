@@ -12,7 +12,7 @@ trait ResultSetTestTrait
     {
         $this->insert();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,
@@ -45,7 +45,7 @@ trait ResultSetTestTrait
         $result->all();
         $result->clearBuffer(1);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,
@@ -72,7 +72,7 @@ trait ResultSetTestTrait
         $result->first();
         $result->clearBuffer();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [],
                 [
@@ -105,7 +105,7 @@ trait ResultSetTestTrait
     {
         $this->insert();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'id',
                 'name',
@@ -163,7 +163,7 @@ trait ResultSetTestTrait
                 return $row;
             });
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,
@@ -231,7 +231,7 @@ trait ResultSetTestTrait
             $results[] = $row;
         }
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,

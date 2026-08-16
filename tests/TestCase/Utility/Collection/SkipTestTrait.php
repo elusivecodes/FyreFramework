@@ -9,7 +9,7 @@ trait SkipTestTrait
 {
     public function testSkip(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 3 => 4,
                 4 => 5,
@@ -27,7 +27,7 @@ trait SkipTestTrait
 
     public function testSkipOverflow(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             Collection::range(1, 10)
                 ->skip(11)

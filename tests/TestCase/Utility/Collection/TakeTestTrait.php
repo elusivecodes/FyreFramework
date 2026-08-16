@@ -9,7 +9,7 @@ trait TakeTestTrait
 {
     public function testTake(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3],
             Collection::range(1, 10)
                 ->take(3)
@@ -19,7 +19,7 @@ trait TakeTestTrait
 
     public function testTakeNegative(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 7 => 8,
                 8 => 9,
@@ -33,7 +33,7 @@ trait TakeTestTrait
 
     public function testTakeOverflow(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3],
             Collection::range(1, 10)
                 ->take(3)

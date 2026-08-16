@@ -89,7 +89,7 @@ final class LchTest extends TestCase
     {
         $color = Lch::createFromString('lavender');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'lightness' => 91.74227138900844,
                 'chroma' => 10.112485226318423,

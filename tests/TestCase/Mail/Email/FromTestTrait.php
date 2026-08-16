@@ -73,7 +73,7 @@ trait FromTestTrait
             $this->email->setFrom('test1@test.com')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'test1@test.com',
             ],
@@ -85,7 +85,7 @@ trait FromTestTrait
     {
         $this->email->setFrom('test1');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->email->getFrom()
         );
@@ -95,7 +95,7 @@ trait FromTestTrait
     {
         $this->email->setFrom('test1@test.com', 'Test 1');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'Test 1',
             ],

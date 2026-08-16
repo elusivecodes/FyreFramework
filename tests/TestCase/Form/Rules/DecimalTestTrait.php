@@ -11,7 +11,7 @@ trait DecimalTestTrait
     {
         $this->validator->add('test', Rule::decimal());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '123',
@@ -23,7 +23,7 @@ trait DecimalTestTrait
     {
         $this->validator->add('test', Rule::decimal());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '123.456',
@@ -35,7 +35,7 @@ trait DecimalTestTrait
     {
         $this->validator->add('test', Rule::decimal());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -47,7 +47,7 @@ trait DecimalTestTrait
     {
         $this->validator->add('test', Rule::decimal());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be a decimal value.'],
             ],
@@ -61,7 +61,7 @@ trait DecimalTestTrait
     {
         $this->validator->add('test', Rule::decimal());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );
@@ -71,7 +71,7 @@ trait DecimalTestTrait
     {
         $this->validator->add('test', Rule::decimal());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '-123',
@@ -83,7 +83,7 @@ trait DecimalTestTrait
     {
         $this->validator->add('test', Rule::decimal());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '0',

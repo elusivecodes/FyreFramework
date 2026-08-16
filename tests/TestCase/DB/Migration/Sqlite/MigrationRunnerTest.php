@@ -34,7 +34,7 @@ final class MigrationRunnerTest extends TestCase
             );
         }
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['3_Test3', '2_Test2', '1_Test1'],
             array_column($this->migrationRunner->getHistory()->all(), 'migration')
         );

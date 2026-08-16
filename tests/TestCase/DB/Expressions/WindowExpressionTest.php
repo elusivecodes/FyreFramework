@@ -101,7 +101,7 @@ final class WindowExpressionTest extends TestCase
                 'test.created' => 'DESC',
             ])
         );
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test.id',
                 'test.created' => 'DESC',
@@ -111,7 +111,7 @@ final class WindowExpressionTest extends TestCase
 
         $window->orderBy('test.name', true);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['test.name'],
             $window->getOrderBy()
         );

@@ -9,7 +9,7 @@ trait WrapTestTrait
 {
     public function testWrap(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1],
             Arr::wrap(1)
         );
@@ -17,7 +17,7 @@ trait WrapTestTrait
 
     public function testWrapArray(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1],
             Arr::wrap([1])
         );
@@ -25,7 +25,7 @@ trait WrapTestTrait
 
     public function testWrapNull(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             Arr::wrap(null)
         );

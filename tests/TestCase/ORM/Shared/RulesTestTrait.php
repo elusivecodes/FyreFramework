@@ -106,7 +106,7 @@ trait RulesTestTrait
             $Posts->save($post)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'user_id' => [
                     'The user_id must exist in the Users table.',
@@ -152,7 +152,7 @@ trait RulesTestTrait
             $Posts->save($post)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'user_id' => [
                     'The user_id must exist in the Users table.',
@@ -237,7 +237,7 @@ trait RulesTestTrait
             $Items->save($item)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => [
                     'The name cannot be modified.',
@@ -273,7 +273,7 @@ trait RulesTestTrait
             $Items->save($item2)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => [
                     'The name must be unique.',
@@ -341,7 +341,7 @@ trait RulesTestTrait
             $Items->save($item2)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => [
                     'The name must be unique.',
@@ -403,7 +403,7 @@ trait RulesTestTrait
             $Items->saveMany($items)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => [
                     'The name must be unique.',
@@ -438,7 +438,7 @@ trait RulesTestTrait
             $Items->saveMany($items)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => [
                     'The name must be unique.',

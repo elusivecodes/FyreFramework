@@ -261,7 +261,7 @@ final class PeriodTest extends TestCase
             $dates[] = $date->toIsoString();
         }
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '2022-01-01T00:00:00.000+00:00',
                 '2022-01-01T01:00:00.000+00:00',
@@ -307,7 +307,7 @@ final class PeriodTest extends TestCase
             $dates[] = $date->toIsoString();
         }
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '2022-01-01T01:00:00.000+00:00',
                 '2022-01-01T02:00:00.000+00:00',

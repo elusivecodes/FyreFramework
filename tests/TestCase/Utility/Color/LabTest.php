@@ -89,7 +89,7 @@ final class LabTest extends TestCase
     {
         $color = Lab::createFromString('lavender');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'lightness' => 91.74227138900844,
                 'a' => 2.775762427467743,

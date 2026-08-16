@@ -9,7 +9,7 @@ trait SkipWhileTestTrait
 {
     public function testSkipWhile(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 3 => 4,
                 4 => 5,

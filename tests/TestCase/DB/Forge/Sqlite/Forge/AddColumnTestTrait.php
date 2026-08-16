@@ -24,7 +24,7 @@ trait AddColumnTestTrait
             'default' => 1,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'integer',
@@ -60,7 +60,7 @@ trait AddColumnTestTrait
             'default' => null,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'varchar',
@@ -96,7 +96,7 @@ trait AddColumnTestTrait
             'default' => null,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'mediumint',
@@ -132,7 +132,7 @@ trait AddColumnTestTrait
             'default' => null,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'numeric',
@@ -168,7 +168,7 @@ trait AddColumnTestTrait
             'default' => null,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'bigint',
@@ -204,7 +204,7 @@ trait AddColumnTestTrait
             'default' => null,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'char',
@@ -239,7 +239,7 @@ trait AddColumnTestTrait
             'default' => null,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'datetime',
@@ -276,7 +276,7 @@ trait AddColumnTestTrait
             'default' => null,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'numeric',
@@ -311,7 +311,7 @@ trait AddColumnTestTrait
             'default' => null,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'real',
@@ -346,7 +346,7 @@ trait AddColumnTestTrait
             'default' => null,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'integer',
@@ -382,7 +382,7 @@ trait AddColumnTestTrait
             'default' => null,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'mediumint',
@@ -418,7 +418,7 @@ trait AddColumnTestTrait
             'default' => null,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'smallint',
@@ -454,7 +454,7 @@ trait AddColumnTestTrait
             'default' => null,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'tinyint',
@@ -490,7 +490,7 @@ trait AddColumnTestTrait
             'default' => null,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'integer',

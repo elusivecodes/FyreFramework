@@ -81,7 +81,7 @@ final class AuthTest extends TestCase
 
         $this->auth->addAuthenticator($authenticator, 'mock');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'mock' => $authenticator,
             ],

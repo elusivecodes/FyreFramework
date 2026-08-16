@@ -18,7 +18,7 @@ trait ShuffleTestTrait
         for ($i = 0; $i < 1000; $i++) {
             $shuffled = $collection->shuffle()->collect();
             $tests[] = $shuffled->join(',');
-            $this->assertSame(
+            $this->assertArraysAreIdentical(
                 $collection->toArray(),
                 $shuffled->sort()->values()->toArray()
             );

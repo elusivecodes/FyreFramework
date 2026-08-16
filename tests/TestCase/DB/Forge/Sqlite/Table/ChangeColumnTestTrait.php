@@ -43,7 +43,7 @@ trait ChangeColumnTestTrait
 
     public function testChangeColumnSqlNewTable(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'CREATE TABLE "test" ("id" INTEGER NOT NULL)',
             ],

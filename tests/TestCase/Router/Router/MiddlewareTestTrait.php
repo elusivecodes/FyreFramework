@@ -63,7 +63,7 @@ trait MiddlewareTestTrait
             $handler->handle($request)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1',
                 'test2',
@@ -124,7 +124,7 @@ trait MiddlewareTestTrait
             $handler->handle($request)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1',
                 'test2',

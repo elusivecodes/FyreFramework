@@ -9,7 +9,7 @@ trait RangeTestTrait
 {
     public function testRange(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3, 4, 5],
             Arr::range(1, 5)
         );
@@ -17,7 +17,7 @@ trait RangeTestTrait
 
     public function testRangeAlpha(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a', 'b', 'c'],
             Arr::range('a', 'c')
         );
@@ -25,7 +25,7 @@ trait RangeTestTrait
 
     public function testRangeWithStep(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0],
             Arr::range(1, 5, .5)
         );

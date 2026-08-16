@@ -9,7 +9,7 @@ trait FlattenTestTrait
 {
     public function testFlatten(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3, 4],
             Arr::flatten([1, 2, [3, 4]])
         );
@@ -17,7 +17,7 @@ trait FlattenTestTrait
 
     public function testFlattenDeep(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3, [4, 5]],
             Arr::flatten([1, 2, [3, [4, 5]]])
         );
@@ -25,7 +25,7 @@ trait FlattenTestTrait
 
     public function testFlattenWithDepth(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3, 4, 5],
             Arr::flatten([1, 2, [3, [4, 5]]], 2)
         );

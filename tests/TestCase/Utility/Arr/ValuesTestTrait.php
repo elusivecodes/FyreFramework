@@ -9,7 +9,7 @@ trait ValuesTestTrait
 {
     public function testValues(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3],
             Arr::values(['a' => 1, 'b' => 2, 'c' => 3])
         );

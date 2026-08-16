@@ -43,7 +43,7 @@ final class TableTest extends TestCase
             'type' => StringType::class,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'id',
                 'type' => 'integer',
@@ -74,7 +74,7 @@ final class TableTest extends TestCase
             'type' => StringType::class,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'id',
                 'value',
@@ -95,7 +95,7 @@ final class TableTest extends TestCase
             'type' => StringType::class,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'id' => [
                     'name' => 'id',
@@ -148,7 +148,7 @@ final class TableTest extends TestCase
             'referencedColumns' => 'id',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value_id',
                 'columns' => [
@@ -183,7 +183,7 @@ final class TableTest extends TestCase
             'referencedColumns' => 'id',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value_id' => [
                     'name' => 'value_id',
@@ -318,7 +318,7 @@ final class TableTest extends TestCase
 
         $table->addIndex('id');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'id',
                 'columns' => [
@@ -343,7 +343,7 @@ final class TableTest extends TestCase
 
         $table->addIndex('id');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'id' => [
                     'name' => 'id',

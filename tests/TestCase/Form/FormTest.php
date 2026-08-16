@@ -80,7 +80,7 @@ final class FormTest extends TestCase
 
         $data['start'] = $data['start']->toISOString();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'title' => 'This is a test',
                 'user_id' => 1,
@@ -91,7 +91,7 @@ final class FormTest extends TestCase
             $data
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $form->getErrors()
         );
@@ -105,12 +105,12 @@ final class FormTest extends TestCase
             $form->execute([])
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $form->getData()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'title' => [
                     'The title is required.',
@@ -203,7 +203,7 @@ final class FormTest extends TestCase
         $form = $this->container->build(TestForm::class);
         $form->validate([]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'The title is required.',
             ],
@@ -241,7 +241,7 @@ final class FormTest extends TestCase
             ])
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'title' => 'This is a test',
                 'user_id' => '1',
@@ -299,8 +299,8 @@ final class FormTest extends TestCase
             ])
         );
 
-        $this->assertSame([], $form->getData());
-        $this->assertSame([], $form->getErrors());
+        $this->assertArraysAreIdentical([], $form->getData());
+        $this->assertArraysAreIdentical([], $form->getErrors());
     }
 
     public function testValidationFail(): void
@@ -311,8 +311,8 @@ final class FormTest extends TestCase
             $form->validate([])
         );
 
-        $this->assertSame([], $form->getData());
-        $this->assertSame(
+        $this->assertArraysAreIdentical([], $form->getData());
+        $this->assertArraysAreIdentical(
             [
                 'title' => [
                     'The title is required.',

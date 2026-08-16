@@ -58,7 +58,7 @@ trait AddForeignKeyTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` ADD CONSTRAINT `value_id` FOREIGN KEY (`value_id`) REFERENCES `test_values` (`id`)',
             ],
@@ -74,7 +74,7 @@ trait AddForeignKeyTestTrait
 
     public function testAddForeignKeySqlNewTable(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'CREATE TABLE `test` (`id` INT(11) NOT NULL, `value_id` INT(11) NOT NULL, CONSTRAINT `value_id` FOREIGN KEY (`value_id`) REFERENCES `test_values` (`id`)) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
             ],

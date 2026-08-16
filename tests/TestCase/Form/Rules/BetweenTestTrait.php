@@ -11,7 +11,7 @@ trait BetweenTestTrait
     {
         $this->validator->add('test', Rule::between(5, 10));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '7',
@@ -23,7 +23,7 @@ trait BetweenTestTrait
     {
         $this->validator->add('test', Rule::between(5, 10));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be between 5 and 10.'],
             ],
@@ -37,7 +37,7 @@ trait BetweenTestTrait
     {
         $this->validator->add('test', Rule::between(5, 10));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be between 5 and 10.'],
             ],
@@ -51,7 +51,7 @@ trait BetweenTestTrait
     {
         $this->validator->add('test', Rule::between(5, 10));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -63,7 +63,7 @@ trait BetweenTestTrait
     {
         $this->validator->add('test', Rule::between(5, 10));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '5',
@@ -75,7 +75,7 @@ trait BetweenTestTrait
     {
         $this->validator->add('test', Rule::between(5, 10));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );
@@ -85,7 +85,7 @@ trait BetweenTestTrait
     {
         $this->validator->add('test', Rule::between(5, 10));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '10',

@@ -9,7 +9,7 @@ trait ZipTestTrait
 {
     public function testZip(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [[1, 4], [2, 5], [3, 6]],
             new Collection([1, 2, 3])->zip([4, 5, 6])->toArray()
         );
@@ -17,7 +17,7 @@ trait ZipTestTrait
 
     public function testZipCollection(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [[1, 4], [2, 5], [3, 6]],
             new Collection([1, 2, 3])->zip(new Collection([4, 5, 6]))->toArray()
         );
@@ -25,7 +25,7 @@ trait ZipTestTrait
 
     public function testZipMissingValues(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [[1, 4], [2, 5]],
             new Collection([1, 2, 3])->zip([4, 5])->toArray()
         );
@@ -33,7 +33,7 @@ trait ZipTestTrait
 
     public function testZipMultiple(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [[1, 4, 7], [2, 5, 8], [3, 6, 9]],
             new Collection([1, 2, 3])->zip([4, 5, 6], [7, 8, 9])->toArray()
         );

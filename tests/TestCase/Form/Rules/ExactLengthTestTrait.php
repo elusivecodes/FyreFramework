@@ -11,7 +11,7 @@ trait ExactLengthTestTrait
     {
         $this->validator->add('test', Rule::exactLength(3));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '123',
@@ -23,7 +23,7 @@ trait ExactLengthTestTrait
     {
         $this->validator->add('test', Rule::exactLength(3));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -35,7 +35,7 @@ trait ExactLengthTestTrait
     {
         $this->validator->add('test', Rule::exactLength(3));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test length must be exactly 3.'],
             ],
@@ -49,7 +49,7 @@ trait ExactLengthTestTrait
     {
         $this->validator->add('test', Rule::exactLength(3));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );

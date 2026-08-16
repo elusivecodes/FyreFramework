@@ -39,7 +39,7 @@ final class ListenerTest extends TestCase
             'retry' => false,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 1,
                 'delayed' => 0,
@@ -59,7 +59,7 @@ final class ListenerTest extends TestCase
 
         $worker->run();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 0,
                 'delayed' => 0,
@@ -79,7 +79,7 @@ final class ListenerTest extends TestCase
             $message
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'className' => MockJob::class,
                 'method' => 'error',
@@ -109,7 +109,7 @@ final class ListenerTest extends TestCase
             'method' => 'error',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 1,
                 'delayed' => 0,
@@ -129,7 +129,7 @@ final class ListenerTest extends TestCase
 
         $worker->run();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 0,
                 'delayed' => 0,
@@ -149,7 +149,7 @@ final class ListenerTest extends TestCase
             $message
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'className' => MockJob::class,
                 'method' => 'error',
@@ -180,7 +180,7 @@ final class ListenerTest extends TestCase
             'retry' => false,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 1,
                 'delayed' => 0,
@@ -200,7 +200,7 @@ final class ListenerTest extends TestCase
 
         $worker->run();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 0,
                 'delayed' => 0,
@@ -218,7 +218,7 @@ final class ListenerTest extends TestCase
             $message
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'className' => MockJob::class,
                 'method' => 'fail',
@@ -243,7 +243,7 @@ final class ListenerTest extends TestCase
             'method' => 'fail',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 1,
                 'delayed' => 0,
@@ -263,7 +263,7 @@ final class ListenerTest extends TestCase
 
         $worker->run();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 0,
                 'delayed' => 0,
@@ -281,7 +281,7 @@ final class ListenerTest extends TestCase
             $message
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'className' => MockJob::class,
                 'method' => 'fail',
@@ -305,7 +305,7 @@ final class ListenerTest extends TestCase
         // @phpstan-ignore argument.type
         $this->queueManager->push('Invalid', ['test' => 1]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 1,
                 'delayed' => 0,
@@ -322,7 +322,7 @@ final class ListenerTest extends TestCase
             $worker->runOnce()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 0,
                 'delayed' => 0,
@@ -340,7 +340,7 @@ final class ListenerTest extends TestCase
             $message
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'className' => 'Invalid',
                 'method' => 'run',
@@ -363,7 +363,7 @@ final class ListenerTest extends TestCase
     {
         $this->queueManager->push(MockJob::class, ['test' => 1]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 1,
                 'delayed' => 0,
@@ -383,7 +383,7 @@ final class ListenerTest extends TestCase
 
         $worker->run();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 0,
                 'delayed' => 0,
@@ -401,7 +401,7 @@ final class ListenerTest extends TestCase
             $message
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'className' => MockJob::class,
                 'method' => 'run',
@@ -426,7 +426,7 @@ final class ListenerTest extends TestCase
             $message
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'className' => MockJob::class,
                 'method' => 'run',

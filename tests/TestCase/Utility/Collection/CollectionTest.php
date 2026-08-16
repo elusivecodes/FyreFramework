@@ -104,7 +104,7 @@ final class CollectionTest extends TestCase
             $test[$key] = $value;
         }
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a' => 1, 'b' => ['c' => 2]],
             $test
         );
@@ -122,7 +122,7 @@ final class CollectionTest extends TestCase
             $test[$key] = $value;
         }
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a' => 1, 'b' => ['c' => 2]],
             $test
         );
@@ -169,7 +169,7 @@ final class CollectionTest extends TestCase
     {
         $collection = new Collection(['a' => 1, 'b' => ['c' => 2]]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a' => 1, 'b' => ['c' => 2]],
             $collection->toArray()
         );
@@ -182,7 +182,7 @@ final class CollectionTest extends TestCase
             yield 'b' => ['c' => 2];
         });
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a' => 1, 'b' => ['c' => 2]],
             $collection->toArray()
         );
@@ -212,7 +212,7 @@ final class CollectionTest extends TestCase
     {
         $collection = new Collection(['a' => 1, 'b' => ['c' => 2]]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, ['c' => 2]],
             $collection->toList()
         );
@@ -225,7 +225,7 @@ final class CollectionTest extends TestCase
             yield 'b' => ['c' => 2];
         });
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, ['c' => 2]],
             $collection->toList()
         );

@@ -78,7 +78,7 @@ final class QueueManagerTest extends TestCase
         $data = $this->queueManager->use()
             ->__debugInfo();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '[class]' => RedisQueue::class,
                 'config' => [

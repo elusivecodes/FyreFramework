@@ -194,7 +194,7 @@ final class TimerTest extends TestCase
         usleep(500000);
         $this->timer->stopAll();
 
-        $this->assertSame($timers, $this->timer->all());
+        $this->assertArraysAreIdentical($timers, $this->timer->all());
     }
 
     public function testStopInvalid(): void

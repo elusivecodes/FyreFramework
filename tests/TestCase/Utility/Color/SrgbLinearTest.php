@@ -89,7 +89,7 @@ final class SrgbLinearTest extends TestCase
     {
         $color = SrgbLinear::createFromString('lavender');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'red' => 0.7912979403326302,
                 'green' => 0.7912979403326302,

@@ -23,7 +23,7 @@ trait ShuffleTestTrait
             $string = Str::shuffle($test);
             $test2 = Str::chunk($string);
             sort($test2);
-            $this->assertSame(
+            $this->assertArraysAreIdentical(
                 $test1,
                 $test2
             );

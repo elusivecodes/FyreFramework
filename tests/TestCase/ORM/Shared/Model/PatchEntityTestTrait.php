@@ -27,7 +27,7 @@ trait PatchEntityTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['Updated', 'Test 2'],
             [$items[0]->name, $items[1]->name]
         );
@@ -69,7 +69,7 @@ trait PatchEntityTestTrait
             $item->get('name')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '*' => true,
             ],

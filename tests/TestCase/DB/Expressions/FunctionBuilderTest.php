@@ -96,7 +96,7 @@ final class FunctionBuilderTest extends TestCase
         $builder = new FunctionBuilder();
         $function = $builder->count($literal);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [$literal],
             $function->getArguments()
         );
@@ -146,7 +146,7 @@ final class FunctionBuilderTest extends TestCase
         $builder = new FunctionBuilder();
         $function = $builder->sum($case);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [$case],
             $function->getArguments()
         );

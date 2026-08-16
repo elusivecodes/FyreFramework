@@ -7,7 +7,7 @@ trait GetTestTrait
 {
     public function testGetData(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value' => 1,
             ],
@@ -52,7 +52,7 @@ trait GetTestTrait
 
     public function testGetGroupBy(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value',
             ],
@@ -80,7 +80,7 @@ trait GetTestTrait
 
     public function testGetHaving(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value' => 1,
             ],
@@ -104,7 +104,7 @@ trait GetTestTrait
 
     public function testGetJoin(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test2' => [
                     'table' => 'test2',
@@ -144,7 +144,7 @@ trait GetTestTrait
 
     public function testGetOrderBy(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value' => 'ASC',
             ],
@@ -158,7 +158,7 @@ trait GetTestTrait
 
     public function testGetSelect(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value',
             ],
@@ -171,7 +171,7 @@ trait GetTestTrait
 
     public function testGetTable(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value',
             ],
@@ -188,7 +188,7 @@ trait GetTestTrait
         $query = $this->db->select()
             ->from('test');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'type' => 'distinct',
@@ -203,7 +203,7 @@ trait GetTestTrait
 
     public function testGetValues(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'value' => 1,
@@ -221,7 +221,7 @@ trait GetTestTrait
 
     public function testGetWhere(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value' => 1,
             ],
@@ -238,7 +238,7 @@ trait GetTestTrait
         $query = $this->db->select()
             ->from('test');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'cte' => [

@@ -89,7 +89,7 @@ final class HslTest extends TestCase
     {
         $color = Hsl::createFromString('lavender');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'hue' => 240.0,
                 'saturation' => 66.66666666666666,

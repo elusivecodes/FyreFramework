@@ -32,7 +32,7 @@ trait SortByTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 3,
@@ -87,7 +87,7 @@ trait SortByTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 3,
@@ -152,7 +152,7 @@ trait SortByTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'data' => [
@@ -217,7 +217,7 @@ trait SortByTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 3,
@@ -272,7 +272,7 @@ trait SortByTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 5,

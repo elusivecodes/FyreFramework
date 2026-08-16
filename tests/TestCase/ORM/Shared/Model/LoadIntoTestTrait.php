@@ -69,7 +69,7 @@ trait LoadIntoTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Post $post): int|null => $post->id,
@@ -77,7 +77,7 @@ trait LoadIntoTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 1],
             array_map(
                 static fn(Post $post): int|null => $post->user_id,
@@ -90,7 +90,7 @@ trait LoadIntoTestTrait
             $user->address->id
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [1, 2],
                 [3, 4],
@@ -153,7 +153,7 @@ trait LoadIntoTestTrait
             'Posts',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Post $post): int|null => $post->id,

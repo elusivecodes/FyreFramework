@@ -19,7 +19,7 @@ trait AlterTableTestTrait
             'comment' => 'This is the value',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'test',
                 'comment' => 'This is the value',

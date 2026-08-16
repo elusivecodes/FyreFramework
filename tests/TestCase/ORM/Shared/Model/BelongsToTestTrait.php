@@ -258,7 +258,7 @@ trait BelongsToTestTrait
             $Addresses->saveMany($addresses)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Address $address): int|null => $address->id,
@@ -266,7 +266,7 @@ trait BelongsToTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Address $address): int|null => $address->user->id,
@@ -274,7 +274,7 @@ trait BelongsToTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Address $address): int|null => $address->user_id,

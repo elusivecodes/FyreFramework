@@ -30,7 +30,7 @@ trait ServerTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => 'value',
             ],
@@ -107,7 +107,7 @@ trait ServerTestTrait
             $request1->getServerParams()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => 'value',
             ],

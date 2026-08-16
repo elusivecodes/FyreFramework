@@ -40,7 +40,7 @@ final class ContainerTest extends TestCase
 
         $this->assertInstanceOf(ArgumentService::class, $argumentService);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [4, 5, 6],
             $argumentService->getArguments()
         );
@@ -52,7 +52,7 @@ final class ContainerTest extends TestCase
 
         $this->assertInstanceOf(ArgumentService::class, $argumentService);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 5, 3],
             $argumentService->getArguments()
         );
@@ -141,7 +141,7 @@ final class ContainerTest extends TestCase
     {
         $argumentService = $this->container->build(ArgumentService::class, [4, 5, 6]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [4, 5, 6],
             $argumentService->getArguments()
         );
@@ -199,7 +199,7 @@ final class ContainerTest extends TestCase
 
         $this->assertTrue($ran);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [4, 5, 6],
             $result
         );
@@ -225,7 +225,7 @@ final class ContainerTest extends TestCase
 
         $this->assertTrue($ran);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 5, 3],
             $result
         );
@@ -328,7 +328,7 @@ final class ContainerTest extends TestCase
             [$providedContainer, 4, 'b' => 5]
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [$providedContainer, 4, 5],
             $result
         );

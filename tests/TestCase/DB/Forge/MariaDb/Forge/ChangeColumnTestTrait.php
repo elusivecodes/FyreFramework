@@ -24,7 +24,7 @@ trait ChangeColumnTestTrait
             'after' => 'id',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'id',
                 'value',
@@ -56,7 +56,7 @@ trait ChangeColumnTestTrait
             'autoIncrement' => true,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'id',
                 'type' => 'int',
@@ -97,7 +97,7 @@ trait ChangeColumnTestTrait
             'collation' => 'utf8mb3_unicode_ci',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'varchar',
@@ -137,7 +137,7 @@ trait ChangeColumnTestTrait
             'comment' => 'This is the value',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'varchar',
@@ -177,7 +177,7 @@ trait ChangeColumnTestTrait
             'default' => 1,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'int',
@@ -216,7 +216,7 @@ trait ChangeColumnTestTrait
             'first' => true,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'id',
                 'value',
@@ -242,7 +242,7 @@ trait ChangeColumnTestTrait
             'length' => 255,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'varchar',
@@ -282,7 +282,7 @@ trait ChangeColumnTestTrait
             'nullable' => true,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'int',
@@ -322,7 +322,7 @@ trait ChangeColumnTestTrait
             'precision' => 9,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'int',
@@ -389,7 +389,7 @@ trait ChangeColumnTestTrait
             'scale' => 2,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'decimal',
@@ -428,7 +428,7 @@ trait ChangeColumnTestTrait
             'type' => IntegerType::class,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'int',
@@ -468,7 +468,7 @@ trait ChangeColumnTestTrait
             'unsigned' => true,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'int',

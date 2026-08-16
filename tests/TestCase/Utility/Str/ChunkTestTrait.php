@@ -9,7 +9,7 @@ trait ChunkTestTrait
 {
     public function testChunkWithEmptyString(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             Str::chunk('')
         );
@@ -17,7 +17,7 @@ trait ChunkTestTrait
 
     public function testChunkWithLength(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'This ',
                 'is a ',
@@ -31,7 +31,7 @@ trait ChunkTestTrait
 
     public function testChunkWithString(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'T',
                 'h',

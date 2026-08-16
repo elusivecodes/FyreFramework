@@ -40,7 +40,7 @@ final class ConnectionTest extends TestCase
     {
         $data = $this->db->__debugInfo();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '[class]' => 'Fyre\DB\Handlers\Mysql\MysqlConnection',
                 'affectedRows' => null,
@@ -254,7 +254,7 @@ final class ConnectionTest extends TestCase
             $this->db->truncate('test')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->db->select()
                 ->from('test')

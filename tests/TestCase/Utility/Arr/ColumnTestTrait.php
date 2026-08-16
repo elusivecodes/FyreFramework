@@ -9,7 +9,7 @@ trait ColumnTestTrait
 {
     public function testColumn(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             Arr::column([
                 ['a' => 1, 'b' => 2],
@@ -20,7 +20,7 @@ trait ColumnTestTrait
 
     public function testColumnMissingValue(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1],
             Arr::column([
                 ['a' => 1, 'b' => 2],
@@ -31,7 +31,7 @@ trait ColumnTestTrait
 
     public function testColumnNArgs(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3],
             Arr::column([
                 ['a' => 1, 'b' => 2],

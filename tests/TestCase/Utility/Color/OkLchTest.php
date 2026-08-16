@@ -89,7 +89,7 @@ final class OkLchTest extends TestCase
     {
         $color = OkLch::createFromString('lavender');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'lightness' => 0.9309007554171675,
                 'chroma' => 0.027017845397763564,

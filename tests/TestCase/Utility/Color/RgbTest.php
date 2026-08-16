@@ -89,7 +89,7 @@ final class RgbTest extends TestCase
     {
         $color = Rgb::createFromString('lavender');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'red' => 230.0,
                 'green' => 230.0,

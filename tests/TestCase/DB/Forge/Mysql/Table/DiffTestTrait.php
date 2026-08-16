@@ -39,7 +39,7 @@ trait DiffTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` DROP FOREIGN KEY `value_id`, ADD CONSTRAINT `value_id` FOREIGN KEY (`value_id`) REFERENCES `test_values` (`id`) ON UPDATE CASCADE ON DELETE CASCADE',
             ],
@@ -75,7 +75,7 @@ trait DiffTestTrait
             'value' => [],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` DROP INDEX `value`, ADD CONSTRAINT `value` UNIQUE KEY (`value`) USING BTREE',
             ],
@@ -138,7 +138,7 @@ trait DiffTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->forge
                 ->build('test')
@@ -191,7 +191,7 @@ trait DiffTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` ADD COLUMN `value1` VARCHAR(80) CHARACTER SET \'utf8mb4\' COLLATE \'utf8mb4_unicode_ci\' NOT NULL AFTER `id`',
             ],
@@ -234,7 +234,7 @@ trait DiffTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` ADD CONSTRAINT `value_id` FOREIGN KEY (`value_id`) REFERENCES `test_values` (`id`)',
             ],
@@ -267,7 +267,7 @@ trait DiffTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` ADD INDEX `value` (`value`) USING BTREE',
             ],
@@ -294,7 +294,7 @@ trait DiffTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` ENGINE = MyISAM',
             ],
@@ -321,7 +321,7 @@ trait DiffTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` CHANGE COLUMN `value` `value` VARCHAR(255) CHARACTER SET \'utf8mb4\' COLLATE \'utf8mb4_unicode_ci\' NOT NULL',
             ],
@@ -353,7 +353,7 @@ trait DiffTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` CHANGE COLUMN `value2` `value2` VARCHAR(80) CHARACTER SET \'utf8mb4\' COLLATE \'utf8mb4_unicode_ci\' NOT NULL AFTER `id`',
             ],
@@ -385,7 +385,7 @@ trait DiffTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` DROP COLUMN `value`',
             ],
@@ -427,7 +427,7 @@ trait DiffTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` DROP FOREIGN KEY `value_id`',
             ],
@@ -458,7 +458,7 @@ trait DiffTestTrait
             'value' => [],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` DROP INDEX `value`',
             ],
@@ -484,7 +484,7 @@ trait DiffTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` ADD PRIMARY KEY (`id`)',
             ],

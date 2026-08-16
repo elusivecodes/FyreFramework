@@ -289,7 +289,7 @@ final class AuthenticatorTest extends TestCase
             ],
         ])->__debugInfo();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '[class]' => CookieAuthenticator::class,
                 'auth' => '[Fyre\Auth\Auth]',

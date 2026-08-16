@@ -233,7 +233,7 @@ final class FunctionsTest extends TestCase
             $collection
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3],
             $collection->toArray()
         );
@@ -379,7 +379,7 @@ final class FunctionsTest extends TestCase
             $logger
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['[ERROR] This is a log message 1'],
             $logger->read()
         );
@@ -432,7 +432,7 @@ final class FunctionsTest extends TestCase
             $messages[0]->getConfig()['className']
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['id' => 1],
             $messages[0]->getConfig()['arguments']
         );

@@ -47,7 +47,7 @@ final class FixtureRegistryTest extends TestCase
 
         $this->fixtureRegistry->clear();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->fixtureRegistry->getNamespaces()
         );
@@ -67,7 +67,7 @@ final class FixtureRegistryTest extends TestCase
 
     public function testGetNamespaces(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'Tests\Mock\Fixtures\\',
             ],

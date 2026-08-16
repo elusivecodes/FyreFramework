@@ -122,7 +122,7 @@ final class ContentSecurityPolicyTest extends TestCase
             ])
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'csp-endpoint' => 'https://test.com/csp-report',
             ],

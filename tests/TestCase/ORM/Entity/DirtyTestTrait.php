@@ -42,7 +42,7 @@ trait DirtyTestTrait
 
         $entity->setDirty('test2');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test2' => 2,
             ],
@@ -60,7 +60,7 @@ trait DirtyTestTrait
 
         $entity->setDirty('test2');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test2' => 2,
             ],

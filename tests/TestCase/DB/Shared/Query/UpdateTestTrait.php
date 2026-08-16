@@ -102,7 +102,7 @@ trait UpdateTestTrait
             ], 'id')
             ->execute();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,

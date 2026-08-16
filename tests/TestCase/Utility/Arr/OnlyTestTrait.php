@@ -9,7 +9,7 @@ trait OnlyTestTrait
 {
     public function testOnly(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a' => 1, 'c' => 3],
             Arr::only(['a' => 1, 'b' => 2, 'c' => 3], ['a', 'c'])
         );

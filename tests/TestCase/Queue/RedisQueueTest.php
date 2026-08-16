@@ -144,7 +144,7 @@ final class RedisQueueTest extends TestCase
         $this->queue->complete($firstMessage);
         $this->queue->complete($secondMessage);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 0,
                 'delayed' => 0,

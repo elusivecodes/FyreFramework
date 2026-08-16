@@ -11,7 +11,7 @@ trait InTestTrait
     {
         $this->validator->add('test', Rule::in(['test', 'other']));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 'test',
@@ -23,7 +23,7 @@ trait InTestTrait
     {
         $this->validator->add('test', Rule::in(['test', 'other']));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -35,7 +35,7 @@ trait InTestTrait
     {
         $this->validator->add('test', Rule::in(['test', 'other']));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be one of the values: test, other'],
             ],
@@ -49,7 +49,7 @@ trait InTestTrait
     {
         $this->validator->add('test', Rule::in(['test', 'other']));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );

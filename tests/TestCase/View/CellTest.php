@@ -91,7 +91,7 @@ final class CellTest extends TestCase
             ])
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 1,
             ],
@@ -120,7 +120,7 @@ final class CellTest extends TestCase
 
             $this->assertSame('test', $action);
 
-            $this->assertSame([
+            $this->assertArraysAreIdentical([
                 'value' => 1,
             ], $args);
         });
@@ -162,7 +162,7 @@ final class CellTest extends TestCase
 
             $this->assertSame('test', $action);
 
-            $this->assertSame([
+            $this->assertArraysAreIdentical([
                 'value' => 1,
             ], $args);
         });
@@ -230,7 +230,7 @@ final class CellTest extends TestCase
             $cell->set('a', 1)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 1,
             ],

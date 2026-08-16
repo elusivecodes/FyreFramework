@@ -44,7 +44,7 @@ trait ListNestedTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,
@@ -138,7 +138,7 @@ trait ListNestedTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 2,
@@ -220,7 +220,7 @@ trait ListNestedTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,
@@ -303,7 +303,7 @@ trait ListNestedTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 2,
@@ -365,7 +365,7 @@ trait ListNestedTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,

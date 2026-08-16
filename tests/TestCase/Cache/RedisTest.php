@@ -75,7 +75,7 @@ final class RedisTest extends TestCase
     {
         $data = $this->cacher->__debugInfo();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '[class]' => RedisCacher::class,
                 'config' => [

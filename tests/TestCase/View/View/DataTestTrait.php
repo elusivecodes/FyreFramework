@@ -14,7 +14,7 @@ trait DataTestTrait
             ])
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 1,
             ],
@@ -32,7 +32,7 @@ trait DataTestTrait
             'b' => 2,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 1,
                 'b' => 2,
@@ -48,7 +48,7 @@ trait DataTestTrait
             $this->view->set('a', 1)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 1,
             ],

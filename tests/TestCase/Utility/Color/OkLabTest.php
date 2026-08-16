@@ -89,7 +89,7 @@ final class OkLabTest extends TestCase
     {
         $color = OkLab::createFromString('lavender');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'lightness' => 0.9309007554171675,
                 'a' => 0.007357648854629639,

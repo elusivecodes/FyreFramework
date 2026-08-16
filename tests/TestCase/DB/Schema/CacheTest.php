@@ -183,7 +183,7 @@ final class CacheTest extends TestCase
             ->table('test_values')
             ->foreignKeys();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test_values_test_id' => [
                     'columns' => [
@@ -207,7 +207,7 @@ final class CacheTest extends TestCase
             ->table('test')
             ->indexes();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'PRIMARY' => [
                     'columns' => [
@@ -243,7 +243,7 @@ final class CacheTest extends TestCase
     {
         $this->schema->tables();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => [
                     'engine' => 'InnoDB',

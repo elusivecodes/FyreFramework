@@ -21,7 +21,7 @@ final class DebugTest extends TestCase
     {
         $data = $this->mailer->__debugInfo();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '[class]' => DebugMailer::class,
                 'config' => [

@@ -48,7 +48,7 @@ final class SmtpMailerTest extends TestCase
             $this->authenticate();
         }, $this->mailer, SmtpMailer::class)();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'AUTH LOGIN',
                 base64_encode('user'),
@@ -73,7 +73,7 @@ final class SmtpMailerTest extends TestCase
             $this->authenticate();
         }, $this->mailer, SmtpMailer::class)();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'AUTH LOGIN',
             ],
@@ -123,7 +123,7 @@ final class SmtpMailerTest extends TestCase
             $this->__destruct();
         }, $this->mailer, SmtpMailer::class)();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'QUIT',
             ],
@@ -175,7 +175,7 @@ final class SmtpMailerTest extends TestCase
             $this->end();
         }, $mailer, SmtpMailer::class)();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'RSET',
             ],
@@ -371,7 +371,7 @@ final class SmtpMailerTest extends TestCase
             $this->sendCommand('hello');
         }, $mailer, SmtpMailer::class)();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'EHLO test',
             ],
@@ -455,7 +455,7 @@ final class SmtpMailerTest extends TestCase
             $this->sendCommand('to', 'to@example.com');
         }, $mailer, SmtpMailer::class)();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'RCPT TO:<to@example.com> NOTIFY=SUCCESS,DELAY,FAILURE ORCPT=rfc822;to@example.com',
             ],

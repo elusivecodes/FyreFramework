@@ -44,7 +44,7 @@ trait PrintNestedTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 1 => 'Test 1',
                 2 => '--Test 2',
@@ -93,7 +93,7 @@ trait PrintNestedTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 1 => 'Test 1',
                 2 => '- Test 2',
@@ -130,7 +130,7 @@ trait PrintNestedTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 1 => 'Test 1',
                 2 => '--Test 2',

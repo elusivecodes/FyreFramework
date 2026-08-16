@@ -36,7 +36,7 @@ final class LoggerTest extends TestCase
             'scopes' => 'api',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'dateFormat' => 'U',
                 'levels' => ['debug'],

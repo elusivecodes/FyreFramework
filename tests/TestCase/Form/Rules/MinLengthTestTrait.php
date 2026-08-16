@@ -11,7 +11,7 @@ trait MinLengthTestTrait
     {
         $this->validator->add('test', Rule::minLength(3));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 'test',
@@ -23,7 +23,7 @@ trait MinLengthTestTrait
     {
         $this->validator->add('test', Rule::minLength(3));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -35,7 +35,7 @@ trait MinLengthTestTrait
     {
         $this->validator->add('test', Rule::minLength(3));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '123',
@@ -47,7 +47,7 @@ trait MinLengthTestTrait
     {
         $this->validator->add('test', Rule::minLength(3));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test length must be at least 3.'],
             ],
@@ -61,7 +61,7 @@ trait MinLengthTestTrait
     {
         $this->validator->add('test', Rule::minLength(3));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );

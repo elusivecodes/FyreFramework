@@ -11,7 +11,7 @@ trait BooleanTestTrait
     {
         $this->validator->add('test', Rule::boolean());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '1',
@@ -23,7 +23,7 @@ trait BooleanTestTrait
     {
         $this->validator->add('test', Rule::boolean());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -35,7 +35,7 @@ trait BooleanTestTrait
     {
         $this->validator->add('test', Rule::boolean());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 'false',
@@ -47,7 +47,7 @@ trait BooleanTestTrait
     {
         $this->validator->add('test', Rule::boolean());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be a boolean value.'],
             ],
@@ -61,7 +61,7 @@ trait BooleanTestTrait
     {
         $this->validator->add('test', Rule::boolean());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );
@@ -71,7 +71,7 @@ trait BooleanTestTrait
     {
         $this->validator->add('test', Rule::boolean());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 'true',
@@ -83,7 +83,7 @@ trait BooleanTestTrait
     {
         $this->validator->add('test', Rule::boolean());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '0',

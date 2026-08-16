@@ -193,7 +193,7 @@ trait UploadedFileTestTrait
             $request1->getUploadedFiles()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => $file,
             ],

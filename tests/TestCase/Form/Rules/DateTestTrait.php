@@ -12,7 +12,7 @@ trait DateTestTrait
     {
         $this->validator->add('test', Rule::date());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => DateTime::now(),
@@ -24,7 +24,7 @@ trait DateTestTrait
     {
         $this->validator->add('test', Rule::date());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -36,7 +36,7 @@ trait DateTestTrait
     {
         $this->validator->add('test', Rule::date());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['invalid'],
             ],
@@ -50,7 +50,7 @@ trait DateTestTrait
     {
         $this->validator->add('test', Rule::date());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );
@@ -60,7 +60,7 @@ trait DateTestTrait
     {
         $this->validator->add('test', Rule::date());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '2022-01-01',

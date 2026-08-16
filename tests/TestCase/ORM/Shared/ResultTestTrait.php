@@ -34,7 +34,7 @@ trait ResultTestTrait
         $items = $Items->find()
             ->getResult();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 1 => 'Test 1',
                 2 => 'Test 2',
@@ -56,7 +56,7 @@ trait ResultTestTrait
 
     public function testColumns(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'Items__id',
                 'Items__name',
@@ -167,7 +167,7 @@ trait ResultTestTrait
         $result = $Items->find()->getResult();
         $result->free();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $result->toArray()
         );

@@ -11,7 +11,7 @@ trait LessThanTestTrait
     {
         $this->validator->add('test', Rule::lessThan(2));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 1,
@@ -23,7 +23,7 @@ trait LessThanTestTrait
     {
         $this->validator->add('test', Rule::lessThan(2));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be less than 2.'],
             ],
@@ -37,7 +37,7 @@ trait LessThanTestTrait
     {
         $this->validator->add('test', Rule::lessThan(2));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -49,7 +49,7 @@ trait LessThanTestTrait
     {
         $this->validator->add('test', Rule::lessThan(2));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be less than 2.'],
             ],
@@ -63,7 +63,7 @@ trait LessThanTestTrait
     {
         $this->validator->add('test', Rule::lessThan(2));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );

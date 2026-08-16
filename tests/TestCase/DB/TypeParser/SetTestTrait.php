@@ -9,7 +9,7 @@ trait SetTestTrait
 {
     public function testSetFromDatabase(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a', 'b', 'c'],
             $this->type->use('set')->fromDatabase('a,b,c')
         );
@@ -24,7 +24,7 @@ trait SetTestTrait
 
     public function testSetParse(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a', 'b', 'c'],
             $this->type->use('set')->parse('a,b,c')
         );
@@ -32,7 +32,7 @@ trait SetTestTrait
 
     public function testSetParseArray(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a', 'b', 'c'],
             $this->type->use('set')->parse(['a', 'b', 'c'])
         );

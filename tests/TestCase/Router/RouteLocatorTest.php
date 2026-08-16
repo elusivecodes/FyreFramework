@@ -48,7 +48,7 @@ final class RouteLocatorTest extends TestCase
 
         usort($cachedRoutes, static fn(array $a, array $b): int => strcmp($a['as'], $b['as']));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'path' => 'comments/create',
@@ -232,7 +232,7 @@ final class RouteLocatorTest extends TestCase
             'Tests\Mock\Controllers\Locate',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'path' => 'parent-category/child-items/do-something',
@@ -393,7 +393,7 @@ final class RouteLocatorTest extends TestCase
             $routes
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [ItemsController::class, 'get'],
             $routes[0]['destination']
         );
@@ -436,7 +436,7 @@ final class RouteLocatorTest extends TestCase
 
         $aliases = array_column($routes, 'as');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             array_unique($aliases) |> array_values(...),
             $aliases
         );
@@ -484,7 +484,7 @@ final class RouteLocatorTest extends TestCase
             'Tests\Mock\Controllers\RouteOrder',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'files/settings',
                 'files/{name}.json',

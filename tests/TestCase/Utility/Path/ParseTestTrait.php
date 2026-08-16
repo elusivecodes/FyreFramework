@@ -9,7 +9,7 @@ trait ParseTestTrait
 {
     public function testParseWithDeepPath(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'dirname' => 'sub/dir',
                 'basename' => 'file.ext',
@@ -22,7 +22,7 @@ trait ParseTestTrait
 
     public function testParseWithEmptyString(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'basename' => '',
                 'filename' => '',
@@ -33,7 +33,7 @@ trait ParseTestTrait
 
     public function testParseWithFileName(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'dirname' => '.',
                 'basename' => 'file.ext',
@@ -46,7 +46,7 @@ trait ParseTestTrait
 
     public function testParseWithFullPath(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'dirname' => '/sub/dir',
                 'basename' => 'file.ext',
@@ -59,7 +59,7 @@ trait ParseTestTrait
 
     public function testParseWithMultipleExtensions(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'dirname' => 'dir',
                 'basename' => 'file.tst.ext',
@@ -72,7 +72,7 @@ trait ParseTestTrait
 
     public function testParseWithNoExtension(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'dirname' => 'dir',
                 'basename' => 'file',
@@ -84,7 +84,7 @@ trait ParseTestTrait
 
     public function testParseWithPath(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'dirname' => 'dir',
                 'basename' => 'file.ext',

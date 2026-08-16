@@ -36,7 +36,7 @@ trait CountByTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 2 => 2,
                 4 => 3,
@@ -75,7 +75,7 @@ trait CountByTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 2 => 2,
                 4 => 3,
@@ -126,7 +126,7 @@ trait CountByTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 2 => 2,
                 4 => 3,

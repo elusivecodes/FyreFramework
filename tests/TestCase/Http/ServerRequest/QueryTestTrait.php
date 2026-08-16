@@ -30,7 +30,7 @@ trait QueryTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => 'value',
             ],
@@ -48,7 +48,7 @@ trait QueryTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 'value',
             ],
@@ -111,7 +111,7 @@ trait QueryTestTrait
             $request1->getQueryParams()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => 'value',
             ],

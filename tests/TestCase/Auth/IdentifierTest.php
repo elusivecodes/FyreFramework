@@ -88,7 +88,7 @@ final class IdentifierTest extends TestCase
 
     public function testGetIdentifierFields(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['username', 'email'],
             $this->identifier->getIdentifierFields()
         );

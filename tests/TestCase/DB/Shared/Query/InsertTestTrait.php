@@ -63,7 +63,7 @@ trait InsertTestTrait
             ])
             ->execute();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,
@@ -123,7 +123,7 @@ trait InsertTestTrait
             ->values($rows)
             ->execute();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             $expected,
             $this->db->select()
                 ->from('test')

@@ -46,7 +46,7 @@ trait HasManyTestTrait
             $Users->save($user)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 1],
             array_map(
                 static fn(Post $post): int|null => $post->user_id,
@@ -115,7 +115,7 @@ trait HasManyTestTrait
             $Users->saveMany($users)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 1, 2],
             array_map(
                 static fn(Post $post): int|null => $post->user_id,
@@ -258,7 +258,7 @@ trait HasManyTestTrait
             $Users->deleteMany($users)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [null, null, null, null],
             array_map(
                 static fn(Post $post): int|null => $post->user_id,
@@ -297,7 +297,7 @@ trait HasManyTestTrait
             $Users->delete($user)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [null, null],
             array_map(
                 static fn(Post $post): int|null => $post->user_id,
@@ -354,7 +354,7 @@ trait HasManyTestTrait
             $user->id
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Post $post): int|null => $post->id,
@@ -418,7 +418,7 @@ trait HasManyTestTrait
             $user->id
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [2],
             array_map(
                 static fn(Post $post): int|null => $post->id,
@@ -480,7 +480,7 @@ trait HasManyTestTrait
             ->orderBy('Users.id')
             ->toArray();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [1],
                 [3],
@@ -526,7 +526,7 @@ trait HasManyTestTrait
 
         $posts = $Users->Posts->findRelated([$user])->toArray();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Post $post): int|null => $post->id,
@@ -550,7 +550,7 @@ trait HasManyTestTrait
         $Users = $this->modelRegistry->use('Users');
         $user = $Users->newEmptyEntity();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $Users->Posts->findRelated([$user])->toArray()
         );
@@ -638,7 +638,7 @@ trait HasManyTestTrait
             $user->id
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Post $post): int|null => $post->id,
@@ -646,7 +646,7 @@ trait HasManyTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 1],
             array_map(
                 static fn(Post $post): int|null => $post->user_id,
@@ -716,7 +716,7 @@ trait HasManyTestTrait
             $Users->saveMany($users)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(User $user): int|null => $user->id,
@@ -724,7 +724,7 @@ trait HasManyTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [1, 2],
                 [3, 4],
@@ -738,7 +738,7 @@ trait HasManyTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [1, 1],
                 [2, 2],
@@ -808,7 +808,7 @@ trait HasManyTestTrait
 
         $Users->Posts->loadRelated([$user]);
 
-        $this->assertSame([], $user->posts);
+        $this->assertArraysAreIdentical([], $user->posts);
     }
 
     public function testHasManyLoadRelatedEmptyClean(): void
@@ -917,7 +917,7 @@ trait HasManyTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $user->posts
         );
@@ -1065,7 +1065,7 @@ trait HasManyTestTrait
             $Users->saveMany($users)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [null, null, null, null],
             array_map(
                 static fn(Post $post): int|null => $post->user_id,
@@ -1106,7 +1106,7 @@ trait HasManyTestTrait
             $Users->save($user)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [null, null],
             array_map(
                 static fn(Post $post): int|null => $post->user_id,
@@ -1167,7 +1167,7 @@ trait HasManyTestTrait
             $user->id
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [2, 1],
             array_map(
                 static fn(Post $post): int|null => $post->id,
@@ -1236,7 +1236,7 @@ trait HasManyTestTrait
             $user->id
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Post $post): int|null => $post->id,
@@ -1305,7 +1305,7 @@ trait HasManyTestTrait
             $user->id
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Post $post): int|null => $post->id,
@@ -1400,7 +1400,7 @@ trait HasManyTestTrait
             $user->name
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['Test 3', 'Test 4'],
             array_map(
                 static fn(Post $post): string|null => $post->title,
@@ -1507,7 +1507,7 @@ trait HasManyTestTrait
             'Posts',
         ])->toArray();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['Test 3', 'Test 4'],
             array_map(
                 static fn(User $user): string|null => $user->name,
@@ -1515,7 +1515,7 @@ trait HasManyTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 ['Test 5', 'Test 6'],
                 ['Test 7', 'Test 8'],

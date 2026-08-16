@@ -23,7 +23,7 @@ final class EntityLocatorTest extends TestCase
 
         $this->locator->clear();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->locator->getNamespaces()
         );
@@ -84,7 +84,7 @@ final class EntityLocatorTest extends TestCase
 
     public function testGetNamespaces(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'Tests\Mock\Entities\\',
             ],

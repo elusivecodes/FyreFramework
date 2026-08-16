@@ -9,7 +9,7 @@ trait ForgetDotTestTrait
 {
     public function testForgetDot(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 1,
                 'b' => [
@@ -22,7 +22,7 @@ trait ForgetDotTestTrait
 
     public function testForgetDotMissing(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 1,
                 'b' => [

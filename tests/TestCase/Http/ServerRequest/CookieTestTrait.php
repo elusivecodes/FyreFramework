@@ -30,7 +30,7 @@ trait CookieTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => 'value',
             ],
@@ -77,7 +77,7 @@ trait CookieTestTrait
             $request1->getCookieParams()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => 'value',
             ],

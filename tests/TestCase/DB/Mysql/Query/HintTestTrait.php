@@ -7,7 +7,7 @@ trait HintTestTrait
 {
     public function testGetHints(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'TEST1()',
                 'TEST2()',

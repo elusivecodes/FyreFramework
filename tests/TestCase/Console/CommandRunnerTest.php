@@ -51,7 +51,7 @@ final class CommandRunnerTest extends TestCase
     {
         $commands = $this->runner->all();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'arguments' => [
                     'description' => '',
@@ -162,7 +162,7 @@ final class CommandRunnerTest extends TestCase
         $this->runner->getEventManager()->on('Command.afterExecute', function(Event $event, array $options, int $result) use (&$ran): void {
             $ran = true;
 
-            $this->assertSame([
+            $this->assertArraysAreIdentical([
                 'value' => 'value',
             ], $options);
 
@@ -180,7 +180,7 @@ final class CommandRunnerTest extends TestCase
         $this->runner->getEventManager()->on('Command.beforeExecute', function(Event $event, array $options) use (&$ran): void {
             $ran = true;
 
-            $this->assertSame([
+            $this->assertArraysAreIdentical([
                 'value' => 'value',
             ], $options);
         });
@@ -204,7 +204,7 @@ final class CommandRunnerTest extends TestCase
 
     public function testGetNamepaces(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'Tests\Mock\Commands\\',
             ],

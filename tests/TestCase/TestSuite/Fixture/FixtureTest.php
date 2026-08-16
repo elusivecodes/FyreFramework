@@ -63,12 +63,12 @@ final class FixtureTest extends TestCase
 
     public function testGetTables(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['items'],
             $this->nestedFixture->getTables()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['items', 'children'],
             $this->associatedFixture->getTables()
         );
@@ -78,7 +78,7 @@ final class FixtureTest extends TestCase
     {
         $this->fixture->run();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,
@@ -101,7 +101,7 @@ final class FixtureTest extends TestCase
     {
         $this->associatedFixture->run();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,
@@ -115,7 +115,7 @@ final class FixtureTest extends TestCase
                 ->toArray()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,

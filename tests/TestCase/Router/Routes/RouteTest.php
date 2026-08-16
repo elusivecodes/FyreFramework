@@ -162,7 +162,7 @@ final class RouteTest extends TestCase
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['item' => 'id'],
             $route->getBindingFields()
         );
@@ -203,7 +203,7 @@ final class RouteTest extends TestCase
             $optionalRequest
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'item' => null,
             ],
@@ -235,7 +235,7 @@ final class RouteTest extends TestCase
 
         $request = $route->parseRequest($request);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 'foo',
                 'b' => 'tail',
@@ -261,7 +261,7 @@ final class RouteTest extends TestCase
 
         $request = $route->parseRequest($request);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => null,
                 'extension' => null,
@@ -269,7 +269,7 @@ final class RouteTest extends TestCase
             $route->getBindingFields()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'archive',
                 'extension' => 'zip',
@@ -291,7 +291,7 @@ final class RouteTest extends TestCase
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'item' => $callback,
             ],
@@ -338,7 +338,7 @@ final class RouteTest extends TestCase
             $route->setBindingCallback('item', $callback)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'item' => $callback,
             ],
@@ -392,7 +392,7 @@ final class RouteTest extends TestCase
             $route->setMiddleware(['test'])
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['test'],
             $route->getMiddleware()
         );
@@ -409,7 +409,7 @@ final class RouteTest extends TestCase
             $route->setPlaceholder('id', '\\d+')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'id' => '\\d+',
             ],

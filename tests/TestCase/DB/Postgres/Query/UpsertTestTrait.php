@@ -70,7 +70,7 @@ trait UpsertTestTrait
             ])
             ->execute();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,

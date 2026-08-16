@@ -30,7 +30,7 @@ final class TemplateLocatorTest extends TestCase
         $this->templateLocator->addPath('tests/templates1');
         $this->templateLocator->addPath('tests/templates2');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 Path::resolve('tests/templates1'),
                 Path::resolve('tests/templates2'),

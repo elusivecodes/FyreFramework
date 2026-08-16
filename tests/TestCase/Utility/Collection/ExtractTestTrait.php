@@ -42,7 +42,7 @@ trait ExtractTestTrait
 
         $extracted = $collection->extract('value');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [2, 4, 3, 4, 1, 5, 3],
             $extracted->toArray()
         );
@@ -83,7 +83,7 @@ trait ExtractTestTrait
 
         $extracted = $collection->extract(static fn(array $item, int $key): int => $item['value']);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [2, 4, 3, 4, 1, 5, 3],
             $extracted->toArray()
         );
@@ -138,7 +138,7 @@ trait ExtractTestTrait
 
         $extracted = $collection->extract('data.value');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [2, 4, 3, 4, 1, 5, 3],
             $extracted->toArray()
         );

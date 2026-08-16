@@ -175,7 +175,7 @@ final class CurlHandlerTest extends TestCase
             $response->hasHeader('X-Interim')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['first=1', 'second=2'],
             $response->getHeader('Set-Cookie')
         );
@@ -200,7 +200,7 @@ final class CurlHandlerTest extends TestCase
             $response->isSuccess()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value' => '1',
             ],
@@ -286,7 +286,7 @@ final class CurlHandlerTest extends TestCase
 
         unset($data['deep']['tmp_name']);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'deep' => [
                     'name' => [

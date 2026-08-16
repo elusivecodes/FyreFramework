@@ -61,7 +61,7 @@ trait SenderTestTrait
             $this->email->setSender('test1@test.com')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'test1@test.com',
             ],
@@ -73,7 +73,7 @@ trait SenderTestTrait
     {
         $this->email->setSender('test1');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->email->getSender()
         );
@@ -83,7 +83,7 @@ trait SenderTestTrait
     {
         $this->email->setSender('test1@test.com', 'Test 1');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'Test 1',
             ],

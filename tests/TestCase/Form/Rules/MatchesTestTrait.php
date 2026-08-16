@@ -11,7 +11,7 @@ trait MatchesTestTrait
     {
         $this->validator->add('test', Rule::matches('other'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 'test',
@@ -24,7 +24,7 @@ trait MatchesTestTrait
     {
         $this->validator->add('test', Rule::matches('other'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -37,7 +37,7 @@ trait MatchesTestTrait
     {
         $this->validator->add('test', Rule::matches('other'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must have the same value as other.'],
             ],
@@ -52,7 +52,7 @@ trait MatchesTestTrait
     {
         $this->validator->add('test', Rule::matches('other'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -65,7 +65,7 @@ trait MatchesTestTrait
     {
         $this->validator->add('test', Rule::matches('other'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );
@@ -75,7 +75,7 @@ trait MatchesTestTrait
     {
         $this->validator->add('test', Rule::matches('other'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must have the same value as other.'],
             ],

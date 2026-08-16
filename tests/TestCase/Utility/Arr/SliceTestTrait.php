@@ -9,7 +9,7 @@ trait SliceTestTrait
 {
     public function testSlice(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3],
             Arr::slice([1, 2, 3])
         );
@@ -17,7 +17,7 @@ trait SliceTestTrait
 
     public function testSliceWithLength(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [3, 4],
             Arr::slice([1, 2, 3, 4, 5], 2, 2)
         );
@@ -25,7 +25,7 @@ trait SliceTestTrait
 
     public function testSliceWithOffset(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [3, 4, 5],
             Arr::slice([1, 2, 3, 4, 5], 2)
         );
@@ -33,7 +33,7 @@ trait SliceTestTrait
 
     public function testSliceWithPreserveKeys(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [2 => 3, 3 => 4],
             Arr::slice([1, 2, 3, 4, 5], 2, 2, true)
         );

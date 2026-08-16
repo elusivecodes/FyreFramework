@@ -89,7 +89,7 @@ final class SrgbTest extends TestCase
     {
         $color = Srgb::createFromString('lavender');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'red' => 0.9019607843137255,
                 'green' => 0.9019607843137255,

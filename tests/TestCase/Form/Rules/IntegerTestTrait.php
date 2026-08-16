@@ -11,7 +11,7 @@ trait IntegerTestTrait
     {
         $this->validator->add('test', Rule::integer());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '123',
@@ -23,7 +23,7 @@ trait IntegerTestTrait
     {
         $this->validator->add('test', Rule::integer());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be an integer value.'],
             ],
@@ -37,7 +37,7 @@ trait IntegerTestTrait
     {
         $this->validator->add('test', Rule::integer());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -49,7 +49,7 @@ trait IntegerTestTrait
     {
         $this->validator->add('test', Rule::integer());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be an integer value.'],
             ],
@@ -63,7 +63,7 @@ trait IntegerTestTrait
     {
         $this->validator->add('test', Rule::integer());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '-123',
@@ -75,7 +75,7 @@ trait IntegerTestTrait
     {
         $this->validator->add('test', Rule::integer());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '0',

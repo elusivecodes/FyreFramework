@@ -9,7 +9,7 @@ trait ExceptTestTrait
 {
     public function testExcept(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 0 => 1,
                 1 => 2,

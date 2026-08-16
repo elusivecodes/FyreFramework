@@ -27,7 +27,7 @@ trait DropIndexTestTrait
         ]);
         $this->forge->addIndex('test', 'id');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'DROP INDEX "id"',
             ],
@@ -40,7 +40,7 @@ trait DropIndexTestTrait
 
     public function testDropIndexSqlNewTable(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'CREATE TABLE "test" ("id" INTEGER NOT NULL)',
             ],

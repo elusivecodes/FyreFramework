@@ -11,7 +11,7 @@ trait NaturalNumberTestTrait
     {
         $this->validator->add('test', Rule::naturalNumber());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '123',
@@ -23,7 +23,7 @@ trait NaturalNumberTestTrait
     {
         $this->validator->add('test', Rule::naturalNumber());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be a natural number.'],
             ],
@@ -37,7 +37,7 @@ trait NaturalNumberTestTrait
     {
         $this->validator->add('test', Rule::naturalNumber());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -49,7 +49,7 @@ trait NaturalNumberTestTrait
     {
         $this->validator->add('test', Rule::naturalNumber());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be a natural number.'],
             ],
@@ -63,7 +63,7 @@ trait NaturalNumberTestTrait
     {
         $this->validator->add('test', Rule::naturalNumber());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );
@@ -73,7 +73,7 @@ trait NaturalNumberTestTrait
     {
         $this->validator->add('test', Rule::naturalNumber());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be a natural number.'],
             ],
@@ -87,7 +87,7 @@ trait NaturalNumberTestTrait
     {
         $this->validator->add('test', Rule::naturalNumber());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '0',

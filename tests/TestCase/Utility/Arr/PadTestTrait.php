@@ -9,7 +9,7 @@ trait PadTestTrait
 {
     public function testPad(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 0, 0],
             Arr::pad([1], 3, 0)
         );

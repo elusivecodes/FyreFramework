@@ -103,7 +103,7 @@ final class ClientTest extends TestCase
             $response->isSuccess()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value' => '1',
             ],
@@ -146,7 +146,7 @@ final class ClientTest extends TestCase
             $response->isSuccess()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => 'value',
             ],
@@ -215,7 +215,7 @@ final class ClientTest extends TestCase
             $response2->isSuccess()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => 'value',
             ],
@@ -536,7 +536,7 @@ final class ClientTest extends TestCase
             $response->isSuccess()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value' => 1,
             ],
@@ -631,7 +631,7 @@ final class ClientTest extends TestCase
             $response->isSuccess()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value' => 1,
             ],
@@ -704,7 +704,7 @@ final class ClientTest extends TestCase
             $response->isSuccess()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value' => '1',
             ],
@@ -805,7 +805,7 @@ final class ClientTest extends TestCase
             $response->isSuccess()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value' => 1,
             ],
@@ -878,7 +878,7 @@ final class ClientTest extends TestCase
             $response->isSuccess()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value' => '1',
             ],
@@ -1321,7 +1321,7 @@ final class ClientTest extends TestCase
 
         $response = $client->send($request);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value' => '1',
             ],
@@ -1358,7 +1358,7 @@ final class ClientTest extends TestCase
 
         $response = $this->client->send($request);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => 'value',
             ],

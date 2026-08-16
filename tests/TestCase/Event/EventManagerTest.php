@@ -79,7 +79,7 @@ final class EventManagerTest extends TestCase
 
         $this->eventManager->addListener($listener);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'name' => 'test',
@@ -99,7 +99,7 @@ final class EventManagerTest extends TestCase
 
         $this->eventManager->addListener($listener);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'name' => 'test',
@@ -173,7 +173,7 @@ final class EventManagerTest extends TestCase
 
         $event = $eventManager->trigger('test');
 
-        $this->assertSame([2, 1], $results);
+        $this->assertArraysAreIdentical([2, 1], $results);
     }
 
     public function testEventResult(): void
@@ -379,7 +379,7 @@ final class EventManagerTest extends TestCase
 
         $this->eventManager->trigger('test');
 
-        $this->assertSame([2, 1], $results);
+        $this->assertArraysAreIdentical([2, 1], $results);
     }
 
     #[Override]

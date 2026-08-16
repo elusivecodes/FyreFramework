@@ -31,7 +31,7 @@ trait ChangeColumnTestTrait
             'autoIncrement' => true,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'id',
                 'type' => 'integer',
@@ -76,7 +76,7 @@ trait ChangeColumnTestTrait
             'autoIncrement' => false,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'id',
                 'type' => 'integer',
@@ -113,7 +113,7 @@ trait ChangeColumnTestTrait
             'comment' => 'This is the value',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'character varying',
@@ -150,7 +150,7 @@ trait ChangeColumnTestTrait
             'default' => 1,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'integer',
@@ -188,7 +188,7 @@ trait ChangeColumnTestTrait
             'default' => null,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'integer',
@@ -225,7 +225,7 @@ trait ChangeColumnTestTrait
             'nullable' => true,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'integer',
@@ -263,7 +263,7 @@ trait ChangeColumnTestTrait
             'nullable' => false,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'integer',
@@ -300,7 +300,7 @@ trait ChangeColumnTestTrait
             'cast' => true,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'integer',

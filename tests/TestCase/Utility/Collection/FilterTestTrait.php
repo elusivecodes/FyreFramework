@@ -9,7 +9,7 @@ trait FilterTestTrait
 {
     public function testFilter(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 1 => 2,
                 3 => 4,

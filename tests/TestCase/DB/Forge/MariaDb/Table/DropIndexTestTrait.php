@@ -28,7 +28,7 @@ trait DropIndexTestTrait
             'id' => [],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` DROP INDEX `id`',
             ],
@@ -41,7 +41,7 @@ trait DropIndexTestTrait
 
     public function testDropIndexSqlNewTable(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'CREATE TABLE `test` (`id` INT(11) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
             ],

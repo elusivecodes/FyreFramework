@@ -39,7 +39,7 @@ final class MigrationRunnerTest extends TestCase
 
     public function testGetMigrations(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '1_Test1' => Migration_1_Test1::class,
                 '2_Test2' => Migration_2_Test2::class,
@@ -51,7 +51,7 @@ final class MigrationRunnerTest extends TestCase
 
     public function testGetNamespaces(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'Tests\Mock\Migrations\\',
             ],

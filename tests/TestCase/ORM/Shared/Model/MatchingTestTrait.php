@@ -62,7 +62,7 @@ trait MatchingTestTrait
             $Users->save($user)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1],
             $this->modelRegistry->use('Posts')
                 ->find()

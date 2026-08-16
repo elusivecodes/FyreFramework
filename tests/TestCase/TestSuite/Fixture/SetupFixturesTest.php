@@ -18,7 +18,7 @@ final class SetupFixturesTest extends TestCase
 
     public function testRun(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,

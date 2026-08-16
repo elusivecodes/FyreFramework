@@ -20,7 +20,7 @@ trait PopTestTrait
     {
         $array = [1, 2, 3];
         Arr::pop($array);
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             $array
         );

@@ -9,7 +9,7 @@ trait SetDotTestTrait
 {
     public function testSetDot(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 1,
                 'b' => [
@@ -23,7 +23,7 @@ trait SetDotTestTrait
 
     public function testSetDotOverwrites(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 1,
                 'b' => [
@@ -37,7 +37,7 @@ trait SetDotTestTrait
 
     public function testSetDotWithOverwrite(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 1,
                 'b' => [

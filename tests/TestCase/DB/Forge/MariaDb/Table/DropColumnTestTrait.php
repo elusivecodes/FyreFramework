@@ -29,7 +29,7 @@ trait DropColumnTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` DROP COLUMN `value`',
             ],
@@ -42,7 +42,7 @@ trait DropColumnTestTrait
 
     public function testDropColumnSqlNewTable(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'CREATE TABLE `test` (`id` INT(11) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
             ],

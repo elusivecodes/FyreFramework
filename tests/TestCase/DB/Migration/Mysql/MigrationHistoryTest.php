@@ -21,7 +21,7 @@ final class MigrationHistoryTest extends TestCase
 
         $history = $this->migrationRunner->getHistory()->all();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '3_Test3',
                 '2_Test2',
@@ -39,7 +39,7 @@ final class MigrationHistoryTest extends TestCase
 
         $history = $this->migrationRunner->getHistory()->all();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '3_Test3',
                 '2_Test2',
@@ -48,7 +48,7 @@ final class MigrationHistoryTest extends TestCase
             array_column($history, 'migration')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 2,
                 1,
@@ -62,7 +62,7 @@ final class MigrationHistoryTest extends TestCase
     {
         $this->migrationRunner->getHistory();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->forgeRegistry->use($this->db)
                 ->build('migrations')

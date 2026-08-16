@@ -10,11 +10,11 @@ trait SpliceTestTrait
     public function testSplice(): void
     {
         $array = [1, 2, 3, 4, 5, 6];
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [3, 4, 5, 6],
             Arr::splice($array, 2)
         );
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             $array
         );
@@ -23,11 +23,11 @@ trait SpliceTestTrait
     public function testSpliceNegativeOffset(): void
     {
         $array = [1, 2, 3, 4, 5, 6];
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [5, 6],
             Arr::splice($array, -2)
         );
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3, 4],
             $array
         );
@@ -36,11 +36,11 @@ trait SpliceTestTrait
     public function testSpliceWithLength(): void
     {
         $array = [1, 2, 3, 4, 5, 6];
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [3],
             Arr::splice($array, 2, 1)
         );
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 4, 5, 6],
             $array
         );
@@ -49,11 +49,11 @@ trait SpliceTestTrait
     public function testSpliceWithNegativeLength(): void
     {
         $array = [1, 2, 3, 4, 5, 6];
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [3, 4, 5],
             Arr::splice($array, 2, -1)
         );
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 6],
             $array
         );
@@ -62,11 +62,11 @@ trait SpliceTestTrait
     public function testSpliceWithReplacement(): void
     {
         $array = [1, 2, 3, 4, 5, 6];
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [3],
             Arr::splice($array, 2, 1, 0)
         );
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 0, 4, 5, 6],
             $array
         );

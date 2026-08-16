@@ -40,7 +40,7 @@ final class ConfigTest extends TestCase
         $this->config->addPath('tests/config/dir2');
         $this->config->addPath('tests/config/dir1');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 Path::resolve('tests/config/dir1'),
                 Path::resolve('tests/config/dir2'),
@@ -67,7 +67,7 @@ final class ConfigTest extends TestCase
         $this->config->addPath('tests/config/dir2');
         $this->config->addPath('tests/config/dir2', true);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 Path::resolve('tests/config/dir1'),
                 Path::resolve('tests/config/dir2'),
@@ -260,7 +260,7 @@ final class ConfigTest extends TestCase
     {
         $this->config->set('test.deep', 'Test');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'deep' => 'Test',
             ],

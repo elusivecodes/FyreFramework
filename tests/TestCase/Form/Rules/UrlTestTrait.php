@@ -11,7 +11,7 @@ trait UrlTestTrait
     {
         $this->validator->add('test', Rule::url());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 'https://test.com/',
@@ -23,7 +23,7 @@ trait UrlTestTrait
     {
         $this->validator->add('test', Rule::url());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -35,7 +35,7 @@ trait UrlTestTrait
     {
         $this->validator->add('test', Rule::url());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be a valid URL.'],
             ],
@@ -49,7 +49,7 @@ trait UrlTestTrait
     {
         $this->validator->add('test', Rule::url());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );

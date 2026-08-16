@@ -84,7 +84,7 @@ final class A98RgbTest extends TestCase
     {
         $color = A98Rgb::createFromString('lavender');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'red' => 0.8990306480521724,
                 'green' => 0.8990307350513126,

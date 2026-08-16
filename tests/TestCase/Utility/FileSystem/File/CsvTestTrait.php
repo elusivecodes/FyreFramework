@@ -18,12 +18,12 @@ trait CsvTestTrait
         $file->write('5,6,7,8');
         $file->rewind();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['1', '2', '3', '4'],
             $file->csv()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['5', '6', '7', '8'],
             $file->csv()
         );

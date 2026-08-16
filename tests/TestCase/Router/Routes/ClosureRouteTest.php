@@ -53,7 +53,7 @@ final class ClosureRouteTest extends TestCase
             $request
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 'a',
                 'b' => '1',

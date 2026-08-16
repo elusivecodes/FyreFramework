@@ -65,7 +65,7 @@ final class HelperRegistryTest extends TestCase
 
     public function testGetNamespaces(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'Tests\Mock\Helpers\\',
             ],

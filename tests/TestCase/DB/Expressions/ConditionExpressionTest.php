@@ -18,9 +18,9 @@ final class ConditionExpressionTest extends TestCase
         $condition = $source->and($nested);
 
         $this->assertSame('AND', $condition->getConjunction());
-        $this->assertSame([$nested], $condition->getConditions());
+        $this->assertArraysAreIdentical([$nested], $condition->getConditions());
         $this->assertSame('OR', $source->getConjunction());
-        $this->assertSame([], $source->getConditions());
+        $this->assertArraysAreIdentical([], $source->getConditions());
     }
 
     public function testConjunctionInvalid(): void
@@ -64,7 +64,7 @@ final class ConditionExpressionTest extends TestCase
         $expression = new ConditionExpression();
         $expression->eq($field, 'test');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'field' => $field,
@@ -92,8 +92,8 @@ final class ConditionExpressionTest extends TestCase
         $condition = $source->or($nested);
 
         $this->assertSame('OR', $condition->getConjunction());
-        $this->assertSame([$nested], $condition->getConditions());
+        $this->assertArraysAreIdentical([$nested], $condition->getConditions());
         $this->assertSame('AND', $source->getConjunction());
-        $this->assertSame([], $source->getConditions());
+        $this->assertArraysAreIdentical([], $source->getConditions());
     }
 }

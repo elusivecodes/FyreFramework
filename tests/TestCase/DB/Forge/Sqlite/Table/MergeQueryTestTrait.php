@@ -23,7 +23,7 @@ trait MergeQueryTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'DROP INDEX "test_idx"',
                 'ALTER TABLE "test" DROP COLUMN "test"',

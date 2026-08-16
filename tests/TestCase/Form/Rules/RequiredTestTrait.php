@@ -11,7 +11,7 @@ trait RequiredTestTrait
     {
         $this->validator->add('test', Rule::required());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 'test',
@@ -23,7 +23,7 @@ trait RequiredTestTrait
     {
         $this->validator->add('test', Rule::required());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test is required.'],
             ],
@@ -37,7 +37,7 @@ trait RequiredTestTrait
     {
         $this->validator->add('test', Rule::required());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '0',
@@ -49,7 +49,7 @@ trait RequiredTestTrait
     {
         $this->validator->add('test', Rule::required());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test is required.'],
             ],

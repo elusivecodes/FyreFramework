@@ -14,7 +14,7 @@ trait ErrorTestTrait
         $entity->setError('test', 'error');
         $entity->clean();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $entity->getError('test')
         );
@@ -29,7 +29,7 @@ trait ErrorTestTrait
 
         $child->setError('test', 'error');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => [
                     'error',
@@ -46,7 +46,7 @@ trait ErrorTestTrait
         $entity->setError('test', 'error');
         $entity->setDirty('test', false);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'error',
             ],
@@ -63,7 +63,7 @@ trait ErrorTestTrait
 
         $child->setError('test', 'error');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'error',
             ],
@@ -78,7 +78,7 @@ trait ErrorTestTrait
         $entity->setError('test', 'error');
         $entity->setDirty('test');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $entity->getError('test')
         );
@@ -93,7 +93,7 @@ trait ErrorTestTrait
 
         $child->setError('test', 'error');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'error',
             ],
@@ -110,7 +110,7 @@ trait ErrorTestTrait
 
         $child->setError('test', 'error');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'test' => [
@@ -131,7 +131,7 @@ trait ErrorTestTrait
             'children' => [$child, null],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'error',
@@ -145,7 +145,7 @@ trait ErrorTestTrait
     {
         $entity = new Entity();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $entity->getError('child.test')
         );
@@ -157,7 +157,7 @@ trait ErrorTestTrait
 
         $entity->setError('test', 'error');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => [
                     'error',
@@ -176,7 +176,7 @@ trait ErrorTestTrait
 
         $child->setError('test', 'error');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'child' => [
                     'test' => [
@@ -197,7 +197,7 @@ trait ErrorTestTrait
 
         $child->setError('test', 'error');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'children' => [
                     [
@@ -282,7 +282,7 @@ trait ErrorTestTrait
             $entity->setError('test', 'error')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'error',
             ],
@@ -299,7 +299,7 @@ trait ErrorTestTrait
             'error2',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'error1',
                 'error2',
@@ -315,7 +315,7 @@ trait ErrorTestTrait
         $entity->setError('test', 'error1');
         $entity->setError('test', 'error2');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'error1',
                 'error2',
@@ -331,7 +331,7 @@ trait ErrorTestTrait
         $entity->setError('test', 'error1');
         $entity->setError('test', 'error2', true);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'error2',
             ],
@@ -350,7 +350,7 @@ trait ErrorTestTrait
             ])
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'error',
             ],
@@ -370,7 +370,7 @@ trait ErrorTestTrait
             'test' => 'error2',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'error1',
                 'error2',
@@ -391,7 +391,7 @@ trait ErrorTestTrait
             'test' => 'error2',
         ], true);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'error2',
             ],

@@ -14,7 +14,7 @@ trait PushTestTrait
             4,
             Arr::push($array, 4)
         );
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3, 4],
             $array
         );
@@ -27,7 +27,7 @@ trait PushTestTrait
             6,
             Arr::push($array, 4, 5, 6)
         );
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3, 4, 5, 6],
             $array
         );

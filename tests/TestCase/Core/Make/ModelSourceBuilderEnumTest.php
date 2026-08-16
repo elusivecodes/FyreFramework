@@ -19,7 +19,7 @@ final class ModelSourceBuilderEnumTest extends TestCase
             ' [enum] Draft, Published:published, Archived: '
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [[
                 'field' => 'status',
                 'className' => 'PostStatus',
@@ -37,7 +37,7 @@ final class ModelSourceBuilderEnumTest extends TestCase
         $column->method('getName')->willReturn('publication_state');
         $column->method('getComment')->willReturn('[enum] Draft, Published');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [[
                 'field' => 'publication_state',
                 'className' => 'PostPublicationState',
@@ -54,7 +54,7 @@ final class ModelSourceBuilderEnumTest extends TestCase
         $column = $this->createStub(Column::class);
         $column->method('getComment')->willReturn('[enum PublicationStatus] Draft');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $builder->inferEnums([$column], 'Post')
         );
@@ -66,7 +66,7 @@ final class ModelSourceBuilderEnumTest extends TestCase
         $column = $this->createStub(Column::class);
         $column->method('getComment')->willReturn('Not an enum');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $builder->inferEnums([$column], 'Post')
         );

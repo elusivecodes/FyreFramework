@@ -47,14 +47,14 @@ final class RequestTest extends TestCase
             $body->getContents()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value',
             ],
             $request->getHeader('test')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test.com',
             ],
@@ -175,7 +175,7 @@ final class RequestTest extends TestCase
             $request2
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'example.com',
             ],
@@ -196,7 +196,7 @@ final class RequestTest extends TestCase
             $request2
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test.com',
             ],

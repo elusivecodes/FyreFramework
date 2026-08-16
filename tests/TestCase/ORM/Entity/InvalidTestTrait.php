@@ -72,7 +72,7 @@ trait InvalidTestTrait
 
         $entity->setInvalid('test', 1);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => 1,
             ],

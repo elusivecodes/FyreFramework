@@ -29,7 +29,7 @@ trait ChangeColumnTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` CHANGE COLUMN `id` `id` INT(11) NOT NULL',
             ],
@@ -44,7 +44,7 @@ trait ChangeColumnTestTrait
 
     public function testChangeColumnSqlNewTable(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'CREATE TABLE `test` (`id` INT(11) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
             ],

@@ -9,7 +9,7 @@ trait FillTestTrait
 {
     public function testFill(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a', 'a', 'a'],
             Arr::fill(3, 'a')
         );

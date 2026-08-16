@@ -676,7 +676,7 @@ final class AccessTest extends TestCase
 
         $this->access->allows('test');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [2, 3, 1, 4, 5],
             $results
         );

@@ -33,7 +33,7 @@ trait DataTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => 'value',
             ],
@@ -51,7 +51,7 @@ trait DataTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 'value',
             ],
@@ -112,7 +112,7 @@ trait DataTestTrait
             ]),
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => 'value',
             ],
@@ -133,7 +133,7 @@ trait DataTestTrait
             ]),
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 'value',
             ],
@@ -205,7 +205,7 @@ trait DataTestTrait
             $request1->getParsedBody()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => 'value',
             ],

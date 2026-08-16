@@ -20,7 +20,7 @@ trait ShiftTestTrait
     {
         $array = [1, 2, 3];
         Arr::shift($array);
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [2, 3],
             $array
         );

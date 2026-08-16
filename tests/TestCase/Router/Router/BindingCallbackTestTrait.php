@@ -21,7 +21,7 @@ trait BindingCallbackTestTrait
             'item' => $callback,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'item' => $callback,
             ],
@@ -55,7 +55,7 @@ trait BindingCallbackTestTrait
             $route
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'item' => $routeCallback,
                 'post' => $groupCallback,

@@ -46,7 +46,7 @@ trait PlaceholderTestTrait
             $route->getAction()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 'test',
                 'b' => 'a',

@@ -70,7 +70,7 @@ final class SchemaTest extends TestCase
 
     public function testFieldNames(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'title',
                 'user_id',
@@ -83,7 +83,7 @@ final class SchemaTest extends TestCase
     {
         $fields = $this->schema->fields();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'title' => [
                     'name' => 'title',

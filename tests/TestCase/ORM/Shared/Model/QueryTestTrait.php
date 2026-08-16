@@ -128,7 +128,7 @@ trait QueryTestTrait
             $item
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'id' => 1,
             ],
@@ -245,7 +245,7 @@ trait QueryTestTrait
             $Items->saveMany($items)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Item $item): int|null => $item->id,
@@ -288,7 +288,7 @@ trait QueryTestTrait
             $Items->saveMany($items)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             range(1, 1000),
             array_map(
                 static fn(Item $item): int|null => $item->id,
@@ -326,7 +326,7 @@ trait QueryTestTrait
             $CompositeItems->saveMany($items)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'tenant_id' => 1,
@@ -516,7 +516,7 @@ trait QueryTestTrait
             $item
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'id' => 1,
                 'name' => 'Test 2',
@@ -579,7 +579,7 @@ trait QueryTestTrait
 
         $items = $Items->find()->toArray();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,
@@ -631,7 +631,7 @@ trait QueryTestTrait
 
         $items = $Items->find()->toArray();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             array_map(
                 static fn(int $i): string => 'Test '.$i,
                 range(1, 1000)

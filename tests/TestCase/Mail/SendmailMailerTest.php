@@ -26,7 +26,7 @@ final class SendmailMailerTest extends TestCase
             'className' => SendmailMailer::class,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '[class]' => SendmailMailer::class,
                 'config' => [

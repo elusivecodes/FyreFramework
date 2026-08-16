@@ -24,7 +24,7 @@ final class NullTest extends TestCase
 
     public function testDebug(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '[class]' => NullCacher::class,
                 'config' => [

@@ -34,7 +34,7 @@ trait AddColumnTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` ADD COLUMN `value` INT(11) NOT NULL AFTER `id`',
             ],
@@ -49,7 +49,7 @@ trait AddColumnTestTrait
 
     public function testAddColumnSqlNewTable(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'CREATE TABLE `test` (`id` INT(11) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
             ],

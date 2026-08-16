@@ -34,7 +34,7 @@ trait AddIndexTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` ADD INDEX `id` (`id`) USING BTREE',
             ],
@@ -47,7 +47,7 @@ trait AddIndexTestTrait
 
     public function testAddIndexSqlNewTable(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'CREATE TABLE `test` (`id` INT(11) NOT NULL, INDEX `id` (`id`) USING BTREE) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
             ],

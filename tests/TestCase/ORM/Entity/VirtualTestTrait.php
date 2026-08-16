@@ -16,7 +16,7 @@ trait VirtualTestTrait
             $entity
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test',
             ],
@@ -31,7 +31,7 @@ trait VirtualTestTrait
         $entity->setVirtual(['test1']);
         $entity->setVirtual(['test2'], true);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1',
                 'test2',
@@ -47,7 +47,7 @@ trait VirtualTestTrait
         $entity->setVirtual(['test1']);
         $entity->setVirtual(['test2']);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test2',
             ],
@@ -61,7 +61,7 @@ trait VirtualTestTrait
 
         $entity->setVirtual(['test']);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test',
             ],

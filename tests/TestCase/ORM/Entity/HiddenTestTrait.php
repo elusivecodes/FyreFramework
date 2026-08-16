@@ -16,7 +16,7 @@ trait HiddenTestTrait
             $entity->setHidden(['test'])
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test',
             ],
@@ -31,7 +31,7 @@ trait HiddenTestTrait
         $entity->setHidden(['test1']);
         $entity->setHidden(['test2'], true);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1',
                 'test2',
@@ -47,7 +47,7 @@ trait HiddenTestTrait
         $entity->set('test', 1);
         $entity->setHidden(['test']);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $entity->getVisible()
         );
@@ -60,7 +60,7 @@ trait HiddenTestTrait
         $entity->setHidden(['test1']);
         $entity->setHidden(['test2']);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test2',
             ],

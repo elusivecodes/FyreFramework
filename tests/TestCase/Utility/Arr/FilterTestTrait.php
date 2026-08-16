@@ -9,7 +9,7 @@ trait FilterTestTrait
 {
     public function testFilter(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1 => 1, 3 => 2, 4 => 3],
             Arr::filter([0, 1, '', 2, 3])
         );
@@ -17,7 +17,7 @@ trait FilterTestTrait
 
     public function testFilterWithCallback(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [2 => 3, 3 => 4, 4 => 5],
             Arr::filter([1, 2, 3, 4, 5], static fn(int $value): bool => $value > 2)
         );
@@ -25,7 +25,7 @@ trait FilterTestTrait
 
     public function testFilterWithMode(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [3 => 4, 4 => 5],
             Arr::filter([1, 2, 3, 4, 5], static fn(int $key): bool => $key > 2, Arr::FILTER_KEY)
         );

@@ -14,7 +14,7 @@ trait ReplyToTestTrait
             $this->email->addReplyTo('test2@test.com')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'test1@test.com',
                 'test2@test.com' => 'test2@test.com',
@@ -28,7 +28,7 @@ trait ReplyToTestTrait
         $this->email->setReplyTo('test1@test.com');
         $this->email->addReplyTo('test2');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'test1@test.com',
             ],
@@ -41,7 +41,7 @@ trait ReplyToTestTrait
         $this->email->setReplyTo('test1@test.com');
         $this->email->addReplyTo('test2@test.com', 'Test 2');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'test1@test.com',
                 'test2@test.com' => 'Test 2',
@@ -127,7 +127,7 @@ trait ReplyToTestTrait
             $this->email->setReplyTo('test1@test.com')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'test1@test.com',
             ],
@@ -141,7 +141,7 @@ trait ReplyToTestTrait
             'test1@test.com' => 'Test 1',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'Test 1',
             ],
@@ -153,7 +153,7 @@ trait ReplyToTestTrait
     {
         $this->email->setReplyTo('test1');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->email->getReplyTo()
         );
@@ -166,7 +166,7 @@ trait ReplyToTestTrait
             'test2@test.com' => 'Test 2',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'Test 1',
                 'test2@test.com' => 'Test 2',

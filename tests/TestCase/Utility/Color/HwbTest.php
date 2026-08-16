@@ -89,7 +89,7 @@ final class HwbTest extends TestCase
     {
         $color = Hwb::createFromString('lavender');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'hue' => 240.0,
                 'whiteness' => 90.19607843137256,

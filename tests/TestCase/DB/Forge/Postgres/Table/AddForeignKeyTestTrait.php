@@ -59,7 +59,7 @@ trait AddForeignKeyTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE "test" ADD CONSTRAINT "value_id" FOREIGN KEY ("value_id") REFERENCES "test_values" ("id") DEFERRABLE INITIALLY IMMEDIATE',
             ],
@@ -75,7 +75,7 @@ trait AddForeignKeyTestTrait
 
     public function testAddForeignKeySqlNewTable(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'CREATE TABLE "test" ("id" INTEGER NOT NULL, "value_id" INTEGER NOT NULL, CONSTRAINT "value_id" FOREIGN KEY ("value_id") REFERENCES "test_values" ("id") DEFERRABLE INITIALLY IMMEDIATE)',
             ],

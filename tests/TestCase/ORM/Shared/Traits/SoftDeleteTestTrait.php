@@ -134,7 +134,7 @@ trait SoftDeleteTestTrait
             $Users->delete($users[0])
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1],
             $Users->findOnlyDeleted(
                 conditions: static fn(Query $query): ConditionExpression => $query->expr()
@@ -172,7 +172,7 @@ trait SoftDeleteTestTrait
             $Users->find()->count()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             $Users->findWithDeleted(
                 conditions: static fn(Query $query): ConditionExpression => $query->expr()
@@ -219,7 +219,7 @@ trait SoftDeleteTestTrait
             $Posts->delete($users[0]->posts[0])
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [2],
             $Users->find()
                 ->innerJoinWith('Posts')
@@ -229,7 +229,7 @@ trait SoftDeleteTestTrait
                 ->toArray()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             $Users->findWithDeleted()
                 ->innerJoinWith('Posts')
@@ -268,7 +268,7 @@ trait SoftDeleteTestTrait
             $Addresses->delete($users[0]->address)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [null, 2],
             $Users->find()
                 ->contain('Addresses')
@@ -282,7 +282,7 @@ trait SoftDeleteTestTrait
                 ->toArray()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             $Users->findWithDeleted()
                 ->contain('Addresses')
@@ -318,7 +318,7 @@ trait SoftDeleteTestTrait
             $Users->purge($users[0])
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [2],
             $Users->find(deleted: true)
                 ->all()
@@ -398,7 +398,7 @@ trait SoftDeleteTestTrait
             $Users->find()->count()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             $Users->find()
                 ->orderBy(['id' => 'ASC'])
@@ -448,7 +448,7 @@ trait SoftDeleteTestTrait
             $Users->find()->count()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             $Users->find()
                 ->orderBy(['id' => 'ASC'])

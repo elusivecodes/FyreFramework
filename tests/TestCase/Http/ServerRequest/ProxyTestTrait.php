@@ -143,12 +143,12 @@ trait ProxyTestTrait
 
         $request2 = new ServerRequest($this->config, $this->type);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $request1->getTrustedProxies()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['127.0.0.1'],
             $request2->getTrustedProxies()
         );

@@ -89,7 +89,7 @@ final class HexTest extends TestCase
     {
         $color = Hex::createFromString('lavender');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'red' => 230.0,
                 'green' => 230.0,

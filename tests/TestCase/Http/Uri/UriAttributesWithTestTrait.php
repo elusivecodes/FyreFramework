@@ -243,7 +243,7 @@ trait UriAttributesWithTestTrait
             $uri2
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => 'a',
             ],

@@ -77,7 +77,7 @@ trait DiffTestTrait
             'value' => [],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'DROP INDEX "value"',
                 'CREATE UNIQUE INDEX "value" ON "test" ("value")',
@@ -138,7 +138,7 @@ trait DiffTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->forge
                 ->build('test')
@@ -187,7 +187,7 @@ trait DiffTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE "test" ADD COLUMN "value1" VARCHAR(80) NOT NULL',
             ],
@@ -263,7 +263,7 @@ trait DiffTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'CREATE INDEX "value" ON "test" ("value")',
             ],
@@ -321,7 +321,7 @@ trait DiffTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE "test" DROP COLUMN "value"',
             ],
@@ -393,7 +393,7 @@ trait DiffTestTrait
             'value' => [],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'DROP INDEX "value"',
             ],

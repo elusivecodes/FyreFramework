@@ -26,7 +26,7 @@ trait AddColumnTestTrait
             'comment' => 'This is the value',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'character varying',
@@ -60,7 +60,7 @@ trait AddColumnTestTrait
             'default' => 1,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'integer',
@@ -94,7 +94,7 @@ trait AddColumnTestTrait
             'length' => 255,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'character varying',
@@ -128,7 +128,7 @@ trait AddColumnTestTrait
             'nullable' => true,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'integer',
@@ -162,7 +162,7 @@ trait AddColumnTestTrait
             'scale' => 2,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'numeric',
@@ -196,7 +196,7 @@ trait AddColumnTestTrait
             'precision' => 20,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'bigint',
@@ -229,7 +229,7 @@ trait AddColumnTestTrait
             'type' => BinaryType::class,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'bytea',
@@ -263,7 +263,7 @@ trait AddColumnTestTrait
             'length' => 1,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'character',
@@ -296,7 +296,7 @@ trait AddColumnTestTrait
             'type' => IntegerType::class,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'integer',
@@ -331,7 +331,7 @@ trait AddColumnTestTrait
             'scale' => 2,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'numeric',
@@ -364,7 +364,7 @@ trait AddColumnTestTrait
             'type' => FloatType::class,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'real',
@@ -399,7 +399,7 @@ trait AddColumnTestTrait
             'precision' => 6,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'smallint',
@@ -432,7 +432,7 @@ trait AddColumnTestTrait
             'type' => TextType::class,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'text',
@@ -465,7 +465,7 @@ trait AddColumnTestTrait
             'type' => DateTimeFractionalType::class,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'timestamp without time zone',

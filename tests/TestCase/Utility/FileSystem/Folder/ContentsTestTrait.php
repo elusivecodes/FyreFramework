@@ -14,7 +14,7 @@ trait ContentsTestTrait
     {
         $folder = new Folder('tmp/test', true);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $folder->contents()
         );

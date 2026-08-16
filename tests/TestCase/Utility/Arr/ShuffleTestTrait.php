@@ -15,7 +15,7 @@ trait ShuffleTestTrait
         for ($i = 0; $i < 1000; $i++) {
             $shuffled = Arr::shuffle($array);
             $sorted = Arr::sort($shuffled, Arr::SORT_NUMERIC);
-            $this->assertSame($array, $sorted);
+            $this->assertArraysAreIdentical($array, $sorted);
             $arrays[] = Arr::join(
                 Arr::map($shuffled, static fn(float|int|string $value): string => (string) $value)
             );

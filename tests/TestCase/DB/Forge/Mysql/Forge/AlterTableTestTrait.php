@@ -19,7 +19,7 @@ trait AlterTableTestTrait
             'engine' => 'MyISAM',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'test',
                 'engine' => 'MyISAM',

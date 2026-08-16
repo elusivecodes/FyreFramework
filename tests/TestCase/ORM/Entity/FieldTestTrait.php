@@ -37,7 +37,7 @@ trait FieldTestTrait
             'test3' => 3,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test2' => 2,
                 'test3' => 3,
@@ -50,7 +50,7 @@ trait FieldTestTrait
     {
         $entity = new Entity();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'invalid' => null,
             ],
@@ -93,7 +93,7 @@ trait FieldTestTrait
             ], original: true)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1',
                 'test2',
@@ -219,7 +219,7 @@ trait FieldTestTrait
             $entity->set('test', 2, original: true)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test',
             ],

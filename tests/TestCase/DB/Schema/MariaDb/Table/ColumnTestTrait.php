@@ -97,7 +97,7 @@ trait ColumnTestTrait
 
     public function testColumnNames(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'id',
                 'name',

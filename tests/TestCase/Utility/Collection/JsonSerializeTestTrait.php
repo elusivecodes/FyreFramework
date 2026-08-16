@@ -11,7 +11,7 @@ trait JsonSerializeTestTrait
     {
         $collection = new Collection(['a' => 1, 'b' => ['c' => 2]]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a' => 1, 'b' => ['c' => 2]],
             $collection->jsonSerialize()
         );
@@ -21,7 +21,7 @@ trait JsonSerializeTestTrait
     {
         $collection = new Collection(['a' => 1, 'b' => new Collection(['c' => 2])]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a' => 1, 'b' => ['c' => 2]],
             $collection->jsonSerialize()
         );

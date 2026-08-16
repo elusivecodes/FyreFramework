@@ -61,7 +61,7 @@ trait ReturnPathTestTrait
             $this->email->setReturnPath('test1@test.com')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'test1@test.com',
             ],
@@ -73,7 +73,7 @@ trait ReturnPathTestTrait
     {
         $this->email->setReturnPath('test1');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->email->getReturnPath()
         );
@@ -83,7 +83,7 @@ trait ReturnPathTestTrait
     {
         $this->email->setReturnPath('test1@test.com', 'Test 1');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'Test 1',
             ],

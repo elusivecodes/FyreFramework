@@ -64,7 +64,7 @@ trait DropForeignKeyTestTrait
 
     public function testDropForeignKeySqlNewTable(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'CREATE TABLE "test" ("id" INTEGER NOT NULL, "value_id" INTEGER NOT NULL)',
             ],

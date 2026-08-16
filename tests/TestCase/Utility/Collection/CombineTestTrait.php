@@ -20,7 +20,7 @@ trait CombineTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1 => 'a', 2 => 'b'],
             $collection->combine('id', 'value')->toArray()
         );
@@ -39,7 +39,7 @@ trait CombineTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1 => 'a', 2 => 'b'],
             $collection->combine(
                 static fn(array $item, int $key): int => $item['id'],
@@ -65,7 +65,7 @@ trait CombineTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1 => 'a', 2 => 'b'],
             $collection->combine('data.id', 'data.value')->toArray()
         );
@@ -84,7 +84,7 @@ trait CombineTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 1 => [
                     'id' => 1,

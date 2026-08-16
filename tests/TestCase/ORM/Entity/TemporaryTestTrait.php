@@ -16,7 +16,7 @@ trait TemporaryTestTrait
         ]);
         $entity->clean();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $entity->getTemporaryFields()
         );
@@ -40,7 +40,7 @@ trait TemporaryTestTrait
             $entity->hasOriginal('test')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $entity->getTemporaryFields()
         );
@@ -61,7 +61,7 @@ trait TemporaryTestTrait
             $entity->hasOriginal('test')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $entity->getTemporaryFields()
         );
@@ -78,7 +78,7 @@ trait TemporaryTestTrait
             ])
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test',
             ],
@@ -93,7 +93,7 @@ trait TemporaryTestTrait
 
         $entity->setTemporaryFields(['test2'], true);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['test2'],
             $entity->getTemporaryFields()
         );

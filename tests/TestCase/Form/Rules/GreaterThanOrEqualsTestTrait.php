@@ -11,7 +11,7 @@ trait GreaterThanOrEqualsTestTrait
     {
         $this->validator->add('test', Rule::greaterThanOrEquals(2));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 3,
@@ -23,7 +23,7 @@ trait GreaterThanOrEqualsTestTrait
     {
         $this->validator->add('test', Rule::greaterThanOrEquals(2));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be greater than or equal to 2.'],
             ],
@@ -37,7 +37,7 @@ trait GreaterThanOrEqualsTestTrait
     {
         $this->validator->add('test', Rule::greaterThanOrEquals(2));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -49,7 +49,7 @@ trait GreaterThanOrEqualsTestTrait
     {
         $this->validator->add('test', Rule::greaterThanOrEquals(2));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 2,
@@ -61,7 +61,7 @@ trait GreaterThanOrEqualsTestTrait
     {
         $this->validator->add('test', Rule::greaterThanOrEquals(2));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );

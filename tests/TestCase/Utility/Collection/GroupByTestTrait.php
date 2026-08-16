@@ -40,7 +40,7 @@ trait GroupByTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 2 => [
                     [
@@ -118,7 +118,7 @@ trait GroupByTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 2 => [
                     [
@@ -210,7 +210,7 @@ trait GroupByTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 2 => [
                     [

@@ -112,7 +112,7 @@ final class AsyncPromiseTest extends TestCase
                 'first' => $promise1,
                 'second' => $promise2,
             ])->then(function(array $values): void {
-                $this->assertSame(
+                $this->assertArraysAreIdentical(
                     [
                         'first' => 1,
                         'second' => 2,
@@ -289,7 +289,7 @@ final class AsyncPromiseTest extends TestCase
 
             socket_write($parentSocket, '11');
 
-            $this->assertSame(
+            $this->assertArraysAreIdentical(
                 [1, 2],
                 Promise::all([$promise1, $promise2]) |> Promise::await(...)
             );
@@ -537,7 +537,7 @@ final class AsyncPromiseTest extends TestCase
             'value' => $value,
         ];
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             $expected,
             $actual
         );
@@ -561,7 +561,7 @@ final class AsyncPromiseTest extends TestCase
 
         $promise->wait();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             $results
         );

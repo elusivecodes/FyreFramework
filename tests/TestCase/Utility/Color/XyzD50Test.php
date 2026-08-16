@@ -89,7 +89,7 @@ final class XyzD50Test extends TestCase
     {
         $color = XyzD50::createFromString('lavender');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'x' => 0.786547072272965,
                 'y' => 0.801280203622004,

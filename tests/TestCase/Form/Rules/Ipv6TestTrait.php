@@ -11,7 +11,7 @@ trait Ipv6TestTrait
     {
         $this->validator->add('test', Rule::ipv6());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
@@ -23,7 +23,7 @@ trait Ipv6TestTrait
     {
         $this->validator->add('test', Rule::ipv6());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -35,7 +35,7 @@ trait Ipv6TestTrait
     {
         $this->validator->add('test', Rule::ipv6());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be a valid IPv6 address.'],
             ],
@@ -49,7 +49,7 @@ trait Ipv6TestTrait
     {
         $this->validator->add('test', Rule::ipv6());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );
@@ -59,7 +59,7 @@ trait Ipv6TestTrait
     {
         $this->validator->add('test', Rule::ipv6());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be a valid IPv6 address.'],
             ],

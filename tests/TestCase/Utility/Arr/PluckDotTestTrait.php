@@ -9,7 +9,7 @@ trait PluckDotTestTrait
 {
     public function testPluckDot(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 3],
             Arr::pluckDot([['b' => ['d' => 1]], ['b' => ['d' => 3]]], 'b.d')
         );
@@ -17,7 +17,7 @@ trait PluckDotTestTrait
 
     public function testPluckDotMissing(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, null],
             Arr::pluckDot([['b' => ['d' => 1]], ['b' => 0]], 'b.d')
         );

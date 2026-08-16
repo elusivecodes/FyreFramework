@@ -94,7 +94,7 @@ final class StreamTest extends TestCase
     {
         $stream = Stream::createFromString('This is a test.');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'wrapper_type' => 'PHP',
                 'stream_type' => 'TEMP',

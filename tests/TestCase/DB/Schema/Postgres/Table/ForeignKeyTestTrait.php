@@ -22,7 +22,7 @@ trait ForeignKeyTestTrait
             $foreignKey->getName()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test_id',
             ],
@@ -34,7 +34,7 @@ trait ForeignKeyTestTrait
             $foreignKey->getReferencedTable()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'id',
             ],
@@ -70,7 +70,7 @@ trait ForeignKeyTestTrait
 
         $this->assertInstanceOf(Collection::class, $foreignKeys);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test_values_test_id' => [
                     'name' => 'test_values_test_id',

@@ -9,7 +9,7 @@ trait MapTestTrait
 {
     public function testMap(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [2, 4, 6],
             Arr::map([1, 2, 3], static fn(int $value): int => $value * 2)
         );
@@ -17,7 +17,7 @@ trait MapTestTrait
 
     public function testMapWithKey(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 4, 6],
             Arr::map([1, 2, 3], static fn(int $value, int $key): int => $key > 0 ? $value * 2 : $value)
         );

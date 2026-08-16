@@ -74,7 +74,7 @@ final class UserAgentTest extends TestCase
     {
         $userAgent = UserAgent::createFromString($agent);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             $expected,
             [
                 'agent' => $userAgent->getAgentString(),

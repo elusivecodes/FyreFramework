@@ -11,7 +11,7 @@ trait RecipientTestTrait
         $this->email->setCc('test2@test.com');
         $this->email->setBcc('test3@test.com');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'test1@test.com',
                 'test2@test.com' => 'test2@test.com',

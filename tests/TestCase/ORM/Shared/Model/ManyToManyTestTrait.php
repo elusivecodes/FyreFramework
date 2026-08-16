@@ -46,7 +46,7 @@ trait ManyToManyTestTrait
             $Posts->save($post)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [[1, 1], [1, 2]],
             $this->modelRegistry->use('PostsTags')
                 ->find()
@@ -110,7 +110,7 @@ trait ManyToManyTestTrait
             $Posts->saveMany($posts)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [[1, 1], [2, 2], [1, 3], [2, 4]],
             $this->modelRegistry->use('PostsTags')
                 ->find()
@@ -255,7 +255,7 @@ trait ManyToManyTestTrait
             $post->id
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Tag $tag): int|null => $tag->id,
@@ -263,7 +263,7 @@ trait ManyToManyTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Tag $tag): int|null => $tag->_joinData->id,
@@ -355,7 +355,7 @@ trait ManyToManyTestTrait
             $post->id
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [2],
             array_map(
                 static fn(Tag $tag): int|null => $tag->id,
@@ -363,7 +363,7 @@ trait ManyToManyTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [2],
             array_map(
                 static fn(Tag $tag): int|null => $tag->_joinData->id,
@@ -443,7 +443,7 @@ trait ManyToManyTestTrait
             ->orderBy('Posts.id')
             ->toArray();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [1],
                 [3],
@@ -489,7 +489,7 @@ trait ManyToManyTestTrait
 
         $tags = $Posts->Tags->findRelated([$post])->toArray();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Tag $tag): int|null => $tag->id,
@@ -497,7 +497,7 @@ trait ManyToManyTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Tag $tag): int|null => $tag->_joinData->id,
@@ -531,7 +531,7 @@ trait ManyToManyTestTrait
         $Posts = $this->modelRegistry->use('Posts');
         $post = $Posts->newEmptyEntity();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $Posts->Tags->findRelated([$post])->toArray()
         );
@@ -619,7 +619,7 @@ trait ManyToManyTestTrait
             $post->id
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Tag $tag): int|null => $tag->id,
@@ -689,7 +689,7 @@ trait ManyToManyTestTrait
             $Posts->saveMany($posts)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Post $post): int|null => $post->id,
@@ -697,7 +697,7 @@ trait ManyToManyTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [1, 2],
                 [3, 4],
@@ -810,7 +810,7 @@ trait ManyToManyTestTrait
             $post->id
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Tag $tag): int|null => $tag->id,
@@ -818,7 +818,7 @@ trait ManyToManyTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Tag $tag): int|null => $tag->_joinData->id,
@@ -826,7 +826,7 @@ trait ManyToManyTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [11, 22],
             array_map(
                 static fn(Tag $tag): int|null => $tag->_joinData->value,
@@ -904,7 +904,7 @@ trait ManyToManyTestTrait
 
         $Posts->Tags->loadRelated([$post]);
 
-        $this->assertSame([], $post->tags);
+        $this->assertArraysAreIdentical([], $post->tags);
     }
 
     public function testManyToManyLoadRelatedEmptyClean(): void
@@ -1011,7 +1011,7 @@ trait ManyToManyTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $post->tags
         );
@@ -1163,7 +1163,7 @@ trait ManyToManyTestTrait
             $Posts->save($post)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [[$joinId, 1, 1, 33]],
             $this->modelRegistry->use('PostsTags')
                 ->find()
@@ -1226,7 +1226,7 @@ trait ManyToManyTestTrait
             $post->id
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [2, 1],
             array_map(
                 static fn(Tag $tag): int|null => $tag->id,
@@ -1234,7 +1234,7 @@ trait ManyToManyTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [2, 1],
             array_map(
                 static fn(Tag $tag): int|null => $tag->_joinData->id,
@@ -1339,7 +1339,7 @@ trait ManyToManyTestTrait
             $post->id
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Tag $tag): int|null => $tag->id,
@@ -1347,7 +1347,7 @@ trait ManyToManyTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Tag $tag): int|null => $tag->_joinData->id,
@@ -1439,7 +1439,7 @@ trait ManyToManyTestTrait
             $post->id
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Tag $tag): int|null => $tag->id,
@@ -1447,7 +1447,7 @@ trait ManyToManyTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Tag $tag): int|null => $tag->_joinData->id,

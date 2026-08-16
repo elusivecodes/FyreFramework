@@ -11,7 +11,7 @@ trait Ipv4TestTrait
     {
         $this->validator->add('test', Rule::ipv4());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '1.1.1.1',
@@ -23,7 +23,7 @@ trait Ipv4TestTrait
     {
         $this->validator->add('test', Rule::ipv4());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -35,7 +35,7 @@ trait Ipv4TestTrait
     {
         $this->validator->add('test', Rule::ipv4());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be a valid IPv4 address.'],
             ],
@@ -49,7 +49,7 @@ trait Ipv4TestTrait
     {
         $this->validator->add('test', Rule::ipv4());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );
@@ -59,7 +59,7 @@ trait Ipv4TestTrait
     {
         $this->validator->add('test', Rule::ipv4());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be a valid IPv4 address.'],
             ],

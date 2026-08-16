@@ -33,7 +33,7 @@ trait AddIndexTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'CREATE INDEX "id" ON "test" ("id")',
             ],
@@ -46,7 +46,7 @@ trait AddIndexTestTrait
 
     public function testAddIndexSqlNewTable(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'CREATE TABLE "test" ("id" INTEGER NOT NULL)',
                 'CREATE INDEX "id" ON "test" ("id")',

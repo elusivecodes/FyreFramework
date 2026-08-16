@@ -40,7 +40,7 @@ trait IndexTestTrait
             $index->getName()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name',
             ],
@@ -68,7 +68,7 @@ trait IndexTestTrait
 
         $this->assertInstanceOf(Collection::class, $indexes);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'primary' => [
                     'name' => 'primary',

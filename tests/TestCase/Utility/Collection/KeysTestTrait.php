@@ -11,7 +11,7 @@ trait KeysTestTrait
     {
         $collection = new Collection(['a' => 1, 'b' => 2, 'c' => 3]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a', 'b', 'c'],
             $collection->keys()->toArray()
         );

@@ -25,7 +25,7 @@ trait DiffDefaultsTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->forge
                 ->build('test')
@@ -46,7 +46,7 @@ trait DiffDefaultsTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->forge
                 ->build('test')
@@ -66,7 +66,7 @@ trait DiffDefaultsTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->forge
                 ->build('test')
@@ -87,7 +87,7 @@ trait DiffDefaultsTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->forge
                 ->build('test')
@@ -108,7 +108,7 @@ trait DiffDefaultsTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->forge
                 ->build('test')
@@ -128,7 +128,7 @@ trait DiffDefaultsTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->forge
                 ->build('test')
@@ -148,7 +148,7 @@ trait DiffDefaultsTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->forge
                 ->build('test')
@@ -168,7 +168,7 @@ trait DiffDefaultsTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->forge
                 ->build('test')
@@ -188,7 +188,7 @@ trait DiffDefaultsTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->forge
                 ->build('test')
@@ -209,7 +209,7 @@ trait DiffDefaultsTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->forge
                 ->build('test')
@@ -230,7 +230,7 @@ trait DiffDefaultsTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->forge
                 ->build('test')
@@ -250,7 +250,7 @@ trait DiffDefaultsTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->forge
                 ->build('test')
@@ -270,7 +270,7 @@ trait DiffDefaultsTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->forge
                 ->build('test')

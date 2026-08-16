@@ -42,7 +42,7 @@ trait AddForeignKeyTestTrait
                 ->hasForeignKey('value_id')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value_id',
                 'columns' => ['value_id'],

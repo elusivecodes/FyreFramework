@@ -20,7 +20,7 @@ trait DotTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '0.id' => 1,
                 '0.value' => 'a',
@@ -48,7 +48,7 @@ trait DotTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '0.data.id' => 1,
                 '0.data.value' => 'a',

@@ -9,7 +9,7 @@ trait FlipTestTrait
 {
     public function testFlip(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 1 => 0,
                 2 => 1,

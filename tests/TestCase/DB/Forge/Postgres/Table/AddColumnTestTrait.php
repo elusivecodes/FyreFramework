@@ -34,7 +34,7 @@ trait AddColumnTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE "test" ADD COLUMN "value" INTEGER NOT NULL',
             ],
@@ -49,7 +49,7 @@ trait AddColumnTestTrait
 
     public function testAddColumnSqlNewTable(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'CREATE TABLE "test" ("id" INTEGER NOT NULL)',
             ],

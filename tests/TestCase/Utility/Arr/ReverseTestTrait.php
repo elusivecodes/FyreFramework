@@ -9,7 +9,7 @@ trait ReverseTestTrait
 {
     public function testReverse(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [3, 2, 1],
             Arr::reverse([1, 2, 3])
         );

@@ -25,7 +25,7 @@ final class PolicyRegistryTest extends TestCase
 
         $this->policyRegistry->clear();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->policyRegistry->getNamespaces()
         );
@@ -45,7 +45,7 @@ final class PolicyRegistryTest extends TestCase
 
     public function testGetNamespaces(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'Tests\Mock\Policies\\',
             ],

@@ -43,7 +43,7 @@ final class MemcachedTest extends TestCase
     {
         $data = $this->cacher->__debugInfo();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '[class]' => MemcachedCacher::class,
                 'config' => [

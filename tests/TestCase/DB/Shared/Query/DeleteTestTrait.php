@@ -25,7 +25,7 @@ trait DeleteTestTrait
             ])
             ->execute();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->db->select()
                 ->from('test')

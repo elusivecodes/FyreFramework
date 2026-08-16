@@ -264,7 +264,7 @@ trait MagicTestTrait
             'test' => 1,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => 1,
             ],
@@ -281,7 +281,7 @@ trait MagicTestTrait
             'child' => $child,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'child' => [
                     'test' => 1,
@@ -300,7 +300,7 @@ trait MagicTestTrait
             'children' => [$child],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'children' => [
                     [
@@ -318,7 +318,7 @@ trait MagicTestTrait
             'values' => [1, 2],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'values' => [1, 2],
             ],
@@ -333,7 +333,7 @@ trait MagicTestTrait
             'uri' => $uri,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'uri' => 'https://example.com',
             ],

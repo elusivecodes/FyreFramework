@@ -28,7 +28,7 @@ final class ValidatorTest extends TestCase
             return $value === 'test';
         });
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 'test',
@@ -42,7 +42,7 @@ final class ValidatorTest extends TestCase
             return $data['test'] === 'test';
         });
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 'test',
@@ -56,7 +56,7 @@ final class ValidatorTest extends TestCase
             return 'error';
         });
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['error'],
             ],
@@ -72,7 +72,7 @@ final class ValidatorTest extends TestCase
             return $value === 'test';
         });
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['invalid'],
             ],
@@ -88,7 +88,7 @@ final class ValidatorTest extends TestCase
 
         $this->validator->clear();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->getFieldRules('test')
         );
@@ -108,7 +108,7 @@ final class ValidatorTest extends TestCase
             return false;
         }, message: 'error');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['error'],
             ],
@@ -146,7 +146,7 @@ final class ValidatorTest extends TestCase
         $this->validator->add('test', Rule::naturalNumber(), message: 'natural number');
         $this->validator->add('test', Rule::greaterThan(1), message: 'greater than 1');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => [
                     'natural number',
@@ -165,7 +165,7 @@ final class ValidatorTest extends TestCase
         $this->validator->add('test', Rule::greaterThan(1), message: 'error');
         $this->validator->add('test', Rule::lessThan(0), message: 'other error');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => [
                     'error',
@@ -183,7 +183,7 @@ final class ValidatorTest extends TestCase
         $this->validator->add('test1', Rule::required());
         $this->validator->add('test2', Rule::required());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1' => ['The test1 is required.'],
                 'test2' => ['The test2 is required.'],
@@ -198,7 +198,7 @@ final class ValidatorTest extends TestCase
             return false;
         }, on: 'create');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['invalid'],
             ],
@@ -214,7 +214,7 @@ final class ValidatorTest extends TestCase
             return false;
         }, on: 'create');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 'test',
@@ -275,7 +275,7 @@ final class ValidatorTest extends TestCase
             return false;
         }, skipEmpty: false));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['invalid'],
             ],
@@ -291,7 +291,7 @@ final class ValidatorTest extends TestCase
             return false;
         }, skipEmpty: false, skipNotSet: false));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['invalid'],
             ],

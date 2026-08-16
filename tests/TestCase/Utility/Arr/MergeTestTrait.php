@@ -9,7 +9,7 @@ trait MergeTestTrait
 {
     public function testMerge(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3, 4],
             Arr::merge([1, 2], [3, 4])
         );
@@ -17,7 +17,7 @@ trait MergeTestTrait
 
     public function testMergeAssoc(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a' => 1, 'b' => 3, 'c' => 4],
             Arr::merge(['a' => 1, 'b' => 2], ['b' => 3, 'c' => 4])
         );
@@ -25,7 +25,7 @@ trait MergeTestTrait
 
     public function testMergeNArgs(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3, 4, 5, 6],
             Arr::merge([1, 2], [3, 4], [5, 6])
         );

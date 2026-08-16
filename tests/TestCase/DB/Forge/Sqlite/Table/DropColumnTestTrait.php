@@ -29,7 +29,7 @@ trait DropColumnTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE "test" DROP COLUMN "value"',
             ],
@@ -42,7 +42,7 @@ trait DropColumnTestTrait
 
     public function testDropColumnSqlNewTable(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'CREATE TABLE "test" ("id" INTEGER NOT NULL)',
             ],

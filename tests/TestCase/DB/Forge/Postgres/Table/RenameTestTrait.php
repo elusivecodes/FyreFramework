@@ -15,7 +15,7 @@ trait RenameTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE "test" RENAME TO "other"',
             ],
@@ -28,7 +28,7 @@ trait RenameTestTrait
 
     public function testRenameSqlNewTable(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'CREATE TABLE "other" ("id" INTEGER NOT NULL)',
             ],

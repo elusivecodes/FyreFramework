@@ -40,7 +40,7 @@ trait IndexByTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 1 => [
                     'id' => 1,
@@ -108,7 +108,7 @@ trait IndexByTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 1 => [
                     'id' => 1,
@@ -190,7 +190,7 @@ trait IndexByTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 1 => [
                     'data' => [

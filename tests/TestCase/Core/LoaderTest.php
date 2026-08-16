@@ -46,7 +46,7 @@ final class LoaderTest extends TestCase
             'Test\Deep\Another' => 'files/Deep/Another.php',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'Test\Example' => Path::resolve('other/classes/Example.php'),
                 'Test\Deep\Another' => Path::resolve('files/Deep/Another.php'),
@@ -65,7 +65,7 @@ final class LoaderTest extends TestCase
             ])
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 Path::resolve('tests/Mock/Core/Loader/Demo'),
             ],
@@ -75,7 +75,7 @@ final class LoaderTest extends TestCase
 
     public function testGetNamespaceInvalid(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->loader->getNamespace('Demo')
         );
@@ -92,7 +92,7 @@ final class LoaderTest extends TestCase
             'Test' => 'tests/',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 Path::resolve('tests'),
                 Path::resolve('other/classes'),
@@ -109,7 +109,7 @@ final class LoaderTest extends TestCase
             'Demo' => 'tests/Mock/Core/Loader/Demo',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'Test\\' => [
                     Path::resolve('tests'),
@@ -216,7 +216,7 @@ final class LoaderTest extends TestCase
             $this->loader->removeClass('Test\Example')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'Test\Deep\Another' => Path::resolve('files/Deep/Another.php'),
             ],

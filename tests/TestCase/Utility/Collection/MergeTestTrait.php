@@ -11,7 +11,7 @@ trait MergeTestTrait
     {
         $collection = new Collection([1, 2, 3]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3, 4, 5, 6],
             $collection->merge([4, 5, 6])->toArray()
         );
@@ -22,7 +22,7 @@ trait MergeTestTrait
         $collection1 = new Collection([1, 2, 3]);
         $collection2 = new Collection([4, 5, 6]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3, 4, 5, 6],
             $collection1->merge($collection2)->toArray()
         );
@@ -32,7 +32,7 @@ trait MergeTestTrait
     {
         $collection = new Collection([1, 2, 3]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3, 4, 5, 6, 7, 8, 9],
             $collection->merge([4, 5, 6], [7, 8, 9])->toArray()
         );

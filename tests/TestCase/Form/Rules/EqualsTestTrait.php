@@ -11,7 +11,7 @@ trait EqualsTestTrait
     {
         $this->validator->add('test', Rule::equals('test'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 'test',
@@ -23,7 +23,7 @@ trait EqualsTestTrait
     {
         $this->validator->add('test', Rule::equals('2'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be equal to 2.'],
             ],
@@ -37,7 +37,7 @@ trait EqualsTestTrait
     {
         $this->validator->add('test', Rule::equals('2'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be equal to 2.'],
             ],
@@ -51,7 +51,7 @@ trait EqualsTestTrait
     {
         $this->validator->add('test', Rule::equals('2'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -63,7 +63,7 @@ trait EqualsTestTrait
     {
         $this->validator->add('test', Rule::equals('2'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '2',
@@ -75,7 +75,7 @@ trait EqualsTestTrait
     {
         $this->validator->add('test', Rule::equals('2'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be equal to 2.'],
             ],
@@ -89,7 +89,7 @@ trait EqualsTestTrait
     {
         $this->validator->add('test', Rule::equals('2'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );

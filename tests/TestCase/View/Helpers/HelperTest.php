@@ -44,7 +44,7 @@ final class HelperTest extends TestCase
             $helper
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value' => 1,
             ],

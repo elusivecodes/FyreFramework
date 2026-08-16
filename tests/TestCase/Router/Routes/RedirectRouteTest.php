@@ -32,7 +32,7 @@ final class RedirectRouteTest extends TestCase
             'destination' => 'https://test.com/',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $route->getParameters()
         );
@@ -72,7 +72,7 @@ final class RedirectRouteTest extends TestCase
             $request
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 'a',
                 'b' => '1',

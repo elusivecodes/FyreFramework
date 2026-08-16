@@ -15,7 +15,7 @@ trait TableTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'COMMENT ON TABLE "test" IS \'This is the value\'',
             ],
@@ -29,7 +29,7 @@ trait TableTestTrait
 
     public function testOptionsNewTable(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'CREATE TABLE "test" ("id" INTEGER NOT NULL)',
                 'COMMENT ON TABLE "test" IS \'This is the value\'',

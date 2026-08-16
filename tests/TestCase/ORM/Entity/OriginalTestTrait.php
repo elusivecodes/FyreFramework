@@ -47,7 +47,7 @@ trait OriginalTestTrait
 
         $entity->set('test2', 4);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test2' => 2,
                 'test3' => 3,
@@ -66,7 +66,7 @@ trait OriginalTestTrait
 
         $entity->set('test2', 4);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test2' => 2,
             ],
@@ -78,7 +78,7 @@ trait OriginalTestTrait
     {
         $entity = new Entity();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $entity->extractOriginalChanged(['invalid'])
         );
@@ -90,7 +90,7 @@ trait OriginalTestTrait
             'test' => 1,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => 1,
             ],
@@ -102,7 +102,7 @@ trait OriginalTestTrait
     {
         $entity = new Entity();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $entity->extractOriginal(['invalid'])
         );
@@ -144,7 +144,7 @@ trait OriginalTestTrait
         ]);
         $entity->set('test2', 3);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1' => 1,
                 'test2' => 2,
@@ -171,7 +171,7 @@ trait OriginalTestTrait
             'test' => 1,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test',
             ],
@@ -237,7 +237,7 @@ trait OriginalTestTrait
         $entity->set('test2', 4);
         $entity->set('test4', 4);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1' => 1,
                 'test2' => 2,
@@ -300,7 +300,7 @@ trait OriginalTestTrait
             $entity->setOriginalFields(['test'])
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['test'],
             $entity->getOriginalFields()
         );

@@ -89,7 +89,7 @@ final class DisplayP3LinearTest extends TestCase
     {
         $color = DisplayP3Linear::createFromString('lavender');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'red' => 0.7913982143903506,
                 'green' => 0.7912845848400826,

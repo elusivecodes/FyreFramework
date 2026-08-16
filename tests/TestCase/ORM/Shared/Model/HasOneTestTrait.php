@@ -258,7 +258,7 @@ trait HasOneTestTrait
             $Users->saveMany($users)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(User $user): int|null => $user->id,
@@ -266,7 +266,7 @@ trait HasOneTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(User $user): int|null => $user->address->id,
@@ -274,7 +274,7 @@ trait HasOneTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(User $user): int|null => $user->address->user_id,

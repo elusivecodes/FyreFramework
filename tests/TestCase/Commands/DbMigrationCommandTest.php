@@ -100,7 +100,7 @@ final class DbMigrationCommandTest extends TestCase
             $this->schema->hasTable('test3')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->migrationRunner->getHistory()->all()
         );
@@ -132,7 +132,7 @@ final class DbMigrationCommandTest extends TestCase
             $this->schema->hasTable('test3')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '2_Test2',
                 '1_Test1',
@@ -165,7 +165,7 @@ final class DbMigrationCommandTest extends TestCase
             $this->schema->hasTable('test3')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '1_Test1',
             ],

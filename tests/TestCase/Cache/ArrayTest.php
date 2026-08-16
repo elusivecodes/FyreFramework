@@ -38,7 +38,7 @@ final class ArrayTest extends TestCase
     {
         $data = $this->cacher->__debugInfo();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '[class]' => ArrayCacher::class,
                 'cache' => [],

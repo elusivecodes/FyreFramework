@@ -26,7 +26,7 @@ trait AddColumnTestTrait
             'after' => 'id',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'id',
                 'value',
@@ -50,7 +50,7 @@ trait AddColumnTestTrait
             'collation' => 'utf8mb3_unicode_ci',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'varchar',
@@ -87,7 +87,7 @@ trait AddColumnTestTrait
             'comment' => 'This is the value',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'varchar',
@@ -124,7 +124,7 @@ trait AddColumnTestTrait
             'default' => 1,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'int',
@@ -160,7 +160,7 @@ trait AddColumnTestTrait
             'first' => true,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value',
                 'id',
@@ -183,7 +183,7 @@ trait AddColumnTestTrait
             'length' => 255,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'varchar',
@@ -220,7 +220,7 @@ trait AddColumnTestTrait
             'nullable' => true,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'int',
@@ -257,7 +257,7 @@ trait AddColumnTestTrait
             'precision' => 8,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'mediumint',
@@ -294,7 +294,7 @@ trait AddColumnTestTrait
             'scale' => 2,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'decimal',
@@ -331,7 +331,7 @@ trait AddColumnTestTrait
             'precision' => 20,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'bigint',
@@ -367,7 +367,7 @@ trait AddColumnTestTrait
             'type' => BinaryType::class,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'blob',
@@ -404,7 +404,7 @@ trait AddColumnTestTrait
             'length' => 1,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'char',
@@ -440,7 +440,7 @@ trait AddColumnTestTrait
             'type' => DateTimeType::class,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'datetime',
@@ -478,7 +478,7 @@ trait AddColumnTestTrait
             'scale' => 2,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'decimal',
@@ -518,7 +518,7 @@ trait AddColumnTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'enum',
@@ -554,7 +554,7 @@ trait AddColumnTestTrait
             'type' => FloatType::class,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'float',
@@ -590,7 +590,7 @@ trait AddColumnTestTrait
             'type' => IntegerType::class,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'int',
@@ -627,7 +627,7 @@ trait AddColumnTestTrait
             'length' => 4_294_967_295,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'longtext',
@@ -664,7 +664,7 @@ trait AddColumnTestTrait
             'precision' => 8,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'mediumint',
@@ -701,7 +701,7 @@ trait AddColumnTestTrait
             'length' => 16_777_215,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'mediumtext',
@@ -738,7 +738,7 @@ trait AddColumnTestTrait
             'precision' => 6,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'smallint',
@@ -774,7 +774,7 @@ trait AddColumnTestTrait
             'type' => TextType::class,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'text',
@@ -811,7 +811,7 @@ trait AddColumnTestTrait
             'precision' => 4,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'tinyint',
@@ -848,7 +848,7 @@ trait AddColumnTestTrait
             'length' => 255,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'tinytext',
@@ -885,7 +885,7 @@ trait AddColumnTestTrait
             'unsigned' => true,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'type' => 'int',

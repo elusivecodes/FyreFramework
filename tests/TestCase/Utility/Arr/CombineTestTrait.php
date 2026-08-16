@@ -9,7 +9,7 @@ trait CombineTestTrait
 {
     public function testCombine(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a' => 1, 'b' => 2],
             Arr::combine(['a', 'b'], [1, 2])
         );

@@ -92,7 +92,7 @@ final class TypeParserTest extends TestCase
 
     public function testGetTypeMap(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'binary' => BinaryType::class,
                 'boolean' => BooleanType::class,

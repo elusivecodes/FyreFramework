@@ -9,7 +9,7 @@ trait KeysTestTrait
 {
     public function testKeys(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a', 'b', 'c'],
             Arr::keys(['a' => 1, 'b' => 2, 'c' => 3])
         );

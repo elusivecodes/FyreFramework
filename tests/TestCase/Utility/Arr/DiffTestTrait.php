@@ -9,7 +9,7 @@ trait DiffTestTrait
 {
     public function testDiff(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1 => 2, 3 => 4],
             Arr::diff([1, 2, 3, 4, 5], [1, 3, 5])
         );
@@ -17,7 +17,7 @@ trait DiffTestTrait
 
     public function testDiffAssoc(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['b' => 2],
             Arr::diff(['a' => 1, 'b' => 2], ['c' => 1, 'd' => 3])
         );
@@ -25,7 +25,7 @@ trait DiffTestTrait
 
     public function testDiffNArgs(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1 => 2, 4 => 5],
             Arr::diff([1, 2, 3, 4, 5], [1, 3], [1, 4])
         );

@@ -18,7 +18,7 @@ trait UniqueTestTrait
             5,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 0 => 1,
                 1 => 2,
@@ -55,7 +55,7 @@ trait UniqueTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 0 => [
                     'value' => 1,
@@ -102,7 +102,7 @@ trait UniqueTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 0 => [
                     'value' => 1,
@@ -161,7 +161,7 @@ trait UniqueTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 0 => [
                     'data' => [

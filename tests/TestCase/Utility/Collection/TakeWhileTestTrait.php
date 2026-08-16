@@ -9,7 +9,7 @@ trait TakeWhileTestTrait
 {
     public function testTakeWhile(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3],
             Collection::range(1, 10)
                 ->takeWhile(static fn(int $value, int $key): bool => $value <= 3)

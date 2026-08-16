@@ -19,7 +19,7 @@ trait AttachmentTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1.jpg' => [
                     'file' => 'test1.jpg',
@@ -40,7 +40,7 @@ trait AttachmentTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test.jpg' => [
                     'file' => 'tests/assets/test.jpg',

@@ -37,7 +37,7 @@ final class MessageTest extends TestCase
             $body->getContents()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value',
             ],
@@ -66,7 +66,7 @@ final class MessageTest extends TestCase
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value',
             ],
@@ -78,7 +78,7 @@ final class MessageTest extends TestCase
     {
         $message = new Message();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $message->getHeader('invalid')
         );
@@ -131,7 +131,7 @@ final class MessageTest extends TestCase
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1' => [
                     'value',
@@ -190,7 +190,7 @@ final class MessageTest extends TestCase
             $message2
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value',
                 'other',
@@ -234,7 +234,7 @@ final class MessageTest extends TestCase
             $message1->hasHeader('test')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'other',
             ],
@@ -272,7 +272,7 @@ final class MessageTest extends TestCase
             $message2
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value2',
             ],
@@ -285,7 +285,7 @@ final class MessageTest extends TestCase
         $message1 = new Message();
         $message2 = $message1->withHeader('test', ['first', 'other']);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'first',
                 'other',
@@ -299,7 +299,7 @@ final class MessageTest extends TestCase
         $message1 = new Message();
         $message2 = $message1->withHeader('test', '');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [''],
             $message2->getHeader('test')
         );
@@ -313,7 +313,7 @@ final class MessageTest extends TestCase
         $message1 = new Message();
         $message2 = $message1->withHeader('x:test', 'value');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [''],
             $message2->getHeader('test')
         );
@@ -337,7 +337,7 @@ final class MessageTest extends TestCase
         $message1 = new Message();
         $message2 = $message1->withHeader('test', "\x00");
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [''],
             $message2->getHeader('test')
         );

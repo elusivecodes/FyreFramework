@@ -89,7 +89,7 @@ final class ProPhotoRgbTest extends TestCase
     {
         $color = ProPhotoRgb::createFromString('lavender');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'red' => 0.8922358591890865,
                 'green' => 0.8809116437953888,

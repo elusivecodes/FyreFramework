@@ -11,7 +11,7 @@ trait DiffersTestTrait
     {
         $this->validator->add('test', Rule::differs('other'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 'test',
@@ -24,7 +24,7 @@ trait DiffersTestTrait
     {
         $this->validator->add('test', Rule::differs('other'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -37,7 +37,7 @@ trait DiffersTestTrait
     {
         $this->validator->add('test', Rule::differs('other'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -50,7 +50,7 @@ trait DiffersTestTrait
     {
         $this->validator->add('test', Rule::differs('other'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );
@@ -60,7 +60,7 @@ trait DiffersTestTrait
     {
         $this->validator->add('test', Rule::differs('other'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 'test',
@@ -73,7 +73,7 @@ trait DiffersTestTrait
     {
         $this->validator->add('test', Rule::differs('other'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must have a different value than other.'],
             ],

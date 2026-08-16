@@ -36,7 +36,7 @@ final class LangTest extends TestCase
         $this->lang->addPath('tests/lang/dir2');
         $this->lang->addPath('tests/lang/dir1');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 Path::resolve('tests/lang/dir1'),
                 Path::resolve('tests/lang/dir2'),
@@ -51,7 +51,7 @@ final class LangTest extends TestCase
         $this->lang->addPath('tests/lang/dir2');
         $this->lang->addPath('tests/lang/dir2', true);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 Path::resolve('tests/lang/dir1'),
                 Path::resolve('tests/lang/dir2'),

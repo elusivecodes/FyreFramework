@@ -11,7 +11,7 @@ trait MaxLengthTestTrait
     {
         $this->validator->add('test', Rule::maxLength(3));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 'a',
@@ -23,7 +23,7 @@ trait MaxLengthTestTrait
     {
         $this->validator->add('test', Rule::maxLength(3));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -35,7 +35,7 @@ trait MaxLengthTestTrait
     {
         $this->validator->add('test', Rule::maxLength(3));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '123',
@@ -47,7 +47,7 @@ trait MaxLengthTestTrait
     {
         $this->validator->add('test', Rule::maxLength(3));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test length must be at most 3.'],
             ],
@@ -61,7 +61,7 @@ trait MaxLengthTestTrait
     {
         $this->validator->add('test', Rule::maxLength(3));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );

@@ -65,7 +65,7 @@ final class CellRegistryTest extends TestCase
 
     public function testGetNamespaces(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'Tests\Mock\Cells\\',
             ],

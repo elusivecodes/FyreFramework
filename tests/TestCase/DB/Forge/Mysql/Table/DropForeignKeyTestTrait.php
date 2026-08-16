@@ -52,7 +52,7 @@ trait DropForeignKeyTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` DROP FOREIGN KEY `value_id`',
             ],
@@ -65,7 +65,7 @@ trait DropForeignKeyTestTrait
 
     public function testDropForeignKeySqlNewTable(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'CREATE TABLE `test` (`id` INT(11) NOT NULL, `value_id` INT(11) NOT NULL) ENGINE = InnoDB DEFAULT CHARSET = \'utf8mb4\' COLLATE = \'utf8mb4_unicode_ci\'',
             ],

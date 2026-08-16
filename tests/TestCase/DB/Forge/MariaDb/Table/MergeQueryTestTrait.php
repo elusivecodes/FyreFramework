@@ -21,7 +21,7 @@ trait MergeQueryTestTrait
             'test' => [],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'ALTER TABLE `test` DROP INDEX `test`, DROP COLUMN `test`, CHANGE COLUMN `id` `id` INT(11) NOT NULL, ADD COLUMN `value` INT(11) NOT NULL AFTER `id`, ADD INDEX `id` (`id`) USING BTREE',
             ],

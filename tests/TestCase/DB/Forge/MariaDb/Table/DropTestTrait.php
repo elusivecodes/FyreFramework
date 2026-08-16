@@ -29,7 +29,7 @@ trait DropTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'DROP TABLE `test`',
             ],

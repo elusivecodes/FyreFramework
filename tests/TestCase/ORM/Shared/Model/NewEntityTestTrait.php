@@ -87,7 +87,7 @@ trait NewEntityTestTrait
             $item->isNew()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '*' => true,
             ],
@@ -729,7 +729,7 @@ trait NewEntityTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [11, 22],
             array_map(
                 static fn(Tag $tag): int|null => $tag->_joinData->value,
@@ -832,7 +832,7 @@ trait NewEntityTestTrait
             ],
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [11, 22],
             array_map(
                 static fn(Tag $tag): int|null => $tag->_joinData->value,
@@ -933,7 +933,7 @@ trait NewEntityTestTrait
         $Items = $this->modelRegistry->use('Items');
         $Items->getSchema()->setEnumClass('name', Status::class);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'published',
             ],
@@ -948,7 +948,7 @@ trait NewEntityTestTrait
         $Items = $this->modelRegistry->use('Items');
         $Items->getSchema()->setEnumClass('name', State::class);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'Published',
             ],
@@ -960,7 +960,7 @@ trait NewEntityTestTrait
 
     public function testToDatabaseSchemaUnknownField(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'unknown' => 'value',
             ],

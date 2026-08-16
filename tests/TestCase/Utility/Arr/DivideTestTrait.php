@@ -9,7 +9,7 @@ trait DivideTestTrait
 {
     public function testDivide(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 ['a', 'b', 'c'],
                 [1, 2, 3],

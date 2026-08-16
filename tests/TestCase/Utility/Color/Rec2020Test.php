@@ -89,7 +89,7 @@ final class Rec2020Test extends TestCase
     {
         $color = Rec2020::createFromString('lavender');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'red' => 0.8931460651448258,
                 'green' => 0.8901273645875314,

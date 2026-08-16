@@ -61,7 +61,7 @@ final class ClientResponseTest extends TestCase
             $response1->getHeaderLine('Content-Type')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 1,
             ],

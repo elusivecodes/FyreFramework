@@ -28,7 +28,7 @@ trait AddIndexTestTrait
                 ->hasIndex('id_value')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'id_value',
                 'columns' => ['id', 'value'],
@@ -62,7 +62,7 @@ trait AddIndexTestTrait
                 ->hasIndex('value')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'columns' => ['value'],
@@ -120,7 +120,7 @@ trait AddIndexTestTrait
                 ->hasIndex('value')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'value',
                 'columns' => ['value'],

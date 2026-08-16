@@ -31,7 +31,7 @@ trait GetSetTestTrait
     {
         $this->cacher->set('test', ['key' => 'value']);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['key' => 'value'],
             $this->cacher->get('test')
         );

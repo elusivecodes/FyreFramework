@@ -24,7 +24,7 @@ final class EmailTest extends TestCase
 
     public function testGetMessagesInvalid(): void
     {
-        $this->assertSame([], $this->getMessages(1));
+        $this->assertArraysAreIdentical([], $this->getMessages(1));
     }
 
     #[Override]

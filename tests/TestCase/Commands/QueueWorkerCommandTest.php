@@ -94,7 +94,7 @@ final class QueueWorkerCommandTest extends TestCase
             '1'
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 1,
                 'delayed' => 0,
@@ -110,14 +110,14 @@ final class QueueWorkerCommandTest extends TestCase
     {
         $allCommands = $this->commandRunner->all();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'default' => QueueManager::DEFAULT,
             ],
             $allCommands['queue:worker']['options']['config']
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'default' => Queue::DEFAULT,
             ],
@@ -145,7 +145,7 @@ final class QueueWorkerCommandTest extends TestCase
             '2'
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 1,
                 'delayed' => 0,
@@ -156,7 +156,7 @@ final class QueueWorkerCommandTest extends TestCase
             $this->queue->stats()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 0,
                 'delayed' => 0,

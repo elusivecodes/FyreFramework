@@ -55,7 +55,7 @@ final class ResponseEmitterTest extends TestCase
         $this->emitter->emit($response);
         $output = ob_get_clean();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'HTTP/1.1 200 OK',
                 'Content-Type: text/html; charset=UTF-8',
@@ -64,7 +64,7 @@ final class ResponseEmitterTest extends TestCase
             self::$headers
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'name' => 'session',
@@ -127,7 +127,7 @@ final class ResponseEmitterTest extends TestCase
         $this->emitter->emit($response);
         $output = ob_get_clean();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'HTTP/1.1 206 Partial Content',
                 'Content-Type: text/plain; charset=UTF-8',
@@ -136,7 +136,7 @@ final class ResponseEmitterTest extends TestCase
             self::$headers
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             self::$cookies
         );
@@ -158,7 +158,7 @@ final class ResponseEmitterTest extends TestCase
         $this->emitter->emit($response);
         $output = ob_get_clean();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'HTTP/1.1 200 OK',
                 'Content-Type: text/plain; charset=UTF-8',
@@ -167,7 +167,7 @@ final class ResponseEmitterTest extends TestCase
             self::$headers
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             self::$cookies
         );
@@ -220,7 +220,7 @@ final class ResponseEmitterTest extends TestCase
         $this->emitter->emit($response);
         $output = ob_get_clean();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'HTTP/1.1 200 OK',
                 'Content-Type: text/html; charset=UTF-8',
@@ -228,7 +228,7 @@ final class ResponseEmitterTest extends TestCase
             self::$headers
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'name' => 'session',

@@ -97,7 +97,7 @@ trait TransactionTestTrait
 
         $this->db->commit();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [2, 1],
             $test
         );
@@ -208,7 +208,7 @@ trait TransactionTestTrait
             })
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,
@@ -246,7 +246,7 @@ trait TransactionTestTrait
             })
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->db->select()
                 ->from('test')
@@ -276,7 +276,7 @@ trait TransactionTestTrait
         } catch (Exception $e) {
         }
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->db->select()
                 ->from('test')
@@ -312,7 +312,7 @@ trait TransactionTestTrait
 
         $this->db->commit();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,
@@ -358,7 +358,7 @@ trait TransactionTestTrait
 
         $this->db->commit();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,
@@ -400,7 +400,7 @@ trait TransactionTestTrait
 
         $this->db->rollback();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->db->select()
                 ->from('test')
@@ -427,7 +427,7 @@ trait TransactionTestTrait
 
         $this->db->rollback();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->db->select()
                 ->from('test')

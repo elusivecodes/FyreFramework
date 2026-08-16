@@ -71,7 +71,7 @@ trait AccessTestTrait
         $entity->setAccess('test', false);
         $entity->setAccess('*', true);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['*' => true],
             $entity->getAccessible()
         );

@@ -94,7 +94,7 @@ final class WorkerTest extends TestCase
     {
         $this->queueManager->push(MockJob::class, ['test' => 1]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 1,
                 'delayed' => 0,
@@ -114,7 +114,7 @@ final class WorkerTest extends TestCase
 
         $worker->run();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 0,
                 'delayed' => 0,
@@ -125,7 +125,7 @@ final class WorkerTest extends TestCase
             $this->queue->stats()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['default'],
             $this->queue->queues()
         );
@@ -142,7 +142,7 @@ final class WorkerTest extends TestCase
             'delay' => 10,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 0,
                 'delayed' => 1,
@@ -178,7 +178,7 @@ final class WorkerTest extends TestCase
 
         $worker->run();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 0,
                 'delayed' => 0,
@@ -189,7 +189,7 @@ final class WorkerTest extends TestCase
             $this->queue->stats()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['default'],
             $this->queue->queues()
         );
@@ -206,7 +206,7 @@ final class WorkerTest extends TestCase
             'expires' => -1,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 0,
                 'delayed' => 0,
@@ -232,7 +232,7 @@ final class WorkerTest extends TestCase
             'queue' => 'test',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 0,
                 'delayed' => 0,
@@ -243,7 +243,7 @@ final class WorkerTest extends TestCase
             $this->queue->stats()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 1,
                 'delayed' => 0,
@@ -272,7 +272,7 @@ final class WorkerTest extends TestCase
             $worker->runOnce()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 0,
                 'delayed' => 0,
@@ -283,7 +283,7 @@ final class WorkerTest extends TestCase
             $this->queue->stats('test')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['test'],
             $this->queue->queues()
         );
@@ -299,7 +299,7 @@ final class WorkerTest extends TestCase
         $this->queueManager->push(MockJob::class, ['test' => 1]);
         $this->queueManager->push(MockJob::class, ['test' => 2]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 2,
                 'delayed' => 0,
@@ -319,7 +319,7 @@ final class WorkerTest extends TestCase
 
         $worker->run();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 0,
                 'delayed' => 0,
@@ -330,7 +330,7 @@ final class WorkerTest extends TestCase
             $this->queue->stats()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['default'],
             $this->queue->queues()
         );
@@ -356,7 +356,7 @@ final class WorkerTest extends TestCase
         $worker->run();
         $worker->run();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'queued' => 0,
                 'delayed' => 0,

@@ -14,7 +14,7 @@ trait BccTestTrait
             $this->email->addBcc('test2@test.com')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'test1@test.com',
                 'test2@test.com' => 'test2@test.com',
@@ -28,7 +28,7 @@ trait BccTestTrait
         $this->email->setBcc('test1@test.com');
         $this->email->addBcc('test2');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'test1@test.com',
             ],
@@ -41,7 +41,7 @@ trait BccTestTrait
         $this->email->setBcc('test1@test.com');
         $this->email->addBcc('test2@test.com', 'Test 2');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'test1@test.com',
                 'test2@test.com' => 'Test 2',
@@ -137,7 +137,7 @@ trait BccTestTrait
             $this->email->setBcc('test1@test.com')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'test1@test.com',
             ],
@@ -151,7 +151,7 @@ trait BccTestTrait
             'test1@test.com' => 'Test 1',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'Test 1',
             ],
@@ -163,7 +163,7 @@ trait BccTestTrait
     {
         $this->email->setBcc('test1');
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->email->getBcc()
         );
@@ -176,7 +176,7 @@ trait BccTestTrait
             'test2@test.com' => 'Test 2',
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test1@test.com' => 'Test 1',
                 'test2@test.com' => 'Test 2',

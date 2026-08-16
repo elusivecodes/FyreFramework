@@ -37,7 +37,7 @@ final class ResponseTest extends TestCase
             $body->getContents()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'value',
             ],

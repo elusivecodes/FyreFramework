@@ -168,7 +168,7 @@ final class PromiseTest extends TestCase
             $results[] = $value + 1;
         });
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             $results
         );
@@ -251,7 +251,7 @@ final class PromiseTest extends TestCase
                 $results[] = 5;
             });
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 3, 2, 5],
             $results
         );

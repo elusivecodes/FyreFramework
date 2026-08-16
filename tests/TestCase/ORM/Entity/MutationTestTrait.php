@@ -13,7 +13,7 @@ trait MutationTestTrait
 
         $entity->set('decimal', 2.5);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'decimal' => '2.50',
             ],
@@ -27,7 +27,7 @@ trait MutationTestTrait
             'decimal' => 1,
         ]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'decimal' => 1,
             ],
@@ -43,7 +43,7 @@ trait MutationTestTrait
 
         $entity->set('decimal', 2.5);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'decimal' => 2,
             ],

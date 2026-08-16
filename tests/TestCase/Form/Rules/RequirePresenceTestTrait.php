@@ -11,7 +11,7 @@ trait RequirePresenceTestTrait
     {
         $this->validator->add('test', Rule::requirePresence());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 'test',
@@ -23,7 +23,7 @@ trait RequirePresenceTestTrait
     {
         $this->validator->add('test', Rule::requirePresence());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -35,7 +35,7 @@ trait RequirePresenceTestTrait
     {
         $this->validator->add('test', Rule::requirePresence());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '0',
@@ -47,7 +47,7 @@ trait RequirePresenceTestTrait
     {
         $this->validator->add('test', Rule::requirePresence());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be set.'],
             ],

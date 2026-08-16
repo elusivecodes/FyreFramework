@@ -9,7 +9,7 @@ trait TakeUntilTestTrait
 {
     public function testTakeUntil(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3],
             Collection::range(1, 10)
                 ->takeUntil(static fn(int $value, int $key): bool => $value > 3)

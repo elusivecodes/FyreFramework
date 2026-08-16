@@ -9,7 +9,7 @@ trait RejectTestTrait
 {
     public function testReject(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 0 => 1,
                 2 => 3,

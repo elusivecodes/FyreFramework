@@ -22,7 +22,7 @@ final class SmtpTest extends TestCase
     {
         $data = self::$mailer->__debugInfo();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '[class]' => SmtpMailer::class,
                 'config' => [

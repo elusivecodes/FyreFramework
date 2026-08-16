@@ -130,7 +130,7 @@ final class ServerRequestTest extends TestCase
             $request1->getAttributes()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => 'value',
             ],

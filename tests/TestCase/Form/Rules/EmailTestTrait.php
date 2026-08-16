@@ -11,7 +11,7 @@ trait EmailTestTrait
     {
         $this->validator->add('test', Rule::email());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 'test@test.com',
@@ -23,7 +23,7 @@ trait EmailTestTrait
     {
         $this->validator->add('test', Rule::email());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -35,7 +35,7 @@ trait EmailTestTrait
     {
         $this->validator->add('test', Rule::email());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must be a valid email address.'],
             ],
@@ -49,7 +49,7 @@ trait EmailTestTrait
     {
         $this->validator->add('test', Rule::email());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );

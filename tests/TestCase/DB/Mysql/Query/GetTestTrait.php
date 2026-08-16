@@ -7,7 +7,7 @@ trait GetTestTrait
 {
     public function testGetAlias(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'alt',
             ],

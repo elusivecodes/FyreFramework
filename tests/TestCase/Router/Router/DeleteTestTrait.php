@@ -120,14 +120,14 @@ trait DeleteTestTrait
             $route->getAction()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => $callback,
             ],
             $route->getBindingCallbacks()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 'test',
                 'b' => 'a',
@@ -197,7 +197,7 @@ trait DeleteTestTrait
             $route->getDestination()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 'a',
                 'b' => '2',

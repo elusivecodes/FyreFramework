@@ -68,7 +68,7 @@ final class RulesTest extends TestCase
     {
         $rule = Rule::between(5, 10);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [5, 10],
             $rule->getArguments()
         );

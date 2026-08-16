@@ -45,7 +45,7 @@ trait CreateTableTestTrait
             $this->schema->hasTable('test')
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'name' => 'test',
                 'engine' => 'MyISAM',

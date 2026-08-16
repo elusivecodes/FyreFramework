@@ -138,7 +138,7 @@ trait CallbacksBelongsToTestTrait
             $Addresses->saveMany($addresses)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [null, null],
             array_map(
                 static fn(Address $address): int|null => $address->id,
@@ -146,7 +146,7 @@ trait CallbacksBelongsToTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [null, null],
             array_map(
                 static fn(Address $address): int|null => $address->user->id,
@@ -154,7 +154,7 @@ trait CallbacksBelongsToTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [null, null],
             array_map(
                 static fn(Address $address): int|null => $address->user_id,
@@ -234,7 +234,7 @@ trait CallbacksBelongsToTestTrait
             $Addresses->saveMany($addresses)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [null, null],
             array_map(
                 static fn(Address $address): int|null => $address->id,
@@ -242,7 +242,7 @@ trait CallbacksBelongsToTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [null, null],
             array_map(
                 static fn(Address $address): int|null => $address->user->id,
@@ -250,7 +250,7 @@ trait CallbacksBelongsToTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [null, null],
             array_map(
                 static fn(Address $address): int|null => $address->user_id,
@@ -398,7 +398,7 @@ trait CallbacksBelongsToTestTrait
             $Addresses->saveMany($addresses)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [null, null],
             array_map(
                 static fn(Address $address): int|null => $address->id,
@@ -406,7 +406,7 @@ trait CallbacksBelongsToTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [null, null],
             array_map(
                 static fn(Address $address): int|null => $address->user->id,
@@ -414,7 +414,7 @@ trait CallbacksBelongsToTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [null, null],
             array_map(
                 static fn(Address $address): int|null => $address->user_id,
@@ -494,7 +494,7 @@ trait CallbacksBelongsToTestTrait
             $Addresses->saveMany($addresses)
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [null, null],
             array_map(
                 static fn(Address $address): int|null => $address->id,
@@ -502,7 +502,7 @@ trait CallbacksBelongsToTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [null, null],
             array_map(
                 static fn(Address $address): int|null => $address->user->id,
@@ -510,7 +510,7 @@ trait CallbacksBelongsToTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [null, null],
             array_map(
                 static fn(Address $address): int|null => $address->user_id,

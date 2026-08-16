@@ -63,7 +63,7 @@ final class ModelRegistryTest extends TestCase
 
         $this->modelRegistry->clear();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->modelRegistry->getNamespaces()
         );
@@ -134,7 +134,7 @@ final class ModelRegistryTest extends TestCase
 
     public function testGetNamespaces(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'Tests\Mock\Models\ORM\\',
             ],

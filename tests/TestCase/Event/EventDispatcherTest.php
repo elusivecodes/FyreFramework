@@ -31,7 +31,7 @@ final class EventDispatcherTest extends TestCase
 
         $this->assertSame($this->dispatcher, $event->getSubject());
 
-        $this->assertSame(['a' => 1], $event->getData());
+        $this->assertArraysAreIdentical(['a' => 1], $event->getData());
 
         $this->assertTrue($ran);
     }

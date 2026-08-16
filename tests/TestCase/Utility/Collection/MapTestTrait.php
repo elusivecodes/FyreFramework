@@ -9,7 +9,7 @@ trait MapTestTrait
 {
     public function testMap(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 2,
                 4,

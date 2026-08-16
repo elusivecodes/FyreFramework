@@ -64,7 +64,7 @@ final class MiddlewareRegistryTest extends TestCase
             $middleware
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             $middleware->getArgs()
         );
@@ -94,7 +94,7 @@ final class MiddlewareRegistryTest extends TestCase
             $middleware
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             $middleware->getArgs()
         );

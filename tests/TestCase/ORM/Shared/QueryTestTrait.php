@@ -40,7 +40,7 @@ trait QueryTestTrait
 
         $items->toArray();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,
@@ -77,7 +77,7 @@ trait QueryTestTrait
 
         $items->toArray();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $items->toArray()
         );
@@ -255,7 +255,7 @@ trait QueryTestTrait
             $result
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'id' => 1,
             ],
@@ -274,7 +274,7 @@ trait QueryTestTrait
             $result
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'id' => 1,
                 'name' => 'Test 1',
@@ -311,7 +311,7 @@ trait QueryTestTrait
 
         $items = $query->all();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [
                     'id' => 1,
@@ -391,7 +391,7 @@ trait QueryTestTrait
             $query->getModel()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['name'],
             $query->getConflictKeys()
         );

@@ -11,7 +11,7 @@ trait AlphaNumericTestTrait
     {
         $this->validator->add('test', Rule::alphaNumeric());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 'test123',
@@ -23,7 +23,7 @@ trait AlphaNumericTestTrait
     {
         $this->validator->add('test', Rule::alphaNumeric());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -35,7 +35,7 @@ trait AlphaNumericTestTrait
     {
         $this->validator->add('test', Rule::alphaNumeric());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must only contain alpha-numeric characters.'],
             ],
@@ -49,7 +49,7 @@ trait AlphaNumericTestTrait
     {
         $this->validator->add('test', Rule::alphaNumeric());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );

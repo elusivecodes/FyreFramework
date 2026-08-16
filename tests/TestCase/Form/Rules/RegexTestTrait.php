@@ -11,7 +11,7 @@ trait RegexTestTrait
     {
         $this->validator->add('test', Rule::regex('/test/'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => 'test',
@@ -23,7 +23,7 @@ trait RegexTestTrait
     {
         $this->validator->add('test', Rule::regex('/test/'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -35,7 +35,7 @@ trait RegexTestTrait
     {
         $this->validator->add('test', Rule::regex('/test/'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['The test must match the regular expression /test/.'],
             ],
@@ -49,7 +49,7 @@ trait RegexTestTrait
     {
         $this->validator->add('test', Rule::regex('/test/'));
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );

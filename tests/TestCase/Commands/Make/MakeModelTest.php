@@ -76,7 +76,7 @@ final class MakeModelTest extends TestCase
             'LegacyPosts'
         );
 
-        $this->assertSame([], $relationships);
+        $this->assertArraysAreIdentical([], $relationships);
     }
 
     public function testMakeModel(): void

@@ -39,7 +39,7 @@ trait ExecuteTestTrait
             ->execute()
             ->all();
 
-        $this->assertSame(['Test'], array_column($rows, 'name'));
+        $this->assertArraysAreIdentical(['Test'], array_column($rows, 'name'));
     }
 
     public function testExecuteGroupLimit(): void

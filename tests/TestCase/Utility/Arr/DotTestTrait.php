@@ -9,7 +9,7 @@ trait DotTestTrait
 {
     public function testDot(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a' => 1,
                 'b.c' => 2,
@@ -22,7 +22,7 @@ trait DotTestTrait
 
     public function testDotNumeric(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'a.0' => 1,
                 'a.1' => 2,

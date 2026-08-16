@@ -78,7 +78,7 @@ trait ContainTestTrait
             $user
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'id' => 1,
                 'address' => [
@@ -212,7 +212,7 @@ trait ContainTestTrait
             $user->id
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Post $post): int|null => $post->id,
@@ -225,7 +225,7 @@ trait ContainTestTrait
             $user->address->id
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [1, 2],
                 [3, 4],
@@ -239,7 +239,7 @@ trait ContainTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [1],
                 [2],
@@ -253,7 +253,7 @@ trait ContainTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [2],
                 [3],
@@ -305,7 +305,7 @@ trait ContainTestTrait
             $user
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [2],
             array_map(
                 static fn(Post $post): int|null => $post->id,
@@ -363,7 +363,7 @@ trait ContainTestTrait
             $user->id
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2],
             array_map(
                 static fn(Post $post): int|null => $post->id,
@@ -371,7 +371,7 @@ trait ContainTestTrait
             )
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 1],
             array_map(
                 static fn(Post $post): int|null => $post->user_id,
@@ -384,7 +384,7 @@ trait ContainTestTrait
             $user->address->id
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 [1, 2],
                 [3, 4],

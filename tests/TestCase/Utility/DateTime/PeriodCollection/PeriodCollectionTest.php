@@ -78,7 +78,7 @@ final class PeriodCollectionTest extends TestCase
             $dates[] = $period->start()->toIsoString();
         }
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 '2022-01-01T00:00:00.000+00:00',
                 '2022-01-05T00:00:00.000+00:00',

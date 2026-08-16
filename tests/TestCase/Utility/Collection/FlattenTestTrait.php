@@ -11,7 +11,7 @@ trait FlattenTestTrait
     {
         $collection = new Collection([1, [2, 3], [[4, 5]]]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3, 4, 5],
             $collection->flatten()->toArray()
         );
@@ -21,7 +21,7 @@ trait FlattenTestTrait
     {
         $collection = new Collection([1, [2, 3], [[4, 5]]]);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [1, 2, 3, [4, 5]],
             $collection->flatten(1)->toArray()
         );

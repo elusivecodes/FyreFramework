@@ -97,7 +97,7 @@ trait UriAttributesGetTestTrait
 
     public function testGetQueryParams(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'param1' => 'a',
                 'param2' => 'b',
@@ -140,7 +140,7 @@ trait UriAttributesGetTestTrait
 
     public function testGetSegments(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['path', 'deep'],
             Uri::createFromString('https://domain.com/path/deep')->getSegments()
         );

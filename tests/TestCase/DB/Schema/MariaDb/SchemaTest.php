@@ -85,7 +85,7 @@ final class SchemaTest extends TestCase
 
     public function testTableNames(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test',
                 'test_values',
@@ -100,7 +100,7 @@ final class SchemaTest extends TestCase
 
         $this->assertInstanceOf(Collection::class, $tables);
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => [
                     'name' => 'test',

@@ -41,7 +41,7 @@ trait SchemaTestTrait
 
     public function testGetPrimaryKey(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['id'],
             $this->modelRegistry->use('Items')->getPrimaryKey()
         );

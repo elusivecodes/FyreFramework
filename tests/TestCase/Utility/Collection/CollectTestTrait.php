@@ -18,22 +18,22 @@ trait CollectTestTrait
 
         $collection2 = $collection1->collect();
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a' => 3, 'b' => 4],
             $collection1->toArray()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a' => 5, 'b' => 6],
             $collection1->toArray()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a' => 1, 'b' => 2],
             $collection2->toArray()
         );
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             ['a' => 1, 'b' => 2],
             $collection2->toArray()
         );

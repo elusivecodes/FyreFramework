@@ -9,7 +9,7 @@ trait IndexTestTrait
 {
     public function testIndex(): void
     {
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 1 => [
                     'a' => 1,

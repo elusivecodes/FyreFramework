@@ -11,7 +11,7 @@ trait EmptyTestTrait
     {
         $this->validator->add('test', Rule::empty());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['invalid'],
             ],
@@ -25,7 +25,7 @@ trait EmptyTestTrait
     {
         $this->validator->add('test', Rule::empty());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
                 'test' => '',
@@ -37,7 +37,7 @@ trait EmptyTestTrait
     {
         $this->validator->add('test', Rule::empty());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [
                 'test' => ['invalid'],
             ],
@@ -51,7 +51,7 @@ trait EmptyTestTrait
     {
         $this->validator->add('test', Rule::empty());
 
-        $this->assertSame(
+        $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
         );
