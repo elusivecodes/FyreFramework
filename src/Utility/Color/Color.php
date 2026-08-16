@@ -24,6 +24,7 @@ use Fyre\Utility\Color\Colors\SrgbLinear;
 use Fyre\Utility\Color\Colors\XyzD50;
 use Fyre\Utility\Color\Colors\XyzD65;
 use InvalidArgumentException;
+use LogicException;
 use Stringable;
 use UnexpectedValueException;
 
@@ -683,6 +684,10 @@ abstract class Color implements Stringable
      */
     public function contrast(Color $other): float
     {
+        if ($this->alpha < 1 || $other->alpha < 1) {
+            throw new LogicException('Contrast can only be calculated between fully opaque colors.');
+        }
+
         $l1 = $this->luma();
         $l2 = $other->luma();
 

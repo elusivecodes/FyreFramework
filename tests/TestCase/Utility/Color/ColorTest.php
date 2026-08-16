@@ -24,6 +24,7 @@ use Fyre\Utility\Color\Colors\SrgbLinear;
 use Fyre\Utility\Color\Colors\XyzD50;
 use Fyre\Utility\Color\Colors\XyzD65;
 use InvalidArgumentException;
+use LogicException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -76,6 +77,17 @@ final class ColorTest extends TestCase
             'large chroma' => [[0.5, 1e8, 30], 'oklch(0.5 0.2 30deg)'],
             'out of gamut' => [[0.5, 0.4, 30], 'oklch(0.5 0.2 30deg)'],
             'white' => [[2, 0.2, 30, 0.5], 'oklch(1 0 30deg / 0.5)'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{float, float}>
+     */
+    public static function invalidContrastProvider(): array
+    {
+        return [
+            'first color' => [0.5, 1.0],
+            'second color' => [1.0, 0.5],
         ];
     }
 
@@ -195,6 +207,15 @@ final class ColorTest extends TestCase
             'xyz percent' => ['color(xyz 78% 80% 102%)', XyzD65::class, 'color(xyz-d65 0.78 0.8 1.02)'],
             'whitespace and case' => [' RGB( 230   230  250 / 50% ) ', Rgb::class, 'rgb(230 230 250 / 50%)'],
         ];
+    }
+
+    #[DataProvider('invalidContrastProvider')]
+    public function testContrastInvalidAlpha(float $alpha, float $otherAlpha): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessageIs('Contrast can only be calculated between fully opaque colors.');
+
+        Color::createFromRgb(alpha: $alpha)->contrast(Color::createFromRgb(alpha: $otherAlpha));
     }
 
     /**

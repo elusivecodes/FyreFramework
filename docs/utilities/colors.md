@@ -337,6 +337,8 @@ $l = $c->luma();
 
 Calculates the contrast ratio between this color and another color using relative luminance.
 
+Both colors must be fully opaque.
+
 Arguments:
 - `$other` (`Color`): the other color.
 
