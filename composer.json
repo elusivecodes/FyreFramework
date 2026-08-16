@@ -43,7 +43,7 @@
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.91",
         "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "^12"
+        "phpunit/phpunit": "^13"
     },
     "provide": {
         "psr/container-implementation": "^2.0",
