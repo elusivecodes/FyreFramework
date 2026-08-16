@@ -90,7 +90,7 @@ final class PeriodTest extends TestCase
     public function testConstructorEndBeforeStart(): void
     {
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('The start date `2022-01-10T00:00:00.000+00:00` must be before the end date `2022-01-01T00:00:00.000+00:00`.');
+        $this->expectExceptionMessageIs('The start date `2022-01-10T00:00:00.000+00:00` must be before the end date `2022-01-01T00:00:00.000+00:00`.');
 
         new Period('2022-01-10', '2022-01-01');
     }
@@ -98,7 +98,7 @@ final class PeriodTest extends TestCase
     public function testConstructorInvalidExcludeBoundaries(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Exclude boundaries `invalid` is not valid.');
+        $this->expectExceptionMessageIs('Exclude boundaries `invalid` is not valid.');
 
         // @phpstan-ignore argument.type
         new Period('2022-01-01', '2022-01-10', excludeBoundaries: 'invalid');
@@ -107,7 +107,7 @@ final class PeriodTest extends TestCase
     public function testConstructorInvalidGranularity(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Granularity `invalid` is not valid.');
+        $this->expectExceptionMessageIs('Granularity `invalid` is not valid.');
 
         // @phpstan-ignore argument.type
         new Period('2022-01-01', '2022-01-10', 'invalid');

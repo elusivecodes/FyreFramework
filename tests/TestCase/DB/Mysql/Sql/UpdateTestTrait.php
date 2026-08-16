@@ -76,7 +76,7 @@ trait UpdateTestTrait
     public function testUpdateFrom(): void
     {
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('UPDATE queries with a FROM clause are not supported by this connection.');
+        $this->expectExceptionMessageIs('UPDATE queries with a FROM clause are not supported by this connection.');
 
         $this->db->update('test')
             ->from('test2');

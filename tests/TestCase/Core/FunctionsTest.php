@@ -95,7 +95,7 @@ final class FunctionsTest extends TestCase
     public function testAbort(): void
     {
         $this->expectException(InternalServerException::class);
-        $this->expectExceptionMessage('Internal Server Error');
+        $this->expectExceptionMessageIs('Internal Server Error');
 
         abort();
     }
@@ -104,7 +104,7 @@ final class FunctionsTest extends TestCase
     {
         $this->expectException(GoneException::class);
         $this->expectExceptionCode(410);
-        $this->expectExceptionMessage('Gone');
+        $this->expectExceptionMessageIs('Gone');
 
         abort(410);
     }
@@ -125,7 +125,7 @@ final class FunctionsTest extends TestCase
     {
         $this->expectException(NotFoundException::class);
         $this->expectExceptionCode(404);
-        $this->expectExceptionMessage('This is a message');
+        $this->expectExceptionMessageIs('This is a message');
 
         abort(404, 'This is a message');
     }
@@ -173,7 +173,7 @@ final class FunctionsTest extends TestCase
     {
         $this->expectException(ForbiddenException::class);
         $this->expectExceptionCode(403);
-        $this->expectExceptionMessage('Forbidden');
+        $this->expectExceptionMessageIs('Forbidden');
 
         authorize('fail');
     }

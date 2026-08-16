@@ -115,7 +115,7 @@ final class ResponseTest extends TestCase
     public function testWithStatusInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Status code `600` is not valid.');
+        $this->expectExceptionMessageIs('Status code `600` is not valid.');
 
         $response = new Response();
         $response->withStatus(600);

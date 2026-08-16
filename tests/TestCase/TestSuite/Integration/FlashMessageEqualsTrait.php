@@ -17,7 +17,7 @@ trait FlashMessageEqualsTrait
     public function testFlashMessageEqualsFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that session flash message "key" value is equal to \'value\'.');
+        $this->expectExceptionMessageIs('Failed asserting that session flash message "key" value is equal to \'value\'.');
 
         $this->get('/response');
 
@@ -27,7 +27,7 @@ trait FlashMessageEqualsTrait
     public function testFlashMessageEqualsNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that session flash message "key" value is equal to \'value\'.');
+        $this->expectExceptionMessageIs('Failed asserting that session flash message "key" value is equal to \'value\'.');
 
         $this->assertFlashMessage('value', 'key');
     }

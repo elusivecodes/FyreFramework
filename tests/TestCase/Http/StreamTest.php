@@ -24,7 +24,7 @@ final class StreamTest extends TestCase
     public function testConstructorInvalid(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid stream resource.');
+        $this->expectExceptionMessageIs('Invalid stream resource.');
 
         // @phpstan-ignore argument.type
         new Stream(123);
@@ -82,7 +82,7 @@ final class StreamTest extends TestCase
     public function testGetContentsInvalid(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid stream resource.');
+        $this->expectExceptionMessageIs('Invalid stream resource.');
 
         $stream = Stream::createfromString('This is a test.');
 
@@ -139,7 +139,7 @@ final class StreamTest extends TestCase
     public function testGetSizeInvalid(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid stream resource.');
+        $this->expectExceptionMessageIs('Invalid stream resource.');
 
         $stream = Stream::createFromString('This is a test.');
 
@@ -247,7 +247,7 @@ final class StreamTest extends TestCase
     public function testReadNotInvalid(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid stream resource.');
+        $this->expectExceptionMessageIs('Invalid stream resource.');
 
         $stream = Stream::createFromString('This is a test.');
 
@@ -258,7 +258,7 @@ final class StreamTest extends TestCase
     public function testReadNotReadable(): void
     {
         $this->expectException(ErrorException::class);
-        $this->expectExceptionMessage('fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor');
+        $this->expectExceptionMessageIs('fread(): Read of 8192 bytes failed with errno=9 Bad file descriptor');
 
         $stream = Stream::createFromFile('tmp/test.txt', 'w');
 
@@ -281,7 +281,7 @@ final class StreamTest extends TestCase
     public function testRewindInvalid(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid stream resource.');
+        $this->expectExceptionMessageIs('Invalid stream resource.');
 
         $stream = Stream::createFromString('This is a test.');
 
@@ -304,7 +304,7 @@ final class StreamTest extends TestCase
     public function testSeekInvalid(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid stream resource.');
+        $this->expectExceptionMessageIs('Invalid stream resource.');
 
         $stream = Stream::createFromString('This is a test.');
 
@@ -325,7 +325,7 @@ final class StreamTest extends TestCase
     public function testTellInvalid(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid stream resource.');
+        $this->expectExceptionMessageIs('Invalid stream resource.');
 
         $stream = Stream::createFromString('This is a test.');
 
@@ -353,7 +353,7 @@ final class StreamTest extends TestCase
     public function testWriteInvalid(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid stream resource.');
+        $this->expectExceptionMessageIs('Invalid stream resource.');
 
         $stream = Stream::createFromFile('tmp/test.txt', 'w');
 
@@ -364,7 +364,7 @@ final class StreamTest extends TestCase
     public function testWriteNotWritable(): void
     {
         $this->expectException(ErrorException::class);
-        $this->expectExceptionMessage('fwrite(): Write of 5 bytes failed with errno=9 Bad file descriptor');
+        $this->expectExceptionMessageIs('fwrite(): Write of 5 bytes failed with errno=9 Bad file descriptor');
 
         $stream = Stream::createFromFile('tmp/test.txt');
 

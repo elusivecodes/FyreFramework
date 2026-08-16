@@ -122,7 +122,7 @@ final class ForgeRegistryTest extends TestCase
     public function testUseInvalidForge(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Database forge `Tests\TestCase\DB\Forge\ForgeRegistryTest` must extend `Fyre\DB\Forge\Forge`.');
+        $this->expectExceptionMessageIs('Database forge `Tests\TestCase\DB\Forge\ForgeRegistryTest` must extend `Fyre\DB\Forge\Forge`.');
 
         $this->forgeRegistry->map(SqliteConnection::class, self::class);
     }
@@ -130,7 +130,9 @@ final class ForgeRegistryTest extends TestCase
     public function testUseMissingForge(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('does not have a mapped forge.');
+        $this->expectExceptionMessageIs(
+            'Database connection `'.$this->missingConnection::class.'` does not have a mapped forge.'
+        );
 
         $this->forgeRegistry->use($this->missingConnection);
     }

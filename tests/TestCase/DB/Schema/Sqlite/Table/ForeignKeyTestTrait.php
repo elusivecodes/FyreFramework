@@ -55,7 +55,7 @@ trait ForeignKeyTestTrait
     public function testForeignKeyInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Table foreign key `test_values.invalid` does not exist.');
+        $this->expectExceptionMessageIs('Table foreign key `test_values.invalid` does not exist.');
 
         $this->schema
             ->table('test_values')

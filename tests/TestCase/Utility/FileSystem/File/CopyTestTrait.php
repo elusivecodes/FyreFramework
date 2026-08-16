@@ -28,7 +28,7 @@ trait CopyTestTrait
     public function testCopyFolderNotExists(): void
     {
         $this->expectException(ErrorException::class);
-        $this->expectExceptionMessage('copy(tmp/test/test2.txt): Failed to open stream: No such file or directory');
+        $this->expectExceptionMessageIs('copy(tmp/test/test2.txt): Failed to open stream: No such file or directory');
 
         $file = new File('tmp/test.txt', true);
         $file->copy('tmp/test/test2.txt');
@@ -37,7 +37,7 @@ trait CopyTestTrait
     public function testCopyNotExists(): void
     {
         $this->expectException(ErrorException::class);
-        $this->expectExceptionMessage('copy(tmp/test.txt): Failed to open stream: No such file or directory');
+        $this->expectExceptionMessageIs('copy(tmp/test.txt): Failed to open stream: No such file or directory');
 
         $file = new File('tmp/test.txt');
         $file->copy('tmp/test2.txt');
@@ -46,7 +46,7 @@ trait CopyTestTrait
     public function testCopyNotOverwrite(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('File `tmp/test2.txt` already exists.');
+        $this->expectExceptionMessageIs('File `tmp/test2.txt` already exists.');
 
         $file = new File('tmp/test.txt', true);
         new File('tmp/test2.txt', true);

@@ -67,7 +67,7 @@ trait InputTypeTestTrait
     public function testInputTypeInvalid(): void
     {
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('Input type `invalid` is not valid.');
+        $this->expectExceptionMessageIs('Input type `invalid` is not valid.');
 
         $this->form->__call('invalid', []);
     }

@@ -74,7 +74,7 @@ final class MemcachedTest extends TestCase
     public function testInvalidConnection(): void
     {
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('Memcache cache connection failed.');
+        $this->expectExceptionMessageIs('Memcache cache connection failed.');
 
         $this->cacheManager->build([
             'className' => MemcachedCacher::class,

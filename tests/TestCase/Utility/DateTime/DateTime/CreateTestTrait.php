@@ -190,7 +190,7 @@ trait CreateTestTrait
     public function testCreateFromIsoStringInvalid(): void
     {
         $this->expectException(DateMalformedStringException::class);
-        $this->expectExceptionMessage('Date string is not valid RFC 3339.');
+        $this->expectExceptionMessageIs('Date string is not valid RFC 3339.');
 
         DateTime::createFromIsoString('invalid');
     }

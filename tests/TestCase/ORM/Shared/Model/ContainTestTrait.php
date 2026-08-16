@@ -402,7 +402,7 @@ trait ContainTestTrait
     public function testContainInvalid(): void
     {
         $this->expectException(OrmException::class);
-        $this->expectExceptionMessage('Model `Users` does not have a relationship to `Invalid`.');
+        $this->expectExceptionMessageIs('Model `Users` does not have a relationship to `Invalid`.');
 
         $this->modelRegistry->use('Users')->find(contain: [
             'Invalid',

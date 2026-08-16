@@ -92,7 +92,7 @@ final class DownloadResponseTest extends TestCase
     public function testInvalidFile(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('File `tests/Mock/invalid.txt` does not exist.');
+        $this->expectExceptionMessageIs('File `tests/Mock/invalid.txt` does not exist.');
 
         $response = DownloadResponse::createFromFile('tests/Mock/invalid.txt');
     }

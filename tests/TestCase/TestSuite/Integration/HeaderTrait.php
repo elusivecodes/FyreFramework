@@ -17,7 +17,7 @@ trait HeaderTrait
     public function testHeaderFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that header "Name" value is equal to "invalid".');
+        $this->expectExceptionMessageIs('Failed asserting that header "Name" value is equal to "invalid".');
 
         $this->get('/header');
 
@@ -27,7 +27,7 @@ trait HeaderTrait
     public function testHeaderNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertHeader('invalid', 'Name');
     }

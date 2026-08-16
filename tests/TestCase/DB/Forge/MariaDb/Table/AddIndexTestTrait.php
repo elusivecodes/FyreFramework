@@ -11,7 +11,7 @@ trait AddIndexTestTrait
     public function testAddIndexExistingIndex(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Table index `test.id` already exists.');
+        $this->expectExceptionMessageIs('Table index `test.id` already exists.');
 
         $this->forge->createTable('test', [
             'id' => [

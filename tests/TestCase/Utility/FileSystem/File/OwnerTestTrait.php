@@ -23,7 +23,7 @@ trait OwnerTestTrait
     public function testOwnerNotExists(): void
     {
         $this->expectException(ErrorException::class);
-        $this->expectExceptionMessage('fileowner(): stat failed for tmp/test.txt');
+        $this->expectExceptionMessageIs('fileowner(): stat failed for tmp/test.txt');
 
         $file = new File('tmp/test.txt');
         $file->owner();

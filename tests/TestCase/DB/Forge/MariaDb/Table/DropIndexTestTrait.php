@@ -11,7 +11,7 @@ trait DropIndexTestTrait
     public function testDropIndexInvalidIndex(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Table index `test.invalid` does not exist.');
+        $this->expectExceptionMessageIs('Table index `test.invalid` does not exist.');
 
         $this->forge
             ->build('test')

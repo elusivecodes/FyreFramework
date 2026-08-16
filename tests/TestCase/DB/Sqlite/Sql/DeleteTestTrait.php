@@ -21,7 +21,7 @@ trait DeleteTestTrait
     public function testDeleteAlias(): void
     {
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('DELETE queries using aliases are not supported by this connection.');
+        $this->expectExceptionMessageIs('DELETE queries using aliases are not supported by this connection.');
 
         $this->db->delete('alt');
     }
@@ -46,7 +46,7 @@ trait DeleteTestTrait
     public function testDeleteJoin(): void
     {
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('DELETE queries with a JOIN clause are not supported by this connection.');
+        $this->expectExceptionMessageIs('DELETE queries with a JOIN clause are not supported by this connection.');
 
         $this->db->delete()
             ->from('test')
@@ -74,7 +74,7 @@ trait DeleteTestTrait
     public function testDeleteMultipleTables(): void
     {
         $this->expectException(DbException::class);
-        $this->expectExceptionMessage('Multiple tables are not supported for this query.');
+        $this->expectExceptionMessageIs('Multiple tables are not supported for this query.');
 
         $this->db->delete()
             ->from([
@@ -123,7 +123,7 @@ trait DeleteTestTrait
     public function testDeleteUsing(): void
     {
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('DELETE queries with a USING clause are not supported by this connection.');
+        $this->expectExceptionMessageIs('DELETE queries with a USING clause are not supported by this connection.');
 
         $this->db->delete()
             ->from('test')

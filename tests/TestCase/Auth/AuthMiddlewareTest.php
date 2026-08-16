@@ -158,7 +158,7 @@ final class AuthMiddlewareTest extends TestCase
 
         $this->expectException(ForbiddenException::class);
         $this->expectExceptionCode(403);
-        $this->expectExceptionMessage('Forbidden');
+        $this->expectExceptionMessageIs('Forbidden');
 
         $this->access->define('test', function(User|null $authUser): bool {
             $this->assertInstanceOf(User::class, $authUser);
@@ -227,7 +227,7 @@ final class AuthMiddlewareTest extends TestCase
     {
         $this->expectException(NotFoundException::class);
         $this->expectExceptionCode(404);
-        $this->expectExceptionMessage('Not Found');
+        $this->expectExceptionMessageIs('Not Found');
 
         $this->login();
 
@@ -246,7 +246,7 @@ final class AuthMiddlewareTest extends TestCase
     {
         $this->expectException(NotFoundException::class);
         $this->expectExceptionCode(404);
-        $this->expectExceptionMessage('Not Found');
+        $this->expectExceptionMessageIs('Not Found');
 
         $this->login();
 

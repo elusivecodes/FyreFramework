@@ -21,7 +21,7 @@ trait ContentsContainsTrait
     public function testErrorContainsFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that stderr contains "Test message".');
+        $this->expectExceptionMessageIs('Failed asserting that stderr contains "Test message".');
 
         $this->assertErrorContains('Test message');
     }
@@ -36,7 +36,7 @@ trait ContentsContainsTrait
     public function testOutputContainsFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that stdout contains "Test message".');
+        $this->expectExceptionMessageIs('Failed asserting that stdout contains "Test message".');
 
         $this->assertOutputContains('Test message');
     }

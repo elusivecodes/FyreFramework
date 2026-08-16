@@ -33,7 +33,7 @@ trait ElementTestTrait
     public function testElementInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Element template `invalid` could not be found.');
+        $this->expectExceptionMessageIs('Element template `invalid` could not be found.');
 
         $this->view->render('test/element_invalid');
     }

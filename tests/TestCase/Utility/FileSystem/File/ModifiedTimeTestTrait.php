@@ -27,7 +27,7 @@ trait ModifiedTimeTestTrait
     public function testModifiedTimeNotExists(): void
     {
         $this->expectException(ErrorException::class);
-        $this->expectExceptionMessage('filemtime(): stat failed for tmp/test.txt');
+        $this->expectExceptionMessageIs('filemtime(): stat failed for tmp/test.txt');
 
         $file = new File('tmp/test.txt');
         $file->modifiedTime();

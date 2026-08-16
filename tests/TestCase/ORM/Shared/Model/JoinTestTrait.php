@@ -12,7 +12,7 @@ trait JoinTestTrait
     public function testContainInnerJoinInvalid(): void
     {
         $this->expectException(OrmException::class);
-        $this->expectExceptionMessage('Model `Posts` does not have a relationship to `Invalid`.');
+        $this->expectExceptionMessageIs('Model `Posts` does not have a relationship to `Invalid`.');
 
         $this->modelRegistry->use('Posts')
             ->find()
@@ -22,7 +22,7 @@ trait JoinTestTrait
     public function testContainJoinConflict(): void
     {
         $this->expectException(OrmException::class);
-        $this->expectExceptionMessage('Join table alias `Users` is already used by the query.');
+        $this->expectExceptionMessageIs('Join table alias `Users` is already used by the query.');
 
         $this->modelRegistry->use('Posts')
             ->find()
@@ -41,7 +41,7 @@ trait JoinTestTrait
     public function testContainJoinContainConflict(): void
     {
         $this->expectException(OrmException::class);
-        $this->expectExceptionMessage('Join table alias `Users` is already used by the query.');
+        $this->expectExceptionMessageIs('Join table alias `Users` is already used by the query.');
 
         $this->modelRegistry->use('Posts')
             ->find()
@@ -58,7 +58,7 @@ trait JoinTestTrait
     public function testContainJoinInvalidOptions(): void
     {
         $this->expectException(OrmException::class);
-        $this->expectExceptionMessage('Contain option `orderBy` cannot be used with the join strategy.');
+        $this->expectExceptionMessageIs('Contain option `orderBy` cannot be used with the join strategy.');
 
         $this->modelRegistry->use('Posts')
             ->find()
@@ -77,7 +77,7 @@ trait JoinTestTrait
     public function testContainJoinPathConflict(): void
     {
         $this->expectException(OrmException::class);
-        $this->expectExceptionMessage('Join table alias `Users` is already used by the query.');
+        $this->expectExceptionMessageIs('Join table alias `Users` is already used by the query.');
 
         $this->modelRegistry->use('Posts')
             ->find()
@@ -90,7 +90,7 @@ trait JoinTestTrait
     public function testContainLeftJoinInvalid(): void
     {
         $this->expectException(OrmException::class);
-        $this->expectExceptionMessage('Model `Posts` does not have a relationship to `Invalid`.');
+        $this->expectExceptionMessageIs('Model `Posts` does not have a relationship to `Invalid`.');
 
         $this->modelRegistry->use('Posts')
             ->find()
@@ -100,7 +100,7 @@ trait JoinTestTrait
     public function testJoinConflict(): void
     {
         $this->expectException(OrmException::class);
-        $this->expectExceptionMessage('Join table alias `Users` is already used by the query.');
+        $this->expectExceptionMessageIs('Join table alias `Users` is already used by the query.');
 
         $this->modelRegistry->use('Posts')
             ->find()

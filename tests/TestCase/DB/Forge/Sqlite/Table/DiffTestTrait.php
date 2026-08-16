@@ -15,7 +15,7 @@ trait DiffTestTrait
     public function testTableDiffChangeForeignKey(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Foreign keys cannot be dropped from existing tables.');
+        $this->expectExceptionMessageIs('Foreign keys cannot be dropped from existing tables.');
 
         $this->forge->createTable('test_values', [
             'id' => [
@@ -210,7 +210,7 @@ trait DiffTestTrait
     public function testTableDiffSqlAddForeignKey(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Foreign keys cannot be added to existing tables.');
+        $this->expectExceptionMessageIs('Foreign keys cannot be added to existing tables.');
 
         $this->forge->createTable('test_values', [
             'id' => [
@@ -285,7 +285,7 @@ trait DiffTestTrait
     public function testTableDiffSqlChangeColumn(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Columns cannot be modified in existing tables.');
+        $this->expectExceptionMessageIs('Columns cannot be modified in existing tables.');
 
         $this->forge->createTable('test', [
             'id' => [
@@ -338,7 +338,7 @@ trait DiffTestTrait
     public function testTableDiffSqlDropForeignKey(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Foreign keys cannot be dropped from existing tables.');
+        $this->expectExceptionMessageIs('Foreign keys cannot be dropped from existing tables.');
 
         $this->forge->createTable('test_values', [
             'id' => [
@@ -414,7 +414,7 @@ trait DiffTestTrait
     public function testTableDiffSqlPrimaryKey(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Primary keys cannot be added to existing tables.');
+        $this->expectExceptionMessageIs('Primary keys cannot be added to existing tables.');
 
         $this->forge->createTable('test', [
             'id' => [

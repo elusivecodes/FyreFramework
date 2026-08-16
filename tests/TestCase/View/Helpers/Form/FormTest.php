@@ -60,7 +60,7 @@ final class FormTest extends TestCase
     public function testInvalidContext(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Item class `stdClass` does not have a mapped context.');
+        $this->expectExceptionMessageIs('Item class `stdClass` does not have a mapped context.');
 
         $this->view->Form->open(new stdClass());
     }
@@ -68,7 +68,7 @@ final class FormTest extends TestCase
     public function testInvalidInputType(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input type `invalid` is not valid.');
+        $this->expectExceptionMessageIs('Input type `invalid` is not valid.');
 
         $this->view->Form->input('input', [
             'type' => 'invalid',
@@ -78,7 +78,7 @@ final class FormTest extends TestCase
     public function testInvalidInputTypeMethod(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Input type `close` is not valid.');
+        $this->expectExceptionMessageIs('Input type `close` is not valid.');
 
         $this->view->Form->input('input', [
             'type' => 'close',
@@ -88,7 +88,7 @@ final class FormTest extends TestCase
     public function testUnclosedForm(): void
     {
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('Unable to open form while existing form context is not closed.');
+        $this->expectExceptionMessageIs('Unable to open form while existing form context is not closed.');
 
         $this->view->Form->open();
         $this->view->Form->open();

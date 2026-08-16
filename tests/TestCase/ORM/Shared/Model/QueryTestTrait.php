@@ -41,7 +41,7 @@ trait QueryTestTrait
     public function testDeleteIncompleteCompositePrimaryKey(): void
     {
         $this->expectException(OrmException::class);
-        $this->expectExceptionMessage('Primary key values for model `CompositeItems` must not be null or missing.');
+        $this->expectExceptionMessageIs('Primary key values for model `CompositeItems` must not be null or missing.');
 
         $CompositeItems = $this->modelRegistry->use('CompositeItems');
         $item = $CompositeItems->newEntity([
@@ -190,7 +190,7 @@ trait QueryTestTrait
     public function testGetIncompleteCompositePrimaryKey(): void
     {
         $this->expectException(OrmException::class);
-        $this->expectExceptionMessage('Primary key values for model `CompositeItems` must not be null or missing.');
+        $this->expectExceptionMessageIs('Primary key values for model `CompositeItems` must not be null or missing.');
 
         $this->modelRegistry->use('CompositeItems')->get([1]);
     }
@@ -528,7 +528,7 @@ trait QueryTestTrait
     public function testUpdateIncompleteCompositePrimaryKey(): void
     {
         $this->expectException(OrmException::class);
-        $this->expectExceptionMessage('Primary key values for model `CompositeItems` must not be null or missing.');
+        $this->expectExceptionMessageIs('Primary key values for model `CompositeItems` must not be null or missing.');
 
         $CompositeItems = $this->modelRegistry->use('CompositeItems');
         $item = $CompositeItems->newEntity([

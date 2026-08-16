@@ -19,7 +19,7 @@ trait LogMessageTrait
     public function testLogMessageFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that the "error" log has the message \'This is a log message\'.');
+        $this->expectExceptionMessageIs('Failed asserting that the "error" log has the message \'This is a log message\'.');
 
         $this->app->use(LogManager::class)
             ->handle('error', 'This is a log message with additional text');
@@ -38,7 +38,7 @@ trait LogMessageTrait
     public function testLogMessageScopedFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that the "error" log has the message \'This is a log message\'.');
+        $this->expectExceptionMessageIs('Failed asserting that the "error" log has the message \'This is a log message\'.');
 
         $this->app->use(LogManager::class)
             ->handle('error', 'This is a log message with additional text', scope: 'test');

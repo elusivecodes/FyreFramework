@@ -34,7 +34,7 @@ final class HttpClientTest extends TestCase
     public function testMatchInvalid(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('No mock response found for `http://localhost/test` (GET).');
+        $this->expectExceptionMessageIs('No mock response found for `http://localhost/test` (GET).');
 
         $response = $this->createResponse();
 

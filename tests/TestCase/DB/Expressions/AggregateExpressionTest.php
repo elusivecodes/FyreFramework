@@ -30,7 +30,7 @@ final class AggregateExpressionTest extends TestCase
     public function testDistinctCountAll(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query aggregate COUNT(*) cannot use distinct values.');
+        $this->expectExceptionMessageIs('Query aggregate COUNT(*) cannot use distinct values.');
 
         $field = new IdentifierExpression('*');
         $aggregate = new AggregateExpression('COUNT', $field);

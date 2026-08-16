@@ -26,7 +26,7 @@ trait PermissionsTestTrait
     public function testPermissionsNotExists(): void
     {
         $this->expectException(ErrorException::class);
-        $this->expectExceptionMessage('fileperms(): stat failed for tmp/test.txt');
+        $this->expectExceptionMessageIs('fileperms(): stat failed for tmp/test.txt');
 
         $file = new File('tmp/test.txt');
         $file->permissions();

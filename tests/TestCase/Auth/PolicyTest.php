@@ -22,7 +22,7 @@ final class PolicyTest extends TestCase
     {
         $this->expectException(ForbiddenException::class);
         $this->expectExceptionCode(403);
-        $this->expectExceptionMessage('Forbidden');
+        $this->expectExceptionMessageIs('Forbidden');
 
         $this->access->authorize('create', 'Posts');
     }
@@ -38,7 +38,7 @@ final class PolicyTest extends TestCase
     {
         $this->expectException(ForbiddenException::class);
         $this->expectExceptionCode(403);
-        $this->expectExceptionMessage('Forbidden');
+        $this->expectExceptionMessageIs('Forbidden');
 
         $this->access->authorize('create', PostsModel::class);
     }
@@ -56,7 +56,7 @@ final class PolicyTest extends TestCase
     {
         $this->expectException(ForbiddenException::class);
         $this->expectExceptionCode(403);
-        $this->expectExceptionMessage('Forbidden');
+        $this->expectExceptionMessageIs('Forbidden');
 
         $Posts = $this->modelRegistry->use('Posts');
 
@@ -74,7 +74,7 @@ final class PolicyTest extends TestCase
     {
         $this->expectException(ForbiddenException::class);
         $this->expectExceptionCode(403);
-        $this->expectExceptionMessage('Forbidden');
+        $this->expectExceptionMessageIs('Forbidden');
 
         $this->access->authorize('update', 'Posts', 1);
     }
@@ -89,7 +89,7 @@ final class PolicyTest extends TestCase
     public function testPolicyUpdateClassNameFail(): void
     {
         $this->expectException(ForbiddenException::class);
-        $this->expectExceptionMessage('Forbidden');
+        $this->expectExceptionMessageIs('Forbidden');
 
         $this->access->authorize('update', PostsModel::class, 1);
     }
@@ -109,7 +109,7 @@ final class PolicyTest extends TestCase
     {
         $this->expectException(ForbiddenException::class);
         $this->expectExceptionCode(403);
-        $this->expectExceptionMessage('Forbidden');
+        $this->expectExceptionMessageIs('Forbidden');
 
         $Posts = $this->modelRegistry->use('Posts');
 
@@ -131,7 +131,7 @@ final class PolicyTest extends TestCase
     {
         $this->expectException(ForbiddenException::class);
         $this->expectExceptionCode(403);
-        $this->expectExceptionMessage('Forbidden');
+        $this->expectExceptionMessageIs('Forbidden');
 
         $Posts = $this->modelRegistry->use('Posts');
 

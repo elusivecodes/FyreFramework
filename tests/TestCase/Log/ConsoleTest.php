@@ -165,7 +165,7 @@ final class ConsoleTest extends TestCase
     public function testInvalidHandler(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Log handler `Invalid` must extend `Fyre\Log\Logger`.');
+        $this->expectExceptionMessageIs('Log handler `Invalid` must extend `Fyre\Log\Logger`.');
 
         $this->logManager->clear();
         $this->logManager->setConfig('invalid', [
@@ -178,7 +178,7 @@ final class ConsoleTest extends TestCase
     public function testInvalidLevel(): void
     {
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('Log level `invalid` is not valid.');
+        $this->expectExceptionMessageIs('Log level `invalid` is not valid.');
 
         $this->logManager->handle('invalid', 'test');
     }
@@ -186,7 +186,7 @@ final class ConsoleTest extends TestCase
     public function testInvalidStream(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Console logger option `stream` must be a string.');
+        $this->expectExceptionMessageIs('Console logger option `stream` must be a string.');
 
         new ConsoleLogger([
             'stream' => null,

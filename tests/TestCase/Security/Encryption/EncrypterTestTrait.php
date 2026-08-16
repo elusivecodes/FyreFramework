@@ -45,7 +45,7 @@ trait EncrypterTestTrait
     public function testInvalidKey(): void
     {
         $this->expectException(EncryptionException::class);
-        $this->expectExceptionMessage('Decryption failed.');
+        $this->expectExceptionMessageIs('Decryption failed.');
 
         $encrypted = $this->encrypter->encrypt('This is a sample string', 'abc123');
         $this->encrypter->decrypt($encrypted, 'invalid');

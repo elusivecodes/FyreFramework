@@ -136,7 +136,7 @@ trait QueryGeneratorTestTrait
     public function testBuildIndexInvalidPrimaryType(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Index type `fulltext` is not valid.');
+        $this->expectExceptionMessageIs('Index type `fulltext` is not valid.');
 
         $index = $this->table
             ->addIndex('PRIMARY', [
@@ -151,7 +151,7 @@ trait QueryGeneratorTestTrait
     public function testBuildInvalidEnum(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Enum class `stdClass` must implement `UnitEnum`.');
+        $this->expectExceptionMessageIs('Enum class `stdClass` must implement `UnitEnum`.');
 
         $column = $this->table
             ->addColumn('value', [

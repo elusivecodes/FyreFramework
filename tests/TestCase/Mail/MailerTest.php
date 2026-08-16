@@ -41,7 +41,7 @@ final class MailerTest extends TestCase
     public function testInvalidConfig(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Mailer `` must extend `Fyre\Mail\Mailer`.');
+        $this->expectExceptionMessageIs('Mailer `` must extend `Fyre\Mail\Mailer`.');
 
         $this->mailManager->use('invalid');
     }

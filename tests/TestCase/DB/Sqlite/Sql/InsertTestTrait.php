@@ -94,7 +94,7 @@ trait InsertTestTrait
     public function testInsertExtraColumn(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('All rows must contain the same columns.');
+        $this->expectExceptionMessageIs('All rows must contain the same columns.');
 
         $this->db->insert()
             ->into('test')
@@ -159,7 +159,7 @@ trait InsertTestTrait
     public function testInsertMissingColumn(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('All rows must contain the same columns.');
+        $this->expectExceptionMessageIs('All rows must contain the same columns.');
 
         $this->db->insert()
             ->into('test')

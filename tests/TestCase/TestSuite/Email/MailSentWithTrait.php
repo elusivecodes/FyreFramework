@@ -92,7 +92,7 @@ trait MailSentWithTrait
     public function testMailSentWithCcAtFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that email #1 was sent with cc address "test4@test.com".');
+        $this->expectExceptionMessageIs('Failed asserting that email #1 was sent with cc address "test4@test.com".');
 
         $this->app->use(MailManager::class)
             ->use()
@@ -122,7 +122,7 @@ trait MailSentWithTrait
     public function testMailSentWithCcFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that an email was sent with cc address "invalid@test.com".');
+        $this->expectExceptionMessageIs('Failed asserting that an email was sent with cc address "invalid@test.com".');
 
         $this->app->use(MailManager::class)
             ->use()

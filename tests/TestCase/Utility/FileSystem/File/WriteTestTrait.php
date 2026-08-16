@@ -44,7 +44,7 @@ trait WriteTestTrait
     public function testWriteInvalidHandle(): void
     {
         $this->expectException(ErrorException::class);
-        $this->expectExceptionMessage('fwrite(): Write of 4 bytes failed with errno=9 Bad file descriptor');
+        $this->expectExceptionMessageIs('fwrite(): Write of 4 bytes failed with errno=9 Bad file descriptor');
 
         $file = new File('tmp/test.txt', true);
         $file->open('r');
@@ -54,7 +54,7 @@ trait WriteTestTrait
     public function testWriteNoHandle(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('File handle is not valid.');
+        $this->expectExceptionMessageIs('File handle is not valid.');
 
         $file = new File('tmp/test.txt', true);
         $file->write('test');

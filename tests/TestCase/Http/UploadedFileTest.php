@@ -128,7 +128,7 @@ final class UploadedFileTest extends TestCase
     public function testGetStreamMoved(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Upload already moved: test.txt');
+        $this->expectExceptionMessageIs('Upload already moved: test.txt');
 
         $filePath = tempnam(sys_get_temp_dir(), 'uploaded-file');
 
@@ -157,7 +157,7 @@ final class UploadedFileTest extends TestCase
     public function testMoveTo(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Failed to move upload `test.txt` to `tmp/php1`.');
+        $this->expectExceptionMessageIs('Failed to move upload `test.txt` to `tmp/php1`.');
 
         $file = new UploadedFile(
             '/tmp/php1',
@@ -205,7 +205,7 @@ final class UploadedFileTest extends TestCase
     public function testMoveToMoved(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Upload already moved: test.txt');
+        $this->expectExceptionMessageIs('Upload already moved: test.txt');
 
         $file = new UploadedFile(
             '/tmp/php1',
@@ -226,7 +226,7 @@ final class UploadedFileTest extends TestCase
     public function testMoveToNotValid(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Upload is not valid: test.txt');
+        $this->expectExceptionMessageIs('Upload is not valid: test.txt');
 
         $file = new UploadedFile(
             '/tmp/php1',

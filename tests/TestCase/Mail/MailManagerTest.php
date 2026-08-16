@@ -31,7 +31,7 @@ final class MailManagerTest extends TestCase
     public function testBuildInvalidHandler(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Mailer `Invalid` must extend `Fyre\Mail\Mailer`.');
+        $this->expectExceptionMessageIs('Mailer `Invalid` must extend `Fyre\Mail\Mailer`.');
 
         $this->mailManager->build([
             'className' => 'Invalid',
@@ -48,7 +48,10 @@ final class MailManagerTest extends TestCase
 
     public function testGetConfig(): void
     {
-        $this->assertSame(
+        $config = $this->mailManager->getConfig();
+
+        $this->assertIsArray($config);
+        $this->assertArraysAreIdentical(
             [
                 'default' => [
                     'className' => SendmailMailer::class,
@@ -57,7 +60,7 @@ final class MailManagerTest extends TestCase
                     'className' => SendmailMailer::class,
                 ],
             ],
-            $this->mailManager->getConfig()
+            $config
         );
     }
 
@@ -77,11 +80,14 @@ final class MailManagerTest extends TestCase
 
     public function testGetConfigKey(): void
     {
-        $this->assertSame(
+        $config = $this->mailManager->getConfig('default');
+
+        $this->assertIsArray($config);
+        $this->assertArraysAreIdentical(
             [
                 'className' => SendmailMailer::class,
             ],
-            $this->mailManager->getConfig('default')
+            $config
         );
     }
 
@@ -119,18 +125,21 @@ final class MailManagerTest extends TestCase
             ])
         );
 
-        $this->assertSame(
+        $config = $this->mailManager->getConfig('test');
+
+        $this->assertIsArray($config);
+        $this->assertArraysAreIdentical(
             [
                 'className' => SendmailMailer::class,
             ],
-            $this->mailManager->getConfig('test')
+            $config
         );
     }
 
     public function testSetConfigExists(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Mail config `default` already exists.');
+        $this->expectExceptionMessageIs('Mail config `default` already exists.');
 
         $this->mailManager->setConfig('default', [
             'className' => SendmailMailer::class,

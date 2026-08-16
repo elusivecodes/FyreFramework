@@ -61,7 +61,7 @@ trait DeleteTestTrait
     public function testDeleteVirtualTables(): void
     {
         $this->expectException(DbException::class);
-        $this->expectExceptionMessage('Virtual tables are not supported for this query.');
+        $this->expectExceptionMessageIs('Virtual tables are not supported for this query.');
 
         $this->db->delete()
             ->from([

@@ -30,18 +30,21 @@ trait UpdateTestTrait
             ])
             ->execute();
 
-        $this->assertSame(
+        $row = $this->db->select()
+            ->from('test')
+            ->where([
+                'id' => 1,
+            ])
+            ->execute()
+            ->first();
+
+        $this->assertIsArray($row);
+        $this->assertArraysAreIdentical(
             [
                 'id' => 1,
                 'name' => 'Test 2',
             ],
-            $this->db->select()
-                ->from('test')
-                ->where([
-                    'id' => 1,
-                ])
-                ->execute()
-                ->first()
+            $row
         );
     }
 
@@ -156,7 +159,7 @@ trait UpdateTestTrait
     public function testUpdateBatchMultipleTables(): void
     {
         $this->expectException(DbException::class);
-        $this->expectExceptionMessage('Multiple tables are not supported for this query.');
+        $this->expectExceptionMessageIs('Multiple tables are not supported for this query.');
 
         $this->db->updateBatch()
             ->table([
@@ -168,7 +171,7 @@ trait UpdateTestTrait
     public function testUpdateBatchVirtualTables(): void
     {
         $this->expectException(DbException::class);
-        $this->expectExceptionMessage('Virtual tables are not supported for this query.');
+        $this->expectExceptionMessageIs('Virtual tables are not supported for this query.');
 
         $this->db->updateBatch()
             ->table([
@@ -180,7 +183,7 @@ trait UpdateTestTrait
     public function testUpdateVirtualTables(): void
     {
         $this->expectException(DbException::class);
-        $this->expectExceptionMessage('Virtual tables are not supported for this query.');
+        $this->expectExceptionMessageIs('Virtual tables are not supported for this query.');
 
         $this->db->update([
             'alt' => $this->db->select()

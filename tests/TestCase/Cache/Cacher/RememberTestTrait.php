@@ -24,7 +24,7 @@ trait RememberTestTrait
     public function testRememberInvalidKey(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Cache key `test/` is not valid.');
+        $this->expectExceptionMessageIs('Cache key `test/` is not valid.');
 
         $this->cacher->remember('test/', static fn(): int => 2);
     }

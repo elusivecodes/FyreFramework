@@ -51,7 +51,7 @@ final class CellTest extends TestCase
     public function testCellInheritedMethod(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Cell method `Test::getView` is not a valid action.');
+        $this->expectExceptionMessageIs('Cell method `Test::getView` is not a valid action.');
 
         $this->view->cell('Test::getView')->render();
     }
@@ -59,7 +59,7 @@ final class CellTest extends TestCase
     public function testCellInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Cell `Invalid` could not be found.');
+        $this->expectExceptionMessageIs('Cell `Invalid` could not be found.');
 
         $this->view->cell('Invalid')->render();
     }
@@ -67,7 +67,7 @@ final class CellTest extends TestCase
     public function testCellInvalidMethod(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Cell method `Test::invalid` does not exist.');
+        $this->expectExceptionMessageIs('Cell method `Test::invalid` does not exist.');
 
         $this->view->cell('Test::invalid')->render();
     }
@@ -75,7 +75,7 @@ final class CellTest extends TestCase
     public function testCellNonPublicMethod(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Cell method `Example::hidden` is not a valid action.');
+        $this->expectExceptionMessageIs('Cell method `Example::hidden` is not a valid action.');
 
         $this->view->cell('Example::hidden')->render();
     }

@@ -24,7 +24,10 @@ final class FixtureTest extends TestCase
 
     public function testData(): void
     {
-        $this->assertSame(
+        $data = $this->fixture->data();
+
+        $this->assertIsArray($data);
+        $this->assertArraysAreIdentical(
             [
                 [
                     'name' => 'Test 1',
@@ -33,7 +36,7 @@ final class FixtureTest extends TestCase
                     'name' => 'Test 2',
                 ],
             ],
-            $this->fixture->data()
+            $data
         );
     }
 

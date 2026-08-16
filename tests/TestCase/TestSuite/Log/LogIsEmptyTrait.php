@@ -16,7 +16,7 @@ trait LogIsEmptyTrait
     public function testLogIsEmptyFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that the "error" log is empty.');
+        $this->expectExceptionMessageIs('Failed asserting that the "error" log is empty.');
 
         $this->app->use(LogManager::class)
             ->handle('error', 'This is a log message');
@@ -32,7 +32,7 @@ trait LogIsEmptyTrait
     public function testLogIsEmptyScopedFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that the "error" log is empty.');
+        $this->expectExceptionMessageIs('Failed asserting that the "error" log is empty.');
 
         $this->app->use(LogManager::class)
             ->handle('error', 'This is a log message', scope: 'test');

@@ -22,32 +22,44 @@ final class ConfigTest extends TestCase
             $config->getRiskyAllowed()
         );
 
-        $this->assertSame(
+        $ruleConfig = $rules['array_syntax'];
+
+        $this->assertIsArray($ruleConfig);
+        $this->assertArraysAreIdentical(
             ['syntax' => 'short'],
-            $rules['array_syntax']
+            $ruleConfig
         );
 
-        $this->assertSame(
+        $ruleConfig = $rules['ordered_imports'];
+
+        $this->assertIsArray($ruleConfig);
+        $this->assertArraysAreIdentical(
             [
                 'imports_order' => ['class', 'function', 'const'],
                 'sort_algorithm' => 'alpha',
             ],
-            $rules['ordered_imports']
+            $ruleConfig
         );
 
-        $this->assertSame(
+        $ruleConfig = $rules['return_type_declaration'];
+
+        $this->assertIsArray($ruleConfig);
+        $this->assertArraysAreIdentical(
             ['space_before' => 'none'],
-            $rules['return_type_declaration']
+            $ruleConfig
         );
 
-        $this->assertSame(
+        $ruleConfig = $rules['yoda_style'];
+
+        $this->assertIsArray($ruleConfig);
+        $this->assertArraysAreIdentical(
             [
                 'always_move_variable' => false,
                 'equal' => false,
                 'identical' => false,
                 'less_and_greater' => false,
             ],
-            $rules['yoda_style']
+            $ruleConfig
         );
     }
 }

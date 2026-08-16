@@ -50,7 +50,7 @@ trait FindRouteTestTrait
     public function testGroupHostInvalid(): void
     {
         $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('No route found for the path `/home`.');
+        $this->expectExceptionMessageIs('No route found for the path `/home`.');
 
         $router = $this->container->use(Router::class);
 
@@ -108,7 +108,7 @@ trait FindRouteTestTrait
     public function testGroupPortInvalid(): void
     {
         $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('No route found for the path `/home`.');
+        $this->expectExceptionMessageIs('No route found for the path `/home`.');
 
         $router = $this->container->use(Router::class);
 
@@ -167,7 +167,7 @@ trait FindRouteTestTrait
     public function testGroupSchemeInvalid(): void
     {
         $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('No route found for the path `/home`.');
+        $this->expectExceptionMessageIs('No route found for the path `/home`.');
 
         $router = $this->container->use(Router::class);
 
@@ -189,7 +189,7 @@ trait FindRouteTestTrait
     public function testInvalidAction(): void
     {
         $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('No route found for the path `/test`.');
+        $this->expectExceptionMessageIs('No route found for the path `/test`.');
 
         $router = $this->container->use(Router::class);
 
@@ -210,7 +210,7 @@ trait FindRouteTestTrait
     public function testInvalidRoute(): void
     {
         $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('No route found for the path `/test`.');
+        $this->expectExceptionMessageIs('No route found for the path `/test`.');
 
         $router = $this->container->use(Router::class);
 
@@ -266,7 +266,7 @@ trait FindRouteTestTrait
     public function testRouteHostInvalid(): void
     {
         $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('No route found for the path `/home`.');
+        $this->expectExceptionMessageIs('No route found for the path `/home`.');
 
         $router = $this->container->use(Router::class);
 
@@ -348,7 +348,7 @@ trait FindRouteTestTrait
     public function testRoutePortInvalid(): void
     {
         $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('No route found for the path `/home`.');
+        $this->expectExceptionMessageIs('No route found for the path `/home`.');
 
         $router = $this->container->use(Router::class);
 
@@ -403,7 +403,7 @@ trait FindRouteTestTrait
     public function testRouteSchemeInvalid(): void
     {
         $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('No route found for the path `/home`.');
+        $this->expectExceptionMessageIs('No route found for the path `/home`.');
 
         $router = $this->container->use(Router::class);
 

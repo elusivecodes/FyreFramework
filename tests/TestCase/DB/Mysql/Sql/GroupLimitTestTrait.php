@@ -29,7 +29,7 @@ trait GroupLimitTestTrait
     public function testGroupLimitDistinctInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query group limits cannot be used with DISTINCT.');
+        $this->expectExceptionMessageIs('Query group limits cannot be used with DISTINCT.');
 
         $this->db->select()
             ->from('test')
@@ -41,7 +41,7 @@ trait GroupLimitTestTrait
     public function testGroupLimitFieldInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query group limit field must not be empty.');
+        $this->expectExceptionMessageIs('Query group limit field must not be empty.');
 
         $this->db->select()
             ->groupLimit(1, '');
@@ -50,7 +50,7 @@ trait GroupLimitTestTrait
     public function testGroupLimitInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query group limit must not be negative.');
+        $this->expectExceptionMessageIs('Query group limit must not be negative.');
 
         $this->db->select()
             ->groupLimit(-1, 'user_id');
@@ -59,7 +59,7 @@ trait GroupLimitTestTrait
     public function testGroupLimitOffsetInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query group offset must not be negative.');
+        $this->expectExceptionMessageIs('Query group offset must not be negative.');
 
         $this->db->select()
             ->groupLimit(1, 'user_id', -1);
@@ -67,23 +67,26 @@ trait GroupLimitTestTrait
 
     public function testGroupLimitOverwrite(): void
     {
-        $this->assertSame(
+        $groupLimit = $this->db->select()
+            ->groupLimit(2, 'user_id', 1)
+            ->groupLimit(1, 'name')
+            ->getGroupLimit();
+
+        $this->assertIsArray($groupLimit);
+        $this->assertArraysAreIdentical(
             [
                 'field' => 'name',
                 'limit' => 1,
                 'offset' => 0,
             ],
-            $this->db->select()
-                ->groupLimit(2, 'user_id', 1)
-                ->groupLimit(1, 'name')
-                ->getGroupLimit()
+            $groupLimit
         );
     }
 
     public function testGroupLimitUnionInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query group limits cannot be used with UNION queries.');
+        $this->expectExceptionMessageIs('Query group limits cannot be used with UNION queries.');
 
         $this->db->select()
             ->from('test')

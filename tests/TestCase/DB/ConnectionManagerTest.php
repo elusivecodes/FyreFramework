@@ -45,7 +45,7 @@ final class ConnectionManagerTest extends TestCase
     public function testBuildInvalidHandler(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Database connection `Invalid` must extend `Fyre\DB\Connection`.');
+        $this->expectExceptionMessageIs('Database connection `Invalid` must extend `Fyre\DB\Connection`.');
 
         $this->connectionManager->build([
             'className' => 'Invalid',
@@ -136,7 +136,10 @@ final class ConnectionManagerTest extends TestCase
 
     public function testGetConfig(): void
     {
-        $this->assertSame(
+        $config = $this->connectionManager->getConfig();
+
+        $this->assertIsArray($config);
+        $this->assertArraysAreIdentical(
             [
                 'default' => [
                     'className' => MysqlConnection::class,
@@ -161,7 +164,7 @@ final class ConnectionManagerTest extends TestCase
                     'compress' => true,
                 ],
             ],
-            $this->connectionManager->getConfig()
+            $config
         );
     }
 
@@ -181,7 +184,10 @@ final class ConnectionManagerTest extends TestCase
 
     public function testGetConfigKey(): void
     {
-        $this->assertSame(
+        $config = $this->connectionManager->getConfig('default');
+
+        $this->assertIsArray($config);
+        $this->assertArraysAreIdentical(
             [
                 'className' => MysqlConnection::class,
                 'host' => getenv('MYSQL_HOST'),
@@ -193,7 +199,7 @@ final class ConnectionManagerTest extends TestCase
                 'charset' => 'utf8mb4',
                 'compress' => true,
             ],
-            $this->connectionManager->getConfig('default')
+            $config
         );
     }
 
@@ -269,11 +275,14 @@ final class ConnectionManagerTest extends TestCase
             ])
         );
 
-        $this->assertSame(
+        $config = $this->connectionManager->getConfig('test');
+
+        $this->assertIsArray($config);
+        $this->assertArraysAreIdentical(
             [
                 'className' => MysqlConnection::class,
             ],
-            $this->connectionManager->getConfig('test')
+            $config
         );
 
         $this->connectionManager->unload('test');
@@ -282,7 +291,7 @@ final class ConnectionManagerTest extends TestCase
     public function testSetConfigExists(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Database connection config `default` already exists.');
+        $this->expectExceptionMessageIs('Database connection config `default` already exists.');
 
         $this->connectionManager->setConfig('default', [
             'className' => MysqlConnection::class,

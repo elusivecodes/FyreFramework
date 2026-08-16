@@ -448,7 +448,7 @@ final class ListenerTest extends TestCase
     public function testListenerSuccessException(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Listener failed.');
+        $this->expectExceptionMessageIs('Listener failed.');
 
         $this->queueManager->push(MockJob::class, ['test' => 1]);
 

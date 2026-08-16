@@ -66,20 +66,23 @@ final class WindowExpressionTest extends TestCase
             $window,
             $window->groups(null, null)
         );
-        $this->assertSame(
+        $frame = $window->getFrame();
+
+        $this->assertIsArray($frame);
+        $this->assertArraysAreIdentical(
             [
                 'type' => 'GROUPS',
                 'start' => 'UNBOUNDED PRECEDING',
                 'end' => 'UNBOUNDED FOLLOWING',
             ],
-            $window->getFrame()
+            $frame
         );
     }
 
     public function testInvalidFrameOffset(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query window frame offset must not be negative.');
+        $this->expectExceptionMessageIs('Query window frame offset must not be negative.');
 
         $function = new FunctionExpression('ROW_NUMBER');
         $window = new WindowExpression($function);
@@ -164,13 +167,16 @@ final class WindowExpressionTest extends TestCase
             $window,
             $window->range(null)
         );
-        $this->assertSame(
+        $frame = $window->getFrame();
+
+        $this->assertIsArray($frame);
+        $this->assertArraysAreIdentical(
             [
                 'type' => 'RANGE',
                 'start' => 'UNBOUNDED PRECEDING',
                 'end' => 'CURRENT ROW',
             ],
-            $window->getFrame()
+            $frame
         );
     }
 
@@ -183,13 +189,16 @@ final class WindowExpressionTest extends TestCase
             $window,
             $window->rows(5, 2)
         );
-        $this->assertSame(
+        $frame = $window->getFrame();
+
+        $this->assertIsArray($frame);
+        $this->assertArraysAreIdentical(
             [
                 'type' => 'ROWS',
                 'start' => '5 PRECEDING',
                 'end' => '2 FOLLOWING',
             ],
-            $window->getFrame()
+            $frame
         );
     }
 }

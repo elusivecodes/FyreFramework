@@ -84,7 +84,7 @@ final class SmtpMailerTest extends TestCase
     public function testAuthenticateInvalidReply(): void
     {
         $this->expectException(MailException::class);
-        $this->expectExceptionMessage('SMTP authentication failed.');
+        $this->expectExceptionMessageIs('SMTP authentication failed.');
 
         $this->replies = [
             '500 Error',
@@ -217,7 +217,7 @@ final class SmtpMailerTest extends TestCase
     public function testGetDataConnectionClosed(): void
     {
         $this->expectException(MailException::class);
-        $this->expectExceptionMessage('SMTP connection closed unexpectedly.');
+        $this->expectExceptionMessageIs('SMTP connection closed unexpectedly.');
 
         $mailer = new SmtpMailer($this->container);
 
@@ -387,7 +387,7 @@ final class SmtpMailerTest extends TestCase
     public function testSendCommandInvalidCommand(): void
     {
         $this->expectException(MailException::class);
-        $this->expectExceptionMessage('SMTP command `invalid` is not valid.');
+        $this->expectExceptionMessageIs('SMTP command `invalid` is not valid.');
 
         Closure::bind(function(): void {
             $socket = fopen('php://temp', 'r+');
@@ -402,7 +402,7 @@ final class SmtpMailerTest extends TestCase
     public function testSendCommandInvalidReply(): void
     {
         $this->expectException(MailException::class);
-        $this->expectExceptionMessage('SMTP invalid reply: 500 Error');
+        $this->expectExceptionMessageIs('SMTP invalid reply: 500 Error');
 
         $this->replies = [
             '500 Error',

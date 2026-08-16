@@ -176,7 +176,7 @@ final class ColorTest extends TestCase
     public function testCreateFromStringInvalid(string $value): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage(sprintf(
+        $this->expectExceptionMessageIs(sprintf(
             'Color string `%s` is not valid.',
             $value
         ));
@@ -252,7 +252,7 @@ final class ColorTest extends TestCase
     public function testToInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Color space `invalid` is not valid.');
+        $this->expectExceptionMessageIs('Color space `invalid` is not valid.');
 
         Color::createFromString('lavender')->to('invalid');
     }

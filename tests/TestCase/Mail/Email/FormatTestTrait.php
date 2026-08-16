@@ -52,7 +52,7 @@ trait FormatTestTrait
     public function testSetFormatInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Email format `invalid` is not valid.');
+        $this->expectExceptionMessageIs('Email format `invalid` is not valid.');
 
         $this->email->setFormat('invalid');
     }

@@ -18,7 +18,7 @@ trait FileTrait
     public function testFileResponseFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that download response file is equal to "tests/assets/test.jpg".');
+        $this->expectExceptionMessageIs('Failed asserting that download response file is equal to "tests/assets/test.jpg".');
 
         $this->get('/response');
 
@@ -28,7 +28,7 @@ trait FileTrait
     public function testFileResponseNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertFileResponse('invalid');
     }

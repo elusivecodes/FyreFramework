@@ -26,7 +26,7 @@ trait ResponseEqualsTrait
     public function testResponseEqualsFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that response body is equal to \'invalid\'.');
+        $this->expectExceptionMessageIs('Failed asserting that response body is equal to \'invalid\'.');
 
         $this->get('/response');
 
@@ -36,7 +36,7 @@ trait ResponseEqualsTrait
     public function testResponseEqualsNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertResponseEquals('invalid');
     }
@@ -51,7 +51,7 @@ trait ResponseEqualsTrait
     public function testResponseNotEqualsFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that response body is not equal to \'This is a test response\'.');
+        $this->expectExceptionMessageIs('Failed asserting that response body is not equal to \'This is a test response\'.');
 
         $this->get('/response');
 
@@ -61,7 +61,7 @@ trait ResponseEqualsTrait
     public function testResponseNotEqualsNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertResponseNotEquals('This is a test response');
     }

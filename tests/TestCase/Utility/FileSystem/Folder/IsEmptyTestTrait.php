@@ -31,7 +31,7 @@ trait IsEmptyTestTrait
     public function testIsEmptyNotExists(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('FilesystemIterator::__construct(tmp/test): Failed to open directory: No such file or directory');
+        $this->expectExceptionMessageIs('FilesystemIterator::__construct(tmp/test): Failed to open directory: No such file or directory');
 
         $folder = new Folder('tmp/test');
         $folder->isEmpty();

@@ -38,7 +38,7 @@ final class UseStatementBuilderTest extends TestCase
     public function testCollision(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Import name `Example` collides');
+        $this->expectExceptionMessageIs('Import name `Example` collides between `First\\Example` and `Second\\Example`.');
 
         self::buildUseStatements('App', [
             'First\Example',

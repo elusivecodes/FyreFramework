@@ -66,7 +66,7 @@ final class RedisTest extends TestCase
         ]);
 
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('Redis cache clear requires a non-empty prefix or flushDatabase enabled.');
+        $this->expectExceptionMessageIs('Redis cache clear requires a non-empty prefix or flushDatabase enabled.');
 
         $cache->clear();
     }

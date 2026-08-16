@@ -63,7 +63,7 @@ final class SchemaTest extends TestCase
     public function testTableInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Table `invalid` does not exist.');
+        $this->expectExceptionMessageIs('Table `invalid` does not exist.');
 
         $this->schema->table('invalid');
     }

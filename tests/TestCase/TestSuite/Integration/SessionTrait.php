@@ -17,7 +17,7 @@ trait SessionTrait
     public function testSessionFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that session "key" value is equal to \'value\'.');
+        $this->expectExceptionMessageIs('Failed asserting that session "key" value is equal to \'value\'.');
 
         $this->get('/response');
 
@@ -27,7 +27,7 @@ trait SessionTrait
     public function testSessionNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that session "key" value is equal to \'value\'.');
+        $this->expectExceptionMessageIs('Failed asserting that session "key" value is equal to \'value\'.');
 
         $this->assertSession('value', 'key');
     }

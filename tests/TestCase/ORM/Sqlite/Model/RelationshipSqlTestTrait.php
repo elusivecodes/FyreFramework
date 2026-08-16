@@ -55,11 +55,14 @@ trait RelationshipSqlTestTrait
             ])
         );
 
-        $this->assertSame(
+        $conditions = $Items->Alias->getConditions();
+
+        $this->assertIsArray($conditions);
+        $this->assertArraysAreIdentical(
             [
                 'Alias.name' => 'Test',
             ],
-            $Items->Alias->getConditions()
+            $conditions
         );
 
         $this->assertSame(

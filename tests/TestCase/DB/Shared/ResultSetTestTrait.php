@@ -133,7 +133,7 @@ trait ResultSetTestTrait
     public function testDecorateAfterBuffering(): void
     {
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Result decorators cannot be added after buffering has started.');
+        $this->expectExceptionMessageIs('Result decorators cannot be added after buffering has started.');
 
         $this->insert();
 
@@ -189,15 +189,18 @@ trait ResultSetTestTrait
     {
         $this->insert();
 
-        $this->assertSame(
+        $row = $this->db->select()
+            ->from('test')
+            ->execute()
+            ->fetch(1);
+
+        $this->assertIsArray($row);
+        $this->assertArraysAreIdentical(
             [
                 'id' => 2,
                 'name' => 'Test 2',
             ],
-            $this->db->select()
-                ->from('test')
-                ->execute()
-                ->fetch(1)
+            $row
         );
     }
 
@@ -205,15 +208,18 @@ trait ResultSetTestTrait
     {
         $this->insert();
 
-        $this->assertSame(
+        $row = $this->db->select()
+            ->from('test')
+            ->execute()
+            ->first();
+
+        $this->assertIsArray($row);
+        $this->assertArraysAreIdentical(
             [
                 'id' => 1,
                 'name' => 'Test 1',
             ],
-            $this->db->select()
-                ->from('test')
-                ->execute()
-                ->first()
+            $row
         );
     }
 
@@ -254,15 +260,18 @@ trait ResultSetTestTrait
     {
         $this->insert();
 
-        $this->assertSame(
+        $row = $this->db->select()
+            ->from('test')
+            ->execute()
+            ->last();
+
+        $this->assertIsArray($row);
+        $this->assertArraysAreIdentical(
             [
                 'id' => 3,
                 'name' => 'Test 3',
             ],
-            $this->db->select()
-                ->from('test')
-                ->execute()
-                ->last()
+            $row
         );
     }
 

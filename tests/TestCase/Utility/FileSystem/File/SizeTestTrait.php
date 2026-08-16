@@ -24,7 +24,7 @@ trait SizeTestTrait
     public function testSizeNotExists(): void
     {
         $this->expectException(ErrorException::class);
-        $this->expectExceptionMessage('filesize(): stat failed for tmp/test.txt');
+        $this->expectExceptionMessageIs('filesize(): stat failed for tmp/test.txt');
 
         $file = new File('tmp/test.txt');
         $file->size();

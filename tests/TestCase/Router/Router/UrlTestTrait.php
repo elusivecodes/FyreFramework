@@ -194,7 +194,7 @@ trait UrlTestTrait
     public function testUrlInvalid(): void
     {
         $this->expectException(RouterException::class);
-        $this->expectExceptionMessage('Route alias `alternate` does not exist.');
+        $this->expectExceptionMessageIs('Route alias `alternate` does not exist.');
 
         $router = $this->container->use(Router::class);
 
@@ -204,7 +204,7 @@ trait UrlTestTrait
     public function testUrlInvalidArgument(): void
     {
         $this->expectException(RouterException::class);
-        $this->expectExceptionMessage('Route parameter `a` is not valid.');
+        $this->expectExceptionMessageIs('Route parameter `a` is not valid.');
 
         $router = $this->container->use(Router::class);
 
@@ -225,7 +225,7 @@ trait UrlTestTrait
     public function testUrlInvalidArgumentLineFeed(): void
     {
         $this->expectException(RouterException::class);
-        $this->expectExceptionMessage('Route parameter `a` is not valid.');
+        $this->expectExceptionMessageIs('Route parameter `a` is not valid.');
 
         $router = $this->container->use(Router::class);
 
@@ -246,7 +246,7 @@ trait UrlTestTrait
     public function testUrlMissingArgument(): void
     {
         $this->expectException(RouterException::class);
-        $this->expectExceptionMessage('Router parameter `c` is missing.');
+        $this->expectExceptionMessageIs('Router parameter `c` is missing.');
 
         $router = $this->container->use(Router::class);
 

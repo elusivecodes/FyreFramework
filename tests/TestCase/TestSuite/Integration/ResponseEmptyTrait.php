@@ -17,7 +17,7 @@ trait ResponseEmptyTrait
     public function testResponseEmptyFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that response body is empty.');
+        $this->expectExceptionMessageIs('Failed asserting that response body is empty.');
 
         $this->get('/response');
 
@@ -27,7 +27,7 @@ trait ResponseEmptyTrait
     public function testResponseEmptyNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertResponseEmpty();
     }
@@ -42,7 +42,7 @@ trait ResponseEmptyTrait
     public function testResponseNotEmptyFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that response body is not empty.');
+        $this->expectExceptionMessageIs('Failed asserting that response body is not empty.');
 
         $this->get('/empty');
 
@@ -52,7 +52,7 @@ trait ResponseEmptyTrait
     public function testResponseNotEmptyNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertResponseNotEmpty();
     }

@@ -27,7 +27,7 @@ trait AccessTimeTestTrait
     public function testAccessTimeNotExists(): void
     {
         $this->expectException(ErrorException::class);
-        $this->expectExceptionMessage('fileatime(): stat failed for tmp/test.txt');
+        $this->expectExceptionMessageIs('fileatime(): stat failed for tmp/test.txt');
 
         $file = new File('tmp/test.txt');
         $file->accessTime();

@@ -352,7 +352,7 @@ final class AccessTest extends TestCase
     {
         $this->expectException(ForbiddenException::class);
         $this->expectExceptionCode(403);
-        $this->expectExceptionMessage('Forbidden');
+        $this->expectExceptionMessageIs('Forbidden');
 
         $ran = false;
         $this->access->define('test', function(User|null $authUser) use (&$ran): bool {

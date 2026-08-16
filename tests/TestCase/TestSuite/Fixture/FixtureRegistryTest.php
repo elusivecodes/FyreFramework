@@ -34,7 +34,7 @@ final class FixtureRegistryTest extends TestCase
     public function testBuildInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Fixture `Invalid` does not exist.');
+        $this->expectExceptionMessageIs('Fixture `Invalid` does not exist.');
 
         $this->fixtureRegistry->build('Invalid');
     }

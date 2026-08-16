@@ -204,7 +204,7 @@ trait OriginalTestTrait
     public function testGetOriginalInvalidWithoutFallback(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('No original value exists for the `invalid` field.');
+        $this->expectExceptionMessageIs('No original value exists for the `invalid` field.');
 
         $entity = new Entity();
 

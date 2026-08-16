@@ -19,7 +19,7 @@ trait ContentsEmptyTrait
     public function testErrorEmptyFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that stderr is empty.');
+        $this->expectExceptionMessageIs('Failed asserting that stderr is empty.');
 
         fwrite($this->error, 'Test message'.PHP_EOL);
 
@@ -34,7 +34,7 @@ trait ContentsEmptyTrait
     public function testOutputEmptyFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that stdout is empty.');
+        $this->expectExceptionMessageIs('Failed asserting that stdout is empty.');
 
         fwrite($this->output, 'Test message'.PHP_EOL);
 

@@ -11,7 +11,7 @@ trait AddColumnTestTrait
     public function testAddColumnExistingColumn(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Table column `test.id` already exists.');
+        $this->expectExceptionMessageIs('Table column `test.id` already exists.');
 
         $this->forge->createTable('test', [
             'id' => [

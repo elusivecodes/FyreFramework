@@ -23,7 +23,7 @@ trait GroupTestTrait
     public function testGroupNotExists(): void
     {
         $this->expectException(ErrorException::class);
-        $this->expectExceptionMessage('filegroup(): stat failed for tmp/test.txt');
+        $this->expectExceptionMessageIs('filegroup(): stat failed for tmp/test.txt');
 
         $file = new File('tmp/test.txt');
         $file->group();

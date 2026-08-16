@@ -21,7 +21,7 @@ trait ContentsNotContainsTrait
     public function testOutputNotContainsFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that stdout does not contain "Test message".');
+        $this->expectExceptionMessageIs('Failed asserting that stdout does not contain "Test message".');
 
         fwrite($this->output, 'Test message'.PHP_EOL);
 

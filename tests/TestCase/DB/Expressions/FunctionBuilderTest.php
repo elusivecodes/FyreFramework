@@ -126,7 +126,7 @@ final class FunctionBuilderTest extends TestCase
     public function testInvalid(string $method, array $arguments, string $message): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage($message);
+        $this->expectExceptionMessageIs($message);
 
         $builder = new FunctionBuilder();
         $builder->$method(...$arguments);

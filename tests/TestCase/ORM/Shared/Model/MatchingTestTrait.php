@@ -11,7 +11,7 @@ trait MatchingTestTrait
     public function testMatchingInvalid(): void
     {
         $this->expectException(OrmException::class);
-        $this->expectExceptionMessage('Model `Users` does not have a relationship to `Invalid`.');
+        $this->expectExceptionMessageIs('Model `Users` does not have a relationship to `Invalid`.');
 
         $this->modelRegistry->use('Users')
             ->find()
@@ -78,7 +78,7 @@ trait MatchingTestTrait
     public function testNotMatchingInvalid(): void
     {
         $this->expectException(OrmException::class);
-        $this->expectExceptionMessage('Model `Users` does not have a relationship to `Invalid`.');
+        $this->expectExceptionMessageIs('Model `Users` does not have a relationship to `Invalid`.');
 
         $this->modelRegistry->use('Users')
             ->find()

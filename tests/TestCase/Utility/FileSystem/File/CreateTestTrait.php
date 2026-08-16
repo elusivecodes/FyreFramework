@@ -25,7 +25,7 @@ trait CreateTestTrait
     public function testCreateExists(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('File `tmp/test.txt` already exists.');
+        $this->expectExceptionMessageIs('File `tmp/test.txt` already exists.');
 
         $file = new File('tmp/test.txt', true);
         $file->create();

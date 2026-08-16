@@ -163,7 +163,7 @@ trait DataTestTrait
     public function testGetDataJsonScalar(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('The request body is not valid.');
+        $this->expectExceptionMessageIs('The request body is not valid.');
 
         $request = new ServerRequest($this->config, $this->type, [
             'server' => [

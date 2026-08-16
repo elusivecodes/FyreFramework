@@ -21,7 +21,7 @@ trait ChmodTestTrait
     public function testChmodNotExists(): void
     {
         $this->expectException(ErrorException::class);
-        $this->expectExceptionMessage('chmod(): No such file or directory');
+        $this->expectExceptionMessageIs('chmod(): No such file or directory');
 
         $file = new File('tmp/test.txt');
         $file->chmod(777);

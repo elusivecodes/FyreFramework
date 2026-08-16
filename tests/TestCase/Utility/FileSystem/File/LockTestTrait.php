@@ -22,7 +22,7 @@ trait LockTestTrait
     public function testLockNoHandle(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('File handle is not valid.');
+        $this->expectExceptionMessageIs('File handle is not valid.');
 
         $file = new File('tmp/test.txt');
         $file->lock();
@@ -42,7 +42,7 @@ trait LockTestTrait
     public function testUnlockNoHandle(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('File handle is not valid.');
+        $this->expectExceptionMessageIs('File handle is not valid.');
 
         $file = new File('tmp/test.txt');
         $file->unlock();

@@ -50,7 +50,7 @@ trait CaseTestTrait
     public function testCaseEmpty(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query CASE expression requires at least one WHEN branch.');
+        $this->expectExceptionMessageIs('Query CASE expression requires at least one WHEN branch.');
 
         $this->db->select([
             'status_label' => static fn(Query $query): CaseExpression => $query->case(),
@@ -134,7 +134,7 @@ trait CaseTestTrait
     public function testCaseSimpleArrayCondition(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query simple CASE expression does not support array WHEN values.');
+        $this->expectExceptionMessageIs('Query simple CASE expression does not support array WHEN values.');
 
         $this->db->select([
             'status_label' => static fn(Query $query): CaseExpression => $query->case($query->identifier('status'))

@@ -25,7 +25,7 @@ trait NegotiateTestTrait
     public function testNegotiateInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Negotiation type `invalid` is not valid.');
+        $this->expectExceptionMessageIs('Negotiation type `invalid` is not valid.');
 
         $request = new ServerRequest($this->config, $this->type);
 

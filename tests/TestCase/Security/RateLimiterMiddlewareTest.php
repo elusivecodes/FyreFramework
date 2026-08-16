@@ -361,7 +361,7 @@ final class RateLimiterMiddlewareTest extends TestCase
     public function testInvalidCost(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Rate limiter cost must not be negative.');
+        $this->expectExceptionMessageIs('Rate limiter cost must not be negative.');
 
         $limiter = $this->container->build(FixedWindowRateLimiter::class, [
             'options' => [
@@ -376,7 +376,7 @@ final class RateLimiterMiddlewareTest extends TestCase
     public function testInvalidLimit(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Rate limiter limit must be greater than 0.');
+        $this->expectExceptionMessageIs('Rate limiter limit must be greater than 0.');
 
         $limiter = $this->container->build(FixedWindowRateLimiter::class, [
             'options' => [
@@ -391,7 +391,7 @@ final class RateLimiterMiddlewareTest extends TestCase
     public function testInvalidWindow(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Rate limiter window must be greater than 0.');
+        $this->expectExceptionMessageIs('Rate limiter window must be greater than 0.');
 
         $limiter = $this->container->build(FixedWindowRateLimiter::class);
         $request = $this->container->build(ServerRequest::class);
@@ -402,7 +402,7 @@ final class RateLimiterMiddlewareTest extends TestCase
     public function testIpIdentifierIgnoresForwardedHeaderByDefault(): void
     {
         $this->expectException(TooManyRequestsException::class);
-        $this->expectExceptionMessage('Rate limit exceeded');
+        $this->expectExceptionMessageIs('Rate limit exceeded');
 
         $middleware = $this->container->build(RateLimiterMiddleware::class, [
             'options' => [
@@ -448,7 +448,7 @@ final class RateLimiterMiddlewareTest extends TestCase
     public function testIpIdentifierIgnoresForwardedHeaderForUntrustedProxy(): void
     {
         $this->expectException(TooManyRequestsException::class);
-        $this->expectExceptionMessage('Rate limit exceeded');
+        $this->expectExceptionMessageIs('Rate limit exceeded');
 
         $this->container->use(Config::class)
             ->set('App.trustProxy', true)

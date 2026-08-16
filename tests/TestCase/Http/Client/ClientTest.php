@@ -422,7 +422,7 @@ final class ClientTest extends TestCase
     public function testInvalidHandler(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Client handler `stdClass` must extend `Fyre\Http\Client\ClientHandler`.');
+        $this->expectExceptionMessageIs('Client handler `stdClass` must extend `Fyre\Http\Client\ClientHandler`.');
 
         new Client([
             'handler' => new stdClass(),
@@ -432,7 +432,7 @@ final class ClientTest extends TestCase
     public function testInvalidMaxRedirectBodySize(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Client option `maxRedirectBodySize` must not be negative.');
+        $this->expectExceptionMessageIs('Client option `maxRedirectBodySize` must not be negative.');
 
         new Client([
             'maxRedirectBodySize' => -1,
@@ -442,7 +442,7 @@ final class ClientTest extends TestCase
     public function testInvalidMaxRedirects(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Client option `maxRedirects` must not be negative.');
+        $this->expectExceptionMessageIs('Client option `maxRedirects` must not be negative.');
 
         new Client([
             'maxRedirects' => -1,
@@ -452,7 +452,7 @@ final class ClientTest extends TestCase
     public function testInvalidRequestMaxRedirectBodySize(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Client option `maxRedirectBodySize` must not be negative.');
+        $this->expectExceptionMessageIs('Client option `maxRedirectBodySize` must not be negative.');
 
         $request = new Request('https://example.com');
 
@@ -464,7 +464,7 @@ final class ClientTest extends TestCase
     public function testInvalidRequestMaxRedirects(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Client option `maxRedirects` must not be negative.');
+        $this->expectExceptionMessageIs('Client option `maxRedirects` must not be negative.');
 
         $request = new Request('https://example.com');
 
@@ -476,7 +476,7 @@ final class ClientTest extends TestCase
     public function testInvalidRequestTimeout(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Client option `timeout` must not be negative.');
+        $this->expectExceptionMessageIs('Client option `timeout` must not be negative.');
 
         $request = new Request('https://example.com');
 
@@ -488,7 +488,7 @@ final class ClientTest extends TestCase
     public function testInvalidTimeout(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Client option `timeout` must not be negative.');
+        $this->expectExceptionMessageIs('Client option `timeout` must not be negative.');
 
         new Client([
             'timeout' => -1,
@@ -889,7 +889,7 @@ final class ClientTest extends TestCase
     public function testRedirectBodySizeLimit(): void
     {
         $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('Request body cannot be buffered for redirect replay.');
+        $this->expectExceptionMessageIs('Request body cannot be buffered for redirect replay.');
 
         $sockets = stream_socket_pair(
             STREAM_PF_UNIX,
@@ -922,7 +922,7 @@ final class ClientTest extends TestCase
     public function testRedirectEmptyLocation(): void
     {
         $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('Redirect location is not valid.');
+        $this->expectExceptionMessageIs('Redirect location is not valid.');
 
         $mockResponse = new Response([
             'statusCode' => 302,
@@ -942,7 +942,7 @@ final class ClientTest extends TestCase
     public function testRedirectInvalidLocation(): void
     {
         $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('Redirect location is not valid.');
+        $this->expectExceptionMessageIs('Redirect location is not valid.');
 
         $mockResponse = new Response([
             'statusCode' => 302,
@@ -965,7 +965,7 @@ final class ClientTest extends TestCase
     public function testRedirectLoop(): void
     {
         $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('Redirect loop detected.');
+        $this->expectExceptionMessageIs('Redirect loop detected.');
 
         $response1 = new Response([
             'statusCode' => 302,
@@ -1001,7 +1001,7 @@ final class ClientTest extends TestCase
     public function testRedirectMalformedLocation(): void
     {
         $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('Redirect location is not valid.');
+        $this->expectExceptionMessageIs('Redirect location is not valid.');
 
         $mockResponse = new Response([
             'statusCode' => 302,

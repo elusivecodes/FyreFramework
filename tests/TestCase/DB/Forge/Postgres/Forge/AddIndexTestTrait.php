@@ -57,12 +57,15 @@ trait AddIndexTestTrait
             'primary' => true,
         ]);
 
-        $this->assertSame(
+        $primaryKey = $this->schema->table('test')
+            ->primaryKey();
+
+        $this->assertIsArray($primaryKey);
+        $this->assertArraysAreIdentical(
             [
                 'id',
             ],
-            $this->schema->table('test')
-                ->primaryKey(),
+            $primaryKey,
         );
     }
 

@@ -76,7 +76,7 @@ final class AuthenticatorTest extends TestCase
         ]);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Authenticator `Invalid` must extend `Fyre\Auth\Authenticator`.');
+        $this->expectExceptionMessageIs('Authenticator `Invalid` must extend `Fyre\Auth\Authenticator`.');
 
         $this->container->build(Auth::class);
     }

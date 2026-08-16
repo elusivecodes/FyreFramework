@@ -17,7 +17,7 @@ trait SessionHasKeyTrait
     public function testSessionHasKeyFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that session has the key \'key\'.');
+        $this->expectExceptionMessageIs('Failed asserting that session has the key \'key\'.');
 
         $this->get('/response');
 
@@ -27,7 +27,7 @@ trait SessionHasKeyTrait
     public function testSessionHasKeyNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that session has the key \'key\'.');
+        $this->expectExceptionMessageIs('Failed asserting that session has the key \'key\'.');
 
         $this->assertSessionHasKey('key');
     }
@@ -42,7 +42,7 @@ trait SessionHasKeyTrait
     public function testSessionNotHasKeyFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that session does not have the key \'key\'.');
+        $this->expectExceptionMessageIs('Failed asserting that session does not have the key \'key\'.');
 
         $this->get('/session');
 

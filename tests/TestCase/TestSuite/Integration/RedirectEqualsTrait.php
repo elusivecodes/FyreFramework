@@ -17,7 +17,7 @@ trait RedirectEqualsTrait
     public function testRedirectEqualsFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that header "Location" value is equal to "/invalid".');
+        $this->expectExceptionMessageIs('Failed asserting that header "Location" value is equal to "/invalid".');
 
         $this->get('/redirect');
 
@@ -27,7 +27,7 @@ trait RedirectEqualsTrait
     public function testRedirectEqualsNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertRedirectEquals('/test');
     }

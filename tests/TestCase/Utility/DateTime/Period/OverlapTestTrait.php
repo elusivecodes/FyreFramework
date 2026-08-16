@@ -143,7 +143,7 @@ trait OverlapTestTrait
     public function testOverlapInvalidGranularity(): void
     {
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Period granularity `day` must match other period granularity `hour`.');
+        $this->expectExceptionMessageIs('Period granularity `day` must match other period granularity `hour`.');
 
         $period1 = new Period('2022-01-01', '2022-01-10');
         $period2 = new Period('2022-01-15', '2022-01-20', 'hour');

@@ -20,15 +20,18 @@ trait InsertTestTrait
             ])
             ->execute();
 
-        $this->assertSame(
+        $row = $this->db->select()
+            ->from('test')
+            ->execute()
+            ->first();
+
+        $this->assertIsArray($row);
+        $this->assertArraysAreIdentical(
             [
                 'id' => 1,
                 'name' => 'Test',
             ],
-            $this->db->select()
-                ->from('test')
-                ->execute()
-                ->first()
+            $row
         );
     }
 
@@ -167,7 +170,7 @@ trait InsertTestTrait
     public function testInsertMultipleTables(): void
     {
         $this->expectException(DbException::class);
-        $this->expectExceptionMessage('Multiple tables are not supported for this query.');
+        $this->expectExceptionMessageIs('Multiple tables are not supported for this query.');
 
         $this->db->insert()
             ->table([
@@ -179,7 +182,7 @@ trait InsertTestTrait
     public function testInsertTableAliases(): void
     {
         $this->expectException(DbException::class);
-        $this->expectExceptionMessage('Table aliases are not supported for this query.');
+        $this->expectExceptionMessageIs('Table aliases are not supported for this query.');
 
         $this->db->insert()
             ->table([
@@ -190,7 +193,7 @@ trait InsertTestTrait
     public function testInsertVirtualTables(): void
     {
         $this->expectException(DbException::class);
-        $this->expectExceptionMessage('Virtual tables are not supported for this query.');
+        $this->expectExceptionMessageIs('Virtual tables are not supported for this query.');
 
         $this->db->insert()
             ->table([

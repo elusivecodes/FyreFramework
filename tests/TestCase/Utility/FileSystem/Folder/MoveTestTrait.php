@@ -67,7 +67,7 @@ trait MoveTestTrait
     public function testMoveNotExists(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('RecursiveDirectoryIterator::__construct(tmp/test): Failed to open directory: No such file or directory');
+        $this->expectExceptionMessageIs('RecursiveDirectoryIterator::__construct(tmp/test): Failed to open directory: No such file or directory');
 
         $folder = new Folder('tmp/test');
         $folder->move('tmp/test2');
@@ -76,7 +76,7 @@ trait MoveTestTrait
     public function testMoveNotOverwrite(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('File `tmp/test2/deep/test.txt` already exists.');
+        $this->expectExceptionMessageIs('File `tmp/test2/deep/test.txt` already exists.');
 
         $folder = new Folder('tmp/test', true);
         new File('tmp/test/deep/test.txt', true);

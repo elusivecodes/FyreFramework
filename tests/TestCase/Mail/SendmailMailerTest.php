@@ -113,7 +113,7 @@ final class SendmailMailerTest extends TestCase
     public function testSendRequiresRecipient(): void
     {
         $this->expectException(MailException::class);
-        $this->expectExceptionMessage('Email sending must have a valid recipient.');
+        $this->expectExceptionMessageIs('Email sending must have a valid recipient.');
 
         $this->mailer->send(
             $this->mailer->email()

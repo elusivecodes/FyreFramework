@@ -12,7 +12,7 @@ trait ChangeColumnTestTrait
     public function testChangeColumnInvalidColumn(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Table column `test.invalid` does not exist.');
+        $this->expectExceptionMessageIs('Table column `test.invalid` does not exist.');
 
         $this->forge
             ->build('test')

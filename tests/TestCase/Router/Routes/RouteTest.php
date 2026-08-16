@@ -315,7 +315,7 @@ final class RouteTest extends TestCase
     public function testOptionalPlaceholderWithinSegmentInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Optional route placeholders must occupy an entire path segment.');
+        $this->expectExceptionMessageIs('Optional route placeholders must occupy an entire path segment.');
 
         $this->container->build(ControllerRoute::class, [
             'destination' => [TestController::class, 'test'],
@@ -437,7 +437,7 @@ final class RouteTest extends TestCase
     public function testSetPortInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Route port must be between 1 and 65535.');
+        $this->expectExceptionMessageIs('Route port must be between 1 and 65535.');
 
         $route = $this->container->build(ControllerRoute::class, [
             'destination' => [TestController::class, 'test'],
@@ -449,7 +449,7 @@ final class RouteTest extends TestCase
     public function testSetPortInvalidMaximum(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Route port must be between 1 and 65535.');
+        $this->expectExceptionMessageIs('Route port must be between 1 and 65535.');
 
         $this->container->build(ControllerRoute::class, [
             'destination' => [TestController::class, 'test'],

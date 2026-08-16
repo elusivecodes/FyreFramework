@@ -11,7 +11,7 @@ trait DropForeignKeyTestTrait
     public function testDropForeignKeyInvalidForeignKey(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Table foreign key `test.invalid` does not exist.');
+        $this->expectExceptionMessageIs('Table foreign key `test.invalid` does not exist.');
 
         $this->forge->createTable('test', [
             'id' => [
@@ -27,7 +27,7 @@ trait DropForeignKeyTestTrait
     public function testDropForeignKeySqlExistingTable(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Table foreign key `test.value_id` does not exist.');
+        $this->expectExceptionMessageIs('Table foreign key `test.value_id` does not exist.');
 
         $this->forge->createTable('test_values', [
             'id' => [

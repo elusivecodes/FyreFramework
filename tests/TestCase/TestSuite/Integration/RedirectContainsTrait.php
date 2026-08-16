@@ -17,7 +17,7 @@ trait RedirectContainsTrait
     public function testRedirectContainsFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that header "Location" value contains "invalid".');
+        $this->expectExceptionMessageIs('Failed asserting that header "Location" value contains "invalid".');
 
         $this->get('/redirect');
 
@@ -27,7 +27,7 @@ trait RedirectContainsTrait
     public function testRedirectContainsNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertRedirectContains('test');
     }
@@ -42,7 +42,7 @@ trait RedirectContainsTrait
     public function testRedirectNotContainsFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that header "Location" value does not contain "test".');
+        $this->expectExceptionMessageIs('Failed asserting that header "Location" value does not contain "test".');
 
         $this->get('/redirect');
 
@@ -52,7 +52,7 @@ trait RedirectContainsTrait
     public function testRedirectNotContainsNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertRedirectNotContains('test');
     }

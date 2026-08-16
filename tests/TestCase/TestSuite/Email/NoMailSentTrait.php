@@ -17,7 +17,7 @@ trait NoMailSentTrait
     public function testNoMailSentFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that no emails were sent.');
+        $this->expectExceptionMessageIs('Failed asserting that no emails were sent.');
 
         $this->app->use(MailManager::class)
             ->use()

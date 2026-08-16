@@ -65,7 +65,7 @@ final class TableTest extends TestCase
     public function testColumnInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Table column `test.invalid` does not exist.');
+        $this->expectExceptionMessageIs('Table column `test.invalid` does not exist.');
 
         $this->forge
             ->build('test')
@@ -179,7 +179,7 @@ final class TableTest extends TestCase
     public function testForeignKeyInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Table foreign key `test.invalid` does not exist.');
+        $this->expectExceptionMessageIs('Table foreign key `test.invalid` does not exist.');
 
         $this->forge
             ->build('test')
@@ -385,7 +385,7 @@ final class TableTest extends TestCase
     public function testIndexInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Table index `test.invalid` does not exist.');
+        $this->expectExceptionMessageIs('Table index `test.invalid` does not exist.');
 
         $this->forge
             ->build('test')

@@ -42,7 +42,7 @@ final class RouterTest extends TestCase
     public function testClear(): void
     {
         $this->expectException(RouterException::class);
-        $this->expectExceptionMessage('Route alias `test` does not exist.');
+        $this->expectExceptionMessageIs('Route alias `test` does not exist.');
 
         $router = $this->container->use(Router::class);
         $router->get('test', static function(): void {}, as: 'test');

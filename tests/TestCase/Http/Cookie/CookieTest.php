@@ -348,7 +348,7 @@ final class CookieTest extends TestCase
     public function testInvalidName(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Cookie name is not valid.');
+        $this->expectExceptionMessageIs('Cookie name is not valid.');
 
         new Cookie('test=1', 'value');
     }
@@ -356,7 +356,7 @@ final class CookieTest extends TestCase
     public function testInvalidValue(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Cookie value is not valid.');
+        $this->expectExceptionMessageIs('Cookie value is not valid.');
 
         new Cookie('test', 'invalid value');
     }

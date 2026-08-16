@@ -122,7 +122,7 @@ final class SchemaRegistryTest extends TestCase
     public function testUseInvalidSchema(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Database schema `Tests\TestCase\DB\Schema\SchemaRegistryTest` must extend `Fyre\DB\Schema\Schema`.');
+        $this->expectExceptionMessageIs('Database schema `Tests\TestCase\DB\Schema\SchemaRegistryTest` must extend `Fyre\DB\Schema\Schema`.');
 
         $this->schemaRegistry->map(SqliteConnection::class, self::class);
     }
@@ -130,7 +130,9 @@ final class SchemaRegistryTest extends TestCase
     public function testUseMissingSchema(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('does not have a mapped schema.');
+        $this->expectExceptionMessageIs(
+            'Database connection `'.$this->missingConnection::class.'` does not have a mapped schema.'
+        );
 
         $this->schemaRegistry->use($this->missingConnection);
     }

@@ -194,7 +194,7 @@ final class RouterMiddlewareTest extends TestCase
     public function testProcessRouteBackedEnumParamInvalid(): void
     {
         $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('Not Found');
+        $this->expectExceptionMessageIs('Not Found');
 
         $destination = static function(Status $status): string {
             return '';
@@ -226,7 +226,7 @@ final class RouterMiddlewareTest extends TestCase
     public function testProcessRouteBindingCallbackInvalid(): void
     {
         $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('Not Found');
+        $this->expectExceptionMessageIs('Not Found');
 
         $destination = static function(string $value): string {
             return '';
@@ -373,7 +373,7 @@ final class RouterMiddlewareTest extends TestCase
     public function testProcessRouteParamMissing(): void
     {
         $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('Not Found');
+        $this->expectExceptionMessageIs('Not Found');
 
         $destination = static function(string $value): string {
             return '';

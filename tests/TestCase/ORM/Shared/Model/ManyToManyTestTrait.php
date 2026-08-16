@@ -763,7 +763,7 @@ trait ManyToManyTestTrait
     public function testManyToManyInvalidSaveStrategy(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Relationship save strategy `invalid` is not valid.');
+        $this->expectExceptionMessageIs('Relationship save strategy `invalid` is not valid.');
 
         $this->modelRegistry->use('Posts')->Tags->setSaveStrategy('invalid');
     }

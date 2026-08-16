@@ -62,7 +62,7 @@ trait MailSentToTrait
     public function testMailSentToAtFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that email #1 was sent to "test1@test.com".');
+        $this->expectExceptionMessageIs('Failed asserting that email #1 was sent to "test1@test.com".');
 
         $this->app->use(MailManager::class)
             ->use()
@@ -90,7 +90,7 @@ trait MailSentToTrait
     public function testMailSentToFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that an email was sent to "invalid@test.com".');
+        $this->expectExceptionMessageIs('Failed asserting that an email was sent to "invalid@test.com".');
 
         $this->app->use(MailManager::class)
             ->use()

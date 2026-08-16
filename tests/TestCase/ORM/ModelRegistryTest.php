@@ -216,7 +216,7 @@ final class ModelRegistryTest extends TestCase
     public function testSaveInvalidEntityClass(): void
     {
         $this->expectException(OrmException::class);
-        $this->expectExceptionMessage('Model `Users` requires an entity of type `Tests\Mock\Entities\User`, `Tests\Mock\Entities\Post` given.');
+        $this->expectExceptionMessageIs('Model `Users` requires an entity of type `Tests\Mock\Entities\User`, `Tests\Mock\Entities\Post` given.');
 
         $Users = $this->modelRegistry->createDefaultModel()
             ->setClassAlias('Users');
@@ -298,7 +298,7 @@ final class ModelRegistryTest extends TestCase
         $this->modelRegistry->use('Members', 'Users');
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Model alias `Members` is already used by another class.');
+        $this->expectExceptionMessageIs('Model alias `Members` is already used by another class.');
 
         $this->modelRegistry->use('Members', 'Items');
     }

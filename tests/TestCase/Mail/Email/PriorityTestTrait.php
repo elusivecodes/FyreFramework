@@ -35,7 +35,7 @@ trait PriorityTestTrait
     public function testSetPriorityInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Email priority must be between 1 and 5.');
+        $this->expectExceptionMessageIs('Email priority must be between 1 and 5.');
 
         $this->email->setPriority(0);
     }
@@ -43,7 +43,7 @@ trait PriorityTestTrait
     public function testSetPriorityInvalidMaximum(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Email priority must be between 1 and 5.');
+        $this->expectExceptionMessageIs('Email priority must be between 1 and 5.');
 
         $this->email->setPriority(6);
     }

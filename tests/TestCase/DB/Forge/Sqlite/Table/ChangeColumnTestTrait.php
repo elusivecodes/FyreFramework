@@ -13,7 +13,7 @@ trait ChangeColumnTestTrait
     public function testChangeColumnInvalidColumn(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Table column `test.invalid` does not exist.');
+        $this->expectExceptionMessageIs('Table column `test.invalid` does not exist.');
 
         $this->forge
             ->build('test')
@@ -25,7 +25,7 @@ trait ChangeColumnTestTrait
     public function testChangeColumnSqlExistingTable(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Columns cannot be modified in existing tables.');
+        $this->expectExceptionMessageIs('Columns cannot be modified in existing tables.');
 
         $this->forge->createTable('test', [
             'id' => [

@@ -146,7 +146,7 @@ final class RouteModelParamsTest extends TestCase
     public function testProcessClosureRouteModelParamsInvalid(): void
     {
         $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('Not Found');
+        $this->expectExceptionMessageIs('Not Found');
 
         $destination = static function(Item $item): string {
             return '';
@@ -270,7 +270,7 @@ final class RouteModelParamsTest extends TestCase
     public function testProcessClosureRouteModelParamsParentInvalid(): void
     {
         $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('Not Found');
+        $this->expectExceptionMessageIs('Not Found');
 
         $destination = static function(Item $item, Child $child): string {
             return '';
@@ -337,7 +337,7 @@ final class RouteModelParamsTest extends TestCase
     public function testProcessControllerRouteModelParamsInvalid(): void
     {
         $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('Not Found');
+        $this->expectExceptionMessageIs('Not Found');
 
         $this->router->connect('test/{item}', ItemsController::class);
 

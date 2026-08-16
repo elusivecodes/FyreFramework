@@ -109,7 +109,7 @@ trait IndexTestTrait
     public function testIndexInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Table index `test.invalid` does not exist.');
+        $this->expectExceptionMessageIs('Table index `test.invalid` does not exist.');
 
         $this->schema
             ->table('test')
@@ -118,13 +118,16 @@ trait IndexTestTrait
 
     public function testPrimaryKey(): void
     {
-        $this->assertSame(
+        $primaryKey = $this->schema
+            ->table('test')
+            ->primaryKey();
+
+        $this->assertIsArray($primaryKey);
+        $this->assertArraysAreIdentical(
             [
                 'id',
             ],
-            $this->schema
-                ->table('test')
-                ->primaryKey()
+            $primaryKey
         );
     }
 }

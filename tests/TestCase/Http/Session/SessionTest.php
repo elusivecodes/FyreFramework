@@ -103,7 +103,7 @@ final class SessionTest extends TestCase
     public function testInvalidCookieExpiration(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Session cookie option `expires` must not be negative.');
+        $this->expectExceptionMessageIs('Session cookie option `expires` must not be negative.');
 
         $config = new Config();
         $config->set('Session', [
@@ -118,7 +118,7 @@ final class SessionTest extends TestCase
     public function testInvalidExpiration(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Session option `expires` must be greater than 0.');
+        $this->expectExceptionMessageIs('Session option `expires` must be greater than 0.');
 
         $config = new Config();
         $config->set('Session', [
@@ -131,7 +131,7 @@ final class SessionTest extends TestCase
     public function testInvalidHandlerExpiration(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Session handler option `expires` must be greater than 0.');
+        $this->expectExceptionMessageIs('Session handler option `expires` must be greater than 0.');
 
         new FileSessionHandler($this->session, [
             'expires' => 0,

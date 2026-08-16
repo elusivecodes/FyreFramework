@@ -57,7 +57,7 @@ final class CacheManagerTest extends TestCase
     public function testBuildInvalidHandler(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Cacher `Invalid` must extend `Fyre\Cache\Cacher`.');
+        $this->expectExceptionMessageIs('Cacher `Invalid` must extend `Fyre\Cache\Cacher`.');
 
         $this->cacheManager->build([
             'className' => 'Invalid',
@@ -120,7 +120,10 @@ final class CacheManagerTest extends TestCase
 
     public function testGetConfig(): void
     {
-        $this->assertSame(
+        $config = $this->cacheManager->getConfig();
+
+        $this->assertIsArray($config);
+        $this->assertArraysAreIdentical(
             [
                 'default' => [
                     'className' => FileCacher::class,
@@ -133,19 +136,22 @@ final class CacheManagerTest extends TestCase
                     'prefix' => 'data.',
                 ],
             ],
-            $this->cacheManager->getConfig()
+            $config
         );
     }
 
     public function testGetConfigKey(): void
     {
-        $this->assertSame(
+        $config = $this->cacheManager->getConfig('data');
+
+        $this->assertIsArray($config);
+        $this->assertArraysAreIdentical(
             [
                 'className' => FileCacher::class,
                 'path' => 'cache',
                 'prefix' => 'data.',
             ],
-            $this->cacheManager->getConfig('data')
+            $config
         );
     }
 
@@ -191,18 +197,21 @@ final class CacheManagerTest extends TestCase
             ])
         );
 
-        $this->assertSame(
+        $config = $this->cacheManager->getConfig('test');
+
+        $this->assertIsArray($config);
+        $this->assertArraysAreIdentical(
             [
                 'className' => FileCacher::class,
             ],
-            $this->cacheManager->getConfig('test')
+            $config
         );
     }
 
     public function testSetConfigExists(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Cache config `default` already exists.');
+        $this->expectExceptionMessageIs('Cache config `default` already exists.');
 
         $this->cacheManager->setConfig('default', [
             'className' => FileCacher::class,
@@ -269,7 +278,7 @@ final class CacheManagerTest extends TestCase
         $this->cacheManager->disable();
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Cacher `` must extend `Fyre\Cache\Cacher`.');
+        $this->expectExceptionMessageIs('Cacher `` must extend `Fyre\Cache\Cacher`.');
 
         $this->cacheManager->use('invalid');
     }

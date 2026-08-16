@@ -11,7 +11,7 @@ trait AddForeignKeyTestTrait
     public function testAddForeignKeyExistingForeignKey(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Table foreign key `test.value_id` already exists.');
+        $this->expectExceptionMessageIs('Table foreign key `test.value_id` already exists.');
 
         $this->forge->createTable('test_values', [
             'id' => [

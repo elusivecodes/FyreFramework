@@ -22,7 +22,7 @@ trait GetSetTestTrait
     public function testGetInvalidKey(): void
     {
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('Cache key `test/` is not valid.');
+        $this->expectExceptionMessageIs('Cache key `test/` is not valid.');
 
         $this->cacher->get('test/');
     }
@@ -84,12 +84,15 @@ trait GetSetTestTrait
             ])
         );
 
-        $this->assertSame(
+        $cachedValues = $this->cacher->getMultiple(['test1', 'test2']);
+
+        $this->assertIsArray($cachedValues);
+        $this->assertArraysAreIdentical(
             [
                 'test1' => 'value1',
                 'test2' => 'value2',
             ],
-            $this->cacher->getMultiple(['test1', 'test2'])
+            $cachedValues
         );
     }
 
@@ -106,12 +109,15 @@ trait GetSetTestTrait
             $this->cacher->setMultiple($values, 0)
         );
 
-        $this->assertSame(
+        $cachedValues = $this->cacher->getMultiple(['test1', 'test2']);
+
+        $this->assertIsArray($cachedValues);
+        $this->assertArraysAreIdentical(
             [
                 'test1' => null,
                 'test2' => null,
             ],
-            $this->cacher->getMultiple(['test1', 'test2'])
+            $cachedValues
         );
     }
 
@@ -140,7 +146,7 @@ trait GetSetTestTrait
     public function testSetInvalidKey(): void
     {
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('Cache key `test/` is not valid.');
+        $this->expectExceptionMessageIs('Cache key `test/` is not valid.');
 
         $this->cacher->set('test/', 'value', 1);
     }

@@ -132,7 +132,7 @@ final class ContainerTest extends TestCase
     public function testBuildNotInstantiable(): void
     {
         $this->expectException(ContainerNotFoundException::class);
-        $this->expectExceptionMessage('Class `Closure` is not instantiable.');
+        $this->expectExceptionMessageIs('Class `Closure` is not instantiable.');
 
         $this->container->build(Closure::class);
     }
@@ -264,7 +264,7 @@ final class ContainerTest extends TestCase
     public function testCallInvalidMethod(): void
     {
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Method name must be a string.');
+        $this->expectExceptionMessageIs('Method name must be a string.');
 
         // @phpstan-ignore argument.type
         $this->container->call([Service::class, 1]);
@@ -273,7 +273,7 @@ final class ContainerTest extends TestCase
     public function testCallInvalidTarget(): void
     {
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Callable target must be a class-string or object.');
+        $this->expectExceptionMessageIs('Callable target must be a class-string or object.');
 
         // @phpstan-ignore argument.type
         $this->container->call([1, 'value']);

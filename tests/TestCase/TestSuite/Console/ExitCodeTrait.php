@@ -18,7 +18,7 @@ trait ExitCodeTrait
     public function testExitCodeFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that command exit code is equal to "1".');
+        $this->expectExceptionMessageIs('Failed asserting that command exit code is equal to "1".');
 
         $this->exitCode = 0;
 
@@ -35,7 +35,7 @@ trait ExitCodeTrait
     public function testExitErrorFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that command exit code is equal to "1".');
+        $this->expectExceptionMessageIs('Failed asserting that command exit code is equal to "1".');
 
         $this->exitCode = Command::CODE_SUCCESS;
 
@@ -52,7 +52,7 @@ trait ExitCodeTrait
     public function testExitSuccessFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that command exit code is equal to "0".');
+        $this->expectExceptionMessageIs('Failed asserting that command exit code is equal to "0".');
 
         $this->exitCode = Command::CODE_ERROR;
 

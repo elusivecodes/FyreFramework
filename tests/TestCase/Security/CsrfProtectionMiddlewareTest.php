@@ -27,7 +27,7 @@ final class CsrfProtectionMiddlewareTest extends TestCase
     public function testCookieInvalid(): void
     {
         $this->expectException(CsrfTokenException::class);
-        $this->expectExceptionMessage('CSRF Token Mismatch');
+        $this->expectExceptionMessageIs('CSRF Token Mismatch');
 
         $csrfProtection = $this->container->use(CsrfProtection::class);
         $middleware = $this->container->build(CsrfProtectionMiddleware::class);
@@ -59,7 +59,7 @@ final class CsrfProtectionMiddlewareTest extends TestCase
     public function testCookieInvalidType(): void
     {
         $this->expectException(CsrfTokenException::class);
-        $this->expectExceptionMessage('CSRF Token Mismatch');
+        $this->expectExceptionMessageIs('CSRF Token Mismatch');
 
         $csrfProtection = $this->container->use(CsrfProtection::class);
         $middleware = $this->container->build(CsrfProtectionMiddleware::class);
@@ -86,7 +86,7 @@ final class CsrfProtectionMiddlewareTest extends TestCase
     public function testCookieMissing(): void
     {
         $this->expectException(CsrfTokenException::class);
-        $this->expectExceptionMessage('CSRF Token Mismatch');
+        $this->expectExceptionMessageIs('CSRF Token Mismatch');
 
         $csrfProtection = $this->container->use(CsrfProtection::class);
         $middleware = $this->container->build(CsrfProtectionMiddleware::class);
@@ -152,7 +152,7 @@ final class CsrfProtectionMiddlewareTest extends TestCase
     public function testFormTokenInvalid(): void
     {
         $this->expectException(CsrfTokenException::class);
-        $this->expectExceptionMessage('CSRF Token Mismatch');
+        $this->expectExceptionMessageIs('CSRF Token Mismatch');
 
         $csrfProtection = $this->container->use(CsrfProtection::class);
         $middleware = $this->container->build(CsrfProtectionMiddleware::class);
@@ -184,7 +184,7 @@ final class CsrfProtectionMiddlewareTest extends TestCase
     public function testFormTokenInvalidType(): void
     {
         $this->expectException(CsrfTokenException::class);
-        $this->expectExceptionMessage('CSRF Token Mismatch');
+        $this->expectExceptionMessageIs('CSRF Token Mismatch');
 
         $csrfProtection = $this->container->use(CsrfProtection::class);
         $middleware = $this->container->build(CsrfProtectionMiddleware::class);
@@ -211,7 +211,7 @@ final class CsrfProtectionMiddlewareTest extends TestCase
     public function testFormTokenMalformed(): void
     {
         $this->expectException(CsrfTokenException::class);
-        $this->expectExceptionMessage('CSRF Token Mismatch');
+        $this->expectExceptionMessageIs('CSRF Token Mismatch');
 
         $csrfProtection = $this->container->use(CsrfProtection::class);
         $middleware = $this->container->build(CsrfProtectionMiddleware::class);
@@ -238,7 +238,7 @@ final class CsrfProtectionMiddlewareTest extends TestCase
     public function testFormTokenMissing(): void
     {
         $this->expectException(CsrfTokenException::class);
-        $this->expectExceptionMessage('CSRF Token Mismatch');
+        $this->expectExceptionMessageIs('CSRF Token Mismatch');
 
         $csrfProtection = $this->container->use(CsrfProtection::class);
         $middleware = $this->container->build(CsrfProtectionMiddleware::class);

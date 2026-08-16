@@ -28,15 +28,18 @@ trait UpsertTestTrait
             ])
             ->execute();
 
-        $this->assertSame(
+        $row = $this->db->select()
+            ->from('test')
+            ->execute()
+            ->first();
+
+        $this->assertIsArray($row);
+        $this->assertArraysAreIdentical(
             [
                 'id' => 1,
                 'name' => 'Test 2',
             ],
-            $this->db->select()
-                ->from('test')
-                ->execute()
-                ->first()
+            $row
         );
     }
 

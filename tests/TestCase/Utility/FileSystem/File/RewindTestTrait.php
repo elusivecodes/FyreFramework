@@ -28,7 +28,7 @@ trait RewindTestTrait
     public function testRewindNoHandle(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('File handle is not valid.');
+        $this->expectExceptionMessageIs('File handle is not valid.');
 
         $file = new File('tmp/test.txt', true);
         $file->rewind();

@@ -35,7 +35,7 @@ final class CellRegistryTest extends TestCase
     public function testBuildInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Cell `Invalid` could not be found.');
+        $this->expectExceptionMessageIs('Cell `Invalid` could not be found.');
 
         $this->cellRegistry->build('Invalid', $this->view);
     }

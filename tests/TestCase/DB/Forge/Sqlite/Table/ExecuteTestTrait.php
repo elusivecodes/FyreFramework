@@ -34,7 +34,7 @@ trait ExecuteTestTrait
     public function testExecuteAddForeignKey(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Foreign keys cannot be added to existing tables.');
+        $this->expectExceptionMessageIs('Foreign keys cannot be added to existing tables.');
 
         $this->forge->createTable('test_values', [
             'id' => [
@@ -173,7 +173,7 @@ trait ExecuteTestTrait
     public function testExecuteDropForeignKey(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Foreign keys cannot be dropped from existing tables.');
+        $this->expectExceptionMessageIs('Foreign keys cannot be dropped from existing tables.');
 
         $this->forge->createTable('test_values', [
             'id' => [

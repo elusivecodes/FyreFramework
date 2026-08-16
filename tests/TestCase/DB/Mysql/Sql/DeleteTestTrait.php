@@ -207,7 +207,7 @@ trait DeleteTestTrait
     public function testDeleteUsing(): void
     {
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('DELETE queries with a USING clause are not supported by this connection.');
+        $this->expectExceptionMessageIs('DELETE queries with a USING clause are not supported by this connection.');
 
         $this->db->delete()
             ->from('test')

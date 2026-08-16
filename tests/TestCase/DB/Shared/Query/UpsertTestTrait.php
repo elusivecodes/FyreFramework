@@ -10,7 +10,7 @@ trait UpsertTestTrait
     public function testUpsertMultipleTables(): void
     {
         $this->expectException(DbException::class);
-        $this->expectExceptionMessage('Multiple tables are not supported for this query.');
+        $this->expectExceptionMessageIs('Multiple tables are not supported for this query.');
 
         $this->db->upsert(['id'])
             ->table([
@@ -22,7 +22,7 @@ trait UpsertTestTrait
     public function testUpsertTableAliases(): void
     {
         $this->expectException(DbException::class);
-        $this->expectExceptionMessage('Table aliases are not supported for this query.');
+        $this->expectExceptionMessageIs('Table aliases are not supported for this query.');
 
         $this->db->upsert(['id'])
             ->table([
@@ -33,7 +33,7 @@ trait UpsertTestTrait
     public function testUpsertVirtualTables(): void
     {
         $this->expectException(DbException::class);
-        $this->expectExceptionMessage('Virtual tables are not supported for this query.');
+        $this->expectExceptionMessageIs('Virtual tables are not supported for this query.');
 
         $this->db->upsert(['id'])
             ->table([

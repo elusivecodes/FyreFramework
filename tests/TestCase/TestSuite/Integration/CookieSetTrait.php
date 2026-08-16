@@ -17,7 +17,7 @@ trait CookieSetTrait
     public function testCookieIsSetFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that cookie "key" is set.');
+        $this->expectExceptionMessageIs('Failed asserting that cookie "key" is set.');
 
         $this->get('/response');
 
@@ -27,7 +27,7 @@ trait CookieSetTrait
     public function testCookieIsSetNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertCookieIsSet('key');
     }
@@ -42,7 +42,7 @@ trait CookieSetTrait
     public function testCookieNotSetFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that cookie "key" is not set.');
+        $this->expectExceptionMessageIs('Failed asserting that cookie "key" is not set.');
 
         $this->get('/cookie');
 
@@ -52,7 +52,7 @@ trait CookieSetTrait
     public function testCookieNotSetNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertCookieNotSet('key');
     }

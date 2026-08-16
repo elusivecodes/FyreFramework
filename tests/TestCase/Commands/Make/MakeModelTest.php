@@ -474,7 +474,7 @@ final class MakeModelTest extends TestCase
     public function testMakeModelRelationshipImportCollision(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage(
+        $this->expectExceptionMessageIs(
             'Import name `AuthorsModel` collides between `First\Models\AuthorsModel` and `Second\Models\AuthorsModel`.'
         );
 

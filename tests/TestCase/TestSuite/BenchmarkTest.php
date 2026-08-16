@@ -101,7 +101,7 @@ final class BenchmarkTest extends TestCase
     public function testRemoveInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Test `invalid` does not exist.');
+        $this->expectExceptionMessageIs('Test `invalid` does not exist.');
 
         $this->benchmark->remove('invalid');
     }

@@ -40,13 +40,16 @@ trait GetTestTrait
 
     public function testGetFrom(): void
     {
-        $this->assertSame(
+        $from = $this->db->select()
+            ->from('test')
+            ->getFrom();
+
+        $this->assertIsArray($from);
+        $this->assertArraysAreIdentical(
             [
                 'test',
             ],
-            $this->db->select()
-                ->from('test')
-                ->getFrom()
+            $from
         );
     }
 
@@ -66,15 +69,18 @@ trait GetTestTrait
 
     public function testGetGroupLimit(): void
     {
-        $this->assertSame(
+        $groupLimit = $this->db->select()
+            ->groupLimit(2, 'user_id', 1)
+            ->getGroupLimit();
+
+        $this->assertIsArray($groupLimit);
+        $this->assertArraysAreIdentical(
             [
                 'field' => 'user_id',
                 'limit' => 2,
                 'offset' => 1,
             ],
-            $this->db->select()
-                ->groupLimit(2, 'user_id', 1)
-                ->getGroupLimit()
+            $groupLimit
         );
     }
 

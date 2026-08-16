@@ -49,7 +49,7 @@ trait UploadedFileTrait
     public function testUploadedFileInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Uploaded file `invalid` is not valid.');
+        $this->expectExceptionMessageIs('Uploaded file `invalid` is not valid.');
 
         $this->file('avatar', 'invalid');
     }

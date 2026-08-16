@@ -17,7 +17,7 @@ trait HeaderContainsTrait
     public function testHeaderContainsFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that header "Name" value contains "invalid".');
+        $this->expectExceptionMessageIs('Failed asserting that header "Name" value contains "invalid".');
 
         $this->get('/header');
 
@@ -27,7 +27,7 @@ trait HeaderContainsTrait
     public function testHeaderContainsNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertHeaderContains('invalid', 'Name');
     }
@@ -42,7 +42,7 @@ trait HeaderContainsTrait
     public function testHeaderNotContainsFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that header "Name" value does not contain "a header".');
+        $this->expectExceptionMessageIs('Failed asserting that header "Name" value does not contain "a header".');
 
         $this->get('/header');
 
@@ -52,7 +52,7 @@ trait HeaderContainsTrait
     public function testHeaderNotContainsNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertHeaderNotContains('a header', 'Name');
     }

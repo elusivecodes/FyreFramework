@@ -204,7 +204,7 @@ trait UploadedFileTestTrait
     public function testWithUploadedFilesInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Uploaded file `test.nested` is not valid.');
+        $this->expectExceptionMessageIs('Uploaded file `test.nested` is not valid.');
 
         $request = new ServerRequest($this->config, $this->type);
 

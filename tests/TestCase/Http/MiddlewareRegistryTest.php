@@ -22,7 +22,7 @@ final class MiddlewareRegistryTest extends TestCase
     public function testClear(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid middleware: mock');
+        $this->expectExceptionMessageIs('Invalid middleware: mock');
 
         $this->middlewareRegistry->map('mock', MockMiddleware::class);
         $this->middlewareRegistry->use('mock');

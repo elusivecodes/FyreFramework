@@ -26,7 +26,7 @@ final class ConditionExpressionTest extends TestCase
     public function testConjunctionInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Condition expression conjunction `INVALID` is not valid.');
+        $this->expectExceptionMessageIs('Condition expression conjunction `INVALID` is not valid.');
 
         new ConditionExpression('invalid');
     }
@@ -52,7 +52,7 @@ final class ConditionExpressionTest extends TestCase
     public function testInEmpty(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Condition expression IN values must not be empty.');
+        $this->expectExceptionMessageIs('Condition expression IN values must not be empty.');
 
         $expression = new ConditionExpression();
         $expression->in('id', []);
@@ -79,7 +79,7 @@ final class ConditionExpressionTest extends TestCase
     public function testNotInEmpty(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Condition expression NOT IN values must not be empty.');
+        $this->expectExceptionMessageIs('Condition expression NOT IN values must not be empty.');
 
         $expression = new ConditionExpression();
         $expression->notIn('id', []);

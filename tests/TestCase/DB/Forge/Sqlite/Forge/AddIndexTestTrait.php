@@ -45,7 +45,7 @@ trait AddIndexTestTrait
     public function testAddIndexPrimary(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Primary keys cannot be added to existing tables.');
+        $this->expectExceptionMessageIs('Primary keys cannot be added to existing tables.');
 
         $this->forge->createTable('test', [
             'id' => [

@@ -65,7 +65,7 @@ final class CsrfProtectionTest extends TestCase
     public function testInvalidSalt(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('CSRF salt must not be empty.');
+        $this->expectExceptionMessageIs('CSRF salt must not be empty.');
 
         $container = new Container();
         $container->singleton(Config::class);

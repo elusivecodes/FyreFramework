@@ -69,7 +69,7 @@ trait ColumnTestTrait
     public function testColumnInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Table column `test.invalid` does not exist.');
+        $this->expectExceptionMessageIs('Table column `test.invalid` does not exist.');
 
         $this->schema
             ->table('test')

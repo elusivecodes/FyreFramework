@@ -104,13 +104,16 @@ final class LangTest extends TestCase
     {
         $this->lang->addPath('tests/lang/dir1');
 
-        $this->assertSame(
+        $data = $this->lang->get('test.data');
+
+        $this->assertIsArray($data);
+        $this->assertArraysAreIdentical(
             [
                 'val1' => 'Value 1',
                 'val2' => 'Value 2',
                 'val3' => 'Value 3',
             ],
-            $this->lang->get('test.data')
+            $data
         );
     }
 

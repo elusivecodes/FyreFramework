@@ -128,7 +128,7 @@ trait BlockTestTrait
     public function testUnclosedBlock(): void
     {
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Unable to render view while blocks remain open.');
+        $this->expectExceptionMessageIs('Unable to render view while blocks remain open.');
 
         $this->view->setData([
             'a' => 1,
@@ -142,7 +142,7 @@ trait BlockTestTrait
     public function testUnopenedBlock(): void
     {
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Unable to close block while no blocks are opened.');
+        $this->expectExceptionMessageIs('Unable to close block while no blocks are opened.');
 
         $this->view->end();
     }

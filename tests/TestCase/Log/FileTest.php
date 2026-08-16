@@ -172,7 +172,7 @@ final class FileTest extends TestCase
     public function testInvalidHandler(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Log handler `Invalid` must extend `Fyre\Log\Logger`.');
+        $this->expectExceptionMessageIs('Log handler `Invalid` must extend `Fyre\Log\Logger`.');
 
         $this->logger->clear();
         $this->logger->setConfig('invalid', [
@@ -185,7 +185,7 @@ final class FileTest extends TestCase
     public function testInvalidLevel(): void
     {
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('Log level `invalid` is not valid.');
+        $this->expectExceptionMessageIs('Log level `invalid` is not valid.');
 
         $this->logger->handle('invalid', 'test');
     }
@@ -193,7 +193,7 @@ final class FileTest extends TestCase
     public function testInvalidMaxSize(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('File logger option `maxSize` must be greater than 0.');
+        $this->expectExceptionMessageIs('File logger option `maxSize` must be greater than 0.');
 
         new FileLogger([
             'maxSize' => 0,

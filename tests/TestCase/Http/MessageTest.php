@@ -202,7 +202,7 @@ final class MessageTest extends TestCase
     public function testWithAddedHeaderEmpty(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Header value cannot be empty.');
+        $this->expectExceptionMessageIs('Header value cannot be empty.');
 
         $message1 = new Message([
             'headers' => [
@@ -215,7 +215,7 @@ final class MessageTest extends TestCase
     public function testWithAddedHeaderInvalidValue(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("Header value `\x00` is not valid.");
+        $this->expectExceptionMessageIs("Header value `\x00` is not valid.");
 
         $message1 = new Message([
             'headers' => [
@@ -308,7 +308,7 @@ final class MessageTest extends TestCase
     public function testWithHeaderInvalidName(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Header name `x:test` is not valid.');
+        $this->expectExceptionMessageIs('Header name `x:test` is not valid.');
 
         $message1 = new Message();
         $message2 = $message1->withHeader('x:test', 'value');
@@ -322,7 +322,7 @@ final class MessageTest extends TestCase
     public function testWithHeaderInvalidNameLineFeed(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("Header name `test\n` is not valid.");
+        $this->expectExceptionMessageIs("Header name `test\n` is not valid.");
 
         $message = new Message();
 
@@ -332,7 +332,7 @@ final class MessageTest extends TestCase
     public function testWithHeaderInvalidValue(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("Header value `\x00` is not valid.");
+        $this->expectExceptionMessageIs("Header value `\x00` is not valid.");
 
         $message1 = new Message();
         $message2 = $message1->withHeader('test', "\x00");
@@ -380,7 +380,7 @@ final class MessageTest extends TestCase
     public function testWithProtocolVersionInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Protocol version `2.1` is not valid.');
+        $this->expectExceptionMessageIs('Protocol version `2.1` is not valid.');
 
         $message = new Message();
         $message->withProtocolVersion('2.1');

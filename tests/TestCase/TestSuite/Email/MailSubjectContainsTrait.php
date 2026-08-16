@@ -62,7 +62,7 @@ trait MailSubjectContainsTrait
     public function testMailSubjectContainsAtFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that email #1 subject contains \'Test 2\'.');
+        $this->expectExceptionMessageIs('Failed asserting that email #1 subject contains \'Test 2\'.');
 
         $this->app->use(MailManager::class)
             ->use()
@@ -90,7 +90,7 @@ trait MailSubjectContainsTrait
     public function testMailSubjectContainsFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that an email subject contains \'invalid\'.');
+        $this->expectExceptionMessageIs('Failed asserting that an email subject contains \'invalid\'.');
 
         $this->app->use(MailManager::class)
             ->use()

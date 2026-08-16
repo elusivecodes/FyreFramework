@@ -39,7 +39,7 @@ final class QueueManagerTest extends TestCase
     public function testBuildInvalidHandler(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Queue `Invalid` must extend `Fyre\Queue\Queue`.');
+        $this->expectExceptionMessageIs('Queue `Invalid` must extend `Fyre\Queue\Queue`.');
 
         $this->queueManager->build([
             'className' => 'Invalid',
@@ -107,7 +107,10 @@ final class QueueManagerTest extends TestCase
 
     public function testGetConfig(): void
     {
-        $this->assertSame(
+        $config = $this->queueManager->getConfig();
+
+        $this->assertIsArray($config);
+        $this->assertArraysAreIdentical(
             [
                 'default' => [
                     'className' => RedisQueue::class,
@@ -124,7 +127,7 @@ final class QueueManagerTest extends TestCase
                     'port' => getenv('REDIS_PORT'),
                 ],
             ],
-            $this->queueManager->getConfig()
+            $config
         );
     }
 
@@ -144,7 +147,10 @@ final class QueueManagerTest extends TestCase
 
     public function testGetConfigKey(): void
     {
-        $this->assertSame(
+        $config = $this->queueManager->getConfig('other');
+
+        $this->assertIsArray($config);
+        $this->assertArraysAreIdentical(
             [
                 'className' => RedisQueue::class,
                 'host' => getenv('REDIS_HOST'),
@@ -152,7 +158,7 @@ final class QueueManagerTest extends TestCase
                 'database' => getenv('REDIS_DATABASE'),
                 'port' => getenv('REDIS_PORT'),
             ],
-            $this->queueManager->getConfig('other')
+            $config
         );
     }
 
@@ -203,18 +209,21 @@ final class QueueManagerTest extends TestCase
             ])
         );
 
-        $this->assertSame(
+        $config = $this->queueManager->getConfig('test');
+
+        $this->assertIsArray($config);
+        $this->assertArraysAreIdentical(
             [
                 'className' => RedisQueue::class,
             ],
-            $this->queueManager->getConfig('test')
+            $config
         );
     }
 
     public function testSetConfigExists(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Queue config `default` already exists.');
+        $this->expectExceptionMessageIs('Queue config `default` already exists.');
 
         $this->queueManager->setConfig('default', [
             'className' => RedisQueue::class,

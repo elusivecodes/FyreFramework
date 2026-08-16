@@ -35,7 +35,7 @@ final class LogManagerTest extends TestCase
     public function testBuildInvalidHandler(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Log handler `Invalid` must extend `Fyre\Log\Logger`.');
+        $this->expectExceptionMessageIs('Log handler `Invalid` must extend `Fyre\Log\Logger`.');
 
         $this->logManager->build([
             'className' => 'Invalid',
@@ -57,7 +57,10 @@ final class LogManagerTest extends TestCase
 
     public function testGetConfig(): void
     {
-        $this->assertSame(
+        $config = $this->logManager->getConfig();
+
+        $this->assertIsArray($config);
+        $this->assertArraysAreIdentical(
             [
                 'default' => [
                     'className' => FileLogger::class,
@@ -72,20 +75,23 @@ final class LogManagerTest extends TestCase
                     'suffix' => '',
                 ],
             ],
-            $this->logManager->getConfig()
+            $config
         );
     }
 
     public function testGetConfigKey(): void
     {
-        $this->assertSame(
+        $config = $this->logManager->getConfig('error');
+
+        $this->assertIsArray($config);
+        $this->assertArraysAreIdentical(
             [
                 'className' => FileLogger::class,
                 'levels' => ['emergency', 'alert', 'critical', 'error'],
                 'path' => 'error',
                 'suffix' => '',
             ],
-            $this->logManager->getConfig('error')
+            $config
         );
     }
 
@@ -132,19 +138,22 @@ final class LogManagerTest extends TestCase
             ])
         );
 
-        $this->assertSame(
+        $config = $this->logManager->getConfig('test');
+
+        $this->assertIsArray($config);
+        $this->assertArraysAreIdentical(
             [
                 'className' => FileLogger::class,
                 'path' => 'log',
             ],
-            $this->logManager->getConfig('test')
+            $config
         );
     }
 
     public function testSetConfigExists(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Log config `default` already exists.');
+        $this->expectExceptionMessageIs('Log config `default` already exists.');
 
         $this->logManager->setConfig('default', [
             'className' => FileLogger::class,

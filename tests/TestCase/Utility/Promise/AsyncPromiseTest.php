@@ -314,7 +314,7 @@ final class AsyncPromiseTest extends TestCase
     public function testAwaitRejection(): void
     {
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('test');
+        $this->expectExceptionMessageIs('test');
 
         $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
             $reject(new Exception('test'));
@@ -326,7 +326,7 @@ final class AsyncPromiseTest extends TestCase
     public function testCancel(): void
     {
         $this->expectException(CancelledPromiseException::class);
-        $this->expectExceptionMessage('test');
+        $this->expectExceptionMessageIs('test');
 
         $sockets = [];
 
@@ -374,7 +374,7 @@ final class AsyncPromiseTest extends TestCase
     public function testCancelTimeout(): void
     {
         $this->expectException(CancelledPromiseException::class);
-        $this->expectExceptionMessage('Promise was cancelled.');
+        $this->expectExceptionMessageIs('Promise was cancelled.');
 
         $sockets = [];
 
@@ -530,16 +530,14 @@ final class AsyncPromiseTest extends TestCase
 
         [$reason, $value] = unserialize($data);
 
-        $actual = [
-            'reason' => $reason instanceof Throwable ?
-                [$reason::class, $reason->getMessage()] :
-                null,
-            'value' => $value,
-        ];
-
         $this->assertArraysAreIdentical(
             $expected,
-            $actual
+            [
+                'reason' => $reason instanceof Throwable ?
+                    [$reason::class, $reason->getMessage()] :
+                    null,
+                'value' => $value,
+            ]
         );
     }
 
@@ -729,7 +727,7 @@ final class AsyncPromiseTest extends TestCase
     public function testUncaughtException(): void
     {
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('test');
+        $this->expectExceptionMessageIs('test');
 
         $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
             $reject(new Exception('test'));

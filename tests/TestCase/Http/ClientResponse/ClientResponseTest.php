@@ -77,7 +77,7 @@ final class ClientResponseTest extends TestCase
     public function testWithJsonInvalid(): void
     {
         $this->expectException(JsonException::class);
-        $this->expectExceptionMessage('Inf and NaN cannot be JSON encoded');
+        $this->expectExceptionMessageIs('Inf and NaN cannot be JSON encoded');
 
         new ClientResponse()->withJson(NAN);
     }

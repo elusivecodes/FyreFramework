@@ -26,7 +26,7 @@ trait CreateTestTrait
     public function testCreateExists(): void
     {
         $this->expectException(ErrorException::class);
-        $this->expectExceptionMessage('mkdir(): File exists');
+        $this->expectExceptionMessageIs('mkdir(): File exists');
 
         $folder = new Folder('tmp/test', true);
         $folder->create();
@@ -35,7 +35,7 @@ trait CreateTestTrait
     public function testCreateExistsFile(): void
     {
         $this->expectException(ErrorException::class);
-        $this->expectExceptionMessage('mkdir(): File exists');
+        $this->expectExceptionMessageIs('mkdir(): File exists');
 
         new File('tmp/test', true);
         $folder = new Folder('tmp/test', true);

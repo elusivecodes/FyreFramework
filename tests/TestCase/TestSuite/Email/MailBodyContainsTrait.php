@@ -116,7 +116,7 @@ trait MailBodyContainsTrait
     public function testMailContainsTextAtFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that email #1 text body contains \'another test\'.');
+        $this->expectExceptionMessageIs('Failed asserting that email #1 text body contains \'another test\'.');
 
         $this->app->use(MailManager::class)
             ->use()
@@ -144,7 +144,7 @@ trait MailBodyContainsTrait
     public function testMailContainsTextFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that an email text body contains \'invalid\'.');
+        $this->expectExceptionMessageIs('Failed asserting that an email text body contains \'invalid\'.');
 
         $this->app->use(MailManager::class)
             ->use()

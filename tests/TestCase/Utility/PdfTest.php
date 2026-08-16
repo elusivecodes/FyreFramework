@@ -52,7 +52,7 @@ final class PdfTest extends TestCase
     public function testInvalidTimeout(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('PDF timeout must not be negative.');
+        $this->expectExceptionMessageIs('PDF timeout must not be negative.');
 
         Pdf::setTimeout(-1);
     }
@@ -89,7 +89,7 @@ final class PdfTest extends TestCase
     public function testPdfSaveUrlExists(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('File `tmp/test.pdf` already exists.');
+        $this->expectExceptionMessageIs('File `tmp/test.pdf` already exists.');
 
         touch('tmp/test.pdf');
 

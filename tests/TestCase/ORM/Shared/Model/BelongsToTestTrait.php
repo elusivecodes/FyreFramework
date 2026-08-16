@@ -131,7 +131,7 @@ trait BelongsToTestTrait
     public function testBelongsToFindCallback(): void
     {
         $this->expectException(OrmException::class);
-        $this->expectExceptionMessage('Contain option `callback` cannot be used with the join strategy.');
+        $this->expectExceptionMessageIs('Contain option `callback` cannot be used with the join strategy.');
 
         $Addresses = $this->modelRegistry->use('Addresses');
 

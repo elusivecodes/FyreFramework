@@ -37,7 +37,7 @@ trait MailCountTrait
     public function testMailCountFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that actual sent emails 1 matches expected count 2.');
+        $this->expectExceptionMessageIs('Failed asserting that actual sent emails 1 matches expected count 2.');
 
         $this->app->use(MailManager::class)
             ->use()

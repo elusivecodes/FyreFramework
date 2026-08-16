@@ -119,7 +119,7 @@ trait LockTestTrait
     public function testLockInvalidExpiration(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Cache lock expiration must be greater than 0.');
+        $this->expectExceptionMessageIs('Cache lock expiration must be greater than 0.');
 
         $this->cacher->lock('test', 0);
     }
@@ -127,7 +127,7 @@ trait LockTestTrait
     public function testLockInvalidKey(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Cache key `__lock__.test/` is not valid.');
+        $this->expectExceptionMessageIs('Cache key `__lock__.test/` is not valid.');
 
         $this->cacher->lock('test/');
     }
@@ -135,7 +135,7 @@ trait LockTestTrait
     public function testLockInvalidWait(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Cache lock wait time must not be negative.');
+        $this->expectExceptionMessageIs('Cache lock wait time must not be negative.');
 
         $this->cacher->lock('test')->acquire(-1);
     }

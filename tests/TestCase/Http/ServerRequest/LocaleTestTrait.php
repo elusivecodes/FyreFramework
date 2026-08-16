@@ -49,7 +49,7 @@ trait LocaleTestTrait
     public function testWithLocaleInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Locale `ru` is not supported.');
+        $this->expectExceptionMessageIs('Locale `ru` is not supported.');
 
         $request = new ServerRequest($this->config, $this->type);
 

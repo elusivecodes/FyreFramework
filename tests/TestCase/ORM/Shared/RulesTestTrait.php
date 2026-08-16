@@ -119,7 +119,7 @@ trait RulesTestTrait
     public function testExistsInMissingRelationship(): void
     {
         $this->expectException(OrmException::class);
-        $this->expectExceptionMessage('Model `Posts` does not have a relationship to `Missing`.');
+        $this->expectExceptionMessageIs('Model `Posts` does not have a relationship to `Missing`.');
 
         $Posts = $this->modelRegistry->use('Posts');
         $rules = $this->container->build(RuleSet::class, ['model' => $Posts]);

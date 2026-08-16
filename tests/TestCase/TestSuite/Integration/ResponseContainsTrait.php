@@ -17,7 +17,7 @@ trait ResponseContainsTrait
     public function testResponseContainsFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that response body contains "invalid".');
+        $this->expectExceptionMessageIs('Failed asserting that response body contains "invalid".');
 
         $this->get('/response');
 
@@ -27,7 +27,7 @@ trait ResponseContainsTrait
     public function testResponseContainsNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertResponseContains('invalid');
     }
@@ -42,7 +42,7 @@ trait ResponseContainsTrait
     public function testResponseNotContainsFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that response body does not contain "a test".');
+        $this->expectExceptionMessageIs('Failed asserting that response body does not contain "a test".');
 
         $this->get('/response');
 
@@ -52,7 +52,7 @@ trait ResponseContainsTrait
     public function testResponseNotContainsNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertResponseNotContains('a test');
     }

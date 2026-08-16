@@ -155,7 +155,7 @@ trait ConditionTestTrait
     public function testConditionInEmpty(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query condition IN values must not be empty.');
+        $this->expectExceptionMessageIs('Query condition IN values must not be empty.');
 
         $this->db->select()
             ->from('test')

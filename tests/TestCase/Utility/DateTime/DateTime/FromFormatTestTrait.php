@@ -164,7 +164,7 @@ trait FromFormatTestTrait
     public function testCreateFromFormatInvalid(): void
     {
         $this->expectException(DateMalformedStringException::class);
-        $this->expectExceptionMessage('Date parsing failed: U_PARSE_ERROR');
+        $this->expectExceptionMessageIsOrContains('Date parsing failed: U_PARSE_ERROR');
         $this->expectExceptionCode(9);
 
         DateTime::createFromFormat('yyyy', 'a');

@@ -19,13 +19,16 @@ trait ExecuteTestTrait
             ])
             ->execute();
 
-        $this->assertSame(
+        $row = $this->db->execute('SELECT * FROM test WHERE name = ?', ['Test 2'])
+            ->first();
+
+        $this->assertIsArray($row);
+        $this->assertArraysAreIdentical(
             [
                 'id' => 2,
                 'name' => 'Test 2',
             ],
-            $this->db->execute('SELECT * FROM test WHERE name = ?', ['Test 2'])
-                ->first()
+            $row
         );
     }
 
@@ -43,13 +46,16 @@ trait ExecuteTestTrait
             ])
             ->execute();
 
-        $this->assertSame(
+        $row = $this->db->execute('SELECT * FROM test WHERE name = :name', ['name' => 'Test 2'])
+            ->first();
+
+        $this->assertIsArray($row);
+        $this->assertArraysAreIdentical(
             [
                 'id' => 2,
                 'name' => 'Test 2',
             ],
-            $this->db->execute('SELECT * FROM test WHERE name = :name', ['name' => 'Test 2'])
-                ->first()
+            $row
         );
     }
 

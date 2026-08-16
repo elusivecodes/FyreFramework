@@ -35,7 +35,7 @@ final class HelperRegistryTest extends TestCase
     public function testBuildInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Helper `Invalid` could not be found.');
+        $this->expectExceptionMessageIs('Helper `Invalid` could not be found.');
 
         $this->helperRegistry->build('Invalid', $this->view);
     }

@@ -11,7 +11,7 @@ trait DropTestTrait
     public function testDropNewTable(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Table `test` does not exist.');
+        $this->expectExceptionMessageIs('Table `test` does not exist.');
 
         $this->forge
             ->build('test')

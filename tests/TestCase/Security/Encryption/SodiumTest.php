@@ -45,7 +45,7 @@ final class SodiumTest extends TestCase
     public function testInvalidBlockSize(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Sodium encrypter option `blockSize` must be greater than 0.');
+        $this->expectExceptionMessageIs('Sodium encrypter option `blockSize` must be greater than 0.');
 
         new SodiumEncrypter([
             'blockSize' => 0,
@@ -55,7 +55,7 @@ final class SodiumTest extends TestCase
     public function testInvalidDigest(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Encryption digest `invalid` is not valid.');
+        $this->expectExceptionMessageIs('Encryption digest `invalid` is not valid.');
 
         new SodiumEncrypter([
             'digest' => 'invalid',

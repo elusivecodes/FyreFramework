@@ -45,7 +45,7 @@ final class WorkerTest extends TestCase
     public function testInvalidMaxJobs(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Worker option `maxJobs` must not be negative.');
+        $this->expectExceptionMessageIs('Worker option `maxJobs` must not be negative.');
 
         $this->container->build(Worker::class, [
             'options' => [
@@ -57,7 +57,7 @@ final class WorkerTest extends TestCase
     public function testInvalidMaxRuntime(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Worker option `maxRuntime` must not be negative.');
+        $this->expectExceptionMessageIs('Worker option `maxRuntime` must not be negative.');
 
         $this->container->build(Worker::class, [
             'options' => [
@@ -69,7 +69,7 @@ final class WorkerTest extends TestCase
     public function testInvalidRest(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Worker option `rest` must not be negative.');
+        $this->expectExceptionMessageIs('Worker option `rest` must not be negative.');
 
         $this->container->build(Worker::class, [
             'options' => [
@@ -81,7 +81,7 @@ final class WorkerTest extends TestCase
     public function testInvalidSleep(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Worker option `sleep` must not be negative.');
+        $this->expectExceptionMessageIs('Worker option `sleep` must not be negative.');
 
         $this->container->build(Worker::class, [
             'options' => [

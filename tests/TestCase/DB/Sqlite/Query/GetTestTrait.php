@@ -10,7 +10,7 @@ trait GetTestTrait
     public function testGetLimitInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query limit must not be negative.');
+        $this->expectExceptionMessageIs('Query limit must not be negative.');
 
         $this->db->select()
             ->limit(-1);
@@ -19,7 +19,7 @@ trait GetTestTrait
     public function testGetLimitOffsetInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query offset must not be negative.');
+        $this->expectExceptionMessageIs('Query offset must not be negative.');
 
         $this->db->select()
             ->limit(1, -1);
@@ -28,7 +28,7 @@ trait GetTestTrait
     public function testGetOffsetInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query offset must not be negative.');
+        $this->expectExceptionMessageIs('Query offset must not be negative.');
 
         $this->db->select()
             ->offset(-1);

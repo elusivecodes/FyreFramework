@@ -28,7 +28,7 @@ trait ResponseCodeTrait
     public function testResponseCodeFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that response status code is equal to "200".');
+        $this->expectExceptionMessageIs('Failed asserting that response status code is equal to "200".');
 
         $this->get('/error');
 
@@ -38,7 +38,7 @@ trait ResponseCodeTrait
     public function testResponseCodeNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertResponseCode(200);
     }
@@ -53,7 +53,7 @@ trait ResponseCodeTrait
     public function testResponseErrorFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that response status code is between 400 and 599.');
+        $this->expectExceptionMessageIs('Failed asserting that response status code is between 400 and 599.');
 
         $this->get('/response');
 
@@ -63,7 +63,7 @@ trait ResponseCodeTrait
     public function testResponseErrorNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertResponseError();
     }
@@ -85,7 +85,7 @@ trait ResponseCodeTrait
     public function testResponseFailureFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that response status code is between 500 and 599.');
+        $this->expectExceptionMessageIs('Failed asserting that response status code is between 500 and 599.');
 
         $this->get('/response');
 
@@ -95,7 +95,7 @@ trait ResponseCodeTrait
     public function testResponseFailureNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertResponseFailure();
     }
@@ -110,7 +110,7 @@ trait ResponseCodeTrait
     public function testResponseOkFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that response status code is between 200 and 204.');
+        $this->expectExceptionMessageIs('Failed asserting that response status code is between 200 and 204.');
 
         $this->get('/error');
 
@@ -120,7 +120,7 @@ trait ResponseCodeTrait
     public function testResponseOkNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertResponseOk();
     }
@@ -135,7 +135,7 @@ trait ResponseCodeTrait
     public function testResponseSuccessFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that response status code is between 200 and 308.');
+        $this->expectExceptionMessageIs('Failed asserting that response status code is between 200 and 308.');
 
         $this->get('/error');
 
@@ -145,7 +145,7 @@ trait ResponseCodeTrait
     public function testResponseSuccessNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertResponseSuccess();
     }

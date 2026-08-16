@@ -84,7 +84,7 @@ trait MailContainsAttachmentTrait
     public function testMailContainsAttachmentAtFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that email #1 was sent with attachment "test2.jpg".');
+        $this->expectExceptionMessageIs('Failed asserting that email #1 was sent with attachment "test2.jpg".');
 
         $this->app->use(MailManager::class)
             ->use()
@@ -122,7 +122,7 @@ trait MailContainsAttachmentTrait
     public function testMailContainsAttachmentFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that an email was sent with attachment "invalid.jpg".');
+        $this->expectExceptionMessageIs('Failed asserting that an email was sent with attachment "invalid.jpg".');
 
         $this->app->use(MailManager::class)
             ->use()

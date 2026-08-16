@@ -28,7 +28,7 @@ trait RelationshipTestTrait
     public function testRelationshipDuplicate(): void
     {
         $this->expectException(OrmException::class);
-        $this->expectExceptionMessage('Model `Items` already has a relationship to `Alias`.');
+        $this->expectExceptionMessageIs('Model `Items` already has a relationship to `Alias`.');
 
         $Items = $this->modelRegistry->use('Items');
 
@@ -43,7 +43,7 @@ trait RelationshipTestTrait
     public function testRelationshipInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Model `Items` does not have a relationship to `Invalid`.');
+        $this->expectExceptionMessageIs('Model `Items` does not have a relationship to `Invalid`.');
 
         $this->modelRegistry->use('Items')->__get('Invalid');
     }
@@ -124,7 +124,7 @@ trait RelationshipTestTrait
     public function testRelationshipPropertyNameConflict(): void
     {
         $this->expectException(OrmException::class);
-        $this->expectExceptionMessage('Model `Items` relationship `Alias` property conflicts with table column `name`.');
+        $this->expectExceptionMessageIs('Model `Items` relationship `Alias` property conflicts with table column `name`.');
 
         $this->modelRegistry->use('Items')->hasOne('Alias', [
             'classAlias' => 'Items',
@@ -199,7 +199,7 @@ trait RelationshipTestTrait
     public function testRelationshipStrategyInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Relationship strategy `invalid` is not valid.');
+        $this->expectExceptionMessageIs('Relationship strategy `invalid` is not valid.');
 
         $Items = $this->modelRegistry->use('Items');
 

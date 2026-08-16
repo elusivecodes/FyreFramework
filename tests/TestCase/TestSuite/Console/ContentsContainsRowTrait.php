@@ -21,7 +21,7 @@ trait ContentsContainsRowTrait
     public function testOutputContainsRowFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that stdout contains the row "a,b,c".');
+        $this->expectExceptionMessageIs('Failed asserting that stdout contains the row "a,b,c".');
 
         $this->assertOutputContainsRow(['a', 'b', 'c']);
     }

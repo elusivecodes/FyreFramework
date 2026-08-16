@@ -95,7 +95,7 @@ final class RequestTest extends TestCase
     public function testWithAuthDigestInvalid(): void
     {
         $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('WWW-Authenticate header is not valid.');
+        $this->expectExceptionMessageIs('WWW-Authenticate header is not valid.');
 
         $request = new Request('https://example.com');
 
@@ -105,7 +105,7 @@ final class RequestTest extends TestCase
     public function testWithAuthDigestInvalidAlgorithm(): void
     {
         $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('Algorithm `invalid` is not supported');
+        $this->expectExceptionMessageIs('Algorithm `invalid` is not supported');
 
         $request = new Request('https://example.com');
 
@@ -119,7 +119,7 @@ final class RequestTest extends TestCase
     public function testWithAuthDigestInvalidQop(): void
     {
         $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('QOP `invalid` is not supported.');
+        $this->expectExceptionMessageIs('QOP `invalid` is not supported.');
 
         $request = new Request('https://example.com');
 

@@ -45,9 +45,12 @@ final class ControllerRouteTest extends TestCase
             'destination' => [TestController::class, 'test'],
         ]);
 
-        $this->assertSame(
+        $destination = $route->getDestination();
+
+        $this->assertIsArray($destination);
+        $this->assertArraysAreIdentical(
             [TestController::class, 'test'],
-            $route->getDestination()
+            $destination
         );
     }
 

@@ -380,7 +380,7 @@ final class PromiseTest extends TestCase
     public function testUncaughtException(): void
     {
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('test');
+        $this->expectExceptionMessageIs('test');
 
         new Promise(static function(Closure $resolve, Closure $reject): void {
             $reject(new Exception('test'));

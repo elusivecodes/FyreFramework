@@ -56,7 +56,7 @@ trait RandomTestTrait
     public function testRandomWithInvalidChars(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Random string characters must not be empty.');
+        $this->expectExceptionMessageIs('Random string characters must not be empty.');
 
         Str::random(8, '');
     }
@@ -64,7 +64,7 @@ trait RandomTestTrait
     public function testRandomWithInvalidLength(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Random string length must be greater than or equal to 0.');
+        $this->expectExceptionMessageIs('Random string length must be greater than or equal to 0.');
 
         Str::random(-1);
     }

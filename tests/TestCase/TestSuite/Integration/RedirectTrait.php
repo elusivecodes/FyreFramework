@@ -17,7 +17,7 @@ trait RedirectTrait
     public function testNoRedirectFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that header "Location" is not set.');
+        $this->expectExceptionMessageIs('Failed asserting that header "Location" is not set.');
 
         $this->get('/redirect');
 
@@ -27,7 +27,7 @@ trait RedirectTrait
     public function testNoRedirectNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertNoRedirect();
     }
@@ -42,7 +42,7 @@ trait RedirectTrait
     public function testRedirectFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that header "Location" is set.');
+        $this->expectExceptionMessageIs('Failed asserting that header "Location" is set.');
 
         $this->get('/response');
 
@@ -52,7 +52,7 @@ trait RedirectTrait
     public function testRedirectNoResponse(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('No response has been set.');
+        $this->expectExceptionMessageIs('No response has been set.');
 
         $this->assertRedirect();
     }

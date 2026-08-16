@@ -23,7 +23,7 @@ final class NegotiateTest extends TestCase
     public function testContentEmpty(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('No supported values supplied.');
+        $this->expectExceptionMessageIs('No supported values supplied.');
 
         Negotiate::content('text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8,appliation/signed-exchange;v=b3;q=0.9', []);
     }
@@ -111,7 +111,7 @@ final class NegotiateTest extends TestCase
     public function testLanguageEmpty(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('No supported values supplied.');
+        $this->expectExceptionMessageIs('No supported values supplied.');
 
         Negotiate::language('en-GB,en-US;q=0.9,en;q=0.8', []);
     }

@@ -105,7 +105,10 @@ final class ConnectionTest extends TestCase
             $ran = true;
 
             $this->assertSame('SELECT ? FROM test', $sql);
-            $this->assertSame([1], $params);
+            $queryParams = $params;
+
+            $this->assertIsArray($queryParams);
+            $this->assertArraysAreIdentical([1], $queryParams);
         });
 
         $this->db->execute('SELECT ? FROM test', [1]);
@@ -179,7 +182,7 @@ final class ConnectionTest extends TestCase
         }
 
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('Optimizer hints are not supported by this connection.');
+        $this->expectExceptionMessageIs('Optimizer hints are not supported by this connection.');
 
         $this->db->select()
             ->hint('TEST()');
@@ -238,15 +241,18 @@ final class ConnectionTest extends TestCase
             ])
             ->execute();
 
-        $this->assertSame(
+        $row = $this->db->select()
+            ->from('test')
+            ->execute()
+            ->first();
+
+        $this->assertIsArray($row);
+        $this->assertArraysAreIdentical(
             [
                 'id' => 1,
                 'name' => 'Test',
             ],
-            $this->db->select()
-                ->from('test')
-                ->execute()
-                ->first()
+            $row
         );
 
         $this->assertSame(
@@ -271,15 +277,18 @@ final class ConnectionTest extends TestCase
             ])
             ->execute();
 
-        $this->assertSame(
+        $row = $this->db->select()
+            ->from('test')
+            ->execute()
+            ->first();
+
+        $this->assertIsArray($row);
+        $this->assertArraysAreIdentical(
             [
                 'id' => 1,
                 'name' => 'Test 2',
             ],
-            $this->db->select()
-                ->from('test')
-                ->execute()
-                ->first()
+            $row
         );
     }
 

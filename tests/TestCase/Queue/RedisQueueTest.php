@@ -88,7 +88,7 @@ final class RedisQueueTest extends TestCase
     public function testInvalidVisibilityTimeout(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Redis queue option `visibilityTimeout` must be greater than 0.');
+        $this->expectExceptionMessageIs('Redis queue option `visibilityTimeout` must be greater than 0.');
 
         $this->queueManager->build([
             'className' => RedisQueue::class,

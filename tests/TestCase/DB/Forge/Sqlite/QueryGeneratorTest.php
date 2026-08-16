@@ -74,7 +74,7 @@ final class QueryGeneratorTest extends TestCase
     public function testBuildConstraintInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Constraint `value` is not valid.');
+        $this->expectExceptionMessageIs('Constraint `value` is not valid.');
 
         $index = $this->table
             ->addIndex('value')
@@ -86,7 +86,7 @@ final class QueryGeneratorTest extends TestCase
     public function testBuildCreateIndexPrimary(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Primary keys cannot be added to existing tables.');
+        $this->expectExceptionMessageIs('Primary keys cannot be added to existing tables.');
 
         $index = $this->table
             ->setPrimaryKey('id')
@@ -112,7 +112,7 @@ final class QueryGeneratorTest extends TestCase
     public function testBuildUnsupportedEnum(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Column type `Fyre\\DB\\Types\\EnumType` is not supported by this connection.');
+        $this->expectExceptionMessageIs('Column type `Fyre\\DB\\Types\\EnumType` is not supported by this connection.');
 
         $this->table->addColumn('value', [
             'type' => EnumType::class,

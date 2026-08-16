@@ -47,7 +47,7 @@ final class TimerTest extends TestCase
     public function testElapsedInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Timer `test` does not exist.');
+        $this->expectExceptionMessageIs('Timer `test` does not exist.');
 
         $this->timer->elapsed('test');
     }
@@ -94,7 +94,7 @@ final class TimerTest extends TestCase
     public function testIsStoppedInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Timer `test` does not exist.');
+        $this->expectExceptionMessageIs('Timer `test` does not exist.');
 
         $this->timer->isStopped('test');
     }
@@ -122,7 +122,7 @@ final class TimerTest extends TestCase
     public function testRemoveInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Timer `test` does not exist.');
+        $this->expectExceptionMessageIs('Timer `test` does not exist.');
 
         $this->timer->remove('test');
     }
@@ -138,7 +138,7 @@ final class TimerTest extends TestCase
     public function testStartMultiple(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Timer `test` has already been started.');
+        $this->expectExceptionMessageIs('Timer `test` has already been started.');
 
         $this->timer->start('test');
         $this->timer->start('test');
@@ -200,7 +200,7 @@ final class TimerTest extends TestCase
     public function testStopInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Timer `test` does not exist.');
+        $this->expectExceptionMessageIs('Timer `test` does not exist.');
 
         $this->timer->stop('test');
     }
@@ -208,7 +208,7 @@ final class TimerTest extends TestCase
     public function testStopMultiple(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Timer `test` has already been stopped.');
+        $this->expectExceptionMessageIs('Timer `test` has already been stopped.');
 
         $this->timer->start('test');
         $this->timer->stop('test');

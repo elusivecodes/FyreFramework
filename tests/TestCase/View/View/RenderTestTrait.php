@@ -109,7 +109,7 @@ trait RenderTestTrait
     public function testRenderInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Template `invalid` could not be found.');
+        $this->expectExceptionMessageIs('Template `invalid` could not be found.');
 
         $this->view->render('invalid');
     }

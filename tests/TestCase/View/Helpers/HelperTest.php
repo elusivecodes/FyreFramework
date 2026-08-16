@@ -80,7 +80,7 @@ final class HelperTest extends TestCase
     public function testLoadHelperInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Helper `Invalid` could not be found.');
+        $this->expectExceptionMessageIs('Helper `Invalid` could not be found.');
 
         $this->view->loadHelper('Invalid');
     }

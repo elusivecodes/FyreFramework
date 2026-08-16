@@ -10,7 +10,7 @@ trait DeleteTestTrait
     public function testDeleteInvalidLimit(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Query limit must not be negative.');
+        $this->expectExceptionMessageIs('Query limit must not be negative.');
 
         $this->db->delete()
             ->limit(-1);

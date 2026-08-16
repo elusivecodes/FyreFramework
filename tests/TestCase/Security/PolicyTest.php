@@ -29,19 +29,22 @@ final class PolicyTest extends TestCase
             ],
         ]);
 
-        $this->assertSame(
+        $directive = $policy->getDirective('default-src');
+
+        $this->assertIsArray($directive);
+        $this->assertArraysAreIdentical(
             [
                 'self',
                 'https://test.com/',
             ],
-            $policy->getDirective('default-src')
+            $directive
         );
     }
 
     public function testGetDirectiveInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('CSP directive `invalid` is not valid.');
+        $this->expectExceptionMessageIs('CSP directive `invalid` is not valid.');
 
         $policy = new Policy();
 
@@ -71,7 +74,7 @@ final class PolicyTest extends TestCase
     public function testHasDirectiveInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('CSP directive `invalid` is not valid.');
+        $this->expectExceptionMessageIs('CSP directive `invalid` is not valid.');
 
         $policy = new Policy();
 
@@ -134,7 +137,7 @@ final class PolicyTest extends TestCase
     public function testWithDirectiveInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('CSP directive `invalid` is not valid.');
+        $this->expectExceptionMessageIs('CSP directive `invalid` is not valid.');
 
         $policy = new Policy();
 
@@ -214,7 +217,7 @@ final class PolicyTest extends TestCase
     public function testWithoutDirectiveInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('CSP directive `invalid` is not valid.');
+        $this->expectExceptionMessageIs('CSP directive `invalid` is not valid.');
 
         $policy = new Policy();
 

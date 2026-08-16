@@ -21,7 +21,7 @@ trait ContentsRegExpTrait
     public function testErrorRegExpFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that stderr matches the pattern `/Test message \d+/`.');
+        $this->expectExceptionMessageIs('Failed asserting that stderr matches the pattern `/Test message \d+/`.');
 
         fwrite($this->error, 'Test message A'.PHP_EOL);
 
@@ -38,7 +38,7 @@ trait ContentsRegExpTrait
     public function testOutputRegExpFail(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Failed asserting that stdout matches the pattern `/Test message \d+/`.');
+        $this->expectExceptionMessageIs('Failed asserting that stdout matches the pattern `/Test message \d+/`.');
 
         fwrite($this->output, 'Test message A'.PHP_EOL);
 

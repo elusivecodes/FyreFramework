@@ -111,7 +111,7 @@ trait UpdateTestTrait
     public function testUpdateJoin(): void
     {
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('UPDATE queries with a JOIN clause are not supported by this connection.');
+        $this->expectExceptionMessageIs('UPDATE queries with a JOIN clause are not supported by this connection.');
 
         $this->db->update('test')
             ->set([
@@ -164,7 +164,7 @@ trait UpdateTestTrait
     public function testUpdateMultipleTables(): void
     {
         $this->expectException(DbException::class);
-        $this->expectExceptionMessage('Multiple tables are not supported for this query.');
+        $this->expectExceptionMessageIs('Multiple tables are not supported for this query.');
 
         $this->db->update([
             'alt' => 'test',

@@ -29,7 +29,7 @@ final class OpenSSLTest extends TestCase
     public function testInvalidCipher(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('OpenSSL cipher `invalid` is not valid.');
+        $this->expectExceptionMessageIs('OpenSSL cipher `invalid` is not valid.');
 
         new OpenSSLEncrypter([
             'cipher' => 'invalid',
@@ -39,7 +39,7 @@ final class OpenSSLTest extends TestCase
     public function testInvalidCipherWithoutInitializationVector(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('OpenSSL cipher `AES-128-ECB` must use an initialization vector.');
+        $this->expectExceptionMessageIs('OpenSSL cipher `AES-128-ECB` must use an initialization vector.');
 
         new OpenSSLEncrypter([
             'cipher' => 'AES-128-ECB',

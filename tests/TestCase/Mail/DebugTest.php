@@ -252,7 +252,7 @@ final class DebugTest extends TestCase
     public function testMailSendAttachmentInvalid(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Email attachment `missing.txt` is not valid.');
+        $this->expectExceptionMessageIs('Email attachment `missing.txt` is not valid.');
 
         $this->mailer->email()
             ->setTo('test1@test.com')

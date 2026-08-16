@@ -214,7 +214,7 @@ final class MakeEntityTest extends TestCase
     public function testMakeEntityRelationshipImportCollision(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage(
+        $this->expectExceptionMessageIs(
             'Import name `Author` collides between `First\Entities\Author` and `Second\Entities\Author`.'
         );
 

@@ -27,7 +27,7 @@ trait DeleteTestTrait
     public function testDeleteInvalidKey(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Cache key `test/` is not valid.');
+        $this->expectExceptionMessageIs('Cache key `test/` is not valid.');
 
         $this->cacher->delete('test/');
     }

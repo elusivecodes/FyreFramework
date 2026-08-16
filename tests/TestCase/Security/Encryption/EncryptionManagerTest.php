@@ -46,7 +46,10 @@ final class EncryptionManagerTest extends TestCase
 
     public function testGetConfig(): void
     {
-        $this->assertSame(
+        $config = $this->encryptionManager->getConfig();
+
+        $this->assertIsArray($config);
+        $this->assertArraysAreIdentical(
             [
                 'default' => [
                     'className' => SodiumEncrypter::class,
@@ -55,17 +58,20 @@ final class EncryptionManagerTest extends TestCase
                     'className' => OpenSSLEncrypter::class,
                 ],
             ],
-            $this->encryptionManager->getConfig()
+            $config
         );
     }
 
     public function testGetConfigKey(): void
     {
-        $this->assertSame(
+        $config = $this->encryptionManager->getConfig('openssl');
+
+        $this->assertIsArray($config);
+        $this->assertArraysAreIdentical(
             [
                 'className' => OpenSSLEncrypter::class,
             ],
-            $this->encryptionManager->getConfig('openssl')
+            $config
         );
     }
 
@@ -111,18 +117,21 @@ final class EncryptionManagerTest extends TestCase
             ])
         );
 
-        $this->assertSame(
+        $config = $this->encryptionManager->getConfig('test');
+
+        $this->assertIsArray($config);
+        $this->assertArraysAreIdentical(
             [
                 'className' => SodiumEncrypter::class,
             ],
-            $this->encryptionManager->getConfig('test')
+            $config
         );
     }
 
     public function testSetConfigExists(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Encryption config `default` already exists.');
+        $this->expectExceptionMessageIs('Encryption config `default` already exists.');
 
         $this->encryptionManager->setConfig('default', [
             'className' => SodiumEncrypter::class,
