@@ -6,6 +6,7 @@ namespace Tests\TestCase\DB\Forge;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
+use Fyre\DB\Connection;
 use Fyre\DB\Forge\Column;
 use Fyre\DB\Forge\ForeignKey;
 use Fyre\DB\Forge\Forge;
@@ -18,7 +19,6 @@ use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use Tests\Mock\DB\TestConnection;
 use Tests\Mock\DB\TestForge;
 use Tests\Mock\DB\TestSqliteConnection;
 
@@ -37,9 +37,9 @@ final class ForgeRegistryTest extends TestCase
     protected ForgeRegistry $forgeRegistry;
 
     /**
-     * @var Stub&TestConnection
+     * @var Connection&Stub
      */
-    protected TestConnection $missingConnection;
+    protected Connection $missingConnection;
 
     /**
      * @var Stub&TestSqliteConnection
@@ -167,15 +167,12 @@ final class ForgeRegistryTest extends TestCase
         $connection = $this->getStubBuilder(SqliteConnection::class)
             ->disableOriginalConstructor()
             ->getStub();
-        $missingConnection = $this->getStubBuilder(TestConnection::class)
-            ->disableOriginalConstructor()
-            ->getStub();
+        $missingConnection = $this->createStub(Connection::class);
         $subclassConnection = $this->getStubBuilder(TestSqliteConnection::class)
             ->disableOriginalConstructor()
             ->getStub();
 
         assert($connection instanceof SqliteConnection);
-        assert($missingConnection instanceof TestConnection);
         assert($subclassConnection instanceof TestSqliteConnection);
 
         $this->connection = $connection;

@@ -6,6 +6,7 @@ namespace Tests\TestCase\DB\Schema;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
+use Fyre\DB\Connection;
 use Fyre\DB\Handlers\Sqlite\SqliteConnection;
 use Fyre\DB\Schema\Column;
 use Fyre\DB\Schema\ForeignKey;
@@ -18,7 +19,6 @@ use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use Tests\Mock\DB\TestConnection;
 use Tests\Mock\DB\TestSchema;
 use Tests\Mock\DB\TestSqliteConnection;
 
@@ -35,9 +35,9 @@ final class SchemaRegistryTest extends TestCase
     protected Container $container;
 
     /**
-     * @var Stub&TestConnection
+     * @var Connection&Stub
      */
-    protected TestConnection $missingConnection;
+    protected Connection $missingConnection;
 
     protected SchemaRegistry $schemaRegistry;
 
@@ -167,15 +167,12 @@ final class SchemaRegistryTest extends TestCase
         $connection = $this->getStubBuilder(SqliteConnection::class)
             ->disableOriginalConstructor()
             ->getStub();
-        $missingConnection = $this->getStubBuilder(TestConnection::class)
-            ->disableOriginalConstructor()
-            ->getStub();
+        $missingConnection = $this->createStub(Connection::class);
         $subclassConnection = $this->getStubBuilder(TestSqliteConnection::class)
             ->disableOriginalConstructor()
             ->getStub();
 
         assert($connection instanceof SqliteConnection);
-        assert($missingConnection instanceof TestConnection);
         assert($subclassConnection instanceof TestSqliteConnection);
 
         $this->connection = $connection;
