@@ -1154,7 +1154,7 @@ abstract class Color implements Stringable
         $parts = [];
 
         if (str_contains($value, ',')) {
-            if ($allowCommas && str_contains($value, '/')) {
+            if ($allowCommas && !str_contains($value, '/')) {
                 $parts = explode(',', $value);
                 $parts = array_map(trim(...), $parts);
 
