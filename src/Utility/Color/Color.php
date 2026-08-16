@@ -25,11 +25,13 @@ use Fyre\Utility\Color\Colors\XyzD50;
 use Fyre\Utility\Color\Colors\XyzD65;
 use InvalidArgumentException;
 use Stringable;
+use UnexpectedValueException;
 
 use function array_map;
 use function array_reduce;
 use function array_values;
 use function count;
+use function explode;
 use function fmod;
 use function hexdec;
 use function hypot;
@@ -40,11 +42,10 @@ use function max;
 use function min;
 use function preg_match;
 use function preg_replace;
-use function preg_split;
 use function rad2deg;
 use function round;
 use function sprintf;
-use function str_ends_with;
+use function str_contains;
 use function str_split;
 use function strlen;
 use function strtolower;
@@ -239,6 +240,8 @@ abstract class Color implements Stringable
         'xyz-d50' => 'toXyzD50',
         'xyz-d65' => 'toXyzD65',
     ];
+
+    protected const CSS_NUMBER_PATTERN = '[+-]?(?:\d+|\d*\.\d+)(?:e[+-]?\d+)?';
 
     protected const FIT_GAMUT_RANGES = [
         'a98-rgb' => [0.0, 1.0],
@@ -488,7 +491,7 @@ abstract class Color implements Stringable
         }
 
         if (
-            preg_match('/^#([0-9a-f]+)$/i', $string, $match) &&
+            preg_match('/^#([0-9a-f]+)\z/i', $string, $match) &&
             in_array(strlen($match[1]), [3, 4, 6, 8], true)
         ) {
             $hex = $match[1];
@@ -510,103 +513,109 @@ abstract class Color implements Stringable
                     1,
             ) |> static::toStaticColor(...);
         }
-        if (preg_match('/^(rgb|rgba|hsl|hsla|hwb|lab|lch|oklab|oklch)\((.+)\)$/', $string, $match)) {
-            $space = $match[1];
-            $parts = preg_split('/\s*[,\/]\s*|\s+/', trim($match[2]), 4) ?: ['0', '0', '0'];
 
-            if (count($parts) < 4) {
-                $parts[] = '1';
+        try {
+            if (preg_match('/^(rgb|rgba|hsl|hsla|hwb|lab|lch|oklab|oklch)\((.+)\)\z/', $string, $match)) {
+                $space = $match[1];
+                $parts = static::parseCssArguments(
+                    $match[2],
+                    in_array($space, ['rgb', 'rgba', 'hsl', 'hsla', 'hwb'], true)
+                );
+
+                switch ($space) {
+                    case 'hsl':
+                    case 'hsla':
+                        return static::createFromHsl(
+                            static::parseCssAngle($parts[0]),
+                            static::parseCssNumber($parts[1], 100),
+                            static::parseCssNumber($parts[2], 100),
+                            static::parseCssNumber($parts[3]),
+                        );
+                    case 'hwb':
+                        return static::createFromHwb(
+                            static::parseCssAngle($parts[0]),
+                            static::parseCssNumber($parts[1], 100),
+                            static::parseCssNumber($parts[2], 100),
+                            static::parseCssNumber($parts[3]),
+                        );
+                    case 'lab':
+                        return static::createFromLab(
+                            static::parseCssNumber($parts[0], 100),
+                            static::parseCssNumber($parts[1], 125),
+                            static::parseCssNumber($parts[2], 125),
+                            static::parseCssNumber($parts[3]),
+                        );
+                    case 'lch':
+                        $chroma = max(
+                            0,
+                            static::parseCssNumber($parts[1], 150)
+                        );
+
+                        return static::createFromLch(
+                            static::parseCssNumber($parts[0], 100),
+                            $chroma,
+                            static::parseCssAngle($parts[2]),
+                            static::parseCssNumber($parts[3]),
+                        );
+                    case 'oklab':
+                        return static::createFromOkLab(
+                            static::parseCssNumber($parts[0]),
+                            static::parseCssNumber($parts[1], 0.4),
+                            static::parseCssNumber($parts[2], 0.4),
+                            static::parseCssNumber($parts[3]),
+                        );
+                    case 'oklch':
+                        $chroma = max(
+                            0,
+                            static::parseCssNumber($parts[1], 0.4)
+                        );
+
+                        return static::createFromOkLch(
+                            static::parseCssNumber($parts[0]),
+                            $chroma,
+                            static::parseCssAngle($parts[2]),
+                            static::parseCssNumber($parts[3]),
+                        );
+                    case 'rgb':
+                    case 'rgba':
+                        return static::createFromRgb(
+                            static::parseCssNumber($parts[0], 255),
+                            static::parseCssNumber($parts[1], 255),
+                            static::parseCssNumber($parts[2], 255),
+                            static::parseCssNumber($parts[3]),
+                        );
+                }
             }
 
-            switch ($space) {
-                case 'hsl':
-                case 'hsla':
-                    return static::createFromHsl(
-                        static::parseCssAngle($parts[0]),
-                        static::parseCssNumber($parts[1], 100),
-                        static::parseCssNumber($parts[2], 100),
-                        static::parseCssNumber($parts[3]),
-                    );
-                case 'hwb':
-                    return static::createFromHwb(
-                        static::parseCssAngle($parts[0]),
-                        static::parseCssNumber($parts[1], 100),
-                        static::parseCssNumber($parts[2], 100),
-                        static::parseCssNumber($parts[3]),
-                    );
-                case 'lab':
-                    return static::createFromLab(
-                        static::parseCssNumber($parts[0], 100),
-                        static::parseCssNumber($parts[1], 125),
-                        static::parseCssNumber($parts[2], 125),
-                        static::parseCssNumber($parts[3]),
-                    );
-                case 'lch':
-                    $chroma = max(
-                        0,
-                        static::parseCssNumber($parts[1], 150)
-                    );
+            if (preg_match('/^color\((a98-rgb|display-p3(?:-linear)?|prophoto-rgb|rec2020|srgb(?:-linear)?|xyz(?:-d50|-d65)?)\s+(.+)\)\z/', $string, $match)) {
+                $space = $match[1];
+                $parts = static::parseCssArguments($match[2]);
+                $values = array_map(static::parseCssNumber(...), $parts);
 
-                    return static::createFromLch(
-                        static::parseCssNumber($parts[0], 100),
-                        $chroma,
-                        static::parseCssAngle($parts[2]),
-                        static::parseCssNumber($parts[3]),
-                    );
-                case 'oklab':
-                    return static::createFromOkLab(
-                        static::parseCssNumber($parts[0]),
-                        static::parseCssNumber($parts[1], 0.4),
-                        static::parseCssNumber($parts[2], 0.4),
-                        static::parseCssNumber($parts[3]),
-                    );
-                case 'oklch':
-                    $chroma = max(
-                        0,
-                        static::parseCssNumber($parts[1], 0.4)
-                    );
-
-                    return static::createFromOkLch(
-                        static::parseCssNumber($parts[0]),
-                        $chroma,
-                        static::parseCssAngle($parts[2]),
-                        static::parseCssNumber($parts[3]),
-                    );
-                case 'rgb':
-                case 'rgba':
-                    return static::createFromRgb(
-                        static::parseCssNumber($parts[0], 255),
-                        static::parseCssNumber($parts[1], 255),
-                        static::parseCssNumber($parts[2], 255),
-                        static::parseCssNumber($parts[3]),
-                    );
+                switch ($space) {
+                    case 'a98-rgb':
+                        return static::createFromA98Rgb(...$values);
+                    case 'display-p3':
+                        return static::createFromDisplayP3(...$values);
+                    case 'display-p3-linear':
+                        return static::createFromDisplayP3Linear(...$values);
+                    case 'prophoto-rgb':
+                        return static::createFromProPhotoRgb(...$values);
+                    case 'rec2020':
+                        return static::createFromRec2020(...$values);
+                    case 'srgb':
+                        return static::createFromSrgb(...$values);
+                    case 'srgb-linear':
+                        return static::createFromSrgbLinear(...$values);
+                    case 'xyz-d50':
+                        return static::createFromXyzD50(...$values);
+                    case 'xyz':
+                    case 'xyz-d65':
+                        return static::createFromXyzD65(...$values);
+                }
             }
-        } else if (preg_match('/^color\((a98-rgb|display-p3(?:-linear)?|prophoto-rgb|rec2020|srgb(?:-linear)?|xyz(?:-d50|-d65)?)\s+(.+)\)$/', $string, $match)) {
-            $space = $match[1];
-            $parts = preg_split('/\s*\/\s*|\s+/', trim($match[2]), 4) ?: ['0', '0', '0'];
-            $values = array_map(static::parseCssNumber(...), $parts);
-
-            switch ($space) {
-                case 'a98-rgb':
-                    return static::createFromA98Rgb(...$values);
-                case 'display-p3':
-                    return static::createFromDisplayP3(...$values);
-                case 'display-p3-linear':
-                    return static::createFromDisplayP3Linear(...$values);
-                case 'prophoto-rgb':
-                    return static::createFromProPhotoRgb(...$values);
-                case 'rec2020':
-                    return static::createFromRec2020(...$values);
-                case 'srgb':
-                    return static::createFromSrgb(...$values);
-                case 'srgb-linear':
-                    return static::createFromSrgbLinear(...$values);
-                case 'xyz-d50':
-                    return static::createFromXyzD50(...$values);
-                case 'xyz':
-                case 'xyz-d65':
-                    return static::createFromXyzD65(...$values);
-            }
+        } catch (UnexpectedValueException) {
+            // Fall through to the consistent invalid string exception.
         }
 
         throw new InvalidArgumentException(sprintf(
@@ -1117,23 +1126,60 @@ abstract class Color implements Stringable
      */
     protected static function parseCssAngle(string $value): float
     {
-        if (str_ends_with($value, '%')) {
-            return ((float) substr($value, 0, -1)) / 100 * 360;
+        if (!preg_match('/^('.static::CSS_NUMBER_PATTERN.')(deg|grad|rad|turn|%)?\z/', $value, $match)) {
+            throw new UnexpectedValueException();
         }
 
-        if (str_ends_with($value, 'grad')) {
-            return ((float) substr($value, 0, -4)) * .9;
+        $number = (float) $match[1];
+
+        return match ($match[2] ?? '') {
+            '%' => $number * 3.6,
+            'grad' => $number * .9,
+            'rad' => rad2deg($number),
+            'turn' => $number * 360,
+            default => $number,
+        };
+    }
+
+    /**
+     * Parses CSS function arguments.
+     *
+     * @param string $value The argument string.
+     * @param bool $allowCommas Whether legacy comma separators are allowed.
+     * @return array{string, string, string, string} The parsed arguments.
+     *
+     * @throws UnexpectedValueException If the arguments are not valid.
+     */
+    protected static function parseCssArguments(string $value, bool $allowCommas = false): array
+    {
+        if (str_contains($value, ',')) {
+            if (!$allowCommas || str_contains($value, '/')) {
+                throw new UnexpectedValueException();
+            }
+
+            $parts = explode(',', $value);
+            $parts = array_map(trim(...), $parts);
+
+            if (count($parts) === 3) {
+                $parts[] = '1';
+            }
+        } else {
+            $groups = explode('/', $value);
+            $groups = array_map(trim(...), $groups);
+
+            if (count($groups) > 2) {
+                throw new UnexpectedValueException();
+            }
+
+            $parts = explode(' ', $groups[0]);
+            $parts[] = $groups[1] ?? '1';
         }
 
-        if (str_ends_with($value, 'rad')) {
-            return ((float) substr($value, 0, -3)) |> rad2deg(...);
+        if (count($parts) !== 4 || in_array('', $parts, true)) {
+            throw new UnexpectedValueException();
         }
 
-        if (str_ends_with($value, 'turn')) {
-            return ((float) substr($value, 0, -4)) * 360;
-        }
-
-        return (float) $value;
+        return $parts;
     }
 
     /**
@@ -1145,11 +1191,15 @@ abstract class Color implements Stringable
      */
     protected static function parseCssNumber(string $value, float $percentMultiplier = 1): float
     {
-        if (str_ends_with($value, '%')) {
-            return ((float) substr($value, 0, -1)) / 100 * $percentMultiplier;
+        if (!preg_match('/^('.static::CSS_NUMBER_PATTERN.')(%)?\z/', $value, $match)) {
+            throw new UnexpectedValueException();
         }
 
-        return (float) $value;
+        $number = (float) $match[1];
+
+        return isset($match[2]) ?
+            $number / 100 * $percentMultiplier :
+            $number;
     }
 
     /**

@@ -33,6 +33,9 @@ use function serialize;
 use function sprintf;
 use function unserialize;
 
+use const INF;
+use const NAN;
+
 /**
  * @phpstan-type FactoryMethod 'createFromA98Rgb'|'createFromDisplayP3'|'createFromDisplayP3Linear'|'createFromHsl'|'createFromHwb'|'createFromLab'|'createFromLch'|'createFromOkLab'|'createFromOkLch'|'createFromProPhotoRgb'|'createFromRec2020'|'createFromRgb'|'createFromSrgb'|'createFromSrgbLinear'|'createFromXyzD50'|'createFromXyzD65'
  */
@@ -64,14 +67,50 @@ final class ColorTest extends TestCase
     }
 
     /**
+     * @return array<string, array{FactoryMethod, (float|int)[]}>
+     */
+    public static function invalidFactoryProvider(): array
+    {
+        return [
+            'alpha' => ['createFromSrgb', [0, 0, 0, NAN]],
+            'hsl hue' => ['createFromHsl', [INF]],
+            'hwb whiteness' => ['createFromHwb', [0, -INF]],
+            'lab a' => ['createFromLab', [0, NAN]],
+            'lch hue' => ['createFromLch', [0, 0, INF]],
+            'ok lab b' => ['createFromOkLab', [0, 0, -INF]],
+            'ok lch chroma' => ['createFromOkLch', [0, NAN]],
+            'rgb' => ['createFromRgb', [INF]],
+            'rgb trait' => ['createFromA98Rgb', [NAN]],
+            'xyz trait' => ['createFromXyzD65', [-INF]],
+        ];
+    }
+
+    /**
      * @return array<string, array{string}>
      */
     public static function invalidStringProvider(): array
     {
         return [
+            'alpha invalid' => ['rgb(1 2 3 / nope)'],
+            'angle unit invalid' => ['hsl(240wat 50% 50%)'],
+            'color alpha without slash' => ['color(srgb 1 2 3 0.5)'],
+            'color comma separator' => ['color(srgb 1, 2, 3)'],
+            'color extra alpha' => ['color(srgb 1 2 3 / 0.5 1)'],
+            'color invalid channel' => ['color(srgb 1 2 nope)'],
+            'color missing channel' => ['color(srgb 1 2)'],
+            'empty channel' => ['rgb(1,,3)'],
+            'extra alpha' => ['rgb(1 2 3 / 0.5 1)'],
+            'extra channel' => ['rgb(1 2 3 0.5)'],
             'invalid' => ['invalid'],
+            'invalid number' => ['rgb(foo 0 0)'],
+            'invalid percent' => ['rgb(50%% 0 0)'],
             'hex length' => ['#12345'],
             'hex length with alpha' => ['#1234567'],
+            'legacy mixed separators' => ['rgb(1, 2 3)'],
+            'legacy slash alpha' => ['rgb(1, 2, 3 / 0.5)'],
+            'missing channel' => ['rgb(1 2)'],
+            'number trailing decimal point' => ['rgb(1. 2 3)'],
+            'number trailing characters' => ['rgb(1foo 2 3)'],
         ];
     }
 
@@ -126,10 +165,12 @@ final class ColorTest extends TestCase
             'rec 2020' => ['color(rec2020 0.89 0.89 0.97)', Rec2020::class, 'color(rec2020 0.89 0.89 0.97)'],
             'rec 2020 percent' => ['color(rec2020 89% 89% 97%)', Rec2020::class, 'color(rec2020 0.89 0.89 0.97)'],
             'rgb' => ['rgb(230 230 250)', Rgb::class, 'rgb(230 230 250)'],
+            'rgb number formats' => ['rgb(+1 .5 1e2 / 5e-1)', Rgb::class, 'rgb(1 0.5 100 / 50%)'],
             'rgba legacy' => ['rgba(230, 230, 250, 0.5)', Rgb::class, 'rgb(230 230 250 / 50%)'],
             'rgb legacy' => ['rgb(230, 230, 250)', Rgb::class, 'rgb(230 230 250)'],
             'rgb with alpha' => ['rgb(230 230 250 / 50%)', Rgb::class, 'rgb(230 230 250 / 50%)'],
             'srgb' => ['color(srgb 0.9 0.9 0.98)', Srgb::class, 'color(srgb 0.9 0.9 0.98)'],
+            'srgb number formats' => ['color(srgb +.1 1.0 1e-2 / 5e-1)', Srgb::class, 'color(srgb 0.1 1 0.01 / 0.5)'],
             'srgb linear' => ['color(srgb-linear 0.79 0.79 0.96)', SrgbLinear::class, 'color(srgb-linear 0.79 0.79 0.96)'],
             'srgb linear percent' => ['color(srgb-linear 79% 79% 96%)', SrgbLinear::class, 'color(srgb-linear 0.79 0.79 0.96)'],
             'srgb percent' => ['color(srgb 90% 90% 98%)', Srgb::class, 'color(srgb 0.9 0.9 0.98)'],
@@ -139,6 +180,7 @@ final class ColorTest extends TestCase
             'xyz d 65' => ['color(xyz-d65 0.78 0.8 1.02)', XyzD65::class, 'color(xyz-d65 0.78 0.8 1.02)'],
             'xyz d 65 percent' => ['color(xyz-d65 78% 80% 102%)', XyzD65::class, 'color(xyz-d65 0.78 0.8 1.02)'],
             'xyz percent' => ['color(xyz 78% 80% 102%)', XyzD65::class, 'color(xyz-d65 0.78 0.8 1.02)'],
+            'whitespace and case' => [' RGB( 230   230  250 / 50% ) ', Rgb::class, 'rgb(230 230 250 / 50%)'],
         ];
     }
 
@@ -158,6 +200,19 @@ final class ColorTest extends TestCase
 
         $this->assertInstanceOf($expectedClass, $color);
         $this->assertSame($expected, $color->toString());
+    }
+
+    /**
+     * @param FactoryMethod $method
+     * @param (float|int)[] $arguments
+     */
+    #[DataProvider('invalidFactoryProvider')]
+    public function testCreateFromFactoryInvalid(string $method, array $arguments): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Color channel values must be finite numbers.');
+
+        Color::$method(...$arguments);
     }
 
     /**
@@ -182,6 +237,14 @@ final class ColorTest extends TestCase
         ));
 
         Color::createFromString($value);
+    }
+
+    public function testCreateFromStringInvalidFinite(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Color channel values must be finite numbers.');
+
+        Color::createFromString('rgb(1e309 0 0)');
     }
 
     public function testCreateFromStringTransparent(): void

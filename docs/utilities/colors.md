@@ -110,6 +110,8 @@ Supported inputs include:
 Parsing details:
 
 - Whitespace is normalized and parsing is case-insensitive.
+- Functional notation requires exactly three channels and accepts one optional alpha value. Space-separated alpha uses `/`; legacy comma syntax is supported for RGB, HSL, and HWB, but separator styles cannot be mixed.
+- Numeric tokens support signs, decimals, percentages, and scientific notation, and must not contain trailing characters or unknown units.
 - Percent values are supported where CSS allows them.
 - CSS angle parsing supports plain degrees plus `%`, `grad`, `rad`, and `turn` units.
 
