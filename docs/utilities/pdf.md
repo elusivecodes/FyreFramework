@@ -14,7 +14,7 @@ You can render a URL, a file path, or an in-memory HTML string.
 - [Method guide](#method-guide)
   - [Creating a PDF](#creating-a-pdf)
   - [Output](#output)
-  - [Global configuration](#global-configuration)
+  - [Option accessors](#option-accessors)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -53,18 +53,31 @@ Examples below assume `Pdf` refers to `Fyre\Utility\Pdf`.
 
 ### Chrome/Chromium binary
 
-By default, the binary path is `google-chrome`. Override it when your environment uses a different binary name or a full path:
+The `binaryPath` option controls the Chrome/Chromium executable used by a `Pdf` instance. It defaults to `google-chrome`. Override it when your environment uses a different binary name or a full path:
 
 ```php
-Pdf::setBinaryPath('/usr/bin/chromium');
+$pdf = Pdf::createFromUrl('https://example.com/invoice/123', [
+    'binaryPath' => '/usr/bin/chromium',
+]);
 ```
 
 ### Timeout
 
-The timeout is expressed in milliseconds and is passed to Chrome/Chromium via `--timeout`.
+The `timeout` option is expressed in milliseconds and is passed to Chrome/Chromium via `--timeout`. It defaults to `5000`.
 
 ```php
-Pdf::setTimeout(10000);
+$pdf = Pdf::createFromUrl('https://example.com/invoice/123', [
+    'timeout' => 10000,
+]);
+```
+
+Options apply only to the `Pdf` instance being created. You can combine them when needed:
+
+```php
+$pdf = Pdf::createFromUrl('https://example.com/invoice/123', [
+    'binaryPath' => '/usr/bin/chromium',
+    'timeout' => 10000,
+]);
 ```
 
 ## Method guide
@@ -76,10 +89,15 @@ Pdf::setTimeout(10000);
 Create a `Pdf` instance from an in-memory HTML string. The HTML is embedded into a base64-encoded `data:` URL.
 
 Arguments:
+
 - `$html` (`string`): the HTML string to render.
+- `$options` (`array`, optional): the instance options. Supports `binaryPath` (`string`) and `timeout` (`int`).
 
 ```php
-$pdf = Pdf::createFromHtml('<h1>Report</h1><p>Generated at runtime.</p>');
+$pdf = Pdf::createFromHtml(
+    '<h1>Report</h1><p>Generated at runtime.</p>',
+    ['timeout' => 10000]
+);
 ```
 
 #### **Create from a URL or file path** (`createFromUrl()`)
@@ -87,7 +105,9 @@ $pdf = Pdf::createFromHtml('<h1>Report</h1><p>Generated at runtime.</p>');
 Create a `Pdf` instance from a URL or file path. The value is passed to Chrome/Chromium as the page to load.
 
 Arguments:
+
 - `$url` (`string`): the URL or file path to render.
+- `$options` (`array`, optional): the instance options. Supports `binaryPath` (`string`) and `timeout` (`int`).
 
 ```php
 $pdf = Pdf::createFromUrl('https://example.com/invoice/123');
@@ -100,6 +120,7 @@ $pdf = Pdf::createFromUrl('https://example.com/invoice/123');
 Generate the PDF and write it to a new file path.
 
 Arguments:
+
 - `$filePath` (`string`): the output file path.
 
 ```php
@@ -116,44 +137,24 @@ $bytes = Pdf::createFromHtml('<h1>Hello</h1>')
     ->toBinary();
 ```
 
-### Global configuration
+### Option accessors
 
 #### **Get the binary path** (`getBinaryPath()`)
 
-Get the currently configured Chrome/Chromium binary path.
+Get the Chrome/Chromium binary path configured for a `Pdf` instance.
 
 ```php
-$binary = Pdf::getBinaryPath();
-```
-
-#### **Set the binary path** (`setBinaryPath()`)
-
-Set the Chrome/Chromium binary path used for PDF generation.
-
-Arguments:
-- `$binaryPath` (`string`): the Chrome/Chromium binary path.
-
-```php
-Pdf::setBinaryPath('google-chrome');
+$pdf = Pdf::createFromUrl('https://example.com/invoice/123');
+$binaryPath = $pdf->getBinaryPath();
 ```
 
 #### **Get the timeout** (`getTimeout()`)
 
-Get the currently configured timeout value (milliseconds).
+Get the timeout configured for a `Pdf` instance, in milliseconds.
 
 ```php
-$timeout = Pdf::getTimeout();
-```
-
-#### **Set the timeout** (`setTimeout()`)
-
-Set the timeout value in milliseconds.
-
-Arguments:
-- `$timeout` (`int`): the timeout value in milliseconds.
-
-```php
-Pdf::setTimeout(5000);
+$pdf = Pdf::createFromUrl('https://example.com/invoice/123');
+$timeout = $pdf->getTimeout();
 ```
 
 ## Behavior notes
@@ -161,6 +162,7 @@ Pdf::setTimeout(5000);
 A few behaviors are worth keeping in mind:
 
 - `save()` throws an `InvalidArgumentException` when `$filePath` is empty.
+- Creating a `Pdf` throws an `InvalidArgumentException` when `timeout` is negative.
 - `save()` throws a `RuntimeException` if the file already exists or if PDF generation did not produce the output file.
 - `toBinary()` creates a temporary file path and then calls `save()` internally; if temporary file creation, generation, or reading fails, it throws a `RuntimeException`.
 - When generating from HTML via `createFromHtml()`, the page source is a `data:` URL. If your HTML uses relative URLs for assets (CSS/images/fonts), use absolute URLs or add a `<base>` tag.

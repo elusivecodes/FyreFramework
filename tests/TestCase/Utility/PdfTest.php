@@ -35,26 +35,32 @@ final class PdfTest extends TestCase
 
     public function testGetBinaryPath(): void
     {
+        $pdf = Pdf::createFromUrl('tests/assets/test.html');
+
         $this->assertSame(
             'google-chrome',
-            Pdf::getBinaryPath()
+            $pdf->getBinaryPath()
         );
     }
 
     public function testGetTimeout(): void
     {
+        $pdf = Pdf::createFromUrl('tests/assets/test.html');
+
         $this->assertSame(
             5000,
-            Pdf::getTimeout()
+            $pdf->getTimeout()
         );
     }
 
     public function testInvalidTimeout(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageIs('PDF timeout must not be negative.');
+        $this->expectExceptionMessageIs('PDF option `timeout` must not be negative.');
 
-        Pdf::setTimeout(-1);
+        Pdf::createFromUrl('tests/assets/test.html', [
+            'timeout' => -1,
+        ]);
     }
 
     public function testMacro(): void
@@ -62,6 +68,17 @@ final class PdfTest extends TestCase
         $this->assertEmpty(
             array_diff([MacroTrait::class, StaticMacroTrait::class], class_uses(Pdf::class))
         );
+    }
+
+    public function testOptions(): void
+    {
+        $pdf = Pdf::createFromUrl('tests/assets/test.html', [
+            'binaryPath' => 'chromium',
+            'timeout' => 10000,
+        ]);
+
+        $this->assertSame('chromium', $pdf->getBinaryPath());
+        $this->assertSame(10000, $pdf->getTimeout());
     }
 
     public function testPdfSaveHtml(): void
@@ -114,9 +131,6 @@ final class PdfTest extends TestCase
     #[Override]
     protected function setUp(): void
     {
-        Pdf::setBinaryPath('google-chrome');
-        Pdf::setTimeout(5000);
-
         @mkdir('tmp');
     }
 
