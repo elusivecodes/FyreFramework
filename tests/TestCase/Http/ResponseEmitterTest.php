@@ -8,6 +8,7 @@ use Fyre\Http\ClientResponse;
 use Fyre\Http\Cookie\Cookie;
 use Fyre\Http\ResponseEmitter;
 use Fyre\Http\Stream;
+use Fyre\Http\Stream\IterableStream;
 use Override;
 use PHPUnit\Framework\TestCase;
 
@@ -84,6 +85,19 @@ final class ResponseEmitterTest extends TestCase
             'This is a test.',
             $output
         );
+    }
+
+    public function testEmitIterableStream(): void
+    {
+        $response = new ClientResponse([
+            'body' => new IterableStream(['This ', 'is ', 'a test.']),
+        ]);
+
+        ob_start();
+        $this->emitter->emit($response);
+        $output = ob_get_clean();
+
+        $this->assertSame('This is a test.', $output);
     }
 
     public function testEmitNonSeekable(): void

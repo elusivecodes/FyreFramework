@@ -5,6 +5,8 @@ namespace Tests\TestCase\Http\ClientResponse;
 
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Http\ClientResponse;
+use Fyre\Http\Stream\JsonStream;
+use InvalidArgumentException;
 use JsonException;
 use PHPUnit\Framework\TestCase;
 use SimpleXMLElement;
@@ -80,6 +82,31 @@ final class ClientResponseTest extends TestCase
         $this->expectExceptionMessageIs('Inf and NaN cannot be JSON encoded');
 
         new ClientResponse()->withJson(NAN);
+    }
+
+    public function testWithJsonStream(): void
+    {
+        $response = new ClientResponse()->withJson([
+            (object) [
+                'id' => 1,
+            ],
+            (object) [
+                'id' => 2,
+            ],
+        ], stream: true);
+
+        $this->assertInstanceOf(JsonStream::class, $response->getBody());
+        $this->assertSame('[{"id":1},{"id":2}]', $response->getBody()->getContents());
+        $this->assertSame('application/json; charset=UTF-8', $response->getHeaderLine('Content-Type'));
+        $this->assertSame('', $response->getHeaderLine('Content-Length'));
+    }
+
+    public function testWithJsonStreamInvalid(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('JSON stream data must be iterable.');
+
+        new ClientResponse()->withJson('test', stream: true);
     }
 
     public function testWithXml(): void

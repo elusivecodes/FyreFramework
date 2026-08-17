@@ -107,13 +107,14 @@ class ResponseEmitter
                 $contents = $body->getContents();
                 echo substr($contents, $start, $length);
             }
-        } else if ($body->isSeekable()) {
-            $body->rewind();
+        } else {
+            if ($body->isSeekable()) {
+                $body->rewind();
+            }
+
             while (!$body->eof()) {
                 echo $body->read(static::MAX_BUFFER_SIZE);
             }
-        } else {
-            echo $body;
         }
 
         if (function_exists('fastcgi_finish_request')) {

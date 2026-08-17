@@ -9,6 +9,7 @@ All response objects are immutable, so every `with*` call returns a new instance
 - [Start here](#start-here)
 - [Choosing a response type](#choosing-a-response-type)
 - [Common response patterns](#common-response-patterns)
+- [Streaming JSON responses](#streaming-json-responses)
 - [Redirect responses](#redirect-responses)
   - [Example: simple redirect](#example-simple-redirect)
   - [Status code behavior](#status-code-behavior)
@@ -31,6 +32,7 @@ In most application code:
 
 - use `response()` when you want a general response object
 - use `json($data)` when you want a JSON response quickly
+- use `json($data, stream: true)` when a JSON array is too large to buffer in memory
 - use `RedirectResponse` or `redirect()` for redirects
 - use `DownloadResponse` for file or generated-content downloads
 
@@ -84,6 +86,28 @@ $response = new ClientResponse()
 ```
 
 `response()` resolves a `ClientResponse` from the container, and `json($data)` is shorthand for `response()->withJson($data)` (see [Helpers](../core/helpers.md)).
+
+## Streaming JSON responses
+
+Streaming JSON responses incrementally encode an iterable as a JSON array. They are useful with unbuffered database or ORM results because the complete response is not held in memory.
+
+```php
+$users = $Users->find()
+    ->disableBuffering()
+    ->all();
+
+$response = response()->withJson($users, stream: true);
+```
+
+The `json()` helper supports the same option:
+
+```php
+return json($users, stream: true);
+```
+
+The iterable values, including objects, become the JSON array items; iterable keys are ignored. Streamed JSON bodies are read-only and non-seekable, and the response does not set `Content-Length`.
+
+If encoding fails after output has started, the client may receive incomplete JSON. Validate uncertain values first or use `ClientResponse::withJson()` without streaming when atomic encoding is required.
 
 ## Redirect responses
 
@@ -185,15 +209,20 @@ $response = $response->withContentType('text/plain');
 
 #### **Write a JSON body** (`withJson()`)
 
-Sets `Content-Type` to `application/json` and writes a pretty-printed JSON body. A `JsonException` is thrown if the data cannot be encoded.
+Sets `Content-Type` to `application/json`. By default, the data is encoded immediately as pretty-printed JSON. Streaming incrementally encodes an iterable as a compact JSON array.
 
 Arguments:
 - `$data` (`mixed`): the data to encode.
+- `$stream` (`bool`): whether to stream an iterable as a JSON array (defaults to `false`).
 
 ```php
 $response = $response->withJson([
     'ok' => true,
 ]);
+```
+
+```php
+$response = $response->withJson($items, stream: true);
 ```
 
 #### **Write an XML body** (`withXml()`)
@@ -393,6 +422,7 @@ A few behaviors are worth keeping in mind:
 
 - Response objects are immutable, so remember to keep the value returned by each `with*` call.
 - `ClientResponse::withCookie()` stores cookies in a response cookie collection, and `ResponseEmitter` emits them when sending the response.
+- Streamed JSON bodies are read-only and non-seekable, and JSON encoding occurs as the body is read.
 - When the request method is available and the protocol version is `>= 1.1`, non-`GET` redirects force `303`, and `GET` redirects convert a default `302` to `307`.
 
 ## Related

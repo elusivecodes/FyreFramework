@@ -26,6 +26,7 @@ use Fyre\Http\Exceptions\UnauthorizedException;
 use Fyre\Http\RedirectResponse;
 use Fyre\Http\ServerRequest;
 use Fyre\Http\Session\Session;
+use Fyre\Http\Stream\JsonStream;
 use Fyre\Log\Handlers\ArrayLogger;
 use Fyre\Log\LogManager;
 use Fyre\Mail\Email;
@@ -347,6 +348,15 @@ final class FunctionsTest extends TestCase
             'application/json; charset=UTF-8',
             $response->getHeaderLine('Content-Type')
         );
+    }
+
+    public function testJsonStream(): void
+    {
+        $response = json([['id' => 1], ['id' => 2]], stream: true);
+
+        $this->assertInstanceOf(JsonStream::class, $response->getBody());
+        $this->assertSame('[{"id":1},{"id":2}]', $response->getBody()->getContents());
+        $this->assertSame('application/json; charset=UTF-8', $response->getHeaderLine('Content-Type'));
     }
 
     public function testLang(): void

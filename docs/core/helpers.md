@@ -194,13 +194,18 @@ $response = response();
 
 #### **Return JSON** (`json()`)
 
-Creates a JSON response (shorthand for `response()->withJson($data)`).
+Creates a JSON response (shorthand for `response()->withJson($data, $stream)`).
 
 Arguments:
 - `$data` (`mixed`): value to JSON-encode.
+- `$stream` (`bool`): whether to stream an iterable as a JSON array (defaults to `false`).
 
 ```php
 return json(['ok' => true]);
+```
+
+```php
+return json($items, stream: true);
 ```
 
 #### **Build a URL for a named route** (`route()`)

@@ -6,12 +6,15 @@ namespace Fyre\Http;
 use DateTimeInterface;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Http\Cookie\Cookie;
+use Fyre\Http\Stream\JsonStream;
 use Fyre\Utility\DateTime\DateTime;
+use InvalidArgumentException;
 use JsonException;
 use SimpleXMLElement;
 
 use function array_values;
 use function gmdate;
+use function is_iterable;
 use function is_numeric;
 use function is_string;
 use function json_encode;
@@ -215,17 +218,27 @@ class ClientResponse extends Response
     /**
      * Returns the new ClientResponse instance with a JSON body.
      *
-     * Sets `Content-Type` to `application/json` and writes a pretty-printed JSON body.
+     * Sets `Content-Type` to `application/json` and writes a JSON body.
      *
      * @param mixed $data The data to send.
+     * @param bool $stream Whether to stream an iterable as a JSON array.
      * @return static The new ClientResponse instance with the JSON body.
      *
+     * @throws InvalidArgumentException If streaming is used with non-iterable data.
      * @throws JsonException If the data cannot be encoded.
      */
-    public function withJson(mixed $data): static
+    public function withJson(mixed $data, bool $stream = false): static
     {
-        $data = json_encode($data, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
-        $body = Stream::createFromString($data);
+        if ($stream) {
+            if (!is_iterable($data)) {
+                throw new InvalidArgumentException('JSON stream data must be iterable.');
+            }
+
+            $body = new JsonStream($data);
+        } else {
+            $data = json_encode($data, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
+            $body = Stream::createFromString($data);
+        }
 
         return $this
             ->withContentType('application/json')

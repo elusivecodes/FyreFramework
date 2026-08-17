@@ -397,11 +397,12 @@ if (!function_exists('json')) {
      * Creates a new ClientResponse with JSON data.
      *
      * @param mixed $data The data to send.
+     * @param bool $stream Whether to stream an iterable as a JSON array.
      * @return ClientResponse The new ClientResponse instance.
      */
-    function json(mixed $data): ClientResponse
+    function json(mixed $data, bool $stream = false): ClientResponse
     {
-        return response()->withJson($data);
+        return response()->withJson($data, $stream);
     }
 }
 
