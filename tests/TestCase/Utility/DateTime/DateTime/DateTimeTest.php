@@ -30,7 +30,6 @@ final class DateTimeTest extends TestCase
     use OutputTestTrait;
     use TransitionTestTrait;
     use UtilityTestTrait;
-    use VarsTestTrait;
 
     public function testDebug(): void
     {

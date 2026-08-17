@@ -13,7 +13,6 @@ For ranges and sets of ranges, see [Periods](periods.md).
 - [Formatting and localization](#formatting-and-localization)
 - [Working immutably](#working-immutably)
 - [Comparisons and differences](#comparisons-and-differences)
-- [Constants](#constants)
 - [Method guide](#method-guide)
   - [Creating instances](#creating-instances)
   - [Defaults and global options](#defaults-and-global-options)
@@ -97,7 +96,7 @@ $compact = $dt->format('yyyy-MM-dd HH:mm');
 $german = $dt->format('eeee, d. MMMM yyyy', 'de_DE');
 ```
 
-Common patterns are available via convenience methods and `DateTime::FORMATS`:
+Common output formats are available through convenience methods:
 
 - `toDateString()` → `"eee MMM dd yyyy"`
 - `toTimeString()` → `"HH:mm:ss xx (VV)"`
@@ -126,15 +125,6 @@ For numeric differences:
 
 - `diff()` returns milliseconds.
 - `diffInDays()` and similar methods return a calendar-aware unit difference.
-
-## Constants
-
-`DateTime` exposes `DateTime::FORMATS`, a map of common ICU patterns used by the formatting helpers.
-
-Common keys include:
-
-- RFC patterns: `atom`, `rfc3339`, `rfc3339_extended`, `rfc1123`, `rfc2822`
-- Convenience patterns: `date`, `time`, `string`
 
 ## Method guide
 
@@ -296,7 +286,7 @@ $out = $dt->format('yyyy-MM-dd HH:mm');
 
 #### **Format as a date string** (`toDateString()`)
 
-Formats the current date using `DateTime::FORMATS['date']`.
+Formats the current date using the ICU pattern `eee MMM dd yyyy`.
 
 ```php
 $dt = new DateTime('2026-02-01 15:04:05', 'UTC', 'en');
@@ -305,7 +295,7 @@ $out = $dt->toDateString();
 
 #### **Format as a time string** (`toTimeString()`)
 
-Formats the current time using `DateTime::FORMATS['time']`.
+Formats the current time using the ICU pattern `HH:mm:ss xx (VV)`.
 
 ```php
 $dt = new DateTime('2026-02-01 15:04:05', 'UTC', 'en');
@@ -314,7 +304,7 @@ $out = $dt->toTimeString();
 
 #### **Format as the default string** (`toString()`)
 
-Formats the date/time using `DateTime::FORMATS['string']`. This is also used for string casting via `__toString()`.
+Formats the date/time using the ICU pattern `eee MMM dd yyyy HH:mm:ss xx (VV)`. This is also used for string casting via `__toString()`.
 
 ```php
 $dt = new DateTime('2026-02-01 15:04:05', 'UTC', 'en');
