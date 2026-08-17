@@ -10,17 +10,25 @@ use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Loader;
 use Fyre\Core\Make;
+use Fyre\DB\Connection;
+use Fyre\DB\ConnectionManager;
+use Fyre\DB\Handlers\Sqlite\SqliteConnection;
+use Fyre\DB\Schema\SchemaRegistry;
 use Fyre\DB\TypeParser;
 use Fyre\Event\EventManager;
+use Fyre\ORM\EntityLocator;
+use Fyre\ORM\ModelRegistry;
 use Fyre\TestSuite\Fixture\FixtureRegistry;
 use Fyre\Utility\Inflector;
 use Fyre\Utility\Path;
 use Override;
 use PHPUnit\Framework\TestCase;
+use Tests\TestCase\Shared\DatabaseLifecycleTrait;
 
 use function fclose;
 use function file_put_contents;
 use function fopen;
+use function implode;
 use function mkdir;
 use function rewind;
 use function rmdir;
@@ -31,7 +39,11 @@ use const ROOT;
 
 final class MakeFixtureTest extends TestCase
 {
+    use DatabaseLifecycleTrait;
+
     protected CommandRunner $commandRunner;
+
+    protected Connection $db;
 
     /**
      * @var resource
@@ -68,8 +80,49 @@ final class MakeFixtureTest extends TestCase
             Make::loadStub('fixture', [
                 '{namespace}' => 'Example\Fixtures',
                 '{class}' => 'ExampleFixture',
+                '{data}' => '        //',
             ]),
             $filePath
+        );
+    }
+
+    public function testMakeFixtureData(): void
+    {
+        $this->db->query(<<<'SQL'
+            INSERT INTO example (id, name, metadata, created) VALUES
+                (2, 'Second', '{"enabled":false}', '2024-02-03 04:05:06'),
+                (1, 'First', '{"enabled":true,"tags":["one","two"]}', '2024-01-02 03:04:05')
+        SQL);
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('make:fixture', [
+                'Example',
+                'data' => true,
+                'limit' => 1,
+            ])
+        );
+
+        $this->assertFileMatchesFormat(
+            Make::loadStub('fixture', [
+                '{namespace}' => 'Example\Fixtures',
+                '{class}' => 'ExampleFixture',
+                '{data}' => implode(PHP_EOL, [
+                    '        [',
+                    '            \'id\' => 1,',
+                    '            \'name\' => \'First\',',
+                    '            \'metadata\' => [',
+                    '                \'enabled\' => true,',
+                    '                \'tags\' => [',
+                    '                    \'one\',',
+                    '                    \'two\',',
+                    '                ],',
+                    '            ],',
+                    '            \'created\' => \'2024-01-02T03:04:05.000+00:00\',',
+                    '        ],',
+                ]),
+            ]),
+            'tmp/Fixtures/ExampleFixture.php'
         );
     }
 
@@ -117,6 +170,7 @@ final class MakeFixtureTest extends TestCase
             Make::loadStub('fixture', [
                 '{namespace}' => 'Example\Fixtures',
                 '{class}' => 'ExampleFixture',
+                '{data}' => '        //',
             ]),
             $filePath
         );
@@ -142,8 +196,7 @@ final class MakeFixtureTest extends TestCase
         $this->assertFileDoesNotExist('tmp/Fixtures/ExampleFixture.php');
     }
 
-    #[Override]
-    protected function setUp(): void
+    protected static function buildContainer(): Container
     {
         $container = new Container();
         $container->singleton(Loader::class);
@@ -151,9 +204,21 @@ final class MakeFixtureTest extends TestCase
         $container->singleton(Config::class);
         $container->singleton(EventManager::class);
         $container->singleton(TypeParser::class);
+        $container->singleton(ConnectionManager::class);
+        $container->singleton(SchemaRegistry::class);
         $container->singleton(CommandRunner::class);
         $container->singleton(Make::class);
+        $container->singleton(EntityLocator::class);
         $container->singleton(FixtureRegistry::class);
+        $container->singleton(ModelRegistry::class);
+        $container->use(Config::class)->set('Database', [
+            'default' => [
+                'className' => SqliteConnection::class,
+                'database' => ':memory:',
+                'mode' => 'memory',
+                'cache' => 'shared',
+            ],
+        ]);
 
         $tmpDir = Path::join(ROOT, 'tmp');
 
@@ -162,6 +227,33 @@ final class MakeFixtureTest extends TestCase
             'Fyre\Commands\\' => Path::join(ROOT, 'src/Commands'),
         ]);
         $container->use(FixtureRegistry::class)->addNamespace('Example\Fixtures');
+        $container->use(ModelRegistry::class)->addNamespace('Example\Models');
+
+        return $container;
+    }
+
+    protected static function clearSchema(Connection $db): void
+    {
+        $db->query('DROP TABLE IF EXISTS example');
+    }
+
+    protected static function createSchema(Connection $db): void
+    {
+        $db->query(<<<'SQL'
+            CREATE TABLE example (
+                id INTEGER NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                metadata JSON NOT NULL,
+                created DATETIME NOT NULL,
+                PRIMARY KEY (id)
+            )
+        SQL);
+    }
+
+    #[Override]
+    protected function setUp(): void
+    {
+        $container = self::buildContainer();
 
         $input = fopen('php://memory', 'r+b');
         $output = fopen('php://memory', 'r+b');
@@ -181,11 +273,16 @@ final class MakeFixtureTest extends TestCase
         $this->commandRunner->addNamespace('Fyre\Commands');
 
         @mkdir('tmp');
+
+        $this->db = $container->use(ConnectionManager::class)->use();
+        $this->db->truncate('example');
     }
 
     #[Override]
     protected function tearDown(): void
     {
+        $this->db->disconnect();
+
         @unlink('tmp/Fixtures/ExampleFixture.php');
         @rmdir('tmp/Fixtures');
         @rmdir('tmp');

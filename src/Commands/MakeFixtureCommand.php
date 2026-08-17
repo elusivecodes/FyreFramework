@@ -8,9 +8,13 @@ use Fyre\Console\Console;
 use Fyre\Core\Make;
 use Fyre\Core\Make\FixtureSourceBuilder;
 use Fyre\Core\Make\GeneratedFile;
+use Fyre\ORM\Model;
+use Fyre\ORM\ModelRegistry;
 use Fyre\TestSuite\Fixture\FixtureRegistry;
 use Fyre\Utility\Path;
 use Override;
+
+use function substr;
 
 /**
  * Implements the make fixture console command.
@@ -36,6 +40,14 @@ class MakeFixtureCommand extends Command
             'as' => 'boolean',
             'default' => false,
         ],
+        'data' => [
+            'as' => 'boolean',
+            'default' => false,
+        ],
+        'limit' => [
+            'as' => 'integer',
+            'default' => 10,
+        ],
     ];
 
     /**
@@ -45,12 +57,14 @@ class MakeFixtureCommand extends Command
      * @param Make $make The Make.
      * @param FixtureRegistry $fixtureRegistry The FixtureRegistry.
      * @param FixtureSourceBuilder $sourceBuilder The fixture source builder.
+     * @param ModelRegistry $modelRegistry The ModelRegistry.
      */
     public function __construct(
         Console $io,
         protected Make $make,
         protected FixtureRegistry $fixtureRegistry,
         protected FixtureSourceBuilder $sourceBuilder,
+        protected ModelRegistry $modelRegistry,
     ) {
         parent::__construct($io);
     }
@@ -64,15 +78,45 @@ class MakeFixtureCommand extends Command
      * @param string $name The fixture name.
      * @param string|null $namespace The fixture namespace.
      * @param bool $force Whether to overwrite an existing file.
+     * @param bool $data Whether to populate the fixture with existing data.
+     * @param int $limit The maximum number of rows to include.
      * @return int|null The exit code.
      */
-    public function run(string $name, string|null $namespace = null, bool $force = false): int|null
-    {
+    public function run(
+        string $name,
+        string|null $namespace = null,
+        bool $force = false,
+        bool $data = false,
+        int $limit = 10
+    ): int|null {
         $namespace ??= $this->fixtureRegistry->getNamespaces()[0] ?? 'Tests\Fixtures';
 
         [$namespace, $className] = Make::parseNamespaceClass($namespace, $name.'Fixture');
 
-        $contents = $this->sourceBuilder->build($namespace, $className);
+        $rows = [];
+
+        if ($data) {
+            $model = substr($className, 0, -7) |> $this->modelRegistry->use(...);
+            $schema = $model->getSchema(Model::READ);
+            $rows = $model->getConnection(Model::READ)
+                ->select($schema->columnNames())
+                ->from($model->getTable())
+                ->orderBy($model->getPrimaryKey())
+                ->limit($limit)
+                ->execute()
+                ->decorate(static function(array $row) use ($schema): array {
+                    foreach ($row as $column => $value) {
+                        $row[$column] = $schema->column($column)
+                            ->type()
+                            ->fromDatabase($value);
+                    }
+
+                    return $row;
+                })
+                ->all();
+        }
+
+        $contents = $this->sourceBuilder->build($namespace, $className, $rows);
         $path = $this->make->findPath($namespace);
 
         if (!$path) {

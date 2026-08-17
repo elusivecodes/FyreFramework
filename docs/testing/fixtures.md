@@ -89,6 +89,14 @@ By default, fixtures do not build nested relationship data. To allow nested data
 
 ### Creating a fixture
 
+Generate an empty fixture with `make:fixture`. To populate it from the model's existing database rows, pass `--data`. The generated rows are ordered by primary key and `--limit` defaults to `10`.
+
+```php
+$commandRunner->handle(['app', 'make:fixture', 'Items', '--data', '--limit=25']);
+```
+
+Database values are read directly from the model's table and converted using its schema types before being written to the fixture.
+
 ```php
 namespace App\Fixtures;
 

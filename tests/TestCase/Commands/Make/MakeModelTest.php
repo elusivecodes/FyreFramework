@@ -709,6 +709,7 @@ final class MakeModelTest extends TestCase
             Make::loadStub('fixture', [
                 '{namespace}' => 'Example\Fixtures',
                 '{class}' => 'BlogPostFixture',
+                '{data}' => '        //',
             ]),
             'tmp/Fixtures/BlogPostFixture.php'
         );

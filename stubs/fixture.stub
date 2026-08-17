@@ -8,6 +8,6 @@ use Fyre\TestSuite\Fixture\Fixture;
 class {class} extends Fixture
 {
     protected iterable $data = [
-        //
+{data}
     ];
 }

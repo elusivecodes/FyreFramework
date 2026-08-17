@@ -156,7 +156,7 @@ Common generators:
 - `make:controller` - generate a controller class
 - `make:entity` - generate an entity class
 - `make:enum` - generate an enum class
-- `make:fixture` - generate a fixture class
+- `make:fixture` - generate a fixture class; pass `--data` to include existing model data (`--limit` defaults to `10`)
 - `make:form` - generate a form class
 - `make:helper` - generate a helper class
 - `make:job` - generate a job class
@@ -178,6 +178,7 @@ Examples:
 $commandRunner->handle(['app', 'make:controller', 'Posts']);
 $commandRunner->handle(['app', 'make:enum', 'Status', '--cases=Draft:draft,Published:published']);
 $commandRunner->handle(['app', 'make:enum', 'State', '--cases=Draft,Published']);
+$commandRunner->handle(['app', 'make:fixture', 'Items', '--data', '--limit=25']);
 $commandRunner->handle(['app', 'make:migration', 'CreatePosts']);
 $commandRunner->handle(['app', 'make:template', 'admin.posts.index']);
 ```
