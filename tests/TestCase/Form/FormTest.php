@@ -78,7 +78,7 @@ final class FormTest extends TestCase
 
         $this->assertInstanceOf(DateTime::class, $data['start']);
 
-        $data['start'] = $data['start']->toISOString();
+        $data['start'] = $data['start']->toIsoString();
 
         $this->assertArraysAreIdentical(
             [

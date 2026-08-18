@@ -55,7 +55,7 @@ trait TimeTestTrait
     {
         $this->assertSame(
             '2021-12-31T22:59:11.000+00:00',
-            $this->type->use('time')->fromDatabase(1640991551)->toISOString()
+            $this->type->use('time')->fromDatabase(1640991551)->toIsoString()
         );
     }
 
@@ -165,7 +165,7 @@ trait TimeTestTrait
 
         $this->assertSame(
             '2021-12-31T22:59:11.000+00:00',
-            $this->type->use('time')->parse($date)->toISOString()
+            $this->type->use('time')->parse($date)->toIsoString()
         );
     }
 
@@ -180,7 +180,7 @@ trait TimeTestTrait
     {
         $this->assertSame(
             '2021-12-31T22:59:11.000+00:00',
-            $this->type->use('time')->parse(1640991551)->toISOString()
+            $this->type->use('time')->parse(1640991551)->toIsoString()
         );
     }
 
