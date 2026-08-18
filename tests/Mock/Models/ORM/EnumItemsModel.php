@@ -6,6 +6,7 @@ namespace Tests\Mock\Models\ORM;
 use Fyre\ORM\Attributes\EnumField;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Model;
+use Override;
 use Tests\Mock\Enums\Status;
 
 /**
@@ -14,5 +15,6 @@ use Tests\Mock\Enums\Status;
 #[EnumField('name', Status::class)]
 class EnumItemsModel extends Model
 {
+    #[Override]
     protected string $table = 'items';
 }

@@ -51,6 +51,7 @@ use Fyre\Utility\Path;
 use Fyre\View\CellRegistry;
 use Fyre\View\HelperRegistry;
 use Fyre\View\TemplateLocator;
+use Override;
 use Psr\Http\Message\ServerRequestInterface;
 
 use function defined;
@@ -68,6 +69,7 @@ class Engine extends Container
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public static function getInstance(): Container
     {
         return static::$instance ??= new static(new Loader());

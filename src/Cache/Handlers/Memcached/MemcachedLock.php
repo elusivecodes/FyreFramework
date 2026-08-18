@@ -5,6 +5,7 @@ namespace Fyre\Cache\Handlers\Memcached;
 
 use Fyre\Cache\Lock;
 use Memcached;
+use Override;
 
 use function array_key_exists;
 use function is_array;
@@ -34,6 +35,7 @@ class MemcachedLock extends Lock
     /**
      * {@inheritDoc}
      */
+    #[Override]
     protected function acquireLock(): bool
     {
         $expires = MemcachedCacher::getExpiry($this->expires);
@@ -72,6 +74,7 @@ class MemcachedLock extends Lock
     /**
      * {@inheritDoc}
      */
+    #[Override]
     protected function refreshLock(): bool
     {
         return $this->swapLock($this->owner, $this->owner);
@@ -80,6 +83,7 @@ class MemcachedLock extends Lock
     /**
      * {@inheritDoc}
      */
+    #[Override]
     protected function releaseLock(): bool
     {
         return $this->swapLock($this->owner, static::AVAILABLE);

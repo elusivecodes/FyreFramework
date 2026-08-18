@@ -7,11 +7,13 @@ use Fyre\DB\Exceptions\DbException;
 use Fyre\ORM\Entity;
 use Fyre\TestSuite\TestCase;
 use InvalidArgumentException;
+use Override;
 
 final class SetupFixturesTest extends TestCase
 {
     use MysqlConnectionTrait;
 
+    #[Override]
     protected array $fixtures = [
         'Items',
     ];

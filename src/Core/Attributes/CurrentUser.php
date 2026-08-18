@@ -8,6 +8,7 @@ use Fyre\Auth\Auth;
 use Fyre\Core\Container;
 use Fyre\Core\ContextualAttribute;
 use Fyre\ORM\Entity;
+use Override;
 
 /**
  * Injects the current authenticated user.
@@ -23,6 +24,7 @@ class CurrentUser extends ContextualAttribute
      * @param Container $container The Container.
      * @return Entity|null The Entity instance for the current user or null if no user is logged in.
      */
+    #[Override]
     public function resolve(Container $container): Entity|null
     {
         return $container->use(Auth::class)->user();

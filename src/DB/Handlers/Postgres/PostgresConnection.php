@@ -22,6 +22,7 @@ use function sprintf;
  */
 class PostgresConnection extends Connection
 {
+    #[Override]
     protected static array $defaults = [
         'host' => '127.0.0.1',
         'username' => '',

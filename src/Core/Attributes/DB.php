@@ -8,6 +8,7 @@ use Fyre\Core\Container;
 use Fyre\Core\ContextualAttribute;
 use Fyre\DB\Connection;
 use Fyre\DB\ConnectionManager;
+use Override;
 
 /**
  * Resolves a database connection for contextual injection.
@@ -32,6 +33,7 @@ class DB extends ContextualAttribute
      * @param Container $container The Container.
      * @return Connection The Connection instance.
      */
+    #[Override]
     public function resolve(Container $container): Connection
     {
         return $container->use(ConnectionManager::class)->use($this->key);

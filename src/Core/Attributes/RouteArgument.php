@@ -7,6 +7,7 @@ use Attribute;
 use Fyre\Core\Container;
 use Fyre\Core\ContextualAttribute;
 use Fyre\Http\ServerRequest;
+use Override;
 
 /**
  * Injects a route argument value.
@@ -31,6 +32,7 @@ class RouteArgument extends ContextualAttribute
      * @param Container $container The Container.
      * @return mixed The route argument value.
      */
+    #[Override]
     public function resolve(Container $container): mixed
     {
         return $container->use(ServerRequest::class)

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Fyre\Cache\Handlers\File;
 
 use Fyre\Cache\Lock;
+use Override;
 
 use function array_key_exists;
 use function chmod;
@@ -52,6 +53,7 @@ class FileLock extends Lock
     /**
      * {@inheritDoc}
      */
+    #[Override]
     protected function acquireLock(): bool
     {
         $handle = $this->openLock();
@@ -161,6 +163,7 @@ class FileLock extends Lock
     /**
      * {@inheritDoc}
      */
+    #[Override]
     protected function refreshLock(): bool
     {
         $handle = $this->openLock();
@@ -193,6 +196,7 @@ class FileLock extends Lock
     /**
      * {@inheritDoc}
      */
+    #[Override]
     protected function releaseLock(): bool
     {
         $handle = $this->openLock();

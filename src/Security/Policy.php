@@ -5,6 +5,7 @@ namespace Fyre\Security;
 
 use Fyre\Core\Traits\DebugTrait;
 use InvalidArgumentException;
+use Override;
 
 use function array_map;
 use function implode;
@@ -100,6 +101,7 @@ class Policy
      *
      * @return string The header string.
      */
+    #[Override]
     public function __toString(): string
     {
         return $this->getHeaderString();

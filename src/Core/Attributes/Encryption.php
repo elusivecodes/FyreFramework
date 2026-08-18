@@ -8,6 +8,7 @@ use Fyre\Core\Container;
 use Fyre\Core\ContextualAttribute;
 use Fyre\Security\Encryption\Encrypter;
 use Fyre\Security\Encryption\EncryptionManager;
+use Override;
 
 /**
  * Resolves an encrypter for contextual injection.
@@ -32,6 +33,7 @@ class Encryption extends ContextualAttribute
      * @param Container $container The Container.
      * @return Encrypter The Encrypter instance for the encrypter key.
      */
+    #[Override]
     public function resolve(Container $container): Encrypter
     {
         return $container->use(EncryptionManager::class)->use($this->key);

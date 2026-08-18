@@ -25,6 +25,7 @@ use Fyre\Utility\Color\Colors\XyzD50;
 use Fyre\Utility\Color\Colors\XyzD65;
 use InvalidArgumentException;
 use LogicException;
+use Override;
 use Stringable;
 use UnexpectedValueException;
 
@@ -671,6 +672,7 @@ abstract class Color implements Stringable
      *
      * @return string The CSS color string.
      */
+    #[Override]
     public function __toString(): string
     {
         return $this->toString();

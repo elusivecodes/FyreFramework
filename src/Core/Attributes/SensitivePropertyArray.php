@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Fyre\Core\Attributes;
 
 use Attribute;
+use Override;
 
 use function is_array;
 
@@ -28,6 +29,7 @@ class SensitivePropertyArray extends SensitiveProperty
      * @param string $name The property name.
      * @return array<string, array<mixed>|true> The secret keys.
      */
+    #[Override]
     public function getSecretKeys(string $name): array
     {
         $addKeys = static function(array $keys) use (&$addKeys): array {

@@ -21,6 +21,7 @@ class MailSentTo extends MailSentWith
      * @param int|null $at The index of the email.
      */
     public function __construct(
+        #[Override]
         protected string $expectedValue,
         int|null $at = null
     ) {

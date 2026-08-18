@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Fyre\Cache\Handlers\Array;
 
 use Fyre\Cache\Lock;
+use Override;
 
 use function time;
 
@@ -30,6 +31,7 @@ class ArrayLock extends Lock
     /**
      * {@inheritDoc}
      */
+    #[Override]
     protected function acquireLock(): bool
     {
         if (
@@ -50,6 +52,7 @@ class ArrayLock extends Lock
     /**
      * {@inheritDoc}
      */
+    #[Override]
     protected function refreshLock(): bool
     {
         if (
@@ -68,6 +71,7 @@ class ArrayLock extends Lock
     /**
      * {@inheritDoc}
      */
+    #[Override]
     protected function releaseLock(): bool
     {
         if (

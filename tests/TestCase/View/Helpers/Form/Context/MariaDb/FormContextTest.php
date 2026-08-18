@@ -17,6 +17,7 @@ use Fyre\Utility\Inflector;
 use Fyre\View\CellRegistry;
 use Fyre\View\HelperRegistry;
 use Fyre\View\TemplateLocator;
+use Override;
 use PHPUnit\Framework\TestCase;
 use Tests\TestCase\View\Helpers\Form\Context\Shared\ConnectionTrait;
 
@@ -53,6 +54,7 @@ final class FormContextTest extends TestCase
     use TinyTextTestTrait;
     use VarcharTestTrait;
 
+    #[Override]
     protected static function buildContainer(): Container
     {
         $container = new Container();

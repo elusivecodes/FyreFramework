@@ -8,6 +8,7 @@ use Fyre\Core\Container;
 use Fyre\Core\ContextualAttribute;
 use Fyre\ORM\Model;
 use Fyre\ORM\ModelRegistry;
+use Override;
 
 /**
  * Resolves an ORM model for contextual injection.
@@ -32,6 +33,7 @@ class ORM extends ContextualAttribute
      * @param Container $container The Container.
      * @return Model The Model instance for the alias.
      */
+    #[Override]
     public function resolve(Container $container): Model
     {
         return $container->use(ModelRegistry::class)->use($this->alias);

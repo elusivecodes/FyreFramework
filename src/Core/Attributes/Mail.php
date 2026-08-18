@@ -8,6 +8,7 @@ use Fyre\Core\Container;
 use Fyre\Core\ContextualAttribute;
 use Fyre\Mail\Mailer;
 use Fyre\Mail\MailManager;
+use Override;
 
 /**
  * Resolves a mailer for contextual injection.
@@ -32,6 +33,7 @@ class Mail extends ContextualAttribute
      * @param Container $container The Container.
      * @return Mailer The Mailer instance for the mailer key.
      */
+    #[Override]
     public function resolve(Container $container): Mailer
     {
         return $container->use(MailManager::class)->use($this->key);

@@ -392,6 +392,7 @@ final class RouteModelParamsTest extends TestCase
         );
     }
 
+    #[Override]
     protected static function buildContainer(): Container
     {
         $container = new Container();
@@ -422,12 +423,14 @@ final class RouteModelParamsTest extends TestCase
         return $container;
     }
 
+    #[Override]
     protected static function clearSchema(Connection $db): void
     {
         $db->query('DROP TABLE IF EXISTS children');
         $db->query('DROP TABLE IF EXISTS items');
     }
 
+    #[Override]
     protected static function createSchema(Connection $db): void
     {
         $db->query(<<<'SQL'

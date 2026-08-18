@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Fyre\Utility\FileSystem;
 
-use FileSystemIterator;
+use FilesystemIterator;
 use Fyre\Core\Exceptions\ErrorException;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
@@ -63,7 +63,7 @@ class Folder
      */
     public function contents(): array
     {
-        $iterator = new FileSystemIterator($this->path);
+        $iterator = new FilesystemIterator($this->path);
 
         $contents = [];
 
@@ -213,7 +213,7 @@ class Folder
      */
     public function isEmpty(): bool
     {
-        return !new FileSystemIterator($this->path)->valid();
+        return !new FilesystemIterator($this->path)->valid();
     }
 
     /**

@@ -51,6 +51,7 @@ class MysqlQueryGenerator extends QueryGenerator
      * @param array<string, mixed> $options The column options.
      * @return string The SQL query.
      */
+    #[Override]
     public function buildAddColumn(Column $column, array $options = []): string
     {
         $sql = 'ADD COLUMN ';

@@ -149,6 +149,7 @@ class Result implements Countable, IteratorAggregate, JsonSerializable
      *
      * @return string The JSON encoded string.
      */
+    #[Override]
     public function __toString(): string
     {
         return (string) $this->collection;

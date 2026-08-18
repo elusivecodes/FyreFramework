@@ -8,6 +8,7 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Utility\Path;
 use Fyre\Utility\Str;
+use Override;
 use ReflectionClass;
 use ReflectionMethod;
 use RuntimeException;
@@ -61,6 +62,7 @@ abstract class Cell
      *
      * @return string The rendered cell.
      */
+    #[Override]
     public function __toString(): string
     {
         return $this->render();

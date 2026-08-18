@@ -46,6 +46,7 @@ class UpsertQuery extends Query
      * @param array<mixed>|string|null $table The table.
      */
     public function __construct(
+        #[Override]
         protected Connection $connection,
         array|string $conflictKeys,
         array|string|null $table = null

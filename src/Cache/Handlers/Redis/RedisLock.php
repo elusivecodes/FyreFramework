@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Fyre\Cache\Handlers\Redis;
 
 use Fyre\Cache\Lock;
+use Override;
 use Redis;
 
 /**
@@ -29,6 +30,7 @@ class RedisLock extends Lock
     /**
      * {@inheritDoc}
      */
+    #[Override]
     protected function acquireLock(): bool
     {
         return $this->connection->set($this->key, $this->owner, [
@@ -40,6 +42,7 @@ class RedisLock extends Lock
     /**
      * {@inheritDoc}
      */
+    #[Override]
     protected function refreshLock(): bool
     {
         $result = $this->connection->eval(
@@ -64,6 +67,7 @@ class RedisLock extends Lock
     /**
      * {@inheritDoc}
      */
+    #[Override]
     protected function releaseLock(): bool
     {
         $result = $this->connection->eval(

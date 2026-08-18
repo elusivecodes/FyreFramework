@@ -5,6 +5,7 @@ namespace Fyre\Http\Cookie;
 
 use Fyre\Core\Traits\DebugTrait;
 use InvalidArgumentException;
+use Override;
 
 use function array_replace;
 use function array_shift;
@@ -258,6 +259,7 @@ class Cookie
      *
      * @return string The cookie header string.
      */
+    #[Override]
     public function __toString(): string
     {
         return $this->toHeaderString();

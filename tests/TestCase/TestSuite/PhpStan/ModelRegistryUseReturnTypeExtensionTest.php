@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\TestSuite\PhpStan;
 
+use Override;
 use PHPStan\Testing\TypeInferenceTestCase;
 
 use const ROOT;
@@ -12,6 +13,7 @@ final class ModelRegistryUseReturnTypeExtensionTest extends TypeInferenceTestCas
     /**
      * @return string[]
      */
+    #[Override]
     public static function getAdditionalConfigFiles(): array
     {
         return [ROOT.'/tests/Mock/PhpStan/phpstan.neon'];

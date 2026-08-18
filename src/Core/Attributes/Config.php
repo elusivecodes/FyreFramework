@@ -7,6 +7,7 @@ use Attribute;
 use Fyre\Core\Config as CoreConfig;
 use Fyre\Core\Container;
 use Fyre\Core\ContextualAttribute;
+use Override;
 
 /**
  * Resolves a config value for contextual injection.
@@ -31,6 +32,7 @@ class Config extends ContextualAttribute
      * @param Container $container The Container.
      * @return mixed The config value.
      */
+    #[Override]
     public function resolve(Container $container): mixed
     {
         return $container->use(CoreConfig::class)->get($this->key);

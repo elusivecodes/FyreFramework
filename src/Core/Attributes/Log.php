@@ -8,6 +8,7 @@ use Fyre\Core\Container;
 use Fyre\Core\ContextualAttribute;
 use Fyre\Log\Logger;
 use Fyre\Log\LogManager;
+use Override;
 
 /**
  * Resolves a logger for contextual injection.
@@ -32,6 +33,7 @@ class Log extends ContextualAttribute
      * @param Container $container The Container.
      * @return Logger The Logger instance for the logger key.
      */
+    #[Override]
     public function resolve(Container $container): Logger
     {
         return $container->use(LogManager::class)->use($this->key);

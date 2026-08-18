@@ -8,6 +8,7 @@ use Fyre\Cache\CacheManager;
 use Fyre\Cache\Cacher;
 use Fyre\Core\Container;
 use Fyre\Core\ContextualAttribute;
+use Override;
 
 /**
  * Resolves a cache handler for contextual injection.
@@ -32,6 +33,7 @@ class Cache extends ContextualAttribute
      * @param Container $container The Container.
      * @return Cacher The Cacher instance for the cache key.
      */
+    #[Override]
     public function resolve(Container $container): Cacher
     {
         return $container->use(CacheManager::class)->use($this->key);

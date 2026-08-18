@@ -1,6 +1,9 @@
 parameters:
     level: 8
     checkFunctionNameCase: true
+    checkInternalClassCaseSensitivity: true
+    checkMissingOverrideMethodAttribute: true
+    reportAlwaysTrueInLastCondition: true
     treatPhpDocTypesAsCertain: false
     bootstrapFiles:
         - bootstrap.php

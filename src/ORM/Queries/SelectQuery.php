@@ -1020,6 +1020,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
     /**
      * Marks the query as dirty.
      */
+    #[Override]
     protected function dirty(): void
     {
         parent::dirty();

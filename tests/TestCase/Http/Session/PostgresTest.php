@@ -11,6 +11,7 @@ use Fyre\DB\Handlers\Postgres\PostgresConnection;
 use Fyre\DB\TypeParser;
 use Fyre\Http\Session\Handlers\DatabaseSessionHandler;
 use Fyre\Http\Session\Session;
+use Override;
 use PHPUnit\Framework\TestCase;
 
 use function getenv;
@@ -94,6 +95,7 @@ final class PostgresTest extends TestCase
         );
     }
 
+    #[Override]
     protected static function buildContainer(): Container
     {
         $container = new Container();
@@ -121,6 +123,7 @@ final class PostgresTest extends TestCase
         return $container;
     }
 
+    #[Override]
     protected static function createSchema(Connection $db): void
     {
         $db->query(<<<'SQL'
