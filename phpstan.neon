@@ -1,5 +1,6 @@
 parameters:
     level: 8
+    checkFunctionNameCase: true
     treatPhpDocTypesAsCertain: false
     bootstrapFiles:
         - tests/bootstrap.php

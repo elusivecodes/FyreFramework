@@ -185,7 +185,7 @@ class RedisSessionHandler extends SessionHandler
 
         $key = $this->prepareKey($sessionId);
 
-        if (!$this->connection->setEx($key, $this->config['expires'], $data)) {
+        if (!$this->connection->setex($key, $this->config['expires'], $data)) {
             return false;
         }
 

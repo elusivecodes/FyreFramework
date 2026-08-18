@@ -11,7 +11,7 @@ trait DirNameTestTrait
     {
         $this->assertSame(
             'sub/dir',
-            Path::dirname('sub/dir/file.ext')
+            Path::dirName('sub/dir/file.ext')
         );
     }
 
@@ -19,7 +19,7 @@ trait DirNameTestTrait
     {
         $this->assertSame(
             '',
-            Path::dirname('')
+            Path::dirName('')
         );
     }
 
@@ -27,7 +27,7 @@ trait DirNameTestTrait
     {
         $this->assertSame(
             '.',
-            Path::dirname('file.ext')
+            Path::dirName('file.ext')
         );
     }
 
@@ -35,7 +35,7 @@ trait DirNameTestTrait
     {
         $this->assertSame(
             '/sub/dir',
-            Path::dirname('/sub/dir/file.ext')
+            Path::dirName('/sub/dir/file.ext')
         );
     }
 
@@ -43,7 +43,7 @@ trait DirNameTestTrait
     {
         $this->assertSame(
             'dir',
-            Path::dirname('dir/file.tst.ext')
+            Path::dirName('dir/file.tst.ext')
         );
     }
 
@@ -51,7 +51,7 @@ trait DirNameTestTrait
     {
         $this->assertSame(
             'dir',
-            Path::dirname('dir/file')
+            Path::dirName('dir/file')
         );
     }
 
@@ -59,7 +59,7 @@ trait DirNameTestTrait
     {
         $this->assertSame(
             'dir',
-            Path::dirname('dir/file.ext')
+            Path::dirName('dir/file.ext')
         );
     }
 }

@@ -84,7 +84,7 @@ final class StreamTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageIs('Invalid stream resource.');
 
-        $stream = Stream::createfromString('This is a test.');
+        $stream = Stream::createFromString('This is a test.');
 
         $stream->close();
         $stream->getContents();

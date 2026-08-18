@@ -193,7 +193,7 @@ class RedisCacher extends Cacher
     {
         $key = $this->prepareKey($key);
 
-        $data = $this->connection->hMGet($key, ['type', 'value']);
+        $data = $this->connection->hMget($key, ['type', 'value']);
 
         switch ($data['type']) {
             case 'array':
@@ -279,7 +279,7 @@ class RedisCacher extends Cacher
                 return false;
         }
 
-        if (!$this->connection->hMSet($key, ['type' => $type, 'value' => $value])) {
+        if (!$this->connection->hMset($key, ['type' => $type, 'value' => $value])) {
             return false;
         }
 

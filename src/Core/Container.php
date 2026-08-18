@@ -566,7 +566,7 @@ class Container implements ContainerInterface
             $paramType = $parameter->getType();
             $e = null;
 
-            if ($paramType instanceof ReflectionNamedType && !$paramType->isBuiltIn()) {
+            if ($paramType instanceof ReflectionNamedType && !$paramType->isBuiltin()) {
                 try {
                     $typeName = $paramType->getName();
 
