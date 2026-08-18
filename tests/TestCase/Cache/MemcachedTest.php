@@ -9,6 +9,7 @@ use Fyre\Cache\Exceptions\CacheException;
 use Fyre\Cache\Handlers\Memcached\MemcachedCacher;
 use Fyre\Core\Container;
 use Override;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Tests\TestCase\Cache\Cacher\DecrementTestTrait;
 use Tests\TestCase\Cache\Cacher\DeleteTestTrait;
@@ -23,6 +24,7 @@ use Tests\TestCase\Cache\Cacher\TagsTestTrait;
 use function getenv;
 use function sleep;
 
+#[RequiresPhpExtension('memcached')]
 final class MemcachedTest extends TestCase
 {
     use DecrementTestTrait;

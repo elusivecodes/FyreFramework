@@ -8,10 +8,12 @@ use Fyre\Core\Container;
 use Fyre\Http\Session\Handlers\RedisSessionHandler;
 use Fyre\Http\Session\Session;
 use Override;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 
 use function getenv;
 
+#[RequiresPhpExtension('redis')]
 final class RedisTest extends TestCase
 {
     protected RedisSessionHandler $handler;

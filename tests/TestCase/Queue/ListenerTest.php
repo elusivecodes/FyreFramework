@@ -12,6 +12,7 @@ use Fyre\Queue\Queue;
 use Fyre\Queue\QueueManager;
 use Fyre\Queue\Worker;
 use Override;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Tests\Mock\Jobs\MockJob;
@@ -24,6 +25,8 @@ use function rmdir;
 use function unlink;
 use function unserialize;
 
+#[RequiresPhpExtension('pcntl')]
+#[RequiresPhpExtension('redis')]
 final class ListenerTest extends TestCase
 {
     protected Container $container;

@@ -10,6 +10,7 @@ use Fyre\Http\Client\Exceptions\RequestException;
 use Fyre\Http\Client\Handlers\CurlHandler;
 use Fyre\Http\Client\Request;
 use Override;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 
 use function exec;
@@ -19,6 +20,7 @@ use function fsockopen;
 use function strlen;
 use function usleep;
 
+#[RequiresPhpExtension('curl')]
 final class CurlHandlerTest extends TestCase
 {
     protected static int $pid;

@@ -12,6 +12,7 @@ use Fyre\Queue\Queue;
 use Fyre\Queue\QueueManager;
 use InvalidArgumentException;
 use Override;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Redis;
 use Tests\Mock\Jobs\MockJob;
@@ -19,6 +20,7 @@ use Tests\Mock\Jobs\MockJob;
 use function getenv;
 use function time;
 
+#[RequiresPhpExtension('redis')]
 final class RedisQueueTest extends TestCase
 {
     protected Queue $queue;

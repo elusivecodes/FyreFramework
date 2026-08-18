@@ -8,12 +8,14 @@ use Fyre\Security\Encryption\EncryptionManager;
 use Fyre\Security\Encryption\Handlers\SodiumEncrypter;
 use InvalidArgumentException;
 use Override;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 
 use function strlen;
 
 use const SODIUM_CRYPTO_SECRETBOX_KEYBYTES;
 
+#[RequiresPhpExtension('sodium')]
 final class SodiumTest extends TestCase
 {
     use EncrypterTestTrait;

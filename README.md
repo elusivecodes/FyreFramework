@@ -40,7 +40,9 @@ Optional (depending on the parts you use):
 - `ext-memcached` (Memcached cache)
 - `ext-openssl` (OpenSSL encryption handler)
 - `ext-pcntl` (queue workers and async promises)
+- `ext-posix` (async promises)
 - `ext-redis` (Redis cache and queue handlers)
+- `ext-sockets` (async promises)
 
 Fyre has no third-party runtime dependencies beyond PSR interfaces (`psr/*`).
 

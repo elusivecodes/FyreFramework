@@ -14,6 +14,7 @@ use Fyre\Queue\QueueManager;
 use Fyre\Queue\Worker;
 use InvalidArgumentException;
 use Override;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Redis;
 use Tests\Mock\Jobs\MockJob;
@@ -26,6 +27,8 @@ use function rmdir;
 use function time;
 use function unlink;
 
+#[RequiresPhpExtension('pcntl')]
+#[RequiresPhpExtension('redis')]
 final class WorkerTest extends TestCase
 {
     protected Container $container;

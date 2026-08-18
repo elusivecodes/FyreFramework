@@ -10,6 +10,7 @@ use Fyre\Utility\Promise\Exceptions\CancelledPromiseException;
 use Fyre\Utility\Promise\Promise;
 use Fyre\Utility\Promise\PromiseInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Throwable;
@@ -24,6 +25,9 @@ use function unserialize;
 use const AF_UNIX;
 use const SOCK_STREAM;
 
+#[RequiresPhpExtension('pcntl')]
+#[RequiresPhpExtension('posix')]
+#[RequiresPhpExtension('sockets')]
 final class AsyncPromiseTest extends TestCase
 {
     /**

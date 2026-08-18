@@ -10,6 +10,7 @@ use Fyre\Cache\Exceptions\CacheException;
 use Fyre\Cache\Handlers\Redis\RedisCacher;
 use Fyre\Core\Container;
 use Override;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Redis;
 use Tests\TestCase\Cache\Cacher\DecrementTestTrait;
@@ -25,6 +26,7 @@ use Tests\TestCase\Cache\Cacher\TagsTestTrait;
 use function getenv;
 use function sleep;
 
+#[RequiresPhpExtension('redis')]
 final class RedisTest extends TestCase
 {
     use DecrementTestTrait;

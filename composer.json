@@ -74,9 +74,11 @@
         "ext-gd": "Required to use image manipulation.",
         "ext-memcached": "Required to use Memcached cache handler.",
         "ext-openssl": "Required to use OpenSSL encryption handler.",
-        "ext-pcntl": "Required to use queue workers and async promises",
+        "ext-pcntl": "Required to use queue workers and async promises.",
         "ext-pdo": "Required to use database connections.",
-        "ext-redis": "Required to use Redis cache and queue handlers."
+        "ext-posix": "Required to use async promises.",
+        "ext-redis": "Required to use Redis cache and queue handlers.",
+        "ext-sockets": "Required to use async promises."
     },
     "config": {
         "lock": false,

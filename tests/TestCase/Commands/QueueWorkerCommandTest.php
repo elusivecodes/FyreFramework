@@ -18,6 +18,7 @@ use Fyre\Queue\QueueManager;
 use Fyre\Utility\Inflector;
 use Fyre\Utility\Path;
 use Override;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Jobs\MockJob;
 
@@ -32,6 +33,8 @@ use function unlink;
 
 use const ROOT;
 
+#[RequiresPhpExtension('pcntl')]
+#[RequiresPhpExtension('redis')]
 final class QueueWorkerCommandTest extends TestCase
 {
     protected CommandRunner $commandRunner;

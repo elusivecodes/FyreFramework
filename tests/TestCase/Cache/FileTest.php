@@ -9,6 +9,7 @@ use Fyre\Cache\Cacher;
 use Fyre\Cache\Handlers\File\FileCacher;
 use Fyre\Core\Container;
 use Override;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Tests\TestCase\Cache\Cacher\DecrementTestTrait;
 use Tests\TestCase\Cache\Cacher\DeleteTestTrait;
@@ -41,6 +42,7 @@ final class FileTest extends TestCase
 
     protected Cacher $cacher;
 
+    #[RequiresPhpExtension('pcntl')]
     public function testConcurrentSynchronizedUpdates(): void
     {
         $this->cacher->set('counter', 0);

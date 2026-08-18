@@ -64,7 +64,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.5"
-          extensions: exif, gd, intl, mbstring
+          extensions: exif, gd, intl, mbstring, openssl, pcntl, posix, sockets, sodium
           coverage: pcov
 
       - name: Install dependencies
@@ -120,7 +120,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.5"
-          extensions: intl, mbstring, pdo_mysql, pdo_pgsql, pdo_sqlite, redis, memcached
+          extensions: curl, intl, mbstring, memcached, pcntl, pdo_mysql, pdo_pgsql, pdo_sqlite, redis
           coverage: pcov
 
       - name: Install dependencies

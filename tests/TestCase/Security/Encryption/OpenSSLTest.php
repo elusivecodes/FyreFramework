@@ -8,10 +8,12 @@ use Fyre\Security\Encryption\EncryptionManager;
 use Fyre\Security\Encryption\Handlers\OpenSSLEncrypter;
 use InvalidArgumentException;
 use Override;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 
 use function strlen;
 
+#[RequiresPhpExtension('openssl')]
 final class OpenSSLTest extends TestCase
 {
     use EncrypterTestTrait;

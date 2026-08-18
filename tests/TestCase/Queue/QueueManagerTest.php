@@ -12,12 +12,14 @@ use Fyre\Queue\Queue;
 use Fyre\Queue\QueueManager;
 use InvalidArgumentException;
 use Override;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Queue\TestQueue;
 
 use function class_uses;
 use function getenv;
 
+#[RequiresPhpExtension('redis')]
 final class QueueManagerTest extends TestCase
 {
     protected QueueManager $queueManager;

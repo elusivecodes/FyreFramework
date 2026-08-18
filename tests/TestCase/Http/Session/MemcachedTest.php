@@ -8,10 +8,12 @@ use Fyre\Core\Container;
 use Fyre\Http\Session\Handlers\MemcachedSessionHandler;
 use Fyre\Http\Session\Session;
 use Override;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 
 use function getenv;
 
+#[RequiresPhpExtension('memcached')]
 final class MemcachedTest extends TestCase
 {
     protected MemcachedSessionHandler $handler;
