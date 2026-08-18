@@ -1,6 +1,6 @@
 # Utilities
 
-Utilities are small, focused helpers for common tasks like strings, arrays, collections, math, paths, formatting, promises, and locale-aware date/time.
+Utilities are small, focused helpers for common tasks like strings, arrays, collections, images, math, paths, formatting, promises, and locale-aware date/time.
 
 ## Table of Contents
 
@@ -17,6 +17,7 @@ Pick a page based on what you’re trying to do:
 - **Work with numbers**: [Math](math.md) (ranges, interpolation, rounding, random values, and trigonometry).
 - **Work with paths and files**: [Paths](paths.md) (string-only path operations) and [File System](file-system.md) (read/write/copy/delete).
 - **Format output**: [Formatter](formatter.md) (locale-aware numbers/dates/lists) and [Colors](colors.md) (CSS colors, conversions, contrast).
+- **Work with images and documents**: [Images](image.md) (GD-based manipulation and encoding) and [PDF](pdf.md) (HTML rendered through Chrome/Chromium).
 - **Work with time**: [Date/time](datetime.md) (immutable instants) and [Periods](periods.md) (ranges and set operations).
 - **Defer work**: [Promises](promises.md) (synchronous and forked async promises).
 
@@ -37,6 +38,7 @@ This `index.md` is a navigation hub: use it to choose the next page to read base
 - [File System](file-system.md) - common file and folder operations
 - [Formatter](formatter.md) - locale-aware numbers, currency, dates, times, and lists
 - [Colors](colors.md) - parse, convert, and format CSS colors and compute contrast
+- [Images](image.md) - load, resize, crop, orient, filter, and encode images with GD
 - [PDF](pdf.md) - render HTML to PDF through headless Chrome or Chromium
 - [Promises](promises.md) - synchronous and forked async promises
 - [Date/time](datetime.md) - immutable instants with locale-aware formatting

@@ -35,6 +35,8 @@ Install the `fyre/framework` package and use individual subsystems as needed, or
 Optional (depending on the parts you use):
 
 - `ext-curl` (HTTP client requests)
+- `ext-exif` (EXIF orientation detection for image manipulation)
+- `ext-gd` (image manipulation)
 - `ext-memcached` (Memcached cache)
 - `ext-openssl` (OpenSSL encryption handler)
 - `ext-pcntl` (queue workers and async promises)
@@ -95,7 +97,7 @@ Start with the [documentation index](docs/index.md), or jump to the area you nee
 - **Auth and security**: [Auth](docs/auth/index.md), [Security](docs/security/index.md)
 - **Shared services**: [Events](docs/events/index.md), [Logging](docs/logging/index.md), [Mail](docs/mail/index.md), [Cache](docs/cache/index.md), [Queue](docs/queue/index.md)
 - **Rendering and forms**: [View](docs/view/index.md), [Form](docs/form/index.md)
-- **Tooling and tests**: [Console](docs/console/index.md), [Testing](docs/testing/index.md), [Utilities](docs/utilities/index.md)
+- **Tooling and tests**: [Console](docs/console/index.md), [Testing](docs/testing/index.md), [Utilities](docs/utilities/index.md), [Images](docs/utilities/image.md)
 
 ## Repository development
 

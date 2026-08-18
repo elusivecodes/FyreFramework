@@ -417,3 +417,4 @@ A few behaviors are worth keeping in mind:
 
 - [Utilities](index.md)
 - [Formatter](formatter.md)
+- [Images](image.md)

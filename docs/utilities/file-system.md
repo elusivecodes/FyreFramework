@@ -529,3 +529,4 @@ A few behaviors are worth keeping in mind:
 
 - [Utilities](index.md)
 - [Paths](paths.md)
+- [Images](image.md)

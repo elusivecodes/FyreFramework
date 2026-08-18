@@ -70,6 +70,8 @@
     },
     "suggest": {
         "ext-curl": "Required to use client requests.",
+        "ext-exif": "Required to detect EXIF orientation for image manipulation.",
+        "ext-gd": "Required to use image manipulation.",
         "ext-memcached": "Required to use Memcached cache handler.",
         "ext-openssl": "Required to use OpenSSL encryption handler.",
         "ext-pcntl": "Required to use queue workers and async promises",

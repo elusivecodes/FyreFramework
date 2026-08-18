@@ -52,4 +52,4 @@ Start with the section you need most, then follow the related links from there.
 - [Queue](queue/index.md) - jobs, queues, and worker processing
 - [Console](console/index.md) - commands, prompts, and CLI tooling
 - [Testing](testing/index.md) - PHPUnit helpers, fixtures, and framework test utilities
-- [Utilities](utilities/index.md) - general-purpose helpers such as files, collections, promises, and date/time tools
+- [Utilities](utilities/index.md) - general-purpose helpers such as files, images, colors, collections, promises, and date/time tools
