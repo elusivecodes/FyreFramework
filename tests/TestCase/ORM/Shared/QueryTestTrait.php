@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\ORM\Shared;
 
 use Fyre\Core\Traits\MacroTrait;
+use Fyre\DB\Pagination\Page;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Queries\DeleteQuery;
 use Fyre\ORM\Queries\InsertQuery;
@@ -349,6 +350,71 @@ trait QueryTestTrait
         $this->assertContains(
             MacroTrait::class,
             class_uses(UpsertQuery::class)
+        );
+    }
+
+    public function testPaginate(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $items = $Items->newEntities([
+            [
+                'name' => 'Test 1',
+            ],
+            [
+                'name' => 'Test 2',
+            ],
+            [
+                'name' => 'Test 3',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+
+        $query = $Items->find()
+            ->orderBy([
+                'id' => 'ASC',
+            ])
+            ->limit(1, 1);
+
+        $page = $query->paginate(2, 2);
+        $pageItems = $page->items();
+
+        $this->assertInstanceOf(
+            Page::class,
+            $page
+        );
+
+        $this->assertCount(
+            1,
+            $page
+        );
+
+        $this->assertInstanceOf(
+            Item::class,
+            $pageItems[0]
+        );
+
+        $this->assertSame(
+            3,
+            $pageItems[0]->id
+        );
+
+        $this->assertSame(
+            3,
+            $page->totalItems()
+        );
+
+        $this->assertSame(
+            1,
+            $query->getLimit()
+        );
+
+        $this->assertSame(
+            1,
+            $query->getOffset()
         );
     }
 

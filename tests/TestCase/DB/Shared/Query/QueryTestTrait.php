@@ -9,6 +9,8 @@ trait QueryTestTrait
     use ExecuteTestTrait;
     use GetTestTrait;
     use InsertTestTrait;
+    use PaginationTestTrait;
+    use SelectTestTrait;
     use TransactionTestTrait;
     use UpdateTestTrait;
     use UpsertTestTrait;

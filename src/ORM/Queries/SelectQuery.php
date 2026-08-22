@@ -222,6 +222,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
      *
      * @return int The result count.
      */
+    #[Override]
     public function count(): int
     {
         if ($this->count === null) {
@@ -234,7 +235,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
 
             $this->count = $query->getConnection()
                 ->select([
-                    'count' => 'COUNT(*)',
+                    'count' => $query->func()->count(),
                 ])
                 ->from([
                     'count_source' => $query->orderBy([], true),
@@ -677,6 +678,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
      *
      * @return array<TEntity> The results.
      */
+    #[Override]
     public function toArray(): array
     {
         return $this->getResult()->toArray();
