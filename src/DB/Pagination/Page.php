@@ -19,15 +19,20 @@ use function min;
 /**
  * Represents a page of query results and its pagination metadata.
  *
- * @implements IteratorAggregate<int, mixed>
+ * @template TItem = mixed
+ *
+ * @implements IteratorAggregate<int, TItem>
  */
 class Page implements Countable, IteratorAggregate, JsonSerializable
 {
     /**
-     * @var array<mixed>|null
+     * @var array<TItem>|null
      */
     protected array|null $items = null;
 
+    /**
+     * @var SelectQuery<TItem>
+     */
     protected SelectQuery $query;
 
     protected int|null $total = null;
@@ -35,7 +40,7 @@ class Page implements Countable, IteratorAggregate, JsonSerializable
     /**
      * Constructs a Page.
      *
-     * @param SelectQuery $query The SelectQuery.
+     * @param SelectQuery<TItem> $query The SelectQuery.
      * @param int $page The current page number.
      * @param int $perPage The maximum number of items per page.
      */
@@ -93,7 +98,7 @@ class Page implements Countable, IteratorAggregate, JsonSerializable
     /**
      * Returns an iterator for the page items.
      *
-     * @return Traversable<int, mixed> The page item iterator.
+     * @return Traversable<int, TItem> The page item iterator.
      */
     #[Override]
     public function getIterator(): Traversable
@@ -124,7 +129,7 @@ class Page implements Countable, IteratorAggregate, JsonSerializable
     /**
      * Returns the page items.
      *
-     * @return array<mixed> The page items.
+     * @return array<TItem> The page items.
      */
     public function items(): array
     {
@@ -142,7 +147,15 @@ class Page implements Countable, IteratorAggregate, JsonSerializable
     /**
      * Returns the JSON serialization data.
      *
-     * @return array<string, mixed> The serialization data.
+     * @return array{
+     *     data: array<TItem>,
+     *     pagination: array{
+     *         page: int,
+     *         perPage: int,
+     *         total: int,
+     *         totalPages: int
+     *     }
+     * } The serialization data.
      */
     #[Override]
     public function jsonSerialize(): array

@@ -27,6 +27,8 @@ use Override;
 
 /**
  * Builds SELECT queries.
+ *
+ * @template TItem = array<string, mixed>
  */
 class SelectQuery extends Query
 {
@@ -121,7 +123,7 @@ class SelectQuery extends Query
      *
      * @param int $page The page number.
      * @param int $perPage The maximum number of items per page.
-     * @return Page The paginated results.
+     * @return Page<TItem> The paginated results.
      *
      * @throws InvalidArgumentException If the page or items per page is not valid.
      */
@@ -143,10 +145,11 @@ class SelectQuery extends Query
     /**
      * Returns the results as an array.
      *
-     * @return array<mixed> The results.
+     * @return array<TItem> The results.
      */
     public function toArray(): array
     {
+        /** @var array<TItem> */
         return $this->execute()->all();
     }
 }

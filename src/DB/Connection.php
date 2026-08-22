@@ -660,7 +660,7 @@ abstract class Connection
      * Creates a SelectQuery.
      *
      * @param array<mixed>|string $fields The fields.
-     * @return SelectQuery The new SelectQuery instance.
+     * @return SelectQuery<array<string, mixed>> The new SelectQuery instance.
      */
     public function select(array|string $fields = '*'): SelectQuery
     {

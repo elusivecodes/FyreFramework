@@ -38,6 +38,8 @@ use function str_replace;
  * joins. Calling {@see self::sql()} will prepare and (by default) reset the query state.
  *
  * @template TEntity of Entity = Entity
+ *
+ * @extends \Fyre\DB\Queries\SelectQuery<TEntity>
  */
 class SelectQuery extends \Fyre\DB\Queries\SelectQuery
 {
