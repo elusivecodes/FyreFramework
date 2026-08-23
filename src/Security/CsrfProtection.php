@@ -18,13 +18,11 @@ use function array_replace_recursive;
 use function assert;
 use function base64_decode;
 use function base64_encode;
-use function chr;
 use function hash_equals;
 use function hash_hmac;
 use function in_array;
 use function is_array;
 use function is_string;
-use function ord;
 use function random_bytes;
 use function strlen;
 use function substr;
@@ -252,8 +250,6 @@ class CsrfProtection
      *
      * @param string $token The unsalted token.
      * @return string|null The salted token, or null if the token is invalid.
-     *
-     * @throws InvalidArgumentException If salting fails.
      */
     protected function saltToken(string $token): string|null
     {
@@ -268,17 +264,7 @@ class CsrfProtection
         assert($length > 0);
 
         $salt = random_bytes($length);
-        $salted = '';
-        for ($i = 0; $i < $length; $i++) {
-            // XOR the token and salt together so that we can reverse it later.
-            $codepoint = ord($decoded[$i]) ^ ord($salt[$i]);
-
-            if ($codepoint < 0 || $codepoint > 255) {
-                throw new InvalidArgumentException('Salting failed.');
-            }
-
-            $salted .= chr($codepoint);
-        }
+        $salted = $decoded ^ $salt;
 
         return base64_encode($salted.$salt);
     }
@@ -288,8 +274,6 @@ class CsrfProtection
      *
      * @param string $token The salted token.
      * @return string|null The unsalted token, or null if the token is invalid.
-     *
-     * @throws InvalidArgumentException If unsalting fails.
      */
     protected function unsaltToken(string $token): string|null
     {
@@ -308,17 +292,7 @@ class CsrfProtection
         $salted = substr($decoded, 0, $length);
         $salt = substr($decoded, $length);
 
-        $unsalted = '';
-        for ($i = 0; $i < $length; $i++) {
-            // Reverse the XOR to desalt.
-            $codepoint = ord($salted[$i]) ^ ord($salt[$i]);
-
-            if ($codepoint < 0 || $codepoint > 255) {
-                throw new InvalidArgumentException('Unsalting failed.');
-            }
-
-            $unsalted .= chr($codepoint);
-        }
+        $unsalted = $salted ^ $salt;
 
         return base64_encode($unsalted);
     }
