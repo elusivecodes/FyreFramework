@@ -66,6 +66,11 @@ class Result implements Countable, IteratorAggregate, JsonSerializable
     protected bool $freed = false;
 
     /**
+     * @var ResultSet<TEntity>
+     */
+    protected ResultSet $result;
+
+    /**
      * Constructs a Result.
      *
      * Note: When `$buffer` is true, the result collection is cached in memory. When
@@ -77,25 +82,31 @@ class Result implements Countable, IteratorAggregate, JsonSerializable
      * @param bool $buffer Whether to buffer the results.
      */
     public function __construct(
-        protected ResultSet $result,
+        ResultSet $result,
         protected SelectQuery $query,
         bool $buffer = true
     ) {
         $eagerLoad = $this->query->getEagerLoadPaths() !== [];
 
-        $this->parseRow(...) |> $this->result->decorate(...);
+        $this->result = $result
+            ->decorate($this->parseRow(...))
+            ->decorate(function(array $data) use ($eagerLoad, $buffer): Entity {
+                $entity = $this->buildEntity($data);
 
-        $this->collection = new Collection(function() use ($eagerLoad, $buffer): Generator {
+                if ($eagerLoad && !$buffer) {
+                    static::loadContain([$entity], $this->query->getContain(), $this->query->getModel(), $this->query, $this->query->getAlias());
+                }
+
+                return $entity;
+            });
+
+        $this->collection = new Collection(function(): Generator {
             while ($this->result->valid()) {
                 if ($this->freed) {
                     break;
                 }
 
-                $entity = $this->result->current() |> $this->buildEntity(...);
-
-                if ($eagerLoad && !$buffer) {
-                    static::loadContain([$entity], $this->query->getContain(), $this->query->getModel(), $this->query, $this->query->getAlias());
-                }
+                $entity = $this->result->current();
 
                 $this->result->key() |> $this->result->clearBuffer(...);
 

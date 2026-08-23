@@ -8,26 +8,22 @@ use Countable;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Iterator;
-use LogicException;
 use OutOfBoundsException;
 use Override;
-use PDO;
-use PDOStatement;
 
 use function array_fill;
-use function array_keys;
+use function array_filter;
 use function array_last;
 use function array_pop;
 use function count;
 use function sprintf;
 
 /**
- * Buffered iterator over database results.
+ * Buffered iterator over a result set.
  *
- * Wraps a {@see PDOStatement}, supports indexed access via an internal buffer, and provides
- * basic column metadata/type helpers for mapping database native types to {@see Type}s.
+ * @template TItem = array<string, mixed>
  *
- * @implements Iterator<int, array<string, mixed>>
+ * @implements Iterator<int, TItem>
  */
 abstract class ResultSet implements Countable, Iterator
 {
@@ -35,41 +31,13 @@ abstract class ResultSet implements Countable, Iterator
     use MacroTrait;
 
     /**
-     * @var array<string, string>
-     */
-    protected static array $types = [];
-
-    /**
-     * @var array<string, mixed>[]
+     * @var array<int, TItem|null>
      */
     protected array $buffer = [];
-
-    /**
-     * @var array<string, array<string, mixed>>|null
-     */
-    protected array|null $columnMeta = null;
-
-    protected int|null $count = null;
-
-    /**
-     * @var array<Closure(array<string, mixed>): array<string, mixed>>
-     */
-    protected array $decorators = [];
 
     protected bool $freed = false;
 
     protected int $index = 0;
-
-    /**
-     * Constructs a ResultSet.
-     *
-     * @param PDOStatement $result The PDOStatement containing the result set.
-     * @param TypeParser $typeParser The TypeParser.
-     */
-    public function __construct(
-        protected PDOStatement $result,
-        protected TypeParser $typeParser
-    ) {}
 
     /**
      * Releases the ResultSet resources.
@@ -80,27 +48,33 @@ abstract class ResultSet implements Countable, Iterator
     }
 
     /**
-     * Returns the results as an array.
+     * Returns all rows.
      *
-     * @return array<string, mixed>[] The buffered results.
+     * @return array<int, TItem> The rows.
      */
     public function all(): array
     {
-        $results = $this->result->fetchAll(PDO::FETCH_ASSOC);
+        while (!$this->freed) {
+            $row = $this->read();
 
-        foreach ($results as $result) {
-            $this->buffer[] = $this->decorateRow($result);
+            if ($row === null) {
+                $this->free();
+                break;
+            }
+
+            $this->buffer[] = $row;
         }
 
-        $this->free();
-
-        return $this->buffer;
+        return array_filter(
+            $this->buffer,
+            static fn(mixed $row): bool => $row !== null
+        );
     }
 
     /**
-     * Clears results from the buffer.
+     * Clears buffered rows.
      *
-     * @param int|null $index The index.
+     * @param int|null $index The row index, or null to clear all rows.
      */
     public function clearBuffer(int|null $index = null): void
     {
@@ -113,75 +87,52 @@ abstract class ResultSet implements Countable, Iterator
                 $count--;
             }
 
-            $this->buffer = array_fill(0, $count, []);
+            $this->buffer = array_fill(0, $count, null);
 
             if ($lastRow !== null) {
                 $this->buffer[] = $lastRow;
             }
         } else if (isset($this->buffer[$index])) {
-            $this->buffer[$index] = [];
+            $this->buffer[$index] = null;
         }
     }
 
     /**
-     * Returns the column count.
+     * Returns the number of columns.
      *
-     * @return int The column count.
+     * @return int The number of columns.
      */
-    public function columnCount(): int
-    {
-        return $this->result->columnCount();
-    }
+    abstract public function columnCount(): int;
 
     /**
-     * Returns the result columns.
+     * Returns the column names.
      *
-     * @return string[] The result column names.
+     * @return array<string> The column names.
      */
-    public function columns(): array
-    {
-        return $this->getColumnMeta() |> array_keys(...);
-    }
+    abstract public function columns(): array;
 
     /**
-     * Returns the result count.
+     * Returns the number of rows.
      *
-     * Note: {@see PDOStatement::rowCount()} is driver-dependent; when it is unreliable this
-     * method buffers remaining rows to determine the count.
-     *
-     * @return int The result count.
+     * @return int The number of rows.
      */
     #[Override]
     public function count(): int
     {
-        if ($this->count !== null) {
-            return $this->count;
-        }
+        $this->all();
 
-        $rowCount = $this->result->rowCount();
-
-        if ($this->result->columnCount() === 0) {
-            $this->free();
-
-            return $this->count = $rowCount;
-        }
-
-        if ($rowCount > 0) {
-            return $this->count = $rowCount;
-        }
-
-        return $this->count = ($this->all() |> count(...));
+        return count($this->buffer);
     }
 
     /**
-     * Returns the result at the current index.
+     * Returns the current row.
      *
-     * @return array<string, mixed> The result at the current index.
+     * @return TItem The current row.
      *
-     * @throws OutOfBoundsException If the index is out of bounds.
+     * @throws OutOfBoundsException If the current row index is invalid.
      */
     #[Override]
-    public function current(): array
+    public function current(): mixed
     {
         $row = $this->fetch($this->index);
 
@@ -196,54 +147,48 @@ abstract class ResultSet implements Countable, Iterator
     }
 
     /**
-     * Adds a result row decorator.
+     * Decorates the result set.
      *
-     * @param Closure(array<string, mixed>): array<string, mixed> $decorator The decorator callback.
-     * @return static The ResultSet instance.
+     * @template TDecorated
      *
-     * @throws LogicException If result buffering has already started.
+     * @param Closure(TItem): TDecorated $decorator The decorator callback.
+     * @return DecoratedResultSet<TItem, TDecorated> The DecoratedResultSet.
      */
-    public function decorate(Closure $decorator): static
+    public function decorate(Closure $decorator): DecoratedResultSet
     {
-        if ($this->buffer !== []) {
-            throw new LogicException('Result decorators cannot be added after buffering has started.');
-        }
-
-        $this->decorators[] = $decorator;
-
-        return $this;
+        return new DecoratedResultSet($this, $decorator);
     }
 
     /**
-     * Returns a result by index.
+     * Returns a row by index.
      *
-     * @param int $index The index.
-     * @return array<string, mixed>|null The result.
+     * @param int $index The row index.
+     * @return TItem|null The row, or null if the index does not exist.
      */
-    public function fetch(int $index = 0): array|null
+    public function fetch(int $index = 0): mixed
     {
         $bufferIndex = $index - count($this->buffer) + 1;
 
-        while ($bufferIndex-- >= 0) {
-            $row = $this->result->fetch(PDO::FETCH_ASSOC);
+        while ($bufferIndex-- >= 0 && !$this->freed) {
+            $row = $this->read();
 
-            if ($row === false) {
+            if ($row === null) {
                 $this->free();
                 break;
             }
 
-            $this->buffer[] = $this->decorateRow($row);
+            $this->buffer[] = $row;
         }
 
         return $this->buffer[$index] ?? null;
     }
 
     /**
-     * Returns the first result.
+     * Returns the first row.
      *
-     * @return array<string, mixed>|null The first result.
+     * @return TItem|null The first row, or null if the ResultSet is empty.
      */
-    public function first(): array|null
+    public function first(): mixed
     {
         $this->rewind();
 
@@ -251,7 +196,7 @@ abstract class ResultSet implements Countable, Iterator
     }
 
     /**
-     * Frees the result from memory.
+     * Releases the ResultSet resources.
      */
     public function free(): void
     {
@@ -259,31 +204,22 @@ abstract class ResultSet implements Countable, Iterator
             return;
         }
 
-        $this->result->closeCursor();
+        $this->release();
         $this->freed = true;
     }
 
     /**
-     * Returns a Type for a column.
+     * Returns the Type for a column.
      *
      * @param string $name The column name.
-     * @return Type|null The Type instance.
+     * @return Type|null The Type, or null if the column does not exist.
      */
-    public function getType(string $name): Type|null
-    {
-        $type = $this->getColumnType($name);
-
-        if (!$type) {
-            return null;
-        }
-
-        return $this->typeParser->use($type);
-    }
+    abstract public function getType(string $name): Type|null;
 
     /**
-     * Returns the current index.
+     * Returns the current row index.
      *
-     * @return int The current index.
+     * @return int The current row index.
      */
     #[Override]
     public function key(): int
@@ -292,11 +228,11 @@ abstract class ResultSet implements Countable, Iterator
     }
 
     /**
-     * Returns the last result.
+     * Returns the last row.
      *
-     * @return array<string, mixed>|null The last result.
+     * @return TItem|null The last row, or null if the ResultSet is empty.
      */
-    public function last(): array|null
+    public function last(): mixed
     {
         $rows = $this->all();
 
@@ -308,7 +244,7 @@ abstract class ResultSet implements Countable, Iterator
     }
 
     /**
-     * Advances the index.
+     * Moves to the next row.
      */
     #[Override]
     public function next(): void
@@ -317,7 +253,7 @@ abstract class ResultSet implements Countable, Iterator
     }
 
     /**
-     * Resets the index.
+     * Resets the current row index.
      */
     #[Override]
     public function rewind(): void
@@ -326,22 +262,22 @@ abstract class ResultSet implements Countable, Iterator
     }
 
     /**
-     * Returns the current result.
+     * Returns the current row and moves to the next row.
      *
-     * @return array<string, mixed>|null The current result.
+     * @return TItem|null The current row, or null if the ResultSet is exhausted.
      */
-    public function row(): array|null
+    public function row(): mixed
     {
-        return $this->fetch($this->index++);
+        $row = $this->fetch($this->index);
+        $this->index++;
+
+        return $row;
     }
 
     /**
-     * Checks whether the current index is valid.
+     * Checks whether the current row index is valid.
      *
-     * Note: This implementation may advance the underlying statement cursor to populate the
-     * buffer when checking validity.
-     *
-     * @return bool Whether the current index is valid.
+     * @return bool TRUE if the current row index is valid, otherwise FALSE.
      */
     #[Override]
     public function valid(): bool
@@ -350,65 +286,14 @@ abstract class ResultSet implements Countable, Iterator
     }
 
     /**
-     * Decorates a result row.
+     * Reads the next row.
      *
-     * @param array<string, mixed> $row The result row.
-     * @return array<string, mixed> The decorated result row.
+     * @return TItem|null The row, or null if the ResultSet is exhausted.
      */
-    protected function decorateRow(array $row): array
-    {
-        foreach ($this->decorators as $decorator) {
-            $row = $decorator($row);
-        }
-
-        return $row;
-    }
+    abstract protected function read(): mixed;
 
     /**
-     * Returns column metadata.
-     *
-     * @return array<string, array<string, mixed>> The column metadata keyed by column name.
+     * Releases the underlying resources.
      */
-    protected function getColumnMeta(): array
-    {
-        if ($this->columnMeta === null) {
-            $columnCount = $this->columnCount();
-
-            $this->columnMeta = [];
-
-            for ($i = 0; $i < $columnCount; $i++) {
-                $column = $this->result->getColumnMeta($i);
-
-                if (!$column) {
-                    continue;
-                }
-
-                $name = $column['name'];
-
-                $this->columnMeta[$name] = $column;
-            }
-        }
-
-        return $this->columnMeta;
-    }
-
-    /**
-     * Returns the database type for a column.
-     *
-     * @param string $name The column name.
-     * @return string|null The database type.
-     */
-    protected function getColumnType(string $name): string|null
-    {
-        $columns = $this->getColumnMeta();
-        $column = $columns[$name] ?? null;
-
-        if (!$column) {
-            return null;
-        }
-
-        $nativeType = $column['native_type'];
-
-        return (string) (static::$types[$nativeType] ?? 'string');
-    }
+    abstract protected function release(): void;
 }

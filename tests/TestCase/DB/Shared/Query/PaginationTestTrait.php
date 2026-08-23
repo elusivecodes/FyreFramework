@@ -3,9 +3,12 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Shared\Query;
 
+use Fyre\Core\Traits\DebugTrait;
+use Fyre\Core\Traits\MacroTrait;
 use Fyre\DB\Pagination\Page;
 use InvalidArgumentException;
 
+use function class_uses;
 use function iterator_to_array;
 
 trait PaginationTestTrait
@@ -41,6 +44,14 @@ trait PaginationTestTrait
                 ->from('test')
                 ->paginate(2, 2)
                 ->currentPage()
+        );
+    }
+
+    public function testPaginateDebug(): void
+    {
+        $this->assertContains(
+            DebugTrait::class,
+            class_uses(Page::class)
         );
     }
 
@@ -230,6 +241,14 @@ trait PaginationTestTrait
         $this->assertSame(
             3,
             $page->totalItems()
+        );
+    }
+
+    public function testPaginateMacro(): void
+    {
+        $this->assertContains(
+            MacroTrait::class,
+            class_uses(Page::class)
         );
     }
 

@@ -203,6 +203,6 @@ class SqliteConnection extends Connection
     #[Override]
     protected static function resultSetClass(): string
     {
-        return SqliteResultSet::class;
+        return SqliteStatementResultSet::class;
     }
 }

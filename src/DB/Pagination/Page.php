@@ -5,6 +5,8 @@ namespace Fyre\DB\Pagination;
 
 use ArrayIterator;
 use Countable;
+use Fyre\Core\Traits\DebugTrait;
+use Fyre\Core\Traits\MacroTrait;
 use Fyre\DB\Queries\SelectQuery;
 use InvalidArgumentException;
 use IteratorAggregate;
@@ -25,6 +27,9 @@ use function min;
  */
 class Page implements Countable, IteratorAggregate, JsonSerializable
 {
+    use DebugTrait;
+    use MacroTrait;
+
     /**
      * @var array<TItem>|null
      */

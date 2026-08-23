@@ -793,7 +793,7 @@ abstract class Connection
     {
         $this->affectedRows = $result->rowCount();
 
-        /** @var class-string<ResultSet> $className */
+        /** @var class-string<StatementResultSet> $className */
         $className = static::resultSetClass();
 
         return $this->container->build($className, ['result' => $result]);
@@ -802,7 +802,7 @@ abstract class Connection
     /**
      * Returns the ResultSet class.
      *
-     * @return class-string<ResultSet> The ResultSet class.
+     * @return class-string<StatementResultSet> The ResultSet class.
      */
     abstract protected static function resultSetClass(): string;
 

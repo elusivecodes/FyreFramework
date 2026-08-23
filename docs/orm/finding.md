@@ -187,7 +187,7 @@ Every primary-key value is required. Missing, `null`, empty-string, or empty-arr
 
 ## Working with `Result`
 
-`Fyre\ORM\Result` wraps a database `ResultSet` and turns each row into an entity (including contained data and `_matchingData` when applicable).
+`Fyre\ORM\Result` decorates a database `ResultSet` and turns each row into an entity (including contained data and `_matchingData` when applicable).
 
 You can iterate the result directly:
 
@@ -408,7 +408,7 @@ $user = $result->fetch(0);
 
 #### **Free resources early** (`free()`)
 
-Release the underlying `ResultSet` and stop streaming iteration.
+Release the underlying result set and stop streaming iteration.
 
 ```php
 $result = $Users->find()->disableBuffering()->all();

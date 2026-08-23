@@ -3,13 +3,13 @@ declare(strict_types=1);
 
 namespace Fyre\DB\Handlers\Postgres;
 
-use Fyre\DB\ResultSet;
+use Fyre\DB\StatementResultSet;
 use Override;
 
 /**
- * Provides a PostgreSQL {@see ResultSet} implementation with native type mapping.
+ * Provides a PostgreSQL {@see StatementResultSet} implementation with native type mapping.
  */
-class PostgresResultSet extends ResultSet
+class PostgresStatementResultSet extends StatementResultSet
 {
     #[Override]
     protected static array $types = [

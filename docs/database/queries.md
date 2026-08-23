@@ -509,15 +509,17 @@ $db->updateBatch('users')
     ->execute();
 ```
 
-## Working with `ResultSet`
+## Working with result sets
 
-Use `ResultSet` to iterate rows, fetch by index, or consume the full result as an array.
+Database queries return a `ResultSet`. PDO-backed result sets provide raw rows as
+arrays, while `DecoratedResultSet` lazily maps the rows to another type. Both can be iterated,
+fetched by index, or consumed as an array.
 
 Buffering vs streaming:
 
 - `row()` reads forward and increments the internal index.
 - `fetch($index)` may read ahead from the statement to populate the internal buffer up to that index.
-- `all()` fetches the remaining rows, buffers them, and frees the underlying cursor.
+- `all()` fetches the remaining rows, frees the underlying cursor, and returns the available non-null rows.
 - `count()` may buffer remaining rows when driver row counts are unreliable.
 - `valid()` may also advance the cursor while checking whether another row exists.
 
@@ -546,20 +548,34 @@ $result = $db->select(['id', 'email'])
 $row = $result->fetch(10);
 ```
 
-Common `ResultSet` methods:
+Common result-set methods:
 
 - `all(): array`
-- `first(): array|null`
-- `last(): array|null`
-- `row(): array|null`
-- `fetch(int $index = 0): array|null`
-- `decorate(Closure $decorator): static`
+- `first(): mixed`
+- `last(): mixed`
+- `row(): mixed`
+- `fetch(int $index = 0): mixed`
+- `decorate(Closure $decorator): DecoratedResultSet`
 - `columns(): array`
 - `columnCount(): int`
 - `count(): int`
 - `free(): void`
 
-Decorators transform each row before it is added to the result buffer. Multiple decorators run in the order they were added. Add all decorators before calling a method that starts buffering rows. They do not change driver column metadata.
+`decorate()` returns a new result set and leaves the wrapped result unchanged. Each callback is
+applied lazily, at most once per row. Decorators can change the row type and can be chained:
+
+```php
+$names = $result
+    ->decorate(static fn(array $row): User => new User($row))
+    ->decorate(static fn(User $user): string => $user->name)
+    ->all();
+```
+
+Decorated result sets delegate counting, column metadata, and resource release to the wrapped
+result. Calling `clearBuffer()` releases buffered rows throughout the decorator chain while
+retaining internal `null` placeholders so later row indexes remain stable. Cleared rows are omitted
+from `all()`, while the remaining rows keep their original indexes. `count()` continues to report
+the total number of source rows. Decorator callbacks should therefore return non-null values.
 
 ## Behavior notes
 

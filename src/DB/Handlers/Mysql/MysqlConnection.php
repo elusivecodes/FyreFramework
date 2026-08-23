@@ -241,6 +241,6 @@ class MysqlConnection extends Connection
     #[Override]
     protected static function resultSetClass(): string
     {
-        return MysqlResultSet::class;
+        return MysqlStatementResultSet::class;
     }
 }

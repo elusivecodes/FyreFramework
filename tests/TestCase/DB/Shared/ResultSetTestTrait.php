@@ -3,8 +3,9 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Shared;
 
+use Fyre\DB\DecoratedResultSet;
 use Fyre\DB\Types\StringType;
-use LogicException;
+use stdClass;
 
 trait ResultSetTestTrait
 {
@@ -51,13 +52,20 @@ trait ResultSetTestTrait
                     'id' => 1,
                     'name' => 'Test 1',
                 ],
-                [],
-                [
+                2 => [
                     'id' => 3,
                     'name' => 'Test 3',
                 ],
             ],
             $result->all()
+        );
+
+        $this->assertNull(
+            $result->fetch(1)
+        );
+        $this->assertSame(
+            3,
+            $result->count()
         );
     }
 
@@ -74,8 +82,7 @@ trait ResultSetTestTrait
 
         $this->assertArraysAreIdentical(
             [
-                [],
-                [
+                1 => [
                     'id' => 2,
                     'name' => 'Test 2',
                 ],
@@ -85,6 +92,11 @@ trait ResultSetTestTrait
                 ],
             ],
             $result->all()
+        );
+
+        $this->assertSame(
+            3,
+            $result->count()
         );
     }
 
@@ -130,11 +142,33 @@ trait ResultSetTestTrait
         );
     }
 
+    public function testDecorate(): void
+    {
+        $this->insert();
+
+        $result = $this->db->select()
+            ->from('test')
+            ->execute()
+            ->decorate(static fn(array $row): stdClass => (object) $row)
+            ->decorate(static fn(stdClass $row): string => $row->name);
+
+        $this->assertInstanceOf(
+            DecoratedResultSet::class,
+            $result
+        );
+
+        $this->assertArraysAreIdentical(
+            [
+                'Test 1',
+                'Test 2',
+                'Test 3',
+            ],
+            $result->all()
+        );
+    }
+
     public function testDecorateAfterBuffering(): void
     {
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessageIs('Result decorators cannot be added after buffering has started.');
-
         $this->insert();
 
         $result = $this->db->select()
@@ -142,7 +176,111 @@ trait ResultSetTestTrait
             ->execute();
 
         $result->all();
-        $result->decorate(static fn(array $row): array => $row);
+
+        $decorated = $result->decorate(static fn(array $row): string => $row['name']);
+
+        $this->assertArraysAreIdentical(
+            [
+                'Test 1',
+                'Test 2',
+                'Test 3',
+            ],
+            $decorated->all()
+        );
+    }
+
+    public function testDecorateCallbackOnce(): void
+    {
+        $this->insert();
+
+        $count = 0;
+        $result = $this->db->select()
+            ->from('test')
+            ->execute()
+            ->decorate(static function(array $row) use (&$count): stdClass {
+                $count++;
+
+                return (object) $row;
+            });
+
+        $first = $result->first();
+
+        $this->assertInstanceOf(
+            stdClass::class,
+            $first
+        );
+
+        $this->assertSame(
+            $first,
+            $result->fetch()
+        );
+
+        $result->all();
+
+        $this->assertSame(
+            3,
+            $count
+        );
+    }
+
+    public function testDecorateClearBuffer(): void
+    {
+        $this->insert();
+
+        $count = 0;
+        $result = $this->db->select()
+            ->from('test')
+            ->execute()
+            ->decorate(static function(array $row) use (&$count): string {
+                $count++;
+
+                return $row['name'];
+            });
+
+        $result->first();
+        $result->clearBuffer(0);
+
+        $this->assertArraysAreIdentical(
+            [
+                1 => 'Test 2',
+                'Test 3',
+            ],
+            $result->all()
+        );
+
+        $this->assertSame(
+            3,
+            $count
+        );
+        $this->assertSame(
+            3,
+            $result->count()
+        );
+    }
+
+    public function testDecorateLazyCount(): void
+    {
+        $this->insert();
+
+        $count = 0;
+        $result = $this->db->select()
+            ->from('test')
+            ->execute()
+            ->decorate(static function(array $row) use (&$count): array {
+                $count++;
+
+                return $row;
+            });
+
+        $this->assertSame(
+            3,
+            $result->count()
+        );
+
+        $this->assertSame(
+            0,
+            $count
+        );
     }
 
     public function testDecorateMultiple(): void

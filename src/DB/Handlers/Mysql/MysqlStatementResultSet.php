@@ -3,13 +3,13 @@ declare(strict_types=1);
 
 namespace Fyre\DB\Handlers\Mysql;
 
-use Fyre\DB\ResultSet;
+use Fyre\DB\StatementResultSet;
 use Override;
 
 /**
- * Provides a MySQL {@see ResultSet} implementation with native type mapping.
+ * Provides a MySQL {@see StatementResultSet} implementation with native type mapping.
  */
-class MysqlResultSet extends ResultSet
+class MysqlStatementResultSet extends StatementResultSet
 {
     #[Override]
     protected static array $types = [

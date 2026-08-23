@@ -3,18 +3,18 @@ declare(strict_types=1);
 
 namespace Fyre\DB\Handlers\Sqlite;
 
-use Fyre\DB\ResultSet;
+use Fyre\DB\StatementResultSet;
 use Override;
 
 use function count;
 
 /**
- * Provides a SQLite-specific {@see ResultSet} implementation.
+ * Provides a SQLite-specific {@see StatementResultSet} implementation.
  *
  * SQLite drivers may not provide reliable metadata until a fetch has occurred, so this
  * implementation ensures column metadata is loaded before buffering results.
  */
-class SqliteResultSet extends ResultSet
+class SqliteStatementResultSet extends StatementResultSet
 {
     #[Override]
     protected static array $types = [
@@ -50,7 +50,9 @@ class SqliteResultSet extends ResultSet
             return $this->count = $rowCount;
         }
 
-        return $this->count = ($this->all() |> count(...));
+        $this->all();
+
+        return $this->count = count($this->buffer);
     }
 
     /**

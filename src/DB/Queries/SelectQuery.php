@@ -104,15 +104,15 @@ class SelectQuery extends Query
     {
         $result = parent::execute($binder);
 
-        if ($this->groupLimit !== null) {
-            $result->decorate(static function(array $row): array {
-                unset($row[static::GROUP_LIMIT_ROW]);
-
-                return $row;
-            });
+        if ($this->groupLimit === null) {
+            return $result;
         }
 
-        return $result;
+        return $result->decorate(static function(array $row): array {
+            unset($row[static::GROUP_LIMIT_ROW]);
+
+            return $row;
+        });
     }
 
     /**

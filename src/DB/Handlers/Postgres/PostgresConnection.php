@@ -200,6 +200,6 @@ class PostgresConnection extends Connection
     #[Override]
     protected static function resultSetClass(): string
     {
-        return PostgresResultSet::class;
+        return PostgresStatementResultSet::class;
     }
 }

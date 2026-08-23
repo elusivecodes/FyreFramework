@@ -106,7 +106,7 @@ Metadata-driven type resolution is driver-dependent. In particular, `ResultSet::
 
 ### From a `ResultSet` column
 
-`Fyre\DB\ResultSet::getType()` returns a `Type` handler for a column name when the driver provides `native_type` metadata for that column.
+`Fyre\DB\ResultSet::getType()` returns a `Type` handler for a column name when the driver provides `native_type` metadata for that column. Decorated result sets delegate this metadata lookup to the wrapped result.
 
 ```php
 $row = $result->first();
