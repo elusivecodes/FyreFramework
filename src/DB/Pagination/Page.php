@@ -63,6 +63,7 @@ class Page implements Countable, IteratorAggregate, JsonSerializable
         }
 
         $this->query = clone $query;
+        $this->query->limit(null, 0);
     }
 
     /**
@@ -236,9 +237,7 @@ class Page implements Countable, IteratorAggregate, JsonSerializable
         if ($this->total === null) {
             $query = clone $this->query;
 
-            $this->total = $query
-                ->limit(null, 0)
-                ->count();
+            $this->total = $query->count();
         }
 
         return $this->total;

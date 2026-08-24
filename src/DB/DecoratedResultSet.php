@@ -21,10 +21,12 @@ class DecoratedResultSet extends ResultSet
      *
      * @param ResultSet<TInput> $result The wrapped ResultSet.
      * @param Closure(TInput): TOutput $decorator The decorator callback.
+     * @param bool $consume Whether to consume buffered rows from the wrapped ResultSet.
      */
     public function __construct(
         protected ResultSet $result,
-        protected Closure $decorator
+        protected Closure $decorator,
+        protected bool $consume = true
     ) {}
 
     /**
@@ -34,6 +36,10 @@ class DecoratedResultSet extends ResultSet
     public function clearBuffer(int|null $index = null): void
     {
         parent::clearBuffer($index);
+
+        if (!$this->consume) {
+            return;
+        }
 
         $this->result->clearBuffer($index);
     }
@@ -80,11 +86,20 @@ class DecoratedResultSet extends ResultSet
     #[Override]
     protected function read(): mixed
     {
+        $index = $this->result->key();
         $row = $this->result->row();
 
-        return $row !== null ?
-            ($row |> $this->decorator) :
-            null;
+        if ($row === null) {
+            return null;
+        }
+
+        $row = ($this->decorator)($row);
+
+        if ($this->consume) {
+            $this->result->clearBuffer($index);
+        }
+
+        return $row;
     }
 
     /**
@@ -93,6 +108,10 @@ class DecoratedResultSet extends ResultSet
     #[Override]
     protected function release(): void
     {
+        if (!$this->consume) {
+            return;
+        }
+
         $this->result->free();
     }
 }

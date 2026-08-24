@@ -8,7 +8,6 @@ use PDO;
 use PDOStatement;
 
 use function array_keys;
-use function count;
 
 /**
  * Buffered iterator over database statement results.
@@ -80,7 +79,7 @@ abstract class StatementResultSet extends ResultSet
 
         $this->all();
 
-        return $this->count = count($this->buffer);
+        return $this->count = $this->bufferLength;
     }
 
     /**

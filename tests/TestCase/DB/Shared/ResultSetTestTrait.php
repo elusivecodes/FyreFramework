@@ -258,6 +258,30 @@ trait ResultSetTestTrait
         );
     }
 
+    public function testDecorateConsumesResult(): void
+    {
+        $this->insert();
+
+        $result = $this->db->select()
+            ->from('test')
+            ->execute();
+
+        $this->assertArraysAreIdentical(
+            [
+                'Test 1',
+                'Test 2',
+                'Test 3',
+            ],
+            $result->decorate(static fn(array $row): string => $row['name'])
+                ->all()
+        );
+
+        $this->assertSame(
+            [],
+            $result->all()
+        );
+    }
+
     public function testDecorateLazyCount(): void
     {
         $this->insert();
@@ -317,6 +341,45 @@ trait ResultSetTestTrait
                     'id' => 3,
                     'name' => 'Test 3',
                     'value' => 6,
+                ],
+            ],
+            $result->all()
+        );
+    }
+
+    public function testDecoratePreservesResult(): void
+    {
+        $this->insert();
+
+        $result = $this->db->select()
+            ->from('test')
+            ->execute();
+
+        $decorated = $result->decorate(
+            static fn(array $row): string => $row['name'],
+            consume: false
+        );
+
+        $this->assertSame(
+            'Test 1',
+            $decorated->first()
+        );
+
+        $decorated->free();
+
+        $this->assertArraysAreIdentical(
+            [
+                [
+                    'id' => 1,
+                    'name' => 'Test 1',
+                ],
+                [
+                    'id' => 2,
+                    'name' => 'Test 2',
+                ],
+                [
+                    'id' => 3,
+                    'name' => 'Test 3',
                 ],
             ],
             $result->all()

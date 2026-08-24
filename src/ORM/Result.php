@@ -16,6 +16,7 @@ use Iterator;
 use IteratorAggregate;
 use JsonSerializable;
 use Override;
+use Stringable;
 
 use function array_first;
 use function array_merge;
@@ -37,7 +38,7 @@ use function in_array;
  *
  * @implements IteratorAggregate<int, TEntity>
  */
-class Result implements Countable, IteratorAggregate, JsonSerializable
+class Result implements Countable, IteratorAggregate, JsonSerializable, Stringable
 {
     use DebugTrait;
     use MacroTrait {
@@ -89,9 +90,8 @@ class Result implements Countable, IteratorAggregate, JsonSerializable
         $eagerLoad = $this->query->getEagerLoadPaths() !== [];
 
         $this->result = $result
-            ->decorate($this->parseRow(...))
-            ->decorate(function(array $data) use ($eagerLoad, $buffer): Entity {
-                $entity = $this->buildEntity($data);
+            ->decorate(function(array $row) use ($eagerLoad, $buffer): Entity {
+                $entity = $this->parseRow($row) |> $this->buildEntity(...);
 
                 if ($eagerLoad && !$buffer) {
                     static::loadContain([$entity], $this->query->getContain(), $this->query->getModel(), $this->query, $this->query->getAlias());

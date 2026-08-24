@@ -555,14 +555,14 @@ Common result-set methods:
 - `last(): mixed`
 - `row(): mixed`
 - `fetch(int $index = 0): mixed`
-- `decorate(Closure $decorator): DecoratedResultSet`
+- `decorate(Closure $decorator, bool $consume = true): DecoratedResultSet`
 - `columns(): array`
 - `columnCount(): int`
 - `count(): int`
 - `free(): void`
 
-`decorate()` returns a new result set and leaves the wrapped result unchanged. Each callback is
-applied lazily, at most once per row. Decorators can change the row type and can be chained:
+`decorate()` returns a new result set and applies its callback lazily, at most once per row.
+Decorators can change the row type and can be chained:
 
 ```php
 $names = $result
@@ -571,11 +571,14 @@ $names = $result
     ->all();
 ```
 
-Decorated result sets delegate counting, column metadata, and resource release to the wrapped
-result. Calling `clearBuffer()` releases buffered rows throughout the decorator chain while
-retaining internal `null` placeholders so later row indexes remain stable. Cleared rows are omitted
-from `all()`, while the remaining rows keep their original indexes. `count()` continues to report
-the total number of source rows. Decorator callbacks should therefore return non-null values.
+By default, each mapped row is removed from the wrapped result, and releasing the decorated result
+also releases the wrapped result. Pass `consume: false` to preserve the wrapped result instead.
+Decorated result sets delegate counting and column metadata to the wrapped result.
+
+Calling `clearBuffer()` releases buffered rows throughout a consuming decorator chain while
+retaining their indexes as sparse gaps. Cleared rows are omitted from `all()`, while the remaining
+rows keep their original indexes. `count()` continues to report the total number of source rows.
+Decorator callbacks should therefore return non-null values.
 
 ## Behavior notes
 

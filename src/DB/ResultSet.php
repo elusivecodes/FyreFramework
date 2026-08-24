@@ -11,11 +11,7 @@ use Iterator;
 use OutOfBoundsException;
 use Override;
 
-use function array_fill;
-use function array_filter;
 use function array_last;
-use function array_pop;
-use function count;
 use function sprintf;
 
 /**
@@ -31,9 +27,11 @@ abstract class ResultSet implements Countable, Iterator
     use MacroTrait;
 
     /**
-     * @var array<int, TItem|null>
+     * @var array<int, TItem>
      */
     protected array $buffer = [];
+
+    protected int $bufferLength = 0;
 
     protected bool $freed = false;
 
@@ -62,13 +60,10 @@ abstract class ResultSet implements Countable, Iterator
                 break;
             }
 
-            $this->buffer[] = $row;
+            $this->buffer[$this->bufferLength++] = $row;
         }
 
-        return array_filter(
-            $this->buffer,
-            static fn(mixed $row): bool => $row !== null
-        );
+        return $this->buffer;
     }
 
     /**
@@ -78,22 +73,24 @@ abstract class ResultSet implements Countable, Iterator
      */
     public function clearBuffer(int|null $index = null): void
     {
-        if ($index === null) {
-            $count = count($this->buffer);
+        if ($this->buffer === []) {
+            return;
+        }
 
+        if ($index === null) {
+            $lastIndex = $this->bufferLength - 1;
             $lastRow = null;
-            if (!$this->freed && $count > 1) {
-                $lastRow = array_pop($this->buffer);
-                $count--;
+            if (!$this->freed && $this->bufferLength > 1) {
+                $lastRow = $this->buffer[$lastIndex] ?? null;
             }
 
-            $this->buffer = array_fill(0, $count, null);
+            $this->buffer = [];
 
             if ($lastRow !== null) {
-                $this->buffer[] = $lastRow;
+                $this->buffer[$lastIndex] = $lastRow;
             }
         } else if (isset($this->buffer[$index])) {
-            $this->buffer[$index] = null;
+            unset($this->buffer[$index]);
         }
     }
 
@@ -121,7 +118,7 @@ abstract class ResultSet implements Countable, Iterator
     {
         $this->all();
 
-        return count($this->buffer);
+        return $this->bufferLength;
     }
 
     /**
@@ -152,11 +149,12 @@ abstract class ResultSet implements Countable, Iterator
      * @template TDecorated
      *
      * @param Closure(TItem): TDecorated $decorator The decorator callback.
+     * @param bool $consume Whether to consume buffered rows from this ResultSet.
      * @return DecoratedResultSet<TItem, TDecorated> The DecoratedResultSet.
      */
-    public function decorate(Closure $decorator): DecoratedResultSet
+    public function decorate(Closure $decorator, bool $consume = true): DecoratedResultSet
     {
-        return new DecoratedResultSet($this, $decorator);
+        return new DecoratedResultSet($this, $decorator, $consume);
     }
 
     /**
@@ -167,7 +165,7 @@ abstract class ResultSet implements Countable, Iterator
      */
     public function fetch(int $index = 0): mixed
     {
-        $bufferIndex = $index - count($this->buffer) + 1;
+        $bufferIndex = $index - $this->bufferLength + 1;
 
         while ($bufferIndex-- >= 0 && !$this->freed) {
             $row = $this->read();
@@ -177,7 +175,7 @@ abstract class ResultSet implements Countable, Iterator
                 break;
             }
 
-            $this->buffer[] = $row;
+            $this->buffer[$this->bufferLength++] = $row;
         }
 
         return $this->buffer[$index] ?? null;

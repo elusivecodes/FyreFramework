@@ -6,8 +6,6 @@ namespace Fyre\DB\Handlers\Sqlite;
 use Fyre\DB\StatementResultSet;
 use Override;
 
-use function count;
-
 /**
  * Provides a SQLite-specific {@see StatementResultSet} implementation.
  *
@@ -45,6 +43,7 @@ class SqliteStatementResultSet extends StatementResultSet
 
         if ($this->result->columnCount() === 0) {
             $rowCount = $this->result->rowCount();
+
             $this->free();
 
             return $this->count = $rowCount;
@@ -52,7 +51,7 @@ class SqliteStatementResultSet extends StatementResultSet
 
         $this->all();
 
-        return $this->count = count($this->buffer);
+        return $this->count = $this->bufferLength;
     }
 
     /**
