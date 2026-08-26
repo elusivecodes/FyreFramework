@@ -9,7 +9,9 @@ trait QueryTestTrait
     use ExecuteTestTrait;
     use GetTestTrait;
     use InsertTestTrait;
-    use PaginationTestTrait;
+    use PaginateByCursorTestTrait;
+    use PaginateTestTrait;
+    use PaginateWithTotalTestTrait;
     use SelectTestTrait;
     use TransactionTestTrait;
     use UpdateTestTrait;

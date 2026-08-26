@@ -16,6 +16,7 @@ Start with a `Connection`, build the query you need, then call `execute()`.
   - [Optimizer hints](#optimizer-hints)
   - [Tail SQL (`epilog()`)](#tail-sql-epilog)
 - [Select queries](#select-queries)
+  - [Pagination](#pagination)
   - [Joins](#joins)
   - [Common table expressions (WITH)](#common-table-expressions-with)
   - [Subqueries](#subqueries)
@@ -263,6 +264,61 @@ Key methods you’ll use most often:
 
 - Core composition: `select()`, `distinct()`, `from()`, `join()`, `where()`, `groupBy()`, `having()`, `orderBy()`, `limit()`, `offset()`, `groupLimit()`
 - CTEs and set operations: `with()`, `withRecursive()`, `union()`, `unionAll()`, `except()`, `intersect()`
+
+### Pagination
+
+Select queries provide three lazy pagination strategies. Each paginator snapshots the query,
+replaces any existing `LIMIT`/`OFFSET`, and only executes when items or related metadata are read.
+The original query is not modified.
+
+- `paginate(int $page = 1, int $perPage = 20)` returns a `Page`. It fetches at most `perPage + 1` rows in one query to expose `hasNext()` without calculating a total.
+- `paginateWithTotal(int $page = 1, int $perPage = 20)` returns a `PageWithTotal`. It runs an item query and a separate count query, exposing `totalItems()` and `totalPages()`.
+- `paginateByCursor(string|null $cursor = null, int $perPage = 20)` returns a `CursorPage`. It uses ordered field values instead of an offset and supports both next and previous cursors.
+
+Use pagination with totals when the UI needs an exact total or numbered final page. Use regular
+pagination when numbered navigation is useful but a count would be expensive. Use cursor pagination
+for stable traversal through large or frequently changing result sets.
+
+Pagination cannot be applied to a query using `groupLimit()`.
+
+```php
+$page = $db->select('*')
+    ->from('users')
+    ->where(['active' => true])
+    ->orderBy(['id' => 'ASC'])
+    ->paginate(page: 2, perPage: 25);
+
+$pageWithTotal = $db->select('*')
+    ->from('users')
+    ->where(['active' => true])
+    ->orderBy(['id' => 'ASC'])
+    ->paginateWithTotal(page: 2, perPage: 25);
+
+$cursorPage = $db->select('*')
+    ->from('users')
+    ->where(['active' => true])
+    ->orderBy(['created' => 'DESC', 'id' => 'DESC'])
+    ->paginateByCursor(cursor: $cursor, perPage: 25);
+```
+
+`Page` and `PageWithTotal` expose `items()`, `count()`, `currentPage()`, `perPage()`,
+`firstItem()`, `lastItem()`, `hasNext()`, `hasPrevious()`, `nextPage()`, and
+`previousPage()`. Their JSON output places the rows in `data` and metadata in `pagination`.
+Only `PageWithTotal` exposes exact total metadata.
+
+`CursorPage` exposes `items()`, `count()`, `currentCursor()`, `perPage()`, `hasNext()`,
+`hasPrevious()`, `nextCursor()`, and `previousCursor()`. Pass `nextCursor()` or
+`previousCursor()` back into `paginateByCursor()` to move in that direction. Its JSON pagination
+metadata contains `perPage`, `nextCursor`, and `previousCursor`.
+
+Cursor ordering has a stricter contract:
+
+- The query must have an `ORDER BY` made from simple field names with `ASC` or `DESC` directions.
+- Ordered fields are selected internally and must contain non-null scalar database values. The
+  internal fields are removed from returned results. The final ordered field should be unique; a
+  primary key is the usual tie-breaker.
+- Cursors are URL-safe encoded navigation state, not encrypted data. Their values are still bound as query parameters when used.
+- A cursor is tied to its ordering and is rejected if reused with a different ordered field set or direction.
 
 ### Per-group limits
 

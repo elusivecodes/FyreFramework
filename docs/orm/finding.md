@@ -15,6 +15,7 @@ Start with a model, call `find()` for lists, and use `get()` for primary-key loo
   - [Loading related data with `contain()`](#loading-related-data-with-contain)
   - [Filtering by relationships](#filtering-by-relationships)
   - [Getting a subset of results](#getting-a-subset-of-results)
+  - [Paginating entities](#paginating-entities)
 - [Finding one record](#finding-one-record)
 - [Working with `Result`](#working-with-result)
   - [Buffering vs streaming](#buffering-vs-streaming)
@@ -166,6 +167,35 @@ Use `count()` and `first()` when you only need a subset:
 $total = $Users->find(conditions: ['Users.id >' => 10])->count();
 $first = $Users->find(conditions: ['Users.id >' => 10])->first();
 ```
+
+### Paginating entities
+
+ORM select queries inherit all three database pagination strategies and return hydrated entities
+as their page items:
+
+```php
+$page = $Users->find()
+    ->where(['Users.active' => true])
+    ->orderBy(['Users.id' => 'ASC'])
+    ->paginate(page: 2, perPage: 25);
+
+$pageWithTotal = $Users->find()
+    ->where(['Users.active' => true])
+    ->orderBy(['Users.id' => 'ASC'])
+    ->paginateWithTotal(page: 2, perPage: 25);
+
+$cursorPage = $Users->find()
+    ->where(['Users.active' => true])
+    ->orderBy(['Users.created' => 'DESC', 'Users.id' => 'DESC'])
+    ->paginateByCursor(cursor: $cursor, perPage: 25);
+```
+
+Use `paginate()` to avoid a count query, `paginateWithTotal()` for exact totals, and
+`paginateByCursor()` for ordered keyset traversal. Cursor-ordered fields are selected internally,
+including fields from joined `contain()` relationships, and must contain non-null scalar database
+values. The final ordered field should normally be the model primary key. See
+[Database query pagination](../database/queries.md#pagination) for the result APIs and cursor
+contract.
 
 ## Finding one record
 

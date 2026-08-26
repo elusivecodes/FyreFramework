@@ -5,25 +5,25 @@ namespace Tests\TestCase\DB\Shared\Query;
 
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
-use Fyre\DB\Pagination\Page;
+use Fyre\DB\Pagination\PageWithTotal;
 use InvalidArgumentException;
 
 use function class_uses;
 use function iterator_to_array;
 
-trait PaginationTestTrait
+trait PaginateWithTotalTestTrait
 {
-    public function testPaginate(): void
+    public function testPaginateWithTotal(): void
     {
         $this->assertInstanceOf(
-            Page::class,
+            PageWithTotal::class,
             $this->db->select()
                 ->from('test')
-                ->paginate()
+                ->paginateWithTotal()
         );
     }
 
-    public function testPaginateCount(): void
+    public function testPaginateWithTotalCount(): void
     {
         $this->insert();
 
@@ -31,31 +31,31 @@ trait PaginationTestTrait
             2,
             $this->db->select()
                 ->from('test')
-                ->paginate(1, 2)
+                ->paginateWithTotal(1, 2)
                 ->count()
         );
     }
 
-    public function testPaginateCurrentPage(): void
+    public function testPaginateWithTotalCurrentPage(): void
     {
         $this->assertSame(
             2,
             $this->db->select()
                 ->from('test')
-                ->paginate(2, 2)
+                ->paginateWithTotal(2, 2)
                 ->currentPage()
         );
     }
 
-    public function testPaginateDebug(): void
+    public function testPaginateWithTotalDebug(): void
     {
         $this->assertContains(
             DebugTrait::class,
-            class_uses(Page::class)
+            class_uses(PageWithTotal::class)
         );
     }
 
-    public function testPaginateFirstItem(): void
+    public function testPaginateWithTotalFirstItem(): void
     {
         $this->insert();
 
@@ -63,22 +63,33 @@ trait PaginationTestTrait
             3,
             $this->db->select()
                 ->from('test')
-                ->paginate(2, 2)
+                ->paginateWithTotal(2, 2)
                 ->firstItem()
         );
     }
 
-    public function testPaginateFirstItemEmpty(): void
+    public function testPaginateWithTotalFirstItemEmpty(): void
     {
         $this->assertNull(
             $this->db->select()
                 ->from('test')
-                ->paginate()
+                ->paginateWithTotal()
                 ->firstItem()
         );
     }
 
-    public function testPaginateHasNext(): void
+    public function testPaginateWithTotalGroupLimit(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Query group limits cannot be used with pagination.');
+
+        $this->db->select()
+            ->from('test')
+            ->groupLimit(1, 'name')
+            ->paginateWithTotal();
+    }
+
+    public function testPaginateWithTotalHasNext(): void
     {
         $this->insert();
 
@@ -86,51 +97,51 @@ trait PaginationTestTrait
             ->from('test');
 
         $this->assertTrue(
-            $query->paginate(1, 2)
+            $query->paginateWithTotal(1, 2)
                 ->hasNext()
         );
         $this->assertFalse(
-            $query->paginate(2, 2)
+            $query->paginateWithTotal(2, 2)
                 ->hasNext()
         );
     }
 
-    public function testPaginateHasPrevious(): void
+    public function testPaginateWithTotalHasPrevious(): void
     {
         $query = $this->db->select()
             ->from('test');
 
         $this->assertFalse(
-            $query->paginate()
+            $query->paginateWithTotal()
                 ->hasPrevious()
         );
         $this->assertTrue(
-            $query->paginate(2)
+            $query->paginateWithTotal(2)
                 ->hasPrevious()
         );
     }
 
-    public function testPaginateInvalidPage(): void
+    public function testPaginateWithTotalInvalidPage(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageIs('Page must be greater than zero.');
 
         $this->db->select()
             ->from('test')
-            ->paginate(0);
+            ->paginateWithTotal(0);
     }
 
-    public function testPaginateInvalidPerPage(): void
+    public function testPaginateWithTotalInvalidPerPage(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageIs('Items per page must be greater than zero.');
 
         $this->db->select()
             ->from('test')
-            ->paginate(1, 0);
+            ->paginateWithTotal(1, 0);
     }
 
-    public function testPaginateItems(): void
+    public function testPaginateWithTotalItems(): void
     {
         $this->insert();
 
@@ -146,12 +157,12 @@ trait PaginationTestTrait
                 ->orderBy([
                     'id' => 'ASC',
                 ])
-                ->paginate(2, 2)
+                ->paginateWithTotal(2, 2)
                 ->items()
         );
     }
 
-    public function testPaginateIteration(): void
+    public function testPaginateWithTotalIteration(): void
     {
         $this->insert();
 
@@ -160,7 +171,7 @@ trait PaginationTestTrait
             ->orderBy([
                 'id' => 'ASC',
             ])
-            ->paginate(2, 2);
+            ->paginateWithTotal(2, 2);
 
         $this->assertArraysAreIdentical(
             [
@@ -173,7 +184,7 @@ trait PaginationTestTrait
         );
     }
 
-    public function testPaginateJsonSerialize(): void
+    public function testPaginateWithTotalJsonSerialize(): void
     {
         $this->insert();
 
@@ -182,7 +193,7 @@ trait PaginationTestTrait
             ->orderBy([
                 'id' => 'ASC',
             ])
-            ->paginate(2, 2);
+            ->paginateWithTotal(2, 2);
 
         $this->assertArraysAreIdentical(
             [
@@ -203,7 +214,7 @@ trait PaginationTestTrait
         );
     }
 
-    public function testPaginateLastItem(): void
+    public function testPaginateWithTotalLastItem(): void
     {
         $this->insert();
 
@@ -211,26 +222,26 @@ trait PaginationTestTrait
             3,
             $this->db->select()
                 ->from('test')
-                ->paginate(2, 2)
+                ->paginateWithTotal(2, 2)
                 ->lastItem()
         );
     }
 
-    public function testPaginateLastItemEmpty(): void
+    public function testPaginateWithTotalLastItemEmpty(): void
     {
         $this->assertNull(
             $this->db->select()
                 ->from('test')
-                ->paginate()
+                ->paginateWithTotal()
                 ->lastItem()
         );
     }
 
-    public function testPaginateLazy(): void
+    public function testPaginateWithTotalLazy(): void
     {
         $page = $this->db->select()
             ->from('test')
-            ->paginate(1, 2);
+            ->paginateWithTotal(1, 2);
 
         $this->insert();
 
@@ -244,15 +255,15 @@ trait PaginationTestTrait
         );
     }
 
-    public function testPaginateMacro(): void
+    public function testPaginateWithTotalMacro(): void
     {
         $this->assertContains(
             MacroTrait::class,
-            class_uses(Page::class)
+            class_uses(PageWithTotal::class)
         );
     }
 
-    public function testPaginateNextPage(): void
+    public function testPaginateWithTotalNextPage(): void
     {
         $this->insert();
 
@@ -261,16 +272,16 @@ trait PaginationTestTrait
 
         $this->assertSame(
             2,
-            $query->paginate(1, 2)
+            $query->paginateWithTotal(1, 2)
                 ->nextPage()
         );
         $this->assertNull(
-            $query->paginate(2, 2)
+            $query->paginateWithTotal(2, 2)
                 ->nextPage()
         );
     }
 
-    public function testPaginateOverwritesLimitOffset(): void
+    public function testPaginateWithTotalOverwritesLimitOffset(): void
     {
         $this->insert();
 
@@ -281,7 +292,7 @@ trait PaginationTestTrait
             ])
             ->limit(1, 1);
 
-        $page = $query->paginate(1, 2);
+        $page = $query->paginateWithTotal(1, 2);
 
         $this->assertArraysAreIdentical(
             [
@@ -310,34 +321,34 @@ trait PaginationTestTrait
         );
     }
 
-    public function testPaginatePerPage(): void
+    public function testPaginateWithTotalPerPage(): void
     {
         $this->assertSame(
             10,
             $this->db->select()
                 ->from('test')
-                ->paginate(1, 10)
+                ->paginateWithTotal(1, 10)
                 ->perPage()
         );
     }
 
-    public function testPaginatePreviousPage(): void
+    public function testPaginateWithTotalPreviousPage(): void
     {
         $query = $this->db->select()
             ->from('test');
 
         $this->assertNull(
-            $query->paginate()
+            $query->paginateWithTotal()
                 ->previousPage()
         );
         $this->assertSame(
             1,
-            $query->paginate(2)
+            $query->paginateWithTotal(2)
                 ->previousPage()
         );
     }
 
-    public function testPaginateTotalItems(): void
+    public function testPaginateWithTotalTotalItems(): void
     {
         $this->insert();
 
@@ -345,12 +356,12 @@ trait PaginationTestTrait
             3,
             $this->db->select()
                 ->from('test')
-                ->paginate()
+                ->paginateWithTotal()
                 ->totalItems()
         );
     }
 
-    public function testPaginateTotalPages(): void
+    public function testPaginateWithTotalTotalPages(): void
     {
         $this->insert();
 
@@ -358,18 +369,18 @@ trait PaginationTestTrait
             2,
             $this->db->select()
                 ->from('test')
-                ->paginate(1, 2)
+                ->paginateWithTotal(1, 2)
                 ->totalPages()
         );
     }
 
-    public function testPaginateTotalPagesEmpty(): void
+    public function testPaginateWithTotalTotalPagesEmpty(): void
     {
         $this->assertSame(
             0,
             $this->db->select()
                 ->from('test')
-                ->paginate()
+                ->paginateWithTotal()
                 ->totalPages()
         );
     }

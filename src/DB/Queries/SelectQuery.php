@@ -3,9 +3,12 @@ declare(strict_types=1);
 
 namespace Fyre\DB\Queries;
 
+use Closure;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\DB\Connection;
+use Fyre\DB\Pagination\CursorPage;
 use Fyre\DB\Pagination\Page;
+use Fyre\DB\Pagination\PageWithTotal;
 use Fyre\DB\Queries\Traits\DistinctTrait;
 use Fyre\DB\Queries\Traits\EpilogTrait;
 use Fyre\DB\Queries\Traits\FromTrait;
@@ -61,6 +64,11 @@ class SelectQuery extends Query
     protected bool $multipleTables = true;
 
     /**
+     * @var (Closure(array<string, mixed>): array<string, mixed>)|null
+     */
+    protected Closure|null $resultCallback = null;
+
+    /**
      * Constructs a SelectQuery.
      *
      * @param Connection $connection The Connection.
@@ -104,32 +112,73 @@ class SelectQuery extends Query
     {
         $result = parent::execute($binder);
 
-        if ($this->groupLimit === null) {
-            return $result;
+        if ($this->groupLimit !== null) {
+            return $result->decorate(static function(array $row): array {
+                unset($row[static::GROUP_LIMIT_ROW]);
+
+                return $row;
+            });
         }
 
-        return $result->decorate(static function(array $row): array {
-            unset($row[static::GROUP_LIMIT_ROW]);
+        if ($this->resultCallback !== null) {
+            return $result->decorate($this->resultCallback);
+        }
 
-            return $row;
-        });
+        return $result;
     }
 
     /**
      * Paginates the query results.
      *
-     * Note: The Page clones this query and lazily executes the item and count queries.
+     * Note: The Page fetches one additional result to determine whether another page exists.
      * Any existing LIMIT/OFFSET clauses are replaced by the pagination values.
      *
      * @param int $page The page number.
      * @param int $perPage The maximum number of items per page.
      * @return Page<TItem> The paginated results.
      *
-     * @throws InvalidArgumentException If the page or items per page is not valid.
+     * @throws InvalidArgumentException If the page, items per page, or query is not valid.
      */
     public function paginate(int $page = 1, int $perPage = 20): Page
     {
         return new Page($this, $page, $perPage);
+    }
+
+    /**
+     * Paginates the query results by cursor.
+     *
+     * Note: Cursor pagination requires an ORDER BY clause containing simple fields with
+     * ASC or DESC directions. For deterministic pagination, the final ordered field should
+     * be unique and all ordered fields should contain non-null scalar values.
+     *
+     * Any existing LIMIT/OFFSET clauses are replaced by the pagination values.
+     *
+     * @param string|null $cursor The pagination cursor.
+     * @param int $perPage The maximum number of items per page.
+     * @return CursorPage<TItem> The paginated results.
+     *
+     * @throws InvalidArgumentException If the cursor, ordering, items per page, or query is not valid.
+     */
+    public function paginateByCursor(string|null $cursor = null, int $perPage = 20): CursorPage
+    {
+        return new CursorPage($this, $cursor, $perPage);
+    }
+
+    /**
+     * Paginates the query results with total-count metadata.
+     *
+     * Note: The PageWithTotal clones this query and lazily executes the item and count queries.
+     * Any existing LIMIT/OFFSET clauses are replaced by the pagination values.
+     *
+     * @param int $page The page number.
+     * @param int $perPage The maximum number of items per page.
+     * @return PageWithTotal<TItem> The paginated results with total metadata.
+     *
+     * @throws InvalidArgumentException If the page, items per page, or query is not valid.
+     */
+    public function paginateWithTotal(int $page = 1, int $perPage = 20): PageWithTotal
+    {
+        return new PageWithTotal($this, $page, $perPage);
     }
 
     /**

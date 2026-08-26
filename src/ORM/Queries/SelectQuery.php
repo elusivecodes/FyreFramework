@@ -25,6 +25,7 @@ use function array_keys;
 use function array_map;
 use function array_merge;
 use function assert;
+use function count;
 use function explode;
 use function is_numeric;
 use function is_string;

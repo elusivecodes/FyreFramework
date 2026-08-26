@@ -8,24 +8,24 @@ use Fyre\DB\Queries\SelectQuery;
 use InvalidArgumentException;
 use Override;
 
-use function array_pop;
-use function count;
+use function ceil;
+use function min;
 
 /**
- * Represents a page of query results.
+ * Represents a page of query results with total-count metadata.
  *
  * @template TItem = mixed
  *
  * @extends AbstractPage<TItem>
  */
-class Page extends AbstractPage
+class PageWithTotal extends AbstractPage
 {
     use MacroTrait;
 
-    protected bool|null $hasNext = null;
+    protected int|null $total = null;
 
     /**
-     * Constructs a Page.
+     * Constructs a PageWithTotal.
      *
      * @param SelectQuery<TItem> $query The SelectQuery.
      * @param int $page The current page number.
@@ -74,9 +74,7 @@ class Page extends AbstractPage
      */
     public function hasNext(): bool
     {
-        $this->items();
-
-        return $this->hasNext ?? false;
+        return $this->page < $this->totalPages();
     }
 
     /**
@@ -97,8 +95,8 @@ class Page extends AbstractPage
      *     pagination: array{
      *         page: int,
      *         perPage: int,
-     *         hasNext: bool,
-     *         hasPrevious: bool
+     *         total: int,
+     *         totalPages: int
      *     }
      * } The serialization data.
      */
@@ -110,8 +108,8 @@ class Page extends AbstractPage
             'pagination' => [
                 'page' => $this->page,
                 'perPage' => $this->perPage,
-                'hasNext' => $this->hasNext(),
-                'hasPrevious' => $this->hasPrevious(),
+                'total' => $this->totalItems(),
+                'totalPages' => $this->totalPages(),
             ],
         ];
     }
@@ -129,7 +127,7 @@ class Page extends AbstractPage
             return null;
         }
 
-        return $firstItem + $this->count() - 1;
+        return min($firstItem + $this->count() - 1, $this->totalItems());
     }
 
     /**
@@ -157,6 +155,32 @@ class Page extends AbstractPage
     }
 
     /**
+     * Returns the total number of items.
+     *
+     * @return int The total number of items.
+     */
+    public function totalItems(): int
+    {
+        if ($this->total === null) {
+            $query = clone $this->query;
+
+            $this->total = $query->count();
+        }
+
+        return $this->total;
+    }
+
+    /**
+     * Returns the total number of pages.
+     *
+     * @return int The total number of pages.
+     */
+    public function totalPages(): int
+    {
+        return (int) ceil($this->totalItems() / $this->perPage);
+    }
+
+    /**
      * Loads the page items.
      *
      * @return array<TItem> The page items.
@@ -166,18 +190,8 @@ class Page extends AbstractPage
     {
         $query = clone $this->query;
 
-        $items = $query
-            ->limit($this->perPage + 1, ($this->page - 1) * $this->perPage)
+        return $query
+            ->limit($this->perPage, ($this->page - 1) * $this->perPage)
             ->toArray();
-
-        $this->hasNext = count($items) > $this->perPage;
-
-        if (!$this->hasNext) {
-            return $items;
-        }
-
-        array_pop($items);
-
-        return $items;
     }
 }
