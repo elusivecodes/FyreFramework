@@ -166,7 +166,7 @@ Empties the folder and then removes the directory itself.
 $folder->delete();
 ```
 
-#### **Get the resolved path** (`path()`)
+#### **Get the resolved folder path** (`path()`)
 
 Returns the resolved path for the folder.
 
@@ -466,7 +466,7 @@ Returns the file group ID.
 $group = $file->group();
 ```
 
-#### **Get the resolved path** (`path()`)
+#### **Get the resolved file path** (`path()`)
 
 Returns the resolved path to the file.
 

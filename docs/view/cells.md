@@ -19,6 +19,7 @@ For long-lived, per-view utilities accessed through `$this->SomeHelperName`, see
 - [Overriding the template](#overriding-the-template)
 - [Cell events](#cell-events)
 - [Method guide](#method-guide)
+  - [`Cell`](#cell)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -158,6 +159,8 @@ Listeners for `Cell.afterRender` can replace the rendered content by calling `$e
 ## Method guide
 
 Applies to `Fyre\View\Cell`, which is typically created from a template via `View::cell()`.
+
+### `Cell`
 
 #### **Render the cell** (`render()`)
 

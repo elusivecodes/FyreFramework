@@ -91,7 +91,7 @@ Continue with [Engine](docs/core/engine.md), [HTTP Middleware](docs/http/middlew
 
 ## Documentation
 
-Start with the [documentation index](docs/index.md), or jump to the area you need:
+Start with [Getting Started](docs/getting-started.md) or browse the [documentation index](docs/index.md). You can also jump directly to the area you need:
 
 - **Core services**: [Core](docs/core/index.md) -> [Engine](docs/core/engine.md) -> [Container](docs/core/container.md)
 - **HTTP applications**: [HTTP](docs/http/index.md) -> [Routing](docs/routing/index.md)

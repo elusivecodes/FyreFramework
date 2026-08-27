@@ -28,7 +28,7 @@ Start with a `Connection`, build the query you need, then call `execute()`.
   - [Upsert queries](#upsert-queries)
   - [Insert-from queries](#insert-from-queries)
   - [Update-batch queries](#update-batch-queries)
-- [Working with `ResultSet`](#working-with-resultset)
+- [Working with result sets](#working-with-result-sets)
   - [Indexed access](#indexed-access)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)

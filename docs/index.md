@@ -14,6 +14,7 @@ These docs cover the framework APIs your application uses. Project layout, entry
 
 Pick a path based on what you are building:
 
+- **New applications**: [Getting Started](getting-started.md)
 - **Core services**: [Core](core/index.md) -> [Engine](core/engine.md) -> [Container](core/container.md)
 - **HTTP applications**: [HTTP](http/index.md) -> [Routing](routing/index.md)
 - **Data and persistence**: [Database](database/index.md) -> [ORM](orm/index.md)
@@ -36,6 +37,7 @@ Start with the section you need most, then follow the related links from there.
 
 ## Pages in this section
 
+- [Getting Started](getting-started.md) - requirements, installation, application bootstrap, and next steps
 - [Core](core/index.md) - configuration, language, helpers, the container, and the default engine
 - [HTTP](http/index.md) - requests, responses, middleware, sessions, and outbound HTTP calls
 - [Routing](routing/index.md) - route definition, matching, bindings, and URL generation
@@ -53,3 +55,4 @@ Start with the section you need most, then follow the related links from there.
 - [Console](console/index.md) - commands, prompts, and CLI tooling
 - [Testing](testing/index.md) - PHPUnit helpers, fixtures, and framework test utilities
 - [Utilities](utilities/index.md) - general-purpose helpers such as files, images, colors, collections, promises, and date/time tools
+- [Contributing](contributing/index.md) - repository checks, test suites, and documentation conventions

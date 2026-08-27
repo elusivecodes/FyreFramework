@@ -1,6 +1,21 @@
 # Documentation Style Guide
 
-This file documents the conventions used across `docs/` so pages read as if written by a single author.
+Use these conventions when adding or updating documentation so pages read as if written by a single author.
+
+## Table of Contents
+
+- [Goals](#goals)
+- [Page openings](#page-openings)
+- [Page structure](#page-structure)
+- [Table-of-contents conventions](#table-of-contents-conventions)
+- [Headings](#headings)
+- [Lists](#lists)
+- [Method guide](#method-guide)
+- [Behavior notes](#behavior-notes)
+- [Examples](#examples)
+- [Formatting](#formatting)
+- [Tone and scope](#tone-and-scope)
+- [Related](#related)
 
 ## Goals
 
@@ -65,7 +80,7 @@ Prefer `Start here` over generic sections like `Purpose` or `How it works`.
 
 Use `How it works` only when the mechanics genuinely help the reader use the feature correctly and the content is still written from the user’s point of view.
 
-## Table of contents
+## Table-of-contents conventions
 
 If a page has meaningful sections, include a table of contents.
 
@@ -171,3 +186,7 @@ Example guidelines:
 - Avoid unnecessary implementation details unless they change behavior, affect debugging, or explain a real limitation.
 - Prefer “what the reader should do” over “what the framework is doing internally”.
 - Keep the voice calm and neutral. Do not write marketing copy, cheerleading, or filler.
+
+## Related
+
+- [Contributing](index.md)

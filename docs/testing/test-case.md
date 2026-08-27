@@ -9,7 +9,7 @@ It gives each test access to the shared application engine, clears scoped servic
 - [Start here](#start-here)
 - [Using fixtures](#using-fixtures)
 - [Method guide](#method-guide)
-  - [`TestCase`](#testcase)
+  - [`TestCase`](#testcase-1)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 

@@ -12,6 +12,7 @@ It gives `var_dump()` and tools that respect `__debugInfo()` a structured view o
   - [Mask nested array keys](#mask-nested-array-keys)
 - [How values are displayed](#how-values-are-displayed)
 - [Method guide](#method-guide)
+  - [`DebugTrait`](#debugtrait)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -84,6 +85,8 @@ class ConnectionConfig
 - non-scalar objects and resources are reduced to a type label such as `[stdClass]`
 
 ## Method guide
+
+### `DebugTrait`
 
 #### **Get debug info** (`__debugInfo()`)
 
