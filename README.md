@@ -110,8 +110,8 @@ composer validate --strict
 composer install
 composer audit --no-interaction
 composer cs
-composer phpstan
-composer phpstan-tests
+composer stan
+composer stan:tests
 composer test:core
 ```
 

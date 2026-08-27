@@ -44,10 +44,10 @@ jobs:
         run: composer cs
 
       - name: PHPStan
-        run: composer phpstan
+        run: composer stan
 
       - name: PHPStan (tests)
-        run: composer phpstan-tests
+        run: composer stan:tests
 
   tests-core:
     name: Tests (core)

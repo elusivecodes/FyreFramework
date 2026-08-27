@@ -28,12 +28,12 @@ Run the baseline checks before submitting changes:
 composer validate --strict
 composer audit --no-interaction
 composer cs
-composer phpstan
-composer phpstan-tests
+composer stan
+composer stan:tests
 composer test:core
 ```
 
-Use `composer cs-fix` to apply supported code-style fixes.
+Use `composer cs:fix` to apply supported code-style fixes.
 
 ## Test suites
 

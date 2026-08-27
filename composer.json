@@ -86,9 +86,9 @@
     },
     "scripts": {
         "cs": "php-cs-fixer fix --ansi --verbose --dry-run --diff",
-        "cs-fix": "php-cs-fixer fix --ansi --verbose --diff",
-        "phpstan": "phpstan analyse",
-        "phpstan-tests": "phpstan analyse -c tests/phpstan.neon",
+        "cs:fix": "php-cs-fixer fix --ansi --verbose --diff",
+        "stan": "phpstan analyse",
+        "stan:tests": "phpstan analyse -c tests/phpstan.neon",
         "test:core": "phpunit --testsuite core",
         "test:mysql": "phpunit --testsuite mysql",
         "test:mariadb": "phpunit --testsuite mariadb",
