@@ -279,7 +279,9 @@ Use pagination with totals when the UI needs an exact total or numbered final pa
 pagination when numbered navigation is useful but a count would be expensive. Use cursor pagination
 for stable traversal through large or frequently changing result sets.
 
-Pagination cannot be applied to a query using `groupLimit()`.
+Pagination cannot be applied to a query using `groupLimit()`. Cursor pagination supports `DISTINCT`
+when all ordered fields are explicitly selected, but does not support `UNION`, `UNION ALL`,
+`INTERSECT`, or `EXCEPT` queries.
 
 ```php
 $page = $db->select('*')
@@ -313,12 +315,29 @@ metadata contains `perPage`, `nextCursor`, and `previousCursor`.
 
 Cursor ordering has a stricter contract:
 
-- The query must have an `ORDER BY` made from simple field names with `ASC` or `DESC` directions.
+- The query must have an `ORDER BY` made from simple field names, or selected aliases that resolve
+  to fields or value expressions, with `ASC` or `DESC` directions.
 - Ordered fields are selected internally and must contain non-null scalar database values. The
   internal fields are removed from returned results. The final ordered field should be unique; a
   primary key is the usual tie-breaker.
 - Cursors are URL-safe encoded navigation state, not encrypted data. Their values are still bound as query parameters when used.
 - A cursor is tied to its ordering and is rejected if reused with a different ordered field set or direction.
+
+Selected aliases use the alias for ordering and cursor validation while cursor comparisons use the
+underlying field or expression:
+
+```php
+$cursorPage = $db->select([
+        'sort_id' => 'users.id',
+        'name' => 'users.name',
+    ])
+    ->from('users')
+    ->orderBy(['sort_id' => 'ASC'])
+    ->paginateByCursor(cursor: $cursor, perPage: 25);
+```
+
+Ordered fields that are already selected with an explicit alias are reused for cursor values.
+Function and other value-expression aliases are supported; subquery aliases are not.
 
 ### Per-group limits
 

@@ -5,6 +5,7 @@ namespace Tests\TestCase\DB\Shared\Query;
 
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
+use Fyre\DB\Pagination\AbstractPage;
 use Fyre\DB\Pagination\CursorPage;
 use InvalidArgumentException;
 
@@ -92,7 +93,7 @@ trait PaginateByCursorTestTrait
     {
         $this->assertContains(
             DebugTrait::class,
-            class_uses(CursorPage::class)
+            class_uses(AbstractPage::class)
         );
     }
 
@@ -120,6 +121,49 @@ trait PaginateByCursorTestTrait
                 'id'
             )
         );
+    }
+
+    public function testPaginateByCursorDistinct(): void
+    {
+        $this->insert();
+
+        $query = $this->db->select([
+            'id' => 'id',
+        ])
+            ->distinct()
+            ->from('test')
+            ->orderBy([
+                'id' => 'ASC',
+            ]);
+
+        $page = $query->paginateByCursor(null, 2);
+
+        $this->assertSame(
+            [1, 2],
+            array_column($page->items(), 'id')
+        );
+
+        $this->assertSame(
+            [3],
+            array_column(
+                $query->paginateByCursor($page->nextCursor(), 2)->items(),
+                'id'
+            )
+        );
+    }
+
+    public function testPaginateByCursorDistinctMissingOrderField(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Cursor pagination requires all ordered fields to be explicitly selected when using DISTINCT.');
+
+        $this->db->select('name')
+            ->distinct()
+            ->from('test')
+            ->orderBy([
+                'id' => 'ASC',
+            ])
+            ->paginateByCursor();
     }
 
     public function testPaginateByCursorDuplicateAlias(): void
@@ -200,6 +244,25 @@ trait PaginateByCursorTestTrait
                 'id' => 'ASC',
             ])
             ->paginateByCursor(null, 0);
+    }
+
+    public function testPaginateByCursorInvalidSelectedAlias(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Cursor pagination requires ordered aliases to resolve to fields or value expressions.');
+
+        $subquery = $this->db->select('id')
+            ->from('test')
+            ->limit(1);
+
+        $this->db->select([
+            'sort_id' => $subquery,
+        ])
+            ->from('test')
+            ->orderBy([
+                'sort_id' => 'ASC',
+            ])
+            ->paginateByCursor();
     }
 
     public function testPaginateByCursorIteration(): void
@@ -376,6 +439,100 @@ trait PaginateByCursorTestTrait
         );
     }
 
+    public function testPaginateByCursorSelectedAlias(): void
+    {
+        $this->insert();
+
+        $query = $this->db->select([
+            'sort_id' => 'id',
+            'name',
+        ])
+            ->from('test')
+            ->orderBy([
+                'sort_id' => 'ASC',
+            ]);
+
+        $page = $query->paginateByCursor(null, 2);
+
+        $this->assertSame(
+            [1, 2],
+            array_column($page->items(), 'sort_id')
+        );
+
+        $this->assertSame(
+            [3],
+            array_column(
+                $query->paginateByCursor($page->nextCursor(), 2)->items(),
+                'sort_id'
+            )
+        );
+    }
+
+    public function testPaginateByCursorSelectedAliasExpression(): void
+    {
+        $this->insert();
+
+        $query = $this->db->select()
+            ->from('test');
+
+        $query->select([
+            'sort_name' => $query->func()->lower('name'),
+            'id' => 'id',
+        ])
+            ->orderBy([
+                'sort_name' => 'ASC',
+                'id' => 'ASC',
+            ]);
+
+        $page = $query->paginateByCursor(null, 2);
+
+        $this->assertSame(
+            ['test 1', 'test 2'],
+            array_column($page->items(), 'sort_name')
+        );
+
+        $this->assertSame(
+            ['test 3'],
+            array_column(
+                $query->paginateByCursor($page->nextCursor(), 2)->items(),
+                'sort_name'
+            )
+        );
+    }
+
+    public function testPaginateByCursorSelectedField(): void
+    {
+        $this->insert();
+
+        $query = $this->db->select([
+            'selected_id' => 'id',
+            '__fyre_cursor_0' => 'name',
+        ])
+            ->from('test')
+            ->orderBy([
+                'id' => 'ASC',
+            ]);
+
+        $page = $query->paginateByCursor(null, 2);
+
+        $this->assertSame(
+            [1, 2],
+            array_column($page->items(), 'selected_id')
+        );
+        $this->assertSame(
+            ['Test 1', 'Test 2'],
+            array_column($page->items(), '__fyre_cursor_0')
+        );
+
+        $this->assertSame(
+            [3],
+            array_column(
+                $query->paginateByCursor($page->nextCursor(), 2)->items(),
+                'selected_id'
+            )
+        );
+    }
+
     public function testPaginateByCursorSelectsOrderField(): void
     {
         $this->insert();
@@ -405,5 +562,22 @@ trait PaginateByCursorTestTrait
             ],
             $query->paginateByCursor($page->nextCursor(), 1)->items()
         );
+    }
+
+    public function testPaginateByCursorSetOperation(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Cursor pagination cannot be used with set-operation queries.');
+
+        $this->db->select()
+            ->from('test')
+            ->union(
+                $this->db->select()
+                    ->from('test')
+            )
+            ->orderBy([
+                'id' => 'ASC',
+            ])
+            ->paginateByCursor();
     }
 }

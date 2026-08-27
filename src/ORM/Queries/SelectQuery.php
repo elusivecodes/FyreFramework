@@ -7,6 +7,7 @@ use ArrayObject;
 use Closure;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\DB\Expressions\ConditionExpression;
+use Fyre\DB\Pagination\CursorPage;
 use Fyre\DB\ValueBinder;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Exceptions\OrmException;
@@ -25,7 +26,6 @@ use function array_keys;
 use function array_map;
 use function array_merge;
 use function assert;
-use function count;
 use function explode;
 use function is_numeric;
 use function is_string;
@@ -556,6 +556,18 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
         }
 
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function paginateByCursor(string|null $cursor = null, int $perPage = 20): CursorPage
+    {
+        $query = clone $this;
+        $query->prepare();
+
+        return new CursorPage($query, $cursor, $perPage);
     }
 
     /**

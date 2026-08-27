@@ -193,7 +193,9 @@ $cursorPage = $Users->find()
 Use `paginate()` to avoid a count query, `paginateWithTotal()` for exact totals, and
 `paginateByCursor()` for ordered keyset traversal. Cursor-ordered fields are selected internally,
 including fields from joined `contain()` relationships, and must contain non-null scalar database
-values. The final ordered field should normally be the model primary key. See
+values. Selected aliases are supported when they resolve to fields or value expressions. `DISTINCT`
+queries require all ordered fields to be explicitly selected, and set-operation queries are not
+supported. The final ordered field should normally be the model primary key. See
 [Database query pagination](../database/queries.md#pagination) for the result APIs and cursor
 contract.
 

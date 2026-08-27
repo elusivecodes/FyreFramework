@@ -5,6 +5,7 @@ namespace Tests\TestCase\DB\Shared\Query;
 
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
+use Fyre\DB\Pagination\AbstractPage;
 use Fyre\DB\Pagination\Page;
 use InvalidArgumentException;
 
@@ -40,7 +41,7 @@ trait PaginateTestTrait
     {
         $this->assertContains(
             DebugTrait::class,
-            class_uses(Page::class)
+            class_uses(AbstractPage::class)
         );
     }
 

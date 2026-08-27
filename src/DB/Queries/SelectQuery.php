@@ -147,9 +147,11 @@ class SelectQuery extends Query
     /**
      * Paginates the query results by cursor.
      *
-     * Note: Cursor pagination requires an ORDER BY clause containing simple fields with
-     * ASC or DESC directions. For deterministic pagination, the final ordered field should
-     * be unique and all ordered fields should contain non-null scalar values.
+     * Note: Cursor pagination requires an ORDER BY clause containing simple fields or selected
+     * aliases that resolve to fields or value expressions, with ASC or DESC directions. For
+     * deterministic pagination, the final ordered field should be unique and all ordered fields
+     * should contain non-null scalar values. DISTINCT queries require all ordered fields to be
+     * explicitly selected. Set-operation queries are not supported.
      *
      * Any existing LIMIT/OFFSET clauses are replaced by the pagination values.
      *

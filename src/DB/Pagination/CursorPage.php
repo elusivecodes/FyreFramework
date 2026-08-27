@@ -5,12 +5,14 @@ namespace Fyre\DB\Pagination;
 
 use Closure;
 use Fyre\Core\Traits\MacroTrait;
+use Fyre\DB\Expressions\ValueExpressionInterface;
 use Fyre\DB\Queries\SelectQuery;
 use InvalidArgumentException;
 use JsonException;
 use Override;
 
 use function array_all;
+use function array_find_key;
 use function array_first;
 use function array_intersect_key;
 use function array_is_list;
@@ -21,6 +23,7 @@ use function array_map;
 use function array_merge;
 use function array_pop;
 use function array_reverse;
+use function array_values;
 use function base64_decode;
 use function base64_encode;
 use function count;
@@ -66,6 +69,11 @@ class CursorPage extends AbstractPage
      */
     protected array $orderBy;
 
+    /**
+     * @var array<string, array{field: string|ValueExpressionInterface, result: string|null}>
+     */
+    protected array $orderFields = [];
+
     protected bool $previous = false;
 
     /**
@@ -87,8 +95,23 @@ class CursorPage extends AbstractPage
     ) {
         parent::__construct($query, $perPage);
 
+        if ($this->query->getUnion() !== []) {
+            throw new InvalidArgumentException('Cursor pagination cannot be used with set-operation queries.');
+        }
+
         $this->orderBy = $this->query->getOrderBy()
             |> static::normalizeOrderBy(...);
+        $this->orderFields = static::resolveOrderFields(
+            array_keys($this->orderBy),
+            $this->query->getSelect()
+        );
+
+        if (
+            $this->query->getDistinct() &&
+            !array_all($this->orderFields, static fn(array $field): bool => $field['result'] !== null)
+        ) {
+            throw new InvalidArgumentException('Cursor pagination requires all ordered fields to be explicitly selected when using DISTINCT.');
+        }
 
         if ($this->cursor !== null) {
             [$this->values, $this->previous] = $this->decodeCursor($this->cursor);
@@ -207,13 +230,14 @@ class CursorPage extends AbstractPage
 
         for ($index = $lastIndex; $index >= 0; $index--) {
             $field = $fields[$index];
+            $orderField = $this->orderFields[$field]['field'];
             $comparison = $query->expr();
             $greaterThan = ($this->orderBy[$field] === 'ASC') !== $this->previous;
 
             if ($greaterThan) {
-                $comparison->gt($field, $this->values[$index]);
+                $comparison->gt($orderField, $this->values[$index]);
             } else {
-                $comparison->lt($field, $this->values[$index]);
+                $comparison->lt($orderField, $this->values[$index]);
             }
 
             if ($index === $lastIndex) {
@@ -226,12 +250,64 @@ class CursorPage extends AbstractPage
                 ->add($comparison)
                 ->add(
                     $query->expr()
-                        ->eq($field, $this->values[$index])
+                        ->eq($orderField, $this->values[$index])
                         ->add($conditions)
                 );
         }
 
         $query->where($conditions);
+    }
+
+    /**
+     * Applies cursor fields and result handling to a query.
+     *
+     * @param SelectQuery<TItem> $query The SelectQuery.
+     * @param array<array{field: string, remove: bool}> $cursorFields The cursor result fields.
+     * @param array<string, string|ValueExpressionInterface> $extraFields The extra select fields.
+     */
+    protected function applyCursorFields(
+        SelectQuery $query,
+        array $cursorFields,
+        array $extraFields
+    ): void {
+        $this->itemValues = [];
+
+        $resultCallback = function(array $row) use ($cursorFields): array {
+            $values = [];
+
+            foreach ($cursorFields as $field) {
+                if (!array_key_exists($field['field'], $row)) {
+                    throw new InvalidArgumentException('Cursor fields must be present in each database row.');
+                }
+
+                $value = $row[$field['field']];
+
+                if ($field['remove']) {
+                    unset($row[$field['field']]);
+                }
+
+                if (!is_scalar($value)) {
+                    throw new InvalidArgumentException('Cursor fields must contain non-null scalar values.');
+                }
+
+                $values[] = $value;
+            }
+
+            $this->itemValues[] = $values;
+
+            return $row;
+        };
+
+        Closure::bind(function() use ($extraFields, $resultCallback): void {
+            /** @var SelectQuery $this */
+            if (array_intersect_key($extraFields, $this->fields) !== []) {
+                throw new InvalidArgumentException('Cursor field aliases conflict with selected fields.');
+            }
+
+            $this->fields = array_merge($this->fields, $extraFields);
+            $this->resultCallback = $resultCallback;
+            $this->dirty();
+        }, $query, SelectQuery::class)();
     }
 
     /**
@@ -242,7 +318,8 @@ class CursorPage extends AbstractPage
      */
     protected function decodeCursor(string $cursor): array
     {
-        $decoded = base64_decode(strtr($cursor, '-_', '+/'), true);
+        $encoded = strtr($cursor, '-_', '+/');
+        $decoded = base64_decode($encoded, true);
 
         if ($decoded === false) {
             throw new InvalidArgumentException('Cursor is not valid.');
@@ -288,8 +365,10 @@ class CursorPage extends AbstractPage
             'values' => $values,
             'previous' => $previous,
         ], JSON_THROW_ON_ERROR);
+        $encoded = base64_encode($data);
+        $encoded = strtr($encoded, '+/', '-_');
 
-        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+        return rtrim($encoded, '=');
     }
 
     /**
@@ -303,48 +382,27 @@ class CursorPage extends AbstractPage
         $query = clone $this->query;
         $this->applyCursor($query);
 
-        $fields = array_keys($this->orderBy);
+        $fields = array_values($this->orderFields);
         $cursorFields = [];
+        $extraFields = [];
 
         foreach ($fields as $index => $field) {
-            $alias = static::CURSOR_FIELD_PREFIX.$index;
-            $cursorFields[$alias] = $field;
-        }
+            $resultField = $field['result'];
+            $remove = false;
 
-        /** @var array<array<bool|float|int|string>> $itemValues */
-        $itemValues = [];
-
-        Closure::bind(function() use ($cursorFields, &$itemValues): void {
-            /** @var SelectQuery $this */
-            if (array_intersect_key($cursorFields, $this->fields) !== []) {
-                throw new InvalidArgumentException('Cursor field aliases conflict with selected fields.');
+            if ($resultField === null) {
+                $resultField = static::CURSOR_FIELD_PREFIX.$index;
+                $extraFields[$resultField] = $field['field'];
+                $remove = true;
             }
 
-            $this->fields = array_merge($this->fields, $cursorFields);
-            $this->resultCallback = static function(array $row) use ($cursorFields, &$itemValues): array {
-                $values = [];
+            $cursorFields[] = [
+                'field' => $resultField,
+                'remove' => $remove,
+            ];
+        }
 
-                foreach ($cursorFields as $alias => $field) {
-                    if (!array_key_exists($alias, $row)) {
-                        throw new InvalidArgumentException('Cursor fields must be present in each database row.');
-                    }
-
-                    $value = $row[$alias];
-                    unset($row[$alias]);
-
-                    if (!is_scalar($value)) {
-                        throw new InvalidArgumentException('Cursor fields must contain non-null scalar values.');
-                    }
-
-                    $values[] = $value;
-                }
-
-                $itemValues[] = $values;
-
-                return $row;
-            };
-            $this->dirty();
-        }, $query, SelectQuery::class)();
+        $this->applyCursorFields($query, $cursorFields, $extraFields);
 
         $orderBy = $this->orderBy;
 
@@ -364,7 +422,7 @@ class CursorPage extends AbstractPage
 
         if ($hasExtra) {
             array_pop($items);
-            array_pop($itemValues);
+            array_pop($this->itemValues);
         }
 
         $this->hasNext = $this->previous || $hasExtra;
@@ -372,10 +430,8 @@ class CursorPage extends AbstractPage
 
         if ($this->previous) {
             $items = array_reverse($items);
-            $itemValues = array_reverse($itemValues);
+            $this->itemValues = array_reverse($this->itemValues);
         }
-
-        $this->itemValues = $itemValues;
 
         return $items;
     }
@@ -419,5 +475,41 @@ class CursorPage extends AbstractPage
         }
 
         return $normalizedOrderBy;
+    }
+
+    /**
+     * Resolves ordered fields and their result aliases.
+     *
+     * @param string[] $fields The ordered field names.
+     * @param array<mixed> $select The select fields.
+     * @return array<string, array{field: string|ValueExpressionInterface, result: string|null}> The resolved fields.
+     */
+    protected static function resolveOrderFields(array $fields, array $select): array
+    {
+        $orderFields = [];
+
+        foreach ($fields as $field) {
+            if (array_key_exists($field, $select)) {
+                $orderField = $select[$field];
+                $resultField = $field;
+            } else {
+                $orderField = $field;
+                $resultField = array_find_key(
+                    $select,
+                    static fn(mixed $value, int|string $key): bool => is_string($key) && $value === $field
+                );
+            }
+
+            if (!is_string($orderField) && !$orderField instanceof ValueExpressionInterface) {
+                throw new InvalidArgumentException('Cursor pagination requires ordered aliases to resolve to fields or value expressions.');
+            }
+
+            $orderFields[$field] = [
+                'field' => $orderField,
+                'result' => is_string($resultField) ? $resultField : null,
+            ];
+        }
+
+        return $orderFields;
     }
 }
