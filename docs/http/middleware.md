@@ -80,6 +80,15 @@ These aliases are mapped by default:
 - `router` → `Fyre\Router\Middleware\RouterMiddleware`: parses the request through the router and sets route attributes like `relativePath`, `route`, and `routeArguments`.
 - `bindings` → `Fyre\Router\Middleware\SubstituteBindingsMiddleware`: resolves route parameters through custom callbacks or automatic entity and enum binding, and throws a not-found exception when a value cannot be resolved.
 
+The default error renderer follows `App.debug`. When debugging is disabled or not configured,
+unexpected exceptions produce a generic `500 Internal Server Error` body without exception details.
+When debugging is enabled, the escaped exception and stack trace are included in the response.
+A custom `Error.renderer` replaces this default behavior and is responsible for controlling what it exposes.
+
+Registering `ErrorHandler` converts non-suppressed PHP errors into `ErrorException` instances. Keep
+the `error` middleware near the start of the queue so errors thrown during request processing pass
+through the same exception-rendering pipeline.
+
 For deeper topic documentation, see [Authentication](../auth/authentication.md), [Authorization](../auth/authorization.md), [Auth Middleware](../auth/middleware.md), [CSRF](../security/csrf.md), [Content Security Policy (CSP)](../security/csp.md), [Router](../routing/router.md), and [Route Bindings](../routing/route-bindings.md).
 
 ### Other built-in middleware

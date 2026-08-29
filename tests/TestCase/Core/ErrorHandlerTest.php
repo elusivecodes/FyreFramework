@@ -8,6 +8,7 @@ use Exception;
 use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\ErrorHandler;
+use Fyre\Core\Exceptions\ErrorException;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Event\Event;
 use Fyre\Event\EventManager;
@@ -31,6 +32,9 @@ use PHPUnit\Framework\TestCase;
 use Throwable;
 
 use function class_uses;
+use function trigger_error;
+
+use const E_USER_WARNING;
 
 final class ErrorHandlerTest extends TestCase
 {
@@ -146,7 +150,7 @@ final class ErrorHandlerTest extends TestCase
 
     public function testHandle(): void
     {
-        $exception = new Exception('Error');
+        $exception = new Exception('Sensitive error');
         $response = $this->errorHandler->render($exception);
 
         $this->assertInstanceOf(
@@ -160,8 +164,40 @@ final class ErrorHandlerTest extends TestCase
         );
 
         $this->assertSame(
-            '<pre>'.$exception.'</pre>',
+            'Internal Server Error',
             $response->getBody()->getContents()
+        );
+    }
+
+    public function testHandleDebug(): void
+    {
+        $this->container->use(Config::class)->set('App.debug', true);
+
+        $errorHandler = $this->container->build(ErrorHandler::class);
+        $errorHandler->disableCli();
+
+        $exception = new Exception('<script>Sensitive error</script>');
+        $response = $errorHandler->render($exception);
+        $body = $response->getBody()->getContents();
+
+        $this->assertSame(
+            500,
+            $response->getStatusCode()
+        );
+
+        $this->assertStringContainsString(
+            '&lt;script&gt;Sensitive error&lt;/script&gt;',
+            $body
+        );
+
+        $this->assertStringContainsString(
+            $exception->getFile(),
+            $body
+        );
+
+        $this->assertStringNotContainsString(
+            '<script>',
+            $body
         );
     }
 
@@ -271,6 +307,26 @@ final class ErrorHandlerTest extends TestCase
         }, $this->errorHandler, ErrorHandler::class)();
 
         $this->assertFalse($registered);
+    }
+
+    public function testRegisteredErrorHandlerThrows(): void
+    {
+        $this->errorHandler->register();
+
+        try {
+            trigger_error('PHP warning', E_USER_WARNING);
+            $this->fail('Execution continued after a reported PHP error.');
+        } catch (ErrorException $exception) {
+            $this->assertSame(
+                'PHP warning',
+                $exception->getMessage()
+            );
+
+            $this->assertSame(
+                E_USER_WARNING,
+                $exception->getSeverity()
+            );
+        }
     }
 
     public function testRenderer(): void

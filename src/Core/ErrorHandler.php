@@ -18,6 +18,7 @@ use Throwable;
 
 use function array_replace;
 use function error_reporting;
+use function htmlspecialchars;
 use function in_array;
 use function register_shutdown_function;
 use function restore_error_handler;
@@ -28,6 +29,8 @@ use function set_exception_handler;
 use const E_ERROR;
 use const E_PARSE;
 use const E_USER_ERROR;
+use const ENT_QUOTES;
+use const ENT_SUBSTITUTE;
 use const PHP_SAPI;
 
 /**
@@ -92,9 +95,12 @@ class ErrorHandler
         Config $config
     ) {
         $options = array_replace(static::$defaults, $config->get('Error', []));
+        $debug = (bool) $config->get('App.debug', false);
 
         $this->level = $options['level'];
-        $this->renderer = $options['renderer'] ?? static fn(Throwable $exception): string => '<pre>'.$exception.'</pre>';
+        $this->renderer = $options['renderer'] ?? static fn(Throwable $exception): string => $debug ?
+            '<pre>'.htmlspecialchars((string) $exception, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8').'</pre>' :
+            'Internal Server Error';
         $this->log = $options['log'];
 
         register_shutdown_function(function(): void {
@@ -171,7 +177,8 @@ class ErrorHandler
      *
      * This method is idempotent.
      *
-     * Note: This updates the error reporting level and installs handlers that render and emit a response.
+     * Note: This updates the error reporting level, converts reported PHP errors to
+     * {@see ErrorException} instances, and installs a handler that renders and emits uncaught exceptions.
      */
     public function register(): void
     {
@@ -188,11 +195,7 @@ class ErrorHandler
                 return false;
             }
 
-            $exception = new ErrorException($message, 0, $type, $file, $line);
-
-            $this->render($exception) |> $this->responseEmitter->emit(...);
-
-            return true;
+            throw new ErrorException($message, 0, $type, $file, $line);
         });
 
         set_exception_handler(function(Throwable $exception): void {
