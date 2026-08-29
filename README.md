@@ -1,10 +1,10 @@
 # FyreFramework
 
-[![CI](https://github.com/elusivecodes/FyreFramework/actions/workflows/ci.yml/badge.svg)](https://github.com/elusivecodes/FyreFramework/actions/workflows/ci.yml)
-[![Codecov](https://codecov.io/github/elusivecodes/FyreFramework/branch/main/graph/badge.svg)](https://app.codecov.io/github/elusivecodes/FyreFramework)
+[![CI](https://github.com/fyrephp/framework/actions/workflows/ci.yml/badge.svg)](https://github.com/fyrephp/framework/actions/workflows/ci.yml)
+[![Codecov](https://codecov.io/github/fyrephp/framework/branch/main/graph/badge.svg)](https://app.codecov.io/github/fyrephp/framework)
 [![Packagist Version](https://img.shields.io/packagist/v/fyre/framework.svg)](https://packagist.org/packages/fyre/framework)
 [![Packagist Downloads](https://img.shields.io/packagist/dt/fyre/framework.svg)](https://packagist.org/packages/fyre/framework)
-[![GitHub License](https://img.shields.io/github/license/elusivecodes/FyreFramework.svg)](LICENSE)
+[![GitHub License](https://img.shields.io/github/license/fyrephp/framework.svg)](LICENSE)
 
 Use FyreFramework to build HTTP applications and CLI tools with routing, ORM, views, caching, queues, and other focused components.
 
