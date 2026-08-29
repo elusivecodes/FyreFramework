@@ -15,7 +15,7 @@ use Fyre\View\View;
 use Override;
 use PHPUnit\Framework\TestCase;
 
-final class CSPTest extends TestCase
+final class CspTest extends TestCase
 {
     protected ContentSecurityPolicy $csp;
 
