@@ -16,6 +16,7 @@ Install the `fyre/framework` package and use individual subsystems as needed, or
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Application bootstrap](#application-bootstrap)
+- [Hello world](#hello-world)
 - [Documentation](#documentation)
 - [Repository development](#repository-development)
 - [License](#license)
@@ -23,6 +24,7 @@ Install the `fyre/framework` package and use individual subsystems as needed, or
 ## Start here
 
 - **Install the framework package**: follow [Installation](#installation).
+- **Run a complete application**: follow the [Hello world guide](docs/getting-started.md#hello-world-application).
 - **Build around the default application services**: see [Application bootstrap](#application-bootstrap).
 - **Use a specific subsystem**: browse the [documentation](#documentation).
 
@@ -59,11 +61,14 @@ composer require fyre/framework
 A common bootstrap extends `Fyre\Core\Engine`, customizes the middleware queue, and shares the application instance with the framework helpers.
 
 ```php
+<?php
+declare(strict_types=1);
+
 use Fyre\Core\Engine;
 use Fyre\Core\Loader;
 use Fyre\Http\MiddlewareQueue;
 
-$composer = require 'vendor/autoload.php';
+$composer = require __DIR__.'/vendor/autoload.php';
 
 final class Application extends Engine
 {
@@ -83,11 +88,17 @@ $loader = new Loader()
 
 $app = new Application($loader);
 Application::setInstance($app);
+
+return $app;
 ```
 
 Your application repository defines its entry points, routes, configuration paths, and project layout around this package.
 
 Continue with [Engine](docs/core/engine.md), [HTTP Middleware](docs/http/middleware.md), and [Routing](docs/routing/index.md).
+
+## Hello world
+
+The [Hello world application](docs/getting-started.md#hello-world-application) combines the bootstrap, route, HTTP request pipeline, response emitter, CLI entry point, and web-server rewrites into one copy-paste example.
 
 ## Documentation
 
