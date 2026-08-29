@@ -5,6 +5,7 @@ namespace Tests\TestCase\Http\Stream;
 
 use Fyre\Http\Stream\IterableStream;
 use Generator;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -127,6 +128,14 @@ final class IterableStreamTest extends TestCase
 
         $stream->close();
         $stream->read(1);
+    }
+
+    public function testReadInvalidLength(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Read length must be greater than 0.');
+
+        new IterableStream(['This is a test.'])->read(0);
     }
 
     public function testRewind(): void

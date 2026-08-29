@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\FileSystem\File;
 
 use Fyre\Utility\FileSystem\File;
+use InvalidArgumentException;
 use RuntimeException;
 
 trait TruncateTestTrait
@@ -34,6 +35,14 @@ trait TruncateTestTrait
         $file = new File('tmp/test.txt', true);
         $file->open('r');
         $file->truncate();
+    }
+
+    public function testTruncateInvalidSize(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Truncate size must not be negative.');
+
+        new File('tmp/test.txt', true)->truncate(-1);
     }
 
     public function testTruncateNoHandle(): void

@@ -8,7 +8,6 @@ use Fyre\Security\Encryption\Exceptions\EncryptionException;
 use InvalidArgumentException;
 use Override;
 
-use function assert;
 use function is_string;
 use function mb_strlen;
 use function random_bytes;
@@ -119,7 +118,9 @@ class SodiumEncrypter extends Encrypter
     {
         $length ??= SODIUM_CRYPTO_SECRETBOX_KEYBYTES;
 
-        assert($length > 0);
+        if ($length < 1) {
+            throw new InvalidArgumentException('Key length must be greater than 0.');
+        }
 
         return random_bytes($length);
     }

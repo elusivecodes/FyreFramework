@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Arr;
 
 use Fyre\Utility\Arr;
+use InvalidArgumentException;
 
 trait ChunkTestTrait
 {
@@ -13,6 +14,14 @@ trait ChunkTestTrait
             [],
             Arr::chunk([], 2)
         );
+    }
+
+    public function testChunkWithInvalidSize(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Chunk size must be greater than 0.');
+
+        Arr::chunk([], 0);
     }
 
     public function testChunkWithPreserveKeys(): void

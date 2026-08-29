@@ -80,6 +80,8 @@ abstract class Encrypter
      *
      * @param int|null $length The key length.
      * @return string The encryption key.
+     *
+     * @throws InvalidArgumentException If the key length is invalid.
      */
     abstract public function generateKey(int|null $length = null): string;
 

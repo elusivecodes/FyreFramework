@@ -5,13 +5,13 @@ namespace Fyre\Http\Stream;
 
 use Closure;
 use Generator;
+use InvalidArgumentException;
 use Override;
 use Psr\Http\Message\StreamInterface;
 use RuntimeException;
 use Stringable;
 use Throwable;
 
-use function assert;
 use function implode;
 use function is_string;
 use function strlen;
@@ -172,11 +172,15 @@ class IterableStream implements StreamInterface, Stringable
 
     /**
      * {@inheritDoc}
+     *
+     * @throws InvalidArgumentException|RuntimeException If the length is invalid or the stream is closed.
      */
     #[Override]
     public function read(int $length): string
     {
-        assert($length > 0);
+        if ($length < 1) {
+            throw new InvalidArgumentException('Read length must be greater than 0.');
+        }
 
         if ($this->closed) {
             throw new RuntimeException('Iterable stream is closed.');

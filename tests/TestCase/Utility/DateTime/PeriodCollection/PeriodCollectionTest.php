@@ -7,6 +7,7 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Utility\DateTime\Period;
 use Fyre\Utility\DateTime\PeriodCollection;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 use function class_uses;
@@ -134,6 +135,17 @@ final class PeriodCollectionTest extends TestCase
             $period3,
             $collection[1]
         );
+    }
+
+    public function testOffsetSetInvalidValue(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Period value must be an instance of Period.');
+
+        $collection = new PeriodCollection();
+
+        // @phpstan-ignore argument.type
+        $collection->offsetSet(null, 'invalid');
     }
 
     public function testOffsetUnset(): void

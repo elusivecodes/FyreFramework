@@ -8,6 +8,7 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Core\Traits\StaticMacroTrait;
 use Fyre\Http\Stream;
+use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -242,6 +243,14 @@ final class StreamTest extends TestCase
             'This is a test.',
             $stream->read(16)
         );
+    }
+
+    public function testReadInvalidLength(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Read length must be greater than 0.');
+
+        Stream::createFromString('This is a test.')->read(0);
     }
 
     public function testReadNotInvalid(): void

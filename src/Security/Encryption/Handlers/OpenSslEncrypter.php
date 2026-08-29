@@ -129,7 +129,13 @@ class OpenSslEncrypter extends Encrypter
     #[Override]
     public function generateKey(int|null $length = null): string
     {
-        $key = openssl_random_pseudo_bytes($length ?? 24, $secure);
+        $length ??= 24;
+
+        if ($length < 1) {
+            throw new InvalidArgumentException('Key length must be greater than 0.');
+        }
+
+        $key = openssl_random_pseudo_bytes($length, $secure);
 
         if (!$secure) {
             return $this->generateKey($length);

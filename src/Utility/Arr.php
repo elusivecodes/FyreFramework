@@ -5,6 +5,7 @@ namespace Fyre\Utility;
 
 use Closure;
 use Fyre\Core\Traits\StaticMacroTrait;
+use InvalidArgumentException;
 
 use function array_all;
 use function array_any;
@@ -36,7 +37,6 @@ use function array_splice;
 use function array_unique;
 use function array_unshift;
 use function array_values;
-use function assert;
 use function count;
 use function explode;
 use function implode;
@@ -95,10 +95,14 @@ abstract class Arr
      * @param int $size The chunk size.
      * @param bool $preserveKeys Whether array keys are preserved.
      * @return array<TValue>[] The chunks.
+     *
+     * @throws InvalidArgumentException If the chunk size is invalid.
      */
     public static function chunk(array $array, int $size, bool $preserveKeys = false): array
     {
-        assert($size > 0);
+        if ($size < 1) {
+            throw new InvalidArgumentException('Chunk size must be greater than 0.');
+        }
 
         return array_chunk($array, $size, $preserveKeys);
     }
@@ -148,10 +152,14 @@ abstract class Arr
      * @param array<mixed> $array The input array.
      * @param int $mode The counting mode.
      * @return int The number of elements in the array.
+     *
+     * @throws InvalidArgumentException If the counting mode is invalid.
      */
     public static function count(array $array, int $mode = self::COUNT_NORMAL): int
     {
-        assert($mode >= 0 && $mode <= 1);
+        if ($mode < self::COUNT_NORMAL || $mode > self::COUNT_RECURSIVE) {
+            throw new InvalidArgumentException('Count mode must be COUNT_NORMAL or COUNT_RECURSIVE.');
+        }
 
         return count($array, $mode);
     }
@@ -377,10 +385,14 @@ abstract class Arr
      * @param int $maxDepth The maximum depth to flatten.
      * @param mixed[] $result The result array.
      * @return mixed[] The flattened array.
+     *
+     * @throws InvalidArgumentException If the maximum depth is invalid.
      */
     public static function flatten(array $array, int $maxDepth = 1, array &$result = []): array
     {
-        assert($maxDepth > 0);
+        if ($maxDepth < 1) {
+            throw new InvalidArgumentException('Maximum depth must be greater than 0.');
+        }
 
         foreach ($array as $value) {
             if (is_array($value)) {

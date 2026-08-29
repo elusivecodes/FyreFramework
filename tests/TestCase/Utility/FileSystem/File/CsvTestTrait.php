@@ -5,6 +5,7 @@ namespace Tests\TestCase\Utility\FileSystem\File;
 
 use ErrorException;
 use Fyre\Utility\FileSystem\File;
+use InvalidArgumentException;
 use RuntimeException;
 
 trait CsvTestTrait
@@ -37,6 +38,14 @@ trait CsvTestTrait
         $file = new File('tmp/test.txt', true);
         $file->open('w');
         $file->csv();
+    }
+
+    public function testCsvInvalidLength(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('CSV length must not be negative.');
+
+        new File('tmp/test.txt', true)->csv(-1);
     }
 
     public function testCsvNoHandle(): void

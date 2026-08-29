@@ -8,9 +8,9 @@ use Fyre\Core\Exceptions\ErrorException;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Utility\Path;
+use InvalidArgumentException;
 use RuntimeException;
 
-use function assert;
 use function chmod;
 use function copy;
 use function decoct;
@@ -237,11 +237,13 @@ class File
      * @param string $escape The escape character.
      * @return (string|null)[] The parsed CSV values.
      *
-     * @throws ErrorException|RuntimeException If the file could not be parsed.
+     * @throws ErrorException|InvalidArgumentException|RuntimeException If the length is invalid or the file could not be parsed.
      */
     public function csv(int $length = 0, string $separator = ',', string $enclosure = '"', string $escape = '\\'): array
     {
-        assert($length >= 0);
+        if ($length < 0) {
+            throw new InvalidArgumentException('CSV length must not be negative.');
+        }
 
         if (!is_resource($this->handle)) {
             throw new RuntimeException('File handle is not valid.');
@@ -504,11 +506,13 @@ class File
      * @param int $length The number of bytes to read.
      * @return string The data.
      *
-     * @throws ErrorException|RuntimeException If the data could not be read.
+     * @throws ErrorException|InvalidArgumentException|RuntimeException If the length is invalid or the data could not be read.
      */
     public function read(int $length): string
     {
-        assert($length > 0);
+        if ($length < 1) {
+            throw new InvalidArgumentException('Read length must be greater than 0.');
+        }
 
         if (!is_resource($this->handle)) {
             throw new RuntimeException('File handle is not valid.');
@@ -624,11 +628,13 @@ class File
      * @param int $size The size to truncate to.
      * @return static The File instance.
      *
-     * @throws ErrorException|RuntimeException If the file could not be truncated.
+     * @throws ErrorException|InvalidArgumentException|RuntimeException If the size is invalid or the file could not be truncated.
      */
     public function truncate(int $size = 0): static
     {
-        assert($size >= 0);
+        if ($size < 0) {
+            throw new InvalidArgumentException('Truncate size must not be negative.');
+        }
 
         if (!is_resource($this->handle)) {
             throw new RuntimeException('File handle is not valid.');

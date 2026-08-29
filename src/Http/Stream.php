@@ -7,12 +7,12 @@ use Fyre\Core\Exceptions\ErrorException;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Core\Traits\StaticMacroTrait;
+use InvalidArgumentException;
 use Override;
 use Psr\Http\Message\StreamInterface;
 use RuntimeException;
 use Stringable;
 
-use function assert;
 use function fclose;
 use function feof;
 use function fopen;
@@ -276,12 +276,14 @@ class Stream implements StreamInterface, Stringable
     /**
      * {@inheritDoc}
      *
-     * @throws ErrorException|RuntimeException If the resource is not readable.
+     * @throws ErrorException|InvalidArgumentException|RuntimeException If the length is invalid or the resource is not readable.
      */
     #[Override]
     public function read(int $length): string
     {
-        assert($length > 0);
+        if ($length < 1) {
+            throw new InvalidArgumentException('Read length must be greater than 0.');
+        }
 
         if (!is_resource($this->resource)) {
             throw new RuntimeException('Invalid stream resource.');

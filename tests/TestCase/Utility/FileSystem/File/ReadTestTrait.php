@@ -5,6 +5,7 @@ namespace Tests\TestCase\Utility\FileSystem\File;
 
 use Fyre\Core\Exceptions\ErrorException;
 use Fyre\Utility\FileSystem\File;
+use InvalidArgumentException;
 use RuntimeException;
 
 trait ReadTestTrait
@@ -30,6 +31,14 @@ trait ReadTestTrait
         $file = new File('tmp/test.txt', true);
         $file->open('w');
         $file->read(4);
+    }
+
+    public function testReadInvalidLength(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Read length must be greater than 0.');
+
+        new File('tmp/test.txt', true)->read(0);
     }
 
     public function testReadNoHandle(): void

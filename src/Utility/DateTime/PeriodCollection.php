@@ -7,6 +7,7 @@ use ArrayAccess;
 use Countable;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
+use InvalidArgumentException;
 use Iterator;
 use OutOfBoundsException;
 use Override;
@@ -214,11 +215,15 @@ class PeriodCollection implements ArrayAccess, Countable, Iterator
      *
      * @param int|null $index The index.
      * @param Period $value The period.
+     *
+     * @throws InvalidArgumentException If the value is not a Period.
      */
     #[Override]
     public function offsetSet(mixed $index, mixed $value): void
     {
-        assert($value instanceof Period);
+        if (!($value instanceof Period)) {
+            throw new InvalidArgumentException('Period value must be an instance of Period.');
+        }
 
         if ($index === null) {
             $this->periods[] = $value;

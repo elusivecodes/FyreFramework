@@ -5,6 +5,7 @@ namespace Tests\TestCase\Security\Encryption;
 
 use Fyre\Security\Encryption\Encrypter;
 use Fyre\Security\Encryption\Exceptions\EncryptionException;
+use InvalidArgumentException;
 
 trait EncrypterTestTrait
 {
@@ -32,6 +33,14 @@ trait EncrypterTestTrait
 
         $this->assertNotSame($data, $encrypted);
         $this->assertSame($data, $decrypted);
+    }
+
+    public function testGenerateKeyInvalidLength(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Key length must be greater than 0.');
+
+        $this->encrypter->generateKey(0);
     }
 
     public function testGenerateKeyRandom(): void

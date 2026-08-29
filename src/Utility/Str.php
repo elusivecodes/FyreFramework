@@ -10,7 +10,6 @@ use function array_keys;
 use function array_map;
 use function array_shift;
 use function array_values;
-use function assert;
 use function ctype_lower;
 use function explode;
 use function htmlspecialchars;
@@ -209,10 +208,14 @@ abstract class Str
      * @param string $string The input string.
      * @param int $size The maximum length of a chunk.
      * @return string[] The split substrings.
+     *
+     * @throws InvalidArgumentException If the chunk size is invalid.
      */
     public static function chunk(string $string, int $size = 1): array
     {
-        assert($size >= 1);
+        if ($size < 1) {
+            throw new InvalidArgumentException('Chunk size must be greater than 0.');
+        }
 
         return str_split($string, $size);
     }
