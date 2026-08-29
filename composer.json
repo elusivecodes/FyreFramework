@@ -31,6 +31,7 @@
         "php": ">=8.5",
         "ext-intl": "*",
         "ext-mbstring": "*",
+        "ext-sodium": "*",
         "psr/container": "^2.0",
         "psr/event-dispatcher": "^1.0",
         "psr/http-client": "^1.0",
@@ -78,7 +79,10 @@
         "ext-pdo": "Required to use database connections.",
         "ext-posix": "Required to use async promises.",
         "ext-redis": "Required to use Redis cache and queue handlers.",
-        "ext-sockets": "Required to use async promises."
+        "ext-sockets": "Required to use async promises.",
+        "friendsofphp/php-cs-fixer": "Required to use Fyre\\TestSuite\\PhpCsFixer\\Config.",
+        "phpstan/phpstan": "Required to use Fyre\\TestSuite\\PhpStan extensions.",
+        "phpunit/phpunit": "Required to use Fyre\\TestSuite\\TestCase, traits, and constraints."
     },
     "config": {
         "lock": false,

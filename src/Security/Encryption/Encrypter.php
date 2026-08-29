@@ -10,19 +10,16 @@ use InvalidArgumentException;
 use function array_replace;
 use function assert;
 use function hash_hkdf;
-use function hash_hmac;
 use function hash_hmac_algos;
 use function in_array;
 use function mb_substr;
 use function sprintf;
-use function strlen;
 use function strtolower;
 
 /**
  * Provides shared encryption helpers for encrypter implementations.
  *
- * Includes config handling, HKDF-based key derivation, and raw-binary HMAC helpers used by
- * concrete encrypters for integrity checks.
+ * Includes config handling and HKDF-based key derivation shared by concrete encrypters.
  */
 abstract class Encrypter
 {
@@ -110,30 +107,6 @@ abstract class Encrypter
         assert($length >= 0);
 
         return hash_hkdf($this->config['digest'], $key, $length);
-    }
-
-    /**
-     * Returns the HMAC.
-     *
-     * Note: The returned value is raw binary output.
-     *
-     * @param string $data The data to hash.
-     * @param string $secret The secret key.
-     * @return string The HMAC value.
-     */
-    protected function getHmac(string $data, string $secret): string
-    {
-        return hash_hmac($this->config['digest'], $data, $secret, true);
-    }
-
-    /**
-     * Returns the HMAC length.
-     *
-     * @return int The HMAC length.
-     */
-    protected function getHmacLength(): int
-    {
-        return $this->getHmac('', '') |> strlen(...);
     }
 
     /**

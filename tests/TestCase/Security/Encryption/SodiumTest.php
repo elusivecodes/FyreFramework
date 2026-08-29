@@ -5,20 +5,36 @@ namespace Tests\TestCase\Security\Encryption;
 
 use Fyre\Core\Container;
 use Fyre\Security\Encryption\EncryptionManager;
+use Fyre\Security\Encryption\Exceptions\EncryptionException;
 use Fyre\Security\Encryption\Handlers\SodiumEncrypter;
 use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 
+use function serialize;
+use function sodium_pad;
 use function strlen;
 
 use const SODIUM_CRYPTO_SECRETBOX_KEYBYTES;
+use const SODIUM_CRYPTO_SECRETBOX_MACBYTES;
+use const SODIUM_CRYPTO_SECRETBOX_NONCEBYTES;
 
 #[RequiresPhpExtension('sodium')]
 final class SodiumTest extends TestCase
 {
     use EncrypterTestTrait;
+
+    public function testAuthentication(): void
+    {
+        $encrypted = $this->encrypter->encrypt('test', 'key');
+        $encrypted[0] = $encrypted[0] === "\0" ? "\1" : "\0";
+
+        $this->expectException(EncryptionException::class);
+        $this->expectExceptionMessageIs('Decryption failed.');
+
+        $this->encrypter->decrypt($encrypted, 'key');
+    }
 
     public function testDigest(): void
     {
@@ -62,6 +78,17 @@ final class SodiumTest extends TestCase
         new SodiumEncrypter([
             'digest' => 'invalid',
         ]);
+    }
+
+    public function testSecretboxPayloadFormat(): void
+    {
+        $encrypted = $this->encrypter->encrypt('test', 'key');
+        $padded = sodium_pad(serialize('test'), 16);
+
+        $this->assertSame(
+            SODIUM_CRYPTO_SECRETBOX_NONCEBYTES + SODIUM_CRYPTO_SECRETBOX_MACBYTES + strlen($padded),
+            strlen($encrypted)
+        );
     }
 
     #[Override]

@@ -5,7 +5,7 @@ namespace Tests\TestCase\Security\Encryption;
 
 use Fyre\Core\Container;
 use Fyre\Security\Encryption\EncryptionManager;
-use Fyre\Security\Encryption\Handlers\OpenSSLEncrypter;
+use Fyre\Security\Encryption\Handlers\OpenSslEncrypter;
 use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 use function strlen;
 
 #[RequiresPhpExtension('openssl')]
-final class OpenSSLTest extends TestCase
+final class OpenSslTest extends TestCase
 {
     use EncrypterTestTrait;
 
@@ -33,7 +33,7 @@ final class OpenSSLTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageIs('OpenSSL cipher `invalid` is not valid.');
 
-        new OpenSSLEncrypter([
+        new OpenSslEncrypter([
             'cipher' => 'invalid',
         ]);
     }
@@ -43,7 +43,7 @@ final class OpenSSLTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageIs('OpenSSL cipher `AES-128-ECB` must use an initialization vector.');
 
-        new OpenSSLEncrypter([
+        new OpenSslEncrypter([
             'cipher' => 'AES-128-ECB',
         ]);
     }
@@ -54,7 +54,7 @@ final class OpenSSLTest extends TestCase
         $this->encrypter = new Container()
             ->use(EncryptionManager::class)
             ->build([
-                'className' => OpenSSLEncrypter::class,
+                'className' => OpenSslEncrypter::class,
             ]);
     }
 }

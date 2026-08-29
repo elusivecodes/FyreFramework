@@ -9,7 +9,7 @@ use InvalidArgumentException;
 use Override;
 
 use function assert;
-use function hash_equals;
+use function is_string;
 use function mb_strlen;
 use function random_bytes;
 use function serialize;
@@ -25,10 +25,10 @@ use const SODIUM_CRYPTO_SECRETBOX_MACBYTES;
 use const SODIUM_CRYPTO_SECRETBOX_NONCEBYTES;
 
 /**
- * Encrypter implementation using libsodium with HMAC integrity checks.
+ * Encrypter implementation using libsodium authenticated encryption.
  *
- * Data is serialized, padded, encrypted using secretbox, and authenticated using an HMAC
- * derived from the encryption key.
+ * Data is serialized, padded, and encrypted using secretbox, which authenticates the
+ * ciphertext as part of its construction.
  */
 class SodiumEncrypter extends Encrypter
 {
@@ -68,33 +68,28 @@ class SodiumEncrypter extends Encrypter
             throw new EncryptionException('Decryption failed.');
         }
 
-        $secret = $this->generateSecret($key, SODIUM_CRYPTO_SECRETBOX_KEYBYTES);
-
-        $hmacLength = (int) $this->getHmacLength();
-        $hmacKey = static::substr($data, 0, $hmacLength);
-        $data = static::substr($data, $hmacLength);
-
-        $hmacCalc = $this->getHmac($data, $secret);
-
-        if (!hash_equals($hmacKey, $hmacCalc)) {
-            throw new EncryptionException('Decryption failed.');
-        }
-
         $nonce = static::substr($data, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
         $cipher = static::substr($data, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+        $secret = $this->generateSecret($key, SODIUM_CRYPTO_SECRETBOX_KEYBYTES);
 
-        $data = sodium_crypto_secretbox_open($cipher, $nonce, $secret);
+        try {
+            $data = sodium_crypto_secretbox_open($cipher, $nonce, $secret);
 
-        if ($data === false) {
-            throw new EncryptionException('Decryption failed.');
+            if ($data === false) {
+                throw new EncryptionException('Decryption failed.');
+            }
+
+            $data = sodium_unpad($data, $this->config['blockSize']);
+
+            return unserialize($data);
+        } finally {
+            sodium_memzero($cipher);
+            sodium_memzero($secret);
+
+            if (is_string($data)) {
+                sodium_memzero($data);
+            }
         }
-
-        $data = sodium_unpad($data, $this->config['blockSize']);
-
-        sodium_memzero($cipher);
-        sodium_memzero($key);
-
-        return unserialize($data);
     }
 
     /**
@@ -103,23 +98,17 @@ class SodiumEncrypter extends Encrypter
     #[Override]
     public function encrypt(mixed $data, string $key): string
     {
-        $secret = $this->generateSecret($key, SODIUM_CRYPTO_SECRETBOX_KEYBYTES);
         $nonce = $this->generateKey(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-
         $data = serialize($data);
-
         $data = sodium_pad($data, $this->config['blockSize']);
+        $secret = $this->generateSecret($key, SODIUM_CRYPTO_SECRETBOX_KEYBYTES);
 
-        $cypher = sodium_crypto_secretbox($data, $nonce, $secret);
-
-        sodium_memzero($data);
-        sodium_memzero($key);
-
-        $result = $nonce.$cypher;
-
-        $hmacKey = $this->getHmac($result, $secret);
-
-        return $hmacKey.$result;
+        try {
+            return $nonce.sodium_crypto_secretbox($data, $nonce, $secret);
+        } finally {
+            sodium_memzero($data);
+            sodium_memzero($secret);
+        }
     }
 
     /**

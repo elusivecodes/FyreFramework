@@ -39,7 +39,7 @@ An `Encrypter` implements three operations:
 
 `EncryptionManager` ships with two built-in handler configs: `default` (libsodium) and `openssl`.
 
-Both handlers serialize data before encryption and use an HMAC derived from the caller-provided key to detect tampering.
+Both handlers serialize data before encryption. `SodiumEncrypter` uses the authentication built into `secretbox`, while `OpenSslEncrypter` authenticates its ciphertext with an HMAC.
 
 ## Configuring encrypters
 
@@ -53,7 +53,7 @@ Each entry under `Encryption` is a named encrypter definition:
 ### Base options
 
 - `className` (`class-string<Fyre\Security\Encryption\Encrypter>`): the encrypter class to build.
-- `digest` (`string`): the digest algorithm used for HKDF and HMAC (default: `SHA512`).
+- `digest` (`string`): the digest algorithm used for HKDF key derivation and, by `OpenSslEncrypter`, HMAC (default: `SHA512`).
 
 ### Built-in encrypter handlers
 
@@ -67,18 +67,18 @@ Prefer `SodiumEncrypter` when libsodium is available and you want a modern, opin
 
 Class: `Fyre\Security\Encryption\Handlers\SodiumEncrypter`
 
-#### `OpenSSLEncrypter`
+#### `OpenSslEncrypter`
 
 - `cipher` (`string`): the OpenSSL cipher to use (default: `AES-256-CTR`).
 
-Use `OpenSSLEncrypter` when you need a specific OpenSSL cipher for compatibility.
+Use `OpenSslEncrypter` when you need a specific OpenSSL cipher for compatibility.
 
-Class: `Fyre\Security\Encryption\Handlers\OpenSSLEncrypter`
+Class: `Fyre\Security\Encryption\Handlers\OpenSslEncrypter`
 
 ### Example configuration
 
 ```php
-use Fyre\Security\Encryption\Handlers\OpenSSLEncrypter;
+use Fyre\Security\Encryption\Handlers\OpenSslEncrypter;
 use Fyre\Security\Encryption\Handlers\SodiumEncrypter;
 
 return [
@@ -87,7 +87,7 @@ return [
             'className' => SodiumEncrypter::class,
         ],
         'openssl' => [
-            'className' => OpenSSLEncrypter::class,
+            'className' => OpenSslEncrypter::class,
             'cipher' => 'AES-256-CTR',
         ],
     ],
@@ -119,10 +119,10 @@ $openssl = encryption('openssl');
 Use `build()` to construct an encrypter directly from options without storing it under a key (and without sharing it).
 
 ```php
-use Fyre\Security\Encryption\Handlers\OpenSSLEncrypter;
+use Fyre\Security\Encryption\Handlers\OpenSslEncrypter;
 
 $encrypter = $encrypters->build([
-    'className' => OpenSSLEncrypter::class,
+    'className' => OpenSslEncrypter::class,
     'cipher' => 'AES-256-CTR',
 ]);
 ```
@@ -174,7 +174,7 @@ $envValue = base64_encode($rawKey);
 ```
 
 - `SodiumEncrypter::generateKey()` defaults to `SODIUM_CRYPTO_SECRETBOX_KEYBYTES` when no length is supplied.
-- `OpenSSLEncrypter::generateKey()` defaults to 24 bytes when no length is supplied.
+- `OpenSslEncrypter::generateKey()` defaults to 24 bytes when no length is supplied.
 
 Changing the key means previously encrypted values become undecryptable with the new key.
 
@@ -214,10 +214,10 @@ Arguments:
 - `$options` (`array<string, mixed>`): encrypter options including `className`.
 
 ```php
-use Fyre\Security\Encryption\Handlers\OpenSSLEncrypter;
+use Fyre\Security\Encryption\Handlers\OpenSslEncrypter;
 
 $temp = $encrypters->build([
-    'className' => OpenSSLEncrypter::class,
+    'className' => OpenSslEncrypter::class,
     'cipher' => 'AES-256-CTR',
 ]);
 ```
@@ -243,10 +243,10 @@ Arguments:
 - `$options` (`array<string, mixed>`): the encrypter options.
 
 ```php
-use Fyre\Security\Encryption\Handlers\OpenSSLEncrypter;
+use Fyre\Security\Encryption\Handlers\OpenSslEncrypter;
 
 $encrypters->setConfig('compat', [
-    'className' => OpenSSLEncrypter::class,
+    'className' => OpenSslEncrypter::class,
     'cipher' => 'AES-256-CTR',
 ]);
 ```
@@ -318,7 +318,7 @@ A few behaviors are worth keeping in mind:
 - When integrity checks fail, `decrypt()` throws `Fyre\Security\Encryption\Exceptions\EncryptionException`.
 - `EncryptionManager::use($key)` requires a valid config entry containing a `className`; requesting a missing key (or invalid class) results in an `InvalidArgumentException` from `build()`.
 - `EncryptionManager::setConfig()` throws if the key already exists; to replace a key, call `unload()` first.
-- The `digest` option controls both HKDF and HMAC behavior and must be supported by `hash_hmac()`.
+- The `digest` option controls HKDF key derivation for both handlers and HMAC behavior for `OpenSslEncrypter`; it must be supported by `hash_hmac()`.
 
 ## Related
 

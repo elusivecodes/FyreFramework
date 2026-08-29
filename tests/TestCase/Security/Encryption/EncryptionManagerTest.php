@@ -9,7 +9,7 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Security\Encryption\Encrypter;
 use Fyre\Security\Encryption\EncryptionManager;
-use Fyre\Security\Encryption\Handlers\OpenSSLEncrypter;
+use Fyre\Security\Encryption\Handlers\OpenSslEncrypter;
 use Fyre\Security\Encryption\Handlers\SodiumEncrypter;
 use InvalidArgumentException;
 use Override;
@@ -55,7 +55,7 @@ final class EncryptionManagerTest extends TestCase
                     'className' => SodiumEncrypter::class,
                 ],
                 'openssl' => [
-                    'className' => OpenSSLEncrypter::class,
+                    'className' => OpenSslEncrypter::class,
                 ],
             ],
             $config
@@ -69,7 +69,7 @@ final class EncryptionManagerTest extends TestCase
         $this->assertIsArray($config);
         $this->assertArraysAreIdentical(
             [
-                'className' => OpenSSLEncrypter::class,
+                'className' => OpenSslEncrypter::class,
             ],
             $config
         );
@@ -203,7 +203,7 @@ final class EncryptionManagerTest extends TestCase
                 'className' => SodiumEncrypter::class,
             ],
             'openssl' => [
-                'className' => OpenSSLEncrypter::class,
+                'className' => OpenSslEncrypter::class,
             ],
         ]);
         $this->encryptionManager = $container->use(EncryptionManager::class);

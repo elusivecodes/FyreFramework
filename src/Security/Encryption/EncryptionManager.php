@@ -6,7 +6,7 @@ namespace Fyre\Security\Encryption;
 use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
-use Fyre\Security\Encryption\Handlers\OpenSSLEncrypter;
+use Fyre\Security\Encryption\Handlers\OpenSslEncrypter;
 use Fyre\Security\Encryption\Handlers\SodiumEncrypter;
 use InvalidArgumentException;
 
@@ -32,7 +32,7 @@ class EncryptionManager
             'className' => SodiumEncrypter::class,
         ],
         'openssl' => [
-            'className' => OpenSSLEncrypter::class,
+            'className' => OpenSslEncrypter::class,
         ],
     ];
 

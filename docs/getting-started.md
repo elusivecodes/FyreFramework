@@ -36,6 +36,7 @@ FyreFramework requires:
 - PHP 8.5 or later
 - `ext-intl`
 - `ext-mbstring`
+- `ext-sodium`
 
 Database connections also require `ext-pdo` and the matching PDO driver, such as `ext-pdo_mysql`, `ext-pdo_pgsql`, or `ext-pdo_sqlite`.
 

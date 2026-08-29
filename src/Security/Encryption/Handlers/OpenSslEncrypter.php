@@ -9,6 +9,7 @@ use InvalidArgumentException;
 use Override;
 
 use function hash_equals;
+use function hash_hmac;
 use function in_array;
 use function openssl_cipher_iv_length;
 use function openssl_decrypt;
@@ -17,6 +18,7 @@ use function openssl_get_cipher_methods;
 use function openssl_random_pseudo_bytes;
 use function serialize;
 use function sprintf;
+use function strlen;
 use function strtolower;
 use function unserialize;
 
@@ -28,7 +30,7 @@ use const OPENSSL_RAW_DATA;
  * Data is serialized for transport, encrypted with the configured cipher, and authenticated
  * using an HMAC derived from the encryption key.
  */
-class OpenSSLEncrypter extends Encrypter
+class OpenSslEncrypter extends Encrypter
 {
     /**
      * @var array<string, mixed>
@@ -39,7 +41,7 @@ class OpenSSLEncrypter extends Encrypter
     ];
 
     /**
-     * Constructs an OpenSSLEncrypter.
+     * Constructs an OpenSslEncrypter.
      *
      * @param array<string, mixed> $options The Encrypter options.
      *
@@ -144,5 +146,29 @@ class OpenSSLEncrypter extends Encrypter
     protected function getCipherLength(): int
     {
         return (int) openssl_cipher_iv_length($this->config['cipher']);
+    }
+
+    /**
+     * Returns the HMAC.
+     *
+     * Note: The returned value is raw binary output.
+     *
+     * @param string $data The data to hash.
+     * @param string $secret The secret key.
+     * @return string The HMAC value.
+     */
+    protected function getHmac(string $data, string $secret): string
+    {
+        return hash_hmac($this->config['digest'], $data, $secret, true);
+    }
+
+    /**
+     * Returns the HMAC length.
+     *
+     * @return int The HMAC length.
+     */
+    protected function getHmacLength(): int
+    {
+        return $this->getHmac('', '') |> strlen(...);
     }
 }

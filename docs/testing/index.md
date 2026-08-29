@@ -7,6 +7,7 @@ The section covers the base `TestCase`, fixtures, in-process HTTP and console te
 ## Table of Contents
 
 - [Start here](#start-here)
+- [Installation](#installation)
 - [Testing overview](#testing-overview)
 - [Pages in this section](#pages-in-this-section)
 
@@ -21,6 +22,23 @@ Pick a path based on what you’re testing:
 - **Console commands**: [Console Testing](console.md)
 - **Email and logging**: [Email Testing](mail.md) and [Log Testing](logging.md)
 - **Performance checks**: [Timers](timers.md) or [Benchmark](benchmark.md)
+
+## Installation
+
+The base test case, assertion traits, and constraints use PHPUnit. Add it to your application as a development dependency:
+
+```bash
+composer require --dev phpunit/phpunit:^13
+```
+
+The PHPStan extension and PHP-CS-Fixer config are separate opt-in integrations. Install the matching tool only when you use that integration:
+
+```bash
+composer require --dev phpstan/phpstan:^2.1
+composer require --dev friendsofphp/php-cs-fixer:^3.91
+```
+
+These packages are development dependencies of FyreFramework itself, but Composer does not install a dependency's `require-dev` packages for consumers.
 
 ## Testing overview
 
