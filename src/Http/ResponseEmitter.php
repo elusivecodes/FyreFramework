@@ -6,6 +6,7 @@ namespace Fyre\Http;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Http\Cookie\Cookie;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 use function array_values;
 use function fastcgi_finish_request;
@@ -38,13 +39,16 @@ class ResponseEmitter
      *   When ids collide, the last parsed cookie wins.
      *
      * Body emission:
+     * - Bodies are suppressed for HEAD requests when the request is provided, and for
+     *   informational (1xx), 204 and 304 responses.
      * - If a valid `Content-Range` header is present, only the requested byte range is output.
      * - Seekable streams are read in chunks; non-seekable streams fall back to reading the
      *   full contents for range handling.
      *
      * @param ResponseInterface $response The Response to send.
+     * @param ServerRequestInterface|null $request The current ServerRequest.
      */
-    public function emit(ResponseInterface $response): void
+    public function emit(ResponseInterface $response, ServerRequestInterface|null $request = null): void
     {
         $statusCode = $response->getStatusCode();
         $reasonPhrase = $response->getReasonPhrase();
@@ -83,6 +87,19 @@ class ResponseEmitter
 
         foreach ($cookies as $cookie) {
             $this->setCookie($cookie);
+        }
+
+        if (
+            $request?->getMethod() === 'HEAD' ||
+            $statusCode < 200 ||
+            $statusCode === 204 ||
+            $statusCode === 304
+        ) {
+            if (function_exists('fastcgi_finish_request')) {
+                fastcgi_finish_request();
+            }
+
+            return;
         }
 
         $body = $response->getBody();

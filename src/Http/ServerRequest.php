@@ -6,12 +6,12 @@ namespace Fyre\Http;
 use Fyre\Core\Config;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\DB\TypeParser;
+use Fyre\Http\Exceptions\BadRequestException;
 use Fyre\Utility\Arr;
 use InvalidArgumentException;
 use Override;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
-use RuntimeException;
 
 use function array_key_exists;
 use function array_key_last;
@@ -375,7 +375,7 @@ class ServerRequest extends Request implements ServerRequestInterface
      *
      * @return array<mixed> The parsed body data.
      *
-     * @throws RuntimeException If the request is invalid.
+     * @throws BadRequestException If the request is invalid.
      */
     #[Override]
     public function getParsedBody(): array
@@ -392,7 +392,7 @@ class ServerRequest extends Request implements ServerRequestInterface
                     json_last_error() !== JSON_ERROR_NONE ||
                     !is_array($data)
                 ) {
-                    throw new RuntimeException('The request body is not valid.');
+                    throw new BadRequestException('The request body is not valid.');
                 }
 
                 $this->data = $data;

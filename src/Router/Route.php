@@ -17,7 +17,6 @@ use ReflectionParameter;
 use function count;
 use function explode;
 use function getservbyname;
-use function in_array;
 use function is_string;
 use function preg_match;
 use function preg_match_all;
@@ -172,6 +171,16 @@ abstract class Route
     }
 
     /**
+     * Returns the route methods.
+     *
+     * @return string[]|null The route methods, or null if any method is allowed.
+     */
+    public function getMethods(): array|null
+    {
+        return $this->methods;
+    }
+
+    /**
      * Returns the route middleware.
      *
      * @return array<Closure|MiddlewareInterface|string> The route middleware.
@@ -256,19 +265,15 @@ abstract class Route
     }
 
     /**
-     * Parses a ServerRequest.
+     * Matches a ServerRequest without checking its HTTP method.
      *
      * Note: When matched, this sets the `route` and `routeArguments` request attributes.
      *
      * @param ServerRequestInterface $request The ServerRequest.
      * @return ServerRequestInterface|null The ServerRequest or null if not matched.
      */
-    public function parseRequest(ServerRequestInterface $request): ServerRequestInterface|null
+    public function matchRequest(ServerRequestInterface $request): ServerRequestInterface|null
     {
-        if ($this->methods !== null && !in_array($request->getMethod(), $this->methods, true)) {
-            return null;
-        }
-
         $uri = $request->getUri();
 
         if ($this->scheme && $uri->getScheme() !== $this->scheme) {

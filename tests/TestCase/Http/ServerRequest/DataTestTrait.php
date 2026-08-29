@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Http\ServerRequest;
 
+use Fyre\Http\Exceptions\BadRequestException;
 use Fyre\Http\ServerRequest;
 use Fyre\Utility\DateTime\DateTime;
-use RuntimeException;
 
 use function json_encode;
 
@@ -160,9 +160,24 @@ trait DataTestTrait
         );
     }
 
+    public function testGetDataJsonInvalid(): void
+    {
+        $this->expectException(BadRequestException::class);
+        $this->expectExceptionMessageIs('The request body is not valid.');
+
+        $request = new ServerRequest($this->config, $this->type, [
+            'server' => [
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            'body' => '{',
+        ]);
+
+        $request->getData();
+    }
+
     public function testGetDataJsonScalar(): void
     {
-        $this->expectException(RuntimeException::class);
+        $this->expectException(BadRequestException::class);
         $this->expectExceptionMessageIs('The request body is not valid.');
 
         $request = new ServerRequest($this->config, $this->type, [

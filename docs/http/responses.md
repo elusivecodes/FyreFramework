@@ -410,10 +410,11 @@ Sends a `Psr\Http\Message\ResponseInterface` to the client using PHP’s `header
 
 Arguments:
 - `$response` (`Psr\Http\Message\ResponseInterface`): the response to send.
+- `$request` (`Psr\Http\Message\ServerRequestInterface|null`): the current request, used to suppress the body for `HEAD` requests.
 
 ```php
 $emitter = new ResponseEmitter();
-$emitter->emit($response);
+$emitter->emit($response, $request);
 ```
 
 ## Behavior notes
@@ -422,6 +423,7 @@ A few behaviors are worth keeping in mind:
 
 - Response objects are immutable, so remember to keep the value returned by each `with*` call.
 - `ClientResponse::withCookie()` stores cookies in a response cookie collection, and `ResponseEmitter` emits them when sending the response.
+- `ResponseEmitter` sends headers and cookies but suppresses the body for `HEAD` when the current request is provided, and for informational (`1xx`), `204`, and `304` responses.
 - Streamed JSON bodies are read-only and non-seekable, and JSON encoding occurs as the body is read.
 - When the request method is available and the protocol version is `>= 1.1`, non-`GET` redirects force `303`, and `GET` redirects convert a default `302` to `307`.
 

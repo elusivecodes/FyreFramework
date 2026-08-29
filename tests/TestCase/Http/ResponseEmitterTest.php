@@ -11,6 +11,7 @@ use Fyre\Http\Stream;
 use Fyre\Http\Stream\IterableStream;
 use Override;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ServerRequestInterface;
 
 use function class_uses;
 use function fclose;
@@ -85,6 +86,27 @@ final class ResponseEmitterTest extends TestCase
             'This is a test.',
             $output
         );
+    }
+
+    public function testEmitHead(): void
+    {
+        $response = new ClientResponse(['body' => 'This is a test.']);
+        $request = $this->createStub(ServerRequestInterface::class);
+        $request->method('getMethod')->willReturn('HEAD');
+
+        ob_start();
+        $this->emitter->emit($response, $request);
+        $output = ob_get_clean();
+
+        $this->assertArraysAreIdentical(
+            [
+                'HTTP/1.1 200 OK',
+                'Content-Type: text/html; charset=UTF-8',
+            ],
+            self::$headers
+        );
+
+        $this->assertSame('', $output);
     }
 
     public function testEmitIterableStream(): void
@@ -262,6 +284,22 @@ final class ResponseEmitterTest extends TestCase
             'This is a test.',
             $output
         );
+    }
+
+    public function testEmitWithoutBodyStatus(): void
+    {
+        foreach ([100, 199, 204, 304] as $statusCode) {
+            $response = new ClientResponse([
+                'body' => 'This is a test.',
+                'statusCode' => $statusCode,
+            ]);
+
+            ob_start();
+            $this->emitter->emit($response);
+            $output = ob_get_clean();
+
+            $this->assertSame('', $output);
+        }
     }
 
     #[Override]

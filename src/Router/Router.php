@@ -8,6 +8,7 @@ use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
+use Fyre\Http\Exceptions\MethodNotAllowedException;
 use Fyre\Http\Exceptions\NotFoundException;
 use Fyre\Http\Uri;
 use Fyre\ORM\Entity;
@@ -27,6 +28,7 @@ use function array_pop;
 use function array_unique;
 use function getservbyname;
 use function implode;
+use function in_array;
 use function preg_match;
 use function preg_replace_callback;
 use function sprintf;
@@ -391,6 +393,7 @@ class Router
      * @param ServerRequestInterface $request The ServerRequest.
      * @return ServerRequestInterface A new ServerRequest.
      *
+     * @throws MethodNotAllowedException If the path matched but the method was not allowed.
      * @throws NotFoundException If the route was not found.
      */
     public function parseRequest(ServerRequestInterface $request): ServerRequestInterface
@@ -407,21 +410,50 @@ class Router
         }
 
         $request = $request->withAttribute('relativePath', $path);
+        $method = $request->getMethod();
+        $allowedMethods = [];
+        $headRequest = null;
 
         foreach ($this->routes as $route) {
-            $newRequest = $route->parseRequest($request);
+            $newRequest = $route->matchRequest($request);
 
             if ($newRequest === null) {
                 continue;
             }
 
-            return $this->request = $newRequest;
+            $methods = $route->getMethods();
+
+            if ($methods === null || in_array($method, $methods, true)) {
+                return $this->request = $newRequest;
+            }
+
+            if ($method === 'HEAD' && in_array('GET', $methods, true)) {
+                $headRequest ??= $newRequest;
+            }
+
+            $allowedMethods = array_merge($allowedMethods, $methods);
         }
 
-        throw new NotFoundException(sprintf(
-            'No route found for the path `%s`.',
-            $path
-        ));
+        if ($headRequest !== null) {
+            return $this->request = $headRequest;
+        }
+
+        if ($allowedMethods === []) {
+            throw new NotFoundException(sprintf(
+                'No route found for the path `%s`.',
+                $path
+            ));
+        }
+
+        if (in_array('GET', $allowedMethods, true)) {
+            $allowedMethods[] = 'HEAD';
+        }
+
+        $allowedMethods = array_unique($allowedMethods);
+
+        throw new MethodNotAllowedException(headers: [
+            'Allow' => implode(', ', $allowedMethods),
+        ]);
     }
 
     /**

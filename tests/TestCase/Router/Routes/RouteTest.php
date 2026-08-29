@@ -15,22 +15,7 @@ final class RouteTest extends TestCase
 {
     protected Container $container;
 
-    public function testCheckMethod(): void
-    {
-        $route = $this->container->build(ControllerRoute::class, [
-            'destination' => [TestController::class, 'test'],
-            'methods' => ['GET'],
-        ]);
-
-        $request = $this->container->build(ServerRequest::class);
-
-        $this->assertInstanceOf(
-            ServerRequest::class,
-            $route->parseRequest($request)
-        );
-    }
-
-    public function testCheckMethodInvalid(): void
+    public function testCheckMethodIgnored(): void
     {
         $route = $this->container->build(ControllerRoute::class, [
             'destination' => [TestController::class, 'test'],
@@ -43,22 +28,9 @@ final class RouteTest extends TestCase
             ],
         ]);
 
-        $this->assertNull(
-            $route->parseRequest($request)
-        );
-    }
-
-    public function testCheckMethodNoMethods(): void
-    {
-        $route = $this->container->build(ControllerRoute::class, [
-            'destination' => [TestController::class, 'test'],
-        ]);
-
-        $request = $this->container->build(ServerRequest::class);
-
         $this->assertInstanceOf(
             ServerRequest::class,
-            $route->parseRequest($request)
+            $route->matchRequest($request)
         );
     }
 
@@ -79,7 +51,7 @@ final class RouteTest extends TestCase
 
         $this->assertInstanceOf(
             ServerRequest::class,
-            $route->parseRequest($request)
+            $route->matchRequest($request)
         );
     }
 
@@ -99,7 +71,7 @@ final class RouteTest extends TestCase
         ]);
 
         $this->assertNull(
-            $route->parseRequest($request)
+            $route->matchRequest($request)
         );
     }
 
@@ -115,7 +87,7 @@ final class RouteTest extends TestCase
             ->withAttribute('relativePath', "test/a\n");
 
         $this->assertNull(
-            $route->parseRequest($request)
+            $route->matchRequest($request)
         );
     }
 
@@ -144,11 +116,11 @@ final class RouteTest extends TestCase
 
         $this->assertInstanceOf(
             ServerRequest::class,
-            $route->parseRequest($matchingRequest)
+            $route->matchRequest($matchingRequest)
         );
 
         $this->assertNull(
-            $route->parseRequest($invalidRequest)
+            $route->matchRequest($invalidRequest)
         );
     }
 
@@ -193,10 +165,10 @@ final class RouteTest extends TestCase
 
         $this->assertInstanceOf(
             ServerRequest::class,
-            $route->parseRequest($matchingRequest)
+            $route->matchRequest($matchingRequest)
         );
 
-        $optionalRequest = $route->parseRequest($optionalRequest);
+        $optionalRequest = $route->matchRequest($optionalRequest);
 
         $this->assertInstanceOf(
             ServerRequest::class,
@@ -211,7 +183,7 @@ final class RouteTest extends TestCase
         );
 
         $this->assertNull(
-            $route->parseRequest($invalidRequest)
+            $route->matchRequest($invalidRequest)
         );
     }
 
@@ -233,7 +205,7 @@ final class RouteTest extends TestCase
             ],
         ]);
 
-        $request = $route->parseRequest($request);
+        $request = $route->matchRequest($request);
 
         $this->assertArraysAreIdentical(
             [
@@ -259,7 +231,7 @@ final class RouteTest extends TestCase
             ],
         ]);
 
-        $request = $route->parseRequest($request);
+        $request = $route->matchRequest($request);
 
         $this->assertArraysAreIdentical(
             [
@@ -296,6 +268,19 @@ final class RouteTest extends TestCase
                 'item' => $callback,
             ],
             $route->getBindingCallbacks()
+        );
+    }
+
+    public function testGetMethods(): void
+    {
+        $route = $this->container->build(ControllerRoute::class, [
+            'destination' => [TestController::class, 'test'],
+            'methods' => ['GET'],
+        ]);
+
+        $this->assertSame(
+            ['GET'],
+            $route->getMethods()
         );
     }
 
@@ -369,15 +354,14 @@ final class RouteTest extends TestCase
             'destination' => [TestController::class, 'test'],
         ]);
 
-        $request = $this->container->build(ServerRequest::class);
-
         $this->assertSame(
             $route,
             $route->setMethods(['POST'])
         );
 
-        $this->assertNull(
-            $route->parseRequest($request)
+        $this->assertSame(
+            ['POST'],
+            $route->getMethods()
         );
     }
 

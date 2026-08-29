@@ -81,7 +81,7 @@ final class ControllerRouteTest extends TestCase
             ],
         ]);
 
-        $request = $route->parseRequest($request);
+        $request = $route->matchRequest($request);
 
         $this->assertInstanceOf(
             ServerRequest::class,

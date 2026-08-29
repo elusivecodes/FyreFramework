@@ -97,6 +97,9 @@ A route can be constrained to one or more HTTP methods via the `methods:` argume
 
 - If `methods` is `null`, the route matches any request method.
 - If `methods` is provided, methods are uppercased and de-duplicated when the route is connected.
+- A `HEAD` request falls back to a matching `GET` route when no explicit `HEAD` route matches.
+- If the path matches but the method does not, the router throws a `MethodNotAllowedException`
+  with every permitted method in the `Allow` header.
 
 ```php
 $router->connect(
@@ -104,6 +107,23 @@ $router->connect(
     static fn(ServerRequestInterface $request): string => 'contact',
     methods: ['GET', 'POST'],
     as: 'contact'
+);
+```
+
+`OPTIONS` responses are not generated automatically. Register one explicitly when needed:
+
+```php
+use Fyre\Http\ClientResponse;
+
+$router->connect(
+    'contact',
+    static fn(): ClientResponse => new ClientResponse([
+        'statusCode' => 204,
+        'headers' => [
+            'Allow' => 'GET, HEAD, POST, OPTIONS',
+        ],
+    ]),
+    methods: ['OPTIONS']
 );
 ```
 

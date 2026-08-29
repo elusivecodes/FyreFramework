@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Router\Router;
 
+use Fyre\Http\Exceptions\MethodNotAllowedException;
 use Fyre\Http\Exceptions\NotFoundException;
 use Fyre\Http\ServerRequest;
 use Fyre\Router\Router;
@@ -188,9 +189,6 @@ trait FindRouteTestTrait
 
     public function testInvalidAction(): void
     {
-        $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessageIs('No route found for the path `/test`.');
-
         $router = $this->container->use(Router::class);
 
         $router->get('test', TestController::class);
@@ -204,7 +202,42 @@ trait FindRouteTestTrait
             ],
         ]);
 
-        $router->parseRequest($request);
+        try {
+            $router->parseRequest($request);
+            $this->fail('A method-not-allowed exception was not thrown.');
+        } catch (MethodNotAllowedException $exception) {
+            $this->assertSame(
+                'GET, HEAD',
+                $exception->getHeaders()['Allow']
+            );
+        }
+    }
+
+    public function testInvalidActionMultipleMethods(): void
+    {
+        $router = $this->container->use(Router::class);
+
+        $router->get('test', TestController::class);
+        $router->post('test', TestController::class);
+
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'method' => 'PUT',
+                'server' => [
+                    'REQUEST_URI' => '/test',
+                ],
+            ],
+        ]);
+
+        try {
+            $router->parseRequest($request);
+            $this->fail('A method-not-allowed exception was not thrown.');
+        } catch (MethodNotAllowedException $exception) {
+            $this->assertSame(
+                'GET, POST, HEAD',
+                $exception->getHeaders()['Allow']
+            );
+        }
     }
 
     public function testInvalidRoute(): void
@@ -223,6 +256,54 @@ trait FindRouteTestTrait
         ]);
 
         $router->parseRequest($request);
+    }
+
+    public function testRouteHeadFallback(): void
+    {
+        $router = $this->container->use(Router::class);
+        $route = $router->get('test', TestController::class);
+
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'method' => 'HEAD',
+                'server' => [
+                    'REQUEST_URI' => '/test',
+                ],
+            ],
+        ]);
+
+        $parsedRequest = $router->parseRequest($request);
+
+        $this->assertSame(
+            $route,
+            $parsedRequest->getAttribute('route')
+        );
+
+        $this->assertSame(
+            'HEAD',
+            $parsedRequest->getMethod()
+        );
+    }
+
+    public function testRouteHeadPrecedence(): void
+    {
+        $router = $this->container->use(Router::class);
+        $router->get('test', TestController::class);
+        $route = $router->connect('test', HomeController::class, methods: ['HEAD']);
+
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'method' => 'HEAD',
+                'server' => [
+                    'REQUEST_URI' => '/test',
+                ],
+            ],
+        ]);
+
+        $this->assertSame(
+            $route,
+            $router->parseRequest($request)->getAttribute('route')
+        );
     }
 
     public function testRouteHost(): void
