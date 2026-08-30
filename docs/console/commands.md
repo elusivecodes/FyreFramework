@@ -126,6 +126,25 @@ $commandRunner->handle(['app', 'db:rollback']);
 $commandRunner->handle(['app', 'db:rollback', 'default', '2', '--steps', '5']);
 ```
 
+#### `db:status`
+
+Displays every discovered or recorded migration with its status and batch. A status of `up` means the migration is discovered and recorded, `down` means it is discovered but not recorded, and `missing` means it is recorded but its implementation cannot be discovered.
+
+Options:
+
+- `db` (`string`): connection key (default: `ConnectionManager::DEFAULT`)
+
+Examples:
+
+```bash
+app db:status --db=default
+```
+
+```php
+$commandRunner->handle(['app', 'db:status']);
+$commandRunner->handle(['app', 'db:status', '--db', 'default']);
+```
+
 ### Queue commands
 
 #### `queue:worker`

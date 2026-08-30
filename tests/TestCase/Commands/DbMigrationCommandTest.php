@@ -27,12 +27,17 @@ use function array_column;
 use function fclose;
 use function fopen;
 use function getenv;
+use function rewind;
+use function stream_get_contents;
 
+use const PHP_EOL;
 use const ROOT;
 
 final class DbMigrationCommandTest extends TestCase
 {
     protected CommandRunner $commandRunner;
+
+    protected ConnectionManager $connectionManager;
 
     protected Connection $db;
 
@@ -173,6 +178,54 @@ final class DbMigrationCommandTest extends TestCase
         );
     }
 
+    public function testDbStatus(): void
+    {
+        $history = $this->migrationRunner->getHistory();
+        $history->add('0_Missing', 1);
+        $history->add('1_Test1', 2);
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('db:status', [
+                'db' => ConnectionManager::DEFAULT,
+            ])
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            '+-----------+---------+-------+'.PHP_EOL.
+            '| Migration | Status  | Batch |'.PHP_EOL.
+            '+-----------+---------+-------+'.PHP_EOL.
+            '| 0_Missing | missing | 1     |'.PHP_EOL.
+            '| 1_Test1   | up      | 2     |'.PHP_EOL.
+            '| 2_Test2   | down    | -     |'.PHP_EOL.
+            '| 3_Test3   | down    | -     |'.PHP_EOL.
+            '+-----------+---------+-------+'.PHP_EOL,
+            stream_get_contents($this->output)
+        );
+
+        rewind($this->error);
+
+        $this->assertSame(
+            '',
+            stream_get_contents($this->error)
+        );
+    }
+
+    public function testDbStatusDb(): void
+    {
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->handle(['app', 'db:status', '--db', 'other'])
+        );
+
+        $this->assertSame(
+            $this->connectionManager->use('other'),
+            $this->migrationRunner->getConnection()
+        );
+    }
+
     #[Override]
     protected function setUp(): void
     {
@@ -187,23 +240,27 @@ final class DbMigrationCommandTest extends TestCase
         $container->singleton(ForgeRegistry::class);
         $container->singleton(MigrationRunner::class);
         $container->singleton(SchemaRegistry::class);
+        $database = [
+            'className' => MysqlConnection::class,
+            'host' => getenv('MYSQL_HOST'),
+            'username' => getenv('MYSQL_USERNAME'),
+            'password' => getenv('MYSQL_PASSWORD'),
+            'database' => getenv('MYSQL_DATABASE'),
+            'port' => getenv('MYSQL_PORT'),
+            'collation' => 'utf8mb4_unicode_ci',
+            'charset' => 'utf8mb4',
+            'compress' => true,
+        ];
+
         $container->use(Config::class)->set('Database', [
-            'default' => [
-                'className' => MysqlConnection::class,
-                'host' => getenv('MYSQL_HOST'),
-                'username' => getenv('MYSQL_USERNAME'),
-                'password' => getenv('MYSQL_PASSWORD'),
-                'database' => getenv('MYSQL_DATABASE'),
-                'port' => getenv('MYSQL_PORT'),
-                'collation' => 'utf8mb4_unicode_ci',
-                'charset' => 'utf8mb4',
-                'compress' => true,
-            ],
+            'default' => $database,
+            'other' => $database,
         ]);
 
+        $this->connectionManager = $container->use(ConnectionManager::class);
         $this->migrationRunner = $container->use(MigrationRunner::class);
 
-        $this->db = $container->use(ConnectionManager::class)->use();
+        $this->db = $this->connectionManager->use();
         $this->schema = $container->use(SchemaRegistry::class)->use($this->db);
 
         $container->use(Loader::class)->addNamespaces([

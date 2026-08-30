@@ -17,7 +17,9 @@ use ReflectionClass;
 use RegexIterator;
 
 use function array_column;
-use function in_array;
+use function array_diff_key;
+use function array_flip;
+use function array_replace;
 use function is_subclass_of;
 use function ksort;
 use function method_exists;
@@ -114,65 +116,34 @@ class MigrationRunner
     }
 
     /**
-     * Migrates to the latest version.
+     * Returns pending migrations.
      *
-     * Loads migrations via {@see MigrationRunner::getMigrations()} and skips any already
-     * present in {@see MigrationHistory}. Migrations are instantiated with the current
-     * {@see Forge} and `up()` is called when present.
-     *
-     * Note: Migrations are not automatically wrapped in a transaction.
-     *
-     * @return static The MigrationRunner instance.
+     * @return array<string, class-string<Migration>> The pending migrations.
      */
-    public function migrate(): static
+    public function getPendingMigrations(): array
     {
-        $migrations = $this->getMigrations();
+        $ranMigrations = $this->getHistory()->all();
+        $ranMigrationNames = array_column($ranMigrations, 'migration')
+            |> array_flip(...);
 
-        $history = $this->getHistory();
-
-        $ranMigrations = $history->all();
-        $ranMigrationNames = array_column($ranMigrations, 'migration');
-
-        $batch = $history->getNextBatch();
-
-        foreach ($migrations as $migrationName => $className) {
-            if (in_array($migrationName, $ranMigrationNames, true)) {
-                continue;
-            }
-
-            $migration = $this->container->build($className, ['forge' => $this->getForge()]);
-
-            if (method_exists($migration, 'up')) {
-                $this->container->call([$migration, 'up']);
-            }
-
-            $history->add($migrationName, $batch);
-        }
-
-        return $this;
+        return array_diff_key($this->getMigrations(), $ranMigrationNames);
     }
 
     /**
-     * Rolls back to a previous version.
-     *
-     * Rollback order follows the migration history in reverse order (latest first). For each
-     * matched migration class, `down()` is called when present, and the migration is removed
-     * from history.
+     * Returns migrations to rollback.
      *
      * @param int|null $batches The number of batches to rollback.
      * @param int|null $steps The number of steps to rollback.
-     * @return static The MigrationRunner instance.
+     * @return array<string, class-string<Migration>> The migrations to rollback.
      *
      * @throws DbException If a recorded migration implementation cannot be found.
      */
-    public function rollback(int|null $batches = 1, int|null $steps = null): static
+    public function getRollbackMigrations(int|null $batches = 1, int|null $steps = null): array
     {
         $migrations = $this->getMigrations();
+        $rollbackMigrations = [];
 
-        $history = $this->getHistory();
-
-        $ranMigrations = $history->all();
-
+        $ranMigrations = $this->getHistory()->all();
         $lastBatch = null;
 
         foreach ($ranMigrations as $data) {
@@ -194,7 +165,95 @@ class MigrationRunner
                 ));
             }
 
-            $migration = $this->container->build($migrations[$migrationName], ['forge' => $this->getForge()]);
+            $rollbackMigrations[$migrationName] = $migrations[$migrationName];
+        }
+
+        return $rollbackMigrations;
+    }
+
+    /**
+     * Returns the migration status.
+     *
+     * @return array<array{migration: string, status: 'up'|'down'|'missing', batch: int|null}> The migration status.
+     */
+    public function getStatus(): array
+    {
+        $migrations = $this->getMigrations();
+        $ranMigrations = $this->getHistory()->all();
+        $ranMigrationsByName = array_column($ranMigrations, null, 'migration');
+
+        $allMigrations = array_replace($migrations, $ranMigrationsByName);
+
+        ksort($allMigrations, SORT_NATURAL);
+
+        $status = [];
+
+        foreach ($allMigrations as $migrationName => $_) {
+            $status[] = [
+                'migration' => $migrationName,
+                'status' => match (true) {
+                    !isset($ranMigrationsByName[$migrationName]) => 'down',
+                    isset($migrations[$migrationName]) => 'up',
+                    default => 'missing',
+                },
+                'batch' => $ranMigrationsByName[$migrationName]['batch'] ?? null,
+            ];
+        }
+
+        return $status;
+    }
+
+    /**
+     * Migrates to the latest version.
+     *
+     * Executes migrations selected by {@see MigrationRunner::getPendingMigrations()}.
+     * Migrations are instantiated with the current {@see Forge} and `up()` is called when
+     * present.
+     *
+     * Note: Migrations are not automatically wrapped in a transaction.
+     *
+     * @return static The MigrationRunner instance.
+     */
+    public function migrate(): static
+    {
+        $history = $this->getHistory();
+        $batch = $history->getNextBatch();
+
+        $pendingMigrations = $this->getPendingMigrations();
+
+        foreach ($pendingMigrations as $migrationName => $className) {
+            $migration = $this->container->build($className, ['forge' => $this->getForge()]);
+
+            if (method_exists($migration, 'up')) {
+                $this->container->call([$migration, 'up']);
+            }
+
+            $history->add($migrationName, $batch);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Rolls back to a previous version.
+     *
+     * Executes migrations selected by {@see MigrationRunner::getRollbackMigrations()} in
+     * reverse history order (latest first). For each migration, `down()` is called when
+     * present, and the migration is removed from history.
+     *
+     * @param int|null $batches The number of batches to rollback.
+     * @param int|null $steps The number of steps to rollback.
+     * @return static The MigrationRunner instance.
+     *
+     * @throws DbException If a recorded migration implementation cannot be found.
+     */
+    public function rollback(int|null $batches = 1, int|null $steps = null): static
+    {
+        $history = $this->getHistory();
+        $rollbackMigrations = $this->getRollbackMigrations($batches, $steps);
+
+        foreach ($rollbackMigrations as $migrationName => $className) {
+            $migration = $this->container->build($className, ['forge' => $this->getForge()]);
 
             if (method_exists($migration, 'down')) {
                 $this->container->call([$migration, 'down']);

@@ -14,6 +14,7 @@ In most applications you write migration classes and run them through the consol
   - [Discovery and ordering](#discovery-and-ordering)
 - [Running migrations](#running-migrations)
   - [Via console commands](#via-console-commands)
+  - [Planning and status](#planning-and-status)
   - [Migrate](#migrate)
   - [Rollback](#rollback)
 - [Migration history](#migration-history)
@@ -154,12 +155,37 @@ Use the built-in database migration commands:
 
 - `db:migrate` — run all pending migrations
 - `db:rollback` — roll back applied migrations
+- `db:status` — display discovered and recorded migration status
 
 For invocation details, supported options, and examples, see [Console Commands](../console/commands.md).
 
+### Planning and status
+
+Use the planning methods to inspect exactly which migrations `migrate()` or `rollback()` would execute:
+
+```php
+$pending = $runner->getPendingMigrations();
+$rollback = $runner->getRollbackMigrations(2);
+$rollbackSteps = $runner->getRollbackMigrations(null, 3);
+```
+
+Both methods return migrations as `migration name => migration class`, in execution order. If a selected rollback migration is recorded but its implementation cannot be discovered, `getRollbackMigrations()` throws a `DbException`.
+
+Use `getStatus()` to inspect all discovered and recorded migrations:
+
+```php
+$status = $runner->getStatus();
+```
+
+Each status row contains `migration`, `status`, and `batch`. Rows are naturally sorted by migration name and use the following statuses:
+
+- `up` — discovered and recorded
+- `down` — discovered but not recorded; `batch` is `null`
+- `missing` — recorded but no longer discovered
+
 ### Migrate
 
-`MigrationRunner::migrate()` runs all discovered migrations that are not already present in history. For each migration, `up()` is called when present and the migration name is recorded into history as part of a new batch.
+`MigrationRunner::migrate()` executes the plan returned by `getPendingMigrations()`. For each migration, `up()` is called when present and the migration name is recorded into history as part of a new batch.
 
 To target a specific connection, call `setConnection()` before running (for example `$runner->setConnection(db('reporting'));`).
 
@@ -169,7 +195,7 @@ $runner->migrate();
 
 ### Rollback
 
-`MigrationRunner::rollback()` rolls back previously applied migrations based on recorded history (latest first). For each matched migration class, `down()` is called when present, and the migration is removed from history.
+`MigrationRunner::rollback()` executes the plan returned by `getRollbackMigrations()` based on recorded history (latest first). For each matched migration class, `down()` is called when present, and the migration is removed from history.
 
 To target a specific connection, call `setConnection()` before rolling back.
 
@@ -205,6 +231,7 @@ History behavior used by `MigrationRunner`:
 A few behaviors are worth keeping in mind:
 
 - `migrate()` skips any migration name already present in history.
+- Migration plans use the same selection logic as execution.
 - `rollback()` throws and preserves the history entry when the corresponding migration class cannot be found.
 - Migration execution is not automatically wrapped in a transaction.
 - If a migration does not implement `up()` or `down()`, the missing method is skipped and execution continues.
