@@ -762,7 +762,7 @@ abstract class Color implements Stringable
         if ($lightness <= 0 || $lightness >= 1) {
             $fitted = $okLch->withLightness(static::clamp($lightness))->withChroma(0);
 
-            return $fitted |> static::toStaticColor(...);
+            return static::toStaticColor($fitted);
         }
 
         $low = 0.0;

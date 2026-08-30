@@ -51,8 +51,7 @@ class UploadedFileFactory implements UploadedFileFactoryInterface
      */
     public function createUploadedFiles(array $files): array
     {
-        return $files
-            |> static::normalizeFiles(...)
+        return static::normalizeFiles($files)
             |> static::buildFiles(...);
     }
 

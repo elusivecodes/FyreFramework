@@ -191,7 +191,8 @@ abstract class ColorConverter
     public static function labToLch(float $L, float $a, float $b): array
     {
         $C = hypot($a, $b);
-        $H = fmod(rad2deg(atan2($b, $a)), 360);
+        $H = atan2($b, $a) |> rad2deg(...);
+        $H = fmod($H, 360);
 
         if ($H < 0) {
             $H += 360;
@@ -266,7 +267,8 @@ abstract class ColorConverter
     public static function okLabToOkLch(float $L, float $a, float $b): array
     {
         $C = hypot($a, $b);
-        $H = fmod(rad2deg(atan2($b, $a)), 360);
+        $H = atan2($b, $a) |> rad2deg(...);
+        $H = fmod($H, 360);
 
         if ($H < 0) {
             $H += 360;

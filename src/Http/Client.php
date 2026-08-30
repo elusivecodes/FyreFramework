@@ -449,7 +449,7 @@ class Client implements ClientInterface
         }
 
         if (!$request->hasHeader('Cookie')) {
-            $cookieHeader = $this->cookieJar->getHeader($request->getUri());
+            $cookieHeader = $request->getUri() |> $this->cookieJar->getHeader(...);
 
             if ($cookieHeader !== '') {
                 $request = $request->withHeader('Cookie', $cookieHeader);

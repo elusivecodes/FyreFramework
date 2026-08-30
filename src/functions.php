@@ -120,7 +120,7 @@ if (!function_exists('asset')) {
     function asset(string $path, bool $full = false): string
     {
         if ($full) {
-            return Uri::createFromString(config('App.baseUri'))
+            return (config('App.baseUri') |> Uri::createFromString(...))
                 ->resolveRelativeUri($path)
                 ->getUri();
         }

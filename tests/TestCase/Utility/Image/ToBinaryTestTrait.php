@@ -95,7 +95,7 @@ trait ToBinaryTestTrait
         $this->assertArraysAreIdentical([0, 0, 0, 127], $this->getPixel($image2, 0, 0));
 
         $data = $image2->toBinary('jpeg', 100);
-        $image3 = $data |> Image::createFromString(...);
+        $image3 = Image::createFromString($data);
 
         $this->assertArraysAreIdentical([255, 255, 255, 0], $this->getPixel($image3, 0, 0));
         $this->assertArraysAreIdentical([0, 0, 0, 127], $this->getPixel($image2, 0, 0));

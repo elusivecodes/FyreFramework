@@ -246,7 +246,7 @@ abstract class QueryGenerator
                 $query->getHints(),
                 $binder
             );
-            $sql .= $this->buildEpilog($query->getEpilog());
+            $sql .= $query->getEpilog() |> $this->buildEpilog(...);
 
             return $sql;
         });
@@ -335,7 +335,7 @@ abstract class QueryGenerator
                 $query->getHints(),
                 $binder
             );
-            $sql .= $this->buildEpilog($query->getEpilog());
+            $sql .= $query->getEpilog() |> $this->buildEpilog(...);
 
             return $sql;
         });
@@ -353,7 +353,7 @@ abstract class QueryGenerator
         return $this->withQuery($query, function() use ($query, $binder): string {
             $sql = $this->buildInsert($query->getTable(), $query->getValues(), $query->getHints(), $binder);
             $sql .= $this->buildOnConflict($query->getConflictKeys(), $query->getValues(), $query->getExcludeUpdateKeys());
-            $sql .= $this->buildEpilog($query->getEpilog());
+            $sql .= $query->getEpilog() |> $this->buildEpilog(...);
 
             return $sql;
         });

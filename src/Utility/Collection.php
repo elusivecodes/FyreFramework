@@ -941,7 +941,7 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
      */
     public function none(Closure $callback): bool
     {
-        return $this->every(static::negate($callback));
+        return static::negate($callback) |> $this->every(...);
     }
 
     /**
@@ -1043,7 +1043,7 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
      */
     public function reject(Closure $callback): static
     {
-        return $this->filter(static::negate($callback));
+        return static::negate($callback) |> $this->filter(...);
     }
 
     /**
@@ -1125,7 +1125,7 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
      */
     public function skipWhile(Closure $callback): static
     {
-        return $this->skipUntil(static::negate($callback));
+        return static::negate($callback) |> $this->skipUntil(...);
     }
 
     /**
@@ -1260,7 +1260,7 @@ class Collection implements Countable, IteratorAggregate, JsonSerializable, Stri
      */
     public function takeWhile(Closure $callback): static
     {
-        return $this->takeUntil(static::negate($callback));
+        return static::negate($callback) |> $this->takeUntil(...);
     }
 
     /**
