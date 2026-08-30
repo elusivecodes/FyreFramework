@@ -18,12 +18,14 @@ use function implode;
 use function json_encode;
 use function mkdir;
 use function preg_quote;
+use function preg_replace;
 use function rmdir;
 use function strtoupper;
 use function unlink;
 
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_UNICODE;
+use const PHP_EOL;
 
 final class ConsoleTest extends TestCase
 {
@@ -162,19 +164,20 @@ final class ConsoleTest extends TestCase
         $lines = [];
         foreach ($this->levels as $level) {
             $this->logManager->handle($level, '{server_vars}');
-            $lines[] = '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] '.
-                preg_quote(json_encode($_SERVER, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), '/');
+            $lines[] = '['.strtoupper($level).'] '.
+                json_encode($_SERVER, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
         }
 
-        $pattern = '/\A'.implode('\R', $lines).'\R\z/';
+        $expected = implode(PHP_EOL, $lines).PHP_EOL;
+        $pattern = '/(?:\A|\R)\K\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} /';
 
-        $this->assertMatchesRegularExpression(
-            $pattern,
-            file_get_contents('log/console-default.log') ?: ''
+        $this->assertSame(
+            $expected,
+            preg_replace($pattern, '', file_get_contents('log/console-default.log') ?: '')
         );
-        $this->assertMatchesRegularExpression(
-            $pattern,
-            file_get_contents('log/console-all.log') ?: ''
+        $this->assertSame(
+            $expected,
+            preg_replace($pattern, '', file_get_contents('log/console-all.log') ?: '')
         );
         $this->assertSame(
             '',

@@ -101,8 +101,8 @@ final class CurlHandlerTest extends TestCase
 
         $this->assertArraysAreIdentical(
             [
-                'Host: example.com',
                 'Test: header',
+                'Host: example.com',
             ],
             $options[CURLOPT_HTTPHEADER]
         );
