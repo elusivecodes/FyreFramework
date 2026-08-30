@@ -452,9 +452,7 @@ final class RouteLocatorTest extends TestCase
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/comments',
-                ],
+                'uri' => '/comments',
             ],
         ]);
 

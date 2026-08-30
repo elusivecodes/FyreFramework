@@ -40,6 +40,17 @@ $empty = Uri::createFromString()
     ->withQuery('page=2');
 ```
 
+Code that should depend on PSR-17 can instead resolve or inject `UriFactoryInterface`:
+
+```php
+use Psr\Http\Message\UriFactoryInterface;
+
+$uriFactory = $app->use(UriFactoryInterface::class);
+$uri = $uriFactory->createUri('https://example.com/posts/42');
+```
+
+The concrete `Fyre\Http\Factories\UriFactory` also provides `createFromServer()` for deriving a URI from server parameters. `ServerRequestFactory` uses this when marshalling global or explicit server data. See [HTTP Factories](factories.md) for the complete request-creation paths.
+
 ## Method guide
 
 `Uri` instances are immutable. Any method that updates a value returns a new instance.
@@ -352,6 +363,7 @@ A few behaviors are worth keeping in mind:
 
 ## Related
 
+- [HTTP Factories](factories.md)
 - [HTTP Requests](requests.md)
 - [Routing](../routing/index.md)
 - [HTTP Client](client.md)

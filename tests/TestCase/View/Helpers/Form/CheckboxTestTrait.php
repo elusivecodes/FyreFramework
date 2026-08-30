@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\View\Helpers\Form;
 
+use Closure;
+use Fyre\View\View;
+
 trait CheckboxTestTrait
 {
     public function testCheckbox(): void
@@ -87,7 +90,12 @@ trait CheckboxTestTrait
 
     public function testCheckboxCheckedPost(): void
     {
-        $_POST['checkbox'] = '1';
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'checkbox' => '1',
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<input name="checkbox" type="hidden" value="0" /><input id="checkbox" name="checkbox" type="checkbox" value="1" checked />',
@@ -97,7 +105,14 @@ trait CheckboxTestTrait
 
     public function testCheckboxCheckedPostDot(): void
     {
-        $_POST['key']['checkbox'] = '1';
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'key' => [
+                    'checkbox' => '1',
+                ],
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<input name="key[checkbox]" type="hidden" value="0" /><input id="key-checkbox" name="key[checkbox]" type="checkbox" value="1" checked />',

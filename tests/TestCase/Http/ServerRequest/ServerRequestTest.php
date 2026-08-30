@@ -9,6 +9,7 @@ use Fyre\Core\Traits\MacroTrait;
 use Fyre\DB\TypeParser;
 use Fyre\Http\Request;
 use Fyre\Http\ServerRequest;
+use Fyre\Http\Uri;
 use Override;
 use PHPUnit\Framework\TestCase;
 
@@ -25,7 +26,6 @@ final class ServerRequestTest extends TestCase
     use QueryTestTrait;
     use ServerTestTrait;
     use UploadedFileTestTrait;
-    use UriTestTrait;
     use UserAgentTestTrait;
 
     protected Config $config;
@@ -44,8 +44,8 @@ final class ServerRequestTest extends TestCase
     public function testIsAjaxTrue(): void
     {
         $request = new ServerRequest($this->config, $this->type, [
-            'server' => [
-                'HTTP_X_REQUESTED_WITH' => 'XmlHttpRequest',
+            'headers' => [
+                'X-Requested-With' => 'XmlHttpRequest',
             ],
         ]);
 
@@ -79,9 +79,11 @@ final class ServerRequestTest extends TestCase
             ->set('App.trustedProxies', ['127.0.0.1']);
 
         $request = new ServerRequest($this->config, $this->type, [
+            'headers' => [
+                'Front-End-Https' => 'ON',
+            ],
             'server' => [
                 'REMOTE_ADDR' => '127.0.0.1',
-                'HTTP_FRONT_END_HTTPS' => 'ON',
             ],
         ]);
 
@@ -118,6 +120,16 @@ final class ServerRequestTest extends TestCase
         $this->assertInstanceOf(
             Request::class,
             $request
+        );
+    }
+
+    public function testUri(): void
+    {
+        $request = new ServerRequest($this->config, $this->type);
+
+        $this->assertInstanceOf(
+            Uri::class,
+            $request->getUri()
         );
     }
 

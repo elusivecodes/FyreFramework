@@ -68,34 +68,6 @@ trait ServerTestTrait
         );
     }
 
-    public function testServerContentType(): void
-    {
-        $request = new ServerRequest($this->config, $this->type, [
-            'server' => [
-                'CONTENT_TYPE' => 'application/json',
-            ],
-        ]);
-
-        $this->assertSame(
-            'application/json',
-            $request->getHeaderLine('Content-Type')
-        );
-    }
-
-    public function testServerMethod(): void
-    {
-        $request = new ServerRequest($this->config, $this->type, [
-            'server' => [
-                'REQUEST_METHOD' => 'POST',
-            ],
-        ]);
-
-        $this->assertSame(
-            'POST',
-            $request->getMethod()
-        );
-    }
-
     public function testWithServerParams(): void
     {
         $request1 = new ServerRequest($this->config, $this->type, [

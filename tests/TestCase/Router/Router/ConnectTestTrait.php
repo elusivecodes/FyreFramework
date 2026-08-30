@@ -18,9 +18,7 @@ trait ConnectTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/home',
-                ],
+                'uri' => '/home',
             ],
         ]);
 
@@ -45,9 +43,7 @@ trait ConnectTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/home',
-                ],
+                'uri' => '/home',
             ],
         ]);
 

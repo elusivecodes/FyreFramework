@@ -49,10 +49,14 @@ class Stream implements StreamInterface, Stringable
      * @param string $mode The file access mode.
      * @return static The new Stream instance.
      *
-     * @throws RuntimeException If the file cannot be opened.
+     * @throws InvalidArgumentException|RuntimeException If the mode is invalid or the file cannot be opened.
      */
     public static function createFromFile(string $filePath, string $mode = 'r'): static
     {
+        if (preg_match('/\A[rwaxc][+bten]*\z/', $mode) !== 1) {
+            throw new InvalidArgumentException('Stream file mode is not valid.');
+        }
+
         $resource = fopen($filePath, $mode);
 
         if ($resource === false) {

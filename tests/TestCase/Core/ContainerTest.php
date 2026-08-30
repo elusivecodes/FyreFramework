@@ -446,6 +446,71 @@ final class ContainerTest extends TestCase
         );
     }
 
+    public function testReplaceInstance(): void
+    {
+        $service = new Service();
+        $replacement = new Service();
+
+        $this->container->singleton(
+            Service::class,
+            static fn(): Service => $service
+        );
+        $this->container->use(Service::class);
+
+        $this->assertSame(
+            $replacement,
+            $this->container->replaceInstance(Service::class, $replacement)
+        );
+
+        $this->assertSame(
+            $replacement,
+            $this->container->use(Service::class)
+        );
+
+        $this->container->unset(Service::class);
+
+        $this->assertSame(
+            $service,
+            $this->container->use(Service::class)
+        );
+    }
+
+    public function testReplaceInstanceDependency(): void
+    {
+        $this->container
+            ->singleton(InnerService::class)
+            ->singleton(OuterService::class);
+
+        $outerService = $this->container->use(OuterService::class);
+        $replacement = new InnerService();
+
+        $this->container->replaceInstance(InnerService::class, $replacement);
+
+        $newOuterService = $this->container->use(OuterService::class);
+
+        $this->assertNotSame($outerService, $newOuterService);
+        $this->assertSame(
+            $replacement,
+            $newOuterService->getInnerService()
+        );
+    }
+
+    public function testReplaceInstanceScoped(): void
+    {
+        $this->container->scoped(Service::class);
+
+        $service = $this->container->use(Service::class);
+        $replacement = new Service();
+
+        $this->container->replaceInstance(Service::class, $replacement);
+        $this->container->clearScoped();
+
+        $newService = $this->container->use(Service::class);
+
+        $this->assertNotSame($service, $newService);
+        $this->assertNotSame($replacement, $newService);
+    }
+
     public function testUse(): void
     {
         $service = $this->container->use(Service::class);

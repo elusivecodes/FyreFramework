@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\View\Helpers\Form;
 
+use Closure;
+use Fyre\View\View;
+
 trait RadioTestTrait
 {
     public function testRadio(): void
@@ -96,7 +99,12 @@ trait RadioTestTrait
 
     public function testRadioCheckedPost(): void
     {
-        $_POST['radio'] = '1';
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'radio' => '1',
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<input id="radio" name="radio" type="radio" value="1" checked />',
@@ -108,7 +116,14 @@ trait RadioTestTrait
 
     public function testRadioCheckedPostDot(): void
     {
-        $_POST['key']['radio'] = '1';
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'key' => [
+                    'radio' => '1',
+                ],
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<input id="key-radio" name="key[radio]" type="radio" value="1" checked />',

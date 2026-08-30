@@ -21,6 +21,13 @@ use Fyre\DB\Schema\SchemaRegistry;
 use Fyre\DB\TypeParser;
 use Fyre\Event\EventManager;
 use Fyre\Event\Traits\EventDispatcherTrait;
+use Fyre\Http\ClientResponse;
+use Fyre\Http\Factories\RequestFactory;
+use Fyre\Http\Factories\ResponseFactory;
+use Fyre\Http\Factories\ServerRequestFactory;
+use Fyre\Http\Factories\StreamFactory;
+use Fyre\Http\Factories\UploadedFileFactory;
+use Fyre\Http\Factories\UriFactory;
 use Fyre\Http\Middleware\SessionMiddleware;
 use Fyre\Http\MiddlewareQueue;
 use Fyre\Http\MiddlewareRegistry;
@@ -52,7 +59,13 @@ use Fyre\View\CellRegistry;
 use Fyre\View\HelperRegistry;
 use Fyre\View\TemplateLocator;
 use Override;
+use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
+use Psr\Http\Message\ServerRequestFactoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\UploadedFileFactoryInterface;
+use Psr\Http\Message\UriFactoryInterface;
 
 use function defined;
 use function file_exists;
@@ -88,6 +101,10 @@ class Engine extends Container
 
         $this
             ->bind(
+                ClientResponse::class,
+                static fn(ResponseFactory $factory, array $options = []): ClientResponse => $factory->createFromOptions($options)
+            )
+            ->bind(
                 ServerRequestInterface::class,
                 fn(): ServerRequest => $this->use(ServerRequest::class)
             )
@@ -119,7 +136,12 @@ class Engine extends Container
                     ->map('session', SessionMiddleware::class)
                     ->map('unauthenticated', UnauthenticatedMiddleware::class)
             )
-            ->scoped(ServerRequest::class)
+            ->scoped(
+                ServerRequest::class,
+                fn(ServerRequestFactory $factory, array|null $options = null): ServerRequest => $options === null ?
+                    $factory->createFromGlobals() :
+                    $factory->createFromOptions($options)
+            )
             ->scoped(Timer::class)
             ->singleton(CacheManager::class)
             ->singleton(
@@ -207,6 +229,10 @@ class Engine extends Container
                     ->addNamespace('App\Policies')
             )
             ->singleton(QueueManager::class)
+            ->singleton(RequestFactory::class)
+            ->singleton(RequestFactoryInterface::class, RequestFactory::class)
+            ->singleton(ResponseFactory::class)
+            ->singleton(ResponseFactoryInterface::class, ResponseFactory::class)
             ->singleton(RouteLocator::class)
             ->singleton(Router::class, function(): Router {
                 $router = $this->build(Router::class);
@@ -222,7 +248,11 @@ class Engine extends Container
                 return $router;
             })
             ->singleton(SchemaRegistry::class)
+            ->singleton(ServerRequestFactory::class)
+            ->singleton(ServerRequestFactoryInterface::class, ServerRequestFactory::class)
             ->singleton(Session::class)
+            ->singleton(StreamFactory::class)
+            ->singleton(StreamFactoryInterface::class, StreamFactory::class)
             ->singleton(
                 TemplateLocator::class,
                 function(): TemplateLocator {
@@ -235,7 +265,11 @@ class Engine extends Container
                     return $templateLocator;
                 }
             )
-            ->singleton(TypeParser::class);
+            ->singleton(TypeParser::class)
+            ->singleton(UploadedFileFactory::class)
+            ->singleton(UploadedFileFactoryInterface::class, UploadedFileFactory::class)
+            ->singleton(UriFactory::class)
+            ->singleton(UriFactoryInterface::class, UriFactory::class);
     }
 
     /**

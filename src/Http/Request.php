@@ -8,7 +8,6 @@ use Override;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
 
-use function in_array;
 use function is_string;
 use function preg_match;
 use function sprintf;
@@ -20,18 +19,6 @@ use function strtoupper;
  */
 class Request extends Message implements RequestInterface
 {
-    protected const VALID_METHODS = [
-        'CONNECT',
-        'DELETE',
-        'GET',
-        'HEAD',
-        'OPTIONS',
-        'PATCH',
-        'POST',
-        'PUT',
-        'TRACE',
-    ];
-
     protected string $method = 'GET';
 
     protected string|null $requestTarget = null;
@@ -177,6 +164,8 @@ class Request extends Message implements RequestInterface
     /**
      * Filters the method.
      *
+     * Extension methods are supported when they use the HTTP token grammar.
+     *
      * @param string $method The method.
      * @return string The filtered method.
      *
@@ -184,16 +173,14 @@ class Request extends Message implements RequestInterface
      */
     protected static function filterMethod(string $method): string
     {
-        $method = strtoupper($method);
-
-        if (!in_array($method, static::VALID_METHODS, true)) {
+        if (!preg_match('/^[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\z/', $method)) {
             throw new InvalidArgumentException(sprintf(
                 'HTTP method `%s` is not valid.',
                 $method
             ));
         }
 
-        return $method;
+        return strtoupper($method);
     }
 
     /**

@@ -23,10 +23,7 @@ trait FindRouteTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'HTTP_HOST' => 'test.com',
-                    'REQUEST_URI' => '/home',
-                ],
+                'uri' => 'http://test.com/home',
             ],
         ]);
 
@@ -61,10 +58,7 @@ trait FindRouteTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'HTTP_HOST' => 'example.com',
-                    'REQUEST_URI' => '/home',
-                ],
+                'uri' => 'http://example.com/home',
             ],
         ]);
 
@@ -81,10 +75,7 @@ trait FindRouteTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'HTTP_HOST' => 'test.com:8000',
-                    'REQUEST_URI' => '/home',
-                ],
+                'uri' => 'http://test.com:8000/home',
             ],
         ]);
 
@@ -119,10 +110,7 @@ trait FindRouteTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'HTTP_HOST' => 'example.com:80',
-                    'REQUEST_URI' => '/home',
-                ],
+                'uri' => 'http://example.com:80/home',
             ],
         ]);
 
@@ -139,11 +127,7 @@ trait FindRouteTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'HTTPS' => 'on',
-                    'HTTP_HOST' => 'test.com',
-                    'REQUEST_URI' => '/home',
-                ],
+                'uri' => 'https://test.com/home',
             ],
         ]);
 
@@ -178,9 +162,7 @@ trait FindRouteTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/home',
-                ],
+                'uri' => '/home',
             ],
         ]);
 
@@ -196,9 +178,7 @@ trait FindRouteTestTrait
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'method' => 'POST',
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -223,9 +203,7 @@ trait FindRouteTestTrait
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'method' => 'PUT',
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -249,9 +227,7 @@ trait FindRouteTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -266,9 +242,7 @@ trait FindRouteTestTrait
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'method' => 'HEAD',
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -294,9 +268,7 @@ trait FindRouteTestTrait
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'method' => 'HEAD',
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -314,10 +286,7 @@ trait FindRouteTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'HTTP_HOST' => 'test.com',
-                    'REQUEST_URI' => '/home',
-                ],
+                'uri' => 'http://test.com/home',
             ],
         ]);
 
@@ -355,10 +324,7 @@ trait FindRouteTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'HTTP_HOST' => 'example.com',
-                    'REQUEST_URI' => '/home',
-                ],
+                'uri' => 'http://example.com/home',
             ],
         ]);
 
@@ -374,9 +340,7 @@ trait FindRouteTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -401,10 +365,7 @@ trait FindRouteTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'HTTP_HOST' => 'test.com:8000',
-                    'REQUEST_URI' => '/home',
-                ],
+                'uri' => 'http://test.com:8000/home',
             ],
         ]);
 
@@ -437,10 +398,7 @@ trait FindRouteTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'HTTP_HOST' => 'example.com:80',
-                    'REQUEST_URI' => '/home',
-                ],
+                'uri' => 'http://example.com:80/home',
             ],
         ]);
 
@@ -455,11 +413,7 @@ trait FindRouteTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'HTTPS' => 'on',
-                    'HTTP_HOST' => 'test.com',
-                    'REQUEST_URI' => '/home',
-                ],
+                'uri' => 'https://test.com/home',
             ],
         ]);
 
@@ -492,9 +446,7 @@ trait FindRouteTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/home',
-                ],
+                'uri' => '/home',
             ],
         ]);
 

@@ -18,9 +18,7 @@ trait RedirectTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -45,9 +43,7 @@ trait RedirectTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/a/2',
-                ],
+                'uri' => '/test/a/2',
             ],
         ]);
 
@@ -86,9 +82,7 @@ trait RedirectTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/files/archive.zip',
-                ],
+                'uri' => '/files/archive.zip',
             ],
         ]);
 

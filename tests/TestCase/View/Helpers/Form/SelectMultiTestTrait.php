@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\View\Helpers\Form;
 
+use Closure;
+use Fyre\View\View;
+
 trait SelectMultiTestTrait
 {
     public function testSelectMulti(): void
@@ -280,7 +283,12 @@ trait SelectMultiTestTrait
 
     public function testSelectMultiSelectedPost(): void
     {
-        $_POST['select'] = ['1', '2'];
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'select' => ['1', '2'],
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<input name="select" type="hidden" value="" /><select id="select" name="select[]" multiple><option value="0">A</option><option value="1" selected>B</option><option value="2" selected>C</option></select>',
@@ -294,7 +302,14 @@ trait SelectMultiTestTrait
 
     public function testSelectMultiSelectedPostDot(): void
     {
-        $_POST['key']['select'] = ['1', '2'];
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'key' => [
+                    'select' => ['1', '2'],
+                ],
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<input name="key[select]" type="hidden" value="" /><select id="key-select" name="key[select][]" multiple><option value="0">A</option><option value="1" selected>B</option><option value="2" selected>C</option></select>',

@@ -31,6 +31,14 @@ final class StreamTest extends TestCase
         new Stream(123);
     }
 
+    public function testCreateFromFileInvalidMode(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Stream file mode is not valid.');
+
+        Stream::createFromFile('php://temp', 'invalid');
+    }
+
     public function testDebug(): void
     {
         $this->assertContains(

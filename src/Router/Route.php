@@ -257,7 +257,7 @@ abstract class Route
             return $result;
         }
 
-        return $this->container->build(ClientResponse::class, [
+        return $this->container->use(ClientResponse::class, [
             'options' => [
                 'body' => $result,
             ],

@@ -5,8 +5,10 @@ namespace Tests\TestCase\Http;
 
 use Closure;
 use Fyre\Core\Traits\DebugTrait;
+use Fyre\Http\Stream;
 use Fyre\Http\UploadedFile;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\StreamInterface;
 use RuntimeException;
 
 use function assert;
@@ -237,5 +239,79 @@ final class UploadedFileTest extends TestCase
         );
 
         $file->moveTo('tmp/php1');
+    }
+
+    public function testMoveToStream(): void
+    {
+        $targetPath = tempnam(sys_get_temp_dir(), 'uploaded-file');
+
+        assert($targetPath !== false);
+
+        @unlink($targetPath);
+
+        $file = new UploadedFile(
+            Stream::createFromString('This is a test.'),
+            null,
+            UPLOAD_ERR_OK,
+            'test.txt',
+            'text/plain'
+        );
+
+        try {
+            $file->moveTo($targetPath);
+
+            $this->assertSame(
+                'This is a test.',
+                file_get_contents($targetPath)
+            );
+        } finally {
+            @unlink($targetPath);
+        }
+    }
+
+    public function testMoveToStreamFailurePreservesTarget(): void
+    {
+        $targetPath = tempnam(sys_get_temp_dir(), 'uploaded-file');
+
+        assert($targetPath !== false);
+
+        file_put_contents($targetPath, 'Original contents.');
+
+        $read = 0;
+        $stream = $this->createStub(StreamInterface::class);
+        $stream->method('eof')
+            ->willReturn(false);
+        $stream->method('read')
+            ->willReturnCallback(static function() use (&$read): string {
+                if ($read++ === 0) {
+                    return 'Partial contents.';
+                }
+
+                throw new RuntimeException();
+            });
+
+        $file = new UploadedFile(
+            $stream,
+            17,
+            UPLOAD_ERR_OK,
+            'test.txt',
+            'text/plain'
+        );
+
+        try {
+            $file->moveTo($targetPath);
+            $this->fail('Expected moveTo to fail.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame(
+                'Failed to move upload `test.txt` to `'.$targetPath.'`.',
+                $exception->getMessage()
+            );
+            $this->assertSame(
+                'Original contents.',
+                file_get_contents($targetPath)
+            );
+        } finally {
+            @unlink($targetPath);
+        }
     }
 }

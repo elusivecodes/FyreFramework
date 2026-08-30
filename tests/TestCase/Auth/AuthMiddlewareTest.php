@@ -258,8 +258,8 @@ final class AuthMiddlewareTest extends TestCase
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'HTTP_ACCEPT' => 'application/json;q=0.9,text/plain',
+                'headers' => [
+                    'Accept' => 'application/json;q=0.9,text/plain',
                 ],
             ],
         ]);

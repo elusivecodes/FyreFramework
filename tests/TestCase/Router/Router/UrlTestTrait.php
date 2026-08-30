@@ -176,10 +176,7 @@ trait UrlTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'HTTP_HOST' => 'test.com',
-                    'REQUEST_URI' => '/home',
-                ],
+                'uri' => 'http://test.com/home',
             ],
         ]);
 

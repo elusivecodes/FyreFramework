@@ -73,9 +73,7 @@ final class RouteModelParamsTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/1',
-                ],
+                'uri' => '/test/1',
             ],
         ]);
 
@@ -127,9 +125,7 @@ final class RouteModelParamsTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/Test',
-                ],
+                'uri' => '/test/Test',
             ],
         ]);
 
@@ -166,9 +162,7 @@ final class RouteModelParamsTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/2',
-                ],
+                'uri' => '/test/2',
             ],
         ]);
 
@@ -201,9 +195,7 @@ final class RouteModelParamsTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -251,9 +243,7 @@ final class RouteModelParamsTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/1/1',
-                ],
+                'uri' => '/test/1/1',
             ],
         ]);
 
@@ -290,9 +280,7 @@ final class RouteModelParamsTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/1/2',
-                ],
+                'uri' => '/test/1/2',
             ],
         ]);
 
@@ -315,9 +303,7 @@ final class RouteModelParamsTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/1',
-                ],
+                'uri' => '/test/1',
             ],
         ]);
 
@@ -353,9 +339,7 @@ final class RouteModelParamsTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/2',
-                ],
+                'uri' => '/test/2',
             ],
         ]);
 
@@ -378,9 +362,7 @@ final class RouteModelParamsTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 

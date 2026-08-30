@@ -15,6 +15,7 @@ use Fyre\Http\Client\Request;
 use Fyre\Http\Client\Response;
 use Fyre\Http\Cookie\Cookie;
 use Fyre\Http\Cookie\CookieJar;
+use Fyre\Http\Factories\RequestFactory;
 use InvalidArgumentException;
 use JsonException;
 use Override;
@@ -83,6 +84,8 @@ class Client implements ClientInterface
 
     protected ClientHandler $handler;
 
+    protected RequestFactory $requestFactory;
+
     /**
      * Adds a mock response.
      *
@@ -109,11 +112,13 @@ class Client implements ClientInterface
      * Constructs a Client.
      *
      * @param array<string, mixed> $options The Client options.
+     * @param RequestFactory|null $requestFactory The RequestFactory.
      *
      * @throws InvalidArgumentException If the handler or Client options are not valid.
      */
-    public function __construct(array $options = [])
+    public function __construct(array $options = [], RequestFactory|null $requestFactory = null)
     {
+        $this->requestFactory = $requestFactory ?? new RequestFactory();
         $this->config = array_replace_recursive(static::$defaults, $options);
 
         if ($this->config['timeout'] < 0) {
@@ -386,7 +391,7 @@ class Client implements ClientInterface
             'protocolVersion' => true,
         ]);
 
-        $request = new Request($uri, $requestOptions);
+        $request = $this->requestFactory->createFromOptions($uri, $requestOptions);
 
         $proxy = $options['proxy'] ?? [];
         $auth = $options['auth'] ?? [];

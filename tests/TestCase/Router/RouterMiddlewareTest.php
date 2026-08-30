@@ -68,9 +68,7 @@ final class RouterMiddlewareTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -97,9 +95,7 @@ final class RouterMiddlewareTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -124,9 +120,7 @@ final class RouterMiddlewareTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -177,9 +171,7 @@ final class RouterMiddlewareTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/draft',
-                ],
+                'uri' => '/test/draft',
             ],
         ]);
 
@@ -214,9 +206,7 @@ final class RouterMiddlewareTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/invalid',
-                ],
+                'uri' => '/test/invalid',
             ],
         ]);
 
@@ -250,9 +240,7 @@ final class RouterMiddlewareTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/value',
-                ],
+                'uri' => '/test/value',
             ],
         ]);
 
@@ -305,9 +293,7 @@ final class RouterMiddlewareTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/1/2',
-                ],
+                'uri' => '/test/1/2',
             ],
         ]);
 
@@ -355,9 +341,7 @@ final class RouterMiddlewareTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -393,9 +377,7 @@ final class RouterMiddlewareTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -428,9 +410,7 @@ final class RouterMiddlewareTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -471,9 +451,7 @@ final class RouterMiddlewareTest extends TestCase
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/Draft',
-                ],
+                'uri' => '/test/Draft',
             ],
         ]);
 

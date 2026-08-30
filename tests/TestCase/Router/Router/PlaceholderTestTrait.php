@@ -22,9 +22,7 @@ trait PlaceholderTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/home/alternate/test/a/2',
-                ],
+                'uri' => '/home/alternate/test/a/2',
             ],
         ]);
 

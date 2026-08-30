@@ -49,13 +49,13 @@ class RequestHandler implements RequestHandlerInterface
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         if ($request instanceof ServerRequest) {
-            $this->container->instance(ServerRequest::class, $request);
+            $this->container->replaceInstance(ServerRequest::class, $request);
         }
 
         if (!$this->queue->valid()) {
             return $this->fallbackHandler ?
                 $this->fallbackHandler->handle($request) :
-                $this->container->build(ClientResponse::class, [
+                $this->container->use(ClientResponse::class, [
                     'options' => [
                         'statusCode' => 204,
                     ],

@@ -350,6 +350,32 @@ class Container implements ContainerInterface
     }
 
     /**
+     * Replaces the current instance while preserving its binding.
+     *
+     * Any dependents of the previous instance are unset. If the alias is scoped,
+     * {@see Container::clearScoped()} will remove the replacement and the preserved
+     * binding will be used on the next resolution.
+     *
+     * @template T
+     *
+     * @param string $alias The alias.
+     * @param T $instance The instance.
+     * @return T The instance.
+     */
+    public function replaceInstance(string $alias, mixed $instance): mixed
+    {
+        if (($this->instances[$alias] ?? null) === $instance) {
+            return $instance;
+        }
+
+        $this->unset($alias);
+
+        $this->instances[$alias] = $instance;
+
+        return $instance;
+    }
+
+    /**
      * Binds an alias to a factory Closure or class name as a reusable scoped instance.
      *
      * @param string $alias The alias.

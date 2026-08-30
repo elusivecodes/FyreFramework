@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\View\Helpers\Form;
 
+use Closure;
 use Fyre\Utility\DateTime\DateTime;
+use Fyre\View\View;
 
 trait DateTestTrait
 {
@@ -147,7 +149,12 @@ trait DateTestTrait
 
     public function testDateValuePost(): void
     {
-        $_POST['date'] = '2022-01-01';
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'date' => '2022-01-01',
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<input id="date" name="date" type="date" value="2022-01-01" />',
@@ -157,7 +164,14 @@ trait DateTestTrait
 
     public function testDateValuePostDot(): void
     {
-        $_POST['key']['date'] = '2022-01-01';
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'key' => [
+                    'date' => '2022-01-01',
+                ],
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<input id="key-date" name="key[date]" type="date" value="2022-01-01" />',

@@ -87,8 +87,8 @@ trait DataTestTrait
     public function testGetDataJson(): void
     {
         $request = new ServerRequest($this->config, $this->type, [
-            'server' => [
-                'CONTENT_TYPE' => 'application/json',
+            'headers' => [
+                'Content-Type' => 'application/json',
             ],
             'body' => json_encode([
                 'test' => 'value',
@@ -104,8 +104,8 @@ trait DataTestTrait
     public function testGetDataJsonAll(): void
     {
         $request = new ServerRequest($this->config, $this->type, [
-            'server' => [
-                'CONTENT_TYPE' => 'application/json',
+            'headers' => [
+                'Content-Type' => 'application/json',
             ],
             'body' => json_encode([
                 'test' => 'value',
@@ -123,8 +123,8 @@ trait DataTestTrait
     public function testGetDataJsonArray(): void
     {
         $request = new ServerRequest($this->config, $this->type, [
-            'server' => [
-                'CONTENT_TYPE' => 'application/json',
+            'headers' => [
+                'Content-Type' => 'application/json',
             ],
             'body' => json_encode([
                 'test' => [
@@ -144,8 +144,8 @@ trait DataTestTrait
     public function testGetDataJsonDot(): void
     {
         $request = new ServerRequest($this->config, $this->type, [
-            'server' => [
-                'CONTENT_TYPE' => 'application/json',
+            'headers' => [
+                'Content-Type' => 'application/json',
             ],
             'body' => json_encode([
                 'test' => [
@@ -166,8 +166,8 @@ trait DataTestTrait
         $this->expectExceptionMessageIs('The request body is not valid.');
 
         $request = new ServerRequest($this->config, $this->type, [
-            'server' => [
-                'CONTENT_TYPE' => 'application/json',
+            'headers' => [
+                'Content-Type' => 'application/json',
             ],
             'body' => '{',
         ]);
@@ -181,8 +181,8 @@ trait DataTestTrait
         $this->expectExceptionMessageIs('The request body is not valid.');
 
         $request = new ServerRequest($this->config, $this->type, [
-            'server' => [
-                'CONTENT_TYPE' => 'application/json',
+            'headers' => [
+                'Content-Type' => 'application/json',
             ],
             'body' => 'true',
         ]);

@@ -19,9 +19,7 @@ trait GetTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/home',
-                ],
+                'uri' => '/home',
             ],
         ]);
 
@@ -51,9 +49,7 @@ trait GetTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/home/alternate',
-                ],
+                'uri' => '/home/alternate',
             ],
         ]);
 
@@ -93,9 +89,7 @@ trait GetTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/home/alternate/test/a/2',
-                ],
+                'uri' => '/home/alternate/test/a/2',
             ],
         ]);
 
@@ -144,9 +138,7 @@ trait GetTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -173,9 +165,7 @@ trait GetTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/a/2',
-                ],
+                'uri' => '/test/a/2',
             ],
         ]);
 

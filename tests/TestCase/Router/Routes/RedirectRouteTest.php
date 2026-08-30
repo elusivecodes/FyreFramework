@@ -59,9 +59,7 @@ final class RedirectRouteTest extends TestCase
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/a/1',
-                ],
+                'uri' => '/test/a/1',
             ],
         ]);
 

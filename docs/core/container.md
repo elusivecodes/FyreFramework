@@ -99,6 +99,7 @@ Bindings tell the container how to resolve an alias. Lifetimes tell it whether t
 - `singleton()`: bind a shared service that stays available for the life of the container.
 - `scoped()`: bind a shared service that can be cleared later with `clearScoped()`.
 - `instance()`: bind an alias directly to a specific value or object.
+- `replaceInstance()`: replace the current cached instance without removing its existing binding or scoped lifetime.
 
 String-to-string bindings are common for interfaces:
 
@@ -304,6 +305,25 @@ $config = new Config();
 $container->instance(Config::class, $config);
 ```
 
+#### **Replace a cached instance** (`replaceInstance()`)
+
+Replaces the current cached instance while preserving the alias binding. Dependents of the previous instance are also cleared.
+
+Arguments:
+- `$alias` (`string`): the alias whose cached instance should be replaced.
+- `$instance` (`mixed`): the replacement value.
+
+```php
+use Fyre\Http\ServerRequest;
+
+$request = $container->use(ServerRequest::class)
+    ->withAttribute('user', $user);
+
+$container->replaceInstance(ServerRequest::class, $request);
+```
+
+Unlike `instance()`, this does not remove the existing binding. If the alias is scoped, `clearScoped()` removes the replacement and the next resolution uses the preserved binding again.
+
 ### Scoping and cleanup
 
 #### **Clear scoped services** (`clearScoped()`)
@@ -360,6 +380,7 @@ A few practical details are worth keeping in mind:
 - Shared services are cached only when you resolve them without manual arguments.
 - `call([ClassName::class, 'method'])` will instantiate the class first when the method is not static.
 - Rebinding a service clears its cached shared instance.
+- `instance()` replaces the binding itself, while `replaceInstance()` preserves the binding and replaces only its current cached value.
 - `clearScoped()` is the main tool for dropping request-specific or job-specific state in long-running processes.
 
 ## Related

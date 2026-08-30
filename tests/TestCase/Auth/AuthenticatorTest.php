@@ -406,8 +406,8 @@ final class AuthenticatorTest extends TestCase
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'HTTP_AUTHORIZATION' => 'Bearer Ew7tqx8kH6QsNe8SS0tVT0BX2LIRVQyl',
+                'headers' => [
+                    'Authorization' => 'Bearer Ew7tqx8kH6QsNe8SS0tVT0BX2LIRVQyl',
                 ],
             ],
         ]);

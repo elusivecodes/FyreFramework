@@ -110,18 +110,10 @@ final class FormTest extends TestCase
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
         $this->view = $this->container->build(View::class, ['request' => $request]);
-    }
-
-    #[Override]
-    protected function tearDown(): void
-    {
-        $_POST = [];
     }
 }

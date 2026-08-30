@@ -61,6 +61,8 @@ A few practical details are worth keeping in mind:
 
 - `RequestHandler` advances the underlying queue as it runs, so rewind the queue or use a fresh one before handling another request with the same instance.
 - Middleware groups run as nested queues and return control to the outer queue when they finish.
+- Each Fyre `ServerRequest` passed to `handle()` replaces the current scoped request instance in the container. This means a request modified by middleware is available to downstream code that resolves `ServerRequest` or `ServerRequestInterface` from the container.
+- The existing scoped request binding is preserved. After the scope is cleared, the next resolution creates a fresh request through `ServerRequestFactory`.
 
 ## Related
 

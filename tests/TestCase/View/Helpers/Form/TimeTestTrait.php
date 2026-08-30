@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\View\Helpers\Form;
 
+use Closure;
 use Fyre\Utility\DateTime\DateTime;
+use Fyre\View\View;
 
 trait TimeTestTrait
 {
@@ -147,7 +149,12 @@ trait TimeTestTrait
 
     public function testTimeValuePost(): void
     {
-        $_POST['time'] = '00:00';
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'time' => '00:00',
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<input id="time" name="time" type="time" value="00:00" />',
@@ -157,7 +164,14 @@ trait TimeTestTrait
 
     public function testTimeValuePostDot(): void
     {
-        $_POST['key']['time'] = '00:00';
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'key' => [
+                    'time' => '00:00',
+                ],
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<input id="key-time" name="key[time]" type="time" value="00:00" />',

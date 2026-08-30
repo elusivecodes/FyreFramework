@@ -7,6 +7,7 @@ use Fyre\Core\Config;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\DB\TypeParser;
 use Fyre\Http\Exceptions\BadRequestException;
+use Fyre\Http\Factories\ServerRequestFactory;
 use Fyre\Utility\Arr;
 use InvalidArgumentException;
 use Override;
@@ -15,8 +16,6 @@ use Psr\Http\Message\UploadedFileInterface;
 
 use function array_key_exists;
 use function array_key_last;
-use function array_map;
-use function array_merge;
 use function array_reverse;
 use function explode;
 use function filter_var;
@@ -28,28 +27,22 @@ use function json_last_error;
 use function locale_get_default;
 use function ltrim;
 use function parse_str;
-use function parse_url;
-use function preg_match;
 use function sprintf;
-use function str_replace;
 use function str_starts_with;
 use function strtolower;
-use function substr;
 use function trim;
-use function ucwords;
 
 use const FILTER_VALIDATE_IP;
 use const JSON_ERROR_NONE;
 use const PHP_SAPI;
-use const PHP_URL_PATH;
 
 /**
- * Provides a PSR-7 {@see ServerRequestInterface} implementation backed by PHP superglobals.
- * When values are not provided via constructor options, this request lazily reads from
- * `$_SERVER`, `$_GET`, `$_POST`, `$_COOKIE`, and `$_FILES`.
+ * Provides a PSR-7 {@see ServerRequestInterface} implementation.
  *
- * The constructor also derives the request URI (scheme/host/port/path/query) from server
- * parameters and headers and sets the default body stream to `php://input`.
+ * This class does not read PHP superglobals or derive request values from server
+ * parameters. Use {@see ServerRequestFactory::createFromGlobals()} to create the current
+ * SAPI request, or {@see ServerRequestFactory::createFromOptions()} to marshal raw server
+ * parameters and PHP file upload data.
  */
 class ServerRequest extends Request implements ServerRequestInterface
 {
@@ -61,9 +54,9 @@ class ServerRequest extends Request implements ServerRequestInterface
     protected array $attributes = [];
 
     /**
-     * @var array<string, mixed>|null
+     * @var array<string, mixed>
      */
-    protected array|null $cookies = null;
+    protected array $cookies = [];
 
     /**
      * @var array<mixed>|null
@@ -73,21 +66,21 @@ class ServerRequest extends Request implements ServerRequestInterface
     protected string $defaultLocale;
 
     /**
-     * @var array<string, mixed>|null
+     * @var array<string, mixed>
      */
-    protected array|null $files = null;
+    protected array $files = [];
 
     /**
-     * @var array<string, mixed>|null
+     * @var array<string, mixed>
      */
-    protected array|null $get = null;
+    protected array $get = [];
 
     protected string|null $locale = null;
 
     /**
-     * @var array<string, mixed>|null
+     * @var array<string, mixed>
      */
-    protected array|null $server = null;
+    protected array $server = [];
 
     /**
      * @var string[]
@@ -108,7 +101,7 @@ class ServerRequest extends Request implements ServerRequestInterface
      *
      * @param Config $config The Config.
      * @param TypeParser $typeParser The TypeParser.
-     * @param array<string, mixed> $options The request options.
+     * @param array<string, mixed> $options The normalized request options.
      */
     public function __construct(
         Config $config,
@@ -120,64 +113,15 @@ class ServerRequest extends Request implements ServerRequestInterface
         $this->trustProxy = $config->get('App.trustProxy', false);
         $this->trustedProxies = $config->get('App.trustedProxies', []);
 
-        $this->server = $options['server'] ?? null;
-        $this->cookies = $options['cookies'] ?? null;
+        $this->server = $options['server'] ?? [];
+        $this->cookies = $options['cookies'] ?? [];
         $this->data = $options['data'] ?? null;
-        $this->get = $options['get'] ?? null;
-        $this->files = $options['files'] ?? null;
+        $this->get = $options['get'] ?? [];
+        $this->files = $options['files'] ?? [];
 
-        if ($this->files) {
-            $this->files = static::normalizeFiles($this->files) |> static::buildFiles(...);
-        }
+        static::validateFiles($this->files);
 
-        $options['method'] ??= $this->getServer('REQUEST_METHOD');
-        $options['headers'] = array_merge(
-            $this->getServerParams() |> static::buildHeaders(...),
-            $options['headers'] ?? []
-        );
-        $options['body'] ??= Stream::createFromFile('php://input');
-
-        parent::__construct(options: $options);
-
-        $scheme = $this->isSecure() ?
-            'https' :
-            'http';
-        $host = $this->getHeaderLine('Host');
-        $port = null;
-
-        if ($host && preg_match('/^(.*)\:(\d+)\z/', $host, $match)) {
-            $host = $match[1];
-            $port = (int) $match[2];
-        } else if (!$host) {
-            $host = $this->getServer('SERVER_NAME') ?? '';
-            $port = $this->getServer('SERVER_PORT');
-
-            if ($port) {
-                $port = (int) $port;
-            } else {
-                $port = null;
-            }
-        }
-
-        if ($host) {
-            $this->uri = $this->uri
-                ->withScheme($scheme)
-                ->withHost($host)
-                ->withPort($port);
-        }
-
-        $requestUri = $this->getServer('REQUEST_URI');
-
-        if ($requestUri) {
-            $path = (string) parse_url($requestUri, PHP_URL_PATH);
-            $this->uri = $this->uri->withPath($path);
-        }
-
-        $query = $this->getServer('QUERY_STRING');
-
-        if ($query) {
-            $this->uri = $this->uri->withQuery($query);
-        }
+        parent::__construct($options['uri'] ?? null, $options);
 
         $userAgent = $this->getHeaderLine('User-Agent');
 
@@ -264,11 +208,11 @@ class ServerRequest extends Request implements ServerRequestInterface
     }
 
     /**
-     * Returns a value from the $_COOKIE array using "dot" notation.
+     * Returns a cookie parameter using "dot" notation.
      *
      * @param string|null $key The key.
      * @param string|null $as The type.
-     * @return mixed The $_COOKIE value.
+     * @return mixed The cookie value.
      */
     public function getCookie(string|null $key = null, string|null $as = null): mixed
     {
@@ -286,25 +230,25 @@ class ServerRequest extends Request implements ServerRequestInterface
     }
 
     /**
-     * Returns the $_COOKIE array.
+     * Returns the cookie parameters.
      *
-     * @return array<string, mixed> The $_COOKIE array.
+     * @return array<string, mixed> The cookie parameters.
      */
     #[Override]
     public function getCookieParams(): array
     {
-        return $this->cookies ??= $_COOKIE;
+        return $this->cookies;
     }
 
     /**
-     * Returns a value from the $_POST array or parsed body data using "dot" notation.
+     * Returns a value from the parsed body data using "dot" notation.
      *
      * This reads from {@see ServerRequest::getParsedBody()} which may parse `php://input`
      * for certain content types/methods.
      *
      * @param string|null $key The key.
      * @param string|null $as The type.
-     * @return mixed The $_POST or parsed body value.
+     * @return mixed The parsed body value.
      */
     public function getData(string|null $key = null, string|null $as = null): mixed
     {
@@ -371,7 +315,7 @@ class ServerRequest extends Request implements ServerRequestInterface
      * - For `application/x-www-form-urlencoded` with `PUT`, `PATCH`, or `DELETE`, the body is
      *   parsed using `parse_str()`.
      * - For `application/json`, the body is JSON-decoded into an associative array.
-     * - Otherwise, `$_POST` is used.
+     * - Otherwise, an empty array is used.
      *
      * @return array<mixed> The parsed body data.
      *
@@ -397,7 +341,7 @@ class ServerRequest extends Request implements ServerRequestInterface
 
                 $this->data = $data;
             } else {
-                $this->data = $_POST;
+                $this->data = [];
             }
         }
 
@@ -405,11 +349,11 @@ class ServerRequest extends Request implements ServerRequestInterface
     }
 
     /**
-     * Returns a value from the $_GET array using "dot" notation.
+     * Returns a query parameter using "dot" notation.
      *
      * @param string|null $key The key.
      * @param string|null $as The type.
-     * @return mixed The $_GET value.
+     * @return mixed The query value.
      */
     public function getQuery(string|null $key = null, string|null $as = null): mixed
     {
@@ -427,22 +371,22 @@ class ServerRequest extends Request implements ServerRequestInterface
     }
 
     /**
-     * Returns the $_GET array.
+     * Returns the query parameters.
      *
-     * @return array<string, mixed> The $_GET array.
+     * @return array<string, mixed> The query parameters.
      */
     #[Override]
     public function getQueryParams(): array
     {
-        return $this->get ??= $_GET;
+        return $this->get;
     }
 
     /**
-     * Returns a value from the $_SERVER array using "dot" notation.
+     * Returns a server parameter using "dot" notation.
      *
      * @param string|null $key The key.
      * @param string|null $as The type.
-     * @return mixed The $_SERVER value.
+     * @return mixed The server value.
      */
     public function getServer(string|null $key = null, string|null $as = null): mixed
     {
@@ -460,14 +404,14 @@ class ServerRequest extends Request implements ServerRequestInterface
     }
 
     /**
-     * Returns the $_SERVER array.
+     * Returns the server parameters.
      *
-     * @return array<string, mixed> The $_SERVER array.
+     * @return array<string, mixed> The server parameters.
      */
     #[Override]
     public function getServerParams(): array
     {
-        return $this->server ??= $_SERVER;
+        return $this->server;
     }
 
     /**
@@ -481,10 +425,10 @@ class ServerRequest extends Request implements ServerRequestInterface
     }
 
     /**
-     * Returns an UploadedFile or array of files from the `$_FILES` array using "dot" notation.
+     * Returns an UploadedFile or nested file array using "dot" notation.
      *
      * @param string|null $key The key.
-     * @return mixed The `$_FILES` value.
+     * @return mixed The uploaded file value.
      */
     public function getUploadedFile(string|null $key = null): mixed
     {
@@ -498,14 +442,14 @@ class ServerRequest extends Request implements ServerRequestInterface
     }
 
     /**
-     * Returns the uploaded files from the $_FILES array.
+     * Returns the uploaded files.
      *
-     * @return array<string, mixed> The uploaded files from the `$_FILES` array.
+     * @return array<string, mixed> The uploaded files.
      */
     #[Override]
     public function getUploadedFiles(): array
     {
-        return $this->files ??= static::normalizeFiles($_FILES) |> static::buildFiles(...);
+        return $this->files;
     }
 
     /**
@@ -778,113 +722,6 @@ class ServerRequest extends Request implements ServerRequestInterface
         $temp->files = $data;
 
         return $temp;
-    }
-
-    /**
-     * Builds an array of UploadedFiles.
-     *
-     * @param array<string, mixed> $files The normalized files.
-     * @return array<string, mixed> The UploadedFiles array.
-     */
-    protected static function buildFiles(array $files): array
-    {
-        return array_map(
-            static function(array $data): array|UploadedFile {
-                if (!isset($data['tmp_name'])) {
-                    return static::buildFiles($data);
-                }
-
-                return new UploadedFile(
-                    $data['tmp_name'],
-                    $data['size'],
-                    $data['error'],
-                    $data['name'] ?? null,
-                    $data['type'] ?? null
-                );
-            },
-            $files
-        );
-    }
-
-    /**
-     * Builds headers from the $_SERVER data.
-     *
-     * @param array<string, mixed> $data The `$_SERVER` data.
-     * @return array<string, mixed> The headers.
-     */
-    protected static function buildHeaders(array $data): array
-    {
-        $headers = [];
-
-        $contentType = $data['CONTENT_TYPE'] ?? getenv('CONTENT_TYPE');
-
-        if ($contentType) {
-            $headers['Content-Type'] = $contentType;
-        }
-
-        foreach ($data as $key => $value) {
-            if (!str_starts_with($key, 'HTTP_')) {
-                continue;
-            }
-
-            $header = substr($key, 5) |> strtolower(...);
-            $header = str_replace('_', ' ', $header) |> ucwords(...);
-            $header = str_replace(' ', '-', $header);
-
-            $headers[$header] = $value;
-        }
-
-        return $headers;
-    }
-
-    /**
-     * Normalizes a file field array.
-     *
-     * @param array<string, mixed> $file The file field array.
-     * @return array<string, mixed> The normalized file field array.
-     */
-    protected static function normalizeFileField(array $file): array
-    {
-        if (!isset($file['name']) || !is_array($file['name'])) {
-            return $file;
-        }
-
-        $normalized = [];
-
-        foreach ($file['name'] as $key => $value) {
-            $data = [
-                'name' => $value,
-                'size' => $file['size'][$key],
-                'error' => $file['error'][$key],
-                'tmp_name' => $file['tmp_name'][$key] ?? null,
-                'type' => $file['type'][$key] ?? null,
-            ];
-
-            if (is_array($value)) {
-                $normalized[$key] = static::normalizeFileField($data);
-            } else {
-                $normalized[$key] = $data;
-            }
-        }
-
-        return $normalized;
-    }
-
-    /**
-     * Normalizes the $_FILES array.
-     *
-     * @param array<string, mixed> $files The $_FILES array.
-     * @return array<string, mixed> The normalized files array.
-     */
-    protected static function normalizeFiles(array $files): array
-    {
-        $results = [];
-
-        foreach ($files as $name => $file) {
-            $results[$name] = static::normalizeFileField($file);
-        }
-
-        return $results;
     }
 
     /**

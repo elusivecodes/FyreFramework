@@ -173,9 +173,7 @@ final class AttributesTest extends TestCase
         $request = $this->app->build(ServerRequest::class, [
             'options' => [
                 'method' => 'get',
-                'server' => [
-                    'REQUEST_URI' => '/test/1',
-                ],
+                'uri' => '/test/1',
             ],
         ]);
 

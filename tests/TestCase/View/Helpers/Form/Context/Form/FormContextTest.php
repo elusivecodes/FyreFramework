@@ -59,9 +59,7 @@ final class FormContextTest extends TestCase
 
         $request = $container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 

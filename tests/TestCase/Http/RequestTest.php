@@ -121,10 +121,10 @@ final class RequestTest extends TestCase
     public function testWithMethodInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageIs('HTTP method `INVALID` is not valid.');
+        $this->expectExceptionMessageIs('HTTP method `invalid method` is not valid.');
 
         $request = new Request();
-        $request->withMethod('invalid');
+        $request->withMethod('invalid method');
     }
 
     public function testWithRequestTarget(): void

@@ -43,9 +43,7 @@ final class RouteTest extends TestCase
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/a',
-                ],
+                'uri' => '/test/a',
             ],
         ]);
 
@@ -64,9 +62,7 @@ final class RouteTest extends TestCase
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/invalid',
-                ],
+                'uri' => '/invalid',
             ],
         ]);
 
@@ -100,17 +96,13 @@ final class RouteTest extends TestCase
 
         $matchingRequest = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/files/archive.zip',
-                ],
+                'uri' => '/files/archive.zip',
             ],
         ]);
 
         $invalidRequest = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/files/archiveXzip',
-                ],
+                'uri' => '/files/archiveXzip',
             ],
         ]);
 
@@ -141,25 +133,19 @@ final class RouteTest extends TestCase
 
         $matchingRequest = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/123',
-                ],
+                'uri' => '/test/123',
             ],
         ]);
 
         $optionalRequest = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
         $invalidRequest = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/value',
-                ],
+                'uri' => '/test/value',
             ],
         ]);
 
@@ -199,9 +185,7 @@ final class RouteTest extends TestCase
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/foo/tail',
-                ],
+                'uri' => '/test/foo/tail',
             ],
         ]);
 
@@ -225,9 +209,7 @@ final class RouteTest extends TestCase
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/files/archive.zip',
-                ],
+                'uri' => '/files/archive.zip',
             ],
         ]);
 

@@ -57,13 +57,15 @@ $request = request();
 
 ## Reading request input
 
-`ServerRequest` includes convenience accessors for the most common server-side data sources:
+`ServerRequest` includes convenience accessors for the most common server-side request data:
 
-- query parameters (`$_GET`)
-- parsed body data (derived from `$_POST` and/or `php://input`, depending on content type and method)
-- cookies (`$_COOKIE`)
-- server parameters (`$_SERVER`)
+- query parameters
+- parsed body data
+- cookies
+- server parameters
 - environment values (via `getenv()`)
+
+The current request resolved by the `Engine` is populated by `ServerRequestFactory::createFromGlobals()`, which imports the corresponding PHP superglobals and uses `php://input` as the request body. `ServerRequest` itself does not read those superglobals or derive its method, headers, URI, or uploaded files from server parameters. See [HTTP Factories](factories.md) for synthetic and non-global request creation.
 
 Most accessors support:
 
@@ -80,7 +82,7 @@ $session = $request->getCookie('session');
 
 ## Working with uploaded files
 
-Uploaded files are exposed as `UploadedFile` objects (from `$_FILES`) and can be retrieved using dot-notation keys. See [Method guide → Uploaded files](#uploaded-files) for examples.
+Uploaded files are exposed as `UploadedFile` objects and can be retrieved using dot-notation keys. For the current PHP request, `ServerRequestFactory::createFromGlobals()` normalizes `$_FILES` into these objects. See [Method guide → Uploaded files](#uploaded-files) for examples.
 
 ## Inspecting request context
 
@@ -159,7 +161,7 @@ Most examples assume you already have a `$request` instance (via dependency inje
 
 #### **Read query values** (`getQuery()`)
 
-Reads from query parameters (`$_GET`) using dot-notation.
+Reads from the request query parameters using dot-notation.
 
 Arguments:
 - `$key` (`string|null`): the key to read (use dot-notation). When `null`, returns the full query array.
@@ -171,7 +173,7 @@ $page = $request->getQuery('page', 'int') ?? 1;
 
 #### **Read all query parameters** (`getQueryParams()`)
 
-Returns the full query array (from `$_GET`).
+Returns the full request query array.
 
 ```php
 $query = $request->getQueryParams();
@@ -206,7 +208,7 @@ $data = $request->getParsedBody();
 
 #### **Read cookies** (`getCookie()`)
 
-Reads from cookie parameters (`$_COOKIE`) using dot-notation.
+Reads from the request cookie parameters using dot-notation.
 
 Arguments:
 - `$key` (`string|null`): the key to read (use dot-notation). When `null`, returns the full cookie array.
@@ -218,7 +220,7 @@ $session = $request->getCookie('session');
 
 #### **Read server parameters** (`getServer()`)
 
-Reads from server parameters (`$_SERVER`) using dot-notation.
+Reads from the request server parameters using dot-notation.
 
 Arguments:
 - `$key` (`string|null`): the key to read (use dot-notation). When `null`, returns the full server array.
@@ -244,7 +246,7 @@ $debug = $request->getEnv('APP_DEBUG', 'bool') ?? false;
 
 #### **Read uploaded files** (`getUploadedFile()`)
 
-Returns an `UploadedFile` (or a nested array of uploads) from `$_FILES` using dot-notation.
+Returns an `UploadedFile` (or a nested array of uploads) from the request uploaded-file state using dot-notation.
 
 Arguments:
 - `$key` (`string|null`): the key to read (use dot-notation). When `null`, returns the full uploaded files structure.
@@ -431,8 +433,8 @@ $body = (string) $request->getBody();
 
 A few practical details are worth keeping in mind:
 
-- `getParsedBody()` always returns an array, but it throws `RuntimeException` when an `application/json` body is invalid or does not decode to an array.
-- `getParsedBody()` treats `application/x-www-form-urlencoded` bodies specially only for `PUT`, `PATCH`, and `DELETE` requests; other cases fall back to `$_POST`.
+- `getParsedBody()` always returns an array, but it throws `BadRequestException` when an `application/json` body is invalid or does not decode to an array.
+- `getParsedBody()` parses `application/x-www-form-urlencoded` bodies only for `PUT`, `PATCH`, and `DELETE` requests. Otherwise, it uses parsed body data supplied when the request was created or an empty array. `ServerRequestFactory::createFromGlobals()` supplies `$_POST` for the current PHP request when it is not empty.
 - `withUploadedFiles()` expects `UploadedFileInterface` instances (and nested arrays of them) and throws when other values are provided.
 - `getClientIp()` uses `REMOTE_ADDR` by default. Proxy trust with an empty trusted list accepts the rightmost forwarded address; a non-empty list restricts forwarding to explicitly trusted proxy hops.
 - `negotiate('content', $supported, strictMatch: true)` returns an empty string when no acceptable match is found.
@@ -442,6 +444,7 @@ A few practical details are worth keeping in mind:
 - [HTTP Responses](responses.md)
 - [HTTP Middleware](middleware.md)
 - [Request Handler](request-handler.md)
+- [HTTP Factories](factories.md)
 - [Sessions](sessions.md)
 - [URI](uri.md)
 - [User Agents](user-agents.md)

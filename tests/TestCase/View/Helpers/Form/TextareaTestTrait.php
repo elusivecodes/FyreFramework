@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\View\Helpers\Form;
 
+use Closure;
+use Fyre\View\View;
+
 trait TextareaTestTrait
 {
     public function testTextarea(): void
@@ -183,7 +186,12 @@ trait TextareaTestTrait
 
     public function testTextareaValuePost(): void
     {
-        $_POST['textarea'] = 'test';
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'textarea' => 'test',
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<textarea id="textarea" name="textarea" placeholder="Textarea">test</textarea>',
@@ -193,7 +201,14 @@ trait TextareaTestTrait
 
     public function testTextareaValuePostDot(): void
     {
-        $_POST['key']['textarea'] = 'test';
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'key' => [
+                    'textarea' => 'test',
+                ],
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<textarea id="key-textarea" name="key[textarea]" placeholder="Textarea">test</textarea>',

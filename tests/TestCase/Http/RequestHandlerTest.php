@@ -164,6 +164,29 @@ final class RequestHandlerTest extends TestCase
         );
     }
 
+    public function testRunScopedRequest(): void
+    {
+        $this->container->scoped(ServerRequest::class);
+
+        $queue = new MiddlewareQueue();
+        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+        $request = $this->container->build(ServerRequest::class);
+
+        $handler->handle($request);
+
+        $this->assertSame(
+            $request,
+            $this->container->use(ServerRequest::class)
+        );
+
+        $this->container->clearScoped();
+
+        $this->assertNotSame(
+            $request,
+            $this->container->use(ServerRequest::class)
+        );
+    }
+
     #[Override]
     protected function setUp(): void
     {

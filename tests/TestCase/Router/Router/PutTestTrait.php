@@ -20,9 +20,7 @@ trait PutTestTrait
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'method' => 'put',
-                'server' => [
-                    'REQUEST_URI' => '/home',
-                ],
+                'uri' => '/home',
             ],
         ]);
 
@@ -53,9 +51,7 @@ trait PutTestTrait
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'method' => 'put',
-                'server' => [
-                    'REQUEST_URI' => '/home/alternate',
-                ],
+                'uri' => '/home/alternate',
             ],
         ]);
 
@@ -96,9 +92,7 @@ trait PutTestTrait
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'method' => 'put',
-                'server' => [
-                    'REQUEST_URI' => '/home/alternate/test/a/2',
-                ],
+                'uri' => '/home/alternate/test/a/2',
             ],
         ]);
 
@@ -148,9 +142,7 @@ trait PutTestTrait
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'method' => 'put',
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -178,9 +170,7 @@ trait PutTestTrait
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'method' => 'put',
-                'server' => [
-                    'REQUEST_URI' => '/test/a/2',
-                ],
+                'uri' => '/test/a/2',
             ],
         ]);
 

@@ -11,15 +11,17 @@ trait UploadedFileTestTrait
 {
     public function testGetUploadedFile(): void
     {
+        $file = new UploadedFile(
+            '/tmp/tempname',
+            1,
+            0,
+            'test.txt',
+            'text/plain'
+        );
+
         $request = new ServerRequest($this->config, $this->type, [
             'files' => [
-                'test' => [
-                    'tmp_name' => '/tmp/tempname',
-                    'name' => 'test.txt',
-                    'type' => 'text/plain',
-                    'size' => 1,
-                    'error' => 0,
-                ],
+                'test' => $file,
             ],
         ]);
 
@@ -48,15 +50,17 @@ trait UploadedFileTestTrait
 
     public function testGetUploadedFileAll(): void
     {
+        $file = new UploadedFile(
+            '/tmp/tempname',
+            1,
+            0,
+            'test.txt',
+            'text/plain'
+        );
+
         $request = new ServerRequest($this->config, $this->type, [
             'files' => [
-                'test' => [
-                    'tmp_name' => '/tmp/tempname',
-                    'name' => 'test.txt',
-                    'type' => 'text/plain',
-                    'size' => 1,
-                    'error' => 0,
-                ],
+                'test' => $file,
             ],
         ]);
 
@@ -75,29 +79,26 @@ trait UploadedFileTestTrait
 
     public function testGetUploadedFileArray(): void
     {
+        $file1 = new UploadedFile(
+            '/tmp/tempname1',
+            1,
+            0,
+            'test1.txt',
+            'text/plain'
+        );
+        $file2 = new UploadedFile(
+            '/tmp/tempname2',
+            1,
+            0,
+            'test2.txt',
+            'text/plain'
+        );
+
         $request = new ServerRequest($this->config, $this->type, [
             'files' => [
                 'test' => [
-                    'tmp_name' => [
-                        '/tmp/tempname1',
-                        '/tmp/tempname2',
-                    ],
-                    'name' => [
-                        'test1.txt',
-                        'test2.txt',
-                    ],
-                    'type' => [
-                        'text/plain',
-                        'text/plain',
-                    ],
-                    'size' => [
-                        1,
-                        1,
-                    ],
-                    'error' => [
-                        0,
-                        0,
-                    ],
+                    $file1,
+                    $file2,
                 ],
             ],
         ]);
@@ -122,24 +123,18 @@ trait UploadedFileTestTrait
 
     public function testGetUploadedFileDeep(): void
     {
+        $file = new UploadedFile(
+            '/tmp/tempname',
+            1,
+            0,
+            'test.txt',
+            'text/plain'
+        );
+
         $request = new ServerRequest($this->config, $this->type, [
             'files' => [
                 'test' => [
-                    'tmp_name' => [
-                        'a' => '/tmp/tempname',
-                    ],
-                    'name' => [
-                        'a' => 'test.txt',
-                    ],
-                    'type' => [
-                        'a' => 'text/plain',
-                    ],
-                    'size' => [
-                        'a' => 1,
-                    ],
-                    'error' => [
-                        'a' => 0,
-                    ],
+                    'a' => $file,
                 ],
             ],
         ]);

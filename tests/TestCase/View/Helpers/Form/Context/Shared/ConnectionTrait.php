@@ -54,9 +54,7 @@ trait ConnectionTrait
 
         $request = $container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 

@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\View\Helpers\Form;
 
+use Closure;
+use Fyre\View\View;
+
 trait NumberTestTrait
 {
     public function testNumber(): void
@@ -163,7 +166,12 @@ trait NumberTestTrait
 
     public function testNumberValuePost(): void
     {
-        $_POST['number'] = '123';
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'number' => '123',
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<input id="number" name="number" type="number" value="123" placeholder="Number" />',
@@ -173,7 +181,14 @@ trait NumberTestTrait
 
     public function testNumberValuePostDot(): void
     {
-        $_POST['key']['number'] = '123';
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'key' => [
+                    'number' => '123',
+                ],
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<input id="key-number" name="key[number]" type="number" value="123" placeholder="Number" />',

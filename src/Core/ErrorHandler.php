@@ -237,7 +237,7 @@ class ErrorHandler
         if ($result instanceof ResponseInterface) {
             $response = $result;
         } else {
-            $response = $this->container->build(ClientResponse::class, [
+            $response = $this->container->use(ClientResponse::class, [
                 'options' => [
                     'statusCode' => 500,
                     'body' => (string) $result,

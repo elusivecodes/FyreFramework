@@ -414,18 +414,22 @@ final class RateLimiterMiddlewareTest extends TestCase
 
         $request1 = $this->container->build(ServerRequest::class, [
             'options' => [
+                'headers' => [
+                    'X-Forwarded-For' => '203.0.113.10',
+                ],
                 'server' => [
                     'REMOTE_ADDR' => '127.0.0.1',
-                    'HTTP_X_FORWARDED_FOR' => '203.0.113.10',
                 ],
             ],
         ]);
 
         $request2 = $this->container->build(ServerRequest::class, [
             'options' => [
+                'headers' => [
+                    'X-Forwarded-For' => '203.0.113.20',
+                ],
                 'server' => [
                     'REMOTE_ADDR' => '127.0.0.1',
-                    'HTTP_X_FORWARDED_FOR' => '203.0.113.20',
                 ],
             ],
         ]);
@@ -464,18 +468,22 @@ final class RateLimiterMiddlewareTest extends TestCase
 
         $request1 = $this->container->build(ServerRequest::class, [
             'options' => [
+                'headers' => [
+                    'X-Forwarded-For' => '203.0.113.10',
+                ],
                 'server' => [
                     'REMOTE_ADDR' => '127.0.0.1',
-                    'HTTP_X_FORWARDED_FOR' => '203.0.113.10',
                 ],
             ],
         ]);
 
         $request2 = $this->container->build(ServerRequest::class, [
             'options' => [
+                'headers' => [
+                    'X-Forwarded-For' => '203.0.113.20',
+                ],
                 'server' => [
                     'REMOTE_ADDR' => '127.0.0.1',
-                    'HTTP_X_FORWARDED_FOR' => '203.0.113.20',
                 ],
             ],
         ]);
@@ -511,18 +519,22 @@ final class RateLimiterMiddlewareTest extends TestCase
 
         $request1 = $this->container->build(ServerRequest::class, [
             'options' => [
+                'headers' => [
+                    'X-Forwarded-For' => '198.51.100.10, 203.0.113.10',
+                ],
                 'server' => [
                     'REMOTE_ADDR' => '127.0.0.1',
-                    'HTTP_X_FORWARDED_FOR' => '198.51.100.10, 203.0.113.10',
                 ],
             ],
         ]);
 
         $request2 = $this->container->build(ServerRequest::class, [
             'options' => [
+                'headers' => [
+                    'X-Forwarded-For' => '198.51.100.10, 203.0.113.20',
+                ],
                 'server' => [
                     'REMOTE_ADDR' => '127.0.0.1',
-                    'HTTP_X_FORWARDED_FOR' => '198.51.100.10, 203.0.113.20',
                 ],
             ],
         ]);
@@ -562,18 +574,22 @@ final class RateLimiterMiddlewareTest extends TestCase
 
         $request1 = $this->container->build(ServerRequest::class, [
             'options' => [
+                'headers' => [
+                    'X-Forwarded-For' => '203.0.113.10, 127.0.0.1',
+                ],
                 'server' => [
                     'REMOTE_ADDR' => '127.0.0.1',
-                    'HTTP_X_FORWARDED_FOR' => '203.0.113.10, 127.0.0.1',
                 ],
             ],
         ]);
 
         $request2 = $this->container->build(ServerRequest::class, [
             'options' => [
+                'headers' => [
+                    'X-Forwarded-For' => '203.0.113.20, 127.0.0.1',
+                ],
                 'server' => [
                     'REMOTE_ADDR' => '127.0.0.1',
-                    'HTTP_X_FORWARDED_FOR' => '203.0.113.20, 127.0.0.1',
                 ],
             ],
         ]);
@@ -611,18 +627,22 @@ final class RateLimiterMiddlewareTest extends TestCase
 
         $request1 = $this->container->build(ServerRequest::class, [
             'options' => [
+                'headers' => [
+                    'X-Forwarded-For' => '198.51.100.10, 203.0.113.10',
+                ],
                 'server' => [
                     'REMOTE_ADDR' => '127.0.0.1',
-                    'HTTP_X_FORWARDED_FOR' => '198.51.100.10, 203.0.113.10',
                 ],
             ],
         ]);
 
         $request2 = $this->container->build(ServerRequest::class, [
             'options' => [
+                'headers' => [
+                    'X-Forwarded-For' => '198.51.100.10, 203.0.113.20',
+                ],
                 'server' => [
                     'REMOTE_ADDR' => '127.0.0.1',
-                    'HTTP_X_FORWARDED_FOR' => '198.51.100.10, 203.0.113.20',
                 ],
             ],
         ]);

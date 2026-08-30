@@ -52,9 +52,7 @@ trait MiddlewareTestTrait
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -113,9 +111,7 @@ trait MiddlewareTestTrait
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -159,9 +155,7 @@ trait MiddlewareTestTrait
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test',
-                ],
+                'uri' => '/test',
             ],
         ]);
 
@@ -196,9 +190,7 @@ trait MiddlewareTestTrait
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/test/2/1',
-                ],
+                'uri' => '/test/2/1',
             ],
         ]);
 

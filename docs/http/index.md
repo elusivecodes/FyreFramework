@@ -17,6 +17,7 @@ Pick the path that matches what you are doing:
 - **Working with sessions**: [Sessions](sessions.md)
 - **Working with cookies**: [Cookies](cookies.md)
 - **Calling external services**: [HTTP Client](client.md)
+- **Creating implementation-independent HTTP objects**: [HTTP Factories](factories.md)
 - **Working with URLs and user agents**: [URI](uri.md) and [User Agents](user-agents.md)
 
 ## HTTP overview
@@ -42,6 +43,7 @@ The core pieces are straightforward:
 - [HTTP Middleware](middleware.md) - define the middleware queue and register aliases or groups
 - [Request Handler](request-handler.md) - execute a middleware queue and hand off to a fallback handler
 - [HTTP Client](client.md) - make outbound HTTP requests and work with client responses
+- [HTTP Factories](factories.md) - create PSR-7 HTTP objects through PSR-17 interfaces
 - [Cookies](cookies.md) - create, parse, scope, and store HTTP cookies
 - [Sessions](sessions.md) - store state across requests and configure session handlers
 - [URI](uri.md) - read and update URI parts, query parameters, and path segments

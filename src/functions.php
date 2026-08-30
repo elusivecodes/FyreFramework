@@ -512,7 +512,7 @@ if (!function_exists('request')) {
 
 if (!function_exists('response')) {
     /**
-     * Loads a shared ClientResponse instance.
+     * Creates a ClientResponse instance.
      *
      * @return ClientResponse The ClientResponse.
      */

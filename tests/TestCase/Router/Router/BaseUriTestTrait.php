@@ -21,10 +21,7 @@ trait BaseUriTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'HTTP_HOST' => 'test.com',
-                    'REQUEST_URI' => '/deep/test',
-                ],
+                'uri' => 'https://test.com/deep/test',
             ],
         ]);
 
@@ -50,10 +47,7 @@ trait BaseUriTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'HTTP_HOST' => 'test.com',
-                    'REQUEST_URI' => '/deep',
-                ],
+                'uri' => 'https://test.com/deep',
             ],
         ]);
 
@@ -74,10 +68,7 @@ trait BaseUriTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'HTTP_HOST' => 'test.com',
-                    'REQUEST_URI' => '/deeper/test',
-                ],
+                'uri' => 'https://test.com/deeper/test',
             ],
         ]);
 

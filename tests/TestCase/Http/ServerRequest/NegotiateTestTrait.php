@@ -11,8 +11,8 @@ trait NegotiateTestTrait
     public function testNegotiateEncoding(): void
     {
         $request = new ServerRequest($this->config, $this->type, [
-            'server' => [
-                'HTTP_ACCEPT_ENCODING' => 'gzip,deflate',
+            'headers' => [
+                'Accept-Encoding' => 'gzip,deflate',
             ],
         ]);
 
@@ -36,8 +36,8 @@ trait NegotiateTestTrait
     public function testNegotiateLanguage(): void
     {
         $request = new ServerRequest($this->config, $this->type, [
-            'server' => [
-                'HTTP_ACCEPT_LANGUAGE' => 'en-gb,en;q=0.5',
+            'headers' => [
+                'Accept-Language' => 'en-gb,en;q=0.5',
             ],
         ]);
 
@@ -50,8 +50,8 @@ trait NegotiateTestTrait
     public function testNegotiateMedia(): void
     {
         $request = new ServerRequest($this->config, $this->type, [
-            'server' => [
-                'HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,/;q=0.8',
+            'headers' => [
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,/;q=0.8',
             ],
         ]);
 
@@ -64,8 +64,8 @@ trait NegotiateTestTrait
     public function testPrefersJson(): void
     {
         $request = new ServerRequest($this->config, $this->type, [
-            'server' => [
-                'HTTP_ACCEPT' => 'application/json,text/html;q=0.9',
+            'headers' => [
+                'Accept' => 'application/json,text/html;q=0.9',
             ],
         ]);
 
@@ -77,8 +77,8 @@ trait NegotiateTestTrait
     public function testPrefersJsonFalse(): void
     {
         $request = new ServerRequest($this->config, $this->type, [
-            'server' => [
-                'HTTP_ACCEPT' => 'text/html,application/json;q=0.9',
+            'headers' => [
+                'Accept' => 'text/html,application/json;q=0.9',
             ],
         ]);
 

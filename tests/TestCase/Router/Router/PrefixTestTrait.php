@@ -45,9 +45,7 @@ trait PrefixTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/prefix/home',
-                ],
+                'uri' => '/prefix/home',
             ],
         ]);
 
@@ -76,9 +74,7 @@ trait PrefixTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/prefix/deep/home',
-                ],
+                'uri' => '/prefix/deep/home',
             ],
         ]);
 
@@ -105,9 +101,7 @@ trait PrefixTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/prefix',
-                ],
+                'uri' => '/prefix',
             ],
         ]);
 
@@ -134,9 +128,7 @@ trait PrefixTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/prefix/home',
-                ],
+                'uri' => '/prefix/home',
             ],
         ]);
 
@@ -163,9 +155,7 @@ trait PrefixTestTrait
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
-                'server' => [
-                    'REQUEST_URI' => '/prefix/home',
-                ],
+                'uri' => '/prefix/home',
             ],
         ]);
 

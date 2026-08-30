@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\View\Helpers\Form;
 
+use Closure;
+use Fyre\View\View;
+
 trait SelectTestTrait
 {
     public function testSelect(): void
@@ -247,7 +250,12 @@ trait SelectTestTrait
 
     public function testSelectSelectedPost(): void
     {
-        $_POST['select'] = '1';
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'select' => '1',
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<select id="select" name="select"><option value="0">A</option><option value="1" selected>B</option></select>',
@@ -260,7 +268,14 @@ trait SelectTestTrait
 
     public function testSelectSelectedPostDot(): void
     {
-        $_POST['key']['select'] = '1';
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'key' => [
+                    'select' => '1',
+                ],
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<select id="key-select" name="key[select]"><option value="0">A</option><option value="1" selected>B</option></select>',

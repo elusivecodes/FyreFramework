@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\View\Helpers\Form;
 
+use Closure;
+use Fyre\View\View;
+
 trait InputTestTrait
 {
     public function testInput(): void
@@ -163,7 +166,12 @@ trait InputTestTrait
 
     public function testInputValuePost(): void
     {
-        $_POST['input'] = 'test';
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'input' => 'test',
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<input id="input" name="input" type="text" value="test" placeholder="Input" />',
@@ -173,7 +181,14 @@ trait InputTestTrait
 
     public function testInputValuePostDot(): void
     {
-        $_POST['key']['input'] = 'test';
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'key' => [
+                    'input' => 'test',
+                ],
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<input id="key-input" name="key[input]" type="text" value="test" placeholder="Input" />',
@@ -183,7 +198,12 @@ trait InputTestTrait
 
     public function testInputValuePostNull(): void
     {
-        $_POST['input'] = null;
+        Closure::bind(function(): void {
+            /** @var View $this */
+            $this->request = $this->request->withParsedBody([
+                'input' => null,
+            ]);
+        }, $this->view, View::class)();
 
         $this->assertSame(
             '<input id="input" name="input" type="text" placeholder="Input" />',
