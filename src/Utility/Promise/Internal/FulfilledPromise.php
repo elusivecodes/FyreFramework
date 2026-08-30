@@ -13,6 +13,8 @@ use Throwable;
  * Represents a fulfilled promise.
  *
  * Fulfilled promises invoke fulfillment handlers immediately and ignore rejection handlers.
+ *
+ * @internal
  */
 class FulfilledPromise implements PromiseInterface
 {

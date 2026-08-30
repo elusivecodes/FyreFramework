@@ -8,6 +8,7 @@ These docs cover the framework APIs your application uses. Project layout, entry
 
 - [Start here](#start-here)
 - [Framework overview](#framework-overview)
+- [Release and support](#release-and-support)
 - [Pages in this section](#pages-in-this-section)
 
 ## Start here
@@ -35,6 +36,12 @@ Most applications touch a few main areas:
 
 Start with the section you need most, then follow the related links from there.
 
+## Release and support
+
+- [Changelog](../CHANGELOG.md) - user-visible changes, deprecations, and breaking changes
+- [Security Policy](../SECURITY.md) - supported releases and private vulnerability reporting
+- [API Stability](stability.md) - public API, internal symbols, and compatibility guarantees
+
 ## Pages in this section
 
 - [Getting Started](getting-started.md) - requirements, installation, application bootstrap, and next steps
@@ -55,4 +62,5 @@ Start with the section you need most, then follow the related links from there.
 - [Console](console/index.md) - commands, prompts, and CLI tooling
 - [Testing](testing/index.md) - PHPUnit helpers, fixtures, and framework test utilities
 - [Utilities](utilities/index.md) - general-purpose helpers such as files, images, colors, collections, promises, and date/time tools
+- [API Stability](stability.md) - public API, internal symbols, and compatibility guarantees
 - [Contributing](contributing/index.md) - repository checks, test suites, and documentation conventions

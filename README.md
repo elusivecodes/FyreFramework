@@ -18,6 +18,7 @@ Install the `fyre/framework` package and use individual subsystems as needed, or
 - [Application bootstrap](#application-bootstrap)
 - [Hello world](#hello-world)
 - [Documentation](#documentation)
+- [Release and support](#release-and-support)
 - [Repository development](#repository-development)
 - [License](#license)
 
@@ -111,6 +112,12 @@ Start with [Getting Started](docs/getting-started.md) or browse the [documentati
 - **Shared services**: [Events](docs/events/index.md), [Logging](docs/logging/index.md), [Mail](docs/mail/index.md), [Cache](docs/cache/index.md), [Queue](docs/queue/index.md)
 - **Rendering and forms**: [View](docs/view/index.md), [Form](docs/form/index.md)
 - **Tooling and tests**: [Console](docs/console/index.md), [Testing](docs/testing/index.md), [Utilities](docs/utilities/index.md), [Images](docs/utilities/image.md)
+
+## Release and support
+
+- [Changelog](CHANGELOG.md) - user-visible changes, deprecations, and breaking changes
+- [Security Policy](SECURITY.md) - supported releases and private vulnerability reporting
+- [API Stability](docs/stability.md) - public API, internal symbols, and compatibility guarantees
 
 ## Repository development
 

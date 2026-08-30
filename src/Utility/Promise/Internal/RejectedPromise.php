@@ -17,6 +17,8 @@ use Throwable;
  *
  * A rejection is considered handled if an onRejected callback is attached via catch/then/finally.
  *
+ * @internal
+ *
  * @phpstan-consistent-constructor
  */
 class RejectedPromise implements PromiseInterface
