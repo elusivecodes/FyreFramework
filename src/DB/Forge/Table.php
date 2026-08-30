@@ -384,9 +384,7 @@ abstract class Table
 
         $this->clear();
 
-        if ($this->schemaTable) {
-            $this->schemaTable->clear();
-        }
+        $this->schemaTable?->clear();
 
         if (
             !$this->schemaTable ||

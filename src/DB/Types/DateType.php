@@ -37,7 +37,7 @@ class DateType extends DateTimeType
     {
         $date = parent::fromDatabase($value);
 
-        return $date ? $date->startOfDay() : null;
+        return $date?->startOfDay();
     }
 
     /**
@@ -50,6 +50,6 @@ class DateType extends DateTimeType
     {
         $date = parent::parse($value);
 
-        return $date ? $date->startOfDay() : null;
+        return $date?->startOfDay();
     }
 }

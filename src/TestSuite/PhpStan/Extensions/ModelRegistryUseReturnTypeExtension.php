@@ -112,11 +112,9 @@ class ModelRegistryUseReturnTypeExtension implements DynamicMethodReturnTypeExte
      */
     protected function modelNamespaces(Scope $scope): array
     {
-        $classReflection = $scope->getClassReflection();
+        $className = $scope->getClassReflection()?->getName();
 
-        if ($classReflection !== null) {
-            $className = $classReflection->getName();
-
+        if ($className !== null) {
             foreach ($this->modelNamespacesOverrides as $override) {
                 if (in_array($className, $override['classes'], true)) {
                     return array_values($override['modelNamespaces']);

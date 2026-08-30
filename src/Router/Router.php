@@ -346,9 +346,7 @@ class Router
      */
     public function getBaseUri(): string|null
     {
-        return $this->baseUri ?
-            $this->baseUri->getUri() :
-            null;
+        return $this->baseUri?->getUri();
     }
 
     /**

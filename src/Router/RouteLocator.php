@@ -64,11 +64,7 @@ class RouteLocator
      */
     public function clear(): void
     {
-        $cache = $this->getCache();
-
-        if ($cache) {
-            $cache->clear();
-        }
+        $this->getCache()?->clear();
     }
 
     /**

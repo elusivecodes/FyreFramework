@@ -154,10 +154,8 @@ class UploadedFile implements UploadedFileInterface
             return;
         }
 
-        if ($this->stream) {
-            $this->stream->close();
-            $this->stream = null;
-        }
+        $this->stream?->close();
+        $this->stream = null;
 
         $moved = is_uploaded_file($this->file) ?
             move_uploaded_file($this->file, $targetPath) :
@@ -226,11 +224,9 @@ class UploadedFile implements UploadedFileInterface
             $source->close();
             $this->stream = null;
         } catch (Throwable $exception) {
-            if ($target !== null) {
-                try {
-                    $target->close();
-                } catch (Throwable) {
-                }
+            try {
+                $target?->close();
+            } catch (Throwable) {
             }
 
             if ($temporaryPath !== null) {
