@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Console;
 
+use Composer\InstalledVersions;
 use Fyre\Console\Command;
 use Fyre\Console\CommandRunner;
 use Fyre\Console\Console;
@@ -24,9 +25,11 @@ use Tests\Mock\Commands\StringOptionsCommand;
 use Tests\Mock\Commands\TestCommand;
 use Tests\Mock\Commands\TypeOptionsCommand;
 
+use function class_exists;
 use function class_uses;
 use function fclose;
 use function fopen;
+use function ftruncate;
 use function fwrite;
 use function rewind;
 use function stream_get_contents;
@@ -337,6 +340,52 @@ final class CommandRunnerTest extends TestCase
         );
     }
 
+    public function testHandleCommandHelp(): void
+    {
+        foreach (['--help', '-h'] as $option) {
+            ftruncate($this->output, 0);
+            rewind($this->output);
+
+            $this->assertSame(
+                Command::CODE_SUCCESS,
+                $this->runner->handle(['app', 'options', $option])
+            );
+
+            rewind($this->output);
+
+            $this->assertSame(
+                'Alias: options'.PHP_EOL.
+                'Description: '.PHP_EOL.
+                PHP_EOL.
+                'Usage:'.PHP_EOL.
+                '  app options [options]'.PHP_EOL.
+                PHP_EOL.
+                'Options:'.PHP_EOL.
+                '+---------+--------+---------+----------+----------------+--------------------+'.PHP_EOL.
+                '| Option  | Type   | Default | Required | Allowed Values | Prompt             |'.PHP_EOL.
+                '+---------+--------+---------+----------+----------------+--------------------+'.PHP_EOL.
+                '| --value | string | a       | yes      | a, b, c        | Which do you want? |'.PHP_EOL.
+                '+---------+--------+---------+----------+----------------+--------------------+'.PHP_EOL,
+                stream_get_contents($this->output)
+            );
+        }
+    }
+
+    public function testHandleCommandHelpInvalid(): void
+    {
+        $this->assertSame(
+            Command::CODE_ERROR,
+            $this->runner->handle(['app', 'invalid', '--help'])
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;31mInvalid command: invalid\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
     public function testHandleCommandList(): void
     {
         $this->assertSame(
@@ -480,6 +529,73 @@ final class CommandRunnerTest extends TestCase
             "\033[0;33mPlease enter a value\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
+    }
+
+    public function testHandleHelp(): void
+    {
+        foreach (['--help', '-h'] as $option) {
+            ftruncate($this->output, 0);
+            rewind($this->output);
+
+            $this->assertSame(
+                Command::CODE_SUCCESS,
+                $this->runner->handle(['app', $option])
+            );
+
+            rewind($this->output);
+
+            $this->assertSame(
+                'Usage:'.PHP_EOL.
+                '  app <command> [options]'.PHP_EOL.
+                PHP_EOL.
+                'Options:'.PHP_EOL.
+                '+---------------+--------------------------------+'.PHP_EOL.
+                '| Option        | Description                    |'.PHP_EOL.
+                '+---------------+--------------------------------+'.PHP_EOL.
+                '| -h, --help    | Display help.                  |'.PHP_EOL.
+                '| -V, --version | Display the framework version. |'.PHP_EOL.
+                '+---------------+--------------------------------+'.PHP_EOL.
+                PHP_EOL.
+                'Commands:'.PHP_EOL.
+                '+------------------+-------------------------+------------------------+'.PHP_EOL.
+                '| Command          | Description             | Options                |'.PHP_EOL.
+                '+------------------+-------------------------+------------------------+'.PHP_EOL.
+                "| \033[0;32marguments\033[0m        |                         | value                  |".PHP_EOL.
+                "| \033[0;32mbool_options\033[0m     |                         | test                   |".PHP_EOL.
+                "| \033[0;32mmissing_run\033[0m      |                         |                        |".PHP_EOL.
+                "| \033[0;32moptional_options\033[0m |                         | choice, enabled, value |".PHP_EOL.
+                "| \033[0;32moptions\033[0m          |                         | value                  |".PHP_EOL.
+                "| \033[0;32mstring_options\033[0m   |                         | value                  |".PHP_EOL.
+                "| \033[0;32mtester\033[0m           | This is a test command. |                        |".PHP_EOL.
+                "| \033[0;32mtype_options\033[0m     |                         | test                   |".PHP_EOL.
+                '+------------------+-------------------------+------------------------+'.PHP_EOL,
+                stream_get_contents($this->output)
+            );
+        }
+    }
+
+    public function testHandleVersion(): void
+    {
+        $version = class_exists(InstalledVersions::class) ?
+            InstalledVersions::getPrettyVersion('fyre/framework') :
+            null;
+
+        foreach (['--version', '-V'] as $option) {
+            ftruncate($this->output, 0);
+            rewind($this->output);
+
+            $this->assertSame(
+                Command::CODE_SUCCESS,
+                $this->runner->handle(['app', $option])
+            );
+
+            rewind($this->output);
+
+            $this->assertSame(
+                'FyreFramework '.($version ?? 'dev').PHP_EOL,
+                stream_get_contents($this->output)
+            );
+        }
     }
 
     public function testHasCommand(): void

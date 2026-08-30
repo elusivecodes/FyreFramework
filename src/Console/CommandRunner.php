@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Fyre\Console;
 
+use Composer\InstalledVersions;
 use DirectoryIterator;
 use Fyre\Core\Container;
 use Fyre\Core\Loader;
@@ -15,10 +16,12 @@ use Fyre\Utility\Inflector;
 use ReflectionClass;
 use RegexIterator;
 
+use function array_intersect_key;
 use function array_is_list;
 use function array_key_exists;
 use function array_keys;
 use function array_shift;
+use function class_exists;
 use function implode;
 use function in_array;
 use function is_array;
@@ -105,33 +108,26 @@ class CommandRunner
     /**
      * Handles an argv command.
      *
-     * Note: When no command alias is provided, this prints a table of available commands.
+     * Note: When no command alias is provided, this displays global help and the available commands.
      *
      * @param string[] $argv The CLI arguments.
      * @return int The exit code of the command.
      */
     public function handle(array $argv): int
     {
+        $script = ($argv[0] ?? '') ?: 'app';
+
         [$command, $arguments] = $this->parseArguments($argv);
 
-        if ($command) {
-            return $this->run($command, $arguments);
+        if ($command !== null && array_intersect_key($arguments, ['help' => true, 'h' => true]) !== []) {
+            return $this->displayCommandHelp($script, $command);
         }
 
-        $allCommands = $this->all();
-
-        $data = [];
-        foreach ($allCommands as $alias => $command) {
-            $data[] = [
-                Console::style($alias, Console::GREEN),
-                $command['description'],
-                implode(', ', array_keys($command['options'])),
-            ];
-        }
-
-        $this->io->table($data, ['Command', 'Description', 'Options']);
-
-        return Command::CODE_SUCCESS;
+        return match ($command) {
+            null, '--help', '-h' => $this->displayHelp($script),
+            '--version', '-V' => $this->displayVersion(),
+            default => $this->run($command, $arguments),
+        };
     }
 
     /**
@@ -211,18 +207,7 @@ class CommandRunner
                 $value = null;
             }
 
-            if (!is_array($data)) {
-                $data = [
-                    'text' => (string) $data,
-                    'required' => true,
-                ];
-            }
-
-            $data['text'] ??= '';
-            $data['values'] ??= null;
-            $data['required'] ??= false;
-            $data['as'] ??= 'string';
-            $data['default'] ??= null;
+            $data = static::normalizeOption($data);
 
             $type = $this->typeParser->use($data['as']);
 
@@ -299,6 +284,122 @@ class CommandRunner
         $this->dispatchEvent('Command.afterExecute', ['options' => $options, 'result' => $result], $instance);
 
         return $result;
+    }
+
+    /**
+     * Displays help for a command.
+     *
+     * @param string $script The script name.
+     * @param string $alias The command alias.
+     * @return int The exit code.
+     */
+    protected function displayCommandHelp(string $script, string $alias): int
+    {
+        $commands = $this->all();
+        $command = $commands[$alias] ?? null;
+
+        if (!$command) {
+            sprintf(
+                'Invalid command: %s',
+                $alias
+            ) |> $this->io->error(...);
+
+            return Command::CODE_ERROR;
+        }
+
+        $this->io->write('Alias: '.$alias);
+        $this->io->write('Description: '.$command['description']);
+        $this->io->write('');
+        $this->io->write('Usage:');
+        $this->io->write('  '.$script.' '.$alias.' [options]');
+        $this->io->write('');
+        $this->io->write('Options:');
+
+        $data = [];
+        foreach ($command['options'] as $key => $option) {
+            $option = static::normalizeOption($option);
+
+            $values = $option['values'];
+            if (!is_array($values)) {
+                $values = [];
+            } else if (!array_is_list($values)) {
+                $values = array_keys($values);
+            }
+
+            $default = match ($option['default']) {
+                null => 'null',
+                true => 'true',
+                false => 'false',
+                default => $option['default'],
+            };
+
+            $data[] = [
+                '--'.$this->inflector->dasherize($key),
+                $option['as'],
+                $default,
+                $option['required'] ? 'yes' : 'no',
+                implode(', ', $values),
+                $option['text'],
+            ];
+        }
+
+        $this->io->table($data, ['Option', 'Type', 'Default', 'Required', 'Allowed Values', 'Prompt']);
+
+        return Command::CODE_SUCCESS;
+    }
+
+    /**
+     * Displays global help.
+     *
+     * @param string $script The script name.
+     * @return int The exit code.
+     */
+    protected function displayHelp(string $script): int
+    {
+        $commands = $this->all();
+
+        $this->io->write('Usage:');
+        $this->io->write('  '.$script.' <command> [options]');
+        $this->io->write('');
+        $this->io->write('Options:');
+        $this->io->table(
+            [
+                ['-h, --help', 'Display help.'],
+                ['-V, --version', 'Display the framework version.'],
+            ],
+            ['Option', 'Description']
+        );
+        $this->io->write('');
+        $this->io->write('Commands:');
+
+        $data = [];
+        foreach ($commands as $alias => $command) {
+            $data[] = [
+                Console::style($alias, Console::GREEN),
+                $command['description'],
+                implode(', ', array_keys($command['options'])),
+            ];
+        }
+
+        $this->io->table($data, ['Command', 'Description', 'Options']);
+
+        return Command::CODE_SUCCESS;
+    }
+
+    /**
+     * Displays the framework version.
+     *
+     * @return int The exit code.
+     */
+    protected function displayVersion(): int
+    {
+        $version = class_exists(InstalledVersions::class) ?
+            InstalledVersions::getPrettyVersion('fyre/framework') :
+            null;
+
+        $this->io->write('FyreFramework '.($version ?? 'dev'));
+
+        return Command::CODE_SUCCESS;
     }
 
     /**
@@ -401,5 +502,29 @@ class CommandRunner
         }
 
         return [$command, $arguments];
+    }
+
+    /**
+     * Normalizes command option metadata.
+     *
+     * @param array<string, mixed>|string $option The option metadata.
+     * @return array{text: string, values: array<mixed>|null, required: bool, as: string, default: mixed} The normalized option metadata.
+     */
+    protected static function normalizeOption(array|string $option): array
+    {
+        if (!is_array($option)) {
+            $option = [
+                'text' => $option,
+                'required' => true,
+            ];
+        }
+
+        $option['text'] ??= '';
+        $option['values'] ??= null;
+        $option['required'] ??= false;
+        $option['as'] ??= 'string';
+        $option['default'] ??= null;
+
+        return $option;
     }
 }

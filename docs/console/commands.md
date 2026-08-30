@@ -49,7 +49,28 @@ $exitCode = $commandRunner->run('db:migrate', [
 ]);
 ```
 
-If no alias is provided, `handle()` prints the available command list.
+If no alias is provided, `handle()` displays usage, global options, and the available command list. The same help is available with `--help` or `-h`:
+
+```bash
+app
+app --help
+app -h
+```
+
+Pass `--help` or `-h` after a command alias to display its description, usage, and option metadata without validating arguments or prompting for input:
+
+```bash
+app db:migrate --help
+```
+
+Display the installed framework version with `--version` or `-V`:
+
+```bash
+app --version
+app -V
+```
+
+The global `help` and `version` options, including their `h` and `V` short forms, are reserved and should not be used as custom command option keys.
 
 Command input follows a few simple rules:
 
@@ -346,6 +367,7 @@ $commandRunner->addNamespace('App\Commands');
 A few practical details are worth keeping in mind:
 
 - Long options support both `--db default` and `--db=default`.
+- Global and command help bypass argument validation and interactive prompts.
 - Unknown named options return an error instead of being treated as positional values.
 - Positional arguments follow the option order defined by the command.
 - `clear()` also removes registered namespaces, so add them again before rediscovering commands.
