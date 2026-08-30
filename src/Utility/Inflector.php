@@ -115,7 +115,7 @@ class Inflector
         '/us\z/i' => 'uses',
         '/(x|ch|ss|sh)\z/i' => '$1es',
         '/s\z/' => 's',
-        '/^\z/' => '',
+        '/\A\z/' => '',
         '/\z/' => 's',
     ];
 
@@ -429,6 +429,6 @@ class Inflector
      */
     protected function isUncountable(string $string): bool
     {
-        return preg_match('/^('.implode('|', $this->uncountable).')\z/i', $string) === 1;
+        return preg_match('/\A('.implode('|', $this->uncountable).')\z/i', $string) === 1;
     }
 }

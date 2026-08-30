@@ -28,7 +28,7 @@ class FunctionExpression implements ValueExpressionInterface
         protected string $name,
         protected array $arguments = []
     ) {
-        if (!preg_match('/^[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*\z/i', $this->name)) {
+        if (!preg_match('/\A[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*\z/i', $this->name)) {
             throw new InvalidArgumentException(sprintf(
                 'Query function name `%s` is not valid.',
                 $this->name

@@ -239,7 +239,7 @@ class Policy
     {
         $sources = array_map(
             static function(string $source): string {
-                if (in_array($source, static::VALID_SOURCES, true) || preg_match('/^(nonce|sha(256|384|512)\-).+\z/', $source)) {
+                if (in_array($source, static::VALID_SOURCES, true) || preg_match('/\A(nonce|sha(256|384|512)\-).+\z/', $source)) {
                     return '\''.$source.'\'';
                 }
 

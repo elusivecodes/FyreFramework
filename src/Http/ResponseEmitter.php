@@ -105,7 +105,7 @@ class ResponseEmitter
         $body = $response->getBody();
         $range = $response->getHeaderLine('Content-Range');
 
-        if ($range && preg_match('/^bytes (\d+)-(\d+)\/(?:\d+|\*)\z/', $range, $match)) {
+        if ($range && preg_match('/\Abytes (\d+)-(\d+)\/(?:\d+|\*)\z/', $range, $match)) {
             $start = (int) $match[1];
             $end = (int) $match[2];
             $length = $end - $start + 1;

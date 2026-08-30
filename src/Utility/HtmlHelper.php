@@ -181,7 +181,7 @@ class HtmlHelper
      */
     protected static function attributeIndex(string $attribute): int
     {
-        if (preg_match('/^(data|aria)-/', $attribute)) {
+        if (preg_match('/\A(data|aria)-/', $attribute)) {
             $attribute = substr($attribute, 0, 5);
         }
 

@@ -206,7 +206,7 @@ class CurlHandler extends ClientHandler
 
         foreach ($headers as $header) {
             if (strpos($header, 'HTTP') === 0) {
-                if (preg_match('/^HTTP\/([12](?:\.[01])?) (\d+)(?: (.*))?\z/', $header, $matches)) {
+                if (preg_match('/\AHTTP\/([12](?:\.[01])?) (\d+)(?: (.*))?\z/', $header, $matches)) {
                     $protocolVersion = $matches[1] === '2' ? '2.0' : $matches[1];
 
                     // Discard headers from an informational/proxy response when the next

@@ -238,7 +238,7 @@ class MigrationRunner
 
             foreach ($folders as $folder) {
                 $directory = new DirectoryIterator($folder);
-                $iterator = new RegexIterator($directory, '/^Migration_\w+.*\.php\z/');
+                $iterator = new RegexIterator($directory, '/\AMigration_\w+.*\.php\z/');
 
                 foreach ($iterator as $item) {
                     if ($item->isDir()) {

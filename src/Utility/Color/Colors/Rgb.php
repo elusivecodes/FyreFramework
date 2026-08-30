@@ -153,7 +153,7 @@ class Rgb extends Color
                 $blue
             );
 
-        if ($shortenHex && preg_match('/^([0-9a-f])\1([0-9a-f])\2([0-9a-f])\3([0-9a-f])?\4?\z/i', $result, $match)) {
+        if ($shortenHex && preg_match('/\A([0-9a-f])\1([0-9a-f])\2([0-9a-f])\3([0-9a-f])?\4?\z/i', $result, $match)) {
             $result = $match[1].$match[2].$match[3].($match[4] ?? '');
         }
 

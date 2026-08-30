@@ -545,7 +545,7 @@ abstract class Connection
         }
 
         // identifier
-        if (preg_match('/^[a-z_]\w*(?:\.[a-z_]\w*)*(?:\.\*)?\z/i', $identifier)) {
+        if (preg_match('/\A[a-z_]\w*(?:\.[a-z_]\w*)*(?:\.\*)?\z/i', $identifier)) {
             $parts = explode('.', $identifier);
             $parts = array_map(
                 fn(string $part): string => $part === '*' ?
@@ -558,7 +558,7 @@ abstract class Connection
         }
 
         // function(...)
-        if (preg_match('/^([a-z_]\w*(?:\.[a-z_]\w*)*)\((.*)\)\z/i', $identifier, $matches)) {
+        if (preg_match('/\A([a-z_]\w*(?:\.[a-z_]\w*)*)\((.*)\)\z/i', $identifier, $matches)) {
             return $matches[1].'('.$this->quoteIdentifier($matches[2], false).')';
         }
 
@@ -567,12 +567,12 @@ abstract class Connection
         }
 
         // identifier AS alias
-        if (preg_match('/^([a-z_]\w*(?:\.[a-z_]\w*)*)\s+AS\s+([a-z_]\w*)\z/i', $identifier, $matches)) {
+        if (preg_match('/\A([a-z_]\w*(?:\.[a-z_]\w*)*)\s+AS\s+([a-z_]\w*)\z/i', $identifier, $matches)) {
             return $this->quoteIdentifier($matches[1], false).' AS '.$this->quoteIdentifier($matches[2], false);
         }
 
         // function(...) AS alias
-        if (preg_match('/^([a-z_]\w*(?:\.[a-z_]\w*)*\(.*\))\s+AS\s+([a-z_]\w*)\z/i', $identifier, $matches)) {
+        if (preg_match('/\A([a-z_]\w*(?:\.[a-z_]\w*)*\(.*\))\s+AS\s+([a-z_]\w*)\z/i', $identifier, $matches)) {
             return $this->quoteIdentifier($matches[1], false).' AS '.$this->quoteIdentifier($matches[2], false);
         }
 

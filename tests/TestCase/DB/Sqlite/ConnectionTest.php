@@ -269,7 +269,7 @@ final class ConnectionTest extends TestCase
     public function testVersion(): void
     {
         $this->assertMatchesRegularExpression(
-            '/^\d+\.\d+.*/',
+            '/\A\d+\.\d+.*/',
             $this->db->version()
         );
     }

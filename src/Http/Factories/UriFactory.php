@@ -32,7 +32,7 @@ class UriFactory implements UriFactoryInterface
     {
         $port = null;
 
-        if ($host !== '' && preg_match('/^(.*)\:(\d+)\z/', $host, $match)) {
+        if ($host !== '' && preg_match('/\A(.*)\:(\d+)\z/', $host, $match)) {
             $host = $match[1];
             $port = (int) $match[2];
         } else if ($host === '') {

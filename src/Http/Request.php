@@ -173,7 +173,7 @@ class Request extends Message implements RequestInterface
      */
     protected static function filterMethod(string $method): string
     {
-        if (!preg_match('/^[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\z/', $method)) {
+        if (!preg_match('/\A[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\z/', $method)) {
             throw new InvalidArgumentException(sprintf(
                 'HTTP method `%s` is not valid.',
                 $method

@@ -411,7 +411,7 @@ class PostgresTable extends Table
             return new LiteralExpression('CURRENT_TIMESTAMP');
         }
 
-        if (preg_match('/^\'(.*)\'\z/s', $value, $matches)) {
+        if (preg_match('/\A\'(.*)\'\z/s', $value, $matches)) {
             return str_replace("''", "'", $matches[1]);
         }
 

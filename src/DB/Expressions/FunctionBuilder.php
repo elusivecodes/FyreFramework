@@ -63,7 +63,7 @@ class FunctionBuilder
      */
     public function cast(string|ValueExpressionInterface $field, string $dataType): FunctionExpression
     {
-        if (!preg_match('/^[a-z][a-z0-9_]*(?:\(\d+(?:\s*,\s*\d+)?\))?(?:\s+[a-z][a-z0-9_]*)*\z/i', $dataType)) {
+        if (!preg_match('/\A[a-z][a-z0-9_]*(?:\(\d+(?:\s*,\s*\d+)?\))?(?:\s+[a-z][a-z0-9_]*)*\z/i', $dataType)) {
             throw new InvalidArgumentException(sprintf(
                 'Query function data type `%s` is not valid.',
                 $dataType

@@ -77,7 +77,7 @@ class MakeCommandCommand extends Command
         [$namespace, $className] = Make::parseNamespaceClass($namespace, $name.'Command');
 
         $command = (string) preg_replace('/Command\z/', '', $className);
-        $alias ??= ((string) preg_replace('/(?<!^)([A-Z]+)/', '_$1', $command)) |> strtolower(...);
+        $alias ??= ((string) preg_replace('/(?!\A)([A-Z]+)/', '_$1', $command)) |> strtolower(...);
 
         $contents = Make::loadStub('command', [
             '{namespace}' => $namespace,

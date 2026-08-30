@@ -450,14 +450,14 @@ class CursorPage extends AbstractPage
             if (is_int($field)) {
                 if (
                     !is_string($direction) ||
-                    !preg_match('/^([a-z_]\w*(?:\.[a-z_]\w*)*)(?:\s+(ASC|DESC))?\z/i', $direction, $matches)
+                    !preg_match('/\A([a-z_]\w*(?:\.[a-z_]\w*)*)(?:\s+(ASC|DESC))?\z/i', $direction, $matches)
                 ) {
                     throw new InvalidArgumentException('Cursor pagination requires simple ordered fields.');
                 }
 
                 $field = $matches[1];
                 $direction = $matches[2] ?? 'ASC';
-            } else if (!preg_match('/^[a-z_]\w*(?:\.[a-z_]\w*)*\z/i', $field)) {
+            } else if (!preg_match('/\A[a-z_]\w*(?:\.[a-z_]\w*)*\z/i', $field)) {
                 throw new InvalidArgumentException('Cursor pagination requires simple ordered fields.');
             }
 

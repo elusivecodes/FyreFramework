@@ -110,7 +110,7 @@ class SqliteTable extends Table
             $scale = null;
             $fractionalSeconds = null;
             $unsigned = false;
-            if (preg_match('/^(unsigned)?\s*(decimal|numeric)(?:\(([0-9]+),([0-9]+)\))?/i', $result['type'], $match)) {
+            if (preg_match('/\A(unsigned)?\s*(decimal|numeric)(?:\(([0-9]+),([0-9]+)\))?/i', $result['type'], $match)) {
                 $unsigned = (bool) $match[1];
                 $type = strtolower($match[2]);
 
@@ -119,7 +119,7 @@ class SqliteTable extends Table
                     $scale = (int) $match[4];
                 }
 
-            } else if (preg_match('/^(unsigned)?\s*(tinyint|smallint|mediumint|integer|int|bigint)(?:\(([0-9]+)\))?/i', $result['type'], $match)) {
+            } else if (preg_match('/\A(unsigned)?\s*(tinyint|smallint|mediumint|integer|int|bigint)(?:\(([0-9]+)\))?/i', $result['type'], $match)) {
                 $unsigned = (bool) $match[1];
                 $type = strtolower($match[2]);
 
@@ -135,13 +135,13 @@ class SqliteTable extends Table
                         default => null,
                     };
                 }
-            } else if (preg_match('/^(unsigned)?\s*(float|real|double)/i', $result['type'], $match)) {
+            } else if (preg_match('/\A(unsigned)?\s*(float|real|double)/i', $result['type'], $match)) {
                 $unsigned = (bool) $match[1];
                 $type = strtolower($match[2]);
-            } else if (preg_match('/^(char|varchar)\(([0-9]+)\)/i', $result['type'], $match)) {
+            } else if (preg_match('/\A(char|varchar)\(([0-9]+)\)/i', $result['type'], $match)) {
                 $type = strtolower($match[1]);
                 $length = (int) $match[2];
-            } else if (preg_match('/^(datetime|datetimefractional|time|timestamp|timestamptimezone)\(([0-9]+)\)/i', $result['type'], $match)) {
+            } else if (preg_match('/\A(datetime|datetimefractional|time|timestamp|timestamptimezone)\(([0-9]+)\)/i', $result['type'], $match)) {
                 $type = strtolower($match[1]);
                 $fractionalSeconds = (int) $match[2];
             } else {
@@ -357,7 +357,7 @@ class SqliteTable extends Table
             return new LiteralExpression('CURRENT_TIMESTAMP');
         }
 
-        if (preg_match('/^\'(.*)\'\z/s', $default, $matches)) {
+        if (preg_match('/\A\'(.*)\'\z/s', $default, $matches)) {
             return str_replace("''", "'", $matches[1]);
         }
 

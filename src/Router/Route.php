@@ -421,7 +421,7 @@ abstract class Route
      */
     protected function getHostRegExp(): string
     {
-        return '`^'.str_replace('\*', '.*', preg_quote($this->host ?? '', '`').'\z`');
+        return '`\A'.str_replace('\*', '.*', preg_quote($this->host ?? '', '`').'\z`');
     }
 
     /**
@@ -458,7 +458,7 @@ abstract class Route
             $captures[$name] = $capture;
         }
 
-        return ['`^'.$path.'\z`u', $captures];
+        return ['`\A'.$path.'\z`u', $captures];
     }
 
     /**

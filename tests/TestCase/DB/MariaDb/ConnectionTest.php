@@ -121,7 +121,7 @@ final class ConnectionTest extends TestCase
     public function testFailedConnection(): void
     {
         $this->expectException(DbException::class);
-        $this->expectExceptionMessageMatches('/^Database connection error: /');
+        $this->expectExceptionMessageMatches('/\ADatabase connection error: /');
 
         $this->connectionManager->setConfig('invalid', [
             'className' => MysqlConnection::class,
@@ -135,7 +135,7 @@ final class ConnectionTest extends TestCase
     public function testFailedQuery(): void
     {
         $this->expectException(DbException::class);
-        $this->expectExceptionMessageMatches('/^Database error: SQLSTATE\[42000\]/');
+        $this->expectExceptionMessageMatches('/\ADatabase error: SQLSTATE\[42000\]/');
 
         $this->db->query('INVALID');
     }
@@ -295,7 +295,7 @@ final class ConnectionTest extends TestCase
     public function testVersion(): void
     {
         $this->assertMatchesRegularExpression(
-            '/^\d+\.\d+\.\d+.*/',
+            '/\A\d+\.\d+\.\d+.*/',
             $this->db->version()
         );
     }

@@ -26,7 +26,7 @@ class IdentifierExpression implements ValueExpressionInterface
     public function __construct(
         protected string $identifier
     ) {
-        if (!preg_match('/^(?:[a-z_][a-z0-9_]*\.)*(?:[a-z_][a-z0-9_]*|\*)\z/i', $this->identifier)) {
+        if (!preg_match('/\A(?:[a-z_][a-z0-9_]*\.)*(?:[a-z_][a-z0-9_]*|\*)\z/i', $this->identifier)) {
             throw new InvalidArgumentException(sprintf(
                 'Query identifier `%s` is not valid.',
                 $this->identifier

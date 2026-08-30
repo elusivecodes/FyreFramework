@@ -30,7 +30,7 @@ class ContentsContainsRow extends ContentsRegExp
             $row
         );
 
-        $pattern = '/^\|\s'.implode('\s|\s+', $row).'\s\|\z/';
+        $pattern = '/\A\|\s'.implode('\s|\s+', $row).'\s\|\z/';
 
         parent::__construct($pattern, $output);
     }

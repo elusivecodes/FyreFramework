@@ -100,7 +100,7 @@ class MockHandler extends ClientHandler
             return $requestUrl === $mockUrl;
         }
 
-        $pattern = '/^'.str_replace('\*', '.*', preg_quote($mockUrl, '/')).'\z/';
+        $pattern = '/\A'.str_replace('\*', '.*', preg_quote($mockUrl, '/')).'\z/';
 
         return preg_match($pattern, $requestUrl) === 1;
     }

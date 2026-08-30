@@ -103,7 +103,7 @@ final class ConnectionTest extends TestCase
     public function testFailedConnection(): void
     {
         $this->expectException(DbException::class);
-        $this->expectExceptionMessageMatches('/^Database connection error: SQLSTATE\[08006\]/');
+        $this->expectExceptionMessageMatches('/\ADatabase connection error: SQLSTATE\[08006\]/');
 
         $this->connectionManager->setConfig('invalid', [
             'className' => PostgresConnection::class,
@@ -117,7 +117,7 @@ final class ConnectionTest extends TestCase
     public function testFailedQuery(): void
     {
         $this->expectException(DbException::class);
-        $this->expectExceptionMessageMatches('/^Database error: SQLSTATE\[42601\]/');
+        $this->expectExceptionMessageMatches('/\ADatabase error: SQLSTATE\[42601\]/');
 
         $this->db->query('INVALID');
     }
@@ -285,7 +285,7 @@ final class ConnectionTest extends TestCase
     public function testVersion(): void
     {
         $this->assertMatchesRegularExpression(
-            '/^\d+\.\d+.*/',
+            '/\A\d+\.\d+.*/',
             $this->db->version()
         );
     }

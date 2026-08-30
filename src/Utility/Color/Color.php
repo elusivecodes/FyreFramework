@@ -495,7 +495,7 @@ abstract class Color implements Stringable
         }
 
         if (
-            preg_match('/^#([0-9a-f]+)\z/i', $string, $match) &&
+            preg_match('/\A#([0-9a-f]+)\z/i', $string, $match) &&
             in_array(strlen($match[1]), [3, 4, 6, 8], true)
         ) {
             $hex = $match[1];
@@ -519,7 +519,7 @@ abstract class Color implements Stringable
         }
 
         try {
-            if (preg_match('/^(rgb|rgba|hsl|hsla|hwb|lab|lch|oklab|oklch)\((.+)\)\z/', $string, $match)) {
+            if (preg_match('/\A(rgb|rgba|hsl|hsla|hwb|lab|lch|oklab|oklch)\((.+)\)\z/', $string, $match)) {
                 $space = $match[1];
                 $parts = static::parseCssArguments(
                     $match[2],
@@ -591,7 +591,7 @@ abstract class Color implements Stringable
                 }
             }
 
-            if (preg_match('/^color\((a98-rgb|display-p3(?:-linear)?|prophoto-rgb|rec2020|srgb(?:-linear)?|xyz(?:-d50|-d65)?)\s+(.+)\)\z/', $string, $match)) {
+            if (preg_match('/\Acolor\((a98-rgb|display-p3(?:-linear)?|prophoto-rgb|rec2020|srgb(?:-linear)?|xyz(?:-d50|-d65)?)\s+(.+)\)\z/', $string, $match)) {
                 $space = $match[1];
                 $parts = static::parseCssArguments($match[2]);
                 $values = array_map(static::parseCssNumber(...), $parts);
@@ -1165,7 +1165,7 @@ abstract class Color implements Stringable
      */
     protected static function parseCssAngle(string $value): float
     {
-        if (!preg_match('/^('.static::CSS_NUMBER_PATTERN.')(deg|grad|rad|turn|%)?\z/', $value, $match)) {
+        if (!preg_match('/\A('.static::CSS_NUMBER_PATTERN.')(deg|grad|rad|turn|%)?\z/', $value, $match)) {
             throw new UnexpectedValueException();
         }
 
@@ -1228,7 +1228,7 @@ abstract class Color implements Stringable
      */
     protected static function parseCssNumber(string $value, float $percentMultiplier = 1): float
     {
-        if (!preg_match('/^('.static::CSS_NUMBER_PATTERN.')(%)?\z/', $value, $match)) {
+        if (!preg_match('/\A('.static::CSS_NUMBER_PATTERN.')(%)?\z/', $value, $match)) {
             throw new UnexpectedValueException();
         }
 
