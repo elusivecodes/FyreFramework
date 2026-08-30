@@ -46,6 +46,18 @@ class Router
     use DebugTrait;
     use MacroTrait;
 
+    protected const DEFAULT_METHODS = [
+        'CONNECT',
+        'DELETE',
+        'GET',
+        'HEAD',
+        'OPTIONS',
+        'PATCH',
+        'POST',
+        'PUT',
+        'TRACE',
+    ];
+
     protected Uri|null $baseUri = null;
 
     /**
@@ -421,9 +433,9 @@ class Router
                 continue;
             }
 
-            $methods = $route->getMethods();
+            $methods = $route->getMethods() ?? static::DEFAULT_METHODS;
 
-            if ($methods === null || in_array($method, $methods, true)) {
+            if (in_array($method, $methods, true)) {
                 return $this->request = $newRequest;
             }
 

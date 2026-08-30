@@ -218,6 +218,30 @@ trait FindRouteTestTrait
         }
     }
 
+    public function testInvalidActionUnsupportedMethod(): void
+    {
+        $router = $this->container->use(Router::class);
+
+        $router->connect('test', TestController::class);
+
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'method' => 'AIOHGOEWHGE',
+                'uri' => '/test',
+            ],
+        ]);
+
+        try {
+            $router->parseRequest($request);
+            $this->fail('A method-not-allowed exception was not thrown.');
+        } catch (MethodNotAllowedException $exception) {
+            $this->assertSame(
+                'CONNECT, DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT, TRACE',
+                $exception->getHeaders()['Allow']
+            );
+        }
+    }
+
     public function testInvalidRoute(): void
     {
         $this->expectException(NotFoundException::class);
@@ -232,6 +256,24 @@ trait FindRouteTestTrait
         ]);
 
         $router->parseRequest($request);
+    }
+
+    public function testRouteCustomMethod(): void
+    {
+        $router = $this->container->use(Router::class);
+        $route = $router->connect('test', TestController::class, methods: ['PROPFIND']);
+
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'method' => 'PROPFIND',
+                'uri' => '/test',
+            ],
+        ]);
+
+        $this->assertSame(
+            $route,
+            $router->parseRequest($request)->getAttribute('route')
+        );
     }
 
     public function testRouteHeadFallback(): void

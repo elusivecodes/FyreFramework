@@ -95,8 +95,9 @@ $router->get(
 
 A route can be constrained to one or more HTTP methods via the `methods:` argument:
 
-- If `methods` is `null`, the route matches any request method.
+- If `methods` is `null`, the route accepts Fyre's default methods: `CONNECT`, `DELETE`, `GET`, `HEAD`, `OPTIONS`, `PATCH`, `POST`, `PUT`, and `TRACE`.
 - If `methods` is provided, methods are uppercased and de-duplicated when the route is connected.
+- Extension methods are supported when they are listed explicitly.
 - A `HEAD` request falls back to a matching `GET` route when no explicit `HEAD` route matches.
 - If the path matches but the method does not, the router throws a `MethodNotAllowedException`
   with every permitted method in the `Allow` header.
@@ -273,7 +274,7 @@ Arguments:
 - `$scheme` (`string|null`): restrict matching to a URI scheme.
 - `$host` (`string|null`): restrict matching to a host (supports `*` wildcards).
 - `$port` (`int|null`): restrict matching to a port.
-- `$methods` (`string[]|null`): restrict matching to a set of HTTP methods (or `null` to match any).
+- `$methods` (`string[]|null`): restrict matching to a set of HTTP methods (or `null` to use the default methods).
 - `$middleware` (`array`): route middleware entries (executed by [Route Handler](route-handler.md)).
 - `$placeholders` (`array`): placeholder patterns (regex strings without delimiters).
 - `$as` (`string|null`): alias name for URL generation.
@@ -314,7 +315,7 @@ Arguments:
 - `$scheme` (`string|null`): restrict matching to a URI scheme.
 - `$host` (`string|null`): restrict matching to a host.
 - `$port` (`int|null`): restrict matching to a port.
-- `$methods` (`string[]|null`): restrict matching to a set of HTTP methods (or `null` to match any).
+- `$methods` (`string[]|null`): restrict matching to a set of HTTP methods (or `null` to use the default methods).
 - `$middleware` (`array`): route middleware entries.
 - `$placeholders` (`array`): placeholder patterns for matching.
 - `$as` (`string|null`): alias name for URL generation.

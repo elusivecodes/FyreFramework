@@ -173,7 +173,7 @@ abstract class Route
     /**
      * Returns the route methods.
      *
-     * @return string[]|null The route methods, or null if any method is allowed.
+     * @return string[]|null The route methods, or null if the default methods are used.
      */
     public function getMethods(): array|null
     {
