@@ -173,7 +173,8 @@ final class AuthenticatorTest extends TestCase
 
         $this->assertTrue($this->auth->isLoggedIn());
 
-        $this->assertEmpty(
+        $this->assertArraysAreIdentical(
+            [],
             $response->getHeader('Set-Cookie')
         );
     }

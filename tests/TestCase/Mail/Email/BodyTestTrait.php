@@ -24,16 +24,41 @@ trait BodyTestTrait
                 ],
             ]);
 
-        $body = $this->email->getFullBody();
+        $boundary = $this->email->getBoundary();
 
-        $this->assertContains(
-            'Content-Type: multipart/alternative; boundary="alt-boundary"',
-            $body
-        );
-
-        $this->assertContains(
-            '--alt-boundary--',
-            $body
+        $this->assertArraysAreIdentical(
+            [
+                '--'.$boundary,
+                'Content-Type: multipart/alternative; boundary="alt-boundary"',
+                '',
+                '--alt-boundary',
+                'Content-Type: text/plain; charset=utf-8',
+                'Content-Transfer-Encoding: 8bit',
+                '',
+                'Text body',
+                '',
+                '',
+                '--alt-boundary',
+                'Content-Type: text/html; charset=utf-8',
+                'Content-Transfer-Encoding: 8bit',
+                '',
+                '<b>HTML body</b>',
+                '',
+                '',
+                '--alt-boundary--',
+                '',
+                '--'.$boundary,
+                'Content-Type: text/plain; name="test.txt"',
+                'Content-Disposition: attachment',
+                'Content-Transfer-Encoding: base64',
+                '',
+                "QXR0YWNobWVudA==\r\n",
+                '',
+                '',
+                '--'.$boundary.'--',
+                '',
+            ],
+            $this->email->getFullBody()
         );
     }
 
@@ -45,10 +70,16 @@ trait BodyTestTrait
             ->setBodyHtml($tag.'Test')
             ->setFormat(Email::HTML);
 
-        $body = $this->email->getFullBody();
-
-        $this->assertContains($tag, $body);
-        $this->assertContains('Test', $body);
+        $this->assertArraysAreIdentical(
+            [
+                '',
+                $tag,
+                'Test',
+                '',
+                '',
+            ],
+            $this->email->getFullBody()
+        );
     }
 
     public function testSetBody(): void

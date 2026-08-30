@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\Core\Make;
 
 use Fyre\Core\Container;
+use Fyre\Core\Make;
 use Fyre\Core\Make\ModelSourceBuilder;
 use Fyre\DB\ConnectionManager;
 use Fyre\DB\Schema\Column;
@@ -11,6 +12,10 @@ use Fyre\DB\Schema\Index;
 use Fyre\DB\Types\DateTimeType;
 use Fyre\DB\Types\IntegerType;
 use PHPUnit\Framework\TestCase;
+
+use function implode;
+
+use const PHP_EOL;
 
 final class ModelSourceBuilderValidatorTest extends TestCase
 {
@@ -40,12 +45,34 @@ final class ModelSourceBuilderValidatorTest extends TestCase
             withRules: false
         );
 
-        $this->assertStringContainsString(
-            '$validator->add(\'code\', Rule::required(), on: \'create\', name: \'required\');',
-            $source
-        );
-        $this->assertStringContainsString(
-            '$validator->add(\'code\', Rule::integer(), name: \'integer\');',
+        $this->assertSame(
+            Make::loadStub('model', [
+                '{namespace}' => 'Example\Models',
+                '{uses}' => implode(PHP_EOL, [
+                    'use Example\Entities\Item;',
+                    'use Fyre\Form\Rule;',
+                    'use Fyre\Form\Validator;',
+                    'use Fyre\ORM\Model;',
+                    'use Fyre\ORM\RuleSet;',
+                    'use Override;',
+                ]),
+                '{docblock}' => implode(PHP_EOL, [
+                    '/**',
+                    ' * @extends Model<Item>',
+                    ' */',
+                ]),
+                '{attributes}' => '',
+                '{class}' => 'ItemsModel',
+                '{traits}' => '',
+                '{properties}' => '',
+                '{rules}' => '',
+                '{validator}' => implode(PHP_EOL, [
+                    '        $validator->add(\'code\', Rule::required(), on: \'create\', name: \'required\');',
+                    '        $validator->add(\'code\', Rule::integer(), name: \'integer\');',
+                    '',
+                    '',
+                ]),
+            ]),
             $source
         );
     }
@@ -73,12 +100,40 @@ final class ModelSourceBuilderValidatorTest extends TestCase
             withRules: false
         );
 
-        $this->assertStringNotContainsString(
-            '$validator->add(\'created\', Rule::required()',
-            $source
-        );
-        $this->assertStringContainsString(
-            '$validator->add(\'created\', Rule::dateTime(), name: \'datetime\');',
+        $this->assertSame(
+            Make::loadStub('model', [
+                '{namespace}' => 'Example\Models',
+                '{uses}' => implode(PHP_EOL, [
+                    'use Example\Entities\Item;',
+                    'use Fyre\Form\Rule;',
+                    'use Fyre\Form\Validator;',
+                    'use Fyre\ORM\Model;',
+                    'use Fyre\ORM\RuleSet;',
+                    'use Fyre\ORM\Traits\TimestampsTrait;',
+                    'use Override;',
+                ]),
+                '{docblock}' => implode(PHP_EOL, [
+                    '/**',
+                    ' * @extends Model<Item>',
+                    ' *',
+                    ' * @use TimestampsTrait<Item>',
+                    ' */',
+                ]),
+                '{attributes}' => '',
+                '{class}' => 'ItemsModel',
+                '{traits}' => implode(PHP_EOL, [
+                    '    use TimestampsTrait;',
+                    '',
+                    '',
+                ]),
+                '{properties}' => '',
+                '{rules}' => '',
+                '{validator}' => implode(PHP_EOL, [
+                    '        $validator->add(\'created\', Rule::dateTime(), name: \'datetime\');',
+                    '',
+                    '',
+                ]),
+            ]),
             $source
         );
     }

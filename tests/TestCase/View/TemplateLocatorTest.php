@@ -126,7 +126,8 @@ final class TemplateLocatorTest extends TestCase
             $this->templateLocator->removePath('tests/templates')
         );
 
-        $this->assertEmpty(
+        $this->assertArraysAreIdentical(
+            [],
             $this->templateLocator->getPaths()
         );
     }

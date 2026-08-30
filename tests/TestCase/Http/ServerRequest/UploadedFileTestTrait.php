@@ -184,7 +184,8 @@ trait UploadedFileTestTrait
         $request1 = new ServerRequest($this->config, $this->type);
         $request2 = $request1->withUploadedFiles(['test' => $file]);
 
-        $this->assertEmpty(
+        $this->assertArraysAreIdentical(
+            [],
             $request1->getUploadedFiles()
         );
 

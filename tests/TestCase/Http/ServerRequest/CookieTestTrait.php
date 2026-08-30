@@ -73,7 +73,8 @@ trait CookieTestTrait
         $request1 = new ServerRequest($this->config, $this->type);
         $request2 = $request1->withCookieParams(['test' => 'value']);
 
-        $this->assertEmpty(
+        $this->assertArraysAreIdentical(
+            [],
             $request1->getCookieParams()
         );
 

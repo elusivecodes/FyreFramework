@@ -45,7 +45,7 @@ final class RequestTest extends TestCase
         );
 
         $authorization = $request->getHeaderLine('Authorization');
-        $result = preg_match('/cnonce="([^"]+)".*response="([^"]+)"/', $authorization, $matches);
+        $result = preg_match('/cnonce="([^"]+)"/', $authorization, $matches);
 
         $this->assertSame(1, $result);
 
@@ -57,14 +57,10 @@ final class RequestTest extends TestCase
         $ha2 = hash($hashAlgorithm, 'POST:/path?value=1');
         $response = hash($hashAlgorithm, implode(':', [$ha1, 'nonce', '00000001', $matches[1], 'auth', $ha2]));
 
-        $this->assertStringContainsString(
-            'algorithm='.$algorithm,
-            $authorization
-        );
-
         $this->assertSame(
-            $response,
-            $matches[2]
+            'Digest username="username", realm="test", nonce="nonce", uri="/path?value=1", '.
+            'algorithm='.$algorithm.', qop=auth, nc=00000001, cnonce="'.$matches[1].'", response="'.$response.'"',
+            $authorization
         );
     }
 
@@ -81,14 +77,20 @@ final class RequestTest extends TestCase
             'password'
         );
 
-        $this->assertStringContainsString(
-            'uri="/path?value=1"',
-            $request->getHeaderLine('Authorization')
-        );
+        $authorization = $request->getHeaderLine('Authorization');
+        $result = preg_match('/cnonce="([^"]+)"/', $authorization, $matches);
 
-        $this->assertStringContainsString(
-            'qop=auth-int',
-            $request->getHeaderLine('Authorization')
+        $this->assertSame(1, $result);
+
+        $ha1 = hash('sha256', 'username:test:password');
+        $body = hash('sha256', 'This is a test.');
+        $ha2 = hash('sha256', 'POST:/path?value=1:'.$body);
+        $response = hash('sha256', implode(':', [$ha1, 'nonce', '00000001', $matches[1], 'auth-int', $ha2]));
+
+        $this->assertSame(
+            'Digest username="username", realm="test", nonce="nonce", uri="/path?value=1", '.
+            'algorithm=SHA-256, qop=auth-int, nc=00000001, cnonce="'.$matches[1].'", response="'.$response.'"',
+            $authorization
         );
     }
 
@@ -145,21 +147,25 @@ final class RequestTest extends TestCase
             'file' => $file,
         ]);
 
-        $this->assertStringStartsWith(
-            'multipart/form-data; boundary=',
-            $request->getHeaderLine('Content-Type')
+        $contentType = $request->getHeaderLine('Content-Type');
+        $result = preg_match('/\Amultipart\/form-data; boundary=([a-f0-9]{32})\z/', $contentType, $matches);
+
+        $this->assertSame(1, $result);
+
+        $boundary = $matches[1];
+
+        $this->assertSame(
+            'multipart/form-data; boundary='.$boundary,
+            $contentType
         );
 
-        $body = (string) $request->getBody();
-
-        $this->assertStringContainsString(
-            'name="file"; filename="test.txt"',
-            $body
-        );
-
-        $this->assertStringContainsString(
-            "Content-Type: text/plain\r\n\r\nThis is a test.",
-            $body
+        $this->assertSame(
+            '--'.$boundary."\r\n".
+            'Content-Disposition: form-data; name="file"; filename="test.txt"'."\r\n".
+            'Content-Type: text/plain'."\r\n\r\n".
+            'This is a test.'."\r\n".
+            '--'.$boundary.'--',
+            (string) $request->getBody()
         );
     }
 }

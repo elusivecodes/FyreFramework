@@ -12,6 +12,7 @@ use PHPUnit\Framework\TestCase;
 use Tests\TestCase\DB\Mysql\QuoteIdentifierTestTrait;
 
 use function file_get_contents;
+use function preg_quote;
 
 final class ConnectionTest extends TestCase
 {
@@ -210,8 +211,10 @@ final class ConnectionTest extends TestCase
             $this->db->disableQueryLogging()
         );
 
-        $this->assertStringContainsString(
-            'SELECT `test`.`id`, `test`.`name` FROM `test` WHERE `test`.`name` = \'test\'',
+        $sql = 'SELECT `test`.`id`, `test`.`name` FROM `test` WHERE `test`.`name` = \'test\'';
+
+        $this->assertMatchesRegularExpression(
+            '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[DEBUG\] '.preg_quote($sql, '/').'\R\z/',
             file_get_contents('log/queries-cli.log') ?: ''
         );
     }
@@ -224,8 +227,8 @@ final class ConnectionTest extends TestCase
 
         $this->db->disableQueryLogging();
 
-        $this->assertStringContainsString(
-            'SELECT 1',
+        $this->assertMatchesRegularExpression(
+            '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[DEBUG\] SELECT 1\R\z/',
             file_get_contents('log/queries-cli.log') ?: ''
         );
     }

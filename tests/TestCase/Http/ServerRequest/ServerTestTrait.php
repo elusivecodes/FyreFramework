@@ -75,7 +75,8 @@ trait ServerTestTrait
         ]);
         $request2 = $request1->withServerParams(['test' => 'value']);
 
-        $this->assertEmpty(
+        $this->assertArraysAreIdentical(
+            [],
             $request1->getServerParams()
         );
 

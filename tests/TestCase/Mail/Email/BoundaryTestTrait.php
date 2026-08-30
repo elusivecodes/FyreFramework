@@ -8,7 +8,7 @@ trait BoundaryTestTrait
     public function testGetBoundary(): void
     {
         $this->assertMatchesRegularExpression(
-            '/[a-z0-9]{32}/',
+            '/\A[a-z0-9]{32}\z/',
             $this->email->getBoundary()
         );
     }

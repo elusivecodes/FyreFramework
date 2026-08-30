@@ -14,6 +14,7 @@ use Override;
 use PHPUnit\Framework\TestCase;
 
 use function class_uses;
+use function str_replace;
 
 final class FormatterTest extends TestCase
 {
@@ -75,9 +76,15 @@ final class FormatterTest extends TestCase
     {
         $date = new DateTime('2022-01-01 11:59:59');
 
-        $this->assertMatchesRegularExpression(
-            '/01\/01\/2022,\s11:59\sAM/u',
+        $formatted = str_replace(
+            ["\u{00A0}", "\u{202F}"],
+            ' ',
             $this->formatter->datetime($date)
+        );
+
+        $this->assertSame(
+            '01/01/2022, 11:59 AM',
+            $formatted
         );
     }
 
@@ -179,9 +186,15 @@ final class FormatterTest extends TestCase
     {
         $date = new DateTime('2022-01-01 11:59:59');
 
-        $this->assertMatchesRegularExpression(
-            '/11:59\sAM/u',
+        $formatted = str_replace(
+            ["\u{00A0}", "\u{202F}"],
+            ' ',
             $this->formatter->time($date)
+        );
+
+        $this->assertSame(
+            '11:59 AM',
+            $formatted
         );
     }
 

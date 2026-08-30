@@ -135,7 +135,7 @@ trait HeaderTestTrait
         $this->assertIsString($messageId);
 
         $this->assertMatchesRegularExpression(
-            '/<[a-z0-9]{42}@.*>/',
+            '/\A<[a-z0-9]{42}@[^<>]+>\z/',
             $messageId
         );
     }

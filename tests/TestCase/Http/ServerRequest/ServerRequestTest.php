@@ -138,7 +138,8 @@ final class ServerRequestTest extends TestCase
         $request1 = new ServerRequest($this->config, $this->type);
         $request2 = $request1->withAttribute('test', 'value');
 
-        $this->assertEmpty(
+        $this->assertArraysAreIdentical(
+            [],
             $request1->getAttributes()
         );
 

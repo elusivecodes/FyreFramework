@@ -107,7 +107,8 @@ trait QueryTestTrait
         $request1 = new ServerRequest($this->config, $this->type);
         $request2 = $request1->withQueryParams(['test' => 'value']);
 
-        $this->assertEmpty(
+        $this->assertArraysAreIdentical(
+            [],
             $request1->getQueryParams()
         );
 

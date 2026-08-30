@@ -53,12 +53,10 @@ final class FileTest extends TestCase
         $content = file_get_contents('log/debug.log') ?: '';
 
         $this->assertMatchesRegularExpression(
-            '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[DEBUG\] test1/',
-            $content
-        );
-
-        $this->assertMatchesRegularExpression(
-            '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[DEBUG\] test2/',
+            '/\A'.
+            '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[DEBUG\] test1\R'.
+            '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[DEBUG\] test2\R'.
+            '\z/',
             $content
         );
 
@@ -79,7 +77,7 @@ final class FileTest extends TestCase
         $this->logger->use('custom')->log('warning', 'test');
 
         $this->assertMatchesRegularExpression(
-            '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[WARNING\] test/',
+            '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[WARNING\] test\R\z/',
             file_get_contents('log/custom.txt') ?: ''
         );
     }
@@ -90,7 +88,7 @@ final class FileTest extends TestCase
             $this->logger->handle($level, '{0}', ['test']);
 
             $this->assertMatchesRegularExpression(
-                '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] test/',
+                '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] test\R\z/',
                 file_get_contents('log/'.$level.'.log') ?: ''
             );
         }
@@ -109,7 +107,7 @@ final class FileTest extends TestCase
         $this->logger->use('cli')->log('debug', 'test');
 
         $this->assertMatchesRegularExpression(
-            '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[DEBUG\] test/',
+            '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[DEBUG\] test\R\z/',
             file_get_contents('log/debug-cli.log') ?: ''
         );
     }
@@ -130,7 +128,8 @@ final class FileTest extends TestCase
             $this->logger->handle($level, '{get_vars}');
 
             $this->assertMatchesRegularExpression(
-                '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] '.preg_quote(json_encode($_GET, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), '/').'/',
+                '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] '.
+                preg_quote(json_encode($_GET, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), '/').'\R\z/',
                 file_get_contents('log/'.$level.'.log') ?: ''
             );
         }
@@ -145,7 +144,8 @@ final class FileTest extends TestCase
             $this->logger->handle($level, '{post_vars}');
 
             $this->assertMatchesRegularExpression(
-                '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] '.preg_quote(json_encode($_POST, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), '/').'/',
+                '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] '.
+                preg_quote(json_encode($_POST, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), '/').'\R\z/',
                 file_get_contents('log/'.$level.'.log') ?: ''
             );
         }
@@ -160,7 +160,8 @@ final class FileTest extends TestCase
             $this->logger->handle($level, '{server_vars}');
 
             $this->assertMatchesRegularExpression(
-                '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] '.preg_quote(json_encode($_SERVER, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), '/').'/',
+                '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] '.
+                preg_quote(json_encode($_SERVER, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), '/').'\R\z/',
                 file_get_contents('log/'.$level.'.log') ?: ''
             );
         }
@@ -206,7 +207,7 @@ final class FileTest extends TestCase
             $this->logger->handle($level, 'test');
 
             $this->assertMatchesRegularExpression(
-                '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] test/',
+                '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] test\R\z/',
                 file_get_contents('log/'.$level.'.log') ?: ''
             );
         }
@@ -226,7 +227,7 @@ final class FileTest extends TestCase
         $this->logger->use('nested')->log('info', 'test');
 
         $this->assertMatchesRegularExpression(
-            '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[INFO\] test/',
+            '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[INFO\] test\R\z/',
             file_get_contents('log/nested/path/info.log') ?: ''
         );
     }
@@ -252,12 +253,12 @@ final class FileTest extends TestCase
         );
 
         $this->assertMatchesRegularExpression(
-            '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[DEBUG\] test1/',
+            '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[DEBUG\] test1\R\z/',
             file_get_contents($rotatedFiles[0]) ?: ''
         );
 
         $this->assertMatchesRegularExpression(
-            '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[DEBUG\] test2/',
+            '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[DEBUG\] test2\R\z/',
             file_get_contents('log/rotate.log') ?: ''
         );
     }
@@ -267,7 +268,7 @@ final class FileTest extends TestCase
         $this->logger->handle('error', 'test', scope: 'scoped');
 
         $this->assertMatchesRegularExpression(
-            '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[ERROR\] test/',
+            '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[ERROR\] test\R\z/',
             file_get_contents('log/scoped.log') ?: ''
         );
     }

@@ -390,13 +390,24 @@ final class CommandRunnerTest extends TestCase
     {
         $this->assertSame(
             Command::CODE_SUCCESS,
+            $this->runner->handle(['app', '--help'])
+        );
+
+        rewind($this->output);
+        $expected = stream_get_contents($this->output);
+
+        ftruncate($this->output, 0);
+        rewind($this->output);
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
             $this->runner->handle([''])
         );
 
         rewind($this->output);
 
-        $this->assertStringContainsString(
-            'This is a test command.',
+        $this->assertSame(
+            $expected,
             stream_get_contents($this->output)
         );
     }
@@ -456,8 +467,10 @@ final class CommandRunnerTest extends TestCase
 
         rewind($this->output);
 
-        $this->assertStringContainsString(
-            'Invalid option value for: value',
+        $this->assertSame(
+            "\033[0;31mInvalid option value for: value\033[0m".PHP_EOL.
+            "\033[0;33mWhich do you want?\033[0m".PHP_EOL.
+            " (\033[1;36ma\033[0m/\033[2;36mb\033[0m/\033[2;36mc\033[0m)".PHP_EOL,
             stream_get_contents($this->output)
         );
     }
@@ -507,8 +520,9 @@ final class CommandRunnerTest extends TestCase
 
         rewind($this->output);
 
-        $this->assertStringContainsString(
-            'Invalid value for: value',
+        $this->assertSame(
+            "\033[0;31mInvalid value for: value\033[0m".PHP_EOL.
+            "\033[0;33mPlease enter a value (value)\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
     }

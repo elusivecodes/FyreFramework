@@ -231,7 +231,8 @@ final class ValidatorTest extends TestCase
             $this->validator->remove('test')
         );
 
-        $this->assertEmpty(
+        $this->assertArraysAreIdentical(
+            [],
             $this->validator->getFieldRules('test')
         );
     }

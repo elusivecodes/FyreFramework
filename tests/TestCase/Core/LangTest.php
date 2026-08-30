@@ -252,7 +252,8 @@ final class LangTest extends TestCase
             $this->lang->removePath('tests/lang/dir1')
         );
 
-        $this->assertEmpty(
+        $this->assertArraysAreIdentical(
+            [],
             $this->lang->getPaths()
         );
     }

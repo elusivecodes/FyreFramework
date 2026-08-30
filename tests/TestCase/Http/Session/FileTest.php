@@ -52,7 +52,8 @@ final class FileTest extends TestCase
             $this->handler->gc(-10)
         );
 
-        $this->assertEmpty(
+        $this->assertSame(
+            [],
             glob('sessions/*')
         );
     }

@@ -12,9 +12,7 @@ use PHPUnit\Framework\TestCase;
 use Tests\Mock\Http\TestCookieJar;
 
 use function class_uses;
-use function explode;
 use function str_repeat;
-use function strlen;
 use function time;
 
 final class CookieJarTest extends TestCase
@@ -123,11 +121,10 @@ final class CookieJarTest extends TestCase
         }
 
         $uri = new Uri('https://example.com');
-        $header = $cookieJar->getHeader($uri);
-
-        $this->assertStringNotContainsString('test0=value', $header);
-        $this->assertStringContainsString('test1=value', $header);
-        $this->assertStringContainsString('test3=value', $header);
+        $this->assertSame(
+            'test1=value; test2=value; test3=value',
+            $cookieJar->getHeader($uri)
+        );
     }
 
     public function testDebug(): void
@@ -207,18 +204,12 @@ final class CookieJarTest extends TestCase
         $cookieJar->add($pathCookie);
 
         $uri = new Uri('https://example.com/path');
-        $header = $cookieJar->getHeader($uri);
+        $value = str_repeat('a', 4000);
 
-        $this->assertCount(
-            4,
-            explode('; ', $header)
+        $this->assertSame(
+            'path='.$value.'; test0='.$value.'; test1='.$value.'; test2='.$value,
+            $cookieJar->getHeader($uri)
         );
-        $this->assertLessThanOrEqual(
-            16384,
-            strlen($header)
-        );
-        $this->assertStringStartsWith('path=', $header);
-        $this->assertStringNotContainsString('test3=', $header);
     }
 
     public function testGetHeaderPath(): void

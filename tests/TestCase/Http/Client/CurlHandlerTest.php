@@ -99,13 +99,11 @@ final class CurlHandlerTest extends TestCase
             $options[CURLOPT_HEADER]
         );
 
-        $this->assertContains(
-            'Host: example.com',
-            $options[CURLOPT_HTTPHEADER]
-        );
-
-        $this->assertContains(
-            'Test: header',
+        $this->assertArraysAreIdentical(
+            [
+                'Host: example.com',
+                'Test: header',
+            ],
             $options[CURLOPT_HTTPHEADER]
         );
 

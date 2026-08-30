@@ -30,7 +30,7 @@ trait DefaultValueTestTrait
     public function testDefaultValueExpression(): void
     {
         $this->assertMatchesRegularExpression(
-            '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/',
+            '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[+-]\d{2}(?::?\d{2})?)?\z/',
             $this->schema
                 ->table('test')
                 ->column('created')

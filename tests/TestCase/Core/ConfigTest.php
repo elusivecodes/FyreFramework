@@ -230,7 +230,8 @@ final class ConfigTest extends TestCase
             $this->config->removePath('tests/config/dir1')
         );
 
-        $this->assertEmpty(
+        $this->assertArraysAreIdentical(
+            [],
             $this->config->getPaths()
         );
     }

@@ -651,11 +651,37 @@ final class MakeModelTest extends TestCase
             withRules: true
         );
 
-        $this->assertStringContainsString(
-            implode(PHP_EOL, [
-                '        $rules->add(RuleSet::existsIn([\'user_id\'], \'Users\'));',
-                '',
-                '        $rules->add(RuleSet::isUnique([\'email\']));',
+        $this->assertSame(
+            Make::loadStub('model', [
+                '{namespace}' => 'Example\Models',
+                '{uses}' => implode(PHP_EOL, [
+                    'use Example\Entities\Post;',
+                    'use Fyre\Form\Validator;',
+                    'use Fyre\ORM\Attributes\BelongsTo;',
+                    'use Fyre\ORM\Model;',
+                    'use Fyre\ORM\Relationships\BelongsTo as BelongsToRelationship;',
+                    'use Fyre\ORM\RuleSet;',
+                    'use Override;',
+                ]),
+                '{docblock}' => implode(PHP_EOL, [
+                    '/**',
+                    ' * @extends Model<Post>',
+                    ' *',
+                    ' * @property BelongsToRelationship<static, UsersModel> $Users',
+                    ' */',
+                ]),
+                '{attributes}' => '#[BelongsTo(\'Users\')]'.PHP_EOL,
+                '{class}' => 'PostsModel',
+                '{traits}' => '',
+                '{properties}' => '',
+                '{rules}' => implode(PHP_EOL, [
+                    '        $rules->add(RuleSet::existsIn([\'user_id\'], \'Users\'));',
+                    '',
+                    '        $rules->add(RuleSet::isUnique([\'email\']));',
+                    '',
+                    '',
+                ]),
+                '{validator}' => '',
             ]),
             $source
         );
@@ -684,8 +710,32 @@ final class MakeModelTest extends TestCase
             withRules: true
         );
 
-        $this->assertStringContainsString(
-            '$rules->add(RuleSet::isUnique([\'email\']));',
+        $this->assertSame(
+            Make::loadStub('model', [
+                '{namespace}' => 'Example\Models',
+                '{uses}' => implode(PHP_EOL, [
+                    'use Example\Entities\User;',
+                    'use Fyre\Form\Validator;',
+                    'use Fyre\ORM\Model;',
+                    'use Fyre\ORM\RuleSet;',
+                    'use Override;',
+                ]),
+                '{docblock}' => implode(PHP_EOL, [
+                    '/**',
+                    ' * @extends Model<User>',
+                    ' */',
+                ]),
+                '{attributes}' => '',
+                '{class}' => 'UsersModel',
+                '{traits}' => '',
+                '{properties}' => '',
+                '{rules}' => implode(PHP_EOL, [
+                    '        $rules->add(RuleSet::isUnique([\'email\']));',
+                    '',
+                    '',
+                ]),
+                '{validator}' => '',
+            ]),
             $source
         );
     }

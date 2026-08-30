@@ -66,7 +66,8 @@ trait OverlapAnyTestTrait
         $period3 = new Period('2022-01-15', '2022-01-20');
         $collection = $period1->overlapAny($period2, $period3);
 
-        $this->assertEmpty(
+        $this->assertCount(
+            0,
             $collection
         );
     }

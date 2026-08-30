@@ -269,17 +269,33 @@ final class CacheTest extends TestCase
         $this->schema->table('test')->indexes();
         $this->schema->table('test_values')->foreignKeys();
 
-        $this->assertNotNull($this->cacher->get('test.tables'));
-        $this->assertNotNull($this->cacher->get('test.test.columns'));
-        $this->assertNotNull($this->cacher->get('test.test.indexes'));
-        $this->assertNotNull($this->cacher->get('test.test_values.foreign_keys'));
+        $this->assertTrue(
+            $this->cacher->has('test.tables')
+        );
+        $this->assertTrue(
+            $this->cacher->has('test.test.columns')
+        );
+        $this->assertTrue(
+            $this->cacher->has('test.test.indexes')
+        );
+        $this->assertTrue(
+            $this->cacher->has('test.test_values.foreign_keys')
+        );
 
         $this->schema->clear();
 
-        $this->assertNull($this->cacher->get('test.tables'));
-        $this->assertNull($this->cacher->get('test.test.columns'));
-        $this->assertNull($this->cacher->get('test.test.indexes'));
-        $this->assertNull($this->cacher->get('test.test_values.foreign_keys'));
+        $this->assertFalse(
+            $this->cacher->has('test.tables')
+        );
+        $this->assertFalse(
+            $this->cacher->has('test.test.columns')
+        );
+        $this->assertFalse(
+            $this->cacher->has('test.test.indexes')
+        );
+        $this->assertFalse(
+            $this->cacher->has('test.test_values.foreign_keys')
+        );
     }
 
     public function testTableClearDeletesOnlyCurrentTableMetadata(): void
@@ -290,14 +306,26 @@ final class CacheTest extends TestCase
         $table->indexes();
         $this->schema->table('test_values')->foreignKeys();
 
-        $this->assertNotNull($this->cacher->get('test.test.columns'));
-        $this->assertNotNull($this->cacher->get('test.test.indexes'));
-        $this->assertNotNull($this->cacher->get('test.test_values.foreign_keys'));
+        $this->assertTrue(
+            $this->cacher->has('test.test.columns')
+        );
+        $this->assertTrue(
+            $this->cacher->has('test.test.indexes')
+        );
+        $this->assertTrue(
+            $this->cacher->has('test.test_values.foreign_keys')
+        );
 
         $table->clear();
 
-        $this->assertNull($this->cacher->get('test.test.columns'));
-        $this->assertNull($this->cacher->get('test.test.indexes'));
-        $this->assertNotNull($this->cacher->get('test.test_values.foreign_keys'));
+        $this->assertFalse(
+            $this->cacher->has('test.test.columns')
+        );
+        $this->assertFalse(
+            $this->cacher->has('test.test.indexes')
+        );
+        $this->assertTrue(
+            $this->cacher->has('test.test_values.foreign_keys')
+        );
     }
 }

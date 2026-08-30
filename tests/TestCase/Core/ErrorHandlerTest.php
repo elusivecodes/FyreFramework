@@ -32,9 +32,12 @@ use PHPUnit\Framework\TestCase;
 use Throwable;
 
 use function class_uses;
+use function htmlspecialchars;
 use function trigger_error;
 
 use const E_USER_WARNING;
+use const ENT_QUOTES;
+use const ENT_SUBSTITUTE;
 
 final class ErrorHandlerTest extends TestCase
 {
@@ -178,26 +181,14 @@ final class ErrorHandlerTest extends TestCase
 
         $exception = new Exception('<script>Sensitive error</script>');
         $response = $errorHandler->render($exception);
-        $body = $response->getBody()->getContents();
-
         $this->assertSame(
             500,
             $response->getStatusCode()
         );
 
-        $this->assertStringContainsString(
-            '&lt;script&gt;Sensitive error&lt;/script&gt;',
-            $body
-        );
-
-        $this->assertStringContainsString(
-            $exception->getFile(),
-            $body
-        );
-
-        $this->assertStringNotContainsString(
-            '<script>',
-            $body
+        $this->assertSame(
+            '<pre>'.htmlspecialchars((string) $exception, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8').'</pre>',
+            $response->getBody()->getContents()
         );
     }
 
@@ -227,7 +218,8 @@ final class ErrorHandlerTest extends TestCase
         $errorHandler = $this->container->build(ErrorHandler::class);
         $errorHandler->disableCli();
 
-        $errorHandler->render(new Exception('Error'));
+        $exception = new Exception('Error');
+        $errorHandler->render($exception);
 
         $logger = $this->container->use(LogManager::class)->use();
 
@@ -236,14 +228,11 @@ final class ErrorHandlerTest extends TestCase
             $logger
         );
 
-        $this->assertCount(
-            1,
+        $this->assertArraysAreIdentical(
+            [
+                '[ERROR] '.(string) $exception,
+            ],
             $logger->read()
-        );
-
-        $this->assertStringContainsString(
-            'Error',
-            $logger->read()[0]
         );
     }
 

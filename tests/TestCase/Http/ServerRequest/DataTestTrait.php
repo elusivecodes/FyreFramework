@@ -216,7 +216,8 @@ trait DataTestTrait
         $request1 = new ServerRequest($this->config, $this->type);
         $request2 = $request1->withParsedBody(['test' => 'value']);
 
-        $this->assertEmpty(
+        $this->assertArraysAreIdentical(
+            [],
             $request1->getParsedBody()
         );
 
