@@ -58,9 +58,33 @@ final class MigrationHistoryTest extends TestCase
         );
     }
 
+    public function testAllWithoutTable(): void
+    {
+        $this->assertArraysAreIdentical(
+            [],
+            $this->migrationRunner->getHistory()->all()
+        );
+
+        $this->assertFalse(
+            $this->schema->hasTable('migrations')
+        );
+    }
+
+    public function testGetNextBatchWithoutTable(): void
+    {
+        $this->assertSame(
+            1,
+            $this->migrationRunner->getHistory()->getNextBatch()
+        );
+
+        $this->assertFalse(
+            $this->schema->hasTable('migrations')
+        );
+    }
+
     public function testSchema(): void
     {
-        $this->migrationRunner->getHistory();
+        $this->migrationRunner->getHistory()->add('Test', 1);
 
         $this->assertArraysAreIdentical(
             [],

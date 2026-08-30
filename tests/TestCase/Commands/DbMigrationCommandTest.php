@@ -82,6 +82,40 @@ final class DbMigrationCommandTest extends TestCase
         );
     }
 
+    public function testDbMigrateDryRun(): void
+    {
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->handle(['app', 'db:migrate', '--dry-run'])
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            '+-----------+--------+'.PHP_EOL.
+            '| Migration | Action |'.PHP_EOL.
+            '+-----------+--------+'.PHP_EOL.
+            '| 1_Test1   | up     |'.PHP_EOL.
+            '| 2_Test2   | up     |'.PHP_EOL.
+            '| 3_Test3   | up     |'.PHP_EOL.
+            '+-----------+--------+'.PHP_EOL,
+            stream_get_contents($this->output)
+        );
+
+        $this->assertFalse(
+            $this->schema->hasTable('migrations')
+        );
+        $this->assertFalse(
+            $this->schema->hasTable('test1')
+        );
+        $this->assertFalse(
+            $this->schema->hasTable('test2')
+        );
+        $this->assertFalse(
+            $this->schema->hasTable('test3')
+        );
+    }
+
     public function testDbRollback(): void
     {
         $this->migrationRunner->migrate();
@@ -139,6 +173,50 @@ final class DbMigrationCommandTest extends TestCase
 
         $this->assertArraysAreIdentical(
             [
+                '2_Test2',
+                '1_Test1',
+            ],
+            array_column($this->migrationRunner->getHistory()->all(), 'migration')
+        );
+    }
+
+    public function testDbRollbackDryRun(): void
+    {
+        $this->migrationRunner->migrate();
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->handle(['app', 'db:rollback', '--dry-run'])
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            '+-----------+--------+'.PHP_EOL.
+            '| Migration | Action |'.PHP_EOL.
+            '+-----------+--------+'.PHP_EOL.
+            '| 3_Test3   | down   |'.PHP_EOL.
+            '| 2_Test2   | down   |'.PHP_EOL.
+            '| 1_Test1   | down   |'.PHP_EOL.
+            '+-----------+--------+'.PHP_EOL,
+            stream_get_contents($this->output)
+        );
+
+        $this->schema->clear();
+
+        $this->assertTrue(
+            $this->schema->hasTable('test1')
+        );
+        $this->assertTrue(
+            $this->schema->hasTable('test2')
+        );
+        $this->assertTrue(
+            $this->schema->hasTable('test3')
+        );
+
+        $this->assertArraysAreIdentical(
+            [
+                '3_Test3',
                 '2_Test2',
                 '1_Test1',
             ],

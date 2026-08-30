@@ -6,6 +6,7 @@ namespace Fyre\DB\Migration;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\DB\Connection;
 use Fyre\DB\Forge\ForgeRegistry;
+use Fyre\DB\Schema\SchemaRegistry;
 use Fyre\DB\Types\DateTimeType;
 use Fyre\DB\Types\IntegerType;
 use Fyre\DB\Types\StringType;
@@ -21,18 +22,20 @@ class MigrationHistory
 
     protected static string $table = 'migrations';
 
+    protected bool $checked = false;
+
     /**
      * Constructs a MigrationHistory.
      *
      * @param Connection $connection The Connection.
      * @param ForgeRegistry $forgeRegistry The ForgeRegistry.
+     * @param SchemaRegistry $schemaRegistry The SchemaRegistry.
      */
     public function __construct(
         protected Connection $connection,
-        protected ForgeRegistry $forgeRegistry
-    ) {
-        $this->check();
-    }
+        protected ForgeRegistry $forgeRegistry,
+        protected SchemaRegistry $schemaRegistry
+    ) {}
 
     /**
      * Adds a migration to the history.
@@ -42,6 +45,8 @@ class MigrationHistory
      */
     public function add(string $name, int $batch): void
     {
+        $this->check();
+
         $this->connection
             ->insert()
             ->into(static::$table)
@@ -61,6 +66,10 @@ class MigrationHistory
      */
     public function all(): array
     {
+        if (!$this->hasTable()) {
+            return [];
+        }
+
         return $this->connection
             ->select()
             ->from(static::$table)
@@ -79,6 +88,10 @@ class MigrationHistory
      */
     public function delete(string $name): void
     {
+        if (!$this->hasTable()) {
+            return;
+        }
+
         $this->connection
             ->delete()
             ->from(static::$table)
@@ -95,6 +108,10 @@ class MigrationHistory
      */
     public function getNextBatch(): int
     {
+        if (!$this->hasTable()) {
+            return 1;
+        }
+
         $lastBatch = $this->connection
             ->select([
                 'last_batch' => 'MAX(batch)',
@@ -113,7 +130,11 @@ class MigrationHistory
      */
     protected function check(): void
     {
-        $table = $this->forgeRegistry->use($this->connection)
+        if ($this->checked) {
+            return;
+        }
+
+        $this->forgeRegistry->use($this->connection)
             ->build(static::$table)
             ->clear()
             ->addColumn('id', [
@@ -136,5 +157,19 @@ class MigrationHistory
                 'unique' => true,
             ])
             ->execute();
+
+        $this->checked = true;
+    }
+
+    /**
+     * Checks whether the migration history table exists.
+     *
+     * @return bool Whether the migration history table exists.
+     */
+    protected function hasTable(): bool
+    {
+        return $this->schemaRegistry
+            ->use($this->connection)
+            ->hasTable(static::$table);
     }
 }

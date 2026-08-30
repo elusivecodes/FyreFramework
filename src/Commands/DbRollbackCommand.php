@@ -35,6 +35,10 @@ class DbRollbackCommand extends Command
             'as' => 'integer',
             'default' => null,
         ],
+        'dryRun' => [
+            'as' => 'boolean',
+            'default' => false,
+        ],
     ];
 
     /**
@@ -60,15 +64,33 @@ class DbRollbackCommand extends Command
      * @param string $db The connection key.
      * @param int|null $batches The number of batches to rollback.
      * @param int|null $steps The number of steps to rollback.
+     * @param bool $dryRun Whether to display the rollback plan without executing it.
      * @return int|null The exit code.
      */
-    public function run(string $db, int|null $batches = 1, int|null $steps = null): int|null
-    {
+    public function run(
+        string $db,
+        int|null $batches = 1,
+        int|null $steps = null,
+        bool $dryRun = false
+    ): int|null {
         $connection = $this->connectionManager->use($db);
 
-        $this->migrationRunner
-            ->setConnection($connection)
-            ->rollback($batches, $steps);
+        $migrationRunner = $this->migrationRunner->setConnection($connection);
+
+        if (!$dryRun) {
+            $migrationRunner->rollback($batches, $steps);
+
+            return static::CODE_SUCCESS;
+        }
+
+        $migrations = $migrationRunner->getRollbackMigrations($batches, $steps);
+
+        $data = [];
+        foreach ($migrations as $migrationName => $_) {
+            $data[] = [$migrationName, 'down'];
+        }
+
+        $this->io->table($data, ['Migration', 'Action']);
 
         return static::CODE_SUCCESS;
     }

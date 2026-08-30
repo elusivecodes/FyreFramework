@@ -93,8 +93,13 @@ Runs all pending migrations.
 Options:
 
 - `db` (`string`): connection key (default: `ConnectionManager::DEFAULT`)
+- `dryRun` (`bool`): display the ordered `up` plan without executing migrations (default: `false`)
 
 Examples:
+
+```bash
+app db:migrate --dry-run
+```
 
 ```php
 $commandRunner->handle(['app', 'db:migrate']);
@@ -118,8 +123,13 @@ Options:
 - `db` (`string`): connection key (default: `ConnectionManager::DEFAULT`)
 - `batches` (`int|null`): number of batches to roll back (default: `1`)
 - `steps` (`int|null`): number of migrations to roll back (default: `null`)
+- `dryRun` (`bool`): display the ordered `down` plan without executing migrations (default: `false`)
 
 Examples:
+
+```bash
+app db:rollback --dry-run
+```
 
 ```php
 $commandRunner->handle(['app', 'db:rollback']);

@@ -15,6 +15,7 @@ In most applications you write migration classes and run them through the consol
 - [Running migrations](#running-migrations)
   - [Via console commands](#via-console-commands)
   - [Planning and status](#planning-and-status)
+  - [Dry runs](#dry-runs)
   - [Migrate](#migrate)
   - [Rollback](#rollback)
 - [Migration history](#migration-history)
@@ -183,6 +184,17 @@ Each status row contains `migration`, `status`, and `batch`. Rows are naturally 
 - `down` — discovered but not recorded; `batch` is `null`
 - `missing` — recorded but no longer discovered
 
+### Dry runs
+
+Use `--dry-run` to display the ordered migration plan without executing it:
+
+```bash
+app db:migrate --dry-run
+app db:rollback --dry-run
+```
+
+Dry-run output lists each migration name with its intended `up` or `down` action. It does not instantiate migrations, call migration methods, or change migration history. It does not display SQL because migrations can execute arbitrary PHP, inspect current database state, and execute queries without using Forge.
+
 ### Migrate
 
 `MigrationRunner::migrate()` executes the plan returned by `getPendingMigrations()`. For each migration, `up()` is called when present and the migration name is recorded into history as part of a new batch.
@@ -216,7 +228,7 @@ $runner->rollback(null, 3);
 
 ## Migration history
 
-`MigrationHistory` stores applied migrations per connection in a `migrations` table. When it is constructed for a connection, it checks and applies the expected history-table structure for that connection.
+`MigrationHistory` stores applied migrations per connection in a `migrations` table. Construction and reads do not create the table. When no history table exists, `all()` returns an empty array and `getNextBatch()` returns `1`. The table structure is checked and created when `add()` first records a migration.
 
 The history table includes `id`, `batch`, `migration`, and `timestamp` columns.
 
@@ -232,6 +244,7 @@ A few behaviors are worth keeping in mind:
 
 - `migrate()` skips any migration name already present in history.
 - Migration plans use the same selection logic as execution.
+- Migration status and dry-run planning do not create the migration history table.
 - `rollback()` throws and preserves the history entry when the corresponding migration class cannot be found.
 - Migration execution is not automatically wrapped in a transaction.
 - If a migration does not implement `up()` or `down()`, the missing method is skipped and execution continues.
