@@ -200,7 +200,7 @@ Dry-run output lists each migration name with its intended `up` or `down` action
 
 `migrate()` and `rollback()` acquire a database-backed migration lock before recomputing their execution plan. The lock is refreshed after each migration and released when execution finishes or throws.
 
-The lock uses a 300-second lease by default. This lifetime must exceed the longest individual migration and can be configured with `MigrationRunner::setLockExpires()`. An expired lease can be acquired by another runner, while refresh and release operations only affect the current owner.
+The lock uses a 300-second lease by default. This lifetime must exceed the longest individual migration and can be configured with `MigrationRunner::setLockExpires()` or the `--lock-expires` option on `db:migrate` and `db:rollback`. An expired lease can be acquired by another runner, while refresh and release operations only affect the current owner.
 
 Migration execution fails immediately when another process owns the lock. Before acquiring the migration lock, an actual migrate or rollback operation initializes the `fyre__migrations` and `fyre__locks` framework tables. Their definitions are provided by `MigrationsPreset` and `LocksPreset` in `Fyre\DB\Forge\Presets`. Planning, status, and dry-run operations do not initialize these tables or acquire migration locks.
 

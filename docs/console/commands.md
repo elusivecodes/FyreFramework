@@ -86,7 +86,26 @@ For example, `db:rollback default 2 --steps 5` resolves as `db = default`, `batc
 
 ### Database commands
 
-#### `db:locks`
+#### `db:lock:prune`
+
+Removes expired database locks. If lock storage has not been initialized, the command exits successfully without creating it.
+
+Options:
+
+- `db` (`string`): connection key (default: `ConnectionManager::DEFAULT`)
+
+Examples:
+
+```bash
+app db:lock:prune --db=default
+```
+
+```php
+$commandRunner->handle(['app', 'db:lock:prune']);
+$commandRunner->handle(['app', 'db:lock:prune', '--db', 'default']);
+```
+
+#### `db:lock:setup`
 
 Initializes database lock storage. Run this once for each connection that uses `Connection::lock()` outside the migration runner.
 
@@ -97,12 +116,12 @@ Options:
 Examples:
 
 ```bash
-app db:locks --db=default
+app db:lock:setup --db=default
 ```
 
 ```php
-$commandRunner->handle(['app', 'db:locks']);
-$commandRunner->handle(['app', 'db:locks', '--db', 'default']);
+$commandRunner->handle(['app', 'db:lock:setup']);
+$commandRunner->handle(['app', 'db:lock:setup', '--db', 'default']);
 ```
 
 #### `db:migrate`
@@ -112,12 +131,14 @@ Runs all pending migrations.
 Options:
 
 - `db` (`string`): connection key (default: `ConnectionManager::DEFAULT`)
+- `lockExpires` (`int`): migration lock lifetime in seconds (default: `300`)
 - `dryRun` (`bool`): display the ordered `up` plan without executing migrations (default: `false`)
 
 Examples:
 
 ```bash
 app db:migrate --dry-run
+app db:migrate --lock-expires=600
 ```
 
 ```php
@@ -142,12 +163,14 @@ Options:
 - `db` (`string`): connection key (default: `ConnectionManager::DEFAULT`)
 - `batches` (`int|null`): number of batches to roll back (default: `1`)
 - `steps` (`int|null`): number of migrations to roll back (default: `null`)
+- `lockExpires` (`int`): migration lock lifetime in seconds (default: `300`)
 - `dryRun` (`bool`): display the ordered `down` plan without executing migrations (default: `false`)
 
 Examples:
 
 ```bash
 app db:rollback --dry-run
+app db:rollback --lock-expires=600
 ```
 
 ```php

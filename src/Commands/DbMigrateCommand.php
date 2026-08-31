@@ -27,6 +27,10 @@ class DbMigrateCommand extends Command
         'db' => [
             'default' => ConnectionManager::DEFAULT,
         ],
+        'lockExpires' => [
+            'as' => 'integer',
+            'default' => 300,
+        ],
         'dryRun' => [
             'as' => 'boolean',
             'default' => false,
@@ -54,17 +58,20 @@ class DbMigrateCommand extends Command
      * Note: The connection is resolved using the supplied `$db` key before running migrations.
      *
      * @param string $db The connection key.
+     * @param int $lockExpires The migration lock lifetime in seconds.
      * @param bool $dryRun Whether to display the migration plan without executing it.
      * @return int|null The exit code.
      */
-    public function run(string $db, bool $dryRun = false): int|null
+    public function run(string $db, int $lockExpires = 300, bool $dryRun = false): int|null
     {
         $connection = $this->connectionManager->use($db);
 
         $migrationRunner = $this->migrationRunner->setConnection($connection);
 
         if (!$dryRun) {
-            $migrationRunner->migrate();
+            $migrationRunner
+                ->setLockExpires($lockExpires)
+                ->migrate();
 
             return static::CODE_SUCCESS;
         }

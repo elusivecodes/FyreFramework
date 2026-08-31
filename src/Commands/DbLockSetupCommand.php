@@ -10,14 +10,14 @@ use Fyre\DB\Forge\Presets\LocksPreset;
 use Override;
 
 /**
- * Implements the db locks console command.
+ * Implements the db lock setup console command.
  *
  * Initializes database lock storage.
  */
-class DbLocksCommand extends Command
+class DbLockSetupCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'db:locks';
+    protected string|null $alias = 'db:lock:setup';
 
     #[Override]
     protected string $description = 'Initialize database lock storage.';

@@ -47,6 +47,20 @@ class MysqlConnection extends Connection
     ];
 
     #[Override]
+    protected static array $retryDriverCodes = [
+        1927, // connection killed
+        2006, // server gone away
+        2013, // server lost during query
+        2055, // server lost
+        4031, // inactivity timeout
+    ];
+
+    #[Override]
+    protected static array $retryErrorCodes = [
+        '08S01', // communication link failure
+    ];
+
+    #[Override]
     #[SensitivePropertyArray([
         'host',
         'username',

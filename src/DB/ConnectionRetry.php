@@ -22,22 +22,6 @@ class ConnectionRetry
 {
     use DebugTrait;
 
-    protected const ERROR_CODES = [
-        '08003', // connection does not exist
-        '08006', // connection failure
-        '57P01', // admin shutdown
-        '57P02', // crash shutdown
-        '57P05', // idle session timeout
-    ];
-
-    protected const DRIVER_CODES = [
-        1927, // connection killed
-        2006, // server gone away
-        2013, // server lost during query
-        2055, // server lost
-        4031, // inactivity timeout
-    ];
-
     protected int $retries = 0;
 
     /**
@@ -46,13 +30,17 @@ class ConnectionRetry
      * @param Connection $connection The Connection.
      * @param int $reconnectDelay The number of milliseconds to wait before reconnecting.
      * @param int $maxRetries The maximum number of retries.
+     * @param string[] $errorCodes The retryable SQLSTATE error codes.
+     * @param int[] $driverCodes The retryable driver error codes.
      *
      * @throws InvalidArgumentException If a connection retry option is not valid.
      */
     public function __construct(
         protected Connection $connection,
         protected int $reconnectDelay = 100,
-        protected int $maxRetries = 1
+        protected int $maxRetries = 1,
+        protected array $errorCodes = [],
+        protected array $driverCodes = []
     ) {
         if ($this->reconnectDelay < 0) {
             throw new InvalidArgumentException('Connection retry option `reconnectDelay` must not be negative.');
@@ -133,8 +121,8 @@ class ConnectionRetry
             $this->retries < $this->maxRetries &&
             $this->connection->getSavePointLevel() === 0 &&
             (
-                in_array($errorCode, static::ERROR_CODES, true) ||
-                in_array($driverCode, static::DRIVER_CODES, true)
+                in_array($errorCode, $this->errorCodes, true) ||
+                in_array($driverCode, $this->driverCodes, true)
             )
         ) {
             return $this->reconnect();

@@ -22,13 +22,14 @@ use Fyre\Utility\Path;
 use Override;
 use PHPUnit\Framework\TestCase;
 
+use function array_column;
 use function fclose;
 use function fopen;
 use function getenv;
 
 use const ROOT;
 
-final class DbLocksCommandTest extends TestCase
+final class DbLockCommandTest extends TestCase
 {
     protected CommandRunner $commandRunner;
 
@@ -51,11 +52,68 @@ final class DbLocksCommandTest extends TestCase
 
     protected Schema $schema;
 
-    public function testDbLocks(): void
+    public function testDbLockPrune(): void
+    {
+        $this->commandRunner->run('db:lock:setup', [
+            'db' => ConnectionManager::DEFAULT,
+        ]);
+
+        $this->db
+            ->insert()
+            ->into('fyre__locks')
+            ->values([
+                [
+                    'name' => 'active',
+                    'owner' => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+                    'expires' => '2999-01-01 00:00:00',
+                ],
+                [
+                    'name' => 'expired',
+                    'owner' => 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+                    'expires' => '2000-01-01 00:00:00',
+                ],
+            ])
+            ->execute();
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('db:lock:prune', [
+                'db' => ConnectionManager::DEFAULT,
+            ])
+        );
+
+        $locks = $this->db
+            ->select(['name'])
+            ->from('fyre__locks')
+            ->orderBy('name ASC')
+            ->execute()
+            ->all();
+
+        $this->assertArraysAreIdentical(
+            ['active'],
+            array_column($locks, 'name')
+        );
+    }
+
+    public function testDbLockPruneWithoutTable(): void
     {
         $this->assertSame(
             Command::CODE_SUCCESS,
-            $this->commandRunner->run('db:locks', [
+            $this->commandRunner->run('db:lock:prune', [
+                'db' => ConnectionManager::DEFAULT,
+            ])
+        );
+
+        $this->assertFalse(
+            $this->schema->hasTable('fyre__locks')
+        );
+    }
+
+    public function testDbLockSetup(): void
+    {
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('db:lock:setup', [
                 'db' => ConnectionManager::DEFAULT,
             ])
         );

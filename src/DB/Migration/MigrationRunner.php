@@ -182,7 +182,7 @@ class MigrationRunner
     /**
      * Returns the migration status.
      *
-     * @return array<array{migration: string, status: 'up'|'down'|'missing', batch: int|null}> The migration status.
+     * @return array<array{migration: string, status: 'down'|'missing'|'up', batch: int|null}> The migration status.
      */
     public function getStatus(): array
     {

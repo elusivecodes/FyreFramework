@@ -68,6 +68,23 @@ abstract class Connection
         'log' => false,
     ];
 
+    /**
+     * @var string[]
+     */
+    protected static array $lockConstraintErrorCodes = [
+        '23000', // integrity constraint violation
+    ];
+
+    /**
+     * @var int[]
+     */
+    protected static array $retryDriverCodes = [];
+
+    /**
+     * @var string[]
+     */
+    protected static array $retryErrorCodes = [];
+
     protected int|null $affectedRows = null;
 
     /**
@@ -517,6 +534,7 @@ abstract class Connection
             'connection' => $this,
             'name' => $name,
             'expires' => $expires,
+            'constraintErrorCodes' => static::$lockConstraintErrorCodes,
         ]);
     }
 
@@ -832,7 +850,11 @@ abstract class Connection
      */
     protected function retry(): ConnectionRetry
     {
-        return $this->retry ??= new ConnectionRetry($this);
+        return $this->retry ??= new ConnectionRetry(
+            $this,
+            errorCodes: static::$retryErrorCodes,
+            driverCodes: static::$retryDriverCodes
+        );
     }
 
     /**

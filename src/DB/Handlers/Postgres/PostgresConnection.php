@@ -37,6 +37,20 @@ class PostgresConnection extends Connection
     ];
 
     #[Override]
+    protected static array $lockConstraintErrorCodes = [
+        '23505', // unique violation
+    ];
+
+    #[Override]
+    protected static array $retryErrorCodes = [
+        '08003', // connection does not exist
+        '08006', // connection failure
+        '57P01', // admin shutdown
+        '57P02', // crash shutdown
+        '57P05', // idle session timeout
+    ];
+
+    #[Override]
     #[SensitivePropertyArray([
         'host',
         'username',

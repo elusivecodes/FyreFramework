@@ -35,6 +35,10 @@ class DbRollbackCommand extends Command
             'as' => 'integer',
             'default' => null,
         ],
+        'lockExpires' => [
+            'as' => 'integer',
+            'default' => 300,
+        ],
         'dryRun' => [
             'as' => 'boolean',
             'default' => false,
@@ -64,6 +68,7 @@ class DbRollbackCommand extends Command
      * @param string $db The connection key.
      * @param int|null $batches The number of batches to rollback.
      * @param int|null $steps The number of steps to rollback.
+     * @param int $lockExpires The migration lock lifetime in seconds.
      * @param bool $dryRun Whether to display the rollback plan without executing it.
      * @return int|null The exit code.
      */
@@ -71,6 +76,7 @@ class DbRollbackCommand extends Command
         string $db,
         int|null $batches = 1,
         int|null $steps = null,
+        int $lockExpires = 300,
         bool $dryRun = false
     ): int|null {
         $connection = $this->connectionManager->use($db);
@@ -78,7 +84,9 @@ class DbRollbackCommand extends Command
         $migrationRunner = $this->migrationRunner->setConnection($connection);
 
         if (!$dryRun) {
-            $migrationRunner->rollback($batches, $steps);
+            $migrationRunner
+                ->setLockExpires($lockExpires)
+                ->rollback($batches, $steps);
 
             return static::CODE_SUCCESS;
         }

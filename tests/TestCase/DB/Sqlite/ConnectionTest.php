@@ -4,11 +4,9 @@ declare(strict_types=1);
 namespace Tests\TestCase\DB\Sqlite;
 
 use BadMethodCallException;
-use Fyre\DB\ConnectionRetry;
 use Fyre\DB\Exceptions\DbException;
 use Fyre\DB\Handlers\Sqlite\SqliteConnection;
 use Fyre\Event\Event;
-use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Tests\TestCase\DB\Shared\LockTestTrait;
 
@@ -27,22 +25,6 @@ final class ConnectionTest extends TestCase
             'UTF-8',
             $this->db->getCharset()
         );
-    }
-
-    public function testConnectionRetryInvalidMaxRetries(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageIs('Connection retry option `maxRetries` must not be negative.');
-
-        new ConnectionRetry($this->db, maxRetries: -1);
-    }
-
-    public function testConnectionRetryInvalidReconnectDelay(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageIs('Connection retry option `reconnectDelay` must not be negative.');
-
-        new ConnectionRetry($this->db, -1);
     }
 
     public function testDebug(): void

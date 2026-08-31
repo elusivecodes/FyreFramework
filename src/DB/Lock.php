@@ -8,7 +8,6 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\DB\Exceptions\DbException;
 use Fyre\DB\Expressions\FunctionExpression;
 use Fyre\DB\Forge\Presets\LocksPreset;
-use Fyre\DB\Query;
 use InvalidArgumentException;
 use PDOException;
 
@@ -39,18 +38,39 @@ class Lock
     protected string $owner;
 
     /**
+     * Clears expired database locks.
+     *
+     * @param Connection $connection The Connection.
+     * @return int The number of expired locks cleared.
+     */
+    public static function clearExpired(Connection $connection): int
+    {
+        $connection
+            ->delete()
+            ->from(LocksPreset::TABLE)
+            ->where([
+                'expires <=' => static fn(Query $query): FunctionExpression => $query->func()->now(),
+            ])
+            ->execute();
+
+        return $connection->affectedRows() ?? 0;
+    }
+
+    /**
      * Constructs a Lock.
      *
      * @param Connection $connection The Connection.
      * @param string $name The lock name (up to 255 characters).
      * @param int $expires The lock lifetime in seconds.
+     * @param string[] $constraintErrorCodes The constraint violation SQLSTATE error codes.
      *
      * @throws InvalidArgumentException If the name or expiration is not valid.
      */
     public function __construct(
         protected Connection $connection,
         protected string $name,
-        protected int $expires = 300
+        protected int $expires = 300,
+        protected array $constraintErrorCodes = ['23000']
     ) {
         if ($this->name === '') {
             throw new InvalidArgumentException('Lock name must not be empty.');
@@ -89,7 +109,7 @@ class Lock
         }
 
         if (random_int(1, static::CLEANUP_DIVISOR) === 1) {
-            $this->clearExpired();
+            static::clearExpired($this->connection);
         }
 
         $deadline = hrtime(true) + (int) ($wait * 1_000_000_000);
@@ -223,7 +243,7 @@ class Lock
                 ])
                 ->execute();
         } catch (DbException $e) {
-            if (!static::isConstraintViolation($e)) {
+            if (!$this->isConstraintViolation($e)) {
                 throw $e;
             }
 
@@ -234,26 +254,12 @@ class Lock
     }
 
     /**
-     * Clears expired locks.
-     */
-    protected function clearExpired(): void
-    {
-        $this->connection
-            ->delete()
-            ->from(LocksPreset::TABLE)
-            ->where([
-                'expires <=' => static fn(Query $query): FunctionExpression => $query->func()->now(),
-            ])
-            ->execute();
-    }
-
-    /**
      * Checks whether an exception represents a constraint violation.
      *
      * @param DbException $exception The exception.
      * @return bool Whether the exception represents a constraint violation.
      */
-    protected static function isConstraintViolation(DbException $exception): bool
+    protected function isConstraintViolation(DbException $exception): bool
     {
         $previous = $exception->getPrevious();
 
@@ -263,6 +269,6 @@ class Lock
 
         $errorCode = (string) ($previous->errorInfo[0] ?? $previous->getCode());
 
-        return in_array($errorCode, ['23000', '23505'], true);
+        return in_array($errorCode, $this->constraintErrorCodes, true);
     }
 }
