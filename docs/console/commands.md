@@ -88,7 +88,7 @@ For example, `db:rollback default 2 --steps 5` resolves as `db = default`, `batc
 
 #### `db:lock:prune`
 
-Removes expired database locks. If lock storage has not been initialized, the command exits successfully without creating it.
+Removes expired database lock rows. Expired rows are not removed automatically, but they do not prevent their lock names from being acquired again. Run this command manually or on a schedule for housekeeping. If lock storage has not been initialized, the command exits successfully without creating it.
 
 Options:
 

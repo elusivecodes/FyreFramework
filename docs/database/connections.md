@@ -251,7 +251,7 @@ Locks with different names do not block each other. Before using database locks 
 app db:lock:setup --db=default
 ```
 
-The migration runner initializes this storage automatically before an actual migrate or rollback operation. `Lock::acquire()` does not perform DDL. Expired locks can be acquired by another owner, while only the current owner can refresh or release a lock. Use `app db:lock:prune --db=default` to remove expired lock rows.
+The migration runner initializes this storage automatically before an actual migrate or rollback operation. `Lock::acquire()` does not perform DDL. Expired lock rows are not removed automatically, but they do not prevent their lock names from being acquired again. Only the current owner can refresh or release an active lock. Run or schedule `app db:lock:prune --db=default` to remove expired rows.
 
 ## Troubleshooting
 
