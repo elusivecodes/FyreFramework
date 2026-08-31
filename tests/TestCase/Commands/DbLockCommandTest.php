@@ -52,7 +52,7 @@ final class DbLockCommandTest extends TestCase
 
     protected Schema $schema;
 
-    public function testDbLockPrune(): void
+    public function testDbLockPurge(): void
     {
         $this->commandRunner->run('db:lock:setup', [
             'db' => ConnectionManager::DEFAULT,
@@ -77,7 +77,7 @@ final class DbLockCommandTest extends TestCase
 
         $this->assertSame(
             Command::CODE_SUCCESS,
-            $this->commandRunner->run('db:lock:prune', [
+            $this->commandRunner->run('db:lock:purge', [
                 'db' => ConnectionManager::DEFAULT,
             ])
         );
@@ -95,11 +95,11 @@ final class DbLockCommandTest extends TestCase
         );
     }
 
-    public function testDbLockPruneWithoutTable(): void
+    public function testDbLockPurgeWithoutTable(): void
     {
         $this->assertSame(
             Command::CODE_SUCCESS,
-            $this->commandRunner->run('db:lock:prune', [
+            $this->commandRunner->run('db:lock:purge', [
                 'db' => ConnectionManager::DEFAULT,
             ])
         );

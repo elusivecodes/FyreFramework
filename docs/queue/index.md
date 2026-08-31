@@ -2,7 +2,7 @@
 
 Use queue handlers when you want to move slow or retryable work out of the main request or command flow.
 
-Queue lets you push jobs, delay them, expire them, enforce uniqueness, and process them with long-running workers.
+Queue lets you push jobs, delay them, retry them with backoff, retain terminal failures, enforce uniqueness, and process them with long-running workers.
 
 ## Table of Contents
 
@@ -18,6 +18,7 @@ Queue lets you push jobs, delay them, expire them, enforce uniqueness, and proce
   - [Message options](#message-options)
 - [Processing jobs](#processing-jobs)
 - [Inspecting queues](#inspecting-queues)
+- [Recovering failed jobs](#recovering-failed-jobs)
 - [Lifecycle events](#lifecycle-events)
 - [Method guide](#method-guide)
   - [`QueueManager`](#queuemanager)
@@ -34,7 +35,7 @@ The usual queue workflow is:
 2. Write a job class with a `run()` method.
 3. Push jobs with `QueueManager::push()` or `queue()`.
 4. Run a worker to process jobs.
-5. Inspect queue health with `stats()` or `queue:stats`.
+5. Inspect queue health with `stats()` or `queue:stats`, and recover terminal failures with the `queue:failed`, `queue:retry`, and `queue:purge` commands.
 
 ```php
 use Fyre\Queue\QueueManager;
@@ -191,6 +192,7 @@ The most common message options are:
 - `expires` (`int`) - number of seconds before the job expires
 - `retry` (`bool`) - whether retries are allowed (default: `true`)
 - `maxRetries` (`int`) - maximum total execution attempts, including the initial attempt (default: `5`)
+- `backoff` (`int|int[]`) - delay in seconds before each retry; an array selects a delay by retry attempt and reuses its final value (default: `0`)
 - `unique` (`bool`) - whether the handler should enforce uniqueness (default: `false`)
 
 For more direct control, you can also set absolute `after` and `before` timestamps instead of `delay` and `expires`.
@@ -204,6 +206,8 @@ The built-in way to run a worker is the `queue:worker` console command; see [Con
 Queues are designed for at-least-once processing. `RedisQueue` reserves each popped job until it is completed, failed, or discarded. If the worker stops first, the job becomes available again after `visibilityTimeout` seconds.
 
 A job may run more than once, so prefer idempotent job design and set `visibilityTimeout` longer than the expected job runtime.
+
+When a failed job can be retried, a positive `backoff` places it in the existing delayed queue until the selected delay has elapsed. When retries are disabled or exhausted, `RedisQueue` retains the message config, failure time, and exception metadata. A job that returns `false` has no exception metadata.
 
 ## Inspecting queues
 
@@ -230,6 +234,33 @@ You can also inspect queue stats from the CLI using `queue:stats`; see [Console 
 $commandRunner->handle(['app', 'queue:stats']);
 $commandRunner->handle(['app', 'queue:stats', '--config', 'default', '--queue', 'search']);
 ```
+
+## Recovering failed jobs
+
+Use `Queue::getFailed()` to inspect terminal failures retained for a queue. Records are indexed by their 32-character message ID and remain until they are retried or forgotten.
+
+```php
+$failures = $queue->getFailed('search');
+```
+
+Use `retryFailed()` to construct and enqueue a fresh `Message` from the stored config. Its retry attempt count starts again at zero, and the retained record is removed only when the message is accepted by the queue. Use `forgetFailed()` to remove a retained record without retrying it.
+
+```php
+$queue->retryFailed($id, 'search');
+$queue->forgetFailed($id, 'search');
+```
+
+The same operations are available through the console. `queue:failed` displays the failure time in UTC.
+
+```bash
+app queue:failed --config=default --queue=search --class='App\Jobs\SearchIndexJob'
+app queue:retry 0123456789abcdef0123456789abcdef --config=default --queue=search
+app queue:retry --config=default --queue=search --class='App\Jobs\SearchIndexJob'
+app queue:purge 0123456789abcdef0123456789abcdef --config=default --queue=search
+app queue:purge --config=default --queue=search --class='App\Jobs\SearchIndexJob'
+```
+
+Retained exception metadata includes the exception class, message, code, file, line, and stack trace. Treat access to the queue backend and command output as sensitive.
 
 ## Lifecycle events
 
@@ -373,6 +404,41 @@ Arguments:
 $queue->reset('search');
 ```
 
+#### **Read failed messages** (`getFailed()`)
+
+Return terminal failures indexed by message ID.
+
+Arguments:
+- `$queue` (`string`): queue name (default: `default`).
+
+```php
+$failures = $queue->getFailed('search');
+```
+
+#### **Retry a failed message** (`retryFailed()`)
+
+Enqueue a fresh message from a retained failure and remove the failure when enqueueing succeeds.
+
+Arguments:
+- `$id` (`string`): failed message ID.
+- `$queue` (`string`): queue name (default: `default`).
+
+```php
+$retried = $queue->retryFailed($id, 'search');
+```
+
+#### **Forget a failed message** (`forgetFailed()`)
+
+Remove a retained failure without retrying it.
+
+Arguments:
+- `$id` (`string`): failed message ID.
+- `$queue` (`string`): queue name (default: `default`).
+
+```php
+$forgotten = $queue->forgetFailed($id, 'search');
+```
+
 ### `Message`
 
 #### **Validate a message** (`isValid()`)
@@ -407,6 +473,14 @@ Check whether a message should be retried.
 $shouldRetry = $message->shouldRetry();
 ```
 
+#### **Get the retry delay** (`getRetryDelay()`)
+
+Return the backoff delay for the current retry attempt.
+
+```php
+$delay = $message->getRetryDelay();
+```
+
 #### **Get a uniqueness hash** (`getHash()`)
 
 Get a stable hash based on the class name, method, and arguments.
@@ -424,8 +498,9 @@ A few behaviors are worth keeping in mind:
 - `QueueManager::push()` does not return whether the handler accepted the message, so uniqueness or expiry can prevent enqueueing without raising an error.
 - `Message::shouldRetry()` increments the retry counter, so call it only once for a given failure.
 - `maxRetries` includes the initial execution, so a value of `5` permits the initial attempt and up to four retries.
+- An integer `backoff` applies to every retry. An array applies successive delays and reuses its final value when there are more retries than values.
 - `RedisQueue` holds a message's uniqueness key while it is delayed, queued, processing, or waiting for a retry. The key is removed when the message is completed, permanently failed, or discarded.
-- `RedisQueue` retries immediately and does not provide built-in retry delay or backoff.
+- Terminal failure records are separate from the `failed` statistics counter. Resetting statistics does not remove retained failures.
 - `RedisQueue` storage is internal to the handler. Drain or clear existing queues before upgrading from a version that used a different storage format.
 - Delays and expiries depend on system time, so keep worker hosts time-synced.
 

@@ -16,6 +16,11 @@ class TestQueue extends Queue
     protected static array $messages = [];
 
     /**
+     * @var array<string, array<string, mixed>>
+     */
+    protected array $failures = [];
+
+    /**
      * @return Message[]
      */
     public static function getMessages(): array
@@ -46,13 +51,19 @@ class TestQueue extends Queue
     #[Override]
     public function forgetFailed(string $id, string $queue = self::DEFAULT): bool
     {
-        return false;
+        if (!isset($this->failures[$queue][$id])) {
+            return false;
+        }
+
+        unset($this->failures[$queue][$id]);
+
+        return true;
     }
 
     #[Override]
     public function getFailed(string $queue = self::DEFAULT): array
     {
-        return [];
+        return $this->failures[$queue] ?? [];
     }
 
     #[Override]
@@ -81,7 +92,25 @@ class TestQueue extends Queue
     #[Override]
     public function retryFailed(string $id, string $queue = self::DEFAULT): bool
     {
-        return false;
+        $failure = $this->failures[$queue][$id] ?? null;
+
+        if ($failure === null || !$this->push(new Message($failure['message']))) {
+            return false;
+        }
+
+        unset($this->failures[$queue][$id]);
+
+        return true;
+    }
+
+    /**
+     * Sets the failed messages.
+     *
+     * @param array<string, array<string, mixed>> $failures The failed messages indexed by queue and identifier.
+     */
+    public function setFailed(array $failures): void
+    {
+        $this->failures = $failures;
     }
 
     #[Override]

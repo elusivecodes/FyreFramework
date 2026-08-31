@@ -12,14 +12,14 @@ use Fyre\DB\Query;
 use Override;
 
 /**
- * Implements the db lock prune console command.
+ * Implements the db lock purge console command.
  *
  * Removes expired database locks.
  */
-class DbLockPruneCommand extends Command
+class DbLockPurgeCommand extends Command
 {
     #[Override]
-    protected string|null $alias = 'db:lock:prune';
+    protected string|null $alias = 'db:lock:purge';
 
     #[Override]
     protected string $description = 'Remove expired database locks.';

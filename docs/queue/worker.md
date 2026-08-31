@@ -67,6 +67,8 @@ The worker handles results like this:
 - Throwing an exception marks the job as failed and emits `Queue.exception`.
 - Any other return value marks the job as successful and emits `Queue.success`.
 
+When a failure is retryable, the message's `backoff` option controls when it becomes available again. When retries are exhausted or disabled, `RedisQueue` retains the message and its failure metadata for inspection, retry, or removal. See [Recovering failed jobs](index.md#recovering-failed-jobs).
+
 Before each valid job runs, the worker clears scoped container services so each job gets a fresh scoped state; see [Container](../core/container.md).
 
 There is no built-in per-job timeout. If jobs call external systems, set timeouts in those clients and let your process supervisor restart stuck workers if needed.
@@ -83,7 +85,7 @@ The worker dispatches these events through the event system:
 - `Queue.exception` - `message`, `exception`, `shouldRetry`
 - `Queue.invalid` - `message`
 
-`shouldRetry` is the boolean return value from `Queue::fail($message)`.
+`shouldRetry` is the boolean return value from `Queue::fail($message, $exception)`. Failures caused by a `false` return do not pass an exception.
 
 When you register listeners with `EventManager::on()`, the `Event` object is passed first, followed by the values listed above.
 
@@ -182,6 +184,7 @@ A few behaviors are worth keeping in mind:
 - Stop signals are handled gracefully: the worker finishes the current job and then exits the loop.
 - `maxJobs` counts only jobs that actually reach execution. Invalid and expired messages do not increment the counter.
 - Retries mean a job may run more than once, so design queue jobs to be idempotent.
+- A positive message `backoff` delays a retry without blocking the worker.
 
 ## Related
 

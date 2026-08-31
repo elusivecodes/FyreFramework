@@ -86,7 +86,7 @@ For example, `db:rollback default 2 --steps 5` resolves as `db = default`, `batc
 
 ### Database commands
 
-#### `db:lock:prune`
+#### `db:lock:purge`
 
 Removes expired database lock rows. Expired rows are not removed automatically, but they do not prevent their lock names from being acquired again. Run this command manually or on a schedule for housekeeping. If lock storage has not been initialized, the command exits successfully without creating it.
 
@@ -97,12 +97,12 @@ Options:
 Examples:
 
 ```bash
-app db:lock:prune --db=default
+app db:lock:purge --db=default
 ```
 
 ```php
-$commandRunner->handle(['app', 'db:lock:prune']);
-$commandRunner->handle(['app', 'db:lock:prune', '--db', 'default']);
+$commandRunner->handle(['app', 'db:lock:purge']);
+$commandRunner->handle(['app', 'db:lock:purge', '--db', 'default']);
 ```
 
 #### `db:lock:setup`
@@ -198,6 +198,85 @@ $commandRunner->handle(['app', 'db:status', '--db', 'default']);
 ```
 
 ### Queue commands
+
+#### `queue:failed`
+
+Displays retained terminal failures for a queue, ordered from newest to oldest. Failure timestamps are displayed in UTC.
+
+Options:
+
+- `config` (`string`): queue handler config key (default: `QueueManager::DEFAULT`)
+- `queue` (`string`): queue name (default: `Queue::DEFAULT`)
+- `class` (`string|null`): limit output to one job class
+
+Examples:
+
+```bash
+app queue:failed --config=default --queue=default
+```
+
+```php
+$commandRunner->handle(['app', 'queue:failed']);
+$commandRunner->handle(['app', 'queue:failed', '--queue', 'emails', '--class', 'App\Jobs\SendEmailJob']);
+```
+
+#### `queue:purge`
+
+Removes retained failures without retrying them. If IDs are omitted, all failures matching the queue and optional class filter are removed.
+
+Options:
+
+- `ids` (`string|null`): comma-separated failed message IDs; may be supplied as the first positional value
+- `config` (`string`): queue handler config key (default: `QueueManager::DEFAULT`)
+- `queue` (`string`): queue name (default: `Queue::DEFAULT`)
+- `class` (`string|null`): limit removal to one job class
+
+Examples:
+
+```bash
+app queue:purge 0123456789abcdef0123456789abcdef,abcdef0123456789abcdef0123456789 --queue=emails
+app queue:purge --ids=0123456789abcdef0123456789abcdef,abcdef0123456789abcdef0123456789 --queue=emails
+app queue:purge --queue=emails --class='App\Jobs\SendEmailJob'
+```
+
+```php
+$commandRunner->handle([
+    'app',
+    'queue:purge',
+    '0123456789abcdef0123456789abcdef,abcdef0123456789abcdef0123456789',
+    '--queue',
+    'emails',
+]);
+```
+
+#### `queue:retry`
+
+Enqueues fresh messages from retained failures and removes each retained record when enqueueing succeeds. If IDs are omitted, all failures matching the queue and optional class filter are retried.
+
+Options:
+
+- `ids` (`string|null`): comma-separated failed message IDs; may be supplied as the first positional value
+- `config` (`string`): queue handler config key (default: `QueueManager::DEFAULT`)
+- `queue` (`string`): queue name (default: `Queue::DEFAULT`)
+- `class` (`string|null`): limit retries to one job class
+
+Examples:
+
+```bash
+app queue:retry 0123456789abcdef0123456789abcdef,abcdef0123456789abcdef0123456789 --queue=emails
+app queue:retry --ids=0123456789abcdef0123456789abcdef,abcdef0123456789abcdef0123456789 --queue=emails
+app queue:retry --queue=emails --class='App\Jobs\SendEmailJob'
+```
+
+```php
+$commandRunner->handle([
+    'app',
+    'queue:retry',
+    '0123456789abcdef0123456789abcdef,abcdef0123456789abcdef0123456789',
+    '--queue',
+    'emails',
+]);
+```
 
 #### `queue:worker`
 
