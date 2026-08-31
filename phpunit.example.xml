@@ -16,6 +16,7 @@
             <exclude>tests/TestCase/Auth/PolicyTest.php</exclude>
             <exclude>tests/TestCase/Cache/MemcachedTest.php</exclude>
             <exclude>tests/TestCase/Cache/RedisTest.php</exclude>
+            <exclude>tests/TestCase/Commands/DbLockCommandTest.php</exclude>
             <exclude>tests/TestCase/Commands/DbMigrationCommandTest.php</exclude>
             <exclude>tests/TestCase/Commands/QueueWorkerCommandTest.php</exclude>
             <exclude>tests/TestCase/DB/ConnectionManagerTest.php</exclude>
@@ -76,6 +77,7 @@
             <file>tests/TestCase/Auth/AuthenticatorTest.php</file>
             <file>tests/TestCase/Auth/IdentifierTest.php</file>
             <file>tests/TestCase/Auth/PolicyTest.php</file>
+            <file>tests/TestCase/Commands/DbLockCommandTest.php</file>
             <file>tests/TestCase/Commands/DbMigrationCommandTest.php</file>
             <file>tests/TestCase/DB/ConnectionManagerTest.php</file>
             <file>tests/TestCase/DB/Migration/MigrationRunnerTest.php</file>
