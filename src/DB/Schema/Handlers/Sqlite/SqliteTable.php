@@ -175,8 +175,8 @@ class SqliteTable extends Table
 
         if (count($primaryKeys) === 1) {
             [$primaryKey] = $primaryKeys;
-            $columns[$primaryKey]['nullable'] = false;
             $columns[$primaryKey]['autoIncrement'] = $columns[$primaryKey]['type'] === 'integer';
+            $columns[$primaryKey]['nullable'] = false;
         }
 
         return $columns;
