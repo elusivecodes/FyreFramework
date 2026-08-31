@@ -21,6 +21,48 @@ final class MessageTest extends TestCase
         );
     }
 
+    public function testGetRetryDelay(): void
+    {
+        $message = new Message([
+            'backoff' => 30,
+        ]);
+
+        $message->shouldRetry();
+
+        $this->assertSame(
+            30,
+            $message->getRetryDelay()
+        );
+    }
+
+    public function testGetRetryDelayArray(): void
+    {
+        $message = new Message([
+            'backoff' => [5, 30],
+        ]);
+
+        $message->shouldRetry();
+
+        $this->assertSame(
+            5,
+            $message->getRetryDelay()
+        );
+
+        $message->shouldRetry();
+
+        $this->assertSame(
+            30,
+            $message->getRetryDelay()
+        );
+
+        $message->shouldRetry();
+
+        $this->assertSame(
+            30,
+            $message->getRetryDelay()
+        );
+    }
+
     public function testMessageHash(): void
     {
         $message1 = new Message([

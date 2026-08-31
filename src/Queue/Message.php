@@ -5,13 +5,17 @@ namespace Fyre\Queue;
 
 use Fyre\Core\Traits\DebugTrait;
 
+use function array_map;
 use function array_replace;
+use function array_values;
 use function class_exists;
+use function count;
 use function implode;
 use function json_encode;
 use function ksort;
 use function md5;
 use function method_exists;
+use function min;
 use function time;
 
 /**
@@ -39,6 +43,7 @@ class Message
         'before' => null,
         'retry' => true,
         'maxRetries' => 5,
+        'backoff' => 0,
         'unique' => false,
     ];
 
@@ -57,6 +62,11 @@ class Message
     public function __construct(array $options = [])
     {
         $this->config = array_replace(static::$defaults, $options);
+
+        $this->config['backoff'] = array_map(
+            static fn(mixed $delay): int => (int) $delay,
+            (array) $this->config['backoff']
+        ) |> array_values(...);
 
         if ($this->config['expires']) {
             $this->config['before'] ??= time() + $this->config['expires'];
@@ -118,6 +128,21 @@ class Message
     public function getQueue(): string
     {
         return $this->config['queue'];
+    }
+
+    /**
+     * Returns the delay before the next retry.
+     *
+     * @return int The retry delay in seconds.
+     */
+    public function getRetryDelay(): int
+    {
+        $index = min(
+            $this->retryAttempts - 1,
+            count($this->config['backoff']) - 1
+        );
+
+        return $this->config['backoff'][$index] ?? 0;
     }
 
     /**

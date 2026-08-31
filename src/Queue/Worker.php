@@ -193,7 +193,7 @@ class Worker
         try {
             $result = $this->container->call([$config['className'], $config['method']], $config['arguments']);
         } catch (Throwable $e) {
-            $retried = $this->queue->fail($message);
+            $retried = $this->queue->fail($message, $e);
 
             $this->dispatchEvent('Queue.exception', ['message' => $message, 'exception' => $e, 'shouldRetry' => $retried]);
 

@@ -18,6 +18,7 @@ use RuntimeException;
 use Tests\Mock\Jobs\MockJob;
 use Tests\Mock\Listeners\MockListener;
 
+use function array_keys;
 use function file_get_contents;
 use function getenv;
 use function mkdir;
@@ -95,6 +96,7 @@ final class ListenerTest extends TestCase
                 'before' => null,
                 'retry' => false,
                 'maxRetries' => 5,
+                'backoff' => [0],
                 'unique' => false,
             ],
             $message->getConfig()
@@ -165,6 +167,7 @@ final class ListenerTest extends TestCase
                 'before' => null,
                 'retry' => true,
                 'maxRetries' => 5,
+                'backoff' => [0],
                 'unique' => false,
             ],
             $message->getConfig()
@@ -234,6 +237,7 @@ final class ListenerTest extends TestCase
                 'before' => null,
                 'retry' => false,
                 'maxRetries' => 5,
+                'backoff' => [0],
                 'unique' => false,
             ],
             $message->getConfig()
@@ -297,6 +301,7 @@ final class ListenerTest extends TestCase
                 'before' => null,
                 'retry' => true,
                 'maxRetries' => 5,
+                'backoff' => [0],
                 'unique' => false,
             ],
             $message->getConfig()
@@ -356,6 +361,7 @@ final class ListenerTest extends TestCase
                 'before' => null,
                 'retry' => true,
                 'maxRetries' => 5,
+                'backoff' => [0],
                 'unique' => false,
             ],
             $message->getConfig()
@@ -417,6 +423,7 @@ final class ListenerTest extends TestCase
                 'before' => null,
                 'retry' => true,
                 'maxRetries' => 5,
+                'backoff' => [0],
                 'unique' => false,
             ],
             $message->getConfig()
@@ -442,6 +449,7 @@ final class ListenerTest extends TestCase
                 'before' => null,
                 'retry' => true,
                 'maxRetries' => 5,
+                'backoff' => [0],
                 'unique' => false,
             ],
             $message->getConfig()
@@ -499,6 +507,12 @@ final class ListenerTest extends TestCase
     #[Override]
     protected function tearDown(): void
     {
+        $failures = $this->queue->getFailed();
+
+        foreach (array_keys($failures) as $id) {
+            $this->queue->forgetFailed($id);
+        }
+
         $this->queue->clear();
         $this->queue->reset();
 

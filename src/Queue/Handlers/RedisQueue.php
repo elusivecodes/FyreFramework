@@ -12,11 +12,15 @@ use InvalidArgumentException;
 use Override;
 use Redis;
 use RedisException;
+use Throwable;
 use WeakMap;
 
+use function array_key_exists;
 use function bin2hex;
 use function explode;
 use function in_array;
+use function is_array;
+use function is_int;
 use function is_string;
 use function random_bytes;
 use function serialize;
@@ -30,7 +34,9 @@ use function unserialize;
  * Queue implementation backed by Redis.
  *
  * Uses a Redis list for queued messages, sorted sets for delayed and processing messages,
- * and a hash for uniqueness checks (when enabled).
+ * and hashes for uniqueness checks and failed messages.
+ *
+ * @phpstan-import-type FailedMessageData from Queue
  */
 class RedisQueue extends Queue
 {
@@ -198,26 +204,69 @@ class RedisQueue extends Queue
      * {@inheritDoc}
      */
     #[Override]
-    public function fail(Message $message): bool
+    public function fail(Message $message, Throwable|null $exception = null): bool
     {
         if (!isset($this->reservations[$message])) {
             return false;
         }
 
         $data = $this->reservations[$message];
-        $shouldRetry = $message->shouldRetry();
 
-        $payload = $shouldRetry ?
-            substr($data['payload'], 0, static::PAYLOAD_HEADER_LENGTH).serialize($message) :
-            '';
+        if ($message->shouldRetry()) {
+            $payload = substr($data['payload'], 0, static::PAYLOAD_HEADER_LENGTH).serialize($message);
+            $retryDelay = $message->getRetryDelay();
+            $retryAt = $retryDelay > 0 ?
+                time() + $retryDelay :
+                null;
 
-        $settled = $this->settle(
-            $message,
-            $shouldRetry ? 'retry' : 'failed',
-            $payload
-        );
+            return $this->settle($message, 'retry', $payload, $retryAt);
+        }
 
-        return $settled && $shouldRetry;
+        $failure = serialize([
+            'message' => $message->getConfig(),
+            'failedAt' => time(),
+            'exception' => $exception ? [
+                'class' => $exception::class,
+                'message' => $exception->getMessage(),
+                'code' => $exception->getCode(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'trace' => $exception->getTraceAsString(),
+            ] : null,
+        ]);
+
+        $this->settle($message, 'failed', failure: $failure);
+
+        return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function forgetFailed(string $id, string $queue = self::DEFAULT): bool
+    {
+        return $this->connection->hDel(static::prepareKey($queue, 'failures'), $id) === 1;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function getFailed(string $queue = self::DEFAULT): array
+    {
+        $data = $this->connection->hGetAll(static::prepareKey($queue, 'failures'));
+        $failures = [];
+
+        foreach ($data as $id => $failure) {
+            $failure = static::parseFailure($failure);
+
+            if ($failure !== null) {
+                $failures[$id] = $failure;
+            }
+        }
+
+        return $failures;
     }
 
     /**
@@ -240,7 +289,7 @@ class RedisQueue extends Queue
         $message = substr($payload, static::PAYLOAD_HEADER_LENGTH) |> @unserialize(...);
 
         if (!($message instanceof Message)) {
-            $this->settleReservation($queue, $data['reservation'], $uniqueHash, 'discard');
+            $this->settleReservation($queue, $data['reservation'], 'discard', $uniqueHash);
 
             return null;
         }
@@ -341,6 +390,31 @@ class RedisQueue extends Queue
         static::prepareKey($queue, 'completed') |> $this->connection->del(...);
         static::prepareKey($queue, 'failed') |> $this->connection->del(...);
         static::prepareKey($queue, 'total') |> $this->connection->del(...);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function retryFailed(string $id, string $queue = self::DEFAULT): bool
+    {
+        $failure = $this->connection->hGet(static::prepareKey($queue, 'failures'), $id);
+
+        if (!is_string($failure)) {
+            return false;
+        }
+
+        $failure = static::parseFailure($failure);
+
+        if ($failure === null || !is_array($failure['message'] ?? null)) {
+            return false;
+        }
+
+        if (!$this->push(new Message($failure['message']))) {
+            return false;
+        }
+
+        return $this->forgetFailed($id, $queue);
     }
 
     /**
@@ -458,10 +532,17 @@ class RedisQueue extends Queue
      * @param Message $message The Message.
      * @param 'complete'|'discard'|'failed'|'retry' $action The settlement action.
      * @param string $payload The retry payload.
+     * @param int|null $retryAt The retry timestamp.
+     * @param string $failure The serialized failure data.
      * @return bool Whether the reservation was settled.
      */
-    protected function settle(Message $message, string $action, string $payload = ''): bool
-    {
+    protected function settle(
+        Message $message,
+        string $action,
+        string $payload = '',
+        int|null $retryAt = null,
+        string $failure = ''
+    ): bool {
         if (!isset($this->reservations[$message])) {
             return false;
         }
@@ -471,9 +552,11 @@ class RedisQueue extends Queue
         $result = $this->settleReservation(
             $data['queue'],
             $data['reservation'],
-            $data['uniqueHash'],
             $action,
-            $payload
+            $data['uniqueHash'],
+            $payload,
+            $retryAt,
+            $failure
         );
 
         unset($this->reservations[$message]);
@@ -486,17 +569,21 @@ class RedisQueue extends Queue
      *
      * @param string $queue The queue name.
      * @param string $reservation The reservation data.
-     * @param string|null $uniqueHash The uniqueness hash.
      * @param 'complete'|'discard'|'failed'|'retry' $action The settlement action.
+     * @param string|null $uniqueHash The uniqueness hash.
      * @param string $payload The retry payload.
+     * @param int|null $retryAt The retry timestamp.
+     * @param string $failure The serialized failure data.
      * @return bool Whether the reservation was settled.
      */
     protected function settleReservation(
         string $queue,
         string $reservation,
-        string|null $uniqueHash,
         string $action,
-        string $payload = ''
+        string|null $uniqueHash = null,
+        string $payload = '',
+        int|null $retryAt = null,
+        string $failure = ''
     ): bool {
         $result = $this->connection->eval(
             <<<'LUA'
@@ -506,8 +593,13 @@ class RedisQueue extends Queue
 
                 if ARGV[3] == 'retry' then
                     redis.call('incr', KEYS[4])
-                    redis.call('lpush', KEYS[5], ARGV[4])
-                    redis.call('incr', KEYS[6])
+
+                    if ARGV[5] ~= '' then
+                        redis.call('zadd', KEYS[7], ARGV[5], ARGV[4])
+                    else
+                        redis.call('lpush', KEYS[5], ARGV[4])
+                        redis.call('incr', KEYS[6])
+                    end
 
                     return 1
                 end
@@ -516,6 +608,7 @@ class RedisQueue extends Queue
                     redis.call('incr', KEYS[3])
                 elseif ARGV[3] == 'failed' then
                     redis.call('incr', KEYS[4])
+                    redis.call('hset', KEYS[8], ARGV[6], ARGV[7])
                 end
 
                 if ARGV[2] ~= '' then
@@ -531,12 +624,17 @@ class RedisQueue extends Queue
                 static::prepareKey($queue, 'failed'),
                 static::prepareKey($queue),
                 static::prepareKey($queue, 'total'),
+                static::prepareKey($queue, 'delayed'),
+                static::prepareKey($queue, 'failures'),
                 $reservation,
                 $uniqueHash ?? '',
                 $action,
                 $payload,
+                $retryAt === null ? '' : (string) $retryAt,
+                substr($reservation, static::ID_LENGTH, static::ID_LENGTH),
+                $failure,
             ],
-            6
+            8
         );
 
         return (int) $result === 1;
@@ -569,6 +667,30 @@ class RedisQueue extends Queue
         return $uniqueHash === static::NO_UNIQUE_HASH ?
             null :
             $uniqueHash;
+    }
+
+    /**
+     * Parses serialized failure data.
+     *
+     * @param string $failure The serialized failure data.
+     * @return FailedMessageData|null The failure data.
+     */
+    protected static function parseFailure(string $failure): array|null
+    {
+        $failure = @unserialize($failure);
+
+        if (
+            !is_array($failure) ||
+            !is_array($failure['message'] ?? null) ||
+            !is_int($failure['failedAt'] ?? null) ||
+            !array_key_exists('exception', $failure) ||
+            ($failure['exception'] !== null && !is_array($failure['exception']))
+        ) {
+            return null;
+        }
+
+        /** @var FailedMessageData $failure */
+        return $failure;
     }
 
     /**

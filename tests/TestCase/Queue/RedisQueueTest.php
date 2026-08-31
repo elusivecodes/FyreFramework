@@ -15,9 +15,13 @@ use Override;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Redis;
+use RuntimeException;
 use Tests\Mock\Jobs\MockJob;
 
+use function array_key_first;
+use function array_keys;
 use function getenv;
+use function strlen;
 use function time;
 
 #[RequiresPhpExtension('redis')]
@@ -84,6 +88,115 @@ final class RedisQueueTest extends TestCase
         $this->assertSame(
             2,
             $this->queue->stats()['delayed']
+        );
+    }
+
+    public function testFailRetainsException(): void
+    {
+        $this->queue->push(new Message([
+            'className' => MockJob::class,
+            'retry' => false,
+        ]));
+
+        $message = $this->queue->pop();
+
+        $this->assertInstanceOf(
+            Message::class,
+            $message
+        );
+
+        $exception = new RuntimeException('Test failure.', 5);
+        $failedAt = time();
+
+        $this->assertFalse(
+            $this->queue->fail($message, $exception)
+        );
+
+        $failures = $this->queue->getFailed();
+
+        $this->assertCount(
+            1,
+            $failures
+        );
+
+        $id = array_key_first($failures);
+
+        $this->assertIsString(
+            $id
+        );
+        $this->assertSame(
+            32,
+            strlen($id)
+        );
+
+        $failure = $failures[$id];
+
+        $this->assertArraysAreIdentical(
+            $message->getConfig(),
+            $failure['message']
+        );
+        $this->assertGreaterThanOrEqual(
+            $failedAt,
+            $failure['failedAt']
+        );
+        $this->assertLessThanOrEqual(
+            time(),
+            $failure['failedAt']
+        );
+
+        $failureException = $failure['exception'];
+
+        $this->assertIsArray(
+            $failureException
+        );
+        $this->assertArraysAreIdentical(
+            [
+                'class' => RuntimeException::class,
+                'message' => 'Test failure.',
+                'code' => 5,
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'trace' => $exception->getTraceAsString(),
+            ],
+            $failureException
+        );
+    }
+
+    public function testForgetFailed(): void
+    {
+        $this->queue->push(new Message([
+            'className' => MockJob::class,
+            'retry' => false,
+        ]));
+
+        $message = $this->queue->pop();
+
+        $this->assertInstanceOf(
+            Message::class,
+            $message
+        );
+        $this->assertFalse(
+            $this->queue->fail($message)
+        );
+
+        $failures = $this->queue->getFailed();
+        $id = array_key_first($failures);
+
+        $this->assertIsString(
+            $id
+        );
+        $this->assertNull(
+            $failures[$id]['exception']
+        );
+        $this->assertTrue(
+            $this->queue->forgetFailed($id)
+        );
+        $this->assertFalse(
+            $this->queue->forgetFailed($id)
+        );
+        $this->assertArraysAreIdentical(
+            [],
+            $this->queue->getFailed()
         );
     }
 
@@ -156,6 +269,101 @@ final class RedisQueueTest extends TestCase
             ],
             $this->queue->stats()
         );
+    }
+
+    public function testRetryBackoff(): void
+    {
+        $this->queue->push(new Message([
+            'className' => MockJob::class,
+            'maxRetries' => 2,
+            'backoff' => 60,
+        ]));
+
+        $message = $this->queue->pop();
+
+        $this->assertInstanceOf(
+            Message::class,
+            $message
+        );
+        $this->assertTrue(
+            $this->queue->fail($message)
+        );
+
+        $this->assertArraysAreIdentical(
+            [
+                'queued' => 0,
+                'delayed' => 1,
+                'completed' => 0,
+                'failed' => 1,
+                'total' => 1,
+            ],
+            $this->queue->stats()
+        );
+
+        $this->assertNull(
+            $this->queue->pop()
+        );
+    }
+
+    public function testRetryFailed(): void
+    {
+        $this->queue->push(new Message([
+            'className' => MockJob::class,
+            'maxRetries' => 2,
+        ]));
+
+        $message = $this->queue->pop();
+
+        $this->assertInstanceOf(
+            Message::class,
+            $message
+        );
+        $this->assertTrue(
+            $this->queue->fail($message)
+        );
+
+        $message = $this->queue->pop();
+
+        $this->assertInstanceOf(
+            Message::class,
+            $message
+        );
+        $this->assertFalse(
+            $this->queue->fail($message)
+        );
+
+        $failures = $this->queue->getFailed();
+        $id = array_key_first($failures);
+
+        $this->assertIsString(
+            $id
+        );
+        $this->assertTrue(
+            $this->queue->retryFailed($id)
+        );
+        $this->assertArraysAreIdentical(
+            [],
+            $this->queue->getFailed()
+        );
+
+        $message = $this->queue->pop();
+
+        $this->assertInstanceOf(
+            Message::class,
+            $message
+        );
+        $this->assertTrue(
+            $this->queue->fail($message)
+        );
+
+        $message = $this->queue->pop();
+
+        $this->assertInstanceOf(
+            Message::class,
+            $message
+        );
+
+        $this->queue->complete($message);
     }
 
     public function testUniqueMessageLifecycle(): void
@@ -242,6 +450,12 @@ final class RedisQueueTest extends TestCase
     #[Override]
     protected function tearDown(): void
     {
+        $failures = $this->queue->getFailed();
+
+        foreach (array_keys($failures) as $id) {
+            $this->queue->forgetFailed($id);
+        }
+
         $this->queue->clear();
         $this->queue->reset();
     }

@@ -6,6 +6,7 @@ namespace Tests\Mock\Queue;
 use Fyre\Queue\Message;
 use Fyre\Queue\Queue;
 use Override;
+use Throwable;
 
 class TestQueue extends Queue
 {
@@ -37,9 +38,21 @@ class TestQueue extends Queue
     public function discard(Message $message): void {}
 
     #[Override]
-    public function fail(Message $message): bool
+    public function fail(Message $message, Throwable|null $exception = null): bool
     {
         return false;
+    }
+
+    #[Override]
+    public function forgetFailed(string $id, string $queue = self::DEFAULT): bool
+    {
+        return false;
+    }
+
+    #[Override]
+    public function getFailed(string $queue = self::DEFAULT): array
+    {
+        return [];
     }
 
     #[Override]
@@ -64,6 +77,12 @@ class TestQueue extends Queue
 
     #[Override]
     public function reset(string $queue = self::DEFAULT): void {}
+
+    #[Override]
+    public function retryFailed(string $id, string $queue = self::DEFAULT): bool
+    {
+        return false;
+    }
 
     #[Override]
     public function stats(string $queue = self::DEFAULT): array

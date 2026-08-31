@@ -6,6 +6,7 @@ namespace Fyre\Queue;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
+use Throwable;
 
 use function array_replace;
 
@@ -14,6 +15,19 @@ use function array_replace;
  *
  * Queue handlers are responsible for pushing and popping {@see Message} instances and for
  * tracking basic queue statistics.
+ *
+ * @phpstan-type FailedMessageData array{
+ *     message: array<string, mixed>,
+ *     failedAt: int,
+ *     exception: array{
+ *         class: class-string<Throwable>,
+ *         message: string,
+ *         code: int,
+ *         file: string,
+ *         line: int,
+ *         trace: string
+ *     }|null
+ * }
  */
 abstract class Queue
 {
@@ -70,9 +84,27 @@ abstract class Queue
      * Marks a job as failed.
      *
      * @param Message $message The Message.
+     * @param Throwable|null $exception The exception that caused the failure.
      * @return bool Whether the Message was retried.
      */
-    abstract public function fail(Message $message): bool;
+    abstract public function fail(Message $message, Throwable|null $exception = null): bool;
+
+    /**
+     * Forgets a failed message.
+     *
+     * @param string $id The failed message identifier.
+     * @param string $queue The queue name.
+     * @return bool Whether the failed message was forgotten.
+     */
+    abstract public function forgetFailed(string $id, string $queue = self::DEFAULT): bool;
+
+    /**
+     * Returns the failed messages.
+     *
+     * @param string $queue The queue name.
+     * @return array<string, FailedMessageData> The failed messages indexed by identifier.
+     */
+    abstract public function getFailed(string $queue = self::DEFAULT): array;
 
     /**
      * Pops the next message off the queue.
@@ -103,6 +135,15 @@ abstract class Queue
      * @param string $queue The queue name.
      */
     abstract public function reset(string $queue = self::DEFAULT): void;
+
+    /**
+     * Retries a failed message.
+     *
+     * @param string $id The failed message identifier.
+     * @param string $queue The queue name.
+     * @return bool Whether the failed message was retried.
+     */
+    abstract public function retryFailed(string $id, string $queue = self::DEFAULT): bool;
 
     /**
      * Returns the statistics for a queue.
