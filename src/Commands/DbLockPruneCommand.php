@@ -6,8 +6,9 @@ namespace Fyre\Commands;
 use Fyre\Console\Command;
 use Fyre\Console\Console;
 use Fyre\DB\ConnectionManager;
+use Fyre\DB\Expressions\FunctionExpression;
 use Fyre\DB\Forge\Presets\LocksPreset;
-use Fyre\DB\Lock;
+use Fyre\DB\Query;
 use Override;
 
 /**
@@ -59,7 +60,13 @@ class DbLockPruneCommand extends Command
             return static::CODE_SUCCESS;
         }
 
-        Lock::clearExpired($connection);
+        $connection
+            ->delete()
+            ->from(LocksPreset::TABLE)
+            ->where([
+                'expires <=' => static fn(Query $query): FunctionExpression => $query->func()->now(),
+            ])
+            ->execute();
 
         return static::CODE_SUCCESS;
     }

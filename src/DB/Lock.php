@@ -17,7 +17,6 @@ use function in_array;
 use function mb_strlen;
 use function min;
 use function random_bytes;
-use function random_int;
 use function sprintf;
 use function usleep;
 
@@ -28,33 +27,12 @@ class Lock
 {
     use DebugTrait;
 
-    protected const CLEANUP_DIVISOR = 100;
-
     protected const RETRY_DELAY = 10000;
 
     protected bool $acquired = false;
 
     #[SensitiveProperty]
     protected string $owner;
-
-    /**
-     * Clears expired database locks.
-     *
-     * @param Connection $connection The Connection.
-     * @return int The number of expired locks cleared.
-     */
-    public static function clearExpired(Connection $connection): int
-    {
-        $connection
-            ->delete()
-            ->from(LocksPreset::TABLE)
-            ->where([
-                'expires <=' => static fn(Query $query): FunctionExpression => $query->func()->now(),
-            ])
-            ->execute();
-
-        return $connection->affectedRows() ?? 0;
-    }
 
     /**
      * Constructs a Lock.
@@ -106,10 +84,6 @@ class Lock
 
         if ($this->acquired) {
             return $this->refresh();
-        }
-
-        if (random_int(1, static::CLEANUP_DIVISOR) === 1) {
-            static::clearExpired($this->connection);
         }
 
         $deadline = hrtime(true) + (int) ($wait * 1_000_000_000);

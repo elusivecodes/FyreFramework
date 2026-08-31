@@ -229,6 +229,8 @@ class MigrationRunner
         $history = $this->getHistory();
         $history->checkTable();
 
+        $this->locksPreset->check($this->getConnection());
+
         $lock = $this->buildLock();
 
         if (!$lock->acquire()) {
@@ -282,6 +284,8 @@ class MigrationRunner
     {
         $history = $this->getHistory();
         $history->checkTable();
+
+        $this->locksPreset->check($this->getConnection());
 
         $lock = $this->buildLock();
 
@@ -357,11 +361,8 @@ class MigrationRunner
      */
     protected function buildLock(): Lock
     {
-        $connection = $this->getConnection();
-
-        $this->locksPreset->check($connection);
-
-        return $connection->lock(MigrationsPreset::TABLE, $this->lockExpires);
+        return $this->getConnection()
+            ->lock(MigrationsPreset::TABLE, $this->lockExpires);
     }
 
     /**
