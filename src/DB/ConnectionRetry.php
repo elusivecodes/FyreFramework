@@ -22,10 +22,20 @@ class ConnectionRetry
 {
     use DebugTrait;
 
-    protected const RECONNECT_ERRORS = [
-        1317, // interrupted
-        2002, // refused
-        2006, // gone away
+    protected const ERROR_CODES = [
+        '08003', // connection does not exist
+        '08006', // connection failure
+        '57P01', // admin shutdown
+        '57P02', // crash shutdown
+        '57P05', // idle session timeout
+    ];
+
+    protected const DRIVER_CODES = [
+        1927, // connection killed
+        2006, // server gone away
+        2013, // server lost during query
+        2055, // server lost
+        4031, // inactivity timeout
     ];
 
     protected int $retries = 0;
@@ -116,13 +126,16 @@ class ConnectionRetry
      */
     protected function shouldRetry(PDOException $exception): bool
     {
+        $errorCode = (string) ($exception->errorInfo[0] ?? $exception->getCode());
         $driverCode = (int) ($exception->errorInfo[1] ?? 0);
 
         if (
             $this->retries < $this->maxRetries &&
             $this->connection->getSavePointLevel() === 0 &&
-            $exception->errorInfo &&
-            in_array($driverCode, static::RECONNECT_ERRORS, true)
+            (
+                in_array($errorCode, static::ERROR_CODES, true) ||
+                in_array($driverCode, static::DRIVER_CODES, true)
+            )
         ) {
             return $this->reconnect();
         }

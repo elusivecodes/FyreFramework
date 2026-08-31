@@ -16,6 +16,7 @@ In most applications you write migration classes and run them through the consol
   - [Via console commands](#via-console-commands)
   - [Planning and status](#planning-and-status)
   - [Dry runs](#dry-runs)
+  - [Migration locking](#migration-locking)
   - [Migrate](#migrate)
   - [Rollback](#rollback)
 - [Migration history](#migration-history)
@@ -30,7 +31,7 @@ In a typical application:
 2. Make sure the runner knows which namespace to scan.
 3. Run `db:migrate` or call `migrate()` from code.
 
-Each connection keeps its own migration history in the `migrations` table, so you can run `migrate()` repeatedly without reapplying the same migration.
+Each connection keeps its own migration history in the `fyre__migrations` table, so you can run `migrate()` repeatedly without reapplying the same migration.
 
 Minimal example running migrations from code:
 
@@ -195,6 +196,14 @@ app db:rollback --dry-run
 
 Dry-run output lists each migration name with its intended `up` or `down` action. It does not instantiate migrations, call migration methods, or change migration history. It does not display SQL because migrations can execute arbitrary PHP, inspect current database state, and execute queries without using Forge.
 
+### Migration locking
+
+`migrate()` and `rollback()` acquire a database-backed migration lock before recomputing their execution plan. The lock is refreshed after each migration and released when execution finishes or throws.
+
+The lock uses a 300-second lease by default. This lifetime must exceed the longest individual migration and can be configured with `MigrationRunner::setLockExpires()`. An expired lease can be acquired by another runner, while refresh and release operations only affect the current owner.
+
+Migration execution fails immediately when another process owns the lock. Before acquiring the migration lock, an actual migrate or rollback operation initializes the `fyre__migrations` and `fyre__locks` framework tables. Their definitions are provided by `MigrationsPreset` and `LocksPreset` in `Fyre\DB\Forge\Presets`. Planning, status, and dry-run operations do not initialize these tables or acquire migration locks.
+
 ### Migrate
 
 `MigrationRunner::migrate()` executes the plan returned by `getPendingMigrations()`. For each migration, `up()` is called when present and the migration name is recorded into history as part of a new batch.
@@ -228,7 +237,7 @@ $runner->rollback(null, 3);
 
 ## Migration history
 
-`MigrationHistory` stores applied migrations per connection in a `migrations` table. Construction and reads do not create the table. When no history table exists, `all()` returns an empty array and `getNextBatch()` returns `1`. The table structure is checked and created when `add()` first records a migration.
+`MigrationHistory` stores applied migrations per connection in the `fyre__migrations` table. Construction and reads do not create the table. When no history table exists, `all()` returns an empty array and `getNextBatch()` returns `1`. The migration table is initialized when `add()` first records a migration. `checkTable()` explicitly initializes migration history before migration execution.
 
 The history table includes `id`, `batch`, `migration`, and `timestamp` columns.
 
@@ -236,6 +245,7 @@ History behavior used by `MigrationRunner`:
 
 - `MigrationHistory::all()` returns applied migrations ordered by batch and most-recent first
 - `MigrationHistory::getNextBatch()` determines the next batch number for a migrate run
+- `MigrationHistory::checkTable()` initializes the migration history table
 - `MigrationHistory::add()` and `MigrationHistory::delete()` record and remove entries
 
 ## Behavior notes
@@ -245,6 +255,7 @@ A few behaviors are worth keeping in mind:
 - `migrate()` skips any migration name already present in history.
 - Migration plans use the same selection logic as execution.
 - Migration status and dry-run planning do not create the migration history table.
+- Migration status and dry-run planning do not acquire the migration lock.
 - `rollback()` throws and preserves the history entry when the corresponding migration class cannot be found.
 - Migration execution is not automatically wrapped in a transaction.
 - If a migration does not implement `up()` or `down()`, the missing method is skipped and execution continues.

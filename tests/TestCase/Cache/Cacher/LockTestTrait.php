@@ -19,16 +19,8 @@ trait LockTestTrait
     {
         $lock = $this->cacher->lock('test');
 
-        $this->assertFalse(
-            $lock->isAcquired()
-        );
-
         $this->assertTrue(
             $lock->acquire()
-        );
-
-        $this->assertTrue(
-            $lock->isAcquired()
         );
 
         $this->assertTrue(
@@ -37,10 +29,6 @@ trait LockTestTrait
 
         $this->assertTrue(
             $lock->release()
-        );
-
-        $this->assertFalse(
-            $lock->isAcquired()
         );
     }
 

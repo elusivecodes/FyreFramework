@@ -103,7 +103,10 @@ final class DbMigrationCommandTest extends TestCase
         );
 
         $this->assertFalse(
-            $this->schema->hasTable('migrations')
+            $this->schema->hasTable('fyre__migrations')
+        );
+        $this->assertFalse(
+            $this->schema->hasTable('fyre__locks')
         );
         $this->assertFalse(
             $this->schema->hasTable('test1')
@@ -289,6 +292,10 @@ final class DbMigrationCommandTest extends TestCase
             '',
             stream_get_contents($this->error)
         );
+
+        $this->assertFalse(
+            $this->schema->hasTable('fyre__locks')
+        );
     }
 
     public function testDbStatusDb(): void
@@ -372,7 +379,8 @@ final class DbMigrationCommandTest extends TestCase
     #[Override]
     protected function tearDown(): void
     {
-        $this->db->query('DROP TABLE IF EXISTS migrations');
+        $this->db->query('DROP TABLE IF EXISTS fyre__locks');
+        $this->db->query('DROP TABLE IF EXISTS fyre__migrations');
         $this->db->query('DROP TABLE IF EXISTS test1');
         $this->db->query('DROP TABLE IF EXISTS test2');
         $this->db->query('DROP TABLE IF EXISTS test3');

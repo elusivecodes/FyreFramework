@@ -17,6 +17,7 @@ Most applications define a single `default` connection and only add more when th
 - [Selecting a connection](#selecting-a-connection)
 - [Building one-off connections](#building-one-off-connections)
 - [Running queries](#running-queries)
+- [Database locks](#database-locks)
 - [Troubleshooting](#troubleshooting)
 - [Method guide](#method-guide)
   - [`ConnectionManager`](#connectionmanager)
@@ -227,6 +228,30 @@ Prefer bound values wherever possible. Query builders bind values by default (vi
 - Use `Query::literal()` only for safe, deliberate SQL fragments (like functions or column expressions).
 - Use `Connection::rawQuery()` only when you specifically need the underlying `PDOStatement`.
 - Avoid embedding user input into literals or raw snippets; see [Raw SQL fragments](queries.md#raw-sql-fragments).
+
+## Database locks
+
+Use `Lock` when work must not run concurrently for the same name:
+
+```php
+$lock = db()->lock('daily-report', 60);
+
+if ($lock->acquire(5)) {
+    try {
+        // Perform protected work and call refresh() before the lease expires.
+    } finally {
+        $lock->release();
+    }
+}
+```
+
+Locks with different names do not block each other. Before using database locks independently of migrations, initialize lock storage for the selected connection:
+
+```bash
+app db:locks --db=default
+```
+
+The migration runner initializes this storage automatically before an actual migrate or rollback operation. `Lock::acquire()` does not perform DDL. Expired locks can be acquired by another owner and are removed opportunistically during acquisition; only the current owner can refresh or release a lock.
 
 ## Troubleshooting
 
@@ -483,6 +508,18 @@ $db->update('users')
     ->execute();
 
 $affected = $db->affectedRows();
+```
+
+#### **Create a named lock** (`lock()`)
+
+Creates a database-backed named lock. Locks use a table-based lease consistently across all supported handlers.
+
+Arguments:
+- `$name` (`string`): the lock name, up to 255 characters.
+- `$expires` (`int`): the lock lifetime in seconds (default: `300`).
+
+```php
+$lock = $db->lock('daily-report', 60);
 ```
 
 #### **Run a query directly** (`query()`)

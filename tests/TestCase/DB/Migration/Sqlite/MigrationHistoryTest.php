@@ -66,7 +66,22 @@ final class MigrationHistoryTest extends TestCase
         );
 
         $this->assertFalse(
-            $this->schema->hasTable('migrations')
+            $this->schema->hasTable('fyre__migrations')
+        );
+    }
+
+    public function testCheckTable(): void
+    {
+        $this->migrationRunner->getHistory()->checkTable();
+
+        $this->schema->clear();
+
+        $this->assertTrue(
+            $this->schema->hasTable('fyre__migrations')
+        );
+
+        $this->assertFalse(
+            $this->schema->hasTable('fyre__locks')
         );
     }
 
@@ -78,7 +93,7 @@ final class MigrationHistoryTest extends TestCase
         );
 
         $this->assertFalse(
-            $this->schema->hasTable('migrations')
+            $this->schema->hasTable('fyre__migrations')
         );
     }
 
@@ -89,7 +104,7 @@ final class MigrationHistoryTest extends TestCase
         $this->assertArraysAreIdentical(
             [],
             $this->forgeRegistry->use($this->db)
-                ->build('migrations')
+                ->build('fyre__migrations')
                 ->clear()
                 ->addColumn('id', [
                     'type' => IntegerType::class,
@@ -106,8 +121,11 @@ final class MigrationHistoryTest extends TestCase
                     'default' => 'CURRENT_TIMESTAMP',
                 ])
                 ->setPrimaryKey('id')
-                ->addIndex('batch')
-                ->addIndex('migration', [
+                ->addIndex('fyre__migrations__batch', [
+                    'columns' => 'batch',
+                ])
+                ->addIndex('fyre__migrations__migration', [
+                    'columns' => 'migration',
                     'unique' => true,
                 ])
                 ->sql()

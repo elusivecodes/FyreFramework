@@ -8,12 +8,14 @@ use Fyre\DB\Handlers\Mysql\MysqlConnection;
 use Fyre\Event\Event;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
+use Tests\TestCase\DB\Shared\LockTestTrait;
 
 use function file_get_contents;
 use function preg_quote;
 
 final class ConnectionTest extends TestCase
 {
+    use LockTestTrait;
     use MysqlConnectionTrait;
     use QuoteIdentifierTestTrait;
 

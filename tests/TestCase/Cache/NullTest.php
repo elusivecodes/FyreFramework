@@ -126,10 +126,6 @@ final class NullTest extends TestCase
         $this->assertTrue(
             $lock->release()
         );
-
-        $this->assertFalse(
-            $lock->isAcquired()
-        );
     }
 
     public function testRemember(): void

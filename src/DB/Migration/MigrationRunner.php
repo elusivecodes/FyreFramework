@@ -13,6 +13,10 @@ use Fyre\DB\ConnectionManager;
 use Fyre\DB\Exceptions\DbException;
 use Fyre\DB\Forge\Forge;
 use Fyre\DB\Forge\ForgeRegistry;
+use Fyre\DB\Forge\Presets\LocksPreset;
+use Fyre\DB\Forge\Presets\MigrationsPreset;
+use Fyre\DB\Lock;
+use InvalidArgumentException;
 use ReflectionClass;
 use RegexIterator;
 
@@ -42,6 +46,8 @@ class MigrationRunner
 
     protected MigrationHistory|null $history = null;
 
+    protected int $lockExpires = 300;
+
     /**
      * @var array<string, class-string<Migration>>|null
      */
@@ -54,12 +60,14 @@ class MigrationRunner
      * @param Loader $loader The Loader.
      * @param ConnectionManager $connectionManager The ConnectionManager.
      * @param ForgeRegistry $forgeRegistry The ForgeRegistry.
+     * @param LocksPreset $locksPreset The LocksPreset.
      */
     public function __construct(
         protected Container $container,
         protected Loader $loader,
         protected ConnectionManager $connectionManager,
-        protected ForgeRegistry $forgeRegistry
+        protected ForgeRegistry $forgeRegistry,
+        protected LocksPreset $locksPreset
     ) {}
 
     /**
@@ -213,22 +221,44 @@ class MigrationRunner
      * Note: Migrations are not automatically wrapped in a transaction.
      *
      * @return static The MigrationRunner instance.
+     *
+     * @throws DbException If the migration lock cannot be acquired or is lost.
      */
     public function migrate(): static
     {
         $history = $this->getHistory();
-        $batch = $history->getNextBatch();
+        $history->checkTable();
 
-        $pendingMigrations = $this->getPendingMigrations();
+        $lock = $this->buildLock();
 
-        foreach ($pendingMigrations as $migrationName => $className) {
-            $migration = $this->container->build($className, ['forge' => $this->getForge()]);
+        if (!$lock->acquire()) {
+            throw new DbException('Migration lock could not be acquired.');
+        }
 
-            if (method_exists($migration, 'up')) {
-                $this->container->call([$migration, 'up']);
+        try {
+            $batch = $history->getNextBatch();
+
+            $pendingMigrations = $this->getPendingMigrations();
+
+            if ($pendingMigrations !== [] && !$lock->refresh()) {
+                throw new DbException('Migration lock was lost.');
             }
 
-            $history->add($migrationName, $batch);
+            foreach ($pendingMigrations as $migrationName => $className) {
+                $migration = $this->container->build($className, ['forge' => $this->getForge()]);
+
+                if (method_exists($migration, 'up')) {
+                    $this->container->call([$migration, 'up']);
+                }
+
+                $history->add($migrationName, $batch);
+
+                if (!$lock->refresh()) {
+                    throw new DbException('Migration lock was lost.');
+                }
+            }
+        } finally {
+            $lock->release();
         }
 
         return $this;
@@ -245,21 +275,42 @@ class MigrationRunner
      * @param int|null $steps The number of steps to rollback.
      * @return static The MigrationRunner instance.
      *
-     * @throws DbException If a recorded migration implementation cannot be found.
+     * @throws DbException If a recorded migration implementation cannot be found, or the
+     *                     migration lock cannot be acquired or is lost.
      */
     public function rollback(int|null $batches = 1, int|null $steps = null): static
     {
         $history = $this->getHistory();
-        $rollbackMigrations = $this->getRollbackMigrations($batches, $steps);
+        $history->checkTable();
 
-        foreach ($rollbackMigrations as $migrationName => $className) {
-            $migration = $this->container->build($className, ['forge' => $this->getForge()]);
+        $lock = $this->buildLock();
 
-            if (method_exists($migration, 'down')) {
-                $this->container->call([$migration, 'down']);
+        if (!$lock->acquire()) {
+            throw new DbException('Migration lock could not be acquired.');
+        }
+
+        try {
+            $rollbackMigrations = $this->getRollbackMigrations($batches, $steps);
+
+            if ($rollbackMigrations !== [] && !$lock->refresh()) {
+                throw new DbException('Migration lock was lost.');
             }
 
-            $history->delete($migrationName);
+            foreach ($rollbackMigrations as $migrationName => $className) {
+                $migration = $this->container->build($className, ['forge' => $this->getForge()]);
+
+                if (method_exists($migration, 'down')) {
+                    $this->container->call([$migration, 'down']);
+                }
+
+                $history->delete($migrationName);
+
+                if (!$lock->refresh()) {
+                    throw new DbException('Migration lock was lost.');
+                }
+            }
+        } finally {
+            $lock->release();
         }
 
         return $this;
@@ -278,6 +329,39 @@ class MigrationRunner
         $this->migrations = null;
 
         return $this;
+    }
+
+    /**
+     * Sets the migration lock lifetime.
+     *
+     * @param int $lockExpires The migration lock lifetime in seconds.
+     * @return static The MigrationRunner instance.
+     *
+     * @throws InvalidArgumentException If the expiration is not valid.
+     */
+    public function setLockExpires(int $lockExpires): static
+    {
+        if ($lockExpires < 1) {
+            throw new InvalidArgumentException('Migration lock expiration must be greater than 0.');
+        }
+
+        $this->lockExpires = $lockExpires;
+
+        return $this;
+    }
+
+    /**
+     * Builds the migration lock.
+     *
+     * @return Lock The Lock instance.
+     */
+    protected function buildLock(): Lock
+    {
+        $connection = $this->getConnection();
+
+        $this->locksPreset->check($connection);
+
+        return $connection->lock(MigrationsPreset::TABLE, $this->lockExpires);
     }
 
     /**

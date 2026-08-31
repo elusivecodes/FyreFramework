@@ -80,5 +80,16 @@ trait PostgresConnectionTrait
                 PRIMARY KEY (id)
             )
         SQL);
+
+        $db->query(<<<'SQL'
+            CREATE TABLE fyre__locks (
+                name VARCHAR(255) NOT NULL,
+                owner VARCHAR(32) NOT NULL,
+                expires TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+                PRIMARY KEY (name)
+            )
+        SQL);
+
+        $db->query('CREATE INDEX fyre__locks__expires ON fyre__locks (expires)');
     }
 }

@@ -82,5 +82,15 @@ trait MariaDbConnectionTrait
                 PRIMARY KEY (id)
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
         SQL);
+
+        $db->query(<<<'SQL'
+            CREATE TABLE fyre__locks (
+                name VARCHAR(255) NOT NULL,
+                owner VARCHAR(32) NOT NULL,
+                expires DATETIME NOT NULL,
+                PRIMARY KEY (name),
+                INDEX fyre__locks__expires (expires)
+            ) ENGINE=InnoDB
+        SQL);
     }
 }

@@ -19,6 +19,7 @@ Pick a path based on what you’re doing:
 - **Inspecting an existing database**: [Schema](schema.md) for tables, columns, indexes, and foreign keys.
 - **Changing schema from code**: [Forge](forge.md) for DDL operations and generated SQL.
 - **Applying schema changes over time**: [Database Migrations](migrations.md) for discovery, migrate/rollback, and history.
+- **Coordinating database-backed work**: [Database locks](connections.md#database-locks) for named leases.
 - **Controlling value conversion**: [Database types](types.md) for parsing, binding, and custom types.
 
 ## Database overview

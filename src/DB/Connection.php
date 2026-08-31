@@ -20,6 +20,7 @@ use Fyre\DB\Queries\UpsertQuery;
 use Fyre\Event\EventManager;
 use Fyre\Event\Traits\EventDispatcherTrait;
 use Fyre\Log\LogManager;
+use InvalidArgumentException;
 use PDO;
 use PDOException;
 use PDOStatement;
@@ -499,6 +500,24 @@ abstract class Connection
     public function inTransaction(): bool
     {
         return $this->inTransaction;
+    }
+
+    /**
+     * Creates a named database lock.
+     *
+     * @param string $name The lock name (up to 255 characters).
+     * @param int $expires The lock lifetime in seconds.
+     * @return Lock The new Lock instance.
+     *
+     * @throws InvalidArgumentException If the name or expiration is not valid.
+     */
+    public function lock(string $name, int $expires = 300): Lock
+    {
+        return $this->container->build(Lock::class, [
+            'connection' => $this,
+            'name' => $name,
+            'expires' => $expires,
+        ]);
     }
 
     /**

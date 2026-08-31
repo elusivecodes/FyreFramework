@@ -410,14 +410,6 @@ Arguments:
 $acquired = $lock->acquire(2);
 ```
 
-#### **Check lock state** (`isAcquired()`)
-
-Returns whether this object currently considers the lock acquired.
-
-```php
-$acquired = $lock->isAcquired();
-```
-
 #### **Refresh a lock** (`refresh()`)
 
 Extends the lifetime of an acquired lock using its configured expiration.

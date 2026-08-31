@@ -84,16 +84,6 @@ abstract class Lock
     }
 
     /**
-     * Checks whether the lock has been acquired by this object.
-     *
-     * @return bool Whether the lock has been acquired.
-     */
-    public function isAcquired(): bool
-    {
-        return $this->acquired;
-    }
-
-    /**
      * Refreshes the lock lifetime.
      *
      * @return bool Whether the lock was refreshed.

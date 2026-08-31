@@ -86,6 +86,25 @@ For example, `db:rollback default 2 --steps 5` resolves as `db = default`, `batc
 
 ### Database commands
 
+#### `db:locks`
+
+Initializes database lock storage. Run this once for each connection that uses `Connection::lock()` outside the migration runner.
+
+Options:
+
+- `db` (`string`): connection key (default: `ConnectionManager::DEFAULT`)
+
+Examples:
+
+```bash
+app db:locks --db=default
+```
+
+```php
+$commandRunner->handle(['app', 'db:locks']);
+$commandRunner->handle(['app', 'db:locks', '--db', 'default']);
+```
+
 #### `db:migrate`
 
 Runs all pending migrations.

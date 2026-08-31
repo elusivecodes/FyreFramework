@@ -5,11 +5,9 @@ namespace Fyre\DB\Migration;
 
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\DB\Connection;
-use Fyre\DB\Forge\ForgeRegistry;
-use Fyre\DB\Schema\SchemaRegistry;
-use Fyre\DB\Types\DateTimeType;
-use Fyre\DB\Types\IntegerType;
-use Fyre\DB\Types\StringType;
+use Fyre\DB\Expressions\AggregateExpression;
+use Fyre\DB\Forge\Presets\MigrationsPreset;
+use Fyre\DB\Query;
 
 /**
  * Stores and queries migration history.
@@ -20,21 +18,17 @@ class MigrationHistory
 {
     use DebugTrait;
 
-    protected static string $table = 'migrations';
-
     protected bool $checked = false;
 
     /**
      * Constructs a MigrationHistory.
      *
      * @param Connection $connection The Connection.
-     * @param ForgeRegistry $forgeRegistry The ForgeRegistry.
-     * @param SchemaRegistry $schemaRegistry The SchemaRegistry.
+     * @param MigrationsPreset $migrationsPreset The MigrationsPreset.
      */
     public function __construct(
         protected Connection $connection,
-        protected ForgeRegistry $forgeRegistry,
-        protected SchemaRegistry $schemaRegistry
+        protected MigrationsPreset $migrationsPreset
     ) {}
 
     /**
@@ -45,11 +39,11 @@ class MigrationHistory
      */
     public function add(string $name, int $batch): void
     {
-        $this->check();
+        $this->checkTable();
 
         $this->connection
             ->insert()
-            ->into(static::$table)
+            ->into(MigrationsPreset::TABLE)
             ->values([
                 [
                     'batch' => $batch,
@@ -72,13 +66,29 @@ class MigrationHistory
 
         return $this->connection
             ->select()
-            ->from(static::$table)
+            ->from(MigrationsPreset::TABLE)
             ->orderBy([
                 'batch' => 'DESC',
                 'id' => 'DESC',
             ])
             ->execute()
             ->all();
+    }
+
+    /**
+     * Checks the migration history table.
+     *
+     * Ensures the migrations table exists with the expected columns and indexes.
+     */
+    public function checkTable(): void
+    {
+        if ($this->checked) {
+            return;
+        }
+
+        $this->migrationsPreset->check($this->connection);
+
+        $this->checked = true;
     }
 
     /**
@@ -94,7 +104,7 @@ class MigrationHistory
 
         $this->connection
             ->delete()
-            ->from(static::$table)
+            ->from(MigrationsPreset::TABLE)
             ->where([
                 'migration' => $name,
             ])
@@ -114,51 +124,14 @@ class MigrationHistory
 
         $lastBatch = $this->connection
             ->select([
-                'last_batch' => 'MAX(batch)',
+                'last_batch' => static fn(Query $query): AggregateExpression => $query->func()
+                    ->max('batch'),
             ])
-            ->from(static::$table)
+            ->from(MigrationsPreset::TABLE)
             ->execute()
             ->fetch()['last_batch'] ?? 0;
 
         return $lastBatch + 1;
-    }
-
-    /**
-     * Checks the migration schema.
-     *
-     * Ensures the migrations table exists with the expected columns and indexes.
-     */
-    protected function check(): void
-    {
-        if ($this->checked) {
-            return;
-        }
-
-        $this->forgeRegistry->use($this->connection)
-            ->build(static::$table)
-            ->clear()
-            ->addColumn('id', [
-                'type' => IntegerType::class,
-                'autoIncrement' => true,
-            ])
-            ->addColumn('batch', [
-                'type' => IntegerType::class,
-            ])
-            ->addColumn('migration', [
-                'type' => StringType::class,
-            ])
-            ->addColumn('timestamp', [
-                'type' => DateTimeType::class,
-                'default' => 'CURRENT_TIMESTAMP',
-            ])
-            ->setPrimaryKey('id')
-            ->addIndex('batch')
-            ->addIndex('migration', [
-                'unique' => true,
-            ])
-            ->execute();
-
-        $this->checked = true;
     }
 
     /**
@@ -168,8 +141,6 @@ class MigrationHistory
      */
     protected function hasTable(): bool
     {
-        return $this->schemaRegistry
-            ->use($this->connection)
-            ->hasTable(static::$table);
+        return $this->migrationsPreset->exists($this->connection);
     }
 }

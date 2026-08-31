@@ -20,6 +20,7 @@ trait ConnectionTrait
 
     protected static function clearSchema(Connection $db): void
     {
+        $db->query('DROP TABLE IF EXISTS fyre__locks');
         $db->query('DROP TABLE IF EXISTS test');
     }
 

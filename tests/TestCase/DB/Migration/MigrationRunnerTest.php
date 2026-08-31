@@ -8,6 +8,7 @@ use Fyre\DB\Exceptions\DbException;
 use Fyre\DB\Migration\Migration;
 use Fyre\DB\Migration\MigrationHistory;
 use Fyre\DB\Migration\MigrationRunner;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Migrations\Migration_1_Test1;
 use Tests\Mock\Migrations\Migration_2_Test2;
@@ -185,6 +186,15 @@ final class MigrationRunnerTest extends TestCase
         $this->assertTrue(
             $this->schema->hasTable('test3')
         );
+
+        $this->assertSame(
+            0,
+            $this->db
+                ->select()
+                ->from('fyre__locks')
+                ->execute()
+                ->count()
+        );
     }
 
     public function testMigrateFromVersion(): void
@@ -206,6 +216,23 @@ final class MigrationRunnerTest extends TestCase
         $this->assertTrue(
             $this->schema->hasTable('test3')
         );
+    }
+
+    public function testMigrateLocked(): void
+    {
+        $this->expectException(DbException::class);
+        $this->expectExceptionMessageIs('Migration lock could not be acquired.');
+
+        $this->migrationRunner->migrate();
+        $this->migrationRunner->rollback();
+
+        $lock = $this->db->lock('fyre__migrations');
+
+        $this->assertTrue(
+            $lock->acquire()
+        );
+
+        $this->migrationRunner->migrate();
     }
 
     public function testRollback(): void
@@ -232,6 +259,22 @@ final class MigrationRunnerTest extends TestCase
         );
     }
 
+    public function testRollbackLocked(): void
+    {
+        $this->expectException(DbException::class);
+        $this->expectExceptionMessageIs('Migration lock could not be acquired.');
+
+        $this->migrationRunner->migrate();
+
+        $lock = $this->db->lock('fyre__migrations');
+
+        $this->assertTrue(
+            $lock->acquire()
+        );
+
+        $this->migrationRunner->rollback();
+    }
+
     public function testRollbackSteps(): void
     {
         $this->migrationRunner->migrate();
@@ -250,5 +293,21 @@ final class MigrationRunnerTest extends TestCase
         $this->assertFalse(
             $this->schema->hasTable('test3')
         );
+    }
+
+    public function testSetLockExpires(): void
+    {
+        $this->assertSame(
+            $this->migrationRunner,
+            $this->migrationRunner->setLockExpires(600)
+        );
+    }
+
+    public function testSetLockExpiresInvalid(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Migration lock expiration must be greater than 0.');
+
+        $this->migrationRunner->setLockExpires(0);
     }
 }

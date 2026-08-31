@@ -69,7 +69,8 @@ trait PostgresConnectionTrait
     #[Override]
     protected function tearDown(): void
     {
-        $this->db->query('DROP TABLE IF EXISTS migrations');
+        $this->db->query('DROP TABLE IF EXISTS fyre__locks');
+        $this->db->query('DROP TABLE IF EXISTS fyre__migrations');
         $this->db->query('DROP TABLE IF EXISTS test1');
         $this->db->query('DROP TABLE IF EXISTS test2');
         $this->db->query('DROP TABLE IF EXISTS test3');
