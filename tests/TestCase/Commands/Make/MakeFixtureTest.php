@@ -68,7 +68,10 @@ final class MakeFixtureTest extends TestCase
         );
 
         rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: tmp/Fixtures/ExampleFixture.php\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
         rewind($this->error);
         $this->assertSame('', stream_get_contents($this->error));
 
@@ -141,7 +144,7 @@ final class MakeFixtureTest extends TestCase
         $this->assertSame('', stream_get_contents($this->output));
         rewind($this->error);
         $this->assertSame(
-            Console::style('Fixture file already exists.', Console::RED).PHP_EOL,
+            "\033[0;31mFixture file already exists.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
         $this->assertStringEqualsFile($filePath, 'changed');
@@ -162,7 +165,10 @@ final class MakeFixtureTest extends TestCase
         );
 
         rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: ".$filePath."\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
         rewind($this->error);
         $this->assertSame('', stream_get_contents($this->error));
 
@@ -190,7 +196,7 @@ final class MakeFixtureTest extends TestCase
         $this->assertSame('', stream_get_contents($this->output));
         rewind($this->error);
         $this->assertSame(
-            Console::style('Namespace path not found.', Console::RED).PHP_EOL,
+            "\033[0;31mNamespace path not found.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
         $this->assertFileDoesNotExist('tmp/Fixtures/ExampleFixture.php');

@@ -11,6 +11,8 @@ use Fyre\Core\Make\TestSourceBuilder;
 use Fyre\Utility\Path;
 use Override;
 
+use function sprintf;
+
 /**
  * Implements the make test console command.
  *
@@ -99,6 +101,11 @@ class MakeTestCommand extends Command
 
             return static::CODE_ERROR;
         }
+
+        sprintf(
+            'Generated: %s',
+            $generatedFile->getPath()
+        ) |> $this->io->success(...);
 
         return static::CODE_SUCCESS;
     }

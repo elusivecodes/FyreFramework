@@ -57,7 +57,7 @@ final class MakeCommandTest extends TestCase
         rewind($this->output);
 
         $this->assertSame(
-            '',
+            "\033[0;32mGenerated: tmp/Commands/ExampleCommand.php\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
 
@@ -105,7 +105,7 @@ final class MakeCommandTest extends TestCase
         rewind($this->error);
 
         $this->assertSame(
-            Console::style('Command file already exists.', Console::RED).PHP_EOL,
+            "\033[0;31mCommand file already exists.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
 
@@ -129,7 +129,7 @@ final class MakeCommandTest extends TestCase
         rewind($this->output);
 
         $this->assertSame(
-            '',
+            "\033[0;32mGenerated: ".$filePath."\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
 
@@ -171,7 +171,7 @@ final class MakeCommandTest extends TestCase
         rewind($this->error);
 
         $this->assertSame(
-            Console::style('Namespace path not found.', Console::RED).PHP_EOL,
+            "\033[0;31mNamespace path not found.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
 

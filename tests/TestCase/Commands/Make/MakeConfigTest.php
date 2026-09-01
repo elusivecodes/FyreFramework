@@ -57,7 +57,7 @@ final class MakeConfigTest extends TestCase
         rewind($this->output);
 
         $this->assertSame(
-            '',
+            "\033[0;32mGenerated: tmp/config/example.php\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
 
@@ -99,7 +99,7 @@ final class MakeConfigTest extends TestCase
         rewind($this->error);
 
         $this->assertSame(
-            Console::style('Config file already exists.', Console::RED).PHP_EOL,
+            "\033[0;31mConfig file already exists.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
 
@@ -123,7 +123,7 @@ final class MakeConfigTest extends TestCase
         rewind($this->output);
 
         $this->assertSame(
-            '',
+            "\033[0;32mGenerated: ".$filePath."\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
 
@@ -162,7 +162,7 @@ final class MakeConfigTest extends TestCase
         rewind($this->error);
 
         $this->assertSame(
-            Console::style('Invalid config path.', Console::RED).PHP_EOL,
+            "\033[0;31mInvalid config path.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
     }

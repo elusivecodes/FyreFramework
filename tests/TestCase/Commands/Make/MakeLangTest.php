@@ -56,7 +56,10 @@ final class MakeLangTest extends TestCase
         );
 
         rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: tmp/lang/en/Example.php\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
         rewind($this->error);
         $this->assertSame('', stream_get_contents($this->error));
 
@@ -85,7 +88,7 @@ final class MakeLangTest extends TestCase
         $this->assertSame('', stream_get_contents($this->output));
         rewind($this->error);
         $this->assertSame(
-            Console::style('Lang file already exists.', Console::RED).PHP_EOL,
+            "\033[0;31mLang file already exists.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
         $this->assertStringEqualsFile($filePath, 'changed');
@@ -106,7 +109,10 @@ final class MakeLangTest extends TestCase
         );
 
         rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: ".$filePath."\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
         rewind($this->error);
         $this->assertSame('', stream_get_contents($this->error));
 
@@ -132,7 +138,7 @@ final class MakeLangTest extends TestCase
         $this->assertSame('', stream_get_contents($this->output));
         rewind($this->error);
         $this->assertSame(
-            Console::style('Invalid lang path.', Console::RED).PHP_EOL,
+            "\033[0;31mInvalid lang path.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
     }

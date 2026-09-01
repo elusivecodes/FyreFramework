@@ -58,7 +58,10 @@ final class MakeMigrationTest extends TestCase
         );
 
         rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: tmp/Migrations/Migration_20240101_CreateTables.php\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
         rewind($this->error);
         $this->assertSame('', stream_get_contents($this->error));
 
@@ -82,11 +85,6 @@ final class MakeMigrationTest extends TestCase
             $this->commandRunner->run('make:migration', ['CreateTables'])
         );
 
-        rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
-        rewind($this->error);
-        $this->assertSame('', stream_get_contents($this->error));
-
         $files = glob('tmp/Migrations/Migration_*_CreateTables.php');
 
         $this->assertIsArray($files);
@@ -94,6 +92,14 @@ final class MakeMigrationTest extends TestCase
 
         $filePath = $files[0];
         $className = pathinfo($filePath, PATHINFO_FILENAME);
+
+        rewind($this->output);
+        $this->assertSame(
+            "\033[0;32mGenerated: ".$filePath."\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+        rewind($this->error);
+        $this->assertSame('', stream_get_contents($this->error));
 
         $this->assertFileMatchesFormat(
             Make::loadStub('migration', [
@@ -119,7 +125,7 @@ final class MakeMigrationTest extends TestCase
         $this->assertSame('', stream_get_contents($this->output));
         rewind($this->error);
         $this->assertSame(
-            Console::style('Migration file already exists.', Console::RED).PHP_EOL,
+            "\033[0;31mMigration file already exists.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
         $this->assertStringEqualsFile($filePath, 'changed');
@@ -141,7 +147,10 @@ final class MakeMigrationTest extends TestCase
         );
 
         rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: ".$filePath."\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
         rewind($this->error);
         $this->assertSame('', stream_get_contents($this->error));
 
@@ -169,7 +178,7 @@ final class MakeMigrationTest extends TestCase
         $this->assertSame('', stream_get_contents($this->output));
         rewind($this->error);
         $this->assertSame(
-            Console::style('Namespace path not found.', Console::RED).PHP_EOL,
+            "\033[0;31mNamespace path not found.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
         $this->assertFileDoesNotExist('tmp/Migrations/Migration_20240101_CreateTables.php');

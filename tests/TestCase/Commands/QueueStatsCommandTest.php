@@ -117,6 +117,23 @@ final class QueueStatsCommandTest extends TestCase
         );
     }
 
+    public function testQueueStatsEmpty(): void
+    {
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('queue:stats', [
+                'queue' => 'missing',
+            ])
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;34mNo queues found.\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
     public function testQueueStatsQueue(): void
     {
         $this->assertSame(
@@ -134,8 +151,7 @@ final class QueueStatsCommandTest extends TestCase
             '+--------+---+'.PHP_EOL.
             '| queued | 2 |'.PHP_EOL.
             '| failed | 1 |'.PHP_EOL.
-            '+--------+---+'.PHP_EOL.
-            "\033[1;32mother\033[0m".PHP_EOL,
+            '+--------+---+'.PHP_EOL,
             stream_get_contents($this->output)
         );
 

@@ -8,8 +8,11 @@ use Fyre\Console\Console;
 use Fyre\Queue\QueueManager;
 use Override;
 
+use function array_filter;
 use function array_keys;
 use function array_map;
+
+use const ARRAY_FILTER_USE_KEY;
 
 /**
  * Implements the queue stats console command.
@@ -56,22 +59,35 @@ class QueueStatsCommand extends Command
     {
         $handlers = $this->queueManager->getConfig() ?? [];
 
-        foreach ($handlers as $key => $data) {
-            if ($config && $key !== $config) {
+        if ($config !== null) {
+            $handlers = array_filter(
+                $handlers,
+                static fn(string $key): bool => $key === $config,
+                ARRAY_FILTER_USE_KEY
+            );
+        }
+
+        $found = false;
+
+        foreach ($handlers as $key => $_) {
+            $instance = $this->queueManager->use($key);
+            $activeQueues = $instance->queues();
+
+            if ($queue !== null) {
+                $activeQueues = array_filter(
+                    $activeQueues,
+                    static fn(string $activeQueue): bool => $activeQueue === $queue
+                );
+            }
+
+            if ($activeQueues === []) {
                 continue;
             }
 
-            $instance = $this->queueManager->use($key);
-
             $this->io->write($key, Console::GREEN, style: Console::BOLD);
-
-            $activeQueues = $instance->queues();
+            $found = true;
 
             foreach ($activeQueues as $activeQueue) {
-                if ($queue && $activeQueue !== $queue) {
-                    continue;
-                }
-
                 $stats = $instance->stats($activeQueue);
                 $data = array_map(
                     static fn(string $key, mixed $value): array => [$key, $value],
@@ -82,6 +98,10 @@ class QueueStatsCommand extends Command
                 $this->io->write($activeQueue, Console::BLUE);
                 $this->io->table($data);
             }
+        }
+
+        if (!$found) {
+            $this->io->info('No queues found.');
         }
 
         return static::CODE_SUCCESS;

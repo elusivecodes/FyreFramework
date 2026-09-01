@@ -11,6 +11,8 @@ use Fyre\Utility\Path;
 use Fyre\View\HelperRegistry;
 use Override;
 
+use function sprintf;
+
 /**
  * Implements the make helper console command.
  *
@@ -98,6 +100,11 @@ class MakeHelperCommand extends Command
 
             return static::CODE_ERROR;
         }
+
+        sprintf(
+            'Generated: %s',
+            $generatedFile->getPath()
+        ) |> $this->io->success(...);
 
         return static::CODE_SUCCESS;
     }

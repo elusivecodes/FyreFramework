@@ -72,6 +72,12 @@ class QueueFailedCommand extends Command
             );
         }
 
+        if ($failures === []) {
+            $this->io->info('No failed queue jobs found.');
+
+            return static::CODE_SUCCESS;
+        }
+
         uksort(
             $failures,
             static function(string $a, string $b) use ($failures): int {

@@ -16,7 +16,7 @@ use function array_map;
  *
  * Displays the status of discovered and recorded migrations.
  */
-class DbStatusCommand extends Command
+class DbMigrationStatusCommand extends Command
 {
     #[Override]
     protected string|null $alias = 'db:status';
@@ -59,6 +59,12 @@ class DbStatusCommand extends Command
         $status = $this->migrationRunner
             ->setConnection($connection)
             ->getStatus();
+
+        if ($status === []) {
+            $this->io->info('No migrations found.');
+
+            return static::CODE_SUCCESS;
+        }
 
         $data = array_map(
             static fn(array $data): array => [

@@ -46,6 +46,8 @@ class MigrationRunner
 
     protected MigrationHistory|null $history = null;
 
+    protected int $lastMigrationCount = 0;
+
     protected int $lockExpires = 300;
 
     /**
@@ -79,6 +81,7 @@ class MigrationRunner
         $this->connection = null;
         $this->history = null;
         $this->migrations = null;
+        $this->lastMigrationCount = 0;
     }
 
     /**
@@ -111,6 +114,16 @@ class MigrationRunner
         return $this->history ??= $this->container->build(MigrationHistory::class, [
             'connection' => $this->getConnection(),
         ]);
+    }
+
+    /**
+     * Returns the number of migrations executed by the last migrate or rollback operation.
+     *
+     * @return int The migration count.
+     */
+    public function getLastMigrationCount(): int
+    {
+        return $this->lastMigrationCount;
     }
 
     /**
@@ -226,6 +239,8 @@ class MigrationRunner
      */
     public function migrate(): static
     {
+        $this->lastMigrationCount = 0;
+
         $history = $this->getHistory();
         $history->checkTable();
 
@@ -255,6 +270,8 @@ class MigrationRunner
 
                 $history->add($migrationName, $batch);
 
+                $this->lastMigrationCount++;
+
                 if (!$lock->refresh()) {
                     throw new DbException('Migration lock was lost.');
                 }
@@ -282,6 +299,8 @@ class MigrationRunner
      */
     public function rollback(int|null $batches = 1, int|null $steps = null): static
     {
+        $this->lastMigrationCount = 0;
+
         $history = $this->getHistory();
         $history->checkTable();
 
@@ -308,6 +327,8 @@ class MigrationRunner
                 }
 
                 $history->delete($migrationName);
+
+                $this->lastMigrationCount++;
 
                 if (!$lock->refresh()) {
                     throw new DbException('Migration lock was lost.');

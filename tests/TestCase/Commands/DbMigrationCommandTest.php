@@ -80,13 +80,22 @@ final class DbMigrationCommandTest extends TestCase
         $this->assertTrue(
             $this->schema->hasTable('test3')
         );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;32mApplied 3 migration(s).\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
     }
 
     public function testDbMigrateDryRun(): void
     {
         $this->assertSame(
             Command::CODE_SUCCESS,
-            $this->commandRunner->handle(['app', 'db:migrate', '--dry-run'])
+            $this->commandRunner->run('db:migrate', [
+                'dryRun' => true,
+            ])
         );
 
         rewind($this->output);
@@ -119,6 +128,44 @@ final class DbMigrationCommandTest extends TestCase
         );
     }
 
+    public function testDbMigrateDryRunEmpty(): void
+    {
+        $this->migrationRunner->migrate();
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('db:migrate', [
+                'dryRun' => true,
+            ])
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;34mNo pending migrations.\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
+    public function testDbMigrateEmpty(): void
+    {
+        $this->migrationRunner->migrate();
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('db:migrate', [
+                'db' => ConnectionManager::DEFAULT,
+            ])
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;34mNo pending migrations.\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
     public function testDbRollback(): void
     {
         $this->migrationRunner->migrate();
@@ -145,6 +192,13 @@ final class DbMigrationCommandTest extends TestCase
         $this->assertArraysAreIdentical(
             [],
             $this->migrationRunner->getHistory()->all()
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;32mRolled back 3 migration(s).\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
         );
     }
 
@@ -181,6 +235,13 @@ final class DbMigrationCommandTest extends TestCase
             ],
             array_column($this->migrationRunner->getHistory()->all(), 'migration')
         );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;32mRolled back 1 migration(s).\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
     }
 
     public function testDbRollbackDryRun(): void
@@ -189,7 +250,9 @@ final class DbMigrationCommandTest extends TestCase
 
         $this->assertSame(
             Command::CODE_SUCCESS,
-            $this->commandRunner->handle(['app', 'db:rollback', '--dry-run'])
+            $this->commandRunner->run('db:rollback', [
+                'dryRun' => true,
+            ])
         );
 
         rewind($this->output);
@@ -227,6 +290,40 @@ final class DbMigrationCommandTest extends TestCase
         );
     }
 
+    public function testDbRollbackDryRunEmpty(): void
+    {
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('db:rollback', [
+                'dryRun' => true,
+            ])
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;34mNo migrations to roll back.\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
+    public function testDbRollbackEmpty(): void
+    {
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('db:rollback', [
+                'db' => ConnectionManager::DEFAULT,
+            ])
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;34mNo migrations to roll back.\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
     public function testDbRollbackSteps(): void
     {
         $this->migrationRunner->migrate();
@@ -256,6 +353,13 @@ final class DbMigrationCommandTest extends TestCase
                 '1_Test1',
             ],
             array_column($this->migrationRunner->getHistory()->all(), 'migration')
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;32mRolled back 2 migration(s).\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
         );
     }
 
@@ -302,12 +406,33 @@ final class DbMigrationCommandTest extends TestCase
     {
         $this->assertSame(
             Command::CODE_SUCCESS,
-            $this->commandRunner->handle(['app', 'db:status', '--db', 'other'])
+            $this->commandRunner->run('db:status', [
+                'db' => 'other',
+            ])
         );
 
         $this->assertSame(
             $this->connectionManager->use('other'),
             $this->migrationRunner->getConnection()
+        );
+    }
+
+    public function testDbStatusEmpty(): void
+    {
+        $this->migrationRunner->clear();
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('db:status', [
+                'db' => ConnectionManager::DEFAULT,
+            ])
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;34mNo migrations found.\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
         );
     }
 

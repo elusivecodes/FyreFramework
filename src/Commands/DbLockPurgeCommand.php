@@ -11,6 +11,8 @@ use Fyre\DB\Forge\Presets\LocksPreset;
 use Fyre\DB\Query;
 use Override;
 
+use function sprintf;
+
 /**
  * Implements the db lock purge console command.
  *
@@ -57,6 +59,8 @@ class DbLockPurgeCommand extends Command
         $connection = $this->connectionManager->use($db);
 
         if (!$this->locksPreset->exists($connection)) {
+            $this->io->info('Database lock storage is not initialized.');
+
             return static::CODE_SUCCESS;
         }
 
@@ -67,6 +71,17 @@ class DbLockPurgeCommand extends Command
                 'expires <=' => static fn(Query $query): FunctionExpression => $query->func()->now(),
             ])
             ->execute();
+
+        $count = $connection->affectedRows() ?? 0;
+
+        if ($count === 0) {
+            $this->io->info('No expired database locks found.');
+        } else {
+            sprintf(
+                'Purged %d expired database lock(s).',
+                $count
+            ) |> $this->io->success(...);
+        }
 
         return static::CODE_SUCCESS;
     }

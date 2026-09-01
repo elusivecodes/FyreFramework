@@ -12,6 +12,7 @@ use Override;
 
 use function array_keys;
 use function count;
+use function sprintf;
 
 /**
  * Implements the queue retry console command.
@@ -77,24 +78,44 @@ class QueueRetryCommand extends Command
             |> array_keys(...);
 
         if ($failureIds === []) {
+            $this->io->info('No failed queue jobs matched.');
+
             return static::CODE_SUCCESS;
         }
 
         $count = count($failureIds);
 
-        if (!$force && !$this->io->confirm('Retry '.$count.' failed queue job(s)?', false)) {
+        if (!$force && !$this->io->confirm(sprintf(
+            'Retry %d failed queue job(s)?',
+            $count
+        ), false)) {
+            $this->io->info('Cancelled.');
+
             return static::CODE_SUCCESS;
         }
 
         $result = static::CODE_SUCCESS;
+        $retried = 0;
 
         foreach ($failureIds as $id) {
             if ($handler->retryFailed($id, $queue)) {
+                $retried++;
+
                 continue;
             }
 
-            $this->io->error('Failed queue job could not be retried: '.$id);
+            sprintf(
+                'Failed queue job could not be retried: %s',
+                $id
+            ) |> $this->io->error(...);
             $result = static::CODE_ERROR;
+        }
+
+        if ($retried > 0) {
+            sprintf(
+                'Retried %d failed queue job(s).',
+                $retried
+            ) |> $this->io->success(...);
         }
 
         return $result;

@@ -25,8 +25,12 @@ use PHPUnit\Framework\TestCase;
 use function array_column;
 use function fclose;
 use function fopen;
+use function ftruncate;
 use function getenv;
+use function rewind;
+use function stream_get_contents;
 
+use const PHP_EOL;
 use const ROOT;
 
 final class DbLockCommandTest extends TestCase
@@ -57,6 +61,9 @@ final class DbLockCommandTest extends TestCase
         $this->commandRunner->run('db:lock:setup', [
             'db' => ConnectionManager::DEFAULT,
         ]);
+
+        rewind($this->output);
+        ftruncate($this->output, 0);
 
         $this->db
             ->insert()
@@ -93,6 +100,37 @@ final class DbLockCommandTest extends TestCase
             ['active'],
             array_column($locks, 'name')
         );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;32mPurged 1 expired database lock(s).\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
+    public function testDbLockPurgeWithoutExpiredLocks(): void
+    {
+        $this->commandRunner->run('db:lock:setup', [
+            'db' => ConnectionManager::DEFAULT,
+        ]);
+
+        rewind($this->output);
+        ftruncate($this->output, 0);
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('db:lock:purge', [
+                'db' => ConnectionManager::DEFAULT,
+            ])
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;34mNo expired database locks found.\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
     }
 
     public function testDbLockPurgeWithoutTable(): void
@@ -106,6 +144,13 @@ final class DbLockCommandTest extends TestCase
 
         $this->assertFalse(
             $this->schema->hasTable('fyre__locks')
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;34mDatabase lock storage is not initialized.\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
         );
     }
 
@@ -122,6 +167,37 @@ final class DbLockCommandTest extends TestCase
 
         $this->assertTrue(
             $this->schema->hasTable('fyre__locks')
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;32mDatabase lock storage initialized.\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
+    public function testDbLockSetupExisting(): void
+    {
+        $this->commandRunner->run('db:lock:setup', [
+            'db' => ConnectionManager::DEFAULT,
+        ]);
+
+        rewind($this->output);
+        ftruncate($this->output, 0);
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('db:lock:setup', [
+                'db' => ConnectionManager::DEFAULT,
+            ])
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;34mDatabase lock storage is already initialized.\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
         );
     }
 

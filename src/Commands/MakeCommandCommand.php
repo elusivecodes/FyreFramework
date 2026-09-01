@@ -12,6 +12,7 @@ use Fyre\Utility\Path;
 use Override;
 
 use function preg_replace;
+use function sprintf;
 use function strtolower;
 
 /**
@@ -110,6 +111,11 @@ class MakeCommandCommand extends Command
 
             return static::CODE_ERROR;
         }
+
+        sprintf(
+            'Generated: %s',
+            $generatedFile->getPath()
+        ) |> $this->io->success(...);
 
         return static::CODE_SUCCESS;
     }

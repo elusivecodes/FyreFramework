@@ -55,7 +55,10 @@ final class MakeFormTest extends TestCase
         );
 
         rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: tmp/Forms/ExampleForm.php\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
         rewind($this->error);
         $this->assertSame('', stream_get_contents($this->error));
 
@@ -87,7 +90,7 @@ final class MakeFormTest extends TestCase
         $this->assertSame('', stream_get_contents($this->output));
         rewind($this->error);
         $this->assertSame(
-            Console::style('Form file already exists.', Console::RED).PHP_EOL,
+            "\033[0;31mForm file already exists.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
         $this->assertStringEqualsFile($filePath, 'changed');
@@ -109,7 +112,10 @@ final class MakeFormTest extends TestCase
         );
 
         rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: ".$filePath."\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
         rewind($this->error);
         $this->assertSame('', stream_get_contents($this->error));
 
@@ -136,7 +142,7 @@ final class MakeFormTest extends TestCase
         $this->assertSame('', stream_get_contents($this->output));
         rewind($this->error);
         $this->assertSame(
-            Console::style('Namespace path not found.', Console::RED).PHP_EOL,
+            "\033[0;31mNamespace path not found.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
         $this->assertFileDoesNotExist('tmp/Forms/ExampleForm.php');

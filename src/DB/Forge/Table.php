@@ -376,6 +376,10 @@ abstract class Table
     {
         $queries = $this->sql();
 
+        if ($queries === []) {
+            return $this;
+        }
+
         $connection = $this->forge->getConnection();
 
         foreach ($queries as $sql) {

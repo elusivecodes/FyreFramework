@@ -12,6 +12,7 @@ use Fyre\Utility\Path;
 use Override;
 
 use function date;
+use function sprintf;
 
 /**
  * Implements the make migration console command.
@@ -104,6 +105,11 @@ class MakeMigrationCommand extends Command
 
             return static::CODE_ERROR;
         }
+
+        sprintf(
+            'Generated: %s',
+            $generatedFile->getPath()
+        ) |> $this->io->success(...);
 
         return static::CODE_SUCCESS;
     }

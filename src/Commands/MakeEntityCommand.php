@@ -18,6 +18,8 @@ use Fyre\Utility\Path;
 use InvalidArgumentException;
 use Override;
 
+use function sprintf;
+
 /**
  * Implements the make entity console command.
  *
@@ -182,6 +184,11 @@ class MakeEntityCommand extends Command
 
             return static::CODE_ERROR;
         }
+
+        sprintf(
+            'Generated: %s',
+            $generatedFile->getPath()
+        ) |> $this->io->success(...);
 
         return static::CODE_SUCCESS;
     }

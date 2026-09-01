@@ -58,7 +58,7 @@ final class MakeCellTemplateTest extends TestCase
         rewind($this->output);
 
         $this->assertSame(
-            '',
+            "\033[0;32mGenerated: tmp/templates/cells/Example/display.php\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
 
@@ -100,7 +100,7 @@ final class MakeCellTemplateTest extends TestCase
         rewind($this->error);
 
         $this->assertSame(
-            Console::style('Cell template file already exists.', Console::RED).PHP_EOL,
+            "\033[0;31mCell template file already exists.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
 
@@ -124,7 +124,7 @@ final class MakeCellTemplateTest extends TestCase
         rewind($this->output);
 
         $this->assertSame(
-            '',
+            "\033[0;32mGenerated: ".$filePath."\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
 
@@ -163,7 +163,7 @@ final class MakeCellTemplateTest extends TestCase
         rewind($this->error);
 
         $this->assertSame(
-            Console::style('Invalid template path.', Console::RED).PHP_EOL,
+            "\033[0;31mInvalid template path.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
     }

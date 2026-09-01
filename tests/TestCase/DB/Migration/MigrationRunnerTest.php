@@ -173,6 +173,11 @@ final class MigrationRunnerTest extends TestCase
             $this->migrationRunner->migrate()
         );
 
+        $this->assertSame(
+            3,
+            $this->migrationRunner->getLastMigrationCount()
+        );
+
         $this->schema->clear();
 
         $this->assertTrue(
@@ -242,6 +247,11 @@ final class MigrationRunnerTest extends TestCase
         $this->assertSame(
             $this->migrationRunner,
             $this->migrationRunner->rollback()
+        );
+
+        $this->assertSame(
+            3,
+            $this->migrationRunner->getLastMigrationCount()
         );
 
         $this->schema->clear();

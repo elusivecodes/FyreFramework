@@ -57,7 +57,10 @@ final class MakeElementTest extends TestCase
 
         rewind($this->output);
 
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: tmp/templates/elements/example.php\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
 
         rewind($this->error);
 
@@ -91,7 +94,7 @@ final class MakeElementTest extends TestCase
         rewind($this->error);
 
         $this->assertSame(
-            Console::style('Element file already exists.', Console::RED).PHP_EOL,
+            "\033[0;31mElement file already exists.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
 
@@ -114,7 +117,10 @@ final class MakeElementTest extends TestCase
 
         rewind($this->output);
 
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: ".$filePath."\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
 
         rewind($this->error);
 
@@ -145,7 +151,7 @@ final class MakeElementTest extends TestCase
         rewind($this->error);
 
         $this->assertSame(
-            Console::style('Invalid element path.', Console::RED).PHP_EOL,
+            "\033[0;31mInvalid element path.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
     }

@@ -10,6 +10,8 @@ use Fyre\Core\Make\GeneratedFile;
 use Fyre\Utility\Path;
 use Override;
 
+use function sprintf;
+
 /**
  * Implements the make job console command.
  *
@@ -94,6 +96,11 @@ class MakeJobCommand extends Command
 
             return static::CODE_ERROR;
         }
+
+        sprintf(
+            'Generated: %s',
+            $generatedFile->getPath()
+        ) |> $this->io->success(...);
 
         return static::CODE_SUCCESS;
     }

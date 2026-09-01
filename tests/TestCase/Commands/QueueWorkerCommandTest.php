@@ -31,6 +31,7 @@ use function rmdir;
 use function stream_get_contents;
 use function unlink;
 
+use const PHP_EOL;
 use const ROOT;
 
 #[RequiresPhpExtension('pcntl')]
@@ -79,7 +80,8 @@ final class QueueWorkerCommandTest extends TestCase
         rewind($this->output);
 
         $this->assertSame(
-            '',
+            "\033[0;34mQueue worker started: default/default.\033[0m".PHP_EOL.
+            "\033[0;34mQueue worker stopped: default/default.\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
 
@@ -168,6 +170,14 @@ final class QueueWorkerCommandTest extends TestCase
                 'total' => 1,
             ],
             $this->otherQueue->stats('test')
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;34mQueue worker started: other/test.\033[0m".PHP_EOL.
+            "\033[0;34mQueue worker stopped: other/test.\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
         );
     }
 

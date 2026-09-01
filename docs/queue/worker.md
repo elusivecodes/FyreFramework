@@ -31,6 +31,8 @@ The built-in way to start a worker is the `queue:worker` console command; see [C
 
 The command runs in the foreground until it receives a stop signal or reaches its configured job or runtime limit. Use a process supervisor to run and restart it in production.
 
+The command prints a message when the worker starts and when it stops normally.
+
 The command accepts the main worker options:
 
 - `config` - queue handler config key

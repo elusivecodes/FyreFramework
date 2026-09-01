@@ -208,6 +208,8 @@ Migration execution fails immediately when another process owns the lock. Before
 
 `MigrationRunner::migrate()` executes the plan returned by `getPendingMigrations()`. For each migration, `up()` is called when present and the migration name is recorded into history as part of a new batch.
 
+After `migrate()` or `rollback()`, `getLastMigrationCount()` returns the number of migrations recorded or removed by that operation.
+
 To target a specific connection, call `setConnection()` before running (for example `$runner->setConnection(db('reporting'));`).
 
 ```php

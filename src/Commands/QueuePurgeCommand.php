@@ -12,6 +12,7 @@ use Override;
 
 use function array_keys;
 use function count;
+use function sprintf;
 
 /**
  * Implements the queue purge console command.
@@ -77,24 +78,44 @@ class QueuePurgeCommand extends Command
             |> array_keys(...);
 
         if ($failureIds === []) {
+            $this->io->info('No failed queue jobs matched.');
+
             return static::CODE_SUCCESS;
         }
 
         $count = count($failureIds);
 
-        if (!$force && !$this->io->confirm('Purge '.$count.' failed queue job(s)?', false)) {
+        if (!$force && !$this->io->confirm(sprintf(
+            'Purge %d failed queue job(s)?',
+            $count
+        ), false)) {
+            $this->io->info('Cancelled.');
+
             return static::CODE_SUCCESS;
         }
 
         $result = static::CODE_SUCCESS;
+        $purged = 0;
 
         foreach ($failureIds as $id) {
             if ($handler->forgetFailed($id, $queue)) {
+                $purged++;
+
                 continue;
             }
 
-            $this->io->error('Failed queue job could not be purged: '.$id);
+            sprintf(
+                'Failed queue job could not be purged: %s',
+                $id
+            ) |> $this->io->error(...);
             $result = static::CODE_ERROR;
+        }
+
+        if ($purged > 0) {
+            sprintf(
+                'Purged %d failed queue job(s).',
+                $purged
+            ) |> $this->io->success(...);
         }
 
         return $result;

@@ -322,6 +322,8 @@ $commandRunner->handle(['app', 'queue:stats', '--config', 'default']);
 
 `make:*` commands generate common application files from framework stubs. They create missing directories and, by default, do not overwrite existing files. Pass `--force` to overwrite an existing target.
 
+Successful `make:*` commands print the path of each generated file. `make:model` prints paths after all files have been written.
+
 Namespace-based generators write to the first matching configured namespace path. Template-style generators write beneath the resolved template path and support dot notation such as `admin.posts.index`.
 
 Common generators:

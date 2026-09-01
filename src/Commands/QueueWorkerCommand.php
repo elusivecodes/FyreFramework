@@ -11,6 +11,8 @@ use Fyre\Queue\QueueManager;
 use Fyre\Queue\Worker;
 use Override;
 
+use function sprintf;
+
 /**
  * Implements the queue worker console command.
  */
@@ -73,7 +75,19 @@ class QueueWorkerCommand extends Command
             ],
         ]);
 
+        sprintf(
+            'Queue worker started: %s/%s.',
+            $config,
+            $queue
+        ) |> $this->io->info(...);
+
         $worker->run();
+
+        sprintf(
+            'Queue worker stopped: %s/%s.',
+            $config,
+            $queue
+        ) |> $this->io->info(...);
 
         return static::CODE_SUCCESS;
     }

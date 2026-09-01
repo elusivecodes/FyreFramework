@@ -5,6 +5,7 @@ namespace Fyre\Core\Make;
 
 use InvalidArgumentException;
 
+use function array_keys;
 use function sprintf;
 
 /**
@@ -50,6 +51,16 @@ class GenerationBatch
         }
 
         $this->files[$path] = $generatedFile;
+    }
+
+    /**
+     * Returns the generated file paths.
+     *
+     * @return array<string> The generated file paths.
+     */
+    public function paths(): array
+    {
+        return array_keys($this->files);
     }
 
     /**

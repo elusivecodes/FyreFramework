@@ -14,6 +14,7 @@ use Fyre\TestSuite\Fixture\FixtureRegistry;
 use Fyre\Utility\Path;
 use Override;
 
+use function sprintf;
 use function substr;
 
 /**
@@ -141,6 +142,11 @@ class MakeFixtureCommand extends Command
 
             return static::CODE_ERROR;
         }
+
+        sprintf(
+            'Generated: %s',
+            $generatedFile->getPath()
+        ) |> $this->io->success(...);
 
         return static::CODE_SUCCESS;
     }

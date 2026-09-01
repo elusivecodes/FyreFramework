@@ -60,7 +60,10 @@ final class MakeEnumTest extends TestCase
         );
 
         rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: tmp/Enums/Status.php\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
         rewind($this->error);
         $this->assertSame('', stream_get_contents($this->error));
 
@@ -98,7 +101,7 @@ final class MakeEnumTest extends TestCase
         $this->assertSame('', stream_get_contents($this->output));
         rewind($this->error);
         $this->assertSame(
-            Console::style('Enum file already exists.', Console::RED).PHP_EOL,
+            "\033[0;31mEnum file already exists.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
         $this->assertStringEqualsFile($filePath, 'changed');
@@ -121,7 +124,10 @@ final class MakeEnumTest extends TestCase
         );
 
         rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: ".$filePath."\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
         rewind($this->error);
         $this->assertSame('', stream_get_contents($this->error));
 
@@ -151,7 +157,7 @@ final class MakeEnumTest extends TestCase
         $this->assertSame('', stream_get_contents($this->output));
         rewind($this->error);
         $this->assertSame(
-            Console::style('Invalid enum case.', Console::RED).PHP_EOL,
+            "\033[0;31mInvalid enum case.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
         $this->assertFileDoesNotExist('tmp/Enums/Status.php');
@@ -171,7 +177,7 @@ final class MakeEnumTest extends TestCase
         $this->assertSame('', stream_get_contents($this->output));
         rewind($this->error);
         $this->assertSame(
-            Console::style('Namespace path not found.', Console::RED).PHP_EOL,
+            "\033[0;31mNamespace path not found.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
         $this->assertFileDoesNotExist('tmp/Enums/Status.php');
@@ -189,7 +195,10 @@ final class MakeEnumTest extends TestCase
         );
 
         rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: tmp/Enums/Status.php\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
         rewind($this->error);
         $this->assertSame('', stream_get_contents($this->error));
 
@@ -219,7 +228,10 @@ final class MakeEnumTest extends TestCase
         );
 
         rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: tmp/Enums/State.php\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
         rewind($this->error);
         $this->assertSame('', stream_get_contents($this->error));
 
@@ -249,7 +261,10 @@ final class MakeEnumTest extends TestCase
         );
 
         rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: tmp/Enums/Status.php\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
         rewind($this->error);
         $this->assertSame('', stream_get_contents($this->error));
 

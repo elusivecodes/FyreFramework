@@ -13,6 +13,7 @@ use Override;
 
 use function file_exists;
 use function is_dir;
+use function sprintf;
 
 /**
  * Implements the make layout console command.
@@ -90,6 +91,11 @@ class MakeLayoutCommand extends Command
 
             return static::CODE_ERROR;
         }
+
+        sprintf(
+            'Generated: %s',
+            $generatedFile->getPath()
+        ) |> $this->io->success(...);
 
         return static::CODE_SUCCESS;
     }

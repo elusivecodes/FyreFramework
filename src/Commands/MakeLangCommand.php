@@ -13,6 +13,7 @@ use Override;
 
 use function file_exists;
 use function is_dir;
+use function sprintf;
 
 /**
  * Implements the make lang console command.
@@ -93,6 +94,11 @@ class MakeLangCommand extends Command
 
             return static::CODE_ERROR;
         }
+
+        sprintf(
+            'Generated: %s',
+            $generatedFile->getPath()
+        ) |> $this->io->success(...);
 
         return static::CODE_SUCCESS;
     }

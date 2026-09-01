@@ -87,7 +87,13 @@ final class MakeModelTest extends TestCase
         );
 
         rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: tmp/Models/ExampleModel.php\033[0m".PHP_EOL.
+            "\033[0;32mGenerated: tmp/Entities/Example.php\033[0m".PHP_EOL.
+            "\033[0;32mGenerated: tmp/Fixtures/ExampleFixture.php\033[0m".PHP_EOL.
+            "\033[0;32mGenerated: tmp/TestCase/ExampleModelTest.php\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
         rewind($this->error);
         $this->assertSame('', stream_get_contents($this->error));
 
@@ -185,7 +191,14 @@ final class MakeModelTest extends TestCase
         );
 
         rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: tmp/Models/BlogPostModel.php\033[0m".PHP_EOL.
+            "\033[0;32mGenerated: tmp/Enums/BlogPostTitle.php\033[0m".PHP_EOL.
+            "\033[0;32mGenerated: tmp/Entities/BlogPost.php\033[0m".PHP_EOL.
+            "\033[0;32mGenerated: tmp/Fixtures/BlogPostFixture.php\033[0m".PHP_EOL.
+            "\033[0;32mGenerated: tmp/TestCase/BlogPostModelTest.php\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
         rewind($this->error);
         $this->assertSame('', stream_get_contents($this->error));
 
@@ -280,7 +293,7 @@ final class MakeModelTest extends TestCase
 
         rewind($this->error);
         $this->assertSame(
-            Console::style('Entity file already exists.', Console::RED).PHP_EOL,
+            "\033[0;31mEntity file already exists.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
         $this->assertStringEqualsFile('tmp/Entities/Example.php', 'changed');
@@ -304,7 +317,7 @@ final class MakeModelTest extends TestCase
         $this->assertSame('', stream_get_contents($this->output));
         rewind($this->error);
         $this->assertSame(
-            Console::style('Model file already exists.', Console::RED).PHP_EOL,
+            "\033[0;31mModel file already exists.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
         $this->assertStringEqualsFile($filePath, 'changed');
@@ -322,7 +335,7 @@ final class MakeModelTest extends TestCase
 
         rewind($this->error);
         $this->assertSame(
-            Console::style('Fixture file already exists.', Console::RED).PHP_EOL,
+            "\033[0;31mFixture file already exists.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
         $this->assertStringEqualsFile('tmp/Fixtures/ExampleFixture.php', 'changed');
@@ -343,7 +356,7 @@ final class MakeModelTest extends TestCase
 
         rewind($this->error);
         $this->assertSame(
-            Console::style('Test file already exists.', Console::RED).PHP_EOL,
+            "\033[0;31mTest file already exists.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
         $this->assertStringEqualsFile('tmp/TestCase/ExampleModelTest.php', 'changed');
@@ -367,7 +380,13 @@ final class MakeModelTest extends TestCase
         );
 
         rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: tmp/Models/ExampleModel.php\033[0m".PHP_EOL.
+            "\033[0;32mGenerated: tmp/Entities/Example.php\033[0m".PHP_EOL.
+            "\033[0;32mGenerated: tmp/Fixtures/ExampleFixture.php\033[0m".PHP_EOL.
+            "\033[0;32mGenerated: tmp/TestCase/ExampleModelTest.php\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
         rewind($this->error);
         $this->assertSame('', stream_get_contents($this->error));
 
@@ -411,7 +430,7 @@ final class MakeModelTest extends TestCase
         $this->assertSame('', stream_get_contents($this->output));
         rewind($this->error);
         $this->assertSame(
-            Console::style('Namespace path not found.', Console::RED).PHP_EOL,
+            "\033[0;31mNamespace path not found.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
         $this->assertFileDoesNotExist('tmp/Models/ExampleModel.php');
@@ -436,7 +455,7 @@ final class MakeModelTest extends TestCase
 
         rewind($this->error);
         $this->assertSame(
-            Console::style('Enum file already exists.', Console::RED).PHP_EOL,
+            "\033[0;31mEnum file already exists.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
         $this->assertStringEqualsFile('tmp/Enums/BlogPostTitle.php', 'changed');
@@ -460,11 +479,8 @@ final class MakeModelTest extends TestCase
 
         rewind($this->error);
         $this->assertSame(
-            Console::style(
-                'Relationship alias `Audits` collides between '.
-                '`audits.audits_updated_by` and `audits.audits_created_by`.',
-                Console::RED
-            ).PHP_EOL,
+            "\033[0;31mRelationship alias `Audits` collides between ".
+            "`audits.audits_updated_by` and `audits.audits_created_by`.\033[0m".PHP_EOL,
             stream_get_contents($this->error)
         );
         $this->assertFileDoesNotExist('tmp/Models/UserModel.php');
@@ -614,7 +630,11 @@ final class MakeModelTest extends TestCase
         );
 
         rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: tmp/Models/AuditModel.php\033[0m".PHP_EOL.
+            "\033[0;32mGenerated: tmp/Entities/Audit.php\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
         rewind($this->error);
         $this->assertSame('', stream_get_contents($this->error));
     }
@@ -751,7 +771,13 @@ final class MakeModelTest extends TestCase
         );
 
         rewind($this->output);
-        $this->assertSame('', stream_get_contents($this->output));
+        $this->assertSame(
+            "\033[0;32mGenerated: tmp/Models/BlogPostModel.php\033[0m".PHP_EOL.
+            "\033[0;32mGenerated: tmp/Entities/BlogPost.php\033[0m".PHP_EOL.
+            "\033[0;32mGenerated: tmp/Fixtures/BlogPostFixture.php\033[0m".PHP_EOL.
+            "\033[0;32mGenerated: tmp/TestCase/BlogPostModelTest.php\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
         rewind($this->error);
         $this->assertSame('', stream_get_contents($this->error));
 

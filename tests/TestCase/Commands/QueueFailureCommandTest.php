@@ -107,6 +107,23 @@ final class QueueFailureCommandTest extends TestCase
         );
     }
 
+    public function testQueueFailedEmpty(): void
+    {
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('queue:failed', [
+                'class' => 'MissingJob',
+            ])
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;34mNo failed queue jobs found.\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
     public function testQueuePurge(): void
     {
         $this->assertSame(
@@ -125,7 +142,7 @@ final class QueueFailureCommandTest extends TestCase
         rewind($this->output);
 
         $this->assertSame(
-            '',
+            "\033[0;32mPurged 2 failed queue job(s).\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
 
@@ -152,6 +169,13 @@ final class QueueFailureCommandTest extends TestCase
             [],
             $this->queueManager->use('other')->getFailed('emails')
         );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;32mPurged 1 failed queue job(s).\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
     }
 
     public function testQueuePurgeClass(): void
@@ -167,6 +191,13 @@ final class QueueFailureCommandTest extends TestCase
         $this->assertSame(
             ['22222222222222222222222222222222'],
             array_keys($this->queueManager->use()->getFailed())
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;32mPurged 1 failed queue job(s).\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
         );
     }
 
@@ -189,7 +220,8 @@ final class QueueFailureCommandTest extends TestCase
 
         $this->assertSame(
             "\033[0;33mPurge 2 failed queue job(s)?\033[0m".PHP_EOL.
-            " (\033[2;36my\033[0m/\033[1;36mn\033[0m)".PHP_EOL,
+            " (\033[2;36my\033[0m/\033[1;36mn\033[0m)".PHP_EOL.
+            "\033[0;32mPurged 2 failed queue job(s).\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
     }
@@ -215,7 +247,26 @@ final class QueueFailureCommandTest extends TestCase
 
         $this->assertSame(
             "\033[0;33mPurge 1 failed queue job(s)?\033[0m".PHP_EOL.
-            " (\033[2;36my\033[0m/\033[1;36mn\033[0m)".PHP_EOL,
+            " (\033[2;36my\033[0m/\033[1;36mn\033[0m)".PHP_EOL.
+            "\033[0;34mCancelled.\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
+    public function testQueuePurgeEmpty(): void
+    {
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('queue:purge', [
+                'missing',
+                'force' => true,
+            ])
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;34mNo failed queue jobs matched.\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
     }
@@ -251,7 +302,7 @@ final class QueueFailureCommandTest extends TestCase
         rewind($this->output);
 
         $this->assertSame(
-            '',
+            "\033[0;32mRetried 1 failed queue job(s).\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
 
@@ -281,6 +332,13 @@ final class QueueFailureCommandTest extends TestCase
         $this->assertCount(
             1,
             TestQueue::getMessages()
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;32mRetried 1 failed queue job(s).\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
         );
     }
 
@@ -312,7 +370,26 @@ final class QueueFailureCommandTest extends TestCase
 
         $this->assertSame(
             "\033[0;33mRetry 1 failed queue job(s)?\033[0m".PHP_EOL.
-            " (\033[2;36my\033[0m/\033[1;36mn\033[0m)".PHP_EOL,
+            " (\033[2;36my\033[0m/\033[1;36mn\033[0m)".PHP_EOL.
+            "\033[0;32mRetried 1 failed queue job(s).\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
+    public function testQueueRetryEmpty(): void
+    {
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('queue:retry', [
+                'missing',
+                'force' => true,
+            ])
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;34mNo failed queue jobs matched.\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
     }
@@ -335,6 +412,13 @@ final class QueueFailureCommandTest extends TestCase
         $this->assertCount(
             2,
             TestQueue::getMessages()
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;32mRetried 2 failed queue job(s).\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
         );
     }
 

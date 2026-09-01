@@ -9,6 +9,8 @@ use Fyre\DB\ConnectionManager;
 use Fyre\DB\Migration\MigrationRunner;
 use Override;
 
+use function sprintf;
+
 /**
  * Implements the db rollback console command.
  *
@@ -88,10 +90,27 @@ class DbRollbackCommand extends Command
                 ->setLockExpires($lockExpires)
                 ->rollback($batches, $steps);
 
+            $count = $migrationRunner->getLastMigrationCount();
+
+            if ($count === 0) {
+                $this->io->info('No migrations to roll back.');
+            } else {
+                sprintf(
+                    'Rolled back %d migration(s).',
+                    $count
+                ) |> $this->io->success(...);
+            }
+
             return static::CODE_SUCCESS;
         }
 
         $migrations = $migrationRunner->getRollbackMigrations($batches, $steps);
+
+        if ($migrations === []) {
+            $this->io->info('No migrations to roll back.');
+
+            return static::CODE_SUCCESS;
+        }
 
         $data = [];
         foreach ($migrations as $migrationName => $_) {

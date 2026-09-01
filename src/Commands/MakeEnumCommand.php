@@ -12,6 +12,8 @@ use Fyre\Utility\Path;
 use InvalidArgumentException;
 use Override;
 
+use function sprintf;
+
 /**
  * Implements the make enum console command.
  *
@@ -108,6 +110,11 @@ class MakeEnumCommand extends Command
 
             return static::CODE_ERROR;
         }
+
+        sprintf(
+            'Generated: %s',
+            $generatedFile->getPath()
+        ) |> $this->io->success(...);
 
         return static::CODE_SUCCESS;
     }

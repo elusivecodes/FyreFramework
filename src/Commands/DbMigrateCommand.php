@@ -9,6 +9,8 @@ use Fyre\DB\ConnectionManager;
 use Fyre\DB\Migration\MigrationRunner;
 use Override;
 
+use function sprintf;
+
 /**
  * Implements the db migrate console command.
  *
@@ -73,10 +75,27 @@ class DbMigrateCommand extends Command
                 ->setLockExpires($lockExpires)
                 ->migrate();
 
+            $count = $migrationRunner->getLastMigrationCount();
+
+            if ($count === 0) {
+                $this->io->info('No pending migrations.');
+            } else {
+                sprintf(
+                    'Applied %d migration(s).',
+                    $count
+                ) |> $this->io->success(...);
+            }
+
             return static::CODE_SUCCESS;
         }
 
         $migrations = $migrationRunner->getPendingMigrations();
+
+        if ($migrations === []) {
+            $this->io->info('No pending migrations.');
+
+            return static::CODE_SUCCESS;
+        }
 
         $data = [];
         foreach ($migrations as $migrationName => $_) {

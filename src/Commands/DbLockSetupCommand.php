@@ -53,8 +53,15 @@ class DbLockSetupCommand extends Command
     public function run(string $db): int|null
     {
         $connection = $this->connectionManager->use($db);
+        $exists = $this->locksPreset->exists($connection);
 
         $this->locksPreset->check($connection);
+
+        if ($exists) {
+            $this->io->info('Database lock storage is already initialized.');
+        } else {
+            $this->io->success('Database lock storage initialized.');
+        }
 
         return static::CODE_SUCCESS;
     }

@@ -11,6 +11,8 @@ use Fyre\Utility\Path;
 use Fyre\View\CellRegistry;
 use Override;
 
+use function sprintf;
+
 /**
  * Implements the make cell console command.
  *
@@ -103,6 +105,11 @@ class MakeCellCommand extends Command
 
             return static::CODE_ERROR;
         }
+
+        sprintf(
+            'Generated: %s',
+            $generatedFile->getPath()
+        ) |> $this->io->success(...);
 
         return static::CODE_SUCCESS;
     }

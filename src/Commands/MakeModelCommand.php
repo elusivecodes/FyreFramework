@@ -26,6 +26,7 @@ use InvalidArgumentException;
 use Override;
 
 use function preg_replace;
+use function sprintf;
 use function substr;
 
 /**
@@ -268,6 +269,15 @@ class MakeModelCommand extends Command
             $this->io->error('Generated files could not be written.');
 
             return static::CODE_ERROR;
+        }
+
+        $paths = $batch->paths();
+
+        foreach ($paths as $path) {
+            sprintf(
+                'Generated: %s',
+                $path
+            ) |> $this->io->success(...);
         }
 
         return static::CODE_SUCCESS;

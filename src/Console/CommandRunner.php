@@ -307,11 +307,21 @@ class CommandRunner
             return Command::CODE_ERROR;
         }
 
-        $this->io->write('Alias: '.$alias);
-        $this->io->write('Description: '.$command['description']);
+        $this->io->write(sprintf(
+            'Alias: %s',
+            $alias
+        ));
+        $this->io->write(sprintf(
+            'Description: %s',
+            $command['description']
+        ));
         $this->io->write('');
         $this->io->write('Usage:');
-        $this->io->write('  '.$script.' '.$alias.' [options]');
+        $this->io->write(sprintf(
+            '  %s %s [options]',
+            $script,
+            $alias
+        ));
         $this->io->write('');
         $this->io->write('Options:');
 
@@ -359,7 +369,10 @@ class CommandRunner
         $commands = $this->all();
 
         $this->io->write('Usage:');
-        $this->io->write('  '.$script.' <command> [options]');
+        $this->io->write(sprintf(
+            '  %s <command> [options]',
+            $script
+        ));
         $this->io->write('');
         $this->io->write('Options:');
         $this->io->table(
@@ -397,7 +410,10 @@ class CommandRunner
             InstalledVersions::getPrettyVersion('fyre/framework') :
             null;
 
-        $this->io->write('FyreFramework '.($version ?? 'dev'));
+        sprintf(
+            'FyreFramework %s',
+            $version ?? 'dev'
+        ) |> $this->io->write(...);
 
         return Command::CODE_SUCCESS;
     }

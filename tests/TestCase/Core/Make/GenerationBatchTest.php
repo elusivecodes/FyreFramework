@@ -29,6 +29,22 @@ final class GenerationBatchTest extends TestCase
         $batch->addFile(new GeneratedFile('example.php', 'second'));
     }
 
+    public function testPaths(): void
+    {
+        $batch = new GenerationBatch(
+            new GeneratedFile('first.php', 'first'),
+            new GeneratedFile('nested/second.php', 'second')
+        );
+
+        $this->assertSame(
+            [
+                'first.php',
+                'nested/second.php',
+            ],
+            $batch->paths()
+        );
+    }
+
     public function testPreflight(): void
     {
         $first = $this->path.'/first.php';
