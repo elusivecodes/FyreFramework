@@ -105,13 +105,13 @@ The [Hello world application](docs/getting-started.md#hello-world-application) c
 
 Start with [Getting Started](docs/getting-started.md) or browse the [documentation index](docs/index.md). You can also jump directly to the area you need:
 
-- **Core services**: [Core](docs/core/index.md) -> [Engine](docs/core/engine.md) -> [Container](docs/core/container.md)
-- **HTTP applications**: [HTTP](docs/http/index.md) -> [Routing](docs/routing/index.md)
-- **Data and persistence**: [Database](docs/database/index.md) -> [ORM](docs/orm/index.md)
+- **Core services**: [Core](docs/core/index.md) → [Engine](docs/core/engine.md) → [Container](docs/core/container.md)
+- **HTTP applications**: [HTTP](docs/http/index.md) → [Routing](docs/routing/index.md)
+- **Data and persistence**: [Database](docs/database/index.md) → [ORM](docs/orm/index.md)
 - **Auth and security**: [Auth](docs/auth/index.md), [Security](docs/security/index.md)
 - **Shared services**: [Events](docs/events/index.md), [Logging](docs/logging/index.md), [Mail](docs/mail/index.md), [Cache](docs/cache/index.md), [Queue](docs/queue/index.md)
 - **Rendering and forms**: [View](docs/view/index.md), [Form](docs/form/index.md)
-- **Tooling and tests**: [Console](docs/console/index.md), [Testing](docs/testing/index.md), [Utilities](docs/utilities/index.md), [Images](docs/utilities/image.md)
+- **Tooling and tests**: [Console](docs/console/index.md), [Testing](docs/testing/index.md), [Utilities](docs/utilities/index.md)
 
 ## Release and support
 

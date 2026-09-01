@@ -164,8 +164,8 @@ Use bullets when they make the content easier to scan:
 
 Examples:
 
-- good for `Start here`: `- **Generating links from aliases**: see [URL Generation](routing/url-generation.md)`
-- good for `Pages in this section`: `- [HTTP Client](http/client.md) - make outbound HTTP requests and work with client responses`
+- good for `Start here`: `- **Generating links from aliases**: see [URL Generation](../routing/url-generation.md)`
+- good for `Pages in this section`: `- [HTTP Client](../http/client.md) - make outbound HTTP requests and work with client responses`
 - good for `Behavior notes`: `- Optional placeholders like \`{id?}\` use the base placeholder name for argument lookup.`
 
 ## Method guide

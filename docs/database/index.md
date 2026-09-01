@@ -13,14 +13,14 @@ Use the database layer when you want to connect to SQL databases, run queries, i
 
 Pick a path based on what you’re doing:
 
-- **Connecting to a database**: [Database connections](connections.md) for drivers, config, and selecting a connection.
-- **Reading and writing data with SQL**: [Database queries](queries.md) for query builders, binding, and `ResultSet`.
-- **Building conditions and calculated fields**: [Query expressions](expressions.md) for conditions, functions, aggregates, and windows.
-- **Inspecting an existing database**: [Schema](schema.md) for tables, columns, indexes, and foreign keys.
-- **Changing schema from code**: [Forge](forge.md) for DDL operations and generated SQL.
-- **Applying schema changes over time**: [Database Migrations](migrations.md) for discovery, migrate/rollback, and history.
-- **Coordinating database-backed work**: [Database locks](connections.md#database-locks) for named leases.
-- **Controlling value conversion**: [Database types](types.md) for parsing, binding, and custom types.
+- **Connecting to a database**: [Database connections](connections.md) for drivers, config, and selecting a connection
+- **Reading and writing data with SQL**: [Database queries](queries.md) for query builders, binding, and `ResultSet`
+- **Building conditions and calculated fields**: [Query expressions](expressions.md) for conditions, functions, aggregates, and windows
+- **Inspecting an existing database**: [Schema](schema.md) for tables, columns, indexes, and foreign keys
+- **Changing schema from code**: [Forge](forge.md) for DDL operations and generated SQL
+- **Applying schema changes over time**: [Database Migrations](migrations.md) for discovery, migrate/rollback, and history
+- **Coordinating database-backed work**: [Database locks](connections.md#database-locks) for named leases
+- **Controlling value conversion**: [Database types](types.md) for parsing, binding, and custom types
 
 ## Database overview
 
@@ -32,16 +32,16 @@ Most database work in Fyre falls into three areas:
 
 ## Pages in this section
 
-- [Database connections](connections.md) — configuring connections and selecting a connection for application code.
-- [Database queries](queries.md) — building and executing queries, value binding, and result handling.
-- [Query expressions](expressions.md) — building conditions, functions, aggregates, and window expressions.
-- [Schema](schema.md) — reading tables, columns, indexes, and foreign keys from an existing database.
-- [Forge](forge.md) — creating and altering schema from PHP code.
-- [Database Migrations](migrations.md) — running schema changes safely across environments.
-- [Database types](types.md) — database type casting and custom type registration.
+- [Database connections](connections.md) - configure connections and select a connection for application code
+- [Database queries](queries.md) - build and execute queries, bind values, and work with results
+- [Query expressions](expressions.md) - build conditions, functions, aggregates, and window expressions
+- [Schema](schema.md) - inspect tables, columns, indexes, and foreign keys
+- [Forge](forge.md) - create and alter schema from PHP code
+- [Database Migrations](migrations.md) - run schema changes safely across environments
+- [Database types](types.md) - cast database values and register custom types
 
 ## Related
 
-- [Config](../core/config.md) — where database connection configs are stored.
-- [ORM](../orm/index.md) — working with database records as models, entities, and relationships.
-- [Console Commands](../console/commands.md) — running database migrations (and other framework commands).
+- [Config](../core/config.md) - store database connection configs
+- [ORM](../orm/index.md) - work with database records as models, entities, and relationships
+- [Console Commands](../console/commands.md) - run database migrations and other framework commands

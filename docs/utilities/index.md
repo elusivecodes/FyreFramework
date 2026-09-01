@@ -12,14 +12,14 @@ Utilities are small, focused helpers for common tasks like strings, arrays, coll
 
 Pick a page based on what you’re trying to do:
 
-- **Transform text**: [Strings](strings.md) (casing, slicing, replacing) and [Inflection](inflection.md) (pluralization, class/table naming).
-- **Transform data**: [Collections](collections.md) (fluent pipelines) and [Array Helpers](arrays.md) (array-first helpers like dot-path access).
-- **Work with numbers**: [Math](math.md) (ranges, interpolation, rounding, random values, and trigonometry).
-- **Work with paths and files**: [Paths](paths.md) (string-only path operations) and [File System](file-system.md) (read/write/copy/delete).
-- **Format output**: [Formatter](formatter.md) (locale-aware numbers/dates/lists) and [Colors](colors.md) (CSS colors, conversions, contrast).
-- **Work with images and documents**: [Images](image.md) (GD-based manipulation and encoding) and [PDF](pdf.md) (HTML rendered through Chrome/Chromium).
-- **Work with time**: [Date/time](datetime.md) (immutable instants) and [Periods](periods.md) (ranges and set operations).
-- **Defer work**: [Promises](promises.md) (synchronous and forked async promises).
+- **Transform text**: [Strings](strings.md) (casing, slicing, replacing) and [Inflection](inflection.md) (pluralization, class/table naming)
+- **Transform data**: [Collections](collections.md) (fluent pipelines) and [Array Helpers](arrays.md) (array-first helpers like dot-path access)
+- **Work with numbers**: [Math](math.md) (ranges, interpolation, rounding, random values, and trigonometry)
+- **Work with paths and files**: [Paths](paths.md) (string-only path operations) and [File System](file-system.md) (read/write/copy/delete)
+- **Format output**: [Formatter](formatter.md) (locale-aware numbers/dates/lists) and [Colors](colors.md) (CSS colors, conversions, contrast)
+- **Work with images and documents**: [Images](image.md) (GD-based manipulation and encoding) and [PDF](pdf.md) (HTML rendered through Chrome/Chromium)
+- **Work with time**: [Date/time](datetime.md) (immutable instants) and [Periods](periods.md) (ranges and set operations)
+- **Defer work**: [Promises](promises.md) (synchronous and forked async promises)
 
 ## Utilities overview
 

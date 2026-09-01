@@ -16,9 +16,9 @@ These docs cover the framework APIs your application uses. Project layout, entry
 Pick a path based on what you are building:
 
 - **New applications**: [Getting Started](getting-started.md)
-- **Core services**: [Core](core/index.md) -> [Engine](core/engine.md) -> [Container](core/container.md)
-- **HTTP applications**: [HTTP](http/index.md) -> [Routing](routing/index.md)
-- **Data and persistence**: [Database](database/index.md) -> [ORM](orm/index.md)
+- **Core services**: [Core](core/index.md) → [Engine](core/engine.md) → [Container](core/container.md)
+- **HTTP applications**: [HTTP](http/index.md) → [Routing](routing/index.md)
+- **Data and persistence**: [Database](database/index.md) → [ORM](orm/index.md)
 - **Auth and security**: [Auth](auth/index.md), [Security](security/index.md)
 - **Shared services**: [Events](events/index.md), [Logging](logging/index.md), [Mail](mail/index.md), [Cache](cache/index.md), [Queue](queue/index.md)
 - **Rendering and forms**: [View](view/index.md), [Form](form/index.md)
@@ -62,5 +62,4 @@ Start with the section you need most, then follow the related links from there.
 - [Console](console/index.md) - commands, prompts, and CLI tooling
 - [Testing](testing/index.md) - PHPUnit helpers, fixtures, and framework test utilities
 - [Utilities](utilities/index.md) - general-purpose helpers such as files, images, colors, collections, promises, and date/time tools
-- [API Stability](stability.md) - public API, internal symbols, and compatibility guarantees
 - [Contributing](contributing/index.md) - repository checks, test suites, and documentation conventions

@@ -12,9 +12,9 @@ Use the form subsystem when you want to parse, validate, and process structured 
 
 Pick a path based on what you’re doing:
 
-- **Building a reusable validation/processing workflow for input**: start with [Forms](forms.md).
-- **Reusing rules outside of forms (ORM, custom workflows)**: start with [Validators](validators.md), then see [Validation rules](rules.md).
-- **Generating HTML form markup**: see [Forms (view helper)](../view/forms.md).
+- **Building a reusable validation/processing workflow for input**: start with [Forms](forms.md)
+- **Reusing rules outside of forms (ORM, custom workflows)**: start with [Validators](validators.md), then see [Validation Rules](rules.md)
+- **Generating HTML form markup**: see [Forms (view helper)](../view/forms.md)
 
 ## Form overview
 
@@ -28,6 +28,6 @@ Most form work in Fyre falls into three pieces:
 
 ## Pages in this section
 
-- [Forms](forms.md) — Define schemas and forms, parse values, validate, and process.
-- [Validators](validators.md) — Define per-field rules, validate input arrays, and return an error map.
-- [Validation rules](rules.md) — Built-in `Rule::*()` factories and their skip behavior.
+- [Forms](forms.md) - define schemas and forms, parse values, validate, and process
+- [Validators](validators.md) - define per-field rules, validate input arrays, and return an error map
+- [Validation Rules](rules.md) - use built-in `Rule::*()` factories and understand their skip behavior

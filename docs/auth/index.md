@@ -11,9 +11,9 @@ Auth covers authentication (who the user is), authorization (what they can do), 
 
 Choose the page that matches what you need to do:
 
-- **Configure login and identity**: start with [Authentication](authentication.md).
-- **Attach auth context and guard routes**: add [Auth Middleware](middleware.md).
-- **Check access rules and policies**: use [Authorization](authorization.md).
+- **Configure login and identity**: start with [Authentication](authentication.md)
+- **Attach auth context and guard routes**: add [Auth Middleware](middleware.md)
+- **Check access rules and policies**: use [Authorization](authorization.md)
 
 ## Pages in this section
 

@@ -13,15 +13,15 @@ Use the ORM when you want to work with database records as models, entities, and
 
 Pick a path based on what you’re doing:
 
-- **Defining your data layer**: start with [Models](models.md) (table metadata, schema, and persistence entry points).
-- **Working with record objects**: see [Entities](entities.md) (field access, dirty tracking, errors, and serialization).
-- **Querying**: see [Finding Data](finding.md) (`find()`/`get()`, `contain()`, and results).
-- **Writing changes**: see [Saving Data](saving.md) (create/patch entities, save workflows, and bulk updates).
-- **Removing records**: see [Deleting Data](deleting.md) (entity deletes, cascades, bulk deletes, soft deletes).
-- **Associations**: see [ORM Relationships](relationships.md) (contain, joins, save/delete coordination).
-- **Integrity checks**: see [Rule Sets](rulesets.md) (uniqueness, exists-in, and other model-level rules).
-- **Lifecycle hooks**: see [ORM Events](events.md) (find/parse/save/delete event attributes and listeners).
-- **Common model behavior**: see [ORM Traits](traits.md) (timestamps, soft deletes, and shared hooks).
+- **Defining your data layer**: start with [Models](models.md) (table metadata, schema, and persistence entry points)
+- **Working with record objects**: see [Entities](entities.md) (field access, dirty tracking, errors, and serialization)
+- **Querying**: see [Finding Data](finding.md) (`find()`/`get()`, `contain()`, and results)
+- **Writing changes**: see [Saving Data](saving.md) (create/patch entities, save workflows, and bulk updates)
+- **Removing records**: see [Deleting Data](deleting.md) (entity deletes, cascades, bulk deletes, soft deletes)
+- **Associations**: see [ORM Relationships](relationships.md) (contain, joins, save/delete coordination)
+- **Integrity checks**: see [Rule Sets](rulesets.md) (uniqueness, exists-in, and other model-level rules)
+- **Lifecycle hooks**: see [ORM Events](events.md) (find/parse/save/delete event attributes and listeners)
+- **Common model behavior**: see [ORM Traits](traits.md) (timestamps, soft deletes, and shared hooks)
 
 ## ORM overview
 
@@ -36,19 +36,19 @@ New or dirty entities fail to save when they or any nested entities have errors.
 
 ## Pages in this section
 
-- [Models](models.md) — table metadata, query construction, persistence, and model lookup.
-- [Entities](entities.md) — record state, dirty tracking, errors, and serialization.
-- [Finding Data](finding.md) — `find()`/`get()`, contain, and working with results.
-- [Saving Data](saving.md) — creating/patching entities, saving workflows, and bulk updates.
-- [Deleting Data](deleting.md) — entity deletes, cascades, and bulk deletes.
-- [ORM Relationships](relationships.md) — defining associations and loading/saving related data.
-- [Rule Sets](rulesets.md) — model-level integrity rules that run during saves.
-- [ORM Traits](traits.md) — opt-in model traits (timestamps, soft deletes).
-- [ORM Events](events.md) — query and persistence lifecycle hooks.
+- [Models](models.md) - table metadata, query construction, persistence, and model lookup
+- [Entities](entities.md) - record state, dirty tracking, errors, and serialization
+- [Finding Data](finding.md) - use `find()`, `get()`, contain, and result sets
+- [Saving Data](saving.md) - create and patch entities, save changes, and run bulk updates
+- [Deleting Data](deleting.md) - delete entities, configure cascades, and run bulk deletes
+- [ORM Relationships](relationships.md) - define associations and load or save related data
+- [Rule Sets](rulesets.md) - run model-level integrity rules during saves
+- [ORM Traits](traits.md) - add timestamps, soft deletes, and shared model behavior
+- [ORM Events](events.md) - use query and persistence lifecycle hooks
 
 ## Related
 
-- [Database](../database/index.md) — connections, queries, and schema tooling the ORM builds on.
-- [Form Validators](../form/validators.md) — validating user input and producing error maps.
-- [Route Bindings](../routing/route-bindings.md) — substituting route arguments with ORM entities.
-- [Events](../events/index.md) — the underlying event system used by ORM lifecycle hooks.
+- [Database](../database/index.md) - connections, queries, and schema tooling used by the ORM
+- [Form Validators](../form/validators.md) - validate user input and produce error maps
+- [Route Bindings](../routing/route-bindings.md) - substitute route arguments with ORM entities
+- [Events](../events/index.md) - use the event system behind ORM lifecycle hooks
