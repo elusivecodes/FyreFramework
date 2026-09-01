@@ -17,9 +17,9 @@ final class ErrorException extends \ErrorException
      *
      * @param string|null $file The file to match.
      * @param int|null $line The line to match.
-     * @return self|null The new ErrorException instance, or null if no matching error is available.
+     * @return static|null The new ErrorException instance, or null if no matching error is available.
      */
-    public static function forLastError(string|null $file = null, int|null $line = null): self|null
+    public static function forLastError(string|null $file = null, int|null $line = null): static|null
     {
         $error = error_get_last();
 
@@ -39,6 +39,6 @@ final class ErrorException extends \ErrorException
             return null;
         }
 
-        return new self($error['message'], 0, $error['type'], $error['file'], $error['line']);
+        return new static($error['message'], 0, $error['type'], $error['file'], $error['line']);
     }
 }

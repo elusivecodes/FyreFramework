@@ -21,7 +21,7 @@ class DisplayP3 extends Color
      * {@inheritDoc}
      */
     #[Override]
-    public function toDisplayP3(): DisplayP3
+    public function toDisplayP3(): static
     {
         return $this;
     }

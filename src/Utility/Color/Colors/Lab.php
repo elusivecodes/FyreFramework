@@ -48,7 +48,7 @@ class Lab extends Color
      * {@inheritDoc}
      */
     #[Override]
-    public function toLab(): Lab
+    public function toLab(): static
     {
         return $this;
     }

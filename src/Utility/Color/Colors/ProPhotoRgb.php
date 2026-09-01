@@ -21,7 +21,7 @@ class ProPhotoRgb extends Color
      * {@inheritDoc}
      */
     #[Override]
-    public function toProPhotoRgb(): ProPhotoRgb
+    public function toProPhotoRgb(): static
     {
         return $this;
     }

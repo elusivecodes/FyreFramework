@@ -32,7 +32,7 @@ class DisplayP3Linear extends Color
      * {@inheritDoc}
      */
     #[Override]
-    public function toDisplayP3Linear(): DisplayP3Linear
+    public function toDisplayP3Linear(): static
     {
         return $this;
     }

@@ -97,7 +97,7 @@ class Hsl extends Color
      * {@inheritDoc}
      */
     #[Override]
-    public function toHsl(): Hsl
+    public function toHsl(): static
     {
         return $this;
     }

@@ -48,7 +48,7 @@ class OkLab extends Color
      * {@inheritDoc}
      */
     #[Override]
-    public function toOkLab(): OkLab
+    public function toOkLab(): static
     {
         return $this;
     }

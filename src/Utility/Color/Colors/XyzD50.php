@@ -43,7 +43,7 @@ class XyzD50 extends Color
      * {@inheritDoc}
      */
     #[Override]
-    public function toXyzD50(): XyzD50
+    public function toXyzD50(): static
     {
         return $this;
     }

@@ -32,7 +32,7 @@ class SrgbLinear extends Color
      * {@inheritDoc}
      */
     #[Override]
-    public function toSrgbLinear(): SrgbLinear
+    public function toSrgbLinear(): static
     {
         return $this;
     }

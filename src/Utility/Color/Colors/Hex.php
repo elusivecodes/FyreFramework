@@ -18,7 +18,7 @@ class Hex extends Rgb
      * {@inheritDoc}
      */
     #[Override]
-    public function toHex(): Hex
+    public function toHex(): static
     {
         return $this;
     }

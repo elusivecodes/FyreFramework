@@ -21,7 +21,7 @@ class Rec2020 extends Color
      * {@inheritDoc}
      */
     #[Override]
-    public function toRec2020(): Rec2020
+    public function toRec2020(): static
     {
         return $this;
     }

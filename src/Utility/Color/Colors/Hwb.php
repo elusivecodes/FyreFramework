@@ -97,7 +97,7 @@ class Hwb extends Color
      * {@inheritDoc}
      */
     #[Override]
-    public function toHwb(): Hwb
+    public function toHwb(): static
     {
         return $this;
     }

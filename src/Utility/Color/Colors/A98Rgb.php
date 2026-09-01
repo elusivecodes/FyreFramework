@@ -21,7 +21,7 @@ class A98Rgb extends Color
      * {@inheritDoc}
      */
     #[Override]
-    public function toA98Rgb(): A98Rgb
+    public function toA98Rgb(): static
     {
         return $this;
     }

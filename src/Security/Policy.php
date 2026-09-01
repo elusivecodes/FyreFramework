@@ -164,9 +164,9 @@ class Policy
      *
      * @param string $directive The directive.
      * @param bool|string|string[] $value The value.
-     * @return Policy The new Policy instance.
+     * @return static The new Policy instance.
      */
-    public function withDirective(string $directive, array|bool|string $value = true): Policy
+    public function withDirective(string $directive, array|bool|string $value = true): static
     {
         if ($value === false) {
             return $this->withoutDirective($directive);

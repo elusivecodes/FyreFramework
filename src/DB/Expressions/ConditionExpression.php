@@ -14,6 +14,8 @@ use function strtoupper;
 
 /**
  * Represents a group of query conditions.
+ *
+ * @phpstan-consistent-constructor
  */
 class ConditionExpression implements ExpressionInterface
 {
@@ -54,11 +56,11 @@ class ConditionExpression implements ExpressionInterface
      * Creates a group of AND conditions.
      *
      * @param ConditionExpression ...$conditions The conditions.
-     * @return ConditionExpression The new ConditionExpression instance.
+     * @return static The new ConditionExpression instance.
      */
-    public function and(ConditionExpression ...$conditions): ConditionExpression
+    public function and(ConditionExpression ...$conditions): static
     {
-        return new self()->add(...$conditions);
+        return new static()->add(...$conditions);
     }
 
     /**
@@ -406,11 +408,11 @@ class ConditionExpression implements ExpressionInterface
      * Creates a group of OR conditions.
      *
      * @param ConditionExpression ...$conditions The conditions.
-     * @return ConditionExpression The new ConditionExpression instance.
+     * @return static The new ConditionExpression instance.
      */
-    public function or(ConditionExpression ...$conditions): ConditionExpression
+    public function or(ConditionExpression ...$conditions): static
     {
-        return new self('OR')->add(...$conditions);
+        return new static('OR')->add(...$conditions);
     }
 
     /**

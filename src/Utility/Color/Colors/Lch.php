@@ -58,7 +58,7 @@ class Lch extends Color
      * {@inheritDoc}
      */
     #[Override]
-    public function toLch(): Lch
+    public function toLch(): static
     {
         return $this;
     }

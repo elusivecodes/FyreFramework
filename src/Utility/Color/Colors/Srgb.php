@@ -63,7 +63,7 @@ class Srgb extends Color
      * {@inheritDoc}
      */
     #[Override]
-    public function toSrgb(): Srgb
+    public function toSrgb(): static
     {
         return $this;
     }
