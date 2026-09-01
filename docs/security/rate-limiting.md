@@ -12,14 +12,11 @@ Rate limiting tracks request usage over time and rejects requests that exceed a 
   - [Supported identifier sources](#supported-identifier-sources)
 - [Limits and cost](#limits-and-cost)
   - [Skipping checks](#skipping-checks)
+  - [Cache persistence](#cache-persistence)
 - [Response headers](#response-headers)
 - [Middleware integration](#middleware-integration)
   - [Registering a shared rate limiter middleware](#registering-a-shared-rate-limiter-middleware)
   - [Overriding limit, window, and cost inline](#overriding-limit-window-and-cost-inline)
-- [Method guide](#method-guide)
-  - [`RateLimiterMiddleware`](#ratelimitermiddleware)
-  - [`RateLimiter`](#ratelimiter)
-- [Behavior notes](#behavior-notes)
 - [Related](#related)
 
 ## Start here
@@ -49,7 +46,7 @@ An identifier is the “key space” used to track usage. It is configured on th
 - a list of identifier sources (strings)
 - a callback that returns a string identifier for the request
 
-When `identifier` is a list, the identifier is assembled by concatenating these sources (with `_`) in the order provided.
+The default is `['ip']`. When `identifier` is a list, the identifier is assembled by concatenating these sources (with `_`) in the order provided.
 
 If your app runs behind a reverse proxy, be careful with IP-based identification. By default, the built-in `ip` identifier uses `REMOTE_ADDR`. When `App.trustProxy` is enabled with no trusted proxy list, the rightmost `X-Forwarded-For` address is used. A non-empty `App.trustedProxies` list restricts resolution to explicitly trusted proxy hops. For a different forwarded header or custom trust rules, use an `identifier` callback.
 
@@ -60,6 +57,10 @@ The base `RateLimiter` supports three identifier source strings:
 - `ip` — uses `REMOTE_ADDR` by default and resolves the configured forwarded IP chain according to the application proxy policy
 - `route` — uses `Controller::action` when the request has a `route` attribute that is a `ControllerRoute`, and always includes the client IP
 - `user` — uses `user_{id}` when the request has a `user` attribute with an `id` property, otherwise falls back to the client IP
+
+Place the limiter after routing middleware when using `route`, and after authentication middleware when using `user`, so those request attributes are available.
+
+Unrecognized source names do not contribute to the identifier. Use one of the supported names or provide a callback for custom identification.
 
 ## Limits and cost
 
@@ -81,9 +82,17 @@ The remaining limiter options are:
 - `cacheConfig` (`string`): cache configuration used to store limiter state (default: `ratelimiter`).
 - `message` (`string`): exception message used when a request is rejected (default: `Rate limit exceeded`).
 
+`limit` and `window` must be greater than zero, while `cost` can be zero but not negative. Invalid values raise an `InvalidArgumentException` when the request is checked.
+
 ### Skipping checks
 
-You can bypass rate limiting for specific requests using the `skipCheck` option. When provided, `RateLimiter::shouldSkip()` calls it through the container and skips the limiter when it returns `true`.
+You can bypass rate limiting for specific requests using the `skipCheck` option (`Closure|null`, default: `null`). When provided, `RateLimiter::shouldSkip()` calls it through the container and skips the limiter only when it returns `true`. Skipped requests are passed directly to the next handler and do not receive rate limit headers.
+
+### Cache persistence
+
+Rate limit state is stored through `CacheManager`. If `cacheConfig` does not exist, the limiter registers a `FileCacher` config with the same name and a matching prefix; the default is `ratelimiter` with the prefix `ratelimiter:`.
+
+Rate limiting requires a persistent cache. When `CacheManager` is disabled—by default while `App.debug` is enabled—it resolves a do-nothing handler and does not throttle across requests.
 
 ## Response headers
 
@@ -95,7 +104,7 @@ When rate limit data is available, responses include:
 
 For fixed and sliding windows, `X-RateLimit-Reset` is the next discrete window boundary. For token buckets, it is the estimated time when the bucket will be full again.
 
-When a request is rejected, `RateLimiterMiddleware` throws `TooManyRequestsException` with:
+When a request is rejected, `RateLimiterMiddleware` throws `TooManyRequestsException` (HTTP 429) with:
 
 - `Retry-After` - seconds until the reported `X-RateLimit-Reset` time (minimum `1`)
 
@@ -106,15 +115,12 @@ Rate limiting is applied like any other middleware. Register a middleware alias 
 ### Registering a shared rate limiter middleware
 
 ```php
-use Fyre\Core\Container;
 use Fyre\Http\MiddlewareQueue;
 use Fyre\Http\MiddlewareRegistry;
 use Fyre\Security\Middleware\RateLimiterMiddleware;
 use Psr\Http\Message\ServerRequestInterface;
 
-$container = Container::getInstance();
-$registry = new MiddlewareRegistry($container);
-$container->instance(MiddlewareRegistry::class, $registry);
+$registry = app(MiddlewareRegistry::class);
 
 $registry->map('throttle', RateLimiterMiddleware::class, [
     'options' => [
@@ -143,87 +149,7 @@ $queue = new MiddlewareQueue();
 $queue->add('throttle:30,60,1');
 ```
 
-## Method guide
-
-### `RateLimiterMiddleware`
-
-#### **Run rate limiting as middleware** (`process()`)
-
-Checks the request against the configured limiter and either continues to the next handler or throws `TooManyRequestsException`.
-
-Arguments:
-- `$request` (`ServerRequestInterface`): the incoming request.
-- `$handler` (`RequestHandlerInterface`): the next handler in the chain.
-- `$limit` (`string|null`): optional limit override (cast to `int` when provided).
-- `$window` (`string|null`): optional window override in seconds (cast to `int` when provided).
-- `$cost` (`string|null`): optional cost override (cast to `int` when provided).
-
-```php
-$response = $middleware->process($request, $handler);
-
-// Optional inline overrides (limit, window, cost):
-$response = $middleware->process($request, $handler, '30', '60', '1');
-```
-
-### `RateLimiter`
-
-#### **Check a request against a limiter** (`checkLimit()`)
-
-Implemented by each limiter strategy to track request usage and return rate limit data.
-
-Arguments:
-- `$request` (`ServerRequestInterface`): the incoming request.
-- `$limit` (`int|null`): optional request limit override.
-- `$window` (`int|null`): optional time window override in seconds.
-- `$cost` (`int|null`): optional request cost override.
-
-```php
-$data = $limiter->checkLimit($request);
-```
-
-#### **Add rate limit headers to a response** (`addHeaders()`)
-
-Adds `X-RateLimit-*` headers when rate limit data is available.
-
-Arguments:
-- `$response` (`ResponseInterface`): the response to add headers to.
-- `$data` (`array`): the rate limit data.
-
-```php
-$response = $limiter->addHeaders($response, $data);
-```
-
-#### **Decide whether to skip rate limiting** (`shouldSkip()`)
-
-Calls the configured `skipCheck` callback (if any) to bypass rate limiting for specific requests.
-
-Arguments:
-- `$request` (`ServerRequestInterface`): the incoming request.
-
-```php
-if ($limiter->shouldSkip($request)) {
-    return $handler->handle($request);
-}
-```
-
-#### **Get the rejection message** (`getMessage()`)
-
-Returns the configured rate limit message used when throwing `TooManyRequestsException`.
-
-```php
-$message = $limiter->getMessage();
-```
-
-## Behavior notes
-
-A few behaviors are worth keeping in mind:
-
-- Inline middleware arguments are strings and are cast to integers before validation. Use integer strings for `limit`, `window`, and `cost` overrides.
-- `limit` and `window` must be greater than `0`, and `cost` must not be negative. Invalid bounds throw an `InvalidArgumentException`.
-- The `route` identifier always includes the client IP; it does not group all clients together for the same controller action.
-- The `ip` identifier uses `REMOTE_ADDR` by default. With proxy trust enabled, an empty trusted list accepts the rightmost forwarded address; otherwise the chain is walked right-to-left through explicitly trusted addresses.
-- If the configured cache does not include the `ratelimiter` config key, `RateLimiter` registers one automatically using `FileCacher` with a `ratelimiter:` prefix.
-- Rate limiting relies on cache persistence; when `CacheManager` is disabled (by default when `App.debug` is enabled), it uses a do-nothing cache handler and will not throttle across requests.
+Use integer strings for inline overrides. They are cast before the limiter validates the bounds described above.
 
 ## Related
 

@@ -11,14 +11,11 @@ In Fyre, CSRF protection uses a cookie token plus a matching form field or reque
   - [Options](#options)
   - [Example `config/app.php`](#example-configappphp)
 - [Middleware integration](#middleware-integration)
+  - [Validation failures](#validation-failures)
 - [`FormHelper` integration](#formhelper-integration)
 - [Manually embedding the token in HTML forms](#manually-embedding-the-token-in-html-forms)
 - [Using the CSRF header (AJAX/JSON)](#using-the-csrf-header-ajaxjson)
   - [Example: send the token with `fetch()`](#example-send-the-token-with-fetch)
-- [Method guide](#method-guide)
-  - [`CsrfProtection`](#csrfprotection)
-  - [`CsrfProtectionMiddleware`](#csrfprotectionmiddleware)
-- [Behavior notes](#behavior-notes)
 - [Related](#related)
 
 ## Start here
@@ -34,11 +31,15 @@ With CSRF enabled, a checked request must provide:
 - **Cookie token**: stored in a cookie and sent automatically by the browser on same-site requests.
 - **Form/header token**: a salted form of the cookie token, safe to embed in HTML and to send back in requests.
 
+Only `DELETE`, `PATCH`, `POST`, and `PUT` are checked by default. Other methods still initialize CSRF protection and can issue the cookie needed by a later state-changing request.
+
 ## Configuring CSRF
 
 CSRF behavior is configured under the `Csrf` key in [Config](../core/config.md). The most important setting is `Csrf.salt`, which must be a stable, secret value.
 
-If `Csrf.salt` changes, existing tokens can no longer be validated (and all clients will effectively “lose” their CSRF cookies until they refresh and get a new one).
+Generate the salt once, load it from your application secrets, and do not commit the deployed value.
+
+Changing `Csrf.salt` invalidates existing tokens. Clients must remove or expire the old CSRF cookie before the middleware will issue a replacement.
 
 If `Csrf.salt` is missing or empty, constructing `CsrfProtection` raises an `InvalidArgumentException`.
 
@@ -47,7 +48,7 @@ If `Csrf.salt` is missing or empty, constructing `CsrfProtection` raises an `Inv
 - `salt` (`string`): stable secret used to authenticate tokens; this option is required.
 - `field` (`string|null`): parsed-body field used to read the form token (default: `csrf_token`); use `null` to disable form-field tokens.
 - `header` (`string|null`): request header used to read the form token (default: `Csrf-Token`); use `null` to disable header tokens.
-- `skipCheck` (`Closure|null`): callback that receives the request and bypasses validation when it returns `true`.
+- `skipCheck` (`Closure|null`): callback that receives the request through the container and bypasses validation only when it returns `true`.
 - `cookie.name` (`string`): cookie name (default: `CsrfToken`).
 - `cookie.expires` (`int`): lifetime in seconds, or `0` for a session cookie (default: `0`).
 - `cookie.domain` (`string`): cookie domain (default: an empty string).
@@ -82,13 +83,21 @@ return [
 
 `CsrfProtectionMiddleware` enforces CSRF checks and makes the current `CsrfProtection` instance available to downstream code:
 
-- The middleware calls `CsrfProtection::checkToken()` for the request.
-- The middleware then calls `CsrfProtection::beforeResponse()` to ensure the CSRF cookie is sent when it’s missing.
-- The `CsrfProtection` instance is attached to the request under the `csrf` attribute key.
+- `checkToken()` attaches the `CsrfProtection` instance to the request under the `csrf` attribute key
+- checked methods require a valid cookie token and a matching token from the configured form field or header
+- `beforeResponse()` adds the CSRF cookie when it was missing from the request
 
 In a typical application middleware queue, this middleware is commonly referenced using the default alias `csrf`.
 
 That `csrf` request attribute is the normal way to access CSRF token metadata when rendering a response (including view helpers).
+
+If the token comes from the configured form field and the parsed body is an array, `checkToken()` removes that field before passing the request downstream. Do not register CSRF protection twice for the same request; a second call raises a `BadMethodCallException`.
+
+### Validation failures
+
+Missing, malformed, or mismatched tokens on a checked method raise `CsrfTokenException`, which is a `403 Forbidden` HTTP exception. A `skipCheck` callback bypasses this validation for matching requests, but CSRF is still attached to the request.
+
+Keep `skipCheck` narrowly scoped. Any unsafe request it matches proceeds without CSRF validation.
 
 ## `FormHelper` integration
 
@@ -177,119 +186,6 @@ await fetch('/profile', {
   body: JSON.stringify({ display_name: 'Example' }),
 });
 ```
-
-## Method guide
-
-Most examples assume you already have a `$request` instance (via dependency injection). After CSRF middleware has run, the request has a `csrf` request attribute that provides the `CsrfProtection` instance.
-
-Examples below also assume the relevant CSRF classes are already imported when needed.
-
-### `CsrfProtection`
-
-#### **Get the form token** (`getFormToken()`)
-
-Returns a salted token suitable for embedding in HTML or sending back via a header.
-
-```php
-$csrf = $request->getAttribute('csrf');
-if ($csrf instanceof CsrfProtection) {
-    $token = $csrf->getFormToken();
-}
-```
-
-#### **Get the form field name** (`getField()`)
-
-Returns the configured form field name used to read CSRF tokens from parsed request bodies.
-
-```php
-$csrf = $request->getAttribute('csrf');
-if ($csrf instanceof CsrfProtection) {
-    $field = $csrf->getField();
-}
-```
-
-#### **Get the header name** (`getHeader()`)
-
-Returns the configured request header name used to read CSRF tokens.
-
-```php
-$csrf = $request->getAttribute('csrf');
-if ($csrf instanceof CsrfProtection) {
-    $header = $csrf->getHeader();
-}
-```
-
-#### **Validate a request** (`checkToken()`)
-
-Attaches the `csrf` request attribute and, on state-changing methods, validates the request token.
-
-Arguments:
-- `$request` (`ServerRequestInterface`): the request to validate.
-
-```php
-$request = $csrf->checkToken($request);
-```
-
-#### **Add the CSRF cookie when needed** (`beforeResponse()`)
-
-Ensures the CSRF cookie is included in the response when it was missing from the request.
-
-Arguments:
-- `$request` (`ServerRequestInterface`): the request being handled.
-- `$response` (`ResponseInterface`): the response returned by downstream handlers.
-
-```php
-$response = $csrf->beforeResponse($request, $response);
-```
-
-#### **Get the cookie token** (`getCookieToken()`)
-
-Returns the current cookie token, generating one if needed.
-
-```php
-$token = $csrf->getCookieToken();
-```
-
-### `CsrfProtectionMiddleware`
-
-#### **Run CSRF checks as middleware** (`process()`)
-
-Validates the request and ensures the CSRF cookie behavior is applied to the response.
-
-Arguments:
-- `$request` (`ServerRequestInterface`): the request to validate.
-- `$handler` (`RequestHandlerInterface`): the next handler.
-
-```php
-use Fyre\Security\Middleware\CsrfProtectionMiddleware;
-use Fyre\Http\Response;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\RequestHandlerInterface;
-
-$request = request();
-$middleware = app(CsrfProtectionMiddleware::class);
-
-$handler = new class implements RequestHandlerInterface {
-    public function handle(ServerRequestInterface $request): ResponseInterface
-    {
-        return new Response();
-    }
-};
-
-$response = $middleware->process($request, $handler);
-```
-
-## Behavior notes
-
-A few behaviors are worth keeping in mind:
-
-- Only `DELETE`, `PATCH`, `POST`, and `PUT` are checked by default; other methods still get the `csrf` request attribute.
-- If the token is provided via the configured field name and the parsed body is an array, the token field is removed from the parsed body before it reaches the handler.
-- CSRF protection cannot be enabled twice for the same request; calling `checkToken()` when a `csrf` request attribute already exists raises an exception.
-- When CSRF checks are applied, validation requires both the cookie token and a user-provided token; if either is missing on a checked method, the request fails validation.
-- A configured “skip check” callback can bypass validation for a request.
-- If the field name or header name is disabled (set to `null`), that input channel is not considered during validation.
 
 ## Related
 
