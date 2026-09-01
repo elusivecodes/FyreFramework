@@ -36,13 +36,7 @@ The usual workflow is:
 
 ## Making requests
 
-Create a `Client`, then use the verb methods (`get()`, `post()`, …). Each verb method accepts:
-
-- a URL (absolute, or relative when `baseUrl` is set)
-- `$data` as either an array (query parameters for `GET`, or encoded body for other methods) or a string (query string for `GET`, raw body for other methods)
-- optional per-request `$options` to override the client configuration
-
-The available methods are `get()`, `post()`, `put()`, `patch()`, `delete()`, `head()`, `options()`, and `trace()`.
+Create a `Client`, then use `get()`, `post()`, `put()`, `patch()`, `delete()`, `head()`, `options()`, or `trace()`. Each method accepts an absolute URL, or a relative URL when `baseUrl` is configured. Per-request options override the client defaults for that call.
 
 ```php
 use Fyre\Http\Client;
@@ -59,6 +53,8 @@ $users = $response->getJson();
 ```
 
 Keep a single `Client` instance when you want cookies and default options to carry across multiple requests.
+
+For `GET`, array data becomes query parameters and string data is parsed as a query string before it is merged with the URL. For the other methods, array data is encoded according to `Content-Type` and string data becomes the raw request body.
 
 ### Sending JSON
 
@@ -78,28 +74,33 @@ $payload = $response->getJson();
 
 ### Sending prepared requests
 
-Use `send($request, $options = [])` when you already have a PSR-7 request but still want client redirects, cookies, mocks, and per-request options.
+Choose the send path according to which client behavior you need:
 
-`sendRequest($request)` is the strict PSR-18 path: it delegates directly to the configured handler and bypasses those client conveniences.
+| Method | Redirects | Cookie jar | Mocks | Client options |
+| --- | --- | --- | --- | --- |
+| `send($request, $options = [])` | yes | yes | yes | yes |
+| `sendRequest($request)` | no | no | no | no |
+
+`sendRequest()` is the strict PSR-18 path and delegates directly to the configured handler.
 
 You can seed the client's cookie jar with `addCookie($cookie)`. Use `getHandler()` when you need direct access to the configured transport.
 
 ## Configuration
 
-`Client` accepts an options array at construction time, and each request method can provide an `$options` array that overrides the client defaults for that call.
+`Client` accepts an options array at construction time. Request methods and `send()` accept per-request options that override these defaults.
 
-Common options:
-
-- `handler`: a handler instance, or a handler class name (defaults to `CurlHandler`)
-- `baseUrl`: a base URL used to resolve relative request URLs
-- `headers`: default request headers (merged/overridden by per-request headers)
-- `auth`: `['type' => 'basic'|'digest', 'username' => string|null, 'password' => string|null]`
-- `proxy`: `['username' => string|null, 'password' => string|null]` (used for a `Proxy-Authorization` header)
-- `protocolVersion`: `'1.0'`, `'1.1'`, or `'2.0'`
-- `timeout`: timeout in seconds (interpreted by handlers that support it, such as `CurlHandler`)
-- `maxRedirects`: number of redirects to follow when using `Client::send()` (and the verb methods)
-- `maxRedirectBodySize`: maximum number of bytes used to buffer a non-seekable request body for redirect replay (default: `16_777_216`)
-- `sensitiveHeaders`: additional header names to remove from cross-origin redirects
+| Option | Default | Purpose |
+| --- | --- | --- |
+| `handler` | `CurlHandler::class` | handler instance or class name used for transport |
+| `baseUrl` | `null` | base URL for resolving relative request URLs |
+| `headers` | `[]` | default request headers |
+| `auth` | `['type' => 'basic', 'username' => null, 'password' => null]` | authentication settings |
+| `proxy` | `['username' => null, 'password' => null]` | credentials used for `Proxy-Authorization` |
+| `protocolVersion` | `1.1` | request protocol version (`1.0`, `1.1`, or `2.0`) |
+| `timeout` | `30` | timeout in seconds for handlers that support it |
+| `maxRedirects` | `0` | maximum redirects followed by `send()` and the verb methods |
+| `maxRedirectBodySize` | `16_777_216` | maximum bytes buffered to replay a non-seekable body |
+| `sensitiveHeaders` | `[]` | additional headers removed from cross-origin redirects |
 
 Example:
 
@@ -180,7 +181,8 @@ Use `getJson()` when the response body is JSON:
 $data = $response->getJson();
 ```
 
-Notes:
+Important behavior:
+
 - Valid JSON scalars are returned as their decoded PHP values (for example `true`, `123`, or `'ok'`), and a JSON `null` literal returns `null`.
 - Invalid JSON throws a `RuntimeException`.
 
@@ -195,7 +197,7 @@ $session = $response->getCookie('session');
 
 ## Handlers
 
-The HTTP client delegates network I/O to a handler. Configure it through the `handler` option as either an instance or a class name.
+The HTTP client delegates network I/O to a handler. Configure `handler` with an instance or a class name. Class names are instantiated directly; provide an instance when a custom handler needs constructor dependencies.
 
 ```php
 use Fyre\Http\Client;
@@ -238,9 +240,9 @@ Mocks are global to the `Client` class (static), so ensure they’re cleared bet
 
 ## Behavior notes
 
-- When `auth.type` is set to `digest`, the client may make an initial `401` challenge request before retrying with credentials.
-- When you pass array `$data` to non-`GET` requests, the request body encoding depends on the request `Content-Type`. If it does not start with `application/json`, the request is encoded as either `multipart/form-data` (when files/streams are present) or `application/x-www-form-urlencoded`, and `Content-Type` is set accordingly.
-- Query parameters are merged recursively when building the final URI (including when the URL already contains a query string).
+- Digest authentication may make an initial `401` challenge request before retrying with credentials.
+- Array body data uses JSON when `Content-Type` starts with `application/json`, `multipart/form-data` when files or streams are present, and `application/x-www-form-urlencoded` otherwise. The client sets the form content type when needed.
+- Query parameters are merged recursively with any query already present in the URL.
 
 ## Related
 

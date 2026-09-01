@@ -1,39 +1,22 @@
 # HTTP Middleware
 
-Use middleware to run shared request logic before and after your main route or handler runs.
+Use middleware for request logic that should run before or after a route or handler, such as sessions, authentication, CSRF protection, and response headers.
 
-The two main pieces are:
-
-- `MiddlewareQueue`, which stores middleware entries in order
-- `MiddlewareRegistry`, which maps aliases and groups to middleware
+`MiddlewareQueue` stores entries in execution order. `MiddlewareRegistry` maps aliases and groups to executable middleware.
 
 ## Table of Contents
 
-- [Start here](#start-here)
-- [Defining the middleware queue](#defining-the-middleware-queue)
+- [Define the application queue](#define-the-application-queue)
 - [Built-in middleware](#built-in-middleware)
-  - [Default middleware aliases (`Engine`)](#default-middleware-aliases-engine)
-  - [Other built-in middleware](#other-built-in-middleware)
-- [Custom aliases and groups](#custom-aliases-and-groups)
-- [String aliases and inline arguments](#string-aliases-and-inline-arguments)
-- [Method guide](#method-guide)
-  - [`MiddlewareQueue`](#middlewarequeue)
-  - [`MiddlewareRegistry`](#middlewareregistry)
-- [Behavior notes](#behavior-notes)
+- [Register aliases](#register-aliases)
+- [Group middleware](#group-middleware)
+- [Pass inline arguments](#pass-inline-arguments)
+- [Queue and registry reference](#queue-and-registry-reference)
 - [Related](#related)
 
-## Start here
+## Define the application queue
 
-Middleware is the right tool when you want logic to run consistently around request handling:
-
-- normalize or validate incoming requests
-- attach request attributes such as auth or route context
-- enforce shared rules such as CSRF, rate limiting, or CSP
-- short-circuit the request with an early response
-
-## Defining the middleware queue
-
-In a typical application, define the queue by overriding `Engine::middleware()` (see [Engine](../core/engine.md)).
+Override `Engine::middleware()` to define the global middleware order (see [Engine](../core/engine.md)):
 
 ```php
 use Fyre\Core\Engine;
@@ -53,163 +36,38 @@ class Application extends Engine
 }
 ```
 
-When ordering middleware, place middleware that creates context before middleware that depends on that context. For example, `bindings` depends on route information, so it must run after `router`.
+Place middleware that creates context before middleware that consumes it. For example, `bindings` requires route information and therefore runs after `router`. Keep `error` near the start so errors thrown by later middleware use the same exception-rendering path.
 
-A queue entry can be:
-
-- a middleware instance
-- a callable middleware closure
-- a string alias or class name resolved by `MiddlewareRegistry`
+A queue entry may be a PSR-15 middleware instance, a middleware closure, or a string alias or class name resolved by `MiddlewareRegistry`.
 
 ## Built-in middleware
 
-Fyre includes a small set of built-in HTTP middleware. Some are available as default aliases through `Engine` (see [Engine](../core/engine.md)); others can be mapped manually if you want to use them in your own queues.
+`Engine` maps these aliases by default:
 
-### Default middleware aliases (`Engine`)
+| Alias | Middleware | Purpose |
+| --- | --- | --- |
+| `error` | `ErrorHandlerMiddleware` | render thrown exceptions through `ErrorHandler` |
+| `session` | `SessionMiddleware` | open the session, attach it to the request, and close it afterward |
+| `auth` | `AuthMiddleware` | authenticate the request and attach `auth` and `user` attributes |
+| `authenticated` | `AuthenticatedMiddleware` | require a logged-in user |
+| `unauthenticated` | `UnauthenticatedMiddleware` | require a logged-out user |
+| `can` | `AuthorizedMiddleware` | enforce an authorization rule |
+| `csrf` | `CsrfProtectionMiddleware` | validate CSRF tokens and apply response behavior |
+| `csp` | `CspMiddleware` | apply Content Security Policy headers |
+| `router` | `RouterMiddleware` | match the request and attach route context |
+| `bindings` | `SubstituteBindingsMiddleware` | resolve route parameters to entities, enums, or custom values |
 
-These aliases are mapped by default:
+`RateLimiterMiddleware` is also included, but it is not mapped by default. Map it under an alias such as `throttle` when needed.
 
-- `error` → `Fyre\Core\Middleware\ErrorHandlerMiddleware`: catches any thrown `Throwable` and delegates to `ErrorHandler::render()`.
-- `session` → `Fyre\Http\Middleware\SessionMiddleware`: starts a session, exposes it as the `session` request attribute, and closes it after the handler returns.
-- `auth` → `Fyre\Auth\Middleware\AuthMiddleware`: runs authenticators, adds `auth` and `user` request attributes, then calls `beforeResponse()` on authenticators after the handler runs.
-- `authenticated` → `Fyre\Auth\Middleware\AuthenticatedMiddleware`: requires a logged-in user; redirects HTML requests to the login URL and throws for JSON requests.
-- `unauthenticated` → `Fyre\Auth\Middleware\UnauthenticatedMiddleware`: requires a logged-out user; throws a not-found exception when already authenticated.
-- `can` → `Fyre\Auth\Middleware\AuthorizedMiddleware`: checks an authorization rule via `Auth::access()->allows(...)` and either continues, redirects, or throws depending on request type and authentication state.
-- `csrf` → `Fyre\Security\Middleware\CsrfProtectionMiddleware`: enforces CSRF token checks and applies CSRF response behavior via `beforeResponse()`.
-- `csp` → `Fyre\Security\Middleware\CspMiddleware`: applies CSP headers to the response returned by the next handler.
-- `router` → `Fyre\Router\Middleware\RouterMiddleware`: parses the request through the router and sets route attributes like `relativePath`, `route`, and `routeArguments`.
-- `bindings` → `Fyre\Router\Middleware\SubstituteBindingsMiddleware`: resolves route parameters through custom callbacks or automatic entity and enum binding, and throws a not-found exception when a value cannot be resolved.
+The default error renderer follows `App.debug`. With debugging disabled or absent, unexpected exceptions produce a generic `500 Internal Server Error` body. With debugging enabled, the escaped exception and stack trace are included. A custom `Error.renderer` replaces that behavior and is responsible for controlling what it exposes.
 
-The default error renderer follows `App.debug`. When debugging is disabled or not configured,
-unexpected exceptions produce a generic `500 Internal Server Error` body without exception details.
-When debugging is enabled, the escaped exception and stack trace are included in the response.
-A custom `Error.renderer` replaces this default behavior and is responsible for controlling what it exposes.
+Registering `ErrorHandler` also converts non-suppressed PHP errors into `ErrorException` instances.
 
-Registering `ErrorHandler` converts non-suppressed PHP errors into `ErrorException` instances. Keep
-the `error` middleware near the start of the queue so errors thrown during request processing pass
-through the same exception-rendering pipeline.
+See [Authentication](../auth/authentication.md), [Authorization](../auth/authorization.md), [Auth Middleware](../auth/middleware.md), [CSRF](../security/csrf.md), [Content Security Policy](../security/csp.md), [Rate Limiting](../security/rate-limiting.md), [Router](../routing/router.md), and [Route Bindings](../routing/route-bindings.md) for feature-specific setup.
 
-For deeper topic documentation, see [Authentication](../auth/authentication.md), [Authorization](../auth/authorization.md), [Auth Middleware](../auth/middleware.md), [CSRF](../security/csrf.md), [Content Security Policy (CSP)](../security/csp.md), [Router](../routing/router.md), and [Route Bindings](../routing/route-bindings.md).
+## Register aliases
 
-### Other built-in middleware
-
-- `Fyre\Security\Middleware\RateLimiterMiddleware` (not mapped by default): enforces request limits and can add rate-limit headers to the response (see [Rate Limiting](../security/rate-limiting.md)).
-
-## Custom aliases and groups
-
-Most applications use string entries in the queue:
-
-- a middleware alias such as `session`
-- a group alias such as `web`
-- a middleware class name
-
-Register your own aliases with `MiddlewareRegistry::map()` and define groups with `MiddlewareRegistry::group()`:
-
-```php
-use Fyre\Http\MiddlewareQueue;
-
-// Assume $registry is a MiddlewareRegistry instance.
-$registry->group('web', [
-    'session',
-    'csrf',
-    'auth',
-]);
-
-$queue = new MiddlewareQueue()
-    ->add('web');
-```
-
-## String aliases and inline arguments
-
-String middleware entries can include inline arguments using the format `alias:arg1,arg2`.
-
-Arguments are always passed as strings. They are not trimmed or type-cast automatically.
-
-This is commonly used for middleware that accepts optional parameters, such as:
-
-- authorization checks (for example `can:admin`)
-- rate limiting overrides (for example `throttle:120,60,2`)
-
-```php
-use Fyre\Http\MiddlewareQueue;
-
-$queue = new MiddlewareQueue()
-    ->add('throttle:120,60,2');
-```
-
-The string prefix (for example `throttle`) must be a mapped alias or a resolvable class name.
-
-## Method guide
-
-This section focuses on the methods you are most likely to use when defining and resolving middleware.
-
-You can also resolve it from the container (see [Helpers](../core/helpers.md)):
-
-```php
-use Fyre\Http\MiddlewareRegistry;
-
-$registry = app(MiddlewareRegistry::class);
-```
-
-### `MiddlewareQueue`
-
-#### **Append middleware** (`add()`)
-
-Appends a middleware entry to the end of the queue.
-
-Arguments:
-- `$middleware` (`Closure|Psr\Http\Server\MiddlewareInterface|string`): a middleware instance, callable middleware, a registry alias, or a middleware class name.
-
-```php
-use Fyre\Http\MiddlewareQueue;
-
-$queue = new MiddlewareQueue()
-    ->add('session')
-    ->add('router');
-```
-
-#### **Prepend middleware** (`prepend()`)
-
-Adds a middleware entry to the start of the queue.
-
-Arguments:
-- `$middleware` (`Closure|Psr\Http\Server\MiddlewareInterface|string`): the middleware entry.
-
-```php
-use Fyre\Http\MiddlewareQueue;
-
-$queue = new MiddlewareQueue()
-    ->add('router')
-    ->prepend('error');
-```
-
-#### **Insert middleware at an index** (`insertAt()`)
-
-Inserts middleware at a specific index.
-
-Arguments:
-- `$index` (`int`): the index to insert at (uses PHP `array_splice()` semantics).
-- `$middleware` (`Closure|Psr\Http\Server\MiddlewareInterface|string`): the middleware entry.
-
-```php
-use Fyre\Http\MiddlewareQueue;
-
-$queue = new MiddlewareQueue()
-    ->add('router')
-    ->add('bindings')
-    ->insertAt(1, 'auth');
-```
-
-### `MiddlewareRegistry`
-
-#### **Map an alias** (`map()`)
-
-Maps a string alias to middleware, so you can reference it in the queue by name.
-
-Arguments:
-- `$alias` (`string`): the alias name.
-- `$middleware` (`Closure|string`): a middleware class name, or a container-invoked factory closure.
-- `$arguments` (`array`): additional constructor/call arguments (when supported).
+Map a class when the container should construct the middleware:
 
 ```php
 use Fyre\Security\Middleware\RateLimiterMiddleware;
@@ -222,13 +80,13 @@ $registry->map('throttle', RateLimiterMiddleware::class, [
 ]);
 ```
 
-#### **Define a group alias** (`group()`)
+The optional third argument supplies container build arguments. A closure passed to `map()` is a container-invoked factory and must return a middleware closure or PSR-15 middleware instance; it is not itself the request middleware.
 
-Maps an alias to a list of middleware entries. When invoked, the group runs as its own sub-queue.
+Aliases are shared after their first resolution. Mapping the same alias again discards its cached instance.
 
-Arguments:
-- `$alias` (`string`): the group name.
-- `$middleware` (`array`): middleware entries for the group.
+## Group middleware
+
+Use `group()` to expose a sequence under one alias:
 
 ```php
 $registry->group('web', [
@@ -236,42 +94,51 @@ $registry->group('web', [
     'csrf',
     'auth',
 ]);
+
+$queue->add('web');
 ```
 
-#### **Resolve a middleware entry** (`resolve()`)
+A group runs as a nested queue. When it finishes, request handling returns to the next entry in the outer queue.
 
-Resolves a middleware entry into executable middleware. This is the method that expands inline argument strings like `throttle:120,60,2`.
+## Pass inline arguments
 
-Arguments:
-- `$middleware` (`Closure|Psr\Http\Server\MiddlewareInterface|string`): the middleware entry.
+String entries may append arguments using `alias:arg1,arg2`:
 
 ```php
-$middleware = $registry->resolve('can:admin');
+$queue->add('can:admin');
+$queue->add('throttle:120,60,2');
 ```
 
-#### **Resolve a shared alias** (`use()`)
+The alias prefix must be mapped or be a resolvable middleware class. Arguments are passed after the request and handler as untrimmed strings; they are not type-cast. An entry ending in `:` passes one empty-string argument.
 
-Returns the middleware registered for the given alias.
+Only use inline arguments with middleware whose additional parameters are optional or always supplied by that alias.
 
-Arguments:
-- `$alias` (`string`): the alias name.
+## Queue and registry reference
+
+Resolve the registry from the container when configuring it outside `Engine`:
 
 ```php
-$authMiddleware = $registry->use('auth');
+use Fyre\Http\MiddlewareRegistry;
+
+$registry = app(MiddlewareRegistry::class);
 ```
 
-## Behavior notes
+| API | Purpose |
+| --- | --- |
+| `MiddlewareQueue::add($middleware)` | append an entry |
+| `MiddlewareQueue::prepend($middleware)` | prepend an entry |
+| `MiddlewareQueue::insertAt($index, $middleware)` | insert using `array_splice()` index semantics |
+| `MiddlewareRegistry::map($alias, $middleware, $arguments = [])` | map an alias to a class or factory |
+| `MiddlewareRegistry::group($alias, $middleware)` | map an alias to a nested queue |
+| `MiddlewareRegistry::resolve($middleware)` | resolve an entry and its inline arguments |
+| `MiddlewareRegistry::use($alias)` | return the shared middleware for an alias |
+| `MiddlewareRegistry::clear()` | remove all aliases and cached instances |
 
-A few behaviors are worth keeping in mind:
-
-- Inline arguments are not trimmed or type-cast; `can:admin` passes `"admin"` as a string argument.
-- Inline argument parsing uses `:` and `,` only; an entry like `alias:` will pass a single empty-string argument.
-- If you register callable middleware that requires extra parameters, ensure those parameters are optional or always provide inline arguments when referencing it as a string.
+For queue execution, fallback handling, and request scoping, see [Request Handler](request-handler.md).
 
 ## Related
 
 - [Engine](../core/engine.md)
-- [Helpers](../core/helpers.md)
 - [HTTP Requests](requests.md)
 - [HTTP Responses](responses.md)
 - [Request Handler](request-handler.md)
@@ -280,5 +147,5 @@ A few behaviors are worth keeping in mind:
 - [Authentication](../auth/authentication.md)
 - [Authorization](../auth/authorization.md)
 - [CSRF](../security/csrf.md)
-- [Content Security Policy (CSP)](../security/csp.md)
+- [Content Security Policy](../security/csp.md)
 - [Rate Limiting](../security/rate-limiting.md)

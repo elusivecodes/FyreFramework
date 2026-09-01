@@ -119,11 +119,11 @@ $id = $uri->getSegment(2);
 ## Behavior notes
 
 - `getSegment()` is 1-based and returns an empty string when the segment does not exist.
-- `getQueryParams()` uses `parse_str()`, so repeated keys can produce arrays and nested structures.
+- `getQueryParams()` uses `parse_str()`. Bracket notation produces arrays and nested structures; repeated plain keys retain the final value.
 - `withQueryParams()` uses `http_build_query()`, so arrays are encoded using bracket notation (for example, `tags%5B0%5D=a&tags%5B1%5D=b`).
 - `withQuery()` accepts a leading `?`, and `withFragment()` accepts a leading `#`; both are normalized when setting the value.
 - `getAuthority()` includes the port only when it differs from the scheme’s default (for example, `https://example.com:443` omits `:443`, but `https://example.com:8443` includes it).
-- `getUserInfo()` includes the password when a password is present.
+- `getUserInfo()` includes the password when one is present. Avoid logging complete credential-bearing URIs.
 
 ## Related
 

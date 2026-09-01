@@ -54,4 +54,6 @@ A few behaviors are worth keeping in mind:
 - [Router](router.md)
 - [Request Handler](../http/request-handler.md)
 - [HTTP Middleware](../http/middleware.md)
+- [HTTP Requests](../http/requests.md)
+- [HTTP Responses](../http/responses.md)
 - [Route Bindings](route-bindings.md)

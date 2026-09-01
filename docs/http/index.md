@@ -12,8 +12,8 @@ HTTP covers incoming requests, outgoing responses, cookies, middleware, sessions
 
 Pick the path that matches what you are doing:
 
-- **Handling incoming requests**: [HTTP Requests](requests.md) -> [HTTP Responses](responses.md) -> [HTTP Middleware](middleware.md)
-- **Running request flow through middleware**: [HTTP Middleware](middleware.md) -> [Request Handler](request-handler.md)
+- **Handling incoming requests**: [HTTP Requests](requests.md) -> [HTTP Middleware](middleware.md) -> [Routing](../routing/index.md) -> [HTTP Responses](responses.md)
+- **Running the application flow**: [HTTP Middleware](middleware.md) -> [Request Handler](request-handler.md) -> [Routing](../routing/index.md)
 - **Working with sessions**: [Sessions](sessions.md)
 - **Working with cookies**: [Cookies](cookies.md)
 - **Calling external services**: [HTTP Client](client.md)
@@ -33,6 +33,7 @@ The core pieces are straightforward:
 - `ClientResponse` and its subclasses help you return HTML, JSON, redirects, downloads, and cookies
 - `Cookie` and `CookieJar` represent cookies and scope them to matching request URIs
 - `MiddlewareQueue` and `RequestHandler` run shared request logic in order
+- routing matches the request and invokes the selected controller action or closure
 - `Session` manages per-user state across requests
 - `Client` makes outbound HTTP calls and returns client responses
 

@@ -134,7 +134,7 @@ To avoid this adjustment for `GET` requests, use a redirect code other than `302
 
 ## Download responses
 
-`DownloadResponse` builds a response suitable for downloads by setting the body to a stream and populating common headers (such as `Content-Disposition` and `Content-Length`). It’s a `ClientResponse`, so it can also carry cookies and other headers.
+`DownloadResponse` builds a response suitable for downloads by setting the body to a stream and adding download headers. It is a `ClientResponse`, so it can also carry cookies and other headers.
 
 ### Example: download a file
 
@@ -161,7 +161,18 @@ return DownloadResponse::createFromString(
 
 ### Header defaults
 
-Both download builders set the usual download headers for you, including `Content-Type`, `Content-Disposition`, and `Content-Length`.
+Both builders preserve explicitly supplied headers and otherwise set these defaults:
+
+| Header | Default |
+| --- | --- |
+| `Content-Type` | detected or supplied MIME type with `charset=UTF-8` |
+| `Content-Disposition` | `attachment` with the download filename |
+| `Content-Length` | file size or string length in bytes |
+| `Content-Transfer-Encoding` | `binary` |
+| `Expires` | `0` |
+| `Cache-Control` | `private, no-transform, no-store, must-revalidate` |
+
+`createFromFile()` rejects missing files and detects the MIME type when it is omitted. `createFromString()` stores the generated content in a `php://temp` stream.
 
 ## Emitting responses
 
@@ -181,9 +192,11 @@ $emitter = new ResponseEmitter();
 $emitter->emit($response);
 ```
 
-Most applications do not create the emitter directly because the framework handles response emission for you, but it is useful in custom entry points.
+The application front controller normally resolves the emitter and calls it after request handling. Create one directly only for a custom entry point (see [Getting Started](../getting-started.md)).
 
 Pass the current request as the optional second argument when emitting manually. Bodies are suppressed for `HEAD` requests, informational responses, `204`, and `304`.
+
+When a response contains a valid `Content-Range` header, the emitter outputs only that byte range. Seekable streams are read in chunks; a non-seekable stream must be read into memory for range handling.
 
 ## Related
 

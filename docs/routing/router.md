@@ -295,3 +295,4 @@ $router->discoverRoutes(['Your\Controllers']);
 - [Route Bindings](route-bindings.md)
 - [Route Discovery](route-discovery.md)
 - [HTTP Middleware](../http/middleware.md)
+- [HTTP Requests](../http/requests.md)

@@ -11,7 +11,6 @@ Use `Fyre\Http\ServerRequest` to read incoming request data, headers, uploaded f
 - [Inspecting request context](#inspecting-request-context)
 - [Locale and negotiation](#locale-and-negotiation)
 - [Request attributes](#request-attributes)
-- [Behavior notes](#behavior-notes)
 - [Related](#related)
 
 ## Start here
@@ -77,6 +76,8 @@ $page = $request->getQuery('page', 'int') ?? 1;
 $session = $request->getCookie('session');
 ```
 
+JSON request bodies are decoded when `getParsedBody()` or `getData()` is first used. Invalid JSON, and JSON that does not decode to an array, throws `BadRequestException`. Form-encoded bodies are parsed from the raw body for `PUT`, `PATCH`, and `DELETE`; other methods use the parsed body supplied when the request was created. For the current SAPI request, `createFromGlobals()` supplies non-empty `$_POST` data.
+
 ## Working with uploaded files
 
 Uploaded files are exposed as `UploadedFile` objects and can be retrieved using dot-notation keys. For the current PHP request, `ServerRequestFactory::createFromGlobals()` normalizes `$_FILES` into these objects.
@@ -93,6 +94,8 @@ if ($file instanceof UploadedFile && $file->getError() === UPLOAD_ERR_OK) {
 ```
 
 Validate an upload's presence, size, and type before moving it. Generate a safe destination name instead of using the client-provided filename directly.
+
+When replacing the upload collection with `withUploadedFiles()`, every leaf value must implement `UploadedFileInterface`.
 
 ## Inspecting request context
 
@@ -120,6 +123,8 @@ return [
 ```
 
 `getTrustedProxies()` returns the configured list. With proxy trust enabled, `getClientIp()` walks `X-Forwarded-For` from right to left and returns the first untrusted valid address. `isSecure()` accepts forwarded HTTPS indicators only from a trusted proxy when a list is configured.
+
+If proxy trust is enabled with an empty trusted-proxy list, the rightmost forwarded address is accepted. Configure explicit trusted proxies whenever forwarded headers can reach the application from untrusted clients.
 
 ## Locale and negotiation
 
@@ -168,14 +173,6 @@ Attributes are typically written by middleware and read by downstream middleware
 - `withoutAttribute($key)` returns a request without that value.
 
 Router middleware stores matched placeholder values in the `routeArguments` attribute. Binding middleware replaces those values as each argument is resolved, so downstream middleware and handlers receive the bound values. See [Route Bindings](../routing/route-bindings.md).
-
-## Behavior notes
-
-- `getParsedBody()` always returns an array, but it throws `BadRequestException` when an `application/json` body is invalid or does not decode to an array.
-- `getParsedBody()` parses `application/x-www-form-urlencoded` bodies only for `PUT`, `PATCH`, and `DELETE` requests. Otherwise, it uses parsed body data supplied when the request was created or an empty array. `ServerRequestFactory::createFromGlobals()` supplies `$_POST` for the current PHP request when it is not empty.
-- `withUploadedFiles()` expects `UploadedFileInterface` instances (and nested arrays of them) and throws when other values are provided.
-- `getClientIp()` uses `REMOTE_ADDR` by default. Proxy trust with an empty trusted list accepts the rightmost forwarded address; a non-empty list restricts forwarding to explicitly trusted proxy hops.
-- `negotiate('content', $supported, strictMatch: true)` returns an empty string when no acceptable match is found.
 
 ## Related
 

@@ -1,29 +1,23 @@
 # Cookies
 
-Use `Fyre\Http\Cookie\Cookie` and `Fyre\Http\Cookie\CookieJar` when you need to create, parse, or scope cookies for outbound HTTP requests.
+Use `Fyre\Http\Cookie\Cookie` and `Fyre\Http\Cookie\CookieJar` to create, parse, and scope cookies.
 
-For normal application responses, use `ClientResponse::withCookie()`. The outbound HTTP client manages its own cookie jar automatically.
+For application responses, use `ClientResponse::withCookie()`. The HTTP client manages its own cookie jar for outbound requests.
 
 ## Table of Contents
 
-- [Start here](#start-here)
-- [Creating cookies](#creating-cookies)
-- [Parsing `Set-Cookie` values](#parsing-set-cookie-values)
-- [Using a cookie jar](#using-a-cookie-jar)
+- [Choose the right cookie API](#choose-the-right-cookie-api)
+- [Create a cookie](#create-a-cookie)
+- [Parse a `Set-Cookie` value](#parse-a-set-cookie-value)
+- [Use a cookie jar](#use-a-cookie-jar)
 - [Cookie scope and security](#cookie-scope-and-security)
-- [Method guide](#method-guide)
-  - [`Cookie`](#cookie)
-  - [`CookieJar`](#cookiejar)
-- [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Start here
+## Choose the right cookie API
 
-Choose the API that matches the direction of the cookie:
-
-- use `ClientResponse::withCookie()` to send a cookie from your application to a browser
-- reuse one `Client` instance when an outbound HTTP conversation should retain response cookies
-- use `Cookie` and `CookieJar` directly when you need to construct, inspect, parse, or manually scope outbound cookies
+- Use `ClientResponse::withCookie()` to send a cookie from your application to a browser.
+- Reuse one `Client` instance when an outbound HTTP conversation should retain response cookies.
+- Use `Cookie` and `CookieJar` directly when you need to construct, inspect, parse, or manually scope outbound cookies.
 
 ```php
 $response = $response->withCookie(
@@ -36,7 +30,7 @@ $response = $response->withCookie(
 
 See [HTTP Responses](responses.md) for response cookie helpers and [HTTP Client](client.md) for automatic cookie handling across outbound requests.
 
-## Creating cookies
+## Create a cookie
 
 Pass cookie attributes through the constructor options:
 
@@ -54,23 +48,23 @@ $cookie = new Cookie('token', 'abc123', [
 ]);
 ```
 
-Available options:
-
-- `expires` (`int|null`): expiration as a Unix timestamp, or `null` for no explicit expiration
-- `path` (`string`): request path scope (defaults to `/`)
-- `domain` (`string`): domain scope used for matching
-- `hostOnly` (`bool`): whether the cookie only matches the exact domain
-- `secure` (`bool`): whether the cookie may only be sent over HTTPS
-- `httpOnly` (`bool`): whether the cookie is marked HTTP only
-- `sameSite` (`'lax'|'none'|'strict'`): same-site mode (defaults to `lax`)
+| Option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `expires` | `int|null` | `null` | expiration as a Unix timestamp |
+| `path` | `string` | `/` | request path scope |
+| `domain` | `string` | `''` | domain used for request matching |
+| `hostOnly` | `bool` | `false` | require an exact host match |
+| `secure` | `bool` | `false` | send the cookie only over HTTPS |
+| `httpOnly` | `bool` | `false` | emit the `HttpOnly` attribute |
+| `sameSite` | `lax`, `none`, or `strict` | `lax` | same-site mode |
 
 Cookie names and values are validated but are not URL-encoded or URL-decoded. Treat values as opaque strings and encode application data before constructing the cookie when necessary.
 
-Use `getName()`, `getValue()`, `getDomain()`, and the other getters to inspect the cookie. Methods such as `isExpired()`, `isHostOnly()`, `isHttpOnly()`, and `isSecure()` expose its current state.
+Use the getters to inspect a cookie and `toHeaderString()` to produce a `Set-Cookie` value. Casting the cookie to `string` produces the same value.
 
-## Parsing `Set-Cookie` values
+## Parse a `Set-Cookie` value
 
-Use `Cookie::createFromHeaderString()` when you have a `Set-Cookie` header value:
+Use `Cookie::createFromHeaderString()` with defaults derived from the response URI:
 
 ```php
 use Fyre\Http\Cookie\Cookie;
@@ -86,11 +80,11 @@ $cookie = Cookie::createFromHeaderString(
 
 The supplied options act as defaults. A missing `Domain` attribute produces a host-only cookie, while an explicit `Domain` attribute allows matching subdomains. A missing or invalid `Path` attribute uses the supplied default path.
 
-`Max-Age` takes precedence over `Expires` when it is a valid integer. Invalid expiration attributes are ignored.
+`Max-Age` takes precedence over `Expires` when it contains a valid integer. Invalid expiration attributes are ignored.
 
-## Using a cookie jar
+## Use a cookie jar
 
-`CookieJar` can store a cookie directly and build the `Cookie` request header for a URI:
+Add a cookie directly, then build the `Cookie` request header for a URI:
 
 ```php
 use Fyre\Http\Cookie\CookieJar;
@@ -103,13 +97,13 @@ $uri = new Uri('https://api.example.com/api/users');
 $header = $jar->getHeader($uri);
 ```
 
-To process cookies from an HTTP response, provide both the response URI and response:
+To parse and store cookies from an HTTP response, supply the response URI as the origin:
 
 ```php
 $jar->storeResponse($uri, $response);
 ```
 
-`storeResponse()` validates each `Set-Cookie` value against its origin before storing it. `add()` has no origin URI to validate, so manually added cookies should always use an explicit domain and the intended `hostOnly` setting.
+`storeResponse()` validates each `Set-Cookie` value against its origin. `add()` has no origin URI to validate, so manually added cookies should use an explicit domain and the intended `hostOnly` setting. Adding an expired cookie removes the stored cookie with the same id.
 
 ## Cookie scope and security
 
@@ -122,67 +116,11 @@ When building a request header, `CookieJar` includes only cookies that match the
 - expired cookies are not sent
 - cookies with longer matching paths are sent first
 
-When storing cookies from a response, the jar rejects malformed cookies, invalid or unrelated domains, secure cookies received over HTTP, invalid `__Secure-` and `__Host-` cookies, and insecure cookies that would overwrite an overlapping secure cookie.
+When storing response cookies, the jar rejects malformed cookies, invalid or unrelated domains, secure cookies received over HTTP, invalid `__Secure-` and `__Host-` cookies, and insecure cookies that would overwrite an overlapping secure cookie.
 
-Storage is bounded to 4,096 bytes per cookie, 180 cookies per domain, 3,000 cookies in total, and 16,384 bytes in a generated `Cookie` header. Older cookies are removed when a storage limit is reached.
+The jar is memory-only and does not use a public suffix list. Only accept cookie domains from services you trust. A manually added cookie with an empty domain can match any valid HTTP host, so set an explicit domain before calling `add()`.
 
-## Method guide
-
-### `Cookie`
-
-#### **Create a cookie** (`__construct()`)
-
-Creates a cookie from a name, value, and options.
-
-Arguments:
-- `$name` (`string`): the cookie name.
-- `$value` (`string`): the opaque cookie value.
-- `$options` (`array<string, mixed>`): cookie attributes.
-
-#### **Parse a header value** (`Cookie::createFromHeaderString()`)
-
-Creates a cookie from a `Set-Cookie` header value.
-
-Arguments:
-- `$string` (`string`): the header value.
-- `$options` (`array<string, mixed>`): default cookie attributes.
-
-#### **Build a header value** (`toHeaderString()`)
-
-Returns the cookie as a `Set-Cookie` header value. Casting a cookie to `string` produces the same result.
-
-### `CookieJar`
-
-#### **Add a cookie** (`add()`)
-
-Adds a manually constructed cookie. An expired cookie removes the stored cookie with the same id.
-
-Arguments:
-- `$cookie` (`Cookie`): the cookie to add.
-
-#### **Build a request header** (`getHeader()`)
-
-Returns the matching cookies formatted for a `Cookie` request header.
-
-Arguments:
-- `$uri` (`Psr\Http\Message\UriInterface`): the request URI.
-
-#### **Store response cookies** (`storeResponse()`)
-
-Parses and stores the `Set-Cookie` headers from a response.
-
-Arguments:
-- `$uri` (`Psr\Http\Message\UriInterface`): the response URI used to validate cookie scope.
-- `$response` (`Psr\Http\Message\ResponseInterface`): the response containing the headers.
-
-## Behavior notes
-
-A few behaviors are worth keeping in mind:
-
-- `CookieJar` stores cookies in memory only; cookies are not persisted between PHP processes.
-- A manually added cookie with an empty domain can match any valid HTTP host, so set an explicit domain before calling `add()`.
-- The jar does not use a public suffix list. Only accept cookie domains from services you trust.
-- `HttpOnly` is emitted as a cookie attribute but does not affect outbound matching in PHP.
+Storage is limited to 4,096 bytes per cookie, 180 cookies per domain, 3,000 cookies in total, and 16,384 bytes in a generated `Cookie` header. Older cookies are removed when a storage limit is reached. `HttpOnly` is emitted as a cookie attribute but does not affect outbound matching in PHP.
 
 ## Related
 

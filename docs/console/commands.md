@@ -388,4 +388,5 @@ If you add new namespaces after commands have already been discovered, call `cle
 - [Console](index.md)
 - [Console I/O](console.md)
 - [Database Migrations](../database/migrations.md)
+- [Queue](../queue/index.md)
 - [Queue Worker](../queue/worker.md)

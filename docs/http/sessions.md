@@ -252,4 +252,5 @@ If you build a custom handler, extend the framework's `SessionHandler` base clas
 
 - [HTTP Middleware](middleware.md)
 - [HTTP Requests](requests.md)
+- [Cookies](cookies.md)
 - [Auth](../auth/index.md)

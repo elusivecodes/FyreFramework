@@ -23,14 +23,14 @@ $response = $responseFactory->createResponse(202);
 
 ## Available factories
 
-| PSR-17 interface | Fyre implementation |
-| --- | --- |
-| `RequestFactoryInterface` | `Fyre\Http\Factories\RequestFactory` |
-| `ResponseFactoryInterface` | `Fyre\Http\Factories\ResponseFactory` |
-| `ServerRequestFactoryInterface` | `Fyre\Http\Factories\ServerRequestFactory` |
-| `StreamFactoryInterface` | `Fyre\Http\Factories\StreamFactory` |
-| `UploadedFileFactoryInterface` | `Fyre\Http\Factories\UploadedFileFactory` |
-| `UriFactoryInterface` | `Fyre\Http\Factories\UriFactory` |
+| PSR-17 interface | Fyre implementation | Creates |
+| --- | --- | --- |
+| `RequestFactoryInterface` | `Fyre\Http\Factories\RequestFactory` | `Fyre\Http\Client\Request` |
+| `ResponseFactoryInterface` | `Fyre\Http\Factories\ResponseFactory` | `Fyre\Http\ClientResponse` |
+| `ServerRequestFactoryInterface` | `Fyre\Http\Factories\ServerRequestFactory` | `Fyre\Http\ServerRequest` |
+| `StreamFactoryInterface` | `Fyre\Http\Factories\StreamFactory` | `Fyre\Http\Stream` |
+| `UploadedFileFactoryInterface` | `Fyre\Http\Factories\UploadedFileFactory` | `Fyre\Http\UploadedFile` |
+| `UriFactoryInterface` | `Fyre\Http\Factories\UriFactory` | `Fyre\Http\Uri` |
 
 The request, response, stream, uploaded-file, and URI factories have no constructor dependencies. The PSR-17 `ServerRequestFactory` instance uses the application `Config` and `TypeParser`, so it is normally resolved from the container.
 
@@ -65,7 +65,15 @@ The concrete request and response factories also accept Fyre constructor options
 
 ## Server requests
 
-`ServerRequestFactoryInterface::createServerRequest()` uses the supplied method, URI, and server parameters without reading PHP superglobals. SAPI-style header fields in the server parameters are converted to request headers. As with other Fyre requests, the method is normalized to uppercase. The factory creates empty body, cookie, query, parsed-body, and uploaded-file state.
+Choose the server-request creation path according to where the input comes from:
+
+| Method | Input source | Use case |
+| --- | --- | --- |
+| `createServerRequest()` | explicit method, URI, and server parameters | PSR-17 consumers |
+| `createFromGlobals()` | PHP superglobals and `php://input` | the current SAPI request |
+| `createFromOptions()` | explicit Fyre request options | tests and synthetic requests |
+
+`ServerRequestFactoryInterface::createServerRequest()` does not read PHP superglobals. SAPI-style header fields in the supplied server parameters become request headers, and the method is normalized to uppercase. Body, cookie, query, parsed-body, and uploaded-file state start empty.
 
 Use the regular `ServerRequest` service when handling the current PHP request. The `Engine` creates that service through `ServerRequestFactory::createFromGlobals()`:
 
@@ -89,7 +97,7 @@ $request = $factory->createFromOptions([
 ]);
 ```
 
-`createFromOptions()` can also marshal raw `server` parameters and PHP `files` data. It derives the method, headers, and URI when they are not supplied explicitly and converts file data to PSR-7 uploaded files. Direct `ServerRequest` construction expects those values to already be normalized; its `server` option is stored as request metadata and does not populate other request fields.
+`createFromOptions()` can also marshal raw `server` parameters and PHP `files` data. It derives the method, headers, and URI when they are not supplied explicitly and converts file data to PSR-7 uploaded files. Direct `ServerRequest` construction expects normalized values; its `server` option is request metadata and does not populate other fields.
 
 The concrete URI and uploaded-file factories also provide marshalling helpers used by `ServerRequestFactory`:
 
