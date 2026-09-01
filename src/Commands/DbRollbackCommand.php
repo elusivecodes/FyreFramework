@@ -65,8 +65,6 @@ class DbRollbackCommand extends Command
     /**
      * Runs the command.
      *
-     * Note: The connection is resolved using the supplied `$db` key before rolling back migrations.
-     *
      * @param string $db The connection key.
      * @param int|null $batches The number of batches to rollback.
      * @param int|null $steps The number of steps to rollback.

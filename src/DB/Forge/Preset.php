@@ -41,6 +41,7 @@ abstract class Preset
         try {
             static::build($forge)->execute();
         } catch (DbException $e) {
+            // Another process may have applied the preset after the schema was read.
             $schema->clear();
 
             if (static::build($forge)->sql() !== []) {

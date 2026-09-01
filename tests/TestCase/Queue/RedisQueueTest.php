@@ -21,6 +21,7 @@ use Tests\Mock\Jobs\MockJob;
 use function array_key_first;
 use function array_keys;
 use function getenv;
+use function serialize;
 use function strlen;
 use function time;
 
@@ -209,6 +210,32 @@ final class RedisQueueTest extends TestCase
             'className' => RedisQueue::class,
             'visibilityTimeout' => 0,
         ]);
+    }
+
+    public function testMalformedFailureException(): void
+    {
+        $connection = Closure::bind(function(): Redis {
+            /** @var RedisQueue $this */
+            return $this->connection;
+        }, $this->queue, RedisQueue::class)();
+
+        $id = '11111111111111111111111111111111';
+
+        $connection->hSet('queue:default:failures', $id, serialize([
+            'message' => [],
+            'failedAt' => time(),
+            'exception' => [
+                'class' => RuntimeException::class,
+            ],
+        ]));
+
+        $failures = $this->queue->getFailed();
+        $this->queue->forgetFailed($id);
+
+        $this->assertArraysAreIdentical(
+            [],
+            $failures
+        );
     }
 
     public function testMalformedMessage(): void

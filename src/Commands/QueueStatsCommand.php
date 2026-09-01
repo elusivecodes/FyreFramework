@@ -49,8 +49,6 @@ class QueueStatsCommand extends Command
     /**
      * Runs the command.
      *
-     * Note: When no filters are provided, stats are displayed for all configured queue handlers and their queues.
-     *
      * @param string|null $config The queue config key.
      * @param string|null $queue The queue name.
      * @return int|null The exit code.

@@ -406,7 +406,7 @@ class RedisQueue extends Queue
 
         $failure = static::parseFailure($failure);
 
-        if ($failure === null || !is_array($failure['message'] ?? null)) {
+        if ($failure === null) {
             return false;
         }
 
@@ -683,8 +683,24 @@ class RedisQueue extends Queue
             !is_array($failure) ||
             !is_array($failure['message'] ?? null) ||
             !is_int($failure['failedAt'] ?? null) ||
-            !array_key_exists('exception', $failure) ||
-            ($failure['exception'] !== null && !is_array($failure['exception']))
+            !array_key_exists('exception', $failure)
+        ) {
+            return null;
+        }
+
+        $exception = $failure['exception'];
+
+        if (
+            $exception !== null &&
+            (
+                !is_array($exception) ||
+                !is_string($exception['class'] ?? null) ||
+                !is_string($exception['message'] ?? null) ||
+                !is_int($exception['code'] ?? null) ||
+                !is_string($exception['file'] ?? null) ||
+                !is_int($exception['line'] ?? null) ||
+                !is_string($exception['trace'] ?? null)
+            )
         ) {
             return null;
         }

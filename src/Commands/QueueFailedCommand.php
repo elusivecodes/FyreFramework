@@ -3,13 +3,13 @@ declare(strict_types=1);
 
 namespace Fyre\Commands;
 
+use Fyre\Commands\Traits\QueueFailureTrait;
 use Fyre\Console\Command;
 use Fyre\Console\Console;
 use Fyre\Queue\Queue;
 use Fyre\Queue\QueueManager;
 use Override;
 
-use function array_filter;
 use function gmdate;
 use function strnatcmp;
 use function uksort;
@@ -21,6 +21,8 @@ use function uksort;
  */
 class QueueFailedCommand extends Command
 {
+    use QueueFailureTrait;
+
     #[Override]
     protected string|null $alias = 'queue:failed';
 
@@ -61,16 +63,8 @@ class QueueFailedCommand extends Command
      */
     public function run(string $config, string $queue, string|null $class = null): int|null
     {
-        $failures = $this->queueManager
-            ->use($config)
-            ->getFailed($queue);
-
-        if ($class !== null) {
-            $failures = array_filter(
-                $failures,
-                static fn(array $failure): bool => $failure['message']['className'] === $class
-            );
-        }
+        $handler = $this->queueManager->use($config);
+        $failures = static::getFilteredFailures($handler, $queue, class: $class);
 
         if ($failures === []) {
             $this->io->info('No failed queue jobs found.');

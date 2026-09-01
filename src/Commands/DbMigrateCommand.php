@@ -57,8 +57,6 @@ class DbMigrateCommand extends Command
     /**
      * Runs the command.
      *
-     * Note: The connection is resolved using the supplied `$db` key before running migrations.
-     *
      * @param string $db The connection key.
      * @param int $lockExpires The migration lock lifetime in seconds.
      * @param bool $dryRun Whether to display the migration plan without executing it.
