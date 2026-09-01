@@ -69,6 +69,7 @@ Command input follows a few simple rules:
 - options without a value are treated as `true`
 - `-o value` is supported when the option key is a single character
 - unknown named options produce an error
+- close matches are suggested, but never substituted, for unknown commands and option names
 - positional values are matched to option keys in the order the command defines them
 
 For example, `db:rollback default 2 --steps 5` resolves as `db = default`, `batches = 2`, `steps = 5`.

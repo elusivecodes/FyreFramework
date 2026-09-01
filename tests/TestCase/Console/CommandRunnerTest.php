@@ -244,13 +244,14 @@ final class CommandRunnerTest extends TestCase
     {
         $this->assertSame(
             Command::CODE_ERROR,
-            $this->runner->handle(['', 'bool_options', '--test', '--other=value'])
+            $this->runner->handle(['', 'bool_options', '--test', '--tset=value'])
         );
 
         rewind($this->output);
 
         $this->assertSame(
-            "\033[0;31mInvalid option: other\033[0m".PHP_EOL,
+            "\033[0;31mInvalid option: --tset\033[0m".PHP_EOL.
+            "\033[0;34mDid you mean: --test\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
     }
@@ -376,13 +377,14 @@ final class CommandRunnerTest extends TestCase
     {
         $this->assertSame(
             Command::CODE_ERROR,
-            $this->runner->handle(['app', 'invalid', '--help'])
+            $this->runner->handle(['app', 'option', '--help'])
         );
 
         rewind($this->output);
 
         $this->assertSame(
-            "\033[0;31mInvalid command: invalid\033[0m".PHP_EOL,
+            "\033[0;31mInvalid command: option\033[0m".PHP_EOL.
+            "\033[0;34mDid you mean: options\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
     }
@@ -463,13 +465,13 @@ final class CommandRunnerTest extends TestCase
 
         $this->assertSame(
             Command::CODE_SUCCESS,
-            $this->runner->handle(['', 'options', 'invalid'])
+            $this->runner->handle(['', 'options', 'd'])
         );
 
         rewind($this->output);
 
         $this->assertSame(
-            "\033[0;31mInvalid option value for: value\033[0m".PHP_EOL.
+            "\033[0;31mInvalid value for --value: d\033[0m".PHP_EOL.
             "\033[0;33mWhich do you want?\033[0m".PHP_EOL.
             " (\033[1;36ma\033[0m/\033[2;36mb\033[0m/\033[2;36mc\033[0m)".PHP_EOL,
             stream_get_contents($this->output)
@@ -522,7 +524,7 @@ final class CommandRunnerTest extends TestCase
         rewind($this->output);
 
         $this->assertSame(
-            "\033[0;31mInvalid value for: value\033[0m".PHP_EOL.
+            "\033[0;31mInvalid value for --value: true\033[0m".PHP_EOL.
             "\033[0;33mPlease enter a value (value)\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
@@ -688,6 +690,22 @@ final class CommandRunnerTest extends TestCase
 
         $this->assertSame(
             "\033[0;31mInvalid command: invalid\033[0m".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
+    public function testRunInvalidSuggestion(): void
+    {
+        $this->assertSame(
+            Command::CODE_ERROR,
+            $this->runner->run('tesetr')
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;31mInvalid command: tesetr\033[0m".PHP_EOL.
+            "\033[0;34mDid you mean: tester\033[0m".PHP_EOL,
             stream_get_contents($this->output)
         );
     }

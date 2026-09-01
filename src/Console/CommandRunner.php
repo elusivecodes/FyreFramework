@@ -22,18 +22,24 @@ use function array_key_exists;
 use function array_keys;
 use function array_shift;
 use function class_exists;
+use function get_debug_type;
 use function implode;
 use function in_array;
 use function is_array;
 use function is_bool;
 use function is_int;
+use function is_scalar;
 use function is_subclass_of;
 use function ksort;
+use function levenshtein;
+use function max;
 use function method_exists;
 use function preg_match;
 use function preg_replace;
 use function sprintf;
+use function strlen;
 
+use const PHP_INT_MAX;
 use const SORT_NATURAL;
 
 /**
@@ -45,6 +51,12 @@ use const SORT_NATURAL;
  * Events:
  * - `Command.buildCommands` is dispatched after discovery so the command list can be modified.
  * - `Command.beforeExecute` and `Command.afterExecute` are dispatched around command execution.
+ *
+ * @phpstan-type CommandData array{
+ *     description: string,
+ *     options: array<string, array<string, mixed>|string>,
+ *     className: class-string<Command>
+ * }
  */
 class CommandRunner
 {
@@ -53,7 +65,7 @@ class CommandRunner
     use NamespacesTrait;
 
     /**
-     * @var array<string, array<string, mixed>>|null
+     * @var array<string, CommandData>|null
      */
     protected array|null $commands = null;
 
@@ -81,7 +93,7 @@ class CommandRunner
      *
      * Note: The command list is cached after it is first built.
      *
-     * @return array<string, array<string, mixed>> The available commands.
+     * @return array<string, CommandData> The available commands.
      */
     public function all(): array
     {
@@ -154,10 +166,19 @@ class CommandRunner
         $command = $commands[$alias] ?? null;
 
         if (!$command) {
+            $suggestion = static::findSuggestion($alias, array_keys($commands));
+
             sprintf(
                 'Invalid command: %s',
                 $alias
             ) |> $this->io->error(...);
+
+            if ($suggestion !== null) {
+                sprintf(
+                    'Did you mean: %s',
+                    $suggestion
+                ) |> $this->io->info(...);
+            }
 
             return Command::CODE_ERROR;
         }
@@ -187,10 +208,19 @@ class CommandRunner
             }
 
             if (!array_key_exists($key, $command['options'])) {
+                $suggestion = static::findSuggestion($key, array_keys($command['options']));
+
                 sprintf(
-                    'Invalid option: %s',
-                    $key
+                    'Invalid option: --%s',
+                    $this->inflector->dasherize($key)
                 ) |> $this->io->error(...);
+
+                if ($suggestion !== null) {
+                    sprintf(
+                        'Did you mean: --%s',
+                        $this->inflector->dasherize($suggestion)
+                    ) |> $this->io->info(...);
+                }
 
                 return Command::CODE_ERROR;
             }
@@ -217,10 +247,18 @@ class CommandRunner
                     array_keys($data['values']);
 
                 if ($value !== null && !in_array($value, $optionKeys, true)) {
+                    $invalidValue = match (true) {
+                        is_bool($value) => $value ? 'true' : 'false',
+                        is_scalar($value) => (string) $value,
+                        default => get_debug_type($value),
+                    };
+
                     sprintf(
-                        'Invalid option value for: %s',
-                        $key
+                        'Invalid value for --%s: %s',
+                        $this->inflector->dasherize($key),
+                        $invalidValue
                     ) |> $this->io->error(...);
+
                     $value = null;
                 }
 
@@ -245,8 +283,9 @@ class CommandRunner
             } else {
                 if (is_bool($value)) {
                     sprintf(
-                        'Invalid value for: %s',
-                        $key
+                        'Invalid value for --%s: %s',
+                        $this->inflector->dasherize($key),
+                        $value ? 'true' : 'false'
                     ) |> $this->io->error(...);
                     $value = null;
                 }
@@ -299,10 +338,19 @@ class CommandRunner
         $command = $commands[$alias] ?? null;
 
         if (!$command) {
+            $suggestion = static::findSuggestion($alias, array_keys($commands));
+
             sprintf(
                 'Invalid command: %s',
                 $alias
             ) |> $this->io->error(...);
+
+            if ($suggestion !== null) {
+                sprintf(
+                    'Did you mean: %s',
+                    $suggestion
+                ) |> $this->io->info(...);
+            }
 
             return Command::CODE_ERROR;
         }
@@ -421,7 +469,7 @@ class CommandRunner
     /**
      * Finds the commands.
      *
-     * @return array<string, array<string, mixed>> The commands.
+     * @return array<string, CommandData> The commands.
      */
     protected function findCommands(): array
     {
@@ -518,6 +566,33 @@ class CommandRunner
         }
 
         return [$command, $arguments];
+    }
+
+    /**
+     * Finds the closest value to a target.
+     *
+     * @param string $value The target value.
+     * @param string[] $candidates The possible values.
+     * @return string|null The closest value, or null if no value is sufficiently similar.
+     */
+    protected static function findSuggestion(string $value, array $candidates): string|null
+    {
+        $maxDistance = max(2, strlen($value) / 3);
+        $closestDistance = PHP_INT_MAX;
+        $suggestion = null;
+
+        foreach ($candidates as $candidate) {
+            $distance = levenshtein($value, $candidate);
+
+            if ($distance > $maxDistance || $distance >= $closestDistance) {
+                continue;
+            }
+
+            $closestDistance = $distance;
+            $suggestion = $candidate;
+        }
+
+        return $suggestion;
     }
 
     /**
