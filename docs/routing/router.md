@@ -13,17 +13,11 @@ Use `Fyre\Router\Router` to define routes, match requests, and generate URLs fro
 - [Route destinations](#route-destinations)
 - [Route groups](#route-groups)
 - [Path placeholders and patterns](#path-placeholders-and-patterns)
+- [Matching requests](#matching-requests)
 - [Aliases and URL generation](#aliases-and-url-generation)
 - [Route attributes and discovery](#route-attributes-and-discovery)
   - [Example controller using `#[Route]`](#example-controller-using-route)
   - [Discovering routes with `Router::discoverRoutes()`](#discovering-routes-with-routerdiscoverroutes)
-- [Method guide](#method-guide)
-  - [Route definitions](#route-definitions)
-  - [Route configuration](#route-configuration)
-  - [Route discovery](#route-discovery)
-  - [Request parsing](#request-parsing)
-  - [URL generation](#url-generation)
-  - [Utilities](#utilities)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -49,13 +43,15 @@ use Fyre\Router\Router;
 $router = app(Router::class);
 ```
 
-Examples below also assume `ServerRequestInterface` is already imported when needed.
-
 All route paths are normalized to exactly one leading slash and no trailing slash (for example, `posts/` becomes `/posts`).
+
+Call `clear()` to remove every connected route and alias when the router needs to be rebuilt.
 
 ### Basic route (closure destination)
 
 ```php
+use Psr\Http\Message\ServerRequestInterface;
+
 $router->get(
     'health',
     static fn(ServerRequestInterface $request): string => 'ok',
@@ -138,14 +134,23 @@ The router selects a route type based on how you define the destination:
 
 When a destination runs, it may return a `ResponseInterface` or a string. If it returns a string, it is wrapped into a response body.
 
+Use `redirect()` when a route should redirect to another path. Placeholders in the destination are replaced with values from the matched route.
+
+```php
+$router->redirect('old-posts/{id}', '/posts/{id}');
+```
+
 ## Route groups
 
 `Router::group()` lets you apply shared settings to multiple routes. Groups can be nested; settings cascade down to all routes connected inside the callback.
 
 Group settings are applied in stack order (nested groups last). Middleware, placeholders, and binding callbacks are merged from outer → inner → route.
 
+When binding callbacks use the same parameter name, inner groups override outer groups and callbacks defined directly on the route take precedence. See [Route Bindings](route-bindings.md#custom-binding-callbacks) for callback behavior and examples.
+
 ```php
 use Fyre\Router\Router;
+use Psr\Http\Message\ServerRequestInterface;
 
 $router->group(
     static function(Router $router): void {
@@ -188,6 +193,18 @@ When a route matches, extracted arguments are stored on the request as `routeArg
 
 For optional placeholders like `{id?}`, use an argument key of `id` (without `?`) for both matching and URL generation.
 
+## Matching requests
+
+Use `parseRequest()` to match an incoming request. It returns a new request containing the matched `route` and `routeArguments` attributes.
+
+```php
+$routedRequest = $router->parseRequest($request);
+$route = $routedRequest->getAttribute('route');
+$arguments = $routedRequest->getAttribute('routeArguments');
+```
+
+The router throws a `NotFoundException` when no path matches. When the path matches but the method does not, it throws a `MethodNotAllowedException` with the permitted methods in the `Allow` header.
+
 ## Aliases and URL generation
 
 When you connect a route with `as: 'name'`, the router registers the route as an alias. You can then generate URLs with `Router::url()`.
@@ -217,6 +234,8 @@ $url = $router->url('posts.show', [
     '#' => 'comments',
 ]);
 ```
+
+`url()` throws a `RouterException` when the alias does not exist, a required placeholder is missing, or a value does not match its placeholder pattern.
 
 ## Route attributes and discovery
 
@@ -256,220 +275,7 @@ Use `discoverRoutes()` when you want to register routes from controller attribut
 $router->discoverRoutes(['Your\Controllers']);
 ```
 
-## Method guide
-
-This section focuses on the methods you’ll use most when defining routes, parsing requests, and generating URLs.
-
-Most examples assume you already have a `$router` instance (see [Defining routes](#defining-routes)).
-
-### Route definitions
-
-#### **Connect a route** (`connect()`)
-
-Connect a route path to a destination, optionally constraining scheme/host/port/methods, attaching route-specific middleware or binding callbacks, and registering an alias for URL generation.
-
-Arguments:
-- `$path` (`string`): the route path (normalized before use).
-- `$destination` (`array|Closure|string`): the destination (closure, controller destination, or redirect target when `redirect` is enabled).
-- `$scheme` (`string|null`): restrict matching to a URI scheme.
-- `$host` (`string|null`): restrict matching to a host (supports `*` wildcards).
-- `$port` (`int|null`): restrict matching to a port.
-- `$methods` (`string[]|null`): restrict matching to a set of HTTP methods (or `null` to use the default methods).
-- `$middleware` (`array`): route middleware entries (executed by [Route Handler](route-handler.md)).
-- `$placeholders` (`array`): placeholder patterns (regex strings without delimiters).
-- `$as` (`string|null`): alias name for URL generation.
-- `$redirect` (`bool`): whether to create a redirect route.
-- `$bindingCallbacks` (`array<string, Closure>`): callbacks indexed by route parameter name.
-
-```php
-$router->connect(
-    'posts/{id}',
-    [PostsController::class, 'show'],
-    methods: ['GET'],
-    placeholders: ['id' => '\d+'],
-    as: 'posts.show'
-);
-```
-
-#### **Connect common HTTP verb routes** (`get()`, `post()`, `put()`, `patch()`, `delete()`)
-
-Convenience wrappers around `connect()` that pre-fill the `methods` argument. Each method also accepts the `bindingCallbacks` argument described above.
-
-```php
-use Psr\Http\Message\ServerRequestInterface;
-
-$router->post(
-    'contact',
-    static fn(ServerRequestInterface $request): string => 'submitted',
-    as: 'contact.submit'
-);
-```
-
-#### **Connect a redirect route** (`redirect()`)
-
-Create a route that issues an HTTP redirect response when matched.
-
-Arguments:
-- `$path` (`string`): the route path.
-- `$destination` (`string`): the redirect destination (may include `{placeholders}` substituted from the matched route arguments).
-- `$scheme` (`string|null`): restrict matching to a URI scheme.
-- `$host` (`string|null`): restrict matching to a host.
-- `$port` (`int|null`): restrict matching to a port.
-- `$methods` (`string[]|null`): restrict matching to a set of HTTP methods (or `null` to use the default methods).
-- `$middleware` (`array`): route middleware entries.
-- `$placeholders` (`array`): placeholder patterns for matching.
-- `$as` (`string|null`): alias name for URL generation.
-
-```php
-$router->redirect('old-posts/{id}', '/posts/{id}');
-```
-
-#### **Group routes** (`group()`)
-
-Apply shared options (prefix, constraints, middleware, placeholders, binding callbacks, alias prefix) to all routes connected inside the callback.
-
-Arguments:
-- `$callback` (`Closure`): callback invoked to connect the group’s routes.
-- `$prefix` (`string|null`): prefix path applied to each route in the group.
-- `$scheme` (`string|null`): scheme applied to routes in the group (unless overridden).
-- `$host` (`string|null`): host applied to routes in the group (unless overridden).
-- `$port` (`int|null`): port applied to routes in the group (unless overridden).
-- `$middleware` (`array`): middleware merged into routes in the group.
-- `$placeholders` (`array`): placeholder patterns merged into routes in the group.
-- `$as` (`string|null`): alias prefix concatenated onto route aliases in the group.
-- `$bindingCallbacks` (`array<string, Closure>`): binding callbacks merged into routes in the group.
-
-```php
-use Fyre\Router\Router;
-use Psr\Http\Message\ServerRequestInterface;
-
-$router->group(
-    static function(Router $router): void {
-        $router->get(
-            'status',
-            static fn(ServerRequestInterface $request): string => 'ok',
-            as: 'status'
-        );
-    },
-    prefix: 'api',
-    as: 'api.'
-);
-```
-
-Nested groups override callbacks from outer groups with the same parameter name. Callbacks defined directly on a route override matching group callbacks. See [Route Bindings](route-bindings.md#custom-binding-callbacks) for callback behavior and examples.
-
-#### **Clear routes** (`clear()`)
-
-Remove all connected routes and alias mappings.
-
-```php
-$router->clear();
-```
-
-### Route configuration
-
-#### **Read binding callbacks** (`Route::getBindingCallbacks()`)
-
-Return the route binding callbacks indexed by parameter name.
-
-```php
-$callbacks = $route->getBindingCallbacks();
-```
-
-#### **Set a binding callback** (`Route::setBindingCallback()`)
-
-Add or replace the binding callback for a route parameter.
-
-Arguments:
-- `$parameter` (`string`): route parameter name.
-- `$callback` (`Closure`): callback used to resolve the matched value.
-
-```php
-$route->setBindingCallback('post', $callback);
-```
-
-### Route discovery
-
-#### **Load discovered routes** (`discoverRoutes()`)
-
-Discover and connect routes from the provided controller namespaces.
-
-Arguments:
-- `$namespaces` (`string[]`): namespaces to scan.
-
-```php
-$router->discoverRoutes(['Your\Controllers']);
-```
-
-### Request parsing
-
-#### **Parse a request** (`parseRequest()`)
-
-Match the incoming request against connected routes and return a new request with routing attributes.
-
-Throws `NotFoundException` if no connected route matches the request.
-
-Arguments:
-- `$request` (`ServerRequestInterface`): the incoming request.
-
-```php
-use Psr\Http\Message\ServerRequestInterface;
-
-$routedRequest = $router->parseRequest($request);
-$route = $routedRequest->getAttribute('route');
-$args = $routedRequest->getAttribute('routeArguments');
-```
-
-### URL generation
-
-#### **Generate a URL** (`url()`)
-
-Generate a URL for a named route alias, substituting placeholder values and applying base URI behavior.
-
-Throws `RouterException` if the alias does not exist, required placeholder values are missing, or a placeholder value does not match the route’s pattern.
-
-Arguments:
-- `$name` (`string`): the route alias.
-- `$arguments` (`array`): placeholder values and special keys (`?` and `#`).
-- `$scheme` (`string|null`): override the scheme used for URL generation.
-- `$host` (`string|null`): override the host used for URL generation.
-- `$port` (`int|null`): override the port used for URL generation.
-- `$full` (`bool|null`): whether to generate a full URL when a scheme and host are available.
-
-```php
-$url = $router->url('posts.show', [
-    'id' => 42,
-    '?' => ['page' => 2],
-    '#' => 'comments',
-]);
-```
-
-#### **Read the configured base URI** (`getBaseUri()`)
-
-Return the router’s configured base URI string (from `App.baseUri`).
-
-```php
-$baseUri = $router->getBaseUri();
-```
-
-### Utilities
-
-#### **Normalize a path** (`normalizePath()`)
-
-Normalize a path to have exactly one leading slash and no trailing slash. Duplicate slashes inside the path are not collapsed.
-
-Arguments:
-- `$path` (`string`): the path to normalize.
-
-```php
-use Fyre\Router\Router;
-
-$path = Router::normalizePath('posts/42/');
-```
-
 ## Behavior notes
-
-A few behaviors are worth keeping in mind:
 
 - Route matching is order-dependent: the first match wins.
 - Route matching uses normalized paths, but duplicate slashes inside the path are not collapsed.

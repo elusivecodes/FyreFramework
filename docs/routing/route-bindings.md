@@ -144,7 +144,7 @@ Other typed dependencies are resolved from the container. The callback result re
 
 Callbacks run in handler parameter order. After each callback or automatic binding succeeds, the request’s `routeArguments` attribute is updated. A later callback can therefore read values resolved for earlier parameters, as shown in the custom model query below.
 
-You can also attach callbacks after connecting a route with `Route::setBindingCallback()`. See [Route configuration](router.md#route-configuration).
+You can also attach callbacks after connecting a route with `Route::setBindingCallback()`.
 
 ### Custom model queries
 
