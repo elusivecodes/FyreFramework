@@ -20,11 +20,6 @@ For direct bulk updates without entities, use `updateAll()`.
   - [Handling errors](#handling-errors)
 - [Bulk updates with `updateAll()`](#bulk-updates-with-updateall)
 - [Events and hooks](#events-and-hooks)
-- [Method guide](#method-guide)
-  - [Entity building](#entity-building)
-  - [Saving](#saving)
-  - [Bulk updates](#bulk-updates)
-- [Behavior notes](#behavior-notes)
 - [Related](#related)
 
 ## Start here
@@ -37,7 +32,7 @@ Most save workflows look like this:
 
 If you need to update many rows and don’t need entity-level behavior, use `updateAll()` instead.
 
-Most examples on this page assume you already have a model instance such as `$Users`.
+The examples use a model instance named `$Users`; see [Models](models.md) for model resolution and configuration.
 
 ## Building entities from input
 
@@ -47,8 +42,11 @@ These workflows are controlled by a set of common flags:
 
 - **Schema parsing** (`$parse`): when enabled, values are converted using the model schema types (and parse events can run).
 - **Guarding** (`$guard` and `$accessible`): when enabled, only accessible fields are set from input.
+- **Mutation hooks** (`$mutate`): controls whether entity setter hooks are applied.
 - **Validation** (`$validate`): when enabled, the model validator validates the input and populates entity errors. See [Form Validators](../form/validators.md).
 - **Relationship selection** (`$associated`): controls which nested relationships are injected and how they are configured. When omitted, every relationship defined directly on the current model is eligible.
+- **Parse events** (`$events`): controls `ORM.beforeParse` and `ORM.afterParse` when schema parsing is enabled.
+- **Entity state** (`$clean` and `$new`): optionally clean the resulting entity or explicitly set whether it represents a new record.
 
 ### Creating empty entities
 
@@ -71,6 +69,8 @@ $user = $Users->newEntity(
 );
 ```
 
+`newEntities()` accepts a list of input arrays and returns one entity for each entry in the same order.
+
 ### Patching existing entities
 
 `patchEntity()` updates an existing entity in-place using the same workflow as `newEntity()` (and using the `update` validation type when validation is enabled).
@@ -82,6 +82,8 @@ if ($user) {
 }
 ```
 
+`patchEntities()` applies a parallel list of input arrays by index. Entries without matching input are left unchanged.
+
 ## Validation and rule sets
 
 Validation and rule sets both produce errors on entities, but they run at different times and serve different purposes:
@@ -92,6 +94,18 @@ Validation and rule sets both produce errors on entities, but they run at differ
 If an entity is new or dirty, saving fails without attempting persistence when it or any nested entity already has errors. Clean existing entities are skipped before errors are checked.
 
 ## Saving entities
+
+The same options control `save()` and `saveMany()`:
+
+| Option | Purpose |
+| --- | --- |
+| `saveRelated` | save eligible related entities |
+| `checkRules` | run the model rule set |
+| `checkExists` | verify whether new entities with primary-key values already exist |
+| `events` | dispatch save lifecycle events |
+| `clean` | clean saved entities after commit |
+
+These options default to `true`.
 
 ### Saving one entity
 
@@ -254,193 +268,7 @@ Saving-related attributes include:
 - `#[BeforeRules]` and `#[AfterRules]` when rule checking is enabled during saves.
 - `#[BeforeSave]`, `#[AfterSave]`, and `#[AfterSaveCommit]` around persistence and transaction commit.
 
-## Method guide
-
-This is a quick reference for the most common calls involved in building and saving entities. For full model behavior and query APIs, see [Models](models.md) and [Finding Data](finding.md).
-
-### Entity building
-
-#### **Create an empty entity** (`newEmptyEntity()`)
-
-Creates a blank entity instance for this model.
-
-```php
-$user = $Users->newEmptyEntity();
-```
-
-#### **Build a new entity from input** (`newEntity()`)
-
-Creates a new entity and injects user input into it (optionally parsing, guarding, validating, and injecting relationships).
-
-Arguments:
-- `$data` (`array<string, mixed>`): input data to apply to the entity.
-- `$associated` (`array<mixed>|string|null`): relationships to accept and configure; when `null`, every relationship defined directly on the current model is eligible.
-- `$accessible` (`array<string, bool>|null`): per-call accessibility overrides (applied only when guarding is enabled).
-- `$guard` (`bool`): whether to enforce field accessibility.
-- `$mutate` (`bool`): whether to allow entity mutations while setting fields.
-- `$validate` (`bool`): whether to validate and populate entity errors.
-- `$parse` (`bool`): whether to parse values using the model schema types.
-- `$events` (`bool`): whether to dispatch parse events during this workflow.
-- `$clean` (`bool`): whether to clean the entity after injecting data.
-- `$new` (`bool|null`): whether to explicitly set the entity “new” state.
-- `$options` (`mixed`): additional entity options.
-
-```php
-$user = $Users->newEntity(
-    ['email' => 'ada@example.com'],
-    validate: true
-);
-```
-
-#### **Build many new entities from input** (`newEntities()`)
-
-Builds multiple new entities from a list of input arrays.
-
-Arguments:
-- `$data` (`array<array<string, mixed>>`): input arrays (one per entity).
-- `$associated` (`array<mixed>|string|null`): relationships to accept and configure; when `null`, every relationship defined directly on the current model is eligible.
-- `$accessible` (`array<string, bool>|null`): per-call accessibility overrides (applied only when guarding is enabled).
-- `$guard` (`bool`): whether to enforce field accessibility.
-- `$mutate` (`bool`): whether to allow entity mutations while setting fields.
-- `$validate` (`bool`): whether to validate and populate entity errors.
-- `$parse` (`bool`): whether to parse values using the model schema types.
-- `$events` (`bool`): whether to dispatch parse events during this workflow.
-- `$clean` (`bool`): whether to clean each entity after injecting data.
-- `$new` (`bool|null`): whether to explicitly set each entity “new” state.
-- `$options` (`mixed`): additional entity options.
-
-```php
-$users = $Users->newEntities([
-    ['email' => 'a@example.com'],
-    ['email' => 'b@example.com'],
-]);
-```
-
-#### **Patch an existing entity from input** (`patchEntity()`)
-
-Updates an existing entity in-place (optionally parsing, guarding, validating, and injecting relationships).
-
-Arguments:
-- `$entity` (`Entity`): the entity to update.
-- `$data` (`array<string, mixed>`): input data to apply.
-- `$associated` (`array<mixed>|string|null`): relationships to accept and configure; when `null`, every relationship defined directly on the current model is eligible.
-- `$accessible` (`array<string, bool>|null`): per-call accessibility overrides (applied only when guarding is enabled).
-- `$guard` (`bool`): whether to enforce field accessibility.
-- `$mutate` (`bool`): whether to allow entity mutations while setting fields.
-- `$validate` (`bool`): whether to validate and populate entity errors.
-- `$parse` (`bool`): whether to parse values using the model schema types.
-- `$events` (`bool`): whether to dispatch parse events during this workflow.
-- `$clean` (`bool`): whether to clean the entity after injecting data.
-- `$new` (`bool|null`): whether to explicitly set the entity “new” state.
-- `$options` (`mixed`): additional entity options.
-
-```php
-$user = $Users->get(10);
-if ($user) {
-    $Users->patchEntity($user, ['name' => 'Ada']);
-}
-```
-
-#### **Patch many existing entities from input** (`patchEntities()`)
-
-Patches many entities from a parallel list of input arrays. Input is matched by index: `$data[0]` patches the first entity, and so on.
-
-Arguments:
-- `$entities` (`iterable<Entity>`): the entities to patch.
-- `$data` (`array<array<string, mixed>>`): input arrays matched by index.
-- `$associated` (`array<mixed>|string|null`): relationships to accept and configure; when `null`, every relationship defined directly on the current model is eligible.
-- `$accessible` (`array<string, bool>|null`): per-call accessibility overrides (applied only when guarding is enabled).
-- `$guard` (`bool`): whether to enforce field accessibility.
-- `$mutate` (`bool`): whether to allow entity mutations while setting fields.
-- `$validate` (`bool`): whether to validate and populate entity errors.
-- `$parse` (`bool`): whether to parse values using the model schema types.
-- `$events` (`bool`): whether to dispatch parse events during this workflow.
-- `$clean` (`bool`): whether to clean entities after injecting data.
-- `$new` (`bool|null`): whether to explicitly set the entity “new” state.
-- `$options` (`mixed`): additional entity options.
-
-```php
-$users = $Users->find()->limit(2)->all();
-$Users->patchEntities($users, [
-    ['active' => 1],
-    ['active' => 0],
-]);
-```
-
-### Saving
-
-#### **Save a single entity** (`save()`)
-
-Persists an entity (insert or update) and optionally saves related entities. The operation runs inside a transaction.
-
-Arguments:
-- `$entity` (`Entity`): the entity to save.
-- `$saveRelated` (`bool`): whether to save related entities.
-- `$checkRules` (`bool`): whether to run model rule sets during the save. See [Rule Sets](rulesets.md).
-- `$checkExists` (`bool`): whether to run an existence check before saving.
-- `$events` (`bool`): whether to dispatch ORM save events.
-- `$clean` (`bool`): whether to clean entities after commit.
-- `$options` (`mixed`): additional save options.
-
-```php
-$user = $Users->newEntity(['email' => 'ada@example.com']);
-
-if (!$Users->save($user, checkRules: true)) {
-    $errors = $user->getErrors();
-}
-```
-
-#### **Save multiple entities** (`saveMany()`)
-
-Saves multiple entities as a single unit. The operation runs inside a single transaction.
-
-Arguments:
-- `$entities` (`iterable<Entity>`): entities to save.
-- `$saveRelated` (`bool`): whether to save related entities.
-- `$checkRules` (`bool`): whether to run model rule sets during saves.
-- `$checkExists` (`bool`): whether to run existence checks before saving.
-- `$events` (`bool`): whether to dispatch ORM save events.
-- `$clean` (`bool`): whether to clean entities after commit.
-- `$options` (`mixed`): additional save options.
-
-```php
-$users = $Users->newEntities([
-    ['email' => 'a@example.com'],
-    ['email' => 'b@example.com'],
-]);
-
-$Users->saveMany($users);
-```
-
-### Bulk updates
-
-#### **Update many rows without entities** (`updateAll()`)
-
-Updates all rows matching the conditions and returns the number of rows affected.
-
-Arguments:
-- `$data` (`array<string, mixed>`): column values to set.
-- `$conditions` (`array<mixed>|Closure|ConditionExpression|string`): conditions to match.
-
-```php
-$affected = $Users->updateAll(
-    ['active' => 0],
-    ['Users.last_login <' => '2025-01-01']
-);
-```
-
-## Behavior notes
-
-A few behaviors are worth keeping in mind:
-
-- `newEntity()` / `patchEntity()` run validation with the model validator when `$validate` is enabled and write errors onto the entity. See [Form Validators](../form/validators.md).
-- Parse events (`ORM.beforeParse` / `ORM.afterParse`) run only when both `$parse` and `$events` are enabled.
-- `save()` returns early (and does not issue queries) when an entity is not new and has no dirty fields.
-- When an entity is new or dirty, `save()` / `saveMany()` return `false` if it or any nested entity has errors; clean existing entities are skipped before errors are checked.
-- When `$checkRules` is enabled, rule sets can add errors during `save()` / `saveMany()` and cause the save to return `false`. See [Rule Sets](rulesets.md).
-- When saving related entities is enabled, belongs-to relations are saved before the main entity, and owning-side relations are saved after.
-- Primary keys and relationship keys populated during a save are set as temporary values during the transaction; a failed save clears them, and successful post-commit cleaning (when enabled) clears the temporary status and marks entities as not new.
-- `updateAll()` bypasses entity parsing, validation, rule sets, relationship saving, and ORM events.
+Parse events run only when both `parse` and `events` are enabled. Disabling save events also suppresses `ORM.afterSaveCommit`.
 
 ## Related
 
