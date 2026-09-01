@@ -2,8 +2,6 @@
 
 Use the ORM finding APIs when you want model-aware queries and entity results.
 
-Start with a model, call `find()` for lists, and use `get()` for primary-key lookups.
-
 ## Table of Contents
 
 - [Start here](#start-here)
@@ -22,11 +20,6 @@ Start with a model, call `find()` for lists, and use `get()` for primary-key loo
   - [Result metadata and cleanup](#result-metadata-and-cleanup)
   - [Forwarded collection methods](#forwarded-collection-methods)
 - [Find events](#find-events)
-- [Method guide](#method-guide)
-  - [`Model`](#model)
-  - [`SelectQuery`](#selectquery)
-  - [`Result`](#result)
-- [Behavior notes](#behavior-notes)
 - [Related](#related)
 
 ## Start here
@@ -38,7 +31,7 @@ Use the ORM finding APIs when you want to:
 - load related data with `contain()`
 - filter through relationship-aware joins like `matching()`
 
-Most examples on this page assume you already have a model instance such as `$Users`.
+The examples use a model instance named `$Users`; see [Models](models.md) for model resolution and configuration.
 
 ## Finding overview
 
@@ -81,6 +74,8 @@ foreach ($result as $user) {
 - `offset` → `offset()`
 - `epilog` → `epilog()`
 
+The `connectionType` option selects the model connection (`Model::READ` by default), `alias` changes the query alias, and `autoFields` controls whether model fields are selected automatically.
+
 Named arguments work well here:
 
 ```php
@@ -106,6 +101,8 @@ $users = $Users->find(
 
 See [Query expressions](../database/expressions.md) for the available condition methods.
 
+Calling `sql()` prepares the current query before compilation, including automatic fields and contain/join configuration. By default, the query is reset to its pre-prepared state afterward.
+
 ### Getting entities vs raw rows
 
 When you want hydrated entities, prefer `all()` / `getResult()` / `toArray()` over calling `execute()` directly:
@@ -121,6 +118,8 @@ Contain supports:
 
 - Nested paths (for example `Posts.Comments`)
 - Array forms for per-relationship options
+
+Successive `contain()` calls merge their configuration. Pass `overwrite: true` to replace it instead.
 
 How related data is loaded depends on the contain strategy:
 
@@ -170,8 +169,7 @@ $first = $Users->find(conditions: ['Users.id >' => 10])->first();
 
 ### Paginating entities
 
-ORM select queries inherit all three database pagination strategies and return hydrated entities
-as their page items:
+ORM select queries inherit all three database pagination strategies and return hydrated entities as their page items:
 
 ```php
 $page = $Users->find()
@@ -190,20 +188,17 @@ $cursorPage = $Users->find()
     ->paginateByCursor(cursor: $cursor, perPage: 25);
 ```
 
-Use `paginate()` to avoid a count query, `paginateWithTotal()` for exact totals, and
-`paginateByCursor()` for ordered keyset traversal. Cursor-ordered fields are selected internally,
-including fields from joined `contain()` relationships, and must contain non-null scalar database
-values. Selected aliases are supported when they resolve to fields or value expressions. `DISTINCT`
-queries require all ordered fields to be explicitly selected, and set-operation queries are not
-supported. The final ordered field should normally be the model primary key. See
-[Database query pagination](../database/queries.md#pagination) for the result APIs and cursor
-contract.
+Use `paginate()` to avoid a count query, `paginateWithTotal()` for exact totals, and `paginateByCursor()` for ordered keyset traversal.
+
+Cursor-ordered fields are selected internally, including fields from joined `contain()` relationships, and must contain non-null scalar database values. Selected aliases are supported when they resolve to fields or value expressions. `DISTINCT` queries require all ordered fields to be explicitly selected, and set-operation queries are not supported. The final ordered field should normally be the model primary key. See [Database query pagination](../database/queries.md#pagination) for the result APIs and cursor contract.
 
 ## Finding one record
 
 `Model::get()` retrieves a single entity by the model primary key(s). It builds a `find()` query, adds primary key conditions, and returns `first()`.
 
 If the record does not exist, `get()` returns `null`.
+
+After the primary-key value, `get()` accepts the same named query options as `find()`.
 
 ```php
 $user = $Users->get(10, contain: 'Addresses');
@@ -220,6 +215,8 @@ Every primary-key value is required. Missing, `null`, empty-string, or empty-arr
 ## Working with `Result`
 
 `Fyre\ORM\Result` decorates a database `ResultSet` and turns each row into an entity (including contained data and `_matchingData` when applicable).
+
+`all()` and `getResult()` return the same cached `Result` until the query is modified.
 
 You can iterate the result directly:
 
@@ -270,191 +267,6 @@ When events are enabled for a query (the default), `SelectQuery` triggers:
 - `ORM.afterFind` when the query result is first wrapped in a `Result`
 
 To learn how to listen using `#[BeforeFind]` / `#[AfterFind]` attributes or event-manager listeners, see [ORM Events](events.md).
-
-## Method guide
-
-This is a quick reference for common query and result operations. For lower-level query builder details, see [Database queries](../database/queries.md) and [Query expressions](../database/expressions.md).
-
-### `Model`
-
-#### **Build a select query** (`find()`)
-
-Create an ORM-aware `SelectQuery`.
-
-Arguments:
-- `$fields` (`array<mixed>|string|null`): the `SELECT` fields.
-- `$contain` (`array<mixed>|string|null`): relationships to load via `contain()`.
-- `$join` (`array<array<string, mixed>>|null`): tables or queries to join.
-- `$conditions` (`array<mixed>|Closure|ConditionExpression|string|null`): the `WHERE` conditions.
-- `$orderBy` (`array<string>|string|null`): the `ORDER BY` fields.
-- `$groupBy` (`string|string[]|null`): the `GROUP BY` fields.
-- `$having` (`array<mixed>|Closure|ConditionExpression|string|null`): the `HAVING` conditions.
-- `$limit` (`int|null`): the `LIMIT` clause.
-- `$offset` (`int|null`): the `OFFSET` clause.
-- `$epilog` (`string|null`): SQL appended to the generated query.
-- `$connectionType` (`string`): the connection type (defaults to `Model::READ`).
-- `$alias` (`string|null`): the query alias.
-- `$autoFields` (`bool|null`): whether to automatically select model fields.
-- `...$options` (`mixed`): additional find options.
-
-```php
-$query = $Users->find(conditions: ['Users.active' => 1]);
-```
-
-#### **Fetch a single entity by primary key** (`get()`)
-
-Look up a single entity by primary key(s) and return the first match (or `null`).
-
-Arguments:
-- `$primaryValues` (`array<int|string>|int|string`): the primary key value(s).
-
-The remaining optional arguments are the same query arguments accepted by `find()`.
-
-```php
-$user = $Users->get(10);
-```
-
-### `SelectQuery`
-
-#### **Hydrate all results** (`all()`)
-
-Execute the query (if needed) and return a `Result` of hydrated entities.
-
-```php
-$result = $Users->find()->all();
-```
-
-#### **Return hydrated entities as an array** (`toArray()`)
-
-Execute the query (if needed) and return all hydrated entities as an array.
-
-```php
-$users = $Users->find()->toArray();
-```
-
-#### **Execute and return raw rows** (`execute()`)
-
-Execute the query and return the underlying `Fyre\DB\ResultSet` of raw rows.
-
-```php
-$rows = $Users->find()->execute();
-```
-
-#### **Load relationships** (`contain()`)
-
-Configure related data loading for the query.
-
-Arguments:
-- `$contain` (`array<mixed>|string`): the contain relationships.
-- `$overwrite` (`bool`): whether to replace existing contain configuration.
-
-```php
-$query = $Users->find()->contain('Addresses');
-```
-
-#### **Require related matches** (`matching()`)
-
-`INNER` join a relationship and hydrate matching data under `_matchingData`.
-
-Arguments:
-- `$contain` (`string`): the relationship path.
-- `$conditions` (`array<mixed>|Closure|ConditionExpression|string`): extra join conditions.
-
-```php
-$query = $Users->find()->matching('Posts', ['Posts.published' => 1]);
-```
-
-#### **Exclude related matches** (`notMatching()`)
-
-Exclude rows that have a related match (using a `NOT EXISTS (...)` subquery).
-
-Arguments:
-- `$contain` (`string`): the relationship path.
-- `$conditions` (`array<mixed>|Closure|ConditionExpression|string`): extra join conditions.
-
-```php
-$query = $Users->find()->notMatching('Posts', ['Posts.published' => 0]);
-```
-
-#### **Join without matching hydration** (`leftJoinWith()`)
-
-`LEFT` join a relationship table without hydrating `_matchingData`.
-
-Arguments:
-- `$contain` (`string`): the relationship path.
-- `$conditions` (`array<mixed>|Closure|ConditionExpression|string`): extra join conditions.
-
-```php
-$query = $Users->find()->leftJoinWith('Posts');
-```
-
-#### **Join without matching hydration** (`innerJoinWith()`)
-
-`INNER` join a relationship table without hydrating `_matchingData`.
-
-Arguments:
-- `$contain` (`string`): the relationship path.
-- `$conditions` (`array<mixed>|Closure|ConditionExpression|string`): extra join conditions.
-
-```php
-$query = $Users->find()->innerJoinWith('Posts');
-```
-
-#### **Return the first entity** (`first()`)
-
-Return the first hydrated entity (or `null`).
-
-```php
-$first = $Users->find()->first();
-```
-
-#### **Count the current query** (`count()`)
-
-Count the current query (including any applied `LIMIT`/`OFFSET`).
-
-```php
-$total = $Users->find()->count();
-```
-
-#### **Stream results instead of buffering** (`disableBuffering()`)
-
-Disable buffering so the `Result` streams entities during iteration.
-
-```php
-$result = $Users->find()->disableBuffering()->all();
-```
-
-### `Result`
-
-#### **Read an entity by index** (`fetch()`)
-
-Iterate until the given index is reached and return that entity (or `null`).
-
-Arguments:
-- `$index` (`int`): the zero-based index.
-
-```php
-$result = $Users->find()->all();
-$user = $result->fetch(0);
-```
-
-#### **Free resources early** (`free()`)
-
-Release the underlying result set and stop streaming iteration.
-
-```php
-$result = $Users->find()->disableBuffering()->all();
-$result->free();
-```
-
-## Behavior notes
-
-A few behaviors are worth keeping in mind:
-
-- `SelectQuery::getResult()` reuses the same `Result` until you modify the query.
-- `SelectQuery::count()` counts the *current* query, including any applied `LIMIT`/`OFFSET`.
-- Generating SQL with `SelectQuery::sql()` expands auto-fields and contain/join configuration for the current query.
-- When buffering is disabled, `Result::fetch()` may advance the underlying cursor, and `Result::free()` stops streaming iteration.
 
 ## Related
 
