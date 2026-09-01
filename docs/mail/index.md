@@ -16,12 +16,9 @@ Most applications configure a default mailer for production and a debug or test 
   - [Debug](#debug)
 - [Selecting a mailer](#selecting-a-mailer)
 - [Building one-off mailers](#building-one-off-mailers)
+- [Managing mailer configurations](#managing-mailer-configurations)
 - [Sending emails](#sending-emails)
-- [Method guide](#method-guide)
-  - [`MailManager`](#mailmanager)
-  - [`Mailer`](#mailer)
 - [Troubleshooting](#troubleshooting)
-- [Behavior notes](#behavior-notes)
 - [Related](#related)
 
 ## Start here
@@ -108,6 +105,8 @@ Implemented by `SmtpMailer`. Sends mail via SMTP.
 - `dsn` (`bool`): default `false` (adds DSN hints to `RCPT TO`)
 - `keepAlive` (`bool`): default `false` (reuses the SMTP connection across sends)
 
+When `auth` is enabled, `username` and `password` must be non-empty strings.
+
 `tls=true` enables `STARTTLS`. This mailer does not automatically secure the connection based on port; on most servers, use port `587` for `STARTTLS`.
 
 For implicit TLS (SMTPS), prefix `host` with `tls://` (or `ssl://`), use port `465`, and leave `tls` as `false`.
@@ -170,28 +169,13 @@ function sendWelcome(#[Mail] Mailer $mailer): void
 }
 ```
 
-To request a non-default key, pass it to the attribute:
-
-```php
-use Fyre\Core\Attributes\Mail;
-use Fyre\Mail\Mailer;
-
-function sendWelcomeDebug(#[Mail('debug')] Mailer $mailer): void
-{
-    $mailer->email()
-        ->setFrom('no-reply@example.com', 'Example App')
-        ->setTo('user@example.com')
-        ->setSubject('Welcome')
-        ->setBodyText("Hello!\n")
-        ->send();
-}
-```
+Pass a key to the attribute when you need a non-default mailer, for example `#[Mail('debug')]`.
 
 For the attribute behavior and other contextual injection helpers, see [Contextual attributes](../core/contextual-attributes.md).
 
 ## Building one-off mailers
 
-Use `build()` to construct a mailer directly from options without storing it under a key (and without sharing it).
+Use `build()` to construct a mailer directly from options without storing it under a key or sharing it. The options must include a `className` that extends `Mailer`.
 
 ```php
 use Fyre\Mail\Handlers\SmtpMailer;
@@ -204,9 +188,24 @@ $mailer = $mailers->build([
 ]);
 ```
 
+## Managing mailer configurations
+
+| Method | Purpose |
+| --- | --- |
+| `getConfig($key = null)` | read one configuration, or all configurations |
+| `hasConfig($key = 'default')` | check whether a configuration exists |
+| `isLoaded($key = 'default')` | check whether a mailer has been built |
+| `setConfig($key, $options)` | add a runtime configuration |
+| `unload($key = 'default')` | remove a configuration and its loaded mailer |
+| `clear()` | remove every configuration and loaded mailer |
+
+`setConfig()` throws when the key already exists. Unload an entry before replacing it.
+
 ## Sending emails
 
 Create a message via `Mailer::email()` and send it via `Email::send()` (or directly via `Mailer::send()`). For a deeper guide to building messages, formats, and attachments, see [Emails](emails.md).
+
+Set a valid `From` address and at least one recipient before sending. `Mailer::send()` throws a `MailException` when the recipient list is empty.
 
 ```php
 $mailer = $mailers->use();
@@ -219,151 +218,6 @@ $mailer->email()
     ->send();
 ```
 
-## Method guide
-
-### `MailManager`
-
-#### **Get a mailer** (`use()`)
-
-Returns the mailer for a config key. The first call builds it from config, and later calls return the same loaded instance.
-
-Arguments:
-- `$key` (`string`): the mailer key (defaults to `MailManager::DEFAULT`).
-
-```php
-$default = $mailers->use();
-$debug = $mailers->use('debug');
-```
-
-#### **Build a mailer instance** (`build()`)
-
-Builds a new mailer instance from an options array (without storing or sharing it).
-
-Arguments:
-- `$options` (`array<string, mixed>`): mailer options including `className`.
-
-This throws an `InvalidArgumentException` if `className` is missing or does not extend `Mailer`.
-
-```php
-use Fyre\Mail\Handlers\DebugMailer;
-
-$mailer = $mailers->build([
-    'className' => DebugMailer::class,
-]);
-```
-
-#### **Register mailer configuration** (`setConfig()`)
-
-Stores a mailer configuration under a new key.
-
-Arguments:
-- `$key` (`string`): the mailer key.
-- `$options` (`array<string, mixed>`): mailer options including `className`.
-
-```php
-use Fyre\Mail\Handlers\DebugMailer;
-
-$mailers->setConfig('debug', [
-    'className' => DebugMailer::class,
-]);
-```
-
-#### **Read stored configuration** (`getConfig()`)
-
-Returns the stored config array. When called with no key, it returns all stored configs.
-
-Arguments:
-- `$key` (`string|null`): the mailer key, or `null` to return all configs.
-
-```php
-$all = $mailers->getConfig();
-$default = $mailers->getConfig('default');
-```
-
-#### **Check stored configuration** (`hasConfig()`)
-
-Checks whether configuration exists for a mailer key.
-
-Arguments:
-- `$key` (`string`): the mailer key.
-
-```php
-$configured = $mailers->hasConfig('debug');
-```
-
-#### **Check a loaded mailer** (`isLoaded()`)
-
-Checks whether a mailer has already been built for a key.
-
-Arguments:
-- `$key` (`string`): the mailer key.
-
-```php
-$loaded = $mailers->isLoaded('debug');
-```
-
-#### **Unload a mailer key** (`unload()`)
-
-Removes the stored configuration and any loaded mailer for that key.
-
-Arguments:
-- `$key` (`string`): the mailer key (defaults to `MailManager::DEFAULT`).
-
-```php
-$mailers->unload('debug');
-```
-
-#### **Clear all mailers** (`clear()`)
-
-Removes all stored configurations and loaded mailers.
-
-```php
-$mailers->clear();
-```
-
-### `Mailer`
-
-#### **Create a new message** (`email()`)
-
-Creates a new `Email` associated with this mailer.
-
-```php
-$email = $mailer->email();
-```
-
-#### **Send a message** (`send()`)
-
-Sends an `Email` through the current mailer.
-
-Arguments:
-- `$email` (`Email`): the email to send.
-
-```php
-$email = $mailer->email()
-    ->setFrom('no-reply@example.com', 'Example App')
-    ->setTo('user@example.com')
-    ->setSubject('Hello')
-    ->setBodyText("Hi!\n");
-
-$mailer->send($email);
-```
-
-#### **Read mailer configuration** (`getConfig()`)
-
-Returns the mailer config array (merged defaults and configured options).
-
-```php
-$config = $mailer->getConfig();
-```
-
-#### **Get the client hostname** (`getClient()`)
-
-Returns the hostname used by handlers that need a client identifier (such as SMTP).
-
-```php
-$client = $mailer->getClient();
-```
-
 ## Troubleshooting
 
 - **SMTP connection failed**: confirm `host`/`port`, and ensure your chosen TLS mode matches your server.
@@ -371,17 +225,6 @@ $client = $mailer->getClient();
 - **Implicit TLS (SMTPS) doesn’t work**: use `host` prefixed with `tls://` (or `ssl://`), `port` usually `465`, and `tls=false`.
 - **SMTP authentication failed**: set `auth=true` and ensure `username`/`password` are set to non-empty strings.
 - **Testing without sending real email**: use the debug mailer (`DebugMailer`) or the test tooling in [Email Testing](../testing/mail.md).
-
-## Behavior notes
-
-A few behaviors are worth keeping in mind:
-
-- `Mailer::send()` throws a `MailException` if an email has no recipients.
-- Set a valid `From` address before sending; `MailManager` does not provide a default sender.
-- `SmtpMailer` only enables `STARTTLS` when `tls` is `true` (it does not automatically secure the connection based on port).
-- `SmtpMailer` does not enable implicit TLS unless you prefix `host` with `tls://` (or `ssl://`).
-- `SmtpMailer` verifies TLS certificates and peer names and stops before authentication when TLS negotiation fails.
-- When `auth` is enabled for `SmtpMailer`, `username` and `password` must be set to strings.
 
 ## Related
 

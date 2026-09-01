@@ -5,7 +5,6 @@ Use `Fyre\Mail\Email` when you want to build a message, set recipients, and send
 ## Table of Contents
 
 - [Start here](#start-here)
-- [Sending an email](#sending-an-email)
 - [Recipes](#recipes)
   - [Send a text email](#send-a-text-email)
   - [Send an HTML email](#send-an-html-email)
@@ -20,8 +19,6 @@ Use `Fyre\Mail\Email` when you want to build a message, set recipients, and send
   - [Format (text/html/both)](#format-texthtmlboth)
   - [Additional message options](#additional-message-options)
   - [Attachments](#attachments)
-- [Method guide](#method-guide)
-  - [`Email`](#email)
 - [Troubleshooting](#troubleshooting)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
@@ -35,29 +32,9 @@ Most email flows look like this:
 3. Set the sender, recipients, subject, and body.
 4. Send it with `send()`.
 
-Most examples assume you already have a configured `Mailer` instance. If you do not, start with [Selecting a mailer](index.md#selecting-a-mailer).
-
-## Sending an email
-
-A typical flow is:
-
-1. Select a mailer.
-2. Create an `Email` via `Mailer::email()`.
-3. Set the sender, recipients, subject, body, and any attachments.
-4. Send the message via `Email::send()` (or directly via `Mailer::send()`).
-
-```php
-$mailer->email()
-    ->setFrom('no-reply@example.com', 'Example App')
-    ->setTo('user@example.com')
-    ->setSubject('Welcome')
-    ->setBodyText("Thanks for signing up.\n")
-    ->send();
-```
+The examples assume you already have a configured `Mailer` instance. If you do not, start with [Selecting a mailer](index.md#selecting-a-mailer).
 
 ## Recipes
-
-These examples assume you already have a `$mailer` (see [Selecting a mailer](index.md#selecting-a-mailer)).
 
 ### Send a text email
 
@@ -231,163 +208,6 @@ Inline attachments work by setting a `contentId`, then referencing it from HTML 
 
 See [Embed an inline image](#embed-an-inline-image) for a complete example.
 
-## Method guide
-
-### `Email`
-
-#### **Set the sender** (`setFrom()`)
-
-Sets the `From` header.
-
-Arguments:
-- `$email` (`string`): the sender email address.
-- `$name` (`string|null`): the sender display name.
-
-```php
-$email->setFrom('no-reply@example.com', 'Example App');
-```
-
-#### **Set primary recipients** (`setTo()`)
-
-Sets the `To` recipients. Use `addTo()` to append a single address without replacing existing recipients.
-
-Arguments:
-- `$emails` (`array|string`): a single email string, or an array of email strings / `email => name` pairs.
-
-```php
-$email->setTo('user@example.com');
-```
-
-#### **Set CC recipients** (`setCc()`)
-
-Sets the `Cc` recipients. Use `addCc()` to append a single address.
-
-Arguments:
-- `$emails` (`array|string`): a single email string, or an array of email strings / `email => name` pairs.
-
-```php
-$email->setCc(['manager@example.com' => 'Manager']);
-```
-
-#### **Set BCC recipients** (`setBcc()`)
-
-Sets the `Bcc` recipients. Use `addBcc()` to append a single address.
-
-Arguments:
-- `$emails` (`array|string`): a single email string, or an array of email strings / `email => name` pairs.
-
-```php
-$email->setBcc('audit@example.com');
-```
-
-#### **Set reply-to recipients** (`setReplyTo()`)
-
-Sets the `Reply-To` recipients. Use `addReplyTo()` to append a single address.
-
-Arguments:
-- `$emails` (`array|string`): a single email string, or an array of email strings / `email => name` pairs.
-
-```php
-$email->setReplyTo('support@example.com');
-```
-
-#### **Set the subject** (`setSubject()`)
-
-Sets the email subject line.
-
-Arguments:
-- `$subject` (`string`): the subject line.
-
-```php
-$email->setSubject('Welcome');
-```
-
-#### **Set the text body** (`setBodyText()`)
-
-Sets the text body content.
-
-Arguments:
-- `$content` (`string`): the text body.
-
-```php
-$email->setBodyText("Line 1\nLine 2\n");
-```
-
-#### **Set the HTML body** (`setBodyHtml()`)
-
-Sets the HTML body content.
-
-Arguments:
-- `$content` (`string`): the HTML body.
-
-```php
-$email->setBodyHtml('<p>Hello</p>');
-```
-
-#### **Set the format** (`setFormat()`)
-
-Sets the email format.
-
-Arguments:
-- `$format` (`string`): one of `Email::TEXT`, `Email::HTML`, or `Email::BOTH`.
-
-```php
-use Fyre\Mail\Email;
-
-$email->setFormat(Email::BOTH);
-```
-
-#### **Set attachments** (`setAttachments()`)
-
-Replaces the attachment list. Each attachment is keyed by filename and must provide either `file` or `content`. Other keys like `mimeType`, `contentId`, and `disposition` are optional.
-
-Arguments:
-- `$attachments` (`array`): the attachments array.
-
-```php
-$email->setAttachments([
-    'report.csv' => [
-        'file' => '/path/to/report.csv',
-    ],
-]);
-```
-
-#### **Add attachments** (`addAttachments()`)
-
-Adds to the existing attachment list.
-
-Arguments:
-- `$attachments` (`array`): the attachments array.
-
-```php
-$email->addAttachments([
-    'extra.txt' => [
-        'content' => 'raw bytes',
-        'mimeType' => 'text/plain',
-    ],
-]);
-```
-
-#### **Set the return path** (`setReturnPath()`)
-
-Sets the return path address. Some mailers use this as the SMTP envelope sender.
-
-Arguments:
-- `$email` (`string`): the return path email address.
-- `$name` (`string|null`): the return path display name.
-
-```php
-$email->setReturnPath('bounces@example.com');
-```
-
-#### **Send the email** (`send()`)
-
-Sends the email through its associated mailer.
-
-```php
-$email->send();
-```
-
 ## Troubleshooting
 
 - **HTML renders as plain text**: set `setFormat(Email::HTML)` or `setFormat(Email::BOTH)` (setting `setBodyHtml()` alone does not change the format).
@@ -396,8 +216,6 @@ $email->send();
 - **Attachment error**: each attachment must include either readable `file` or string `content` data.
 
 ## Behavior notes
-
-A few behaviors are worth keeping in mind:
 
 - Email addresses are validated with `FILTER_VALIDATE_EMAIL`. Invalid addresses are ignored when building recipient lists; sending fails if the final recipient set is empty.
 - BCC addresses set with `setBcc()` are used as transport recipients but are excluded from rendered message headers.

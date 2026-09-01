@@ -8,6 +8,7 @@ It wraps PHP sessions and adds dot-notation access, flash and temporary values, 
 
 - [Start here](#start-here)
 - [Using sessions in requests](#using-sessions-in-requests)
+- [Working with session data](#working-with-session-data)
 - [Session lifecycle](#session-lifecycle)
   - [Starting and closing](#starting-and-closing)
   - [Refreshing the session ID](#refreshing-the-session-id)
@@ -21,8 +22,6 @@ It wraps PHP sessions and adds dot-notation access, flash and temporary values, 
   - [Redis storage](#redis-storage)
   - [Memcached storage](#memcached-storage)
   - [Custom handlers](#custom-handlers)
-- [Method guide](#method-guide)
-  - [`Session`](#session)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -62,6 +61,29 @@ function handle(ServerRequestInterface $request): void
 }
 ```
 
+## Working with session data
+
+Session keys support dot notation, and data access starts the session lazily when necessary.
+
+| Method | Purpose |
+| --- | --- |
+| `get($key, $default = null)` | read a value |
+| `has($key)` | check whether a key exists |
+| `set($key, $value)` | write a value |
+| `delete($key)` | remove a value |
+| `consume($key)` | read and remove a value |
+| `setFlash($key, $value)` | keep a value for the next session start |
+| `setTemp($key, $value, $expire = 300)` | keep a value until its lifetime expires |
+| `clear()` | remove all session data |
+
+```php
+$session->set('user.id', 123);
+$session->setFlash('notice', 'Profile saved.');
+$session->setTemp('mfa.challenge', 'pending', 300);
+```
+
+The `session()` helper returns the current `Session` with no arguments, reads with one argument, and writes with two (see [Helpers](../core/helpers.md)).
+
 ## Session lifecycle
 
 Sessions can be started, closed, refreshed (ID regeneration), or destroyed. In HTTP requests, `SessionMiddleware` handles start/close automatically; the methods below are still useful in custom flows (for example, explicit logout).
@@ -69,6 +91,8 @@ Sessions can be started, closed, refreshed (ID regeneration), or destroyed. In H
 ### Starting and closing
 
 The session starts when you call `Session::start()`, or implicitly when you access session data (for example, `get()` calls `start()` internally).
+
+In CLI, starting a session initializes `$_SESSION` when needed and uses the fixed session ID `cli`.
 
 `Session::close()`:
 
@@ -216,163 +240,7 @@ Common options:
 
 If you build a custom handler, extend the framework's `SessionHandler` base class. Custom handlers must implement `validateId()` so PHP strict mode can reject unknown IDs, and `updateTimestamp()` so unchanged sessions can refresh their expiry without rewriting their data.
 
-## Method guide
-
-This section documents the session APIs you’ll use most often in application code.
-
-Most examples assume you already have a `$session` instance (via dependency injection or request attributes).
-
-You can also use the `session()` helper (see [Helpers](../core/helpers.md)):
-
-- `session()` returns the `Session` instance.
-- `session($key)` reads a value from the session.
-- `session($key, $value)` writes a value to the session.
-
-In HTTP requests, this is typically the same `Session` instance started by `SessionMiddleware`. The read/write forms start the session lazily (because they call `Session::get()` and `Session::set()` internally).
-
-### `Session`
-
-#### **Start the session** (`start()`)
-
-Starts the underlying PHP session if it hasn’t already been started.
-
-In CLI, this initializes `$_SESSION` (if needed) and uses a fixed session id (`cli`).
-
-```php
-$session->start();
-```
-
-#### **Start the session (read-only)** (`startReadOnly()`)
-
-Starts the session in read-only mode (PHP’s `read_and_close=true`) and marks the `Session` instance as read-only.
-
-`startReadOnly()` does not enforce `allowReadOnly()`.
-
-```php
-$session->startReadOnly();
-$userId = $session->get('user.id');
-```
-
-#### **Read a value** (`get()`)
-
-Reads a value using dot-notation keys, returning `$default` when missing.
-
-Arguments:
-- `$key` (`string`): the session key (dot-notation supported).
-- `$default` (`mixed`): the value to return when the key is missing.
-
-```php
-$userId = $session->get('user.id');
-```
-
-#### **Check whether a key exists** (`has()`)
-
-Returns `true` when a key exists.
-
-Arguments:
-- `$key` (`string`): the session key (dot-notation supported).
-
-```php
-$hasUser = $session->has('user.id');
-```
-
-#### **Write a value** (`set()`)
-
-Sets a value using dot-notation keys.
-
-Arguments:
-- `$key` (`string`): the session key (dot-notation supported).
-- `$value` (`mixed`): the value to set.
-
-```php
-$session->set('user.id', 123);
-```
-
-#### **Delete a value** (`delete()`)
-
-Deletes a value using dot-notation keys.
-
-Arguments:
-- `$key` (`string`): the session key (dot-notation supported).
-
-```php
-$session->delete('user.id');
-```
-
-#### **Read and delete a value** (`consume()`)
-
-Returns the value for `$key` and then deletes it.
-
-Arguments:
-- `$key` (`string`): the session key (dot-notation supported).
-
-```php
-$notice = $session->consume('notice');
-```
-
-#### **Set a flash value** (`setFlash()`)
-
-Sets a value that is automatically rotated after the next session start.
-
-Arguments:
-- `$key` (`string`): the session key (dot-notation supported).
-- `$value` (`mixed`): the value to set.
-
-```php
-$session->setFlash('notice', 'Saved.');
-```
-
-#### **Set a temporary value** (`setTemp()`)
-
-Sets a value with an expiry time in seconds. Expired values are removed when the session is started.
-
-Arguments:
-- `$key` (`string`): the session key (dot-notation supported).
-- `$value` (`mixed`): the value to set.
-- `$expire` (`int`): expiry time in seconds (defaults to `300`).
-
-```php
-$session->setTemp('mfa.challenge', 'pending', 300);
-```
-
-#### **Clear session data** (`clear()`)
-
-Clears all session data.
-
-```php
-$session->clear();
-```
-
-#### **Close the session** (`close()`)
-
-Closes the underlying PHP session and resets the `Session` started/read-only flags.
-
-```php
-$session->close();
-```
-
-#### **Regenerate the session id** (`refresh()`)
-
-Regenerates the session id (non-CLI). This is commonly done after authentication state changes.
-
-Arguments:
-- `$deleteOldSession` (`bool`): whether to delete the old session data.
-
-```php
-$session->refresh(true);
-```
-
-#### **Destroy the session** (`destroy()`)
-
-Destroys the current session and clears all in-memory session data.
-
-```php
-$session->destroy();
-```
-
 ## Behavior notes
-
-A few behaviors are worth keeping in mind:
 
 - `startReadOnly()` does not enforce `allowReadOnly()`, so check `allowReadOnly()` when choosing to start read-only mode outside of `SessionMiddleware`.
 - Writing methods throw a `SessionException` when the session is started in read-only mode.

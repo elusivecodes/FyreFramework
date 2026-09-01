@@ -19,9 +19,7 @@ This page covers the rule and policy flow, policy resolution, and the APIs you w
   - [Namespace-based discovery](#namespace-based-discovery)
   - [Explicit mappings](#explicit-mappings)
   - [Model attribute aliases](#model-attribute-aliases)
-- [Method guide](#method-guide)
-  - [`Access`](#access)
-  - [`PolicyRegistry`](#policyregistry)
+  - [Cached policies](#cached-policies)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -33,15 +31,14 @@ Use authorization when you want to:
 - control which UI options appear for a user
 - keep access rules in one place, instead of scattering checks
 
-In a typical application, authorization starts from `Auth::access()` after authentication has resolved the current user.
-
 Use named rules for checks you define directly on `Access`, and use policies when access depends on a specific model or entity subject.
 
-In a typical application:
+Authorization usually follows this flow:
 
-1. Get an `Access` instance from `Auth`.
-2. Define named rules for general checks such as `admin`, and use policies for subject-specific rules such as `edit` on an article.
-3. Call `allows()` to branch on the result, `authorize()` to fail immediately when access is denied, or `can` middleware for route-level authorization.
+1. Authentication resolves the current user.
+2. Get an `Access` instance from `Auth::access()`.
+3. Define named rules for general checks such as `admin`, or policies for subject-specific checks such as editing an article.
+4. Call `allows()` to inspect the result, `authorize()` to reject denied access, or use `can` middleware for route-level checks.
 
 ## Authorization flow
 
@@ -75,6 +72,15 @@ $access = app(Auth::class)->access();
 There’s also a global `authorize()` helper that forwards to `Access::authorize()`; see [Helpers](../core/helpers.md).
 
 Examples below assume you already have an `Access` instance in `$access`.
+
+| Method | Purpose |
+| --- | --- |
+| `allows($rule, ...$args)` | check whether a rule is allowed |
+| `authorize($rule, ...$args)` | throw a `ForbiddenException` when a rule is denied |
+| `denies($rule, ...$args)` | check whether a rule is denied |
+| `any($rules, ...$args)` | check whether any rule in an array is allowed |
+| `none($rules, ...$args)` | check whether every rule in an array is denied |
+| `clear()` | remove all named rules and before/after callbacks |
 
 ### Checking a named rule
 
@@ -227,161 +233,18 @@ class ArticleModel extends Model
 }
 ```
 
-## Method guide
+### Cached policies
 
-This section focuses on the methods you’ll use most when defining and evaluating access rules and policies.
+The registry caches policies resolved through `use()`. Use `unload()` with the resolved alias when one policy should be rebuilt, or `clear()` to remove every namespace, mapping, resolved alias, and cached policy.
 
-### `Access`
-
-#### **Check an access rule** (`allows()`)
-
-Evaluate a rule name using before callbacks, named rules, policies, then after callbacks.
-
-Arguments:
-- `$rule` (`string`): the access rule name.
-- `...$args` (`mixed`): additional arguments for the rule/policy.
-
-```php
-if ($access->allows('admin')) {
-    // ...
-}
-```
-
-#### **Authorize an access rule** (`authorize()`)
-
-Like `allows()`, but throws a `ForbiddenException` when authorization fails.
-
-Arguments:
-- `$rule` (`string`): the access rule name.
-- `...$args` (`mixed`): additional arguments for the rule/policy.
-
-```php
-$access->authorize('edit', 'Articles', 42);
-```
-
-#### **Define a named rule** (`define()`)
-
-Register a named rule callback.
-
-Arguments:
-- `$rule` (`string`): the rule name.
-- `$callback` (`Closure`): the callback to evaluate.
-
-```php
-use Fyre\ORM\Entity;
-
-$access->define('admin', static fn(Entity $user): bool => (bool) $user->is_admin);
-```
-
-#### **Add a global before callback** (`before()`)
-
-Register a callback that runs before named rules and policies.
-
-Arguments:
-- `$beforeRule` (`Closure`): receives `(user|null, rule, ...args)` and returns `bool|null`.
-
-```php
-use Fyre\ORM\Entity;
-
-$access->before(function(Entity|null $user, string $rule, mixed ...$args): bool|null {
-    return $user && $user->is_admin ? true : null;
-});
-```
-
-#### **Add a global after callback** (`after()`)
-
-Register a callback that runs after named rules and policies.
-
-Arguments:
-- `$afterRule` (`Closure`): receives `(user|null, rule, result|null, ...args)` and returns `bool|null`.
-
-```php
-use Fyre\ORM\Entity;
-
-$access->after(function(Entity|null $user, string $rule, bool|null $result, mixed ...$args): bool|null {
-    return $result ?? ($rule === 'view' ? true : null);
-});
-```
-
-#### **Use convenience checks** (`denies()`, `any()`, `none()`)
-
-Invert or combine checks:
-
-- `denies()` is the inverse of `allows()`.
-- `any()` returns `true` if any rule allows.
-- `none()` returns `true` if no rules allow.
-
-#### **Reset rules and callbacks** (`clear()`)
-
-Remove all defined named rules and before/after callbacks from this `Access` instance.
-
-```php
-$access->clear();
-```
-
-### `PolicyRegistry`
-
-Examples below assume you already have a `PolicyRegistry` instance in `$policyRegistry`.
-
-#### **Register a policy namespace** (`addNamespace()`)
-
-Add a namespace used for `<SingularAlias>Policy` discovery.
-
-Arguments:
-- `$namespace` (`string`): a namespace (normalized to include a trailing `\`).
-
-```php
-$policyRegistry->addNamespace('Plugin\Policies');
-```
-
-#### **Map an alias to a policy class** (`map()`)
-
-Explicitly map an alias (after alias resolution) to a policy class.
-
-Arguments:
-- `$alias` (`string`): the policy alias.
-- `$className` (`class-string`): the policy class name.
-
-```php
-$policyRegistry->map('Articles', ArticlePolicy::class);
-```
-
-#### **Resolve and cache a policy instance** (`use()`)
-
-Build (if needed) and return a shared policy instance for an alias.
-
-Arguments:
-- `$alias` (`string`): the policy alias (or a model class name).
-
-```php
-$policy = $policyRegistry->use('Articles');
-```
-
-#### **Resolve an alias** (`resolveAlias()`)
-
-Resolve an alias (including model class names) to the effective policy alias.
-
-Arguments:
-- `$alias` (`string`): the alias to resolve.
-
-```php
-$alias = $policyRegistry->resolveAlias('Articles');
-```
-
-#### **Unload a cached policy** (`unload()`)
-
-Remove a cached policy instance for a resolved alias.
-
-Arguments:
-- `$alias` (`string`): the resolved alias used by `use()`.
-
-```php
-$policyRegistry->unload('Articles');
-```
+| Method | Purpose |
+| --- | --- |
+| `use($alias)` | resolve and return a shared policy instance |
+| `resolveAlias($alias)` | resolve a model class or alias to its effective policy alias |
+| `unload($resolvedAlias)` | remove a cached policy instance |
+| `clear()` | reset the registry |
 
 ## Behavior notes
-
-A few behaviors are worth keeping in mind:
 
 - `allows()` defaults to deny when no before callback, named rule, policy method, or after callback applies.
 - If a named rule produces a non-`null` result (including `false`), policy lookup is skipped.
