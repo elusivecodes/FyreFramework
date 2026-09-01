@@ -1,31 +1,27 @@
 # Forge
 
-Use `Forge` when you want to create or change database tables from PHP code.
+Use `Forge` to create and change database tables from PHP. It provides driver-aware DDL operations for columns, indexes, constraints, and table metadata.
 
-Most applications use it inside migrations, but it also works well for setup scripts and tooling.
+Most applications use Forge inside [database migrations](migrations.md), but the same API can be used by setup scripts and other tooling.
 
 ## Table of Contents
 
-- [Start here](#start-here)
-- [Working with DDL operations](#working-with-ddl-operations)
-  - [Creating tables](#creating-tables)
-  - [Altering existing tables](#altering-existing-tables)
-  - [Dropping and renaming](#dropping-and-renaming)
-  - [Previewing generated SQL](#previewing-generated-sql)
-  - [Naming conventions](#naming-conventions)
+- [Resolve Forge](#resolve-forge)
+- [Create a table](#create-a-table)
+- [Modify a table](#modify-a-table)
+  - [Define columns](#define-columns)
+  - [Add indexes](#add-indexes)
+  - [Add foreign keys](#add-foreign-keys)
+- [Rename or remove schema objects](#rename-or-remove-schema-objects)
+- [Preview generated SQL](#preview-generated-sql)
 - [Driver differences](#driver-differences)
-  - [Built-in forge handlers](#built-in-forge-handlers)
-  - [Driver-specific features](#driver-specific-features)
-- [Method guide](#method-guide)
-  - [`ForgeRegistry`](#forgeregistry)
-  - [`Forge`](#forge-1)
-  - [`Table`](#table)
+- [Forge reference](#forge-reference)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Start here
+## Resolve Forge
 
-Resolve a `Forge` from a connection, then either run a one-off change or build a table definition and execute it.
+Resolve a `Forge` for the connection you want to modify:
 
 ```php
 use Fyre\DB\Forge\ForgeRegistry;
@@ -34,61 +30,75 @@ $db = db();
 $forge = app(ForgeRegistry::class)->use($db);
 ```
 
-Use Forge when you want to:
+`ForgeRegistry` selects the handler mapped to the connection class and reuses it for later calls with the same connection. Use `map($connectionClass, $forgeClass)` to register a Forge implementation for a custom connection class.
 
-- create tables and indexes from code
-- batch several schema changes together before running them
-- preview generated SQL before you execute it
+## Create a table
 
-## Working with DDL operations
-
-Forge supports two styles:
-
-- **Convenience methods** on `Forge` execute immediately and return the same `Forge` instance.
-- **Queued operations** on `Table` let you build up multiple changes, then call `execute()` once.
-
-### Creating tables
-
-`Forge::createTable()` is the simplest way to create a table from arrays of columns, indexes, and foreign keys.
-
-```php
-$forge->createTable(
-    'roles',
-    [
-        'name' => ['length' => 100],
-    ],
-    [
-        'name' => ['unique' => true],
-    ]
-);
-```
-
-For more control, build a table definition and call `execute()`:
+Use `createTable()` when the table can be described with column, index, and foreign-key arrays:
 
 ```php
 use Fyre\DB\Types\IntegerType;
 use Fyre\DB\Types\StringType;
 
+$forge->createTable(
+    'roles',
+    [
+        'id' => [
+            'type' => IntegerType::class,
+            'autoIncrement' => true,
+        ],
+        'name' => [
+            'type' => StringType::class,
+            'length' => 100,
+        ],
+    ],
+    [
+        'primary' => [
+            'columns' => 'id',
+            'primary' => true,
+        ],
+        'name' => [
+            'unique' => true,
+        ],
+    ]
+);
+```
+
+For a fluent definition, call `build()` and queue the same operations on the returned `Table`:
+
+```php
 $forge->build('roles')
-    ->addColumn('id', ['type' => IntegerType::class, 'autoIncrement' => true])
-    ->addColumn('name', ['type' => StringType::class, 'length' => 100])
+    ->addColumn('id', [
+        'type' => IntegerType::class,
+        'autoIncrement' => true,
+    ])
+    ->addColumn('name', [
+        'type' => StringType::class,
+        'length' => 100,
+    ])
     ->setPrimaryKey('id')
-    ->addIndex('name', ['unique' => true])
+    ->addIndex('name', [
+        'unique' => true,
+    ])
     ->execute();
 ```
 
-### Altering existing tables
+`createTable()` executes immediately. A built `Table` waits until `execute()` is called.
 
-When `build($name)` targets an existing table, `Table` starts from the current introspected definition and you apply changes relative to it.
+## Modify a table
 
-Example: batch multiple changes
+`build($name)` loads an existing table's current definition, allowing several changes to be queued and executed together:
 
 ```php
 use Fyre\DB\Types\IntegerType;
 
 $forge->build('roles')
-    ->addColumn('description', ['nullable' => true])
-    ->addColumn('user_id', ['type' => IntegerType::class])
+    ->addColumn('description', [
+        'nullable' => true,
+    ])
+    ->addColumn('user_id', [
+        'type' => IntegerType::class,
+    ])
     ->addIndex('description')
     ->addForeignKey('fk_roles_user_id', [
         'columns' => 'user_id',
@@ -99,74 +109,153 @@ $forge->build('roles')
     ->execute();
 ```
 
-Alternative: use convenience methods instead of batching with `build()` (each call executes immediately)
+For a single change, the corresponding method on `Forge` builds and executes the operation immediately:
 
 ```php
-$forge->addColumn('roles', 'description', ['nullable' => true]);
+$forge->addColumn('roles', 'description', [
+    'nullable' => true,
+]);
+
 $forge->addIndex('roles', 'description');
 ```
 
-### Dropping and renaming
+Use the fluent form when several changes belong together. Forge runs the generated statements in order, but does not automatically wrap them in a transaction.
 
-Use `dropColumn()`, `dropIndex()`, `dropForeignKey()`, and `dropTable()` to remove schema objects.
+### Define columns
 
-For renames:
+Use `addColumn()`, `changeColumn()`, and `dropColumn()` to manage columns. `changeColumn()` also accepts a `name` option to rename the column.
 
-- `Forge::renameColumn()` is a convenience wrapper around `changeColumn()` with a `name` option.
-- `Forge::renameTable()` delegates to `Table::rename()` and executes.
+Common column options are:
+
+| Option | Type | Purpose |
+| --- | --- | --- |
+| `type` | `class-string<Type>|string` | portable type handler class or driver-specific type name |
+| `length` | `int|null` | maximum length where supported |
+| `precision` | `int|null` | numeric precision |
+| `scale` | `int|null` | numeric scale |
+| `fractionalSeconds` | `int|null` | fractional-second precision |
+| `nullable` | `bool` | allow `NULL` values |
+| `unsigned` | `bool` | use an unsigned numeric type where supported |
+| `default` | `bool|float|int|string|LiteralExpression|null` | scalar default, SQL expression, or no default |
+| `comment` | `string|null` | column comment where supported |
+| `autoIncrement` | `bool` | use the driver's auto-increment behavior |
+
+Prefer type classes from `Fyre\DB\Types` for portable definitions. Use a driver type string only when the schema deliberately depends on that database.
+
+Scalar defaults are quoted by the driver. Wrap a deliberate SQL expression in `LiteralExpression`; `null` means no `DEFAULT` clause rather than `DEFAULT NULL`.
 
 ```php
-$forge->renameColumn('roles', 'name', 'title');
-$forge->renameTable('roles', 'app_roles');
+use Fyre\DB\Expressions\LiteralExpression;
+use Fyre\DB\Types\DateTimeType;
+
+$forge->addColumn('roles', 'created', [
+    'type' => DateTimeType::class,
+    'default' => new LiteralExpression('CURRENT_TIMESTAMP'),
+]);
 ```
 
-### Previewing generated SQL
+When `changeColumn()` changes the column type, its previous `length` and `precision` are cleared unless replacements are supplied.
 
-If you want to inspect what will run (for example while authoring migrations), build a `Table` operation and call `sql()` before executing:
+### Add indexes
+
+Use `addIndex()` and `dropIndex()` to manage indexes. A built `Table` accepts these options:
+
+| Option | Type | Purpose |
+| --- | --- | --- |
+| `columns` | `string|string[]` | columns in the index; defaults to the index name |
+| `unique` | `bool` | create a unique index |
+| `primary` | `bool` | create a primary key and imply `unique` |
+| `type` | `string|null` | driver-specific index type, normalized to lowercase |
+
+```php
+$forge->build('users')
+    ->addIndex('primary', [
+        'columns' => 'id',
+        'primary' => true,
+    ])
+    ->addIndex('email', [
+        'unique' => true,
+    ])
+    ->execute();
+```
+
+If `columns` is omitted, Forge uses the index name. Name a single-column index after its column or pass `columns` explicitly.
+
+### Add foreign keys
+
+Use `addForeignKey()` and `dropForeignKey()` to manage foreign-key constraints:
+
+| Option | Type | Purpose |
+| --- | --- | --- |
+| `columns` | `string|string[]` | local columns; defaults to the foreign-key name |
+| `referencedTable` | `string` | referenced table |
+| `referencedColumns` | `string|string[]` | referenced columns |
+| `onUpdate` | `string|null` | update action |
+| `onDelete` | `string|null` | delete action |
+
+```php
+$forge->addForeignKey('posts', 'fk_posts_user_id', [
+    'columns' => 'user_id',
+    'referencedTable' => 'users',
+    'referencedColumns' => 'id',
+    'onDelete' => 'cascade',
+]);
+```
+
+Avoid giving an index and foreign key the same name on one table. Dropping either removes same-named entries from the pending definition.
+
+## Rename or remove schema objects
+
+The `Forge` convenience methods execute these changes immediately:
+
+| Task | Method |
+| --- | --- |
+| rename a column | `renameColumn($tableName, $columnName, $newColumnName)` |
+| rename a table | `renameTable($tableName, $newTableName)` |
+| remove a column | `dropColumn($tableName, $columnName)` |
+| remove an index | `dropIndex($tableName, $indexName)` |
+| remove a foreign key | `dropForeignKey($tableName, $foreignKeyName)` |
+| remove a table | `dropTable($tableName)` |
+
+On a built `Table`, use `changeColumn($name, ['name' => $newName])`, `rename()`, `dropColumn()`, `dropIndex()`, `dropForeignKey()`, or `drop()`, then call `execute()`.
+
+## Preview generated SQL
+
+Call `sql()` on a built `Table` to return the driver-specific statements without executing them:
 
 ```php
 $table = $forge->build('roles')
-    ->addColumn('description', ['nullable' => true])
+    ->addColumn('description', [
+        'nullable' => true,
+    ])
     ->addIndex('description');
 
 $queries = $table->sql();
 ```
 
-`sql()` returns an array of driver-specific DDL queries and does not execute them. The generated SQL can differ significantly between drivers for the same high-level table change.
-
-### Naming conventions
-
-Forge uses object names as defaults in a few places, so consistent naming avoids surprises:
-
-- `Table::addIndex($name, $options)` defaults `columns` to `$name` when `columns` is omitted.
-- `Table::addForeignKey($name, $options)` defaults `columns` to `$name` when `columns` is omitted.
-
-In practice, either:
-
-- name the index/foreign key after the column it targets, **or**
-- always pass an explicit `columns` option.
-
-Also avoid reusing the same name for an index and a foreign key on the same table: `dropIndex()` and `dropForeignKey()` will also remove same-named objects from the in-memory definition.
+This previews Forge DDL only. A migration dry run lists migration names and directions because a migration can run arbitrary PHP and SQL outside Forge; see [Preview with a dry run](migrations.md#preview-with-a-dry-run).
 
 ## Driver differences
 
-### Built-in forge handlers
+The built-in mappings are:
 
-Forge uses a handler matched to your connection type. The built-in mappings are:
+| Connection | Forge handler |
+| --- | --- |
+| `MysqlConnection` | `MysqlForge` |
+| `PostgresConnection` | `PostgresForge` |
+| `SqliteConnection` | `SqliteForge` |
 
-- `MysqlConnection` → `MysqlForge`
-- `PostgresConnection` → `PostgresForge`
-- `SqliteConnection` → `SqliteForge`
+Driver-specific behavior includes:
 
-### Driver-specific features
+- MySQL and PostgreSQL handlers provide `createSchema()`, `dropSchema()`, and `dropPrimaryKey()`.
+- MySQL table options include `engine`, `charset`, `collation`, and `comment`.
+- MySQL columns accept `first` and `after` when adding or changing columns.
+- MySQL `enum` and `set` columns accept either explicit `values` or a PHP enum class.
+- PostgreSQL represents primary keys and unique indexes as table constraints and requires `btree` for those constraints.
+- PostgreSQL and SQLite reject unsupported enum and set column types.
+- SQLite cannot modify columns, add or remove foreign keys on existing tables, or add or remove primary keys.
 
-Some features are only present on specific driver implementations:
-
-- MySQL and PostgreSQL `Forge` handlers add `createSchema()`, `dropSchema()`, and `dropPrimaryKey()`.
-- For MySQL native `enum` and `set` columns, `values` can be either an explicit value list or a PHP enum class name. When a class name is used, MySQL derives the option values from the enum cases.
-- SQLite’s handler does not add schema-level operations.
-
-If you need a driver-only method, check the concrete handler first:
+Use a concrete-handler check before calling a driver-only method:
 
 ```php
 use Fyre\DB\Forge\Handlers\Mysql\MysqlForge;
@@ -176,177 +265,44 @@ if ($forge instanceof MysqlForge) {
 }
 ```
 
-Example: MySQL enum values from a PHP enum class
+## Forge reference
 
-```php
-use App\Enums\Status;
-use Fyre\DB\Types\EnumType;
+The main APIs are grouped by how they execute:
 
-$forge->addColumn('articles', 'status', [
-    'type' => EnumType::class,
-    'values' => Status::class,
-]);
-```
-
-### Driver-specific table behavior
-
-- MySQL tables support `engine`, `charset`, and `collation` options when building a table definition (passed to `build()`).
-- MySQL columns support `first` and `after` options on `Table::addColumn()` and `Table::changeColumn()` to control column order.
-- PostgreSQL treats primary keys and unique indexes as table constraints (not standalone indexes), and requires a `btree` type for those constraints.
-- Some type handlers are not supported on all drivers (for example, enum/set types are rejected by the PostgreSQL and SQLite forge column implementations).
-
-## Method guide
-
-### `ForgeRegistry`
-
-#### **Map a connection class to a forge handler** (`map()`)
-
-Registers the `Forge` implementation to use for a given `Connection` class.
-
-Arguments:
-- `$connectionClass` (`class-string<Connection>`): the connection class name.
-- `$forgeClass` (`class-string<Forge>`): the forge class name (must extend `Forge`).
-
-```php
-use Fyre\DB\Forge\Handlers\Mysql\MysqlForge;
-use Fyre\DB\Handlers\Mysql\MysqlConnection;
-
-$forgeRegistry->map(MysqlConnection::class, MysqlForge::class);
-```
-
-#### **Get a Forge for a connection** (`use()`)
-
-Returns the `Forge` instance for the provided connection object.
-
-Arguments:
-- `$connection` (`Connection`): the connection instance.
-
-```php
-$forge = $forgeRegistry->use($connection);
-```
-
-### `Forge`
-
-`Forge` is the driver-aware DDL builder API for creating and altering tables.
-
-```php
-$forge = $forgeRegistry->use($connection);
-```
-
-#### **Build a table definition** (`build()`)
-
-Returns a `Table` instance for the specified table name. If the table exists, the `Table` definition is loaded from introspection so changes can be applied relative to the current structure.
-
-Arguments:
-- `$name` (`string`): the table name.
-- `$options` (`array<string, mixed>`): driver-specific table options (for example, MySQL `engine`, `charset`, `collation`, and `comment`).
-
-```php
-$table = $forge->build('users');
-$table
-    ->addColumn('id', ['type' => 'int'])
-    ->execute();
-```
-
-#### **Create a table from arrays** (`createTable()`)
-
-Creates a table by adding columns, indexes, and foreign keys to a built `Table` definition, then executing it.
-
-Arguments:
-- `$tableName` (`string`): the table name.
-- `$columns` (`array<string, array<string, mixed>>`): column definitions keyed by column name.
-- `$indexes` (`array<string, array<string, mixed>>`): index definitions keyed by index name.
-- `$foreignKeys` (`array<string, array<string, mixed>>`): foreign key definitions keyed by foreign key name.
-- `$options` (`array<string, mixed>`): table options passed to `build()`.
-
-```php
-$forge->createTable('users', [
-    'id' => ['type' => 'int'],
-    'email' => ['type' => 'string', 'length' => 255],
-], [
-    'idx_users_email' => ['columns' => ['email']],
-]);
-```
-
-#### **Convenience DDL methods (execute immediately)** (`addColumn()`, `changeColumn()`, `renameColumn()`, `dropColumn()`, `addIndex()`, `dropIndex()`, `addForeignKey()`, `dropForeignKey()`, `alterTable()`, `renameTable()`, `dropTable()`)
-
-These methods build a `Table` operation and call `execute()` as part of the method.
-
-Use them for one-off operations; use `build()->...->execute()` to apply multiple changes as a single generated set of queries.
-
-#### **Access the connection** (`getConnection()`)
-
-- `getConnection()` returns the `Connection` backing this `Forge`.
-
-### `Table`
-
-#### **Queue table changes** (`addColumn()`, `changeColumn()`, `dropColumn()`)
-
-Column definitions accept a set of common options (driver handlers may support additional keys):
-
-- `type` (`class-string<Type>|string`) The column type; can be a type handler class (for example `StringType::class`) or a driver-level type string.
-- `length` (`int|null`) The column length (when applicable).
-- `precision` (`int|null`) The column precision (when applicable).
-- `nullable` (`bool`) Whether the column is nullable.
-- `unsigned` (`bool`) Whether the column is unsigned (when supported).
-- `default` (`bool|float|int|string|LiteralExpression|null`) The column default value.
-  - For scalar values, pass the native PHP type (strings are quoted by the driver generator).
-  - For SQL expressions, pass a `LiteralExpression` (for example `new LiteralExpression('CURRENT_TIMESTAMP')`).
-  - `null` means “no DEFAULT clause” (not `DEFAULT NULL`).
-- `comment` (`string|null`) The column comment (when supported).
-- `autoIncrement` (`bool`) Whether the column auto-increments (driver-specific behavior).
-
-In general:
-
-- Prefer **type classes** for portable behavior across drivers.
-- Use **driver type strings** only when you need a database-specific type or feature (and you can accept driver differences).
-
-#### **Queue index changes** (`addIndex()`, `dropIndex()`)
-
-Index options include:
-
-- `columns` (`string|string[]`) The indexed columns (defaults to the index name when omitted).
-- `unique` (`bool`) Whether the index is unique.
-- `primary` (`bool`) Whether the index represents a primary key (implies `unique`).
-- `type` (`string|null`) Driver-specific index type (normalized to lowercase).
-
-#### **Queue foreign key changes** (`addForeignKey()`, `dropForeignKey()`)
-
-Foreign key options include:
-
-- `columns` (`string|string[]`) Local column names (defaults to the foreign key name when omitted).
-- `referencedTable` (`string`) The referenced table name.
-- `referencedColumns` (`string|string[]`) The referenced column names.
-- `onUpdate` (`string|null`) Update action (normalized by the generator).
-- `onDelete` (`string|null`) Delete action (normalized by the generator).
-
-#### **Rename or drop a table** (`rename()`, `drop()`)
-
-- `rename($newName)` queues a table rename.
-- `drop()` queues dropping the table (throws if the table does not exist).
-
-#### **Execute and inspect** (`execute()`, `sql()`, `toArray()`, getters)
-
-- `execute()` generates SQL via `sql()`, runs each query using the underlying connection, clears queued operations, and refreshes schema state as needed.
-- `sql()` returns the generated SQL queries without executing them (driver-specific output).
-- `getName()`, `getComment()`, `columns()`, `indexes()`, and `foreignKeys()` expose the current in-memory definition.
+| API | Behavior |
+| --- | --- |
+| `ForgeRegistry::use($connection)` | resolve the Forge handler for a connection |
+| `ForgeRegistry::map($connectionClass, $forgeClass)` | register a custom handler mapping |
+| `Forge::build($tableName, $options = [])` | return a table definition without executing it |
+| `Forge::createTable(...)` | create a table immediately from definition arrays |
+| `Forge::addColumn()`, `changeColumn()`, `renameColumn()`, `dropColumn()` | build and execute one column change immediately |
+| `Forge::addIndex()`, `dropIndex()` | build and execute one index change immediately |
+| `Forge::addForeignKey()`, `dropForeignKey()` | build and execute one foreign-key change immediately |
+| `Forge::renameTable()`, `dropTable()` | rename or remove a table immediately |
+| `Forge::alterTable($tableName, $options = [])` | apply table options immediately |
+| `Forge::getConnection()` | return the underlying connection |
+| `Table::addColumn()`, `changeColumn()`, `dropColumn()` | queue column changes |
+| `Table::addIndex()`, `dropIndex()` | queue index changes |
+| `Table::addForeignKey()`, `dropForeignKey()` | queue foreign-key changes |
+| `Table::rename()`, `drop()` | queue a table rename or removal |
+| `Table::setPrimaryKey($columns)` | queue the driver-appropriate primary key |
+| `Table::sql()` | return queued DDL statements without execution |
+| `Table::execute()` | execute queued statements and refresh affected schema state |
+| `Table::columns()`, `indexes()`, `foreignKeys()` | inspect the current in-memory definition |
+| `Table::toArray()` | return table metadata such as name, comment, and driver options |
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
-- Forge runs real DDL against your connection.
-- Forge convenience methods execute immediately; use `build()->...->execute()` when you want to batch changes together.
-- Column `default` values accept scalars or `LiteralExpression` for raw SQL expressions.
-- When `changeColumn()` changes `type`, `length` and `precision` are cleared unless you provide new values.
-- Some drivers handle defaults specially. For example, MySQL normalizes some expression defaults.
-- `Table::execute()` runs generated queries sequentially and does not automatically wrap them in a transaction.
-- SQLite has strict limitations for existing tables: columns cannot be modified, foreign keys cannot be added or dropped, and primary keys cannot be added or dropped.
-- Avoid reusing the same name for an index and a foreign key on the same table; drops can affect same-named objects in the pending table definition.
+- Forge convenience methods execute immediately; a built `Table` does not execute until `execute()` is called.
+- `Table::execute()` returns without clearing schema state when there are no generated statements.
+- Generated statements run sequentially and are not automatically wrapped in a transaction.
+- DDL output and feature support vary by driver.
+- Operations fail when they add an object that already exists or remove one that is missing.
+- Schema state is refreshed after an executed change, rename, or drop.
 
 ## Related
 
 - [Database connections](connections.md)
 - [Schema](schema.md)
-- [Database Migrations](migrations.md)
+- [Database migrations](migrations.md)
 - [Database types](types.md)

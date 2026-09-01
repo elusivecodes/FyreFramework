@@ -6,9 +6,8 @@ Start with a `Connection`, build the query you need, then call `execute()`.
 
 ## Table of Contents
 
-- [Start here](#start-here)
-- [Query builder basics](#query-builder-basics)
-  - [Query types and SQL mapping](#query-types-and-sql-mapping)
+- [Build and execute queries](#build-and-execute-queries)
+  - [Choose a query type](#choose-a-query-type)
   - [Tables and aliases](#tables-and-aliases)
   - [Binding and expressions](#binding-and-expressions)
   - [Condition arrays](#condition-arrays)
@@ -17,6 +16,7 @@ Start with a `Connection`, build the query you need, then call `execute()`.
   - [Tail SQL (`epilog()`)](#tail-sql-epilog)
 - [Select queries](#select-queries)
   - [Pagination](#pagination)
+  - [Per-group limits](#per-group-limits)
   - [Joins](#joins)
   - [Common table expressions (WITH)](#common-table-expressions-with)
   - [Subqueries](#subqueries)
@@ -33,20 +33,9 @@ Start with a `Connection`, build the query you need, then call `execute()`.
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Start here
+## Build and execute queries
 
-Query builders are a good fit when you want to:
-
-- write SQL in application code without stitching strings together
-- keep values parameterized by default
-- stay close to SQL while still working with a consistent result object
-
-Most examples on this page assume you already have a `$db` (`Connection`) instance.
-
-- `db()` returns the default connection (see [Database connections](connections.md)).
-- Otherwise, resolve a `Connection` from your container and pass it into the code that needs it.
-
-## Query builder basics
+Most examples on this page assume `$db` is a `Connection`. Use `db()` for the default configured connection or see [Database connections](connections.md) for other ways to resolve one.
 
 Queries are created by a connection and all share the same lifecycle:
 
@@ -57,19 +46,21 @@ Queries are created by a connection and all share the same lifecycle:
 
 `Query::execute()` performs the compile/bind/execute flow for you by generating SQL, preparing bindings, and calling `Connection::execute()`.
 
-Optionally, compile the SQL first with `Query::sql()` (for debugging/logging or when executing manually with `Connection::execute()`).
+Call `Query::sql()` when you need to inspect the compiled SQL or execute it manually with `Connection::execute()`.
 
-### Query types and SQL mapping
+### Choose a query type
 
-The query objects returned by `Connection` map to the following SQL statement types:
+Choose the builder that matches the statement you need:
 
-- `Connection::select()` → `SELECT ... FROM ...`
-- `Connection::insert()` → `INSERT INTO ... VALUES ...`
-- `Connection::update()` → `UPDATE ... SET ...`
-- `Connection::delete()` → `DELETE ... FROM ...`
-- `Connection::upsert()` → `INSERT INTO ... VALUES ...` with a conflict clause (database-specific)
-- `Connection::insertFrom()` → `INSERT INTO ... SELECT ...`
-- `Connection::updateBatch()` → a single `UPDATE ... SET ...` statement that typically uses `CASE` expressions to update multiple rows at once
+| Connection method | Query | SQL operation |
+| --- | --- | --- |
+| `select()` | `SelectQuery` | `SELECT` |
+| `insert()` | `InsertQuery` | `INSERT ... VALUES` |
+| `update()` | `UpdateQuery` | `UPDATE` |
+| `delete()` | `DeleteQuery` | `DELETE` |
+| `upsert()` | `UpsertQuery` | driver-specific insert-or-update |
+| `insertFrom()` | `InsertFromQuery` | `INSERT ... SELECT` |
+| `updateBatch()` | `UpdateBatchQuery` | update several rows in one statement |
 
 ### Tables and aliases
 
@@ -84,20 +75,7 @@ Table aliases are provided using associative arrays like `['Users' => 'users']` 
 
 `SelectQuery` also supports “virtual tables” (for example, subqueries) in `from()`. Other query types require table names to be strings.
 
-Common query methods (available on all query types):
-
-- `case(mixed $value = null): CaseExpression`
-- `execute(ValueBinder|null $binder = null): ResultSet`
-- `expr(string $conjunction = 'AND'): ConditionExpression`
-- `func(): FunctionBuilder`
-- `getConnection(): Connection`
-- `getHints(): array`
-- `getTable(): array` (the normalized internal table representation)
-- `hint(array|string $hints, bool $overwrite = false): static`
-- `identifier(string $identifier): IdentifierExpression`
-- `literal(string $string): LiteralExpression`
-- `sql(ValueBinder|null $binder = null): string`
-- `table(array|string $table, bool $overwrite = false): static`
+All query types provide `execute()`, `sql()`, `getConnection()`, and expression helpers such as `expr()`, `case()`, `func()`, `identifier()`, and `literal()`. They also support `table()` and `hint()` where the active driver permits the requested behavior.
 
 ### Binding and expressions
 
@@ -464,9 +442,7 @@ $rows = $current
 
 ## Insert queries
 
-`Connection::insert()` creates a `Fyre\DB\Queries\InsertQuery`.
-
-This query type compiles to an `INSERT INTO ... VALUES ...` statement.
+Use `insert()` with `into()` and `values()` to add one or more rows:
 
 ```php
 $db->insert()
@@ -475,13 +451,9 @@ $db->insert()
     ->execute();
 ```
 
-Key methods you’ll use most often: `into()`, `values()`.
-
 ## Update queries
 
-`Connection::update()` creates a `Fyre\DB\Queries\UpdateQuery`.
-
-This query type compiles to an `UPDATE ... SET ...` statement (optionally with `JOIN`, `FROM`, and `WHERE` clauses, depending on the connection features).
+Use `update()` with `set()` and `where()` to change matching rows:
 
 ```php
 $db->update('users')
@@ -490,18 +462,14 @@ $db->update('users')
     ->execute();
 ```
 
-Some UPDATE features are connection-dependent:
+Additional update clauses are connection-dependent:
 
 - `UpdateQuery::from()` throws if `UPDATE ... FROM` is not supported.
 - `UpdateQuery::join()` throws if `UPDATE ... JOIN` is not supported.
 
-Key methods you’ll use most often: `set()`, `where()`, plus optional `from()` / `join()` when supported.
-
 ## Delete queries
 
-`Connection::delete()` creates a `Fyre\DB\Queries\DeleteQuery`.
-
-This query type compiles to a `DELETE ... FROM ...` statement (optionally with `USING`, `JOIN`, `WHERE`, `ORDER BY`, and `LIMIT` clauses, depending on the connection features).
+Use `delete()` with `from()` and `where()` to remove matching rows:
 
 ```php
 $db->delete()
@@ -510,7 +478,7 @@ $db->delete()
     ->execute();
 ```
 
-Some DELETE features are connection-dependent:
+Additional delete clauses are connection-dependent:
 
 - `DeleteQuery::alias()` throws if deleting by alias is not supported.
 - `DeleteQuery::using()` throws if `DELETE ... USING` is not supported.
@@ -518,19 +486,13 @@ Some DELETE features are connection-dependent:
 - `DeleteQuery::orderBy()` throws if `DELETE ... ORDER BY` is not supported.
 - `DeleteQuery::limit()` throws if `DELETE ... LIMIT` is not supported.
 
-Key methods you’ll use most often: `from()` and `where()`, plus optional `alias()`, `using()`, `join()`, `orderBy()`, and `limit()` when supported.
-
 ## Other write queries
 
 These queries are also created by `Connection` and are useful for bulk operations or database-specific conflict handling.
 
 ### Upsert queries
 
-`Connection::upsert()` creates a `Fyre\DB\Queries\UpsertQuery`.
-
-This query type compiles to an insert statement with a database-specific conflict clause (for example, “insert or update on key conflict” semantics).
-
-The `upsert()` argument (`$conflictKeys`) defines which column(s) determine a conflict. The exact SQL generated is database-specific, but conceptually it is “insert, and if these key(s) conflict, update”.
+Use `upsert($conflictKeys)` to insert rows or update them when the specified key conflicts.
 
 - On PostgreSQL and SQLite, `conflictKeys` is used to build the `ON CONFLICT (...)` target.
 - On MySQL, `conflictKeys` is ignored for SQL generation because MySQL uses `ON DUPLICATE KEY UPDATE`.
@@ -546,11 +508,7 @@ $db->upsert('id')
 
 ### Insert-from queries
 
-`Connection::insertFrom()` creates a `Fyre\DB\Queries\InsertFromQuery` for `INSERT ... SELECT` statements.
-
-This query type compiles to `INSERT INTO ... SELECT ...`.
-
-Pass `$columns` as the second argument to `insertFrom()` to explicitly set the insert column list.
+Use `insertFrom($query, $columns)` for `INSERT ... SELECT`. The optional column list explicitly sets the target columns:
 
 ```php
 $from = $db->select(['id', 'email', 'created'])
@@ -564,9 +522,7 @@ $db->insertFrom($from, ['id', 'email', 'created'])
 
 ### Update-batch queries
 
-`Connection::updateBatch()` creates a `Fyre\DB\Queries\UpdateBatchQuery`, typically used to update multiple rows using a single statement.
-
-This query type compiles to a single `UPDATE ... SET ...` statement for applying multiple row updates in one query. The exact SQL shape is generator-specific.
+Use `updateBatch()` to apply several row updates in one statement. The exact SQL shape is driver-specific.
 
 The `$keys` argument to `UpdateBatchQuery::set($data, $keys)` defines which column(s) identify each row being updated. These key columns are used to:
 
@@ -586,9 +542,7 @@ $db->updateBatch('users')
 
 ## Working with result sets
 
-Database queries return a `ResultSet`. PDO-backed result sets provide raw rows as
-arrays, while `DecoratedResultSet` lazily maps the rows to another type. Both can be iterated,
-fetched by index, or consumed as an array.
+Database queries return a `ResultSet`. PDO-backed results contain array rows, while `DecoratedResultSet` lazily maps rows to another type. Both can be iterated, fetched by index, or consumed as an array.
 
 Buffering vs streaming:
 
@@ -612,7 +566,7 @@ foreach ($result as $row) {
 
 ### Indexed access
 
-`fetch($index)` returns a row by 0-based index. This may read ahead from the underlying statement to populate the internal buffer.
+`fetch($index)` returns a row by zero-based index and may read ahead to populate the internal buffer.
 
 ```php
 $result = $db->select(['id', 'email'])
@@ -623,18 +577,16 @@ $result = $db->select(['id', 'email'])
 $row = $result->fetch(10);
 ```
 
-Common result-set methods:
-
-- `all(): array`
-- `first(): mixed`
-- `last(): mixed`
-- `row(): mixed`
-- `fetch(int $index = 0): mixed`
-- `decorate(Closure $decorator, bool $consume = true): DecoratedResultSet`
-- `columns(): array`
-- `columnCount(): int`
-- `count(): int`
-- `free(): void`
+| Method | Purpose |
+| --- | --- |
+| `all()` | consume the remaining rows as an array |
+| `first()`, `last()` | return the first or last row |
+| `row()` | read the next row |
+| `fetch($index = 0)` | return a row by index |
+| `decorate($decorator, $consume = true)` | lazily map rows into another type |
+| `columns()`, `columnCount()` | inspect result columns |
+| `count()` | count source rows, buffering when required by the driver |
+| `free()` | release the underlying cursor |
 
 `decorate()` returns a new result set and applies its callback lazily, at most once per row.
 Decorators can change the row type and can be chained:

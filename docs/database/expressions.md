@@ -6,7 +6,7 @@ Expressions are created from the query being compiled, so identifiers use the co
 
 ## Table of Contents
 
-- [Start here](#start-here)
+- [Create expressions](#create-expressions)
 - [Expression callbacks](#expression-callbacks)
 - [Identifiers and literals](#identifiers-and-literals)
 - [Conditions](#conditions)
@@ -22,14 +22,17 @@ Expressions are created from the query being compiled, so identifiers use the co
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Start here
+## Create expressions
 
 Queries expose four main expression helpers:
 
-- `expr()` creates a `ConditionExpression`.
-- `case()` creates a `CaseExpression`.
-- `func()` returns the query's `FunctionBuilder`.
-- `identifier()` and `literal()` mark identifiers and deliberate raw SQL fragments.
+| Helper | Use it for |
+| --- | --- |
+| `expr()` | comparisons and grouped conditions |
+| `case()` | searched or simple `CASE` expressions |
+| `func()` | scalar, date, aggregate, and window functions |
+| `identifier()` | an identifier in a general expression value |
+| `literal()` | deliberate raw SQL controlled by the application |
 
 Use a callback when the expression is part of the query being built:
 
@@ -56,9 +59,7 @@ Expression callbacks are evaluated when SQL is compiled. The current query is pa
 static fn(Query $query, ValueBinder|null $binder): mixed => ...
 ```
 
-The binder argument is rarely needed. The query provides the expression helpers and is normally the only argument used.
-
-Callbacks can be used as selected fields, conditions, join conditions, and other values accepted by the query compiler.
+The binder argument is rarely needed; the query normally provides everything required to build the expression. Callbacks can be used as selected fields, conditions, join conditions, and other values accepted by the query compiler.
 
 ## Identifiers and literals
 

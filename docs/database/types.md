@@ -1,228 +1,141 @@
 # Database types
 
-Use database types when you need consistent value conversion between PHP and the database.
-
-The same type system is used across queries, schema metadata, forms, and other input parsing features.
+Database types convert values between untrusted input, application PHP values, and database-safe values. The same type system is used by queries, schema metadata, forms, and console input.
 
 ## Table of Contents
 
-- [Start here](#start-here)
-- [Type handlers](#type-handlers)
-- [Where types are used](#where-types-are-used)
-- [Working with `TypeParser`](#working-with-typeparser)
-  - [Resolving and using types](#resolving-and-using-types)
-  - [Listing mapped types](#listing-mapped-types)
-- [Retrieving types from metadata](#retrieving-types-from-metadata)
-  - [From a `ResultSet` column](#from-a-resultset-column)
-  - [From a schema Column](#from-a-schema-column)
+- [Convert values](#convert-values)
+- [Resolve type handlers](#resolve-type-handlers)
+- [Use metadata-driven types](#use-metadata-driven-types)
+  - [Result columns](#result-columns)
+  - [Schema columns](#schema-columns)
 - [Built-in types](#built-in-types)
-  - [Binary (`binary`)](#binary-binary)
-  - [Boolean (`boolean`, `bool`)](#boolean-boolean-bool)
-  - [Date (`date`)](#date-date)
-  - [Datetime (`datetime`)](#datetime-datetime)
-  - [Datetime (fractional) (`datetime-fractional`)](#datetime-fractional-datetime-fractional)
-  - [Datetime (timezone) (`datetime-timezone`)](#datetime-timezone-datetime-timezone)
-  - [Decimal (`decimal`, `double`)](#decimal-decimal-double)
-  - [Enum (`enum`)](#enum-enum)
-  - [Float (`float`)](#float-float)
-  - [Integer (`integer`, `int`)](#integer-integer-int)
-  - [JSON (`json`)](#json-json)
-  - [Set (`set`)](#set-set)
-  - [String (`string`)](#string-string)
-  - [Text (`text`)](#text-text)
-  - [Time (`time`)](#time-time)
-- [Creating custom types](#creating-custom-types)
+  - [Date and time types](#date-and-time-types)
+  - [JSON](#json)
+- [Create a custom type](#create-a-custom-type)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Start here
+## Convert values
 
-Use database types when you want to:
+Every type extends `Fyre\DB\Type` and can convert values at three points:
 
-- parse untrusted values into typed PHP values such as `"123"` → `123`
-- convert PHP values into database-safe values such as `DateTime` → formatted string
-- interpret database values using metadata such as “this column is a `datetime`”
+| Method | Conversion |
+| --- | --- |
+| `parse($value)` | arbitrary input to an application PHP value |
+| `fromDatabase($value)` | database value to an application PHP value |
+| `toDatabase($value)` | application PHP value to a database-safe value |
 
-Most code starts with the shared `TypeParser`:
+The base implementation of `fromDatabase()` and `toDatabase()` delegates to `parse()`. Built-in types override the methods that need different database behavior.
+
+Types are used throughout the framework:
+
+- ORM hydration and form marshalling use schema column types.
+- Forms, the view `FormHelper`, requests, and console options can parse raw input explicitly.
+- Query binding converts values such as `Fyre\Utility\DateTime\DateTime` into database-safe strings.
+- Schema columns and result metadata can resolve a type from driver information.
+
+## Resolve type handlers
+
+Use the `type()` helper to resolve the shared `TypeParser` or a mapped handler:
 
 ```php
 $typeParser = type();
-```
 
-## Type handlers
-
-Types are implemented as subclasses of `Fyre\DB\Type`. A type handler is a small object responsible for converting values at three points:
-
-- `Type::parse()` converts an arbitrary input value into a PHP value your code can work with.
-- `Type::fromDatabase()` converts a database value into a PHP value (by default this calls `parse()`).
-- `Type::toDatabase()` converts a PHP value into a database value (by default this calls `parse()`).
-
-Most built-in types override one or more of these methods to validate and normalize input. Some also expose additional public configuration methods (for example `DateTimeType` and `JsonType`).
-
-## Where types are used
-
-Types show up in a few places across the framework:
-
-- **ORM entities**: entity data is hydrated from database values through column types, and the same type information is commonly used when parsing incoming form data before it is written back.
-- **Forms and view form helpers**: forms validate raw submitted values before parsing fields through `TypeParser`, while the view `FormHelper` uses the same types to normalize control values.
-- **Console argument parsing**: command option values can be parsed into typed PHP values through the same type system.
-- **Request data parsing**: request query / post / body values can also be normalized with `TypeParser` when you want explicit typed input handling.
-- **Query execution**: values such as `Fyre\Utility\DateTime\DateTime` are converted to database-safe values before binding.
-- **Schema and result metadata**: schema columns and `ResultSet` metadata can resolve a `Fyre\DB\Type` based on driver-reported column information.
-
-## Working with `TypeParser`
-
-Use `type()` to get the shared `TypeParser`, or resolve `Fyre\DB\TypeParser` through dependency injection if you prefer.
-
-### Resolving and using types
-
-`Fyre\DB\TypeParser` resolves short identifiers (like `integer` or `json`) to `Fyre\DB\Type` handlers. Unknown identifiers fall back to `string`, and `bool` / `int` are aliases for `boolean` / `integer` unless you explicitly remap them.
-
-Use `TypeParser::use()` to get a handler instance, then call `parse()`, `toDatabase()`, or `fromDatabase()`:
-
-```php
 $limit = $typeParser->use('integer')->parse($value);
+$created = type('datetime')->fromDatabase($databaseValue);
 ```
 
-If you only need a single mapped type, you can use the helper directly:
+`TypeParser::use()` accepts a short identifier such as `integer`, `json`, or `datetime`. Unknown identifiers resolve to `string`. The `bool` and `int` aliases resolve to `boolean` and `integer` unless those aliases have been explicitly remapped.
+
+Use `getTypeMap()` to inspect the current identifier-to-class mappings:
 
 ```php
-$cutoff = type('datetime')->fromDatabase($dbValue);
+$types = $typeParser->getTypeMap();
 ```
 
-### Listing mapped types
+Each handler class is instantiated once per `TypeParser`. Identifiers mapped to the same class therefore share one handler and its configuration.
 
-To see which identifiers are currently mapped (built-ins plus any overrides you have registered), use `TypeParser::getTypeMap()`:
+## Use metadata-driven types
 
-```php
-$map = $typeParser->getTypeMap();
-```
+Use metadata-driven resolution when the type should follow the database column rather than an application-supplied identifier.
 
-## Retrieving types from metadata
+### Result columns
 
-Sometimes you do not know a value’s type up-front and want the database layer to tell you what to use.
-
-Metadata-driven type resolution is driver-dependent. In particular, `ResultSet::getType()` may return `null` when column metadata is unavailable.
-
-### From a `ResultSet` column
-
-`Fyre\DB\ResultSet::getType()` returns a `Type` handler for a column name when the driver provides `native_type` metadata for that column. Decorated result sets delegate this metadata lookup to the wrapped result.
+`ResultSet::getType($column)` returns a type when the PDO driver supplies `native_type` metadata for that column. It can return `null` when the metadata is unavailable:
 
 ```php
 $row = $result->first();
+
 if ($row !== null) {
     $type = $result->getType('created');
-    $createdAt = $type ? $type->fromDatabase($row['created']) : $row['created'];
+    $created = $type?->fromDatabase($row['created']) ?? $row['created'];
 }
 ```
 
-### From a schema Column
+Decorated result sets delegate type lookup to the wrapped result.
 
-Schema column objects resolve to a `Type` handler using driver-specific column type mappings:
+### Schema columns
+
+A schema `Column` uses the active driver's type map:
 
 ```php
-$value = $column->type()->fromDatabase($dbValue);
+$column = $schema->table('users')->column('created');
+$created = $column->type()->fromDatabase($databaseValue);
 ```
+
+See [Schema](schema.md#inspect-columns) for introspection and PHP enum metadata.
 
 ## Built-in types
 
-Built-in types are resolved by `TypeParser` using the identifiers below.
+The built-in identifiers and their PHP behavior are:
 
-### Binary (`binary`)
+| Identifier | Conversion behavior |
+| --- | --- |
+| `binary` | converts a database binary string to a readable stream resource |
+| `boolean`, `bool` | validates a boolean; `null` and `''` become `null` |
+| `date` | parses a `DateTime` and normalizes it to the start of the day |
+| `datetime` | parses timestamps, date-time strings, `DateTimeInterface`, and framework `DateTime` values |
+| `datetime-fractional` | behaves like `datetime` with fractional seconds in the database format |
+| `datetime-timezone` | behaves like `datetime` with fractional seconds and a timezone offset |
+| `decimal`, `double` | validates a numeric value and returns a string to preserve precision |
+| `enum` | currently behaves like `string` |
+| `float` | validates and returns a float |
+| `integer`, `int` | validates and returns an integer |
+| `json` | converts between JSON strings and PHP values |
+| `set` | converts between comma-separated database strings and PHP arrays |
+| `string` | casts scalars and `Stringable` objects; other values become `null` |
+| `text` | currently behaves like `string` |
+| `time` | parses a time into a framework `DateTime` instance |
 
-Used for binary/blob-like values.
+### Date and time types
 
-`fromDatabase()` converts a binary string into a readable stream resource. Other conversions use the base `Type` behavior.
-
-### Boolean (`boolean`, `bool`)
-
-Parses values using PHP’s boolean validation rules. `null` and `''` parse to `null`.
-
-### Date (`date`)
-
-Parses a date and normalizes it to the start of the day. Uses server time zone `UTC` for database conversion.
-
-### Datetime (`datetime`)
-
-Parses a date-time into a `Fyre\Utility\DateTime\DateTime` instance. It accepts:
+`datetime` accepts:
 
 - integer timestamps and integer-formatted strings
 - `Fyre\Utility\DateTime\DateTime` instances
 - any `DateTimeInterface` implementation
-- strings matching common formats (or a configured locale format)
+- strings in common formats or a configured locale format
 
-This type also exposes configuration methods to control parsing and database formatting:
+Configure its shared handler with:
 
-- `getLocaleFormat()` / `setLocaleFormat()`
-- `getServerTimeZone()` / `setServerTimeZone()`
-- `getUserTimeZone()` / `setUserTimeZone()`
+- `getLocaleFormat()` and `setLocaleFormat()`
+- `getServerTimeZone()` and `setServerTimeZone()`
+- `getUserTimeZone()` and `setUserTimeZone()`
 
-Because `TypeParser::use()` caches handler instances by class, treat these setters as configuration for the `TypeParser` instance: updating the handler affects all future `datetime` conversions that use the same cached handler.
+The `date` and `time` types use a server timezone of UTC for database conversion. Because handler instances are cached, changing date-time configuration affects later conversions performed through the same `TypeParser`.
 
-### Datetime (fractional) (`datetime-fractional`)
+### JSON
 
-Same as `datetime`, but uses a server format that includes fractional seconds.
+`JsonType::fromDatabase()` decodes JSON into associative PHP arrays. `toDatabase()` encodes PHP values as JSON, and `setEncodingFlags()` controls the flags passed to `json_encode()`.
 
-### Datetime (timezone) (`datetime-timezone`)
+Invalid JSON and the JSON literal `null` both decode to `null`. Validate input separately when the distinction matters.
 
-Same as `datetime`, but uses a server format that includes fractional seconds and a timezone offset.
+Encoding flags are stored on the cached handler, so a change affects later JSON conversions through the same `TypeParser`.
 
-### Decimal (`decimal`, `double`)
+## Create a custom type
 
-Validates that the value is numeric and returns it as a string. This is useful for preserving precision when working with database decimal/numeric columns.
-
-### Enum (`enum`)
-
-Currently behaves the same as `string`.
-
-### Float (`float`)
-
-Parses values using PHP’s float validation rules.
-
-### Integer (`integer`, `int`)
-
-Parses values using PHP’s integer validation rules.
-
-### JSON (`json`)
-
-Converts between JSON strings and PHP values.
-
-- `fromDatabase()` runs `json_decode($value, true)` (associative arrays).
-- `toDatabase()` runs `json_encode()` and returns the encoded string.
-- `Fyre\DB\Types\JsonType::setEncodingFlags()` configures the flags passed to `json_encode()`.
-
-Because `TypeParser::use()` caches handler instances by class, changing encoding flags affects all future `json` conversions that use the same cached handler.
-
-Note: `json_decode()` returns `null` for invalid JSON and for the literal JSON `null` value. If you need to distinguish those cases, validate the input before decoding.
-
-### Set (`set`)
-
-Converts between comma-separated strings and PHP arrays.
-
-- `parse()` returns an array (splitting on `,`) or `null`
-- `toDatabase()` joins arrays with `,` for storage
-
-### String (`string`)
-
-Casts scalar values (or `Stringable` objects) to string. Non-scalar, non-`Stringable` values parse to `null`.
-
-### Text (`text`)
-
-Currently behaves the same as `string`.
-
-### Time (`time`)
-
-Parses a time into a `Fyre\Utility\DateTime\DateTime` instance. Uses server time zone `UTC` for database conversion.
-
-## Creating custom types
-
-Custom types are regular classes extending `Fyre\DB\Type`. In practice, most custom types override one or more of:
-
-- `Type::parse()` for general input parsing
-- `Type::toDatabase()` for database-safe values
-- `Type::fromDatabase()` for database-to-PHP conversion
-
-After creating the class, map it to an identifier with `TypeParser::map()` and use that identifier consistently across the database layer.
+Extend `Fyre\DB\Type`, override the conversions you need, and map the class to an identifier:
 
 ```php
 use Fyre\DB\Type;
@@ -246,20 +159,20 @@ class UuidType extends Type
 $typeParser->map('uuid', UuidType::class);
 ```
 
-`map()` updates the identifier-to-class mapping immediately. If a handler for that class has already been instantiated, call `clear()` on the `TypeParser` to force fresh handler resolution on subsequent `use()` calls.
+`map()` changes the identifier mapping immediately, but it does not rebuild existing handler instances. Call `clear()` if the newly mapped class has already been resolved and a fresh instance is required.
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
-- Unknown identifiers resolve to the `string` type.
-- `bool` and `int` are aliases for `boolean` and `integer` unless you explicitly map `bool` or `int` yourself.
-- `TypeParser::use()` caches a single instance per handler class, so identifiers mapped to the same class share one handler instance.
-- `TypeParser::map()` does not rebuild existing handler instances; call `TypeParser::clear()` after remapping if you need the new mapping to take effect.
+- Unknown identifiers resolve to `string`.
+- `bool` and `int` are aliases unless explicitly remapped.
+- Handler instances are cached by class, so aliases mapped to one class share configuration.
+- Metadata-driven result types depend on information exposed by the PDO driver.
+- Invalid inputs generally parse to `null`; validate required or malformed input separately when failure must be distinguished from a nullable value.
 
 ## Related
 
 - [Database connections](connections.md)
 - [Database queries](queries.md)
 - [Schema](schema.md)
+- [Forms](../form/forms.md)
 - [Helpers](../core/helpers.md)

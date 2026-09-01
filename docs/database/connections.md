@@ -19,6 +19,7 @@ Most applications define a single `default` connection and only add more when th
 - [Managing connections](#managing-connections)
 - [Running queries](#running-queries)
 - [Transactions](#transactions)
+- [Connection retries](#connection-retries)
 - [Database locks](#database-locks)
 - [Connection utilities](#connection-utilities)
 - [Troubleshooting](#troubleshooting)
@@ -27,23 +28,13 @@ Most applications define a single `default` connection and only add more when th
 
 ## Start here
 
-In most applications:
+For the common application path:
 
-- define one or more connections under the `Database` config key
-- resolve the default connection with `db()` or `ConnectionManager::use()`
-- pass a connection key when you need a non-default database
-- use `build()` only for temporary connections you do not want to store or share
+1. Define a `default` entry under the `Database` config key.
+2. Resolve it with `db()` or `ConnectionManager::use()`.
+3. Build queries or run a transaction through the returned `Connection`.
 
-Most code can stay database-agnostic once the connection is configured.
-
-```php
-use Fyre\DB\ConnectionManager;
-
-$connections = app(ConnectionManager::class);
-
-$default = $connections->use();
-$analytics = $connections->use('analytics');
-```
+Add named connections only when code needs a different database, driver, or credentials. Use `build()` for a temporary connection that should not be stored or shared.
 
 ## Connection configuration
 
@@ -51,11 +42,14 @@ Define connections under the `Database` key in your config (see [Config](../core
 
 ### Common connection options
 
-These options apply to all connection handlers:
+These options apply to every handler:
 
-- `className` (`class-string<Fyre\DB\Connection>`): the connection class to build.
-- `log` (`bool`): whether query logging is enabled for that connection (default: `false`).
-  - Queries are logged at `debug` level with the `queries` scope; configure handlers accordingly (see [Logging](../logging/index.md)).
+| Option | Type | Default | Purpose |
+| --- | --- | --- | --- |
+| `className` | `class-string<Fyre\DB\Connection>` | none | connection class to build |
+| `log` | `bool` | `false` | log queries at `debug` level with the `queries` scope |
+
+When query logging is enabled, configure a logger that accepts the `debug` level and `queries` scope; see [Logging](../logging/index.md).
 
 Other options depend on the selected handler.
 
@@ -118,44 +112,56 @@ The options below are specific to the built-in handlers under `Fyre\DB\Handlers\
 
 Use `MysqlConnection::class` as `className`.
 
-- `host` (`string`): default `127.0.0.1`
-- `username` (`string`): default `''`
-- `password` (`string`): default `''`
-- `database` (`string`): default `''`
-- `port` (`int|string`): default `'3306'`
-- `charset` (`string`): default `utf8mb4`
-- `collation` (`string`): default `utf8mb4_unicode_ci`
-- `compress` (`bool`): default `false`
-- `persist` (`bool`): default `false`
-- `timeout` (`mixed`): default `null`
-- `ssl` (`array`): keys `key`, `cert`, `ca`, `capath`, `cipher` (all default `null`)
-- `flags` (`array`): PDO driver options to merge into the default options (default `[]`)
+| Option | Type | Default |
+| --- | --- | --- |
+| `host` | `string` | `127.0.0.1` |
+| `username` | `string` | `''` |
+| `password` | `string` | `''` |
+| `database` | `string` | `''` |
+| `port` | `int|string` | `'3306'` |
+| `charset` | `string` | `utf8mb4` |
+| `collation` | `string` | `utf8mb4_unicode_ci` |
+| `compress` | `bool` | `false` |
+| `persist` | `bool` | `false` |
+| `timeout` | `mixed` | `null` |
+| `ssl` | `array` | `key`, `cert`, `ca`, `capath`, and `cipher` set to `null` |
+| `flags` | `array` | `[]` |
+
+`flags` are merged into the default PDO driver options.
 
 ### PostgreSQL
 
 Use `PostgresConnection::class` as `className`.
 
-- `host` (`string`): default `127.0.0.1`
-- `username` (`string`): default `''`
-- `password` (`string`): default `''`
-- `database` (`string`): default `''`
-- `port` (`int|string`): default `'5432'`
-- `charset` (`string`): default `utf8`
-- `schema` (`string`): default `public`
-- `persist` (`bool`): default `false`
-- `timeout` (`mixed`): default `null`
-- `flags` (`array`): PDO driver options to merge into the default options (default `[]`)
+| Option | Type | Default |
+| --- | --- | --- |
+| `host` | `string` | `127.0.0.1` |
+| `username` | `string` | `''` |
+| `password` | `string` | `''` |
+| `database` | `string` | `''` |
+| `port` | `int|string` | `'5432'` |
+| `charset` | `string` | `utf8` |
+| `schema` | `string` | `public` |
+| `persist` | `bool` | `false` |
+| `timeout` | `mixed` | `null` |
+| `flags` | `array` | `[]` |
+
+`flags` are merged into the default PDO driver options.
 
 ### SQLite
 
 Use `SqliteConnection::class` as `className`.
 
-- `database` (`string`): default `:memory:`
-- `mask` (`int`): default `0644` (applied when creating a new file database)
-- `cache` (`string|null`): default `null`
-- `mode` (`string|null`): default `null`
-- `persist` (`bool`): default `false`
-- `flags` (`array`): PDO driver options to merge into the default options (default `[]`)
+| Option | Type | Default |
+| --- | --- | --- |
+| `database` | `string` | `:memory:` |
+| `mask` | `int` | `0644` |
+| `cache` | `string|null` | `null` |
+| `mode` | `string|null` | `null` |
+| `persist` | `bool` | `false` |
+| `flags` | `array` | `[]` |
+
+`mask` is applied when a file-backed database is created. `flags` are merged into the default PDO driver options.
 
 ## Selecting a connection
 
@@ -214,24 +220,22 @@ $temp = $connections->build([
 
 ## Running queries
 
-Once you have a `Connection`, most day-to-day database work is done through query builder objects. Each builder compiles to SQL and executes through the connection (usually via `Query::execute()`).
+Once you have a `Connection`, use its query builders for normal reads and writes:
+
+```php
+$users = $db->select(['id', 'email'])
+    ->from('users')
+    ->where(['active' => true])
+    ->execute()
+    ->all();
+```
+
+The connection provides builders for select, insert, update, delete, upsert, insert-from-select, and batch-update statements. See [Database queries](queries.md) for their composition, binding, and result APIs.
 
 You can also run SQL directly on the connection when needed:
 
 - `execute($sql, $params)` for parameterized SQL with bound values
 - `query($sql)` for direct SQL that should return a normal `ResultSet`
-
-Common query types:
-
-- **SELECT**: `$db->select()` returns a `SelectQuery` (see [Select queries](queries.md#select-queries)).
-- **INSERT**: `$db->insert()` returns an `InsertQuery` (see [Insert queries](queries.md#insert-queries)).
-- **UPDATE**: `$db->update()` returns an `UpdateQuery` (see [Update queries](queries.md#update-queries)).
-- **DELETE**: `$db->delete()` returns a `DeleteQuery` (see [Delete queries](queries.md#delete-queries)).
-- **UPSERT**: `$db->upsert()` returns an `UpsertQuery` (see [Upsert queries](queries.md#upsert-queries)).
-- **INSERT FROM SELECT**: `$db->insertFrom()` returns an `InsertFromQuery` (see [Insert-from queries](queries.md#insert-from-queries)).
-- **Batch UPDATE**: `$db->updateBatch()` returns an `UpdateBatchQuery` (see [Update-batch queries](queries.md#update-batch-queries)).
-
-For a deeper guide to building and executing queries (including value binding, result handling, and edge cases), see [Database queries](queries.md).
 
 Prefer bound values wherever possible. Query builders bind values by default (via `Query::execute()`), while raw SQL fragments bypass binding:
 
@@ -261,29 +265,39 @@ For manual control, use `begin()`, `commit()`, and `rollback()`. Nested transact
 
 `afterCommit($callback, $priority = 1, $key = null)` schedules work after the outermost commit. When no transaction is active, the callback runs immediately. A key can be used to replace an already queued callback.
 
+## Connection retries
+
+Query execution recognizes a small set of driver-specific connection errors. Outside a transaction, the connection waits `100` milliseconds, reconnects, and retries the operation once. Queries are not retried while a transaction or savepoint is active because reconnecting would lose its state.
+
+This behavior applies to `execute()` and `rawQuery()`, including normal query-builder execution. The initial connection attempt made during construction is not retried.
+
 ## Database locks
 
-Use `Lock` when work must not run concurrently for the same name:
+Use `Connection::lock()` when work must not run concurrently for the same name. Initialize lock storage once for each connection that uses locks outside the migration runner:
+
+```bash
+app db:lock:setup --db=default
+```
+
+Then acquire the lease and always release it in a `finally` block:
 
 ```php
 $lock = db()->lock('daily-report', 60);
 
 if ($lock->acquire(5)) {
     try {
-        // Perform protected work and call refresh() before the lease expires.
+        // Complete the protected work within the 60-second lease.
     } finally {
         $lock->release();
     }
 }
 ```
 
-Locks with different names do not block each other. Before using database locks independently of migrations, initialize lock storage for the selected connection:
+The second argument to `lock()` is the lease lifetime in seconds and defaults to `300`. The argument to `acquire()` is the maximum time to wait and defaults to `0`, which fails immediately when another owner holds the name. Locks with different names do not block each other.
 
-```bash
-app db:lock:setup --db=default
-```
+Call `refresh()` and check its return value before long-running work exceeds the lease. Only the current owner can refresh or release an active lock, and both methods return whether the operation succeeded.
 
-The migration runner initializes this storage automatically before an actual migrate or rollback operation. `Lock::acquire()` does not perform DDL. Expired lock rows are not removed automatically, but they do not prevent their lock names from being acquired again. Only the current owner can refresh or release an active lock. Run or schedule `app db:lock:purge --db=default` to remove expired rows.
+`Lock::acquire()` never performs DDL. The migration runner initializes lock storage before an actual migrate or rollback operation, but planning, status, and dry runs do not. Expired rows no longer block acquisition but remain stored until `app db:lock:purge --db=default` removes them. Run that command manually or on a schedule; see [Database commands](migrations.md#database-commands).
 
 ## Connection utilities
 
