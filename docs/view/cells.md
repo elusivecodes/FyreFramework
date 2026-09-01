@@ -1,78 +1,43 @@
 # Cells
 
-Use cells when you want a small renderable component with its own PHP action and template.
+Use cells for reusable view components that need their own PHP action and template. Each `View::cell()` call creates a new cell instance, invokes its selected action, and renders through a child view.
 
-Each `View::cell()` call creates a new cell instance, runs an action method, and renders a dedicated template.
-
-For long-lived, per-view utilities accessed through `$this->SomeHelperName`, see [Helpers](helpers.md).
+For reusable template utilities that do not need a template of their own, use [Helpers](helpers.md).
 
 ## Table of Contents
 
-- [Start here](#start-here)
-- [Basic usage](#basic-usage)
-  - [Rendering a cell](#rendering-a-cell)
-  - [Selecting an action](#selecting-an-action)
-- [Creating a custom cell](#creating-a-custom-cell)
-  - [Cell class naming and location](#cell-class-naming-and-location)
-  - [Cell templates and defaults](#cell-templates-and-defaults)
-- [Passing data to cell actions and templates](#passing-data-to-cell-actions-and-templates)
-- [Overriding the template](#overriding-the-template)
+- [Render a cell](#render-a-cell)
+- [Create a cell](#create-a-cell)
+- [Pass action arguments and template data](#pass-action-arguments-and-template-data)
+- [Select a template](#select-a-template)
 - [Cell events](#cell-events)
-- [Method guide](#method-guide)
-  - [`Cell`](#cell)
-- [Behavior notes](#behavior-notes)
+- [Cell API reference](#cell-api-reference)
+- [Failure behavior](#failure-behavior)
 - [Related](#related)
 
-## Start here
+## Render a cell
 
-Use cells when you want to:
-
-- keep a small piece of view logic out of the parent template
-- render a reusable chunk with its own template
-- pass arguments into a renderable component-like object
-
-## Basic usage
-
-Most examples on this page assume you are in a template, where `$this` is the current `View`.
-
-### Rendering a cell
-
-`View::cell(string $cell, array $args = []): Cell` creates the cell instance. You can explicitly render it, or echo it directly.
-
-Example: render a cell in a template:
+Echo a cell directly from a template:
 
 ```php
-echo $this->cell('RecentPosts', ['limit' => 5]);
+echo $this->cell('RecentPosts', [
+    'limit' => 5,
+]);
 ```
 
-If you need to configure the cell instance before rendering, render explicitly:
+The default action is `display`. Append `::action` to select another public action:
 
 ```php
-$cell = $this->cell('RecentPosts', ['limit' => 5]);
-
-echo $cell->render();
+echo $this->cell('RecentPosts::byCategory', [
+    'slug' => 'php',
+]);
 ```
 
-### Selecting an action
+Echoing calls `render()` through `Cell::__toString()`. Store the instance when you need to set data or change its template first.
 
-The cell name supports an optional action selector using `::`:
+## Create a cell
 
-- `'RecentPosts'` targets the default action (`display`).
-- `'RecentPosts::byCategory'` targets the `byCategory` action.
-
-Example:
-
-```php
-echo $this->cell('RecentPosts::byCategory', ['slug' => 'php']);
-```
-
-## Creating a custom cell
-
-### Cell class naming and location
-
-`View::cell('RecentPosts')` looks for a cell class named `RecentPostsCell` in one of the configured cell namespaces. In most applications, cells live under `App\Cells`.
-
-Example cell class:
+Application cells normally live under `App\Cells`, which `Engine` registers by default. A cell named `RecentPosts` resolves to `RecentPostsCell`:
 
 ```php
 namespace App\Cells;
@@ -93,16 +58,37 @@ class RecentPostsCell extends Cell
 }
 ```
 
-Public action methods are invoked via the container, so you can pass values via `$args` and also rely on type-hinted dependencies when appropriate. Methods inherited from the base `Cell` class cannot be used as actions.
+Cell actions are invoked through the container. Named values from the `View::cell()` argument array match action parameters, and additional services can be resolved by type hint.
 
-### Cell templates and defaults
+The selected action must be public and declared outside the base `Cell` class.
 
-If you do not call `Cell::setTemplate()`, the template name is derived from:
+## Pass action arguments and template data
 
-- the cell short name (class name without the trailing `Cell`), and
-- the action name converted to `snake_case`.
+Use named action arguments for readable, stable calls:
 
-Default templates for the cell above:
+```php
+echo $this->cell('RecentPosts', [
+    'limit' => 10,
+]);
+```
+
+Inside the action, use `set()` or `setData()` to expose local variables to the cell template. The cell's child `View` shares the parent request, but has its own view data and no layout.
+
+```php
+public function display(PostsService $posts, int $limit = 5): void
+{
+    $this->setData([
+        'posts' => $posts->recent($limit),
+        'limit' => $limit,
+    ]);
+}
+```
+
+Parent view variables are not copied into the cell template. Pass required values as action arguments or set them explicitly.
+
+## Select a template
+
+Without an override, the template path combines the cell short name and the `snake_case` action name:
 
 ```text
 templates/
@@ -112,128 +98,52 @@ templates/
       by_category.php
 ```
 
-Example template: `templates/cells/RecentPosts/display.php`
-
-```php
-echo '<div class="recent-posts">';
-echo '<p>Showing '.(string) $limit.' posts.</p>';
-echo '</div>';
-```
-
-## Passing data to cell actions and templates
-
-`View::cell($cell, $args)` passes `$args` to the action method call:
-
-- Use keyed arguments to match action parameter names (recommended).
-- Use `Cell::set()` / `Cell::setData()` inside the action method to set template variables.
-- The cell renders with a fresh child `View` that shares the parent request, but not the parent view data or layout.
-
-Example: pass parameters to the default `display()` action, then read them in the template:
-
-```php
-echo $this->cell('RecentPosts', ['limit' => 10]);
-```
-
-## Overriding the template
-
-You can override which template a cell renders by calling `Cell::setTemplate()` before rendering.
-
-Example: render using `templates/cells/Shared/promo.php`:
+Override the path relative to `templates/cells` before rendering:
 
 ```php
 echo $this->cell('RecentPosts', ['limit' => 5])
     ->setTemplate('Shared/promo');
 ```
 
+This renders `templates/cells/Shared/promo.php`.
+
 ## Cell events
 
-Cells dispatch events through the parent View's event manager. Listener callbacks receive the `Event` first, followed by the values listed for that event:
+Cells dispatch through the parent view's event manager. Listener methods receive the `Event` first, followed by these payload values:
 
-- `Cell.beforeAction` - `Cell $cell`, `string $action`, `array $args`
-- `Cell.afterAction` - `Cell $cell`, `string $action`, `array $args`
-- `Cell.beforeRender` - `string $filePath`
-- `Cell.afterRender` - `string $filePath`, `string $content`
+| Event | Payload after `Event` |
+| --- | --- |
+| `Cell.beforeAction` | `Cell $cell`, `string $action`, `array $args` |
+| `Cell.afterAction` | `Cell $cell`, `string $action`, `array $args` |
+| `Cell.beforeRender` | `string $filePath` |
+| `Cell.afterRender` | `string $filePath`, `string $content` |
 
-Listeners for `Cell.afterRender` can replace the rendered content by calling `$event->setResult($content)` with a string. See [Event Listeners](../events/listeners.md) for listener registration.
+An `afterRender` listener may replace the output by setting a string event result. See [Event Listeners](../events/listeners.md).
 
-## Method guide
+## Cell API reference
 
-Applies to `Fyre\View\Cell`, which is typically created from a template via `View::cell()`.
+| API | Purpose |
+| --- | --- |
+| `View::cell($name, $args = [])` | create a new cell and select an optional `::action` |
+| `Cell::render()` | invoke the action and render the selected template |
+| `Cell::set($name, $value)` | set one child-view value |
+| `Cell::setData($data)` | merge child-view values |
+| `Cell::setTemplate($file)` | override the template path relative to `cells` |
+| `Cell::getTemplate()` | return the override, or `null` when the default will be used |
+| `Cell::getView()` | return the layout-free child view |
 
-### `Cell`
+Each `View::cell()` call creates a fresh cell. Helpers are a better fit when state or configuration should be reused throughout one view.
 
-#### **Render the cell** (`render()`)
+## Failure behavior
 
-Runs the selected action and renders the resolved cell template.
-
-```php
-$content = $this->cell('RecentPosts')->render();
-```
-
-#### **Set a single template value** (`set()`)
-
-Sets one value on the cell's child view.
-
-Arguments:
-- `$name` (`string`): the variable name.
-- `$value` (`mixed`): the variable value.
-
-```php
-$cell->set('title', 'Recent posts');
-```
-
-#### **Set multiple template values** (`setData()`)
-
-Merges values into the cell's child view data.
-
-Arguments:
-- `$data` (`array<string, mixed>`): the view data.
-
-```php
-$cell->setData([
-    'title' => 'Recent posts',
-]);
-```
-
-#### **Select a cell template** (`setTemplate()`)
-
-Sets the template path relative to the `cells` folder.
-
-Arguments:
-- `$file` (`string`): the template path relative to `cells/`.
-
-```php
-$cell->setTemplate('RecentPosts/custom');
-```
-
-#### **Read the selected template** (`getTemplate()`)
-
-Returns the explicitly selected template path, or `null` when the action-derived default will be used.
-
-```php
-$template = $cell->getTemplate();
-```
-
-#### **Get the child view** (`getView()`)
-
-Returns the child view used to render the cell. It shares the parent request and has no layout.
-
-```php
-$view = $cell->getView();
-```
-
-## Behavior notes
-
-A few behaviors are worth keeping in mind:
-
-- `View::cell()` throws an `InvalidArgumentException` if the cell class cannot be resolved.
-- The action defaults to `display`. If the action method is missing, non-public, or inherited from the base `Cell` class, `Cell::render()` throws a `RuntimeException`.
-- If the resolved template does not exist under the `cells/` folder, `Cell::render()` throws a `RuntimeException`.
-- Each `View::cell()` call creates a new instance; use [Helpers](helpers.md) when you need a reusable per-view object.
-- Only the first `::` is treated as the action separator; avoid using `::` anywhere else in the cell string.
+- An unresolved cell name causes `View::cell()` to throw an `InvalidArgumentException`.
+- A missing, non-public, or base-class action causes `render()` to throw a `RuntimeException`.
+- A missing resolved template causes `render()` to throw a `RuntimeException`.
+- Only the first `::` separates the cell name from its action.
 
 ## Related
 
 - [View](index.md)
 - [Templates](templates.md)
 - [Helpers](helpers.md)
+- [Event Listeners](../events/listeners.md)

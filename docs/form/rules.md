@@ -1,14 +1,9 @@
 # Validation Rules
 
-Use built-in rule factories when you want consistent, reusable validation checks.
-
-Each `Rule::*()` factory returns a `Rule` object you can attach to a validator.
-
-For how rules are attached to a validator and executed, see [Validators](validators.md).
+Each `Fyre\Form\Rule::*()` factory creates a reusable validation rule. Attach the returned object to a [Validator](validators.md), or use it anywhere a `Rule` is accepted.
 
 ## Table of Contents
 
-- [Start here](#start-here)
 - [Rule factories and skip behavior](#rule-factories-and-skip-behavior)
 - [Common patterns](#common-patterns)
   - [Optional format check](#optional-format-check)
@@ -25,18 +20,6 @@ For how rules are attached to a validator and executed, see [Validators](validat
 - [Date and time rules](#date-and-time-rules)
 - [Related](#related)
 
-## Start here
-
-Use built-in rule factories when you want consistent, reusable validation logic.
-
-If you’re not sure where to start:
-
-- Use `required()`/`notEmpty()` to control presence and emptiness.
-- Add a format rule (`email()`, `url()`, `regex()`, etc.) for shape checks.
-- Use a cross-field rule (`matches()`, `differs()`) when one field depends on another.
-
-In this subsystem, “empty” means `null`, empty string, or empty array.
-
 ## Rule factories and skip behavior
 
 Most `Rule::*()` factories default to:
@@ -46,7 +29,7 @@ Most `Rule::*()` factories default to:
 
 Each factory also assigns its own rule name for language fallback, so you do not need to pass the same name to `Validator::add()`.
 
-A rule is typically evaluated only when a field is present and non-empty, unless the specific factory overrides this. The most important exceptions are:
+A rule is typically evaluated only when a field is present and non-empty. Empty means `null`, `''`, or `[]`. The most important exceptions are:
 
 - `Rule::notEmpty()` — does not skip empty values.
 - `Rule::required()` — does not skip empty values and does not skip when the field is not set.
@@ -149,15 +132,16 @@ These rules compare the current field value against another field in the same in
 
 ## Date and time rules
 
-These rules accept common string inputs and validate them by parsing through the DB type parser:
+These rules validate through the DB type parser:
 
 - `Rule::date()`
 - `Rule::dateTime()`
 - `Rule::time()`
 
-They pass for `null` and empty strings, and otherwise require parsing to succeed.
+They skip missing and empty values by default; other values must parse successfully.
 
 ## Related
 
 - [Validators](validators.md)
+- [Forms](forms.md)
 - [Language (Lang)](../core/lang.md)

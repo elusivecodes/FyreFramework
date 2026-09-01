@@ -20,7 +20,7 @@ It wraps PHP's `intl` formatters and gives you one place to apply locale and cur
 
 Use `Formatter` when you want consistent presentation of user-facing values without managing ICU patterns or `intl` formatter instances yourself.
 
-In views, you will usually access the same behavior through the [Format helper](../view/helpers.md#format-helper).
+In views, you will usually access the same behavior through the [Format helper](../view/helpers.md#format-and-form-helpers).
 
 ```php
 use Fyre\Core\Config;

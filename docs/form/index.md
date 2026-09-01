@@ -26,6 +26,8 @@ Most form work in Fyre falls into three pieces:
 
 `Fyre\Form\Form` is not an ORM entity form abstraction. For entity/model validation workflows, use validators and rules directly; see [ORM](../orm/index.md).
 
+A server-side `Form` can also be passed to the view [Form helper](../view/forms.md) so submitted values and schema or validator metadata are reused when rendering fields.
+
 ## Pages in this section
 
 - [Forms](forms.md) - define schemas and forms, parse values, validate, and process

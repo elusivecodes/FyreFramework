@@ -8,7 +8,7 @@ Most view work comes down to rendering a template, optionally wrapping it in a l
 
 - [Start here](#start-here)
 - [Template files and naming](#template-files-and-naming)
-- [Rendering templates and layouts](#rendering-templates-and-layouts)
+- [Render templates and layouts](#render-templates-and-layouts)
 - [Passing data to templates](#passing-data-to-templates)
 - [Using helpers in templates](#using-helpers-in-templates)
 - [Including elements](#including-elements)
@@ -25,12 +25,15 @@ Most view work comes down to rendering a template, optionally wrapping it in a l
 
 ## Start here
 
-Most template work looks like this:
+For a typical controller action or route, render a template with the `view()` helper:
 
-1. Create a `View`.
-2. Pass data with `set()` or `setData()`.
-3. Render a template with `render()`.
-4. Use layouts, elements, and blocks when the page needs structure or reuse.
+```php
+return view('blog/index', [
+    'posts' => $posts,
+]);
+```
+
+The helper creates a `View`, supplies the data, uses `App.defaultLayout` when no layout is passed, and returns the rendered string. Work with an injected `View` directly when you need to configure it over several calls.
 
 Most examples on this page are shown from either:
 
@@ -51,9 +54,15 @@ templates/
   cells/RecentPosts/by_category.php
 ```
 
-## Rendering templates and layouts
+## Render templates and layouts
 
 `View::render($file)` renders a template and (when a layout is enabled) renders the layout afterwards using the same view data.
+
+```php
+$view->set('posts', $posts);
+
+return $view->render('blog/index');
+```
 
 Inside templates and layouts:
 
@@ -223,6 +232,7 @@ Listeners for `View.afterRender`, `View.afterLayout`, and `View.afterElement` ca
 - `View::render()` will automatically end any unclosed blocks after layout rendering and then throw a `LogicException` when blocks were left open.
 - Blocks are cleared after each top-level `render()` call, so they do not persist across separate renders on the same `View` instance.
 - `TemplateLocator::locate()` returns `null` when a file cannot be found; `View::render()` and `View::element()` turn missing templates into exceptions.
+- Template lookup resolves real paths and rejects files outside the configured base path.
 
 ## Related
 

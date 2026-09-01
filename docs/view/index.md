@@ -20,7 +20,7 @@ Pick a path based on what you’re doing:
 
 ## View overview
 
-The view layer turns templates plus view data into strings, usually HTML. `View` is the main entry point for rendering templates, layouts, elements, helpers, and cells.
+The view layer turns templates plus view data into strings, usually HTML. `View` renders templates, layouts, and elements; helpers and cells provide reusable rendering behavior around them.
 
 ## Pages in this section
 

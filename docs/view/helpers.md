@@ -1,137 +1,99 @@
 # Helpers
 
-Use helpers to keep templates focused by moving reusable view-side logic into objects such as `$this->Url` or `$this->Form`.
-
-For encapsulated “component-like” chunks that render with their own templates, see [Cells](cells.md).
-
-Form helper usage is documented separately in [Forms (view helper)](forms.md).
+Helpers expose reusable view-side operations through template properties such as `$this->Url` and `$this->Form`. Use a helper for small rendering utilities; use a [Cell](cells.md) when a component needs its own action and template.
 
 ## Table of Contents
 
-- [Start here](#start-here)
-- [Using helpers in templates](#using-helpers-in-templates)
-  - [Lazy-loading and explicit loading](#lazy-loading-and-explicit-loading)
-- [Loading helpers](#loading-helpers)
-  - [Naming and namespaces](#naming-and-namespaces)
-  - [When to clear the registry](#when-to-clear-the-registry)
+- [Use helpers in templates](#use-helpers-in-templates)
 - [Built-in helpers](#built-in-helpers)
-  - [CSP helper](#csp-helper)
-  - [Form helper](#form-helper)
-  - [Format helper](#format-helper)
   - [URL helper](#url-helper)
-- [Creating custom helpers](#creating-custom-helpers)
-  - [Choosing a helper namespace](#choosing-a-helper-namespace)
-  - [Writing a helper class](#writing-a-helper-class)
-  - [Loading custom helpers](#loading-custom-helpers)
-- [Method guide](#method-guide)
-  - [`View`](#view)
-  - [`Helper`](#helper)
-  - [`HelperRegistry`](#helperregistry)
-  - [`CspHelper`](#csphelper)
-  - [`UrlHelper`](#urlhelper)
-- [Behavior notes](#behavior-notes)
+  - [CSP helper](#csp-helper)
+  - [Format and form helpers](#format-and-form-helpers)
+- [Create a custom helper](#create-a-custom-helper)
+- [Configure helper discovery](#configure-helper-discovery)
+- [Helper API reference](#helper-api-reference)
 - [Related](#related)
 
-## Start here
+## Use helpers in templates
 
-Use helpers when you want to:
-
-- generate markup or URLs from templates
-- keep repeated template code in one place
-- expose small view-side APIs without creating a full cell
-
-If you need encapsulated “component-like” chunks that render using their own templates, use [Cells](cells.md) instead.
-
-## Using helpers in templates
-
-Templates run with `$this` bound to the current `View`, so helpers are accessed as properties like `$this->Url` and `$this->Form`.
-
-Most examples on this page assume you are in a template, where `$this` is the current `View`.
-
-### Lazy-loading and explicit loading
-
-Helpers are loaded the first time you access them:
-
-- Accessing `$this->Url` loads and returns that helper instance.
-- You can also load explicitly via `View::loadHelper()` (for example, when you want to ensure a helper is available before using it).
-
-Example: generating a link in a template:
+Templates run with `$this` bound to the current `View`. Accessing a helper property loads that helper on first use and reuses it for the rest of the view:
 
 ```php
-echo $this->Url->link(
-    'Home',
-    ['href' => $this->Url->path('/')]
-);
+echo $this->Url->link('Account', [
+    'href' => $this->Url->to('account'),
+]);
 ```
 
-## Loading helpers
+Use `loadHelper()` when the helper needs first-load options:
 
-Helpers are loaded through `HelperRegistry`.
+```php
+$this->loadHelper('Breadcrumbs', [
+    'separator' => ' > ',
+]);
 
-### Naming and namespaces
+echo $this->Breadcrumbs->render();
+```
 
-When loading a helper name like `Url`, the registry searches configured namespaces in order, then falls back to the built-in helpers namespace `Fyre\View\Helpers`.
-
-Within each namespace, it probes the class name pattern `{$namespace}{$name}Helper` and accepts the first match that is a subclass of `Fyre\View\Helper`.
-
-### When to clear the registry
-
-If you add namespaces or helper classes while the application is already running, clear the registry before loading that helper again. `HelperRegistry::clear()` also clears configured namespaces, so register them again afterwards if needed.
+Options apply only when the helper is first loaded. Later calls with different options return the existing instance.
 
 ## Built-in helpers
 
-Built-in helpers live under `Fyre\View\Helpers` and are always considered after any configured namespaces.
-
-### CSP helper
-
-`CspHelper` integrates Content Security Policy (CSP) into templates by generating script and style nonces on first use and adding them to all configured CSP policies on the shared `ContentSecurityPolicy` instance.
-
-Example: adding a script nonce to inline scripts:
-
-```php
-$nonce = $this->Csp->scriptNonce();
-echo '<script nonce="'.$nonce.'"></script>';
-```
-
-### Form helper
-
-`FormHelper` generates form tags and form fields and is accessed via `$this->Form`.
-
-See [Forms (view helper)](forms.md) for usage and APIs.
-
-### Format helper
-
-`FormatHelper` forwards method calls to an underlying `Fyre\Utility\Formatter` instance, so you can format values in templates without manually plumbing a formatter into every view.
-
-This helper intentionally does not define a fixed set of formatting methods. Instead, call whatever methods your configured `Formatter` provides.
+| Property | Class | Purpose |
+| --- | --- | --- |
+| `$this->Url` | `UrlHelper` | generate links, paths, and named-route URLs |
+| `$this->Form` | `FormHelper` | generate forms and controls |
+| `$this->Format` | `FormatHelper` | forward formatting calls to `Formatter` |
+| `$this->Csp` | `CspHelper` | generate CSP nonces for inline scripts and styles |
 
 ### URL helper
 
-`UrlHelper` supports building URLs from either named routes (via the router) or from paths.
+`UrlHelper` separates URL generation from anchor rendering:
 
-Common tasks:
+| Method | Purpose |
+| --- | --- |
+| `to($name, $arguments = [], $scheme = null, $host = null, $port = null, $full = null)` | generate a URL from a route alias |
+| `path($path, $full = false)` | normalize a path, optionally resolving it against the router's base URI |
+| `link($content, $attributes = [], $escape = true)` | render an anchor with supplied attributes |
 
-- Generate an anchor tag: `link()`
-- Turn a relative path into a URL string: `path()`
-- Build a URL from a named route: `to()`
-
-## Creating custom helpers
-
-Custom helpers are discovered using the same `{Name}Helper` convention as built-ins. Helpers are built through the container, so you can type-hint additional dependencies in your constructor as needed.
-
-### Choosing a helper namespace
-
-`Engine` registers `App\Helpers` by default, so application helpers in that namespace require no additional setup. Register any additional helper namespace on the `HelperRegistry` instance used by your views:
+`link()` does not generate its own destination; pass `href` in the attribute array. Link content is escaped by default, so disable escaping only for trusted HTML.
 
 ```php
-$helperRegistry->addNamespace('Plugin\Helpers');
+echo $this->Url->link('View post', [
+    'href' => $this->Url->to('posts.show', [
+        'id' => $post->id,
+    ]),
+]);
 ```
 
-The registry will now also consider classes like `Plugin\Helpers\BreadcrumbsHelper` when you access `$this->Breadcrumbs` in a template.
+See [URL Generation](../routing/url-generation.md) for route arguments and full-URL behavior.
 
-### Writing a helper class
+### CSP helper
 
-Helpers typically extend `Fyre\View\Helper`. If you define `protected static array $defaults`, options passed when loading the helper are merged into those defaults.
+Call `scriptNonce()` or `styleNonce()` and use the returned value in the matching inline element:
+
+```php
+$nonce = $this->Csp->scriptNonce();
+
+echo '<script nonce="'.$nonce.'">/* ... */</script>';
+```
+
+Each method reuses its nonce on subsequent calls to the same helper. The first call adds that nonce to every configured CSP policy under `script-src` or `style-src` respectively. See [Content Security Policy](../security/csp.md) for policy setup.
+
+### Format and form helpers
+
+`FormatHelper` forwards calls to the configured `Fyre\Utility\Formatter`:
+
+```php
+echo $this->Format->currency($total);
+```
+
+The available methods are therefore the methods provided by that formatter. See [Formatter](../utilities/formatter.md).
+
+`FormHelper` is documented separately because it has a larger rendering API; see [Forms](forms.md).
+
+## Create a custom helper
+
+Application helpers use the `{Name}Helper` naming convention and normally live under `App\Helpers`, which `Engine` registers by default:
 
 ```php
 namespace App\Helpers;
@@ -144,191 +106,59 @@ class BreadcrumbsHelper extends Helper
         'separator' => ' / ',
     ];
 
-    public function separator(): string
+    public function render(): string
     {
-        return (string) $this->getConfig()['separator'];
+        return implode(
+            $this->getConfig()['separator'],
+            ['Home', 'Account']
+        );
     }
 }
 ```
 
-If you add a custom constructor, keep the parameter names `View $view` (named `$view`) and the options array (named `$options`) so `HelperRegistry` can pass the current view instance and the helper options.
+Helpers are built through the container, so a custom constructor may request additional services. Keep the inherited inputs named `View $view` and `array $options` so `HelperRegistry` can supply the current view and first-load options.
 
-### Loading custom helpers
+Within a helper, `getConfig()` returns options merged over static defaults, and `getView()` returns the view that loaded it.
 
-Once the namespace is registered, load the helper by name:
+## Configure helper discovery
 
-```php
-$this->loadHelper('Breadcrumbs', ['separator' => ' > ']);
-echo $this->Breadcrumbs->separator();
-```
-
-## Method guide
-
-### `View`
-
-Applies to `Fyre\View\View`. In templates, it’s available as `$this`.
-
-#### **Load a helper** (`loadHelper()`)
-
-Ensures the helper is built and cached on the view.
-
-Arguments:
-- `$name` (`string`): the helper name (for example `Url`).
-- `$options` (`array<string, mixed>`): options passed to the helper constructor on first load.
-
-```php
-$this->loadHelper('Url');
-echo $this->Url->path('/');
-```
-
-#### **Get a helper via property access** (`__get()`)
-
-Loads and returns a helper when you access it as `$this->HelperName` in a template.
-
-Arguments:
-- `$name` (`string`): the helper name.
-
-```php
-$url = $this->Url; // loads UrlHelper on first access
-echo $url->path('/');
-```
-
-### `Helper`
-
-Applies to `Fyre\View\Helper` and its subclasses. These methods are primarily useful when writing custom helpers.
-
-#### **Read helper configuration** (`getConfig()`)
-
-Returns the helper options after they have been merged with the helper's defaults.
-
-```php
-$config = $this->getConfig();
-```
-
-#### **Get the view** (`getView()`)
-
-Returns the view that loaded the helper.
-
-```php
-$request = $this->getView()->getRequest();
-```
-
-### `HelperRegistry`
-
-Applies to `Fyre\View\HelperRegistry`, which is typically configured during application bootstrapping.
-
-#### **Add a lookup namespace** (`addNamespace()`)
-
-Adds a namespace to the search list. Namespaces are normalized (trim leading/trailing `\` and ensure a trailing `\`).
-
-Arguments:
-- `$namespace` (`string`): the namespace to add.
+Register additional namespaces on `HelperRegistry`:
 
 ```php
 $helperRegistry->addNamespace('Plugin\Helpers');
 ```
 
-#### **Find a helper class** (`find()`)
+For a name such as `Breadcrumbs`, namespaces are searched in registration order for `{Namespace}\BreadcrumbsHelper`, followed by the built-in `Fyre\View\Helpers` namespace. The first subclass of `Helper` wins, and successful and failed lookups are cached by name.
 
-Resolves a helper class name (or returns `null`) and caches the result.
+If namespaces or classes change in a long-running process, call `clear()` and then re-register the required namespaces. Clearing the registry removes both its lookup cache and every configured namespace.
 
-Arguments:
-- `$name` (`string`): the helper name.
+Helper names are not case-normalized. Match the class short name to avoid case-sensitive autoloader failures.
 
-```php
-$className = $helperRegistry->find('Url'); // e.g. "Fyre\View\Helpers\UrlHelper"
-```
+## Helper API reference
 
-#### **Clear namespaces and cache** (`clear()`)
+### Loading and configuration
 
-Clears all configured namespaces and the helper resolution cache.
+| API | Purpose |
+| --- | --- |
+| `View::loadHelper($name, $options = [])` | load and cache a helper on the view |
+| `View::__get($name)` | load and return a helper through property access |
+| `Helper::getConfig()` | return merged helper configuration |
+| `Helper::getView()` | return the owning view |
 
-```php
-$helperRegistry->clear();
-```
+### Registry operations
 
-### `CspHelper`
-
-Applies to `Fyre\View\Helpers\CspHelper` and is typically accessed as `$this->Csp` from a template.
-
-#### **Generate a script nonce** (`scriptNonce()`)
-
-Returns the script nonce for the current helper instance and ensures it is added to all configured CSP policies under the `script-src` directive.
-
-```php
-$nonce = $this->Csp->scriptNonce();
-```
-
-#### **Generate a style nonce** (`styleNonce()`)
-
-Returns the style nonce for the current helper instance and ensures it is added to all configured CSP policies under the `style-src` directive.
-
-```php
-$nonce = $this->Csp->styleNonce();
-```
-
-### `UrlHelper`
-
-Applies to `Fyre\View\Helpers\UrlHelper` and is typically accessed as `$this->Url` from a template.
-
-#### **Generate an anchor tag** (`link()`)
-
-Builds an `<a>` tag from content and a set of attributes.
-
-Arguments:
-- `$content` (`string`): the link text or HTML.
-- `$attributes` (`array<string, mixed>`): HTML attributes for the anchor tag (for example `href`).
-- `$escape` (`bool`): whether to HTML-escape `$content`.
-
-```php
-echo $this->Url->link(
-    'Account',
-    ['href' => $this->Url->path('/account')]
-);
-```
-
-#### **Build a URL from a path** (`path()`)
-
-Returns a URL string for a relative path. When `$full` is `true` and the router has a base URI configured, the path is resolved relative to that base URI.
-
-Arguments:
-- `$path` (`string`): the relative path.
-- `$full` (`bool`): whether to use a full URL.
-
-```php
-$url = $this->Url->path('/account');
-$fullUrl = $this->Url->path('/account', true);
-```
-
-#### **Build a URL from a named route** (`to()`)
-
-Returns a URL string for a named route, using the router to generate the destination.
-
-Arguments:
-- `$name` (`string`): the route name.
-- `$arguments` (`array<string, mixed>`): route arguments.
-- `$scheme` (`string|null`): route scheme override.
-- `$host` (`string|null`): route host override.
-- `$port` (`int|null`): route port override.
-- `$full` (`bool|null`): whether to use a full URL.
-
-```php
-$url = $this->Url->to('account');
-$url = $this->Url->to('user.view', ['id' => 123]);
-```
-
-## Behavior notes
-
-A few behaviors are worth keeping in mind:
-
-- Helper options apply only on first load: `View::loadHelper()` creates the helper once and reuses it, so later calls with different `$options` do not rebuild the helper.
-- `CspHelper::scriptNonce()` and `styleNonce()` reuse the same nonce for repeated calls on the current helper instance while mutating the shared CSP policies for the current response.
-- Helper name casing is not normalized. Prefer matching the class short name (`Url` → `UrlHelper`) to avoid case-sensitive autoloader issues.
+| API | Purpose |
+| --- | --- |
+| `HelperRegistry::addNamespace($namespace)` | append a helper lookup namespace |
+| `HelperRegistry::find($name)` | return and cache the matching helper class or `null` |
+| `HelperRegistry::build($name, $view, $options = [])` | build a helper through the container |
+| `HelperRegistry::clear()` | remove namespaces and cached lookups |
 
 ## Related
 
 - [View](index.md)
 - [Templates](templates.md)
-- [Forms (view helper)](forms.md)
+- [Forms](forms.md)
 - [Cells](cells.md)
-- [Content Security Policy (CSP)](../security/csp.md)
+- [Content Security Policy](../security/csp.md)
+- [URL Generation](../routing/url-generation.md)
