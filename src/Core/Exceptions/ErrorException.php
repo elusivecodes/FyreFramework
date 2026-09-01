@@ -39,6 +39,6 @@ final class ErrorException extends \ErrorException
             return null;
         }
 
-        return new static($error['message'], 0, $error['type'], $error['file'], $error['line']);
+        return new self($error['message'], 0, $error['type'], $error['file'], $error['line']);
     }
 }

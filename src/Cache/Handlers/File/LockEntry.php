@@ -26,7 +26,7 @@ final class LockEntry
     {
         try {
             $entry = @unserialize($data, [
-                'allowed_classes' => [static::class],
+                'allowed_classes' => [self::class],
             ]);
         } catch (Throwable) {
             return null;
