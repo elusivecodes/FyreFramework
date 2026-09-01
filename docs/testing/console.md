@@ -9,7 +9,11 @@ The trait captures command I/O in memory so you can test commands without spawni
 - [Start here](#start-here)
 - [Running commands](#running-commands)
 - [Feeding input](#feeding-input)
-- [Assertion reference](#assertion-reference)
+- [Method guide](#method-guide)
+  - [Execution](#execution)
+  - [Exit codes](#exit-codes)
+  - [Standard output](#standard-output)
+  - [Standard error](#standard-error)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -53,20 +57,36 @@ $this->exec('confirm-delete', [
 ]);
 ```
 
-## Assertion reference
+## Method guide
 
-Every assertion accepts an optional final `$message` argument for the PHPUnit failure message.
+The test class under [Running commands](#running-commands) provides the setup for this reference. Every assertion accepts an optional final `$message` argument for the PHPUnit failure message.
+
+### Execution
+
+`exec(string $command, array $input = []): void` runs a command in-process, replacing the previously captured exit code and output. Each input value becomes one line on stdin.
+
+### Exit codes
 
 | Assertion | Checks |
 | --- | --- |
 | `assertExitSuccess()` | exit code is `Command::CODE_SUCCESS` |
 | `assertExitError()` | exit code is `Command::CODE_ERROR` |
 | `assertExitCode($code)` | exact exit code |
+
+### Standard output
+
+| Assertion | Checks |
+| --- | --- |
 | `assertOutputContains($value)` | a stdout line contains a string |
 | `assertOutputNotContains($value)` | no stdout line contains a string |
 | `assertOutputRegExp($pattern)` | a stdout line matches a regular expression |
 | `assertOutputContainsRow($value)` | stdout contains the given table row |
 | `assertOutputEmpty()` | nothing was written to stdout |
+
+### Standard error
+
+| Assertion | Checks |
+| --- | --- |
 | `assertErrorContains($value)` | a stderr line contains a string |
 | `assertErrorRegExp($pattern)` | a stderr line matches a regular expression |
 | `assertErrorEmpty()` | nothing was written to stderr |

@@ -30,7 +30,7 @@ final class HealthcheckTest extends TestCase
     public function testHealthcheck(): void
     {
         $this->get('/health');
-        $this->assertResponseContains('OK');
+        $this->assertResponseEquals('OK');
     }
 }
 ```
@@ -40,12 +40,7 @@ final class HealthcheckTest extends TestCase
 `TestCase` can apply fixtures before each test and clean them up after by setting the `$fixtures` property:
 
 ```php
-use Fyre\TestSuite\TestCase;
-
-final class UsersTableTest extends TestCase
-{
-    protected array $fixtures = ['Users'];
-}
+protected array $fixtures = ['Users'];
 ```
 
 For fixture definitions, discovery rules, and examples, see [Fixtures](fixtures.md).
@@ -62,6 +57,10 @@ Most examples assume you’re in a `TestCase`.
 
 Skip the current test when the condition is true.
 
+```php
+skipIf(bool $shouldSkip, string $message = ''): bool
+```
+
 Arguments:
 - `$shouldSkip` (`bool`): whether to skip the test.
 - `$message` (`string`): the skip message to display.
@@ -73,6 +72,10 @@ $this->skipIf(!extension_loaded('pdo_mysql'), 'pdo_mysql is required for this te
 #### **Skip a test unless a condition is true** (`skipUnless()`)
 
 Skip the current test unless the condition is true.
+
+```php
+skipUnless(bool $shouldNotSkip, string $message = ''): bool
+```
 
 Arguments:
 - `$shouldNotSkip` (`bool`): whether the test can run.

@@ -18,22 +18,18 @@ Most tests should prefer the higher-level trait helpers, but the constraints are
 
 ## Start here
 
-Use constraints directly when you want PHPUnit-style assertions without pulling in a full testing trait.
-
-Assert against a response object directly:
+Use constraints directly when you already have the value under test and do not need the state managed by a testing trait:
 
 ```php
 use Fyre\TestSuite\Constraint\Response\StatusCode;
-
-$this->assertThat($response, new StatusCode(200));
-```
-
-Assert against session data such as a snapshot of `$_SESSION`:
-
-```php
 use Fyre\TestSuite\Constraint\Session\SessionEquals;
 
-$this->assertThat($_SESSION, new SessionEquals(1, 'Auth.user_id'));
+$this->assertThat($response, new StatusCode(200));
+
+$this->assertThat(
+    $_SESSION,
+    new SessionEquals(1, 'Auth.user_id')
+);
 ```
 
 ## Available constraints

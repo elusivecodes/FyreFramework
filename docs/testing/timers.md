@@ -1,14 +1,13 @@
 # Timers
 
-Use `Timer` when you want lightweight timing around named phases in a test or script.
+Use `Timer` to measure named phases that run once. Timers use the monotonic `hrtime(true)` clock and report elapsed seconds.
 
-It uses `hrtime(true)` and returns durations in seconds.
+Use [Benchmark](benchmark.md) instead when the same callback should run repeatedly with time and memory results.
 
 ## Table of Contents
 
-- [Start here](#start-here)
-- [Reading elapsed time](#reading-elapsed-time)
-- [Inspecting timers](#inspecting-timers)
+- [Measure named phases](#measure-named-phases)
+- [Read timer data](#read-timer-data)
 - [Method guide](#method-guide)
   - [Timing](#timing)
   - [Inspection](#inspection)
@@ -16,13 +15,9 @@ It uses `hrtime(true)` and returns durations in seconds.
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Start here
+## Measure named phases
 
-Use named timers when you want to measure a few phases such as bootstrap, rendering, or serialization without setting up a full benchmark run.
-
-If you want repeated callback execution with time and memory results, see [Benchmark](benchmark.md).
-
-Timers are created by name:
+Create one timer and use distinct names for the phases being measured:
 
 ```php
 use Fyre\TestSuite\Timer;
@@ -30,208 +25,74 @@ use Fyre\TestSuite\Timer;
 $timer = new Timer();
 
 $timer->start('bootstrap');
-// ... work ...
+// Bootstrap the application.
 $timer->stop('bootstrap');
+
+$timer->start('render');
+// Render the response.
+$timer->stop('render');
+
+$bootstrapSeconds = $timer->elapsed('bootstrap');
+$renderSeconds = $timer->elapsed('render');
 ```
 
-You can stop all running timers at once:
+`elapsed()` returns the frozen duration after `stop()`. While a timer is running, it returns the time from `start()` to the current monotonic clock reading.
+
+Call `stopAll()` when several running timers should share the same end timestamp.
+
+## Read timer data
+
+`get($name)` returns `null` for an unknown name. A known timer has this exact shape:
 
 ```php
-$timer->start('a');
-$timer->start('b');
-
-// ... work ...
-
-$timer->stopAll();
+[
+    'start' => 123456789000000,
+    'end' => 123456790000000,
+    'duration' => 0.001,
+]
 ```
 
-## Reading elapsed time
+`start` and `end` are monotonic nanosecond readings. `end` and `duration` remain `null` until the timer is stopped. The numeric values above illustrate the relationship; actual clock readings vary.
 
-`elapsed($name)` returns the duration in seconds:
-
-- If the timer has been stopped, it returns the recorded duration.
-- If the timer is still running, it returns the time since it was started.
-
-```php
-$timer = new Timer();
-$timer->start('phase');
-
-// ... work ...
-
-$secondsSoFar = $timer->elapsed('phase');
-$timer->stop('phase');
-$finalSeconds = $timer->elapsed('phase');
-```
-
-## Inspecting timers
-
-Timer state is stored as timer data with:
-
-- `start` (int nanoseconds)
-- `end` (int nanoseconds or `null`)
-- `duration` (float seconds or `null`)
-
-Useful helpers:
-
-- `all()` returns all timers
-- `get($name)` returns timer data or `null`
-- `has($name)` checks whether a timer exists
-- `isStopped($name)` checks whether a timer has been stopped
-- `remove($name)` removes a timer
-- `clear()` removes all timers
+`all()` returns the same arrays keyed by timer name.
 
 ## Method guide
 
-Examples below assume you already have a `$timer` instance.
+The examples above establish the shared `$timer` instance used by these methods.
 
 ### Timing
 
-#### **Start a timer** (`start()`)
-
-Start a named timer.
-
-Arguments:
-- `$name` (`string`): the timer name.
-
-```php
-$timer->start('bootstrap');
-```
-
-#### **Stop a timer** (`stop()`)
-
-Stop a timer and freeze its duration.
-
-Arguments:
-- `$name` (`string`): the timer name.
-
-```php
-$timer->start('bootstrap');
-// ... work ...
-$timer->stop('bootstrap');
-```
-
-#### **Stop all running timers** (`stopAll()`)
-
-Stops every timer that is currently running.
-
-```php
-$timer
-    ->start('a')
-    ->start('b');
-
-// ... work ...
-
-$timer->stopAll();
-```
-
-#### **Read elapsed time** (`elapsed()`)
-
-Return elapsed seconds for a timer.
-
-Arguments:
-- `$name` (`string`): the timer name.
-
-```php
-$timer->start('phase');
-// ... work ...
-$seconds = $timer->elapsed('phase');
-```
+| Method | Return | Behavior |
+| --- | --- | --- |
+| `start($name)` | `static` | create and start a named timer |
+| `stop($name)` | `static` | stop one running timer and store its duration |
+| `stopAll()` | `static` | stop every running timer using one end reading |
+| `elapsed($name)` | `float` | return running or final elapsed seconds |
 
 ### Inspection
 
-#### **Check whether a timer exists** (`has()`)
-
-Check whether a timer exists.
-
-Arguments:
-- `$name` (`string`): the timer name.
-
-```php
-if ($timer->has('phase')) {
-    // ...
-}
-```
-
-#### **Fetch timer data** (`get()`)
-
-Return the timer data array, or `null` if the timer does not exist.
-
-Arguments:
-- `$name` (`string`): the timer name.
-
-```php
-$data = $timer->get('phase');
-```
-
-#### **Check whether a timer is stopped** (`isStopped()`)
-
-Return whether the timer has been stopped.
-
-Arguments:
-- `$name` (`string`): the timer name.
-
-```php
-$stopped = $timer->isStopped('phase');
-```
-
-#### **Get all timers** (`all()`)
-
-Return all timers keyed by name.
-
-```php
-$timer
-    ->start('a')
-    ->start('b');
-
-$all = $timer->all();
-```
-
-#### **Count timers** (`count()`)
-
-Return the number of timers currently stored.
-
-```php
-$timer
-    ->start('a')
-    ->start('b');
-
-$count = $timer->count();
-```
+| Method | Return | Behavior |
+| --- | --- | --- |
+| `has($name)` | `bool` | check whether a timer exists |
+| `get($name)` | `array|null` | return timer data without changing it |
+| `isStopped($name)` | `bool` | check whether the timer has an end reading |
+| `all()` | `array<string, array>` | return all timer data keyed by name |
+| `count()` | `int` | return the number of stored timers; also available through `count($timer)` |
 
 ### Management
 
-#### **Remove a timer** (`remove()`)
-
-Remove a timer by name.
-
-Arguments:
-- `$name` (`string`): the timer name.
-
-```php
-$timer->remove('phase');
-```
-
-#### **Clear all timers** (`clear()`)
-
-Clear all timers.
-
-```php
-$timer
-    ->start('a')
-    ->start('b');
-
-$timer->clear();
-```
+| Method | Return | Behavior |
+| --- | --- | --- |
+| `remove($name)` | `static` | remove one existing timer |
+| `clear()` | `void` | remove every timer |
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
-- `start($name)` throws if the timer already exists.
-- `stop($name)` throws if the timer does not exist or was already stopped.
-- `elapsed($name)` and `isStopped($name)` throw if the timer does not exist.
-- `remove($name)` throws if the timer does not exist.
-- `stopAll()` stops only timers that are currently running.
+- `start()` throws ``Timer `bootstrap` has already been started.`` for an existing `bootstrap` timer, even if it has stopped.
+- `stop()` throws when the timer does not exist or has already stopped.
+- `elapsed()`, `isStopped()`, and `remove()` throw when the timer does not exist.
+- `get()` is the non-throwing lookup and returns `null` for an unknown timer.
+- `stopAll()` leaves timers that have already stopped unchanged.
 
 ## Related
 

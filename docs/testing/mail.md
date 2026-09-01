@@ -8,7 +8,11 @@ The trait swaps configured mailers to a test handler, captures sent messages in 
 
 - [Start here](#start-here)
 - [Sending and asserting email](#sending-and-asserting-email)
-- [Assertion reference](#assertion-reference)
+- [Method guide](#method-guide)
+  - [Message counts](#message-counts)
+  - [Recipients and headers](#recipients-and-headers)
+  - [Subject, body, and attachments](#subject-body-and-attachments)
+  - [Captured messages](#captured-messages)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -52,9 +56,11 @@ final class PasswordResetMailTest extends TestCase
 }
 ```
 
-## Assertion reference
+## Method guide
 
-Every assertion accepts an optional final `$message` argument for the PHPUnit failure message. Helpers ending in `At()` add a 1-based `$at` argument before it and inspect only that captured email.
+The test class under [Sending and asserting email](#sending-and-asserting-email) provides the setup for these methods. Every assertion accepts an optional final `$message` argument for the PHPUnit failure message. Helpers ending in `At()` add a 1-based `$at` argument before it and inspect only that captured email.
+
+### Message counts
 
 Use `assertMailCount($count)` for an exact count and `assertNoMailSent()` when no email should have been delivered.
 
@@ -78,6 +84,8 @@ Use `assertMailCount($count)` for an exact count and `assertNoMailSent()` when n
 | text body | `assertMailContainsText($needle)` | `assertMailContainsTextAt($needle, $at)` |
 | HTML body | `assertMailContainsHtml($needle)` | `assertMailContainsHtmlAt($needle, $at)` |
 | attachment filename | `assertMailContainsAttachment($filename)` | `assertMailContainsAttachmentAt($filename, $at)` |
+
+### Captured messages
 
 `getMessages()` returns every captured `Email`. Passing a 1-based index returns an array containing that message, or an empty array when it does not exist.
 

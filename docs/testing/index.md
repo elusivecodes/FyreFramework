@@ -42,12 +42,19 @@ These packages are development dependencies of FyreFramework itself, but Compose
 
 ## Testing overview
 
-The testing tools fall into a few simple groups:
+Choose the tool by what the test needs:
 
-- `TestCase` gives tests access to the shared framework engine and optional fixture loading
-- fixtures provide repeatable database datasets
-- trait helpers make common assertions shorter for HTTP responses, console output, outbound HTTP, mail, and logs
-- `Timer` and `Benchmark` help with quick performance checks during development
+| Tool | Purpose |
+| --- | --- |
+| `TestCase` | framework-aware PHPUnit base class and automatic fixture lifecycle |
+| Assertion traits | assertions over captured HTTP responses, console output, mail, and logs |
+| Constraints | lower-level PHPUnit constraints for use with `assertThat()` |
+| Fixtures | repeatable database rows loaded before a test and removed afterward |
+| Integration helpers | in-process application requests and outbound HTTP client mocks |
+| `Timer` | elapsed time for named phases that run once |
+| `Benchmark` | repeated execution of named callbacks with time and memory results |
+
+Timers and benchmarks report measurements; they are not assertions and do not decide whether a test passes. Compare their results explicitly when a test needs a performance threshold.
 
 ## Pages in this section
 

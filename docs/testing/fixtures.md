@@ -1,298 +1,174 @@
 # Fixtures
 
-Use fixtures when you want repeatable database rows for tests.
+Fixtures provide repeatable database rows for tests. Each fixture targets a model, defines rows, and optionally allows nested association data.
 
-Fixtures are classes that define rows and resolve the target model. For automatic per-test fixture setup and cleanup, see [`TestCase`](test-case.md).
+Use fixtures through [`TestCase`](test-case.md) for automatic setup and cleanup. Resolve them through `FixtureRegistry` when a test needs manual control.
 
 ## Table of Contents
 
-- [Start here](#start-here)
-- [Finding fixtures](#finding-fixtures)
-  - [Naming conventions](#naming-conventions)
-  - [Managing namespaces](#managing-namespaces)
-- [Defining fixture data](#defining-fixture-data)
-  - [Class alias resolution](#class-alias-resolution)
-- [Loading and cleaning up data](#loading-and-cleaning-up-data)
-- [Examples](#examples)
-  - [Creating a fixture](#creating-a-fixture)
-  - [Resolving and running a fixture](#resolving-and-running-a-fixture)
-  - [Rebuilding a fixture instance](#rebuilding-a-fixture-instance)
+- [Define a fixture](#define-a-fixture)
+- [Load fixtures in a test](#load-fixtures-in-a-test)
+- [Discover fixtures](#discover-fixtures)
+- [Load associated data](#load-associated-data)
+- [Generate fixtures](#generate-fixtures)
 - [Method guide](#method-guide)
   - [`FixtureRegistry`](#fixtureregistry)
   - [`Fixture`](#fixture)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Start here
+## Define a fixture
 
-The usual fixture workflow is:
-
-1. Create a fixture class that extends `Fixture` or generate one with `make:fixture`.
-2. Register one or more fixture namespaces.
-3. Resolve fixtures by alias through `FixtureRegistry`.
-4. Run them before a test, or let [`TestCase`](test-case.md) handle setup and cleanup for you.
-
-## Finding fixtures
-
-Fixture discovery is handled by `Fyre\TestSuite\Fixture\FixtureRegistry`.
-
-The registry resolves fixtures by:
-1. Iterating over configured namespaces (in order)
-2. Building a candidate class name using `{Namespace}{Alias}Fixture`
-3. Accepting the first class found that is a subclass of `Fyre\TestSuite\Fixture\Fixture`
-4. Building the fixture instance via the container
-
-### Naming conventions
-
-- The alias passed to the registry is the fixture name **without** the `Fixture` suffix.
-- With a namespace of `App\Fixtures` and an alias of `Items`, the registry looks for `App\Fixtures\ItemsFixture`.
-
-### Managing namespaces
-
-Namespaces are normalized (trimmed and forced to a trailing `\`) and duplicates are ignored.
-
-Register one or more namespaces before resolving fixtures:
+Extend `Fyre\TestSuite\Fixture\Fixture` and set the protected `$data` property:
 
 ```php
-$fixtureRegistry->addNamespace('App\Fixtures');
-$fixtureRegistry->addNamespace('Tests\Fixtures');
-```
-
-## Defining fixture data
-
-Fixture classes extend `Fyre\TestSuite\Fixture\Fixture` and typically provide rows by setting the protected `$data` property.
-
-The base fixture class provides:
-- `data()` to return the dataset as an iterable
-- `associated()` to return the relationships that may be built from nested row data
-- `getClassAlias()` to determine the model alias for the fixture
-- `getModel()` to resolve the model instance (cached per fixture instance)
-- `getTables()` to return the fixture table plus tables implied by the configured associations
-
-### Class alias resolution
-
-By default, the fixture class alias is derived from the fixture’s short class name by stripping the `Fixture` suffix:
-
-- `ItemsFixture` → `Items`
-
-To use a different model alias, set `protected string $classAlias` in the fixture class.
-
-## Loading and cleaning up data
-
-`Fixture::run()` iterates each row from `data()` and saves it through the model.
-
-The fixture implementation creates entities with `guard: false` and `validate: false`, and saves them with `checkExists: false` and `checkRules: false`. If any row cannot be saved, `run()` throws a `RuntimeException`.
-
-By default, fixtures do not build nested relationship data. To allow nested data, set `protected array|string|null $associated` on the fixture. Setup and cleanup are typically handled by [`TestCase`](test-case.md), which disables foreign key checks while loading and truncating fixture tables and always re-enables them afterward.
-
-## Examples
-
-### Creating a fixture
-
-Generate an empty fixture with `make:fixture`. To populate it from the model's existing database rows, pass `--data`. The generated rows are ordered by primary key and `--limit` defaults to `10`.
-
-```php
-$commandRunner->handle(['app', 'make:fixture', 'Items', '--data', '--limit=25']);
-```
-
-Database values are read directly from the model's table and converted using its schema types before being written to the fixture.
-
-```php
-namespace App\Fixtures;
+namespace Tests\Fixtures;
 
 use Fyre\TestSuite\Fixture\Fixture;
 
-class ItemsFixture extends Fixture
+final class ItemsFixture extends Fixture
 {
-    protected array|string|null $associated = 'Comments';
-
     protected iterable $data = [
         [
-            'name' => 'Test 1',
-            'comments' => [
-                ['body' => 'First comment'],
-            ],
+            'id' => 1,
+            'name' => 'First item',
         ],
         [
-            'name' => 'Test 2',
+            'id' => 2,
+            'name' => 'Second item',
         ],
     ];
 }
 ```
 
-### Resolving and running a fixture
+The model alias defaults to the fixture's short class name without `Fixture`, so `ItemsFixture` uses the `Items` model. Set `protected string $classAlias` when the names differ.
+
+`run()` creates each entity with `guard: false` and `validate: false`, then saves it with `checkExists: false` and `checkRules: false`. A failed save throws a `RuntimeException` identifying the row and model.
+
+## Load fixtures in a test
+
+Set the `$fixtures` property once on the test class to load those aliases before every test:
 
 ```php
-$fixtureRegistry->addNamespace('App\Fixtures');
+use Fyre\TestSuite\TestCase;
 
-$fixtureRegistry->use('Items')->run();
+final class ItemsTableTest extends TestCase
+{
+    protected array $fixtures = ['Items'];
+
+    public function testFindsFixtureRows(): void
+    {
+        $items = model('Items')
+            ->find()
+            ->orderBy(['id' => 'ASC'])
+            ->all();
+
+        $this->assertSame(
+            ['First item', 'Second item'],
+            $items->extract('name')->toArray()
+        );
+    }
+}
 ```
 
-### Rebuilding a fixture instance
+`TestCase` disables foreign-key checks while loading data and again while truncating affected tables after the test. Checks are re-enabled even if setup or cleanup fails.
+
+For manual loading, resolve the registry and run the fixture:
 
 ```php
-$fixtureRegistry->use('Items');
+use Fyre\TestSuite\Fixture\FixtureRegistry;
 
-if ($fixtureRegistry->isLoaded('Items')) {
-    $fixtureRegistry->unload('Items');
+$fixtures = app(FixtureRegistry::class);
+
+$fixtures->use('Items')->run();
+```
+
+Manual `run()` calls do not arrange automatic cleanup; the caller owns that lifecycle.
+
+## Discover fixtures
+
+The shared `FixtureRegistry` searches `Tests\Fixtures` by default. Additional namespaces are searched in registration order. For alias `Items` and namespace `Tests\Fixtures`, the registry looks for `Tests\Fixtures\ItemsFixture` and uses the first class that extends `Fixture`.
+
+Namespaces are trimmed, normalized to a trailing `\`, and deduplicated. Pass aliases without the `Fixture` suffix; `use('ItemsFixture')` would look for `ItemsFixtureFixture`.
+
+`use($alias)` caches one fixture instance per alias. Use `build($alias)` for an uncached instance or `unload($alias)` before the next `use()` call when constructor dependencies must be resolved again.
+
+## Load associated data
+
+Fixtures ignore nested relationship data by default. Set `$associated` to the relationships that may be built:
+
+```php
+final class ItemsFixture extends Fixture
+{
+    protected array|string|null $associated = 'Comments';
+
+    protected iterable $data = [
+        [
+            'name' => 'First item',
+            'comments' => [
+                [
+                    'body' => 'First comment',
+                ],
+            ],
+        ],
+    ];
 }
+```
 
-$fixtureRegistry->use('Items');
+`getTables()` follows that association configuration and returns every table affected by setup or cleanup, including `ManyToMany` junction tables.
+
+## Generate fixtures
+
+Generate an empty fixture with `make:fixture`:
+
+```bash
+app make:fixture Items
+```
+
+Add `--data` to populate it from existing model rows. Rows are ordered by primary key, database values are converted through schema types, and `--limit` defaults to `10`:
+
+```bash
+app make:fixture Items --data --limit=25
 ```
 
 ## Method guide
 
-Most examples assume you already have a `$fixtureRegistry` instance.
+The setup above uses the shared registry and the `ItemsFixture` definition. The methods below describe the remaining management and inspection API without repeating that setup.
 
 ### `FixtureRegistry`
 
-#### **Add a namespace** (`addNamespace()`)
-
-Register a namespace to search for fixture classes.
-
-Arguments:
-- `$namespace` (`string`): the namespace to search (normalized and deduplicated).
-
-```php
-$fixtureRegistry->addNamespace('App\Fixtures');
-```
-
-#### **Load a fixture** (`use()`)
-
-Resolve a fixture by alias and return a shared instance (cached per alias).
-
-Arguments:
-- `$alias` (`string`): the fixture alias (without the `Fixture` suffix).
-
-```php
-$fixture = $fixtureRegistry->use('Items');
-$fixture->run();
-```
-
-#### **Unload a fixture** (`unload()`)
-
-Remove a cached fixture instance so it will be rebuilt the next time you use it.
-
-Arguments:
-- `$alias` (`string`): the fixture alias to unload.
-
-```php
-$fixtureRegistry->unload('Items');
-```
-
-#### **Clear namespaces and fixtures** (`clear()`)
-
-Clear all configured namespaces and unload all cached fixtures.
-
-```php
-$fixtureRegistry->clear();
-```
-
-#### **Check whether a fixture is loaded** (`isLoaded()`)
-
-Check whether the registry has already built and cached a fixture instance for an alias.
-
-Arguments:
-- `$alias` (`string`): the fixture alias to check.
-
-```php
-if ($fixtureRegistry->isLoaded('Items')) {
-    $fixtureRegistry->unload('Items');
-}
-```
-
-#### **Build a fixture** (`build()`)
-
-Build a new fixture instance by alias without caching it.
-
-Arguments:
-- `$alias` (`string`): the fixture alias to build.
-
-```php
-$fixture = $fixtureRegistry->build('Items');
-```
+| Method | Behavior |
+| --- | --- |
+| `addNamespace($namespace)` | add a normalized namespace unless it is already registered |
+| `use($alias)` | return the cached fixture for an alias, building it on first use |
+| `build($alias)` | build a new uncached fixture; throw when no matching class exists |
+| `isLoaded($alias)` | check whether `use()` has cached the alias |
+| `unload($alias)` | remove one cached fixture and return the registry |
+| `clear()` | remove every cached fixture and registered namespace |
 
 ### `Fixture`
 
-#### **Run the fixture** (`run()`)
-
-Insert all rows returned by `data()` into the model table.
-
-```php
-$fixtureRegistry->use('Items')->run();
-```
-
-#### **Return fixture rows** (`data()`)
-
-Return the dataset used by `run()`. Most fixtures simply set the protected `$data` property.
-
-```php
-namespace App\Fixtures;
-
-use Fyre\TestSuite\Fixture\Fixture;
-
-final class ItemsFixture extends Fixture
-{
-    protected iterable $data = [
-        ['name' => 'Test 1'],
-    ];
-}
-```
-
-#### **Return fixture associations** (`associated()`)
-
-Return the relationships that `run()` may build from nested row data.
-
-```php
-namespace App\Fixtures;
-
-use Fyre\TestSuite\Fixture\Fixture;
-
-final class ItemsFixture extends Fixture
-{
-    protected array|string|null $associated = 'Comments';
-}
-```
-
-#### **Resolve the model alias** (`getClassAlias()`)
-
-Return the model alias for the fixture. By default, this is derived from the fixture class name by stripping the `Fixture` suffix.
-
-```php
-$alias = $fixtureRegistry->use('Items')->getClassAlias();
-```
-
-#### **Resolve the model instance** (`getModel()`)
-
-Return the model instance used by the fixture (cached per fixture instance).
-
-```php
-$model = $fixtureRegistry->use('Items')->getModel();
-```
-
-#### **Return affected tables** (`getTables()`)
-
-Return the fixture table plus any tables implied by the fixture's configured associations.
-
-```php
-$tables = $fixtureRegistry->use('Items')->getTables();
-```
+| Method | Behavior |
+| --- | --- |
+| `run()` | save every row returned by `data()` and throw on the first failure |
+| `data()` | return the configured iterable dataset |
+| `associated()` | return the allowed association configuration |
+| `getClassAlias()` | return the explicit alias or derive it from the fixture class name |
+| `getModel()` | resolve and cache the fixture model |
+| `getTables()` | return the model, associated, and junction tables affected by the fixture |
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
-- Fixture discovery is namespace-order dependent, so when multiple namespaces contain a fixture for the same alias, the first match wins.
-- `$fixtureRegistry->use('ItemsFixture')` looks for an `ItemsFixtureFixture` class; use the alias without the suffix (`Items`).
-- `FixtureRegistry::clear()` resets both the cached fixtures *and* the configured namespaces.
-- `FixtureRegistry::use()` returns a shared instance per alias; call `unload()` to force a rebuild (including any constructor-injected dependencies).
-- `Fixture::run()` creates entities with `guard: false` and `validate: false`, and saves them with `checkExists: false` and `checkRules: false`; database constraints can still cause saves to fail (and will throw).
-- Fixtures default to `protected array|string|null $associated = []`, so nested relationship data is ignored unless you explicitly allow it.
-- `Fixture::getTables()` includes the fixture model table, associated target tables, and `ManyToMany` junction tables implied by the configured associations.
-- When fixtures are used through `TestCase`, foreign key checks are disabled while fixture data is loaded and while affected tables are truncated. They are re-enabled even if either operation fails.
+- Namespace order controls which fixture wins when several namespaces contain the same alias.
+- `FixtureRegistry::use()` shares instances by alias; `build()` does not cache its result.
+- `FixtureRegistry::clear()` removes namespaces as well as fixture instances.
+- Fixture saves bypass guards, validation, existence checks, and application rules, but database constraints still apply.
+- Nested relationship rows are ignored unless `$associated` allows them.
+- Automatic `TestCase` cleanup truncates every table returned by `getTables()`.
 
 ## Related
 
 - [Testing](index.md)
 - [`TestCase`](test-case.md)
 - [Integration Testing](integration.md)
+- [Models](../orm/models.md)

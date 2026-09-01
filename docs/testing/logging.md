@@ -1,38 +1,20 @@
 # Log Testing
 
-Use `LogTestTrait` when you want to verify log output without writing to disk.
+Use `LogTestTrait` to replace configured loggers with in-memory `ArrayLogger` handlers and assert on captured messages without writing to disk.
 
-The trait registers in-memory `ArrayLogger` handlers and gives you assertions for exact messages, partial matches, and empty logs.
+Unlike the other testing traits, log capture must be configured explicitly in `setUp()`.
 
 ## Table of Contents
 
-- [Start here](#start-here)
-- [Setting up handlers](#setting-up-handlers)
-- [Asserting log output](#asserting-log-output)
+- [Configure log capture](#configure-log-capture)
 - [Method guide](#method-guide)
   - [`LogTestTrait`](#logtesttrait)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Start here
+## Configure log capture
 
-The usual workflow is:
-
-1. Call `setupLogs()` in `setUp()`.
-2. Choose the levels or handler configs you want to capture.
-3. Run the code that logs.
-4. Assert on the captured messages.
-
-## Setting up handlers
-
-Call `setupLogs()` in your test's `setUp()` method to register the handlers you want to capture.
-
-`$logHandlers` supports two shapes:
-
-- a simple list of log levels, where each level becomes its own handler
-- an associative array of handler keys to full option arrays, where you can set `levels` and `scopes`
-
-Example:
+Call `setupLogs()` once from the test's `setUp()` method, then log through the normal `LogManager`:
 
 ```php
 use Fyre\Log\LogManager;
@@ -40,7 +22,7 @@ use Fyre\TestSuite\TestCase;
 use Fyre\TestSuite\Traits\LogTestTrait;
 use Override;
 
-final class LoggingTest extends TestCase
+final class PaymentLoggingTest extends TestCase
 {
     use LogTestTrait;
 
@@ -57,94 +39,59 @@ final class LoggingTest extends TestCase
         ]);
     }
 
-    public function testLogsScopedError(): void
+    public function testLogsDeclinedPayment(): void
     {
         $this->app->use(LogManager::class)
-            ->handle('error', 'Card declined', scope: 'payments');
+            ->handle(
+                'error',
+                'Card declined',
+                scope: 'payments'
+            );
 
-        $this->assertLogMessage('Card declined', 'error', 'payments');
+        $this->assertLogMessage(
+            'Card declined',
+            'error',
+            'payments'
+        );
     }
 }
 ```
 
-## Asserting log output
-
-Use the assertion helpers to verify whether log output is present, matches exactly, or contains a substring.
-
-```php
-$this->assertLogIsEmpty('error');
-$this->assertLogMessage('Card declined', 'error', 'payments');
-$this->assertLogMessageContains('declined', 'error', 'payments');
-```
+A list such as `['error', 'warning']` creates one handler per level. An associative entry accepts normal logger options such as `levels` and `scopes`; every configured handler uses `ArrayLogger` regardless of any supplied `className`.
 
 ## Method guide
 
-Most examples assume you’re in a `TestCase` using `LogTestTrait`.
+The test class above provides the setup for every assertion in this reference.
 
 ### `LogTestTrait`
 
-#### **Set up in-memory log handlers** (`setupLogs()`)
-
-Register one or more `ArrayLogger` handlers for the current test case.
-
-Arguments:
-- `$logHandlers` (`array`): handler definitions (levels and/or handler option arrays).
+#### **Set up in-memory handlers** (`setupLogs()`)
 
 ```php
-$this->setupLogs(['error', 'warning']);
+setupLogs(array $logHandlers = []): void
 ```
 
-#### **Assert no messages were logged** (`assertLogIsEmpty()`)
+The method clears the current `LogManager` configuration, remembers it for teardown, and registers the requested in-memory handlers.
 
-Assert that no log messages were captured for the given level and optional scope.
+#### **Assert captured messages**
 
-Arguments:
-- `$level` (`string`): the log level to assert against.
-- `$scope` (`string|null`): the log scope to assert against.
-- `$message` (`string`): the message to display on failure.
+| Assertion | Checks |
+| --- | --- |
+| `assertLogIsEmpty($level, $scope = null, $message = '')` | no captured messages for the level and optional scope |
+| `assertLogMessage($expected, $level, $scope = null, $message = '')` | at least one complete message equals `$expected` |
+| `assertLogMessageContains($needle, $level, $scope = null, $message = '')` | at least one message contains `$needle` |
 
-```php
-$this->assertLogIsEmpty('error');
-```
-
-#### **Assert an exact message was logged** (`assertLogMessage()`)
-
-Assert that a log message exactly matches the expected message for the given level and optional scope.
-
-Arguments:
-- `$expectedMessage` (`string`): the expected log message.
-- `$level` (`string`): the log level to assert against.
-- `$scope` (`string|null`): the log scope to assert against.
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertLogMessage('Card declined', 'error', 'payments');
-```
-
-#### **Assert a message contains a string** (`assertLogMessageContains()`)
-
-Assert that at least one log message contains the provided substring for the given level and optional scope.
-
-Arguments:
-- `$needle` (`string`): the substring to search for.
-- `$level` (`string`): the log level to assert against.
-- `$scope` (`string|null`): the log scope to assert against.
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertLogMessageContains('declined', 'error', 'payments');
-```
+Scope matching is strict. An assertion only reads handlers whose level and scope configuration can handle both supplied values.
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
-- Scope matching is strict, so assertions only read from handlers that can handle both the level and the scope.
-- `setupLogs()` clears the current `LogManager` config, so call it after any setup that depends on your normal logging configuration.
-- The original `LogManager` configuration is restored after each test.
-- When you use associative keys in `$logHandlers`, provide `levels`; otherwise the key name becomes the default `levels` value.
+- Call `setupLogs()` after setup that depends on the application's normal logger configuration because it clears that configuration.
+- Associative handler definitions should provide `levels`; otherwise the associative key becomes the default level.
+- The trait restores the original `LogManager` configuration after each test.
+- Exact assertions compare complete formatted messages; use `assertLogMessageContains()` only when surrounding context is intentionally variable.
 
 ## Related
 
 - [Testing](index.md)
 - [Logging](../logging/index.md)
+- [Constraints](constraints.md)

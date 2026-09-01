@@ -1,36 +1,26 @@
 # HTTP Client Testing
 
-Use `HttpClientTestTrait` when your code calls `Fyre\Http\Client` and you want tests without real network traffic.
-
-The trait lets you register mock responses for common HTTP verbs and clears them automatically after each test.
+Use `HttpClientTestTrait` to replace outbound `Fyre\Http\Client` calls with deterministic responses. No network request is made when a mock matches.
 
 ## Table of Contents
 
-- [Start here](#start-here)
-- [Mocking responses](#mocking-responses)
-- [Matching requests](#matching-requests)
+- [Set up client mocks](#set-up-client-mocks)
+- [Match requests](#match-requests)
 - [Method guide](#method-guide)
   - [`HttpClientTestTrait`](#httpclienttesttrait)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Start here
+## Set up client mocks
 
-The usual workflow is:
-
-1. Create a mock `Response`.
-2. Register it for the verb and URL you expect.
-3. Run the code that uses `Client`.
-4. Assert against the returned response.
-
-Mock a `GET` request and assert that your code received the expected response:
+Use the trait in a framework `TestCase`, create the response to return, and register it before running the code under test:
 
 ```php
 use Fyre\Http\Client;
 use Fyre\TestSuite\TestCase;
 use Fyre\TestSuite\Traits\HttpClientTestTrait;
 
-final class ApiClientTest extends TestCase
+final class UserApiTest extends TestCase
 {
     use HttpClientTestTrait;
 
@@ -38,166 +28,112 @@ final class ApiClientTest extends TestCase
     {
         $response = $this->createResponse(
             200,
-            ['Content-Type' => 'application/json'],
+            [
+                'Content-Type' => 'application/json',
+            ],
             '{"id":1,"name":"Ada"}'
         );
 
-        $this->mockClientGet('https://api.example.com/users/1', $response);
+        $this->mockClientGet(
+            'https://api.example.com/users/1',
+            $response
+        );
 
-        $client = new Client();
-        $result = $client->get('https://api.example.com/users/1');
+        $result = new Client()
+            ->get('https://api.example.com/users/1');
 
-        $this->assertSame(200, $result->getStatusCode());
-        $this->assertSame(['id' => 1, 'name' => 'Ada'], $result->getJson());
+        $this->assertSame(
+            200,
+            $result->getStatusCode()
+        );
+        $this->assertSame(
+            ['id' => 1, 'name' => 'Ada'],
+            $result->getJson()
+        );
     }
 }
 ```
 
-## Mocking responses
+The trait clears all client mocks after each test.
 
-Use the verb-specific helpers to register mock responses:
+## Match requests
 
-- `mockClientGet()`
-- `mockClientPost()`
-- `mockClientPut()`
-- `mockClientPatch()`
-- `mockClientDelete()`
-
-Each helper takes a URL, a `Response`, and an optional match callback.
-
-## Matching requests
-
-URL matching is exact by default, but `*` acts as a wildcard. If you need more control, pass a match callback that receives the `RequestInterface` and returns `true` only for requests you want that mock to handle.
-
-## Method guide
-
-Most examples assume you’re in a `TestCase` using `HttpClientTestTrait`, and you already have a `$client` instance.
-
-### `HttpClientTestTrait`
-
-#### **Create a response** (`createResponse()`)
-
-Create a `Fyre\Http\Client\Response` instance for use with the mock helpers.
-
-Arguments:
-- `$statusCode` (`int`): the HTTP status code (default: `200`).
-- `$headers` (`array<string, string|string[]>`): response headers (default: `[]`).
-- `$body` (`string`): response body (default: `''`).
-
-```php
-$response = $this->createResponse(204, ['X-Test' => '1']);
-
-$this->assertSame(204, $response->getStatusCode());
-$this->assertSame('1', $response->getHeaderLine('X-Test'));
-```
-
-#### **Mock a GET response** (`mockClientGet()`)
-
-Register a mock response for `Client::get()` calls matching the URL.
-
-Arguments:
-- `$url` (`string`): the request URL to match (supports `*` wildcards).
-- `$response` (`Response`): the response to return.
-- `$match` (`(Closure(RequestInterface): bool)|null`): an optional callback to accept/reject the request.
+URLs match exactly unless the registered URL contains `*`, which matches any character sequence. Add a callback when the URL and method are not enough to identify the request:
 
 ```php
 use Psr\Http\Message\RequestInterface;
 
-$response = $this->createResponse(200, [], 'OK');
+$response = $this->createResponse(202, [], 'Accepted');
 
-$this->mockClientGet('http://localhost/*', $response, static function (RequestInterface $request): bool {
-    return $request->getHeaderLine('X-Debug') === '1';
-});
+$this->mockClientPost(
+    'https://api.example.com/users/*',
+    $response,
+    static fn(RequestInterface $request): bool =>
+        $request->getHeaderLine('Idempotency-Key') === 'create-user-1'
+);
 
-$result = $client->get('http://localhost/test', [], [
-    'headers' => [
-        'X-Debug' => '1',
-    ],
-]);
+$result = $client->post(
+    'https://api.example.com/users/1',
+    [],
+    [
+        'headers' => [
+            'Idempotency-Key' => 'create-user-1',
+        ],
+    ]
+);
 
-$this->assertSame('OK', (string) $result->getBody());
+$this->assertSame(
+    'Accepted',
+    (string) $result->getBody()
+);
 ```
 
-#### **Mock a POST response** (`mockClientPost()`)
+The callback receives the PSR-7 request and must return `true` to select that mock. A rejected mock does not fail immediately; matching continues with the next registered response.
 
-Register a mock response for `Client::post()` calls matching the URL.
+## Method guide
 
-Arguments:
-- `$url` (`string`): the request URL to match (supports `*` wildcards).
-- `$response` (`Response`): the response to return.
-- `$match` (`(Closure(RequestInterface): bool)|null`): an optional callback to accept/reject the request.
+The setup above applies to every method in this trait.
+
+### `HttpClientTestTrait`
+
+#### **Create a client response** (`createResponse()`)
 
 ```php
-$this->mockClientPost('http://localhost/test', $this->createResponse(201, [], 'Created'));
-
-$result = $client->post('http://localhost/test');
-
-$this->assertSame(201, $result->getStatusCode());
+createResponse(
+    int $statusCode = 200,
+    array $headers = [],
+    string $body = ''
+): Fyre\Http\Client\Response
 ```
 
-#### **Mock a PUT response** (`mockClientPut()`)
+`$headers` accepts string values or lists of strings. The returned response can be reused by more than one mock.
 
-Register a mock response for `Client::put()` calls matching the URL.
+#### **Register responses by method** (`mockClientGet()`, `mockClientPost()`, `mockClientPut()`, `mockClientPatch()`, `mockClientDelete()`)
 
-Arguments:
-- `$url` (`string`): the request URL to match (supports `*` wildcards).
-- `$response` (`Response`): the response to return.
-- `$match` (`(Closure(RequestInterface): bool)|null`): an optional callback to accept/reject the request.
+Every verb helper has the same arguments:
 
-```php
-$this->mockClientPut('http://localhost/test', $this->createResponse(200, [], 'Updated'));
+- `$url` (`string`): exact URL or a pattern containing `*` wildcards.
+- `$response` (`Fyre\Http\Client\Response`): response returned when the mock matches.
+- `$match` (`Closure|null`): optional request predicate.
 
-$result = $client->put('http://localhost/test');
-
-$this->assertSame(200, $result->getStatusCode());
-```
-
-#### **Mock a PATCH response** (`mockClientPatch()`)
-
-Register a mock response for `Client::patch()` calls matching the URL.
-
-Arguments:
-- `$url` (`string`): the request URL to match (supports `*` wildcards).
-- `$response` (`Response`): the response to return.
-- `$match` (`(Closure(RequestInterface): bool)|null`): an optional callback to accept/reject the request.
-
-```php
-$this->mockClientPatch('http://localhost/test', $this->createResponse(200, [], 'Patched'));
-
-$result = $client->patch('http://localhost/test');
-
-$this->assertSame(200, $result->getStatusCode());
-```
-
-#### **Mock a DELETE response** (`mockClientDelete()`)
-
-Register a mock response for `Client::delete()` calls matching the URL.
-
-Arguments:
-- `$url` (`string`): the request URL to match (supports `*` wildcards).
-- `$response` (`Response`): the response to return.
-- `$match` (`(Closure(RequestInterface): bool)|null`): an optional callback to accept/reject the request.
-
-```php
-$this->mockClientDelete('http://localhost/test', $this->createResponse(204));
-
-$result = $client->delete('http://localhost/test');
-
-$this->assertSame(204, $result->getStatusCode());
-```
+| Request method | Helper |
+| --- | --- |
+| `GET` | `mockClientGet()` |
+| `POST` | `mockClientPost()` |
+| `PUT` | `mockClientPut()` |
+| `PATCH` | `mockClientPatch()` |
+| `DELETE` | `mockClientDelete()` |
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
-- Mocking is global to `Client`, and the trait clears mocks after each test.
-- URL matching is exact by default, but `*` in the mock URL matches any character sequence.
-- When a mock response matches, it is moved to the end of the internal list, so multiple matching mocks rotate in round-robin order.
-- If you provide a match callback and it returns `false`, the next mock is checked instead.
-- If no mock response matches, a `RuntimeException` is thrown.
-- Mocks affect `Client::send()` and the verb methods (`get()`, `post()`, …). `Client::sendRequest()` bypasses the mock handler.
+- Client mocks are global and are cleared automatically after each test using the trait.
+- Multiple mocks that match the same request rotate in round-robin order because a selected mock moves to the end of the list.
+- A callback returning `false` allows later mocks to be considered.
+- A request with no matching response throws a `RuntimeException`.
+- Mocks affect `Client::send()` and the verb helpers; PSR-18 `Client::sendRequest()` bypasses the mock handler.
 
 ## Related
 
 - [Testing](index.md)
 - [HTTP Client](../http/client.md)
+- [Integration Testing](integration.md)

@@ -15,7 +15,11 @@ It is a good fit for request and response testing, redirects, cookies, session s
   - [Uploaded files](#uploaded-files)
   - [JSON requests](#json-requests)
   - [CSRF](#csrf)
-- [Assertion reference](#assertion-reference)
+- [Method guide](#method-guide)
+  - [Status and body assertions](#status-and-body-assertions)
+  - [Header and redirect assertions](#header-and-redirect-assertions)
+  - [Content type, cookie, and file assertions](#content-type-cookie-and-file-assertions)
+  - [Session assertions](#session-assertions)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -38,10 +42,10 @@ final class ResponseTest extends TestCase
 
     public function testResponseBody(): void
     {
-        $this->get('/response');
+        $this->get('/health');
 
-        $this->assertResponseOk();
-        $this->assertResponseContains('test response');
+        $this->assertResponseCode(200);
+        $this->assertResponseEquals('OK');
     }
 }
 ```
@@ -53,6 +57,8 @@ Use the request helpers to send an in-process request to your application and ca
 - `get($path)`, `head($path)`, `options($path)`
 - `post($path, $data)`, `put($path, $data)`, `patch($path, $data)`
 - `delete($path)`
+
+The helpers return `void`; assertions operate on the captured response.
 
 Query strings in the path are parsed and passed through as GET parameters:
 
@@ -137,11 +143,11 @@ $this->enableCsrfToken();
 $this->post('/posts', ['title' => 'Test']);
 ```
 
-## Assertion reference
+## Method guide
 
-After sending a request, use these helpers to inspect the last captured response. Every assertion accepts an optional final `$message` argument for the PHPUnit failure message.
+The test class under [Start here](#start-here) provides the setup for these request and assertion helpers. After sending a request, every assertion accepts an optional final `$message` argument for the PHPUnit failure message.
 
-### Status and body
+### Status and body assertions
 
 | Assertion | Checks |
 | --- | --- |
@@ -157,7 +163,7 @@ After sending a request, use these helpers to inspect the last captured response
 | `assertResponseEmpty()` | empty body |
 | `assertResponseNotEmpty()` | non-empty body |
 
-### Headers and redirects
+### Header and redirect assertions
 
 | Assertion | Checks |
 | --- | --- |
@@ -170,7 +176,7 @@ After sending a request, use these helpers to inspect the last captured response
 | `assertRedirectContains($url)` | redirect URL contains a string |
 | `assertRedirectNotContains($url)` | redirect URL does not contain a string |
 
-### Content type, cookies, and files
+### Content type, cookie, and file assertions
 
 | Assertion | Checks |
 | --- | --- |
@@ -180,7 +186,7 @@ After sending a request, use these helpers to inspect the last captured response
 | `assertCookieNotSet($name)` | response cookie is absent |
 | `assertFileResponse($path)` | response represents the given file download |
 
-### Session
+### Session assertions
 
 Session paths use dot notation, such as `Auth.user_id`.
 
