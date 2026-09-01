@@ -1,149 +1,112 @@
 # Images
 
-Use `Image` when you want common GD-based image manipulation without managing `GdImage` resources directly.
-
-It can load images, normalize EXIF orientation, resize or crop them, apply basic filters, and encode the result for files or HTTP output.
+`Fyre\Utility\Image` loads encoded images into GD, applies mutable transformations, and writes or returns AVIF, GIF, JPEG, PNG, or WebP output.
 
 ## Table of Contents
 
-- [Start here](#start-here)
-- [Environment checklist](#environment-checklist)
-- [Working with image instances](#working-with-image-instances)
-- [Creating images](#creating-images)
-- [Resizing and cropping](#resizing-and-cropping)
-- [Transforms and filters](#transforms-and-filters)
-- [Color analysis](#color-analysis)
-- [Output](#output)
-- [Output formats](#output-formats)
-- [Behavior notes](#behavior-notes)
+- [Load and transform an image](#load-and-transform-an-image)
+- [Environment requirements](#environment-requirements)
+- [Method guide](#method-guide)
+  - [Creation and dimensions](#creation-and-dimensions)
+  - [Resize and crop](#resize-and-crop)
+  - [Orientation, transforms, and filters](#orientation-transforms-and-filters)
+  - [Analysis and output](#analysis-and-output)
+- [Mutation and format behavior](#mutation-and-format-behavior)
 - [Related](#related)
 
-## Start here
+## Load and transform an image
 
-Load a file, normalize its EXIF orientation, crop it to the required aspect ratio, and save the result:
+Load a file, apply its recorded EXIF orientation, crop it to an output aspect ratio, and save it:
 
 ```php
 use Fyre\Utility\Image;
 
 $image = Image::createFromFile('uploads/photo.jpg');
 
-$image->orient()
+$image
+    ->orient()
     ->cover(1200, 630)
     ->save('tmp/social-card.jpg');
 ```
 
-You can also work with image bytes already held in memory:
+Transformations update `$image` and return the same instance. Load the source again or create another instance from the original bytes when an unchanged copy is required.
 
-```php
-$image = Image::createFromString($bytes);
-$thumbnail = $image->fit(320, 320)->toBinary('webp');
-```
+## Environment requirements
 
-## Environment checklist
+- `ext-gd` is required for every operation and must support each input or output format being used.
+- `ext-exif` is optional. Without it, `createFromFile()` cannot record EXIF orientation and `orient()` has no effect.
+- `save()` requires an existing writable parent directory; it does not create folders.
+- `ext-gd` and `ext-exif` are Composer suggestions rather than required package dependencies.
 
-Before using `Image`, verify the relevant PHP extensions and GD features:
+## Method guide
 
-- The GD extension (`ext-gd`) is required for all image operations.
-- The EXIF extension (`ext-exif`) is optional, but is required for `createFromFile()` to detect EXIF orientation.
-- Available input formats depend on the formats supported by the installed GD build.
-- AVIF, GIF, JPEG, PNG, and WebP output each require the corresponding GD encoder function.
-- The directory passed to `save()` must already exist and be writable by the current PHP process.
+The methods below use the `$image` loaded above.
 
-## Working with image instances
+### Creation and dimensions
 
-Image transformations are mutable. Methods such as `resize()`, `crop()`, `rotate()`, and `grayscale()` update the current image and return the same `Image` instance, which allows fluent chains.
-
-```php
-$image = Image::createFromFile('uploads/photo.jpg');
-$result = $image->fit(800, 800)->sharpen();
-
-// $result and $image are the same instance.
-```
-
-Create a separate `Image` instance from the original file or bytes when you need to preserve an unmodified version.
-
-## Creating images
-
-| Method | Source |
+| Method | Behavior |
 | --- | --- |
-| `Image::createFromFile($filePath)` | an image file |
-| `Image::createFromString($data)` | encoded image bytes |
+| `Image::createFromFile(string $filePath): static` | read and decode a file, recording a valid EXIF orientation when available |
+| `Image::createFromString(string $data): static` | decode image bytes without retaining EXIF orientation |
+| `getWidth(): int` | current pixel width |
+| `getHeight(): int` | current pixel height |
 
-`createFromFile()` records EXIF orientation when the extension is available, but does not apply it until you call `orient()`. Images created from bytes do not retain EXIF orientation.
+Unreadable files throw a `RuntimeException`. Data that GD cannot decode throws an `InvalidArgumentException`. Loaded palette images are converted to true color and configured to retain alpha.
 
-An unreadable file raises a `RuntimeException`. Data that GD cannot decode raises an `InvalidArgumentException`.
-
-## Resizing and cropping
-
-Use `getWidth()` and `getHeight()` to read the current dimensions in pixels.
+### Resize and crop
 
 | Method | Result |
 | --- | --- |
-| `resize($width, $height)` | exact dimensions; may change the aspect ratio |
-| `fit($width, $height)` | proportional image within the given bounds |
-| `contain($width, $height, $background = 'transparent')` | proportional image centered on an exact-size canvas |
-| `cover($width, $height)` | proportional image filling the dimensions, cropped from the center |
-| `crop($x, $y, $width, $height)` | the selected rectangle |
+| `resize(int $width, int $height): static` | exact dimensions, regardless of aspect ratio |
+| `fit(int $width, int $height): static` | proportional image inside the bounds |
+| `contain(int $width, int $height, Color\|string $background = 'transparent'): static` | fitted image centered on an exact-size canvas |
+| `cover(int $width, int $height): static` | proportional image filling the bounds, center-cropped |
+| `crop(int $x, int $y, int $width, int $height): static` | selected rectangle |
 
-`fit()`, `contain()`, and `cover()` can upscale the source. A crop must remain within the current image bounds. Backgrounds accept a `Color` or a string understood by the [Colors](colors.md) utility and default to transparent.
+Every dimension must be positive. `crop()` also requires a non-negative origin and a rectangle contained by the current image. `fit()`, `contain()`, and `cover()` can upscale.
 
-## Transforms and filters
+Backgrounds accept a [Color](colors.md) or any string supported by `Color::createFromString()`.
+
+### Orientation, transforms, and filters
 
 | Method | Effect |
 | --- | --- |
-| `orient()` | apply the EXIF orientation recorded from a file |
-| `rotate($degrees, $background = 'transparent')` | rotate clockwise, filling exposed areas with a color |
-| `flipHorizontal()` | mirror across the vertical axis |
-| `flipVertical()` | mirror across the horizontal axis |
-| `blur($passes = 1)` | apply Gaussian blur one or more times |
-| `brightness($amount)` | adjust brightness from `-255` through `255` |
-| `contrast($amount)` | adjust contrast from `-100` through `100` |
-| `grayscale()` | remove color |
-| `pixelate($size)` | apply square pixel blocks |
-| `sharpen()` | apply GD's mean-removal filter |
+| `orient(): static` | apply recorded EXIF orientation once, then reset it |
+| `rotate(float $degrees, Color\|string $background = 'transparent'): static` | rotate clockwise after normalizing to one turn |
+| `flipHorizontal(): static` | mirror across the vertical axis |
+| `flipVertical(): static` | mirror across the horizontal axis |
+| `blur(int $passes = 1): static` | apply Gaussian blur at least once |
+| `brightness(int $amount): static` | GD brightness adjustment in `-255..255` |
+| `contrast(int $amount): static` | contrast adjustment in `-100..100` |
+| `grayscale(): static` | remove color |
+| `pixelate(int $size): static` | use positive square pixel blocks |
+| `sharpen(): static` | apply GD's mean-removal filter |
 
-`orient()` resets the stored orientation after applying it, so calling it again does not repeat the transformation. Rotation degrees are normalized to one full turn; the value must be finite. Blur passes and pixel size must be greater than zero.
+Rotation must be finite. A normalized rotation of zero leaves the image unchanged.
 
-## Color analysis
-
-`dominantColor()` samples the image down to one pixel and returns a six-digit hexadecimal color such as `#0f172a`. It is a quick overall estimate, not a histogram of the most frequent source pixel.
-
-## Output
+### Analysis and output
 
 | Method | Result |
 | --- | --- |
-| `save($filePath, $quality = 90, $overwrite = false)` | encode using the file extension and write to disk |
-| `toBinary($format = 'png', $quality = 90)` | encoded image bytes |
-| `toBase64($format = 'png', $quality = 90)` | Base64 without a data URI prefix |
-| `toDataUri($format = 'png', $quality = 90)` | a complete Base64 data URI |
+| `dominantColor(): string` | six-digit hex estimate obtained by resampling to one pixel |
+| `save(string $filePath, int $quality = 90, bool $overwrite = false): void` | encode using the destination extension and write to disk |
+| `toBinary(string $format = 'png', int $quality = 90): string` | encoded bytes |
+| `toBase64(string $format = 'png', int $quality = 90): string` | Base64 without a URI prefix |
+| `toDataUri(string $format = 'png', int $quality = 90): string` | complete `data:image/...;base64,...` URI |
 
-Quality defaults to `90` and must be between `0` and `100`. `save()` does not replace an existing file unless `$overwrite` is `true`.
+`dominantColor()` is an overall average-like sample, not a histogram of the most frequent source pixel.
 
-```php
-$image->save('tmp/photo.webp', quality: 85);
-$src = $image->toDataUri('webp', 85);
-```
+Quality must be in `0..100`. `save()` requires a non-empty extension and refuses to replace an existing file unless `$overwrite` is `true`.
 
-## Output formats
+## Mutation and format behavior
 
-The following output format names are supported:
-
-- `avif`
-- `gif`
-- `jpeg` or `jpg`
-- `png`
-- `webp`
-
-Format names are case-insensitive, and `jpg` is normalized to `jpeg`. The requested encoder must be available in the installed GD build.
-
-JPEG does not support transparency, so JPEG output is flattened onto a white background. PNG, WebP, and AVIF can retain transparency when supported by GD. GIF encoding does not use the quality argument; PNG maps it to a compression level while remaining lossless.
-
-## Behavior notes
-
-- Widths and heights passed to resize and crop methods must be greater than `0`.
-- Without the EXIF extension, file images use the default orientation and `orient()` has no effect.
-- `save()` chooses the format from the file extension, while in-memory output methods use their `$format` argument.
-- Unsupported formats, unavailable encoders, invalid quality values, and invalid geometry raise exceptions rather than returning `false`.
+- Supported output names are `avif`, `gif`, `jpeg`, `jpg`, `png`, and `webp`; matching is case-insensitive and `jpg` normalizes to `jpeg`.
+- The corresponding GD encoder function must exist. Unsupported formats and unavailable encoders throw rather than returning `false`.
+- JPEG output is composited over white because JPEG has no alpha channel.
+- GIF ignores quality. PNG maps quality inversely to compression level while remaining lossless. AVIF, JPEG, and WebP pass quality to GD.
+- `save()` chooses the format from the filename; in-memory methods use their `$format` argument.
+- Transformations mutate the current `GdImage`; analysis and output methods do not replace it.
+- `Image` supports instance and static macros.
 
 ## Related
 

@@ -1,208 +1,87 @@
 # Paths
 
-Use `Path` when you want platform-aware path string handling without touching the filesystem.
+`Fyre\Utility\Path` joins, normalizes, resolves, and inspects path strings without reading the filesystem.
 
-For filesystem operations (reading, writing, copying), see [File System](file-system.md).
+Use [File System](file-system.md) when the operation should create, read, copy, move, or delete something on disk.
 
 ## Table of Contents
 
-- [Start here](#start-here)
-- [Constants](#constants)
+- [Common operations](#common-operations)
 - [Method guide](#method-guide)
-  - [Joining and normalizing](#joining-and-normalizing)
-  - [Resolving](#resolving)
-  - [Inspecting paths](#inspecting-paths)
-  - [Parsing and formatting](#parsing-and-formatting)
-- [Behavior notes](#behavior-notes)
+  - [Join, normalize, and resolve](#join-normalize-and-resolve)
+  - [Inspect and format](#inspect-and-format)
+- [Platform behavior](#platform-behavior)
 - [Related](#related)
 
-## Start here
+## Common operations
 
-All operations are based on the current runtime `DIRECTORY_SEPARATOR`.
-
-If you are working across operating systems, review the [Behavior notes](#behavior-notes) for separator and absolute-path edge cases.
-
-Joining and normalizing:
+All methods are static and use `Path::SEPARATOR`, an alias of the current runtime's `DIRECTORY_SEPARATOR`:
 
 ```php
 use Fyre\Utility\Path;
 
-$cacheDir = Path::join('tmp', 'cache');            // "tmp/cache"
-$filePath = Path::join($cacheDir, 'routes.php');   // "tmp/cache/routes.php"
+$cache = Path::join('tmp', 'cache');
+$file = Path::join($cache, 'routes.php');
+$normalized = Path::normalize('tmp/cache/../logs/');
 ```
 
-Resolving segments:
-
-```php
-$relative = Path::resolve('tmp', 'cache', 'views'); // "tmp/cache/views"
-```
-
-Parsing and formatting:
-
-```php
-$info = Path::parse('tmp/cache/routes.php');
-$path = Path::format($info); // "tmp/cache/routes.php"
-```
-
-## Constants
-
-`Path` exposes a small constant for working with separators:
-
-- `Path::SEPARATOR` The current platform directory separator (alias of `DIRECTORY_SEPARATOR`).
+On a Unix-like runtime the results are `tmp/cache`, `tmp/cache/routes.php`, and `tmp/logs/`. Equivalent output uses `\` on Windows.
 
 ## Method guide
 
-Examples below assume `Path` is already imported.
+The methods below use the imported `Path` class from [Common operations](#common-operations).
 
-### Joining and normalizing
+### Join, normalize, and resolve
 
-#### **Join segments** (`join()`)
+| Method | Behavior |
+| --- | --- |
+| `join(string ...$paths): string` | discard empty-string segments, join with the platform separator, then normalize |
+| `normalize(string $path = ''): string` | collapse empty, `.`, and resolvable `..` segments while preserving a trailing separator |
+| `resolve(string ...$paths): string` | scan from the final segment backward and discard anything before the last absolute segment, then join and normalize |
 
-Joins path segments using the current platform separator and normalizes the result.
-
-Arguments:
-- `$paths` (`string ...`): the path segments.
-
-```php
-$path = Path::join('tmp', 'cache', 'routes.php'); // "tmp/cache/routes.php"
-```
-
-`join()` filters out empty segments before joining.
-
-#### **Normalize a path string** (`normalize()`)
-
-Normalizes a path string by collapsing `.` / `..` segments and duplicate separators.
-
-Arguments:
-- `$path` (`string`): the file path.
+`resolve()` is a string operation, not `realpath()`. Relative input remains relative rather than being prefixed with the current working directory. With no arguments it returns `getcwd()`, or `.` if the current directory is unavailable.
 
 ```php
-$path = Path::normalize('tmp//cache/./../cache/routes.php'); // "tmp/cache/routes.php"
+Path::resolve('tmp', 'cache', '..', 'logs'); // "tmp/logs"
+Path::resolve('ignored', '/var', 'log'); // "/var/log" on Unix-like systems
 ```
 
-`normalize()` is a string operation; it does not check the filesystem. Leading `..` segments are preserved for relative paths and discarded when they would traverse above an absolute root.
+Normalization preserves leading `..` segments in a relative path and discards attempts to move above an absolute root. An empty normalized result is `.`, except an absolute root remains the platform separator.
 
-### Resolving
+### Inspect and format
 
-#### **Resolve segments** (`resolve()`)
-
-Resolves one or more segments into a normalized path. If an absolute segment is encountered, earlier segments are ignored.
-
-Arguments:
-- `$paths` (`string ...`): the path segments.
+| Method | Return behavior |
+| --- | --- |
+| `baseName(string $path): string` | `PATHINFO_BASENAME` |
+| `dirName(string $path): string` | `PATHINFO_DIRNAME` |
+| `extension(string $path): string` | `PATHINFO_EXTENSION` |
+| `fileName(string $path): string` | `PATHINFO_FILENAME` |
+| `isAbsolute(string $path): bool` | whether the path starts with the current platform separator or a Windows drive plus `\` or `/` |
+| `parse(string $path): array` | native `pathinfo()` result |
+| `format(array $pathInfo): string` | normalized join of the `dirname` and `basename` entries; missing entries become empty strings |
 
 ```php
-$relative = Path::resolve('tmp', 'cache', 'views');  // "tmp/cache/views"
-$absolute = Path::resolve('/var', 'log', 'app.log'); // "/var/log/app.log" (on Unix-like systems)
+$parts = Path::parse('tmp/cache/routes.php');
+
+// [
+//     'dirname' => 'tmp/cache',
+//     'basename' => 'routes.php',
+//     'extension' => 'php',
+//     'filename' => 'routes',
+// ]
+
+Path::format($parts); // "tmp/cache/routes.php"
 ```
 
-When called with no arguments, `resolve()` returns the current working directory (or `.` if it can’t be determined):
+`parse()` retains PHP's `pathinfo()` platform and edge-case behavior, including its handling of dotfiles and multiple extensions.
 
-```php
-$cwd = Path::resolve();
-```
+## Platform behavior
 
-### Inspecting paths
-
-`Path` includes small wrappers around `pathinfo()` for common pieces:
-
-```php
-$baseName = Path::baseName('tmp/cache/routes.php'); // routes.php
-$dirName = Path::dirName('tmp/cache/routes.php');   // tmp/cache
-$extension = Path::extension('tmp/cache/routes.php'); // php
-$fileName = Path::fileName('tmp/cache/routes.php');   // routes
-```
-
-#### **Get the base name** (`baseName()`)
-
-Returns the base name from a file path.
-
-Arguments:
-- `$path` (`string`): the file path.
-
-```php
-$baseName = Path::baseName('tmp/cache/routes.php'); // "routes.php"
-```
-
-#### **Get the directory name** (`dirName()`)
-
-Returns the directory name from a file path.
-
-Arguments:
-- `$path` (`string`): the file path.
-
-```php
-$dirName = Path::dirName('tmp/cache/routes.php'); // "tmp/cache"
-```
-
-#### **Get the file extension** (`extension()`)
-
-Returns the file extension from a file path.
-
-Arguments:
-- `$path` (`string`): the file path.
-
-```php
-$extension = Path::extension('tmp/cache/routes.php'); // "php"
-```
-
-#### **Get the file name** (`fileName()`)
-
-Returns the file name (without extension) from a file path.
-
-Arguments:
-- `$path` (`string`): the file path.
-
-```php
-$fileName = Path::fileName('tmp/cache/routes.php'); // "routes"
-```
-
-#### **Check for an absolute path** (`isAbsolute()`)
-
-Checks whether a path is absolute on the current platform. This includes Unix-style root paths and Windows drive-letter paths.
-
-Arguments:
-- `$path` (`string`): the file path.
-
-```php
-$ok = Path::isAbsolute('/var/log'); // true (on Unix-like systems)
-$windows = Path::isAbsolute('C:\logs'); // true
-```
-
-### Parsing and formatting
-
-#### **Parse a path** (`parse()`)
-
-Parses a path using `pathinfo()`.
-
-Arguments:
-- `$path` (`string`): the file path.
-
-```php
-$info = Path::parse('tmp/cache/routes.php');
-```
-
-#### **Format a path** (`format()`)
-
-Formats a `pathinfo()`-style array back into a path by joining `dirname` and `basename`.
-
-Arguments:
-- `$pathInfo` (`array<string, mixed>`): a path info array (commonly from `parse()`).
-
-```php
-$info = Path::parse('tmp/cache/routes.php');
-$path = Path::format($info); // "tmp/cache/routes.php"
-```
-
-## Behavior notes
-
-A few behaviors are worth keeping in mind:
-
-- `Path` uses the current platform separator (`DIRECTORY_SEPARATOR`, exposed as `Path::SEPARATOR`) for splitting and joining.
-- `normalize()` returns `.` for an empty result. If the original path started with a directory separator and normalization removes all segments, it returns a single directory separator.
-- `join()` filters out empty segments before joining; if all segments are empty, it returns `.`.
-- `resolve()` is not `realpath()`; it does not check the filesystem.
-- `isAbsolute()` treats both leading-separator paths and Windows drive-letter paths (for example `C:\path`) as absolute.
+- `normalize()` splits only on the current `DIRECTORY_SEPARATOR`; it does not translate arbitrary `/` and `\` characters between platforms.
+- On Unix-like systems, a leading `/` is absolute. On Windows, a leading `\`, a drive path such as `C:\logs`, and a drive path using `/` are recognized.
+- A Windows drive path is recognized by `isAbsolute()` even when the current runtime is not Windows, but normalization still uses the current platform separator.
+- `join()` removes only `''`; `resolve()` skips all falsey segments, including the string `0`.
+- `Path` supports static macros.
 
 ## Related
 

@@ -20,6 +20,8 @@ use function sin;
  *
  * This class contains the conversion math used by the Color classes and does not validate inputs beyond what is
  * required for the calculations.
+ *
+ * @internal
  */
 abstract class ColorConverter
 {

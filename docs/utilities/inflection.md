@@ -1,189 +1,93 @@
 # Inflection
 
-Use `Inflector` when you need pluralization, singularization, and naming-convention helpers for class, table, or variable names.
+`Fyre\Utility\Inflector` converts between singular and plural words and between common PHP/database naming conventions.
 
-For general string transformations (casing, searching, slicing, escaping), see [Strings](strings.md).
+Use [Strings](strings.md) for general casing, searching, slicing, and escaping.
 
 ## Table of Contents
 
-- [Start here](#start-here)
+- [Common operations](#common-operations)
 - [Method guide](#method-guide)
-  - [Word inflection](#word-inflection)
+  - [Words](#words)
   - [Naming conventions](#naming-conventions)
-  - [Delimiter and casing helpers](#delimiter-and-casing-helpers)
   - [Custom rules](#custom-rules)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Start here
+## Common operations
 
-Common uses include:
-
-- converting between singular class names and plural table names
-- generating variable-style names from class-style identifiers
-- pluralizing and singularizing words while respecting irregular and uncountable forms
+Create one inflector and reuse it so repeated conversions can use its per-instance cache:
 
 ```php
 use Fyre\Utility\Inflector;
 
 $inflector = new Inflector();
 
-$plural = $inflector->pluralize('country');   // "countries"
-$singular = $inflector->singularize('people'); // "person"
-
-$table = $inflector->tableize('UserProfile');     // "user_profiles"
-$class = $inflector->classify('user_profiles');   // "UserProfile"
-$var = $inflector->variable('UserProfile');       // "userProfile"
+$plural = $inflector->pluralize('country');
+$singular = $inflector->singularize('people');
+$table = $inflector->tableize('UserProfile');
+$class = $inflector->classify('user_profiles');
 ```
+
+The results are `countries`, `person`, `user_profiles`, and `UserProfile`.
 
 ## Method guide
 
-Examples below assume `$inflector` is an `Inflector` instance.
+The methods below use the `$inflector` created in [Common operations](#common-operations).
 
-### Word inflection
+### Words
 
-#### **Pluralize a word** (`pluralize()`)
-
-Returns the plural form of a word.
-
-Arguments:
-- `$string` (`string`): the input word.
-
-```php
-$value = $inflector->pluralize('country'); // "countries"
-$value = $inflector->pluralize('person');  // "people"
-```
-
-#### **Singularize a word** (`singularize()`)
-
-Returns the singular form of a word.
-
-Arguments:
-- `$string` (`string`): the input word.
-
-```php
-$value = $inflector->singularize('countries'); // "country"
-$value = $inflector->singularize('people');    // "person"
-```
+| Method | Behavior | Example result |
+| --- | --- | --- |
+| `pluralize(string $string): string` | apply uncountable, irregular, then plural rules | `pluralize('person')` → `people` |
+| `singularize(string $string): string` | apply uncountable, irregular, then singular rules | `singularize('countries')` → `country` |
 
 ### Naming conventions
 
-#### **Convert a table name to a class name** (`classify()`)
-
-Converts a `table_name` (plural or singular) to a singular `ClassName`.
-
-Arguments:
-- `$tableName` (`string`): the table name (usually `snake_case`).
-
-```php
-$class = $inflector->classify('user_profiles'); // "UserProfile"
-$class = $inflector->classify('user_profile');  // "UserProfile"
-```
-
-#### **Convert a class name to a table name** (`tableize()`)
-
-Converts a `ClassName` to a plural `table_name`.
-
-Arguments:
-- `$className` (`string`): the class name (usually `PascalCase`).
-
-```php
-$table = $inflector->tableize('AuditLog'); // "audit_logs"
-```
-
-#### **Convert a string into a variable name** (`variable()`)
-
-Builds a lower `camelCase` name, commonly used for variables derived from class names or identifiers.
-
-Arguments:
-- `$string` (`string`): the input string.
-
-```php
-$var = $inflector->variable('UserProfile'); // "userProfile"
-```
-
-### Delimiter and casing helpers
-
-#### **Convert a delimited string into `CamelCase`** (`camelize()`)
-
-Converts a delimited string into `CamelCase`.
-
-Arguments:
-- `$string` (`string`): the input string.
-- `$delimiter` (`string`): the delimiter (default: `_`).
-
-```php
-$value = $inflector->camelize('user_profile');     // "UserProfile"
-$value = $inflector->camelize('user-profile', '-'); // "UserProfile"
-```
-
-#### **Convert a string into `kebab-case`** (`dasherize()`)
-
-Converts a string into `kebab-case` using `-` as the delimiter.
-
-Arguments:
-- `$string` (`string`): the input string.
-
-```php
-$value = $inflector->dasherize('UserProfile'); // "user-profile"
-```
-
-#### **Convert a string into human readable form** (`humanize()`)
-
-Converts a delimited string into human readable form by replacing the delimiter with spaces and title-casing words.
-
-Arguments:
-- `$string` (`string`): the input string.
-- `$delimiter` (`string`): the delimiter (default: `_`).
-
-```php
-$value = $inflector->humanize('user_profile'); // "User Profile"
-```
-
-#### **Convert a string into `snake_case`** (`underscore()`)
-
-Converts a string into `snake_case` using `_` as the delimiter.
-
-Arguments:
-- `$string` (`string`): the input string.
-
-```php
-$value = $inflector->underscore('UserProfile'); // "user_profile"
-```
+| Method | Conversion | Example result |
+| --- | --- | --- |
+| `classify(string $tableName): string` | plural or singular `table_name` to singular `ClassName` | `classify('user_profiles')` → `UserProfile` |
+| `tableize(string $className): string` | `ClassName` to plural `table_name` | `tableize('AuditLog')` → `audit_logs` |
+| `variable(string $string): string` | input to lower `camelCase` | `variable('UserProfile')` → `userProfile` |
+| `camelize(string $string, string $delimiter = '_'): string` | delimited input to `CamelCase` | `camelize('user-profile', '-')` → `UserProfile` |
+| `dasherize(string $string): string` | input to lowercase `kebab-case` | `dasherize('UserProfile')` → `user-profile` |
+| `humanize(string $string, string $delimiter = '_'): string` | replace the delimiter with spaces and title-case words | `humanize('user_profile')` → `User Profile` |
+| `underscore(string $string): string` | input to lowercase `snake_case` | `underscore('UserProfile')` → `user_profile` |
 
 ### Custom rules
 
-#### **Add or override inflection rules** (`rules()`)
-
-Adds or overrides inflection rules for irregular, plural, singular, and uncountable words.
-
-Arguments:
-- `$type` (`string`): the rule group to modify: `irregular`, `plural`, `singular`, or `uncountable`.
-- `$rules` (`array<string, string>|string[]`): the rules to add or override (depending on `$type`).
-
-Rule formats:
-- `irregular`: `lowercase_word => lowercase_plural`
-- `plural` / `singular`: `regex_pattern => replacement`
-- `uncountable`: list of lowercase literals or regex patterns
+#### **Add or replace rules** (`rules()`)
 
 ```php
-// Add a new irregular mapping (lowercase word => lowercase plural).
+rules(string $type, array $rules): static
+```
+
+`$type` must be one of `irregular`, `plural`, `singular`, or `uncountable`.
+
+| Type | Expected values |
+| --- | --- |
+| `irregular` | lowercase singular keys mapped to lowercase plurals |
+| `plural` | regular-expression patterns mapped to replacements |
+| `singular` | regular-expression patterns mapped to replacements |
+| `uncountable` | lowercase literals or regular-expression patterns |
+
+```php
 $inflector->rules('irregular', [
     'cactus' => 'cacti',
 ]);
 
-$value = $inflector->pluralize('cactus'); // "cacti"
+$inflector->pluralize('cactus'); // "cacti"
 ```
+
+New irregular and uncountable values are merged with the defaults. New plural and singular patterns take precedence over existing patterns with the same keys. Calling `rules()` clears cached results.
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
-- `Inflector` caches computed results per instance; repeated calls with the same method and input reuse cached values.
-- Calling `rules()` always clears internal caches so subsequent calls use the updated rule sets.
-- “Uncountable” rules are evaluated as a single anchored regex; patterns like `.*data` match `metadata` as well as `data`.
-- Irregular mappings are stored as lowercase values; applying an irregular rule does not preserve title casing (for example, `Person` pluralizes to `people`).
-- `underscore()` and `dasherize()` always lowercase output, including strings that start in `CamelCase` or `PascalCase`.
+- Inflection results are cached by method, delimiter where applicable, and input on each `Inflector` instance.
+- Uncountable entries are combined into one anchored regular expression. A pattern such as `.*data` therefore matches both `data` and `metadata`.
+- Irregular mappings are lowercase and do not preserve input capitalization; for example, `Person` pluralizes to `people`.
+- `underscore()` and `dasherize()` always lowercase their output.
+- Passing an unsupported type to `rules()` leaves the rule sets unchanged but still clears the cache.
 
 ## Related
 

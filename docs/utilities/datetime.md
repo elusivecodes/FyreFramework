@@ -1,222 +1,158 @@
 # Date/time
 
-Use `DateTime` (`Fyre\Utility\DateTime\DateTime`) when you need an immutable date/time value with locale-aware formatting and calendar-aware operations.
+Use `DateTime` (`Fyre\Utility\DateTime\DateTime`) for immutable date/time values with millisecond precision, time zones, locale-aware formatting, and calendar-aware operations.
 
 For ranges and sets of ranges, see [Periods](periods.md).
 
 ## Table of Contents
 
-- [Common operations](#common-operations)
-- [Choosing `DateTime` or periods](#choosing-datetime-or-periods)
-- [Working with `DateTime` values](#working-with-datetime-values)
-- [Creating `DateTime` values](#creating-datetime-values)
-- [Formatting and localization](#formatting-and-localization)
-- [Working immutably](#working-immutably)
-- [Comparisons and differences](#comparisons-and-differences)
-- [Method guide](#method-guide)
-  - [Creating values](#creating-values)
-  - [Defaults and formatting](#defaults-and-formatting)
-  - [Reading values](#reading-values)
-  - [Immutable operations](#immutable-operations)
-  - [Comparison methods](#comparison-methods)
+- [Creating values](#creating-values)
+- [Formatting and conversion](#formatting-and-conversion)
+- [Reading values](#reading-values)
+- [Changing values](#changing-values)
+- [Comparing values](#comparing-values)
+- [Defaults and date clamping](#defaults-and-date-clamping)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Common operations
+## Creating values
 
-A `DateTime` value can be formatted, shifted, or anchored without changing the original instance:
+The constructor accepts any time string supported by PHP's native `DateTimeImmutable`, plus optional time-zone and locale overrides:
 
 ```php
 use Fyre\Utility\DateTime\DateTime;
 
-$dt = new DateTime('2026-02-01 15:04:05', 'America/New_York', 'en_US');
-
-$label = $dt->toString();
-$utcIso = $dt->toIsoString();
-
-$nextWeek = $dt->addWeeks(1);
-$dayStart = $dt->startOfDay();
+$date = new DateTime(
+    '2026-02-01 15:04:05',
+    'Australia/Brisbane',
+    'en_AU'
+);
 ```
 
-## Choosing `DateTime` or periods
+Time zones may be identifiers such as `Australia/Brisbane` or offsets such as `+10:00` and `+1000`.
 
-- Use `DateTime` for a single moment (with a time zone and locale for presentation).
-- Use `Period` when you need a bounded range at a specific granularity (days, hours, months, …); see [Periods](periods.md).
-- Use `PeriodCollection` when you need set-style operations over many ranges (normalize/sort, find gaps, subtract another set); see [Periods](periods.md).
-
-## Working with `DateTime` values
-
-`DateTime` is designed for application-level work where you care about human-facing formatting and calendar behavior:
-
-- It’s immutable: methods like `addDays()` and `withMonth()` always return a new instance.
-- It stores time with millisecond precision: `getTime()` returns milliseconds since the UNIX epoch.
-- It formats using ICU patterns via the `intl` extension (`IntlDateFormatter` / `IntlCalendar`), so formatting is locale-aware and time-zone-aware.
-
-It also implements `Stringable` and `JsonSerializable`:
-
-- `(string) $dateTime` uses `toString()`.
-- `json_encode($dateTime)` serializes as an ISO string via `toIsoString()`.
-
-## Creating `DateTime` values
-
-You can construct a `DateTime` from a “time string” supported by PHP’s `DateTimeImmutable`, with optional overrides for time zone and locale:
-
-```php
-$local = new DateTime('2026-02-01 15:04:05', 'America/New_York', 'en_US');
-$nowUtc = DateTime::now('UTC', 'en');
-```
-
-Time zones accept a time zone identifier (for example, `Australia/Brisbane`) or a UTC offset string (for example, `+10:00` or `+1000`).
-
-Alternative constructors exist for common inputs:
-
-- Parse a specific ICU format: `DateTime::createFromFormat()`
-- Parse an ISO string: `DateTime::createFromIsoString()`
-- From an array: `DateTime::createFromArray()`
-- From a timestamp: `DateTime::createFromTimestamp()`
-- From a native instance: `DateTime::createFromNativeDateTime()`
-
-## Formatting and localization
-
-Formatting uses ICU patterns (not PHP’s `date()` patterns). For ad-hoc formatting, use `format()`:
-
-If you are formatting values for templates, also see [Formatter](formatter.md). `DateTime` stores locale/time zone on the value itself (used by methods like `toString()` and `format()`), while `Formatter` applies presentation defaults (via config) at formatting time.
-
-```php
-$dt = new DateTime('2026-02-01 15:04:05', 'America/New_York', 'en_US');
-
-$compact = $dt->format('yyyy-MM-dd HH:mm');
-$german = $dt->format('eeee, d. MMMM yyyy', 'de_DE');
-```
-
-Common output formats are available through convenience methods:
-
-- `toDateString()` → `"eee MMM dd yyyy"`
-- `toTimeString()` → `"HH:mm:ss xx (VV)"`
-- `toString()` → `"eee MMM dd yyyy HH:mm:ss xx (VV)"`
-- `toIsoString()` → RFC3339 extended (UTC)
-
-## Working immutably
-
-Most updates come in two shapes:
-
-- Arithmetic (add/sub): `addDays()`, `subMonths()`, …
-- Targeted setters (with*): `withYear()`, `withHours()`, `withTimeZone()`, …
-
-```php
-$start = DateTime::now('UTC')->startOfDay();
-$end = $start->addDays(7)->endOfDay();
-```
-
-When you need anchored boundaries, `startOf*()` and `endOf*()` cover day/hour/minute/second plus month/quarter/week/year.
-
-## Comparisons and differences
-
-For comparisons between instants, use `isBefore()`, `isAfter()`, and `isBetween()` (and the unit-specific variants like `isBeforeDay()` when you want comparisons rounded to a unit).
-
-For numeric differences:
-
-- `diff()` returns milliseconds.
-- `diffInDays()` and similar methods return a calendar-aware unit difference.
-
-## Method guide
-
-### Creating values
-
-| Method | Input |
+| Method | Creates a value from |
 | --- | --- |
-| `new DateTime()` | a PHP-compatible time string, with optional time zone and locale |
-| `now()` | optional time zone and locale |
-| `createFromIsoString()` | an ISO date/time string |
-| `createFromFormat()` | an ICU pattern and matching value |
-| `createFromTimestamp()` | a UNIX timestamp in seconds |
-| `createFromNativeDateTime()` | any `DateTimeInterface` value |
-| `createFromArray()` | `[year, month, date, hour, minute, second, millisecond]` |
+| `new DateTime($time = null, $timeZone = null, $locale = null)` | a PHP-compatible time string; `null` means now |
+| `now($timeZone = null, $locale = null)` | the current time |
+| `createFromArray($values, $timeZone = null, $locale = null)` | `[year, month, day, hour, minute, second, millisecond]`; omitted date fields default to `1` and time fields to `0` |
+| `createFromFormat($pattern, $value, $timeZone = null, $locale = null)` | a value matching an ICU pattern |
+| `createFromIsoString($value, $timeZone = null, $locale = null)` | an RFC 3339 value with milliseconds |
+| `createFromNativeDateTime($value, $timeZone = null, $locale = null)` | any native `DateTimeInterface` value |
+| `createFromTimestamp($timestamp, $timeZone = null, $locale = null)` | a UNIX timestamp in seconds |
 
-Each factory accepts optional time-zone and locale overrides. `createFromFormat()` uses ICU patterns rather than PHP `date()` patterns.
+Factories that accept an existing instant preserve that instant when applying a different time zone. `createFromNativeDateTime()` also preserves milliseconds.
 
-### Defaults and formatting
+## Formatting and conversion
 
-`getDefaultLocale()` and `getDefaultTimeZone()` return the process-wide defaults. Change them with `setDefaultLocale()` and `setDefaultTimeZone()`. Passing `null` to either setter restores the environment-derived default.
+`DateTime` uses ICU patterns through the `intl` extension, not PHP `date()` patterns:
 
-Use `withDateClamping()` to control how `withMonth()` and `withYear()` handle a day that does not exist in the target month.
+```php
+$label = $date->format('eeee, d MMMM yyyy');
+$german = $date->format('eeee, d. MMMM yyyy', 'de_DE');
+```
 
 | Method | Result |
 | --- | --- |
-| `format($pattern, $locale = null)` | output using an ICU pattern |
-| `toDateString()` | the built-in date representation |
-| `toTimeString()` | the built-in time representation |
-| `toString()` | the default combined representation |
-| `toUTCString()` | the default combined representation in UTC |
-| `toIsoString()` | an RFC 3339 extended value in UTC |
-| `toNativeDateTime()` | a native mutable `DateTime` copy |
+| `format($pattern, $locale = null)` | locale-aware output using an ICU pattern |
+| `toDateString()` | `eee MMM dd yyyy` |
+| `toTimeString()` | `HH:mm:ss xx (VV)` |
+| `toString()` | `eee MMM dd yyyy HH:mm:ss xx (VV)` |
+| `toUTCString()` | the `toString()` representation in UTC |
+| `toIsoString()` | RFC 3339 with milliseconds in UTC |
+| `toNativeDateTime()` | a mutable native `DateTime` copy |
 
-### Reading values
+Casting to `string` calls `toString()`. `jsonSerialize()` returns `toIsoString()`. Native PHP serialization preserves the instant, time zone, and locale.
 
-The accessors fall into a few related groups:
+For presentation defaults supplied by application configuration, see [Formatter](formatter.md).
+
+## Reading values
 
 | Values | Methods |
 | --- | --- |
-| epoch | `getTime()` (milliseconds), `getTimestamp()` (seconds) |
+| instant | `getTime()` in milliseconds, `getTimestamp()` in seconds |
 | context | `getLocale()`, `getTimeZone()`, `getTimeZoneOffset()` |
-| calendar date | `getYear()`, `getMonth()`, `getDate()`, `getQuarter()` |
-| day fields | `getDay()`, `getDayOfYear()` |
-| local week fields | `getWeek()`, `getWeekDay()`, `getWeekDayInMonth()`, `getWeekOfMonth()`, `getWeekYear()` |
-| time of day | `getHours()`, `getMinutes()`, `getSeconds()`, `getMilliseconds()` |
+| date | `getYear()`, `getMonth()`, `getDate()`, `getQuarter()` |
+| day | `getDay()`, `getDayOfYear()` |
+| week | `getWeek()`, `getWeekDay()`, `getWeekDayInMonth()`, `getWeekOfMonth()`, `getWeekYear()` |
+| time | `getHours()`, `getMinutes()`, `getSeconds()`, `getMilliseconds()` |
+| calendar counts | `daysInMonth()`, `daysInYear()`, `weeksInYear()` |
 
-Localized labels are available through `dayName()`, `monthName()`, `dayPeriod()`, `era()`, and `timeZoneName()`. Their `$type` argument selects the display width; unsupported values return `null`.
+`getDay()` uses `0` for Sunday through `6` for Saturday. Local week fields follow the instance's locale and calendar.
 
-`daysInMonth()`, `daysInYear()`, and `weeksInYear()` return calendar counts for the current value.
+Localized labels are available through:
 
-### Immutable operations
+| Method | Allowed widths |
+| --- | --- |
+| `dayName($type = 'long')` | `long`, `short`, `narrow` |
+| `monthName($type = 'long')` | `long`, `short`, `narrow` |
+| `era($type = 'long')` | `long`, `short`, `narrow` |
+| `dayPeriod($type = 'long')` | `long`, `short` |
+| `timeZoneName($type = 'full')` | `full`, `short` |
 
-Arithmetic methods are available for days, hours, minutes, months, seconds, weeks, and years:
+An unsupported width returns `null`.
 
-- `addDay()` / `addDays($amount)`
-- `subDay()` / `subDays($amount)`
+## Changing values
 
-The other units follow the same singular/plural naming pattern. All of them return a new value.
-
-Boundary methods use `startOf*` and `endOf*` for day, hour, minute, second, week, month, quarter, and year. Field replacements use `with*`, including:
-
-- date fields: `withYear()`, `withMonth()`, `withDate()`, `withDay()`, `withDayOfYear()`, and `withQuarter()`
-- time fields: `withHours()`, `withMinutes()`, `withSeconds()`, and `withMilliseconds()`
-- week fields: `withWeek()`, `withWeekDay()`, `withWeekDayInMonth()`, `withWeekOfMonth()`, and `withWeekYear()`
-- instant and context: `withTime()`, `withTimestamp()`, `withTimeZone()`, `withTimeZoneOffset()`, and `withLocale()`
-
-Related operations can be chained without changing the original value:
+All date/time changes return a new instance; the original value is unchanged:
 
 ```php
-$windowEnd = $dt
+$windowEnd = $date
     ->withTimeZone('UTC')
     ->startOfDay()
     ->addWeeks(1)
     ->endOfDay();
 ```
 
-### Comparison methods
+| Operation | Methods |
+| --- | --- |
+| add | `addDay()`, `addDays()`, `addHour()`, `addHours()`, `addMinute()`, `addMinutes()`, `addMonth()`, `addMonths()`, `addSecond()`, `addSeconds()`, `addWeek()`, `addWeeks()`, `addYear()`, `addYears()` |
+| subtract | `subDay()`, `subDays()`, `subHour()`, `subHours()`, `subMinute()`, `subMinutes()`, `subMonth()`, `subMonths()`, `subSecond()`, `subSeconds()`, `subWeek()`, `subWeeks()`, `subYear()`, `subYears()` |
+| start boundaries | `startOfDay()`, `startOfHour()`, `startOfMinute()`, `startOfMonth()`, `startOfQuarter()`, `startOfSecond()`, `startOfWeek()`, `startOfYear()` |
+| end boundaries | `endOfDay()`, `endOfHour()`, `endOfMinute()`, `endOfMonth()`, `endOfQuarter()`, `endOfSecond()`, `endOfWeek()`, `endOfYear()` |
+| date fields | `withYear()`, `withMonth()`, `withDate()`, `withDay()`, `withDayOfYear()`, `withQuarter()` |
+| time fields | `withHours()`, `withMinutes()`, `withSeconds()`, `withMilliseconds()` |
+| week fields | `withWeek()`, `withWeekDay()`, `withWeekDayInMonth()`, `withWeekOfMonth()`, `withWeekYear()` |
+| instant | `withTime()` in milliseconds, `withTimestamp()` in seconds |
+| context | `withTimeZone()`, `withTimeZoneOffset()`, `withLocale()` |
 
-`isBefore()`, `isAfter()`, `isSame()`, `isSameOrBefore()`, `isSameOrAfter()`, and `isBetween()` compare instants. Each family also has variants for day, hour, minute, month, second, week, and year where applicable.
+The more specific `with*()` methods accept related trailing fields where useful. For example, `withHours($hours, $minutes, $seconds, $milliseconds)` can replace the complete time of day in one call.
 
-```php
-if ($scheduled->isBetween($windowStart, $windowEnd)) {
-    // The scheduled instant is inside the window.
-}
-```
+## Comparing values
 
-`diff()` returns the signed difference in milliseconds. `diffInDays()`, `diffInHours()`, `diffInMinutes()`, `diffInMonths()`, `diffInSeconds()`, `diffInWeeks()`, and `diffInYears()` return differences in calendar units.
+`diff($other)` returns the signed instant difference in milliseconds: positive when the receiver is later and negative when it is earlier.
 
-Use `isDst()` to check daylight-saving time and `isLeapYear()` to check the current year.
+Calendar differences are available through `diffInDays()`, `diffInHours()`, `diffInMinutes()`, `diffInMonths()`, `diffInSeconds()`, `diffInWeeks()`, and `diffInYears()`. Their `$relative` argument defaults to `true`; see [Behavior notes](#behavior-notes).
+
+| Comparison family | Available units |
+| --- | --- |
+| `isAfter()`, `isAfterDay()`, `isAfterHour()`, `isAfterMinute()`, `isAfterMonth()`, `isAfterSecond()`, `isAfterWeek()`, `isAfterYear()` | receiver is later |
+| `isBefore()`, `isBeforeDay()`, `isBeforeHour()`, `isBeforeMinute()`, `isBeforeMonth()`, `isBeforeSecond()`, `isBeforeWeek()`, `isBeforeYear()` | receiver is earlier |
+| `isSame()`, `isSameDay()`, `isSameHour()`, `isSameMinute()`, `isSameMonth()`, `isSameSecond()`, `isSameWeek()`, `isSameYear()` | values are equal at the selected unit |
+| `isSameOrAfter()`, `isSameOrAfterDay()`, `isSameOrAfterHour()`, `isSameOrAfterMinute()`, `isSameOrAfterMonth()`, `isSameOrAfterSecond()`, `isSameOrAfterWeek()`, `isSameOrAfterYear()` | receiver is equal or later |
+| `isSameOrBefore()`, `isSameOrBeforeDay()`, `isSameOrBeforeHour()`, `isSameOrBeforeMinute()`, `isSameOrBeforeMonth()`, `isSameOrBeforeSecond()`, `isSameOrBeforeWeek()`, `isSameOrBeforeYear()` | receiver is equal or earlier |
+| `isBetween()`, `isBetweenDay()`, `isBetweenHour()`, `isBetweenMinute()`, `isBetweenMonth()`, `isBetweenSecond()`, `isBetweenWeek()`, `isBetweenYear()` | receiver is strictly between two values |
+
+`isBetween*()` excludes both boundaries. Use `isDst()` to test daylight-saving time and `isLeapYear()` to test the current year.
+
+## Defaults and date clamping
+
+`getDefaultLocale()` and `getDefaultTimeZone()` return process-wide defaults, initially derived from PHP. Change them with `setDefaultLocale()` and `setDefaultTimeZone()`; passing `null` restores environment-derived behavior on the next read.
+
+Date clamping is enabled by default. When `withMonth()` or `withYear()` changes to a month that lacks the current day, the day is clamped to the last valid day. Disable or re-enable this process-wide behavior with `withDateClamping(false)` or `withDateClamping(true)`. Supplying an explicit day bypasses clamping.
 
 ## Behavior notes
 
-- `toIsoString()` always formats in UTC, regardless of the instance’s current time zone.
-- `createFromIsoString()` converts the parsed instant to the requested time zone, or the default time zone when none is provided.
-- Date clamping affects `withMonth()` and `withYear()` when `$date` is omitted. Control this with `DateTime::withDateClamping()`.
-- `getTimeZoneOffset()` and `withTimeZoneOffset()` use the inverse sign convention of `DateTimeZone::getOffset()` (negative values indicate time zones ahead of UTC).
-- The `diffIn*()` methods default to `$relative = true`, which normalizes the comparison into the receiver’s time zone and aligns smaller calendar fields before computing the unit difference.
+- `DateTime` requires the `intl` extension. Locale-sensitive names, week fields, and formatted output may vary with ICU data.
+- `toIsoString()` and `toUTCString()` always format in UTC; they do not change the original instance.
+- `createFromIsoString()` converts the parsed instant to the requested time zone, or the current default when none is supplied.
+- `getTimeZoneOffset()` returns minutes using the inverse sign of native `DateTimeZone::getOffset()`: `+10:00` is `-600`. `withTimeZoneOffset()` uses the same convention.
+- With `$relative = true`, `diffIn*()` converts the other value to the receiver's time zone and aligns smaller calendar fields before calculating the requested unit. Pass `false` to compare the unaligned calendar fields.
+- Arithmetic and field replacement use calendar operations. Results around daylight-saving transitions can therefore differ from adding a fixed number of elapsed seconds.
+- Instance and static macros can extend the API; see [Macros](../core/macros.md).
 
 ## Related
 
 - [Utilities](index.md)
 - [Periods](periods.md)
+- [Formatter](formatter.md)

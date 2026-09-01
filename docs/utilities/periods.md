@@ -1,396 +1,147 @@
 # Periods
 
-Use `Period` (`Fyre\Utility\DateTime\Period`) when you need a bounded date/time range at a specific granularity.
+Use `Period` (`Fyre\Utility\DateTime\Period`) for a bounded date/time range at a fixed granularity. Use `PeriodCollection` (`Fyre\Utility\DateTime\PeriodCollection`) for set-style operations across several ranges.
 
-Use `PeriodCollection` (`Fyre\Utility\DateTime\PeriodCollection`) when you need to work with multiple ranges as a set.
-
-For single instants (time zones, localization, calendar-aware diffs), see [Date/time](datetime.md).
+For individual date/time values, see [Date/time](datetime.md).
 
 ## Table of Contents
 
-- [Common operations](#common-operations)
-- [Method guide](#method-guide)
-  - [`Period`](#period)
-  - [`PeriodCollection`](#periodcollection)
+- [Creating a period](#creating-a-period)
+- [Boundaries, count, and iteration](#boundaries-count-and-iteration)
+- [Comparing and combining periods](#comparing-and-combining-periods)
+- [Period collections](#period-collections)
+- [Mutation and materialization](#mutation-and-materialization)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Common operations
-
-Create a period, iterate it, and subtract a blocked range:
-
-Boundaries matter: periods can include or exclude the start and/or end. If you see off-by-one results when iterating or calling `includes()`, double-check the boundary flags (see [Behavior notes](#behavior-notes)).
+## Creating a period
 
 ```php
 use Fyre\Utility\DateTime\Period;
 
-$period = new Period('2026-02-01', '2026-02-05'); // default granularity: "day"
+$period = new Period(
+    '2026-02-01',
+    '2026-02-05',
+    'day',
+    'none'
+);
+```
 
+The start and end may be `DateTime` instances or strings accepted by `DateTime`. Granularity is one of `year`, `month`, `day`, `hour`, `minute`, or `second`.
+
+The fourth argument identifies boundaries to exclude:
+
+| Value | Start | End |
+| --- | --- | --- |
+| `none` | included | included |
+| `start` | excluded | included |
+| `end` | included | excluded |
+| `both` | excluded | excluded |
+
+`Period::getBoundaries($includesStart, $includesEnd)` performs the inverse mapping and returns the matching exclusion keyword.
+
+## Boundaries, count, and iteration
+
+`start()` and `end()` return the original boundaries. `includedStart()` and `includedEnd()` return the effective boundaries after exclusions have advanced or reduced them by one unit. `includesStart()`, `includesEnd()`, and `granularity()` expose the remaining configuration.
+
+A period is an `Iterator<int, DateTime>` and yields every included value at its granularity:
+
+```php
 foreach ($period as $date) {
-    $iso = $date->toIsoString();
+    echo $date->toDateString().PHP_EOL;
 }
-
-$blocked = new Period('2026-02-03', '2026-02-04');
-$available = $period->subtract($blocked); // PeriodCollection
 ```
-
-Work with multiple ranges:
-
-```php
-use Fyre\Utility\DateTime\Period;
-use Fyre\Utility\DateTime\PeriodCollection;
-
-$a = new Period('2026-02-01', '2026-02-10');
-$b = new Period('2026-02-15', '2026-02-20');
-
-$collection = new PeriodCollection($a, $b);
-
-$sorted = $collection->sort();
-$boundaries = $collection->boundaries(); // Period|null
-$gaps = $collection->gaps(); // PeriodCollection
-```
-
-## Method guide
-
-### `Period`
-
-#### **Get the excluded boundary string** (`getBoundaries()`)
-
-Builds the boundary keyword (`'none'`, `'start'`, `'end'`, `'both'`) from two booleans indicating whether the start/end are included.
-
-Arguments:
-- `$includesStart` (`bool`): whether to include the start boundary.
-- `$includesEnd` (`bool`): whether to include the end boundary.
-
-```php
-$excludeBoundaries = Period::getBoundaries(true, false); // "end"
-```
-
-#### **Check whether a period includes a date** (`includes()`)
-
-Checks whether a `DateTime` falls within the included boundaries of the period.
-
-Arguments:
-- `$date` (`DateTime`): the date to test.
-
-```php
-use Fyre\Utility\DateTime\DateTime;
-
-$ok = $period->includes(new DateTime('2026-02-03')); // true
-```
-
-#### **Check whether a period fully contains another** (`contains()`)
-
-Checks whether another period is entirely within this period (using included boundaries).
-
-Arguments:
-- `$other` (`Period`): the period to test.
-
-```php
-$outer = new Period('2026-02-01', '2026-02-10');
-$inner = new Period('2026-02-03', '2026-02-05');
-
-$ok = $outer->contains($inner); // true
-```
-
-#### **Check whether periods overlap** (`overlapsWith()`)
-
-Returns whether two periods overlap. A shared boundary instant counts only when that boundary is included by both periods.
-
-Arguments:
-- `$other` (`Period`): the period to compare against.
-
-```php
-$a = new Period('2026-02-01', '2026-02-05');
-$b = new Period('2026-02-05', '2026-02-10');
-
-$ok = $a->overlapsWith($b); // true
-```
-
-#### **Get the overlap between two periods** (`overlap()`)
-
-Returns a new `Period` representing the overlap, or `null` if no overlap exists.
-
-Arguments:
-- `$other` (`Period`): the period to compare against.
-
-```php
-$a = new Period('2026-02-01', '2026-02-10');
-$b = new Period('2026-02-05', '2026-02-12');
-
-$overlap = $a->overlap($b); // Period|null
-```
-
-#### **Get the overlap for multiple periods** (`overlapAll()`)
-
-Returns the overlap of this period with every provided period, or `null` if any comparison has no overlap.
-
-Arguments:
-- `$others` (`Period[]`): the periods to compare against.
-
-```php
-$a = new Period('2026-02-01', '2026-02-10');
-$b = new Period('2026-02-05', '2026-02-12');
-$c = new Period('2026-02-08', '2026-02-20');
-
-$overlap = $a->overlapAll($b, $c); // Period|null
-```
-
-#### **Get overlaps against multiple periods** (`overlapAny()`)
-
-Returns a `PeriodCollection` containing the overlap of this period with each provided period (skipping non-overlapping periods).
-
-Arguments:
-- `$others` (`Period[]`): the periods to compare against.
-
-```php
-$base = new Period('2026-02-01', '2026-02-10');
-
-$a = new Period('2026-01-15', '2026-01-20');
-$b = new Period('2026-02-05', '2026-02-06');
-$c = new Period('2026-02-09', '2026-02-15');
-
-$overlaps = $base->overlapAny($a, $b, $c); // PeriodCollection
-```
-
-#### **Get the gap between two periods** (`gap()`)
-
-Returns the gap between two non-overlapping periods as a new `Period`, or `null` if the periods overlap or touch with no gap.
-
-Arguments:
-- `$other` (`Period`): the period to compare against.
-
-```php
-$a = new Period('2026-02-01', '2026-02-05');
-$b = new Period('2026-02-10', '2026-02-12');
-
-$gap = $a->gap($b); // Period|null
-```
-
-#### **Subtract a period from another** (`subtract()`)
-
-Removes the overlapping part of another period and returns the remaining ranges (0–2) as a `PeriodCollection`.
-
-Arguments:
-- `$other` (`Period`): the period to remove.
-
-```php
-$a = new Period('2026-02-01', '2026-02-10');
-$b = new Period('2026-02-04', '2026-02-06');
-
-$remaining = $a->subtract($b); // PeriodCollection
-```
-
-#### **Subtract multiple periods at once** (`subtractAll()`)
-
-Subtracts many periods and returns the remaining ranges as a `PeriodCollection`.
-
-Arguments:
-- `$others` (`Period[]`): the periods to remove.
-
-```php
-$available = new Period('2026-02-01', '2026-02-10');
-$busyA = new Period('2026-02-03', '2026-02-04');
-$busyB = new Period('2026-02-07', '2026-02-08');
-
-$remaining = $available->subtractAll($busyA, $busyB);
-```
-
-#### **Get the symmetric difference** (`diffSymmetric()`)
-
-Returns the non-overlapping parts of two periods.
-
-Arguments:
-- `$other` (`Period`): the period to compare against.
-
-```php
-$a = new Period('2026-02-01', '2026-02-10');
-$b = new Period('2026-02-05', '2026-02-12');
-
-$diff = $a->diffSymmetric($b); // PeriodCollection
-```
-
-#### **Check whether two periods touch** (`touches()`)
-
-Returns `true` when the included start of one period is the same as the included end of the other (at the current granularity).
-
-Arguments:
-- `$other` (`Period`): the period to compare against.
-
-```php
-$a = new Period('2026-02-01', '2026-02-05');
-$b = new Period('2026-02-05', '2026-02-10');
-
-$ok = $a->touches($b); // true
-```
-
-#### **Get the number of yielded values** (`count()`)
-
-Returns how many `DateTime` values iteration will yield for this period (respecting excluded boundaries).
-
-```php
-$a = new Period('2026-02-01', '2026-02-05');
-$steps = $a->count(); // 5
-```
-
-#### **Get the distance between boundaries** (`length()`)
-
-Returns the distance between the included boundaries in units of the granularity (so a single included instant has a length of `0`).
-
-```php
-$a = new Period('2026-02-01', '2026-02-05');
-$len = $a->length(); // 4
-```
-
-#### **Inspect boundaries and configuration**
 
 | Method | Result |
 | --- | --- |
-| `start()` / `end()` | the original boundary values supplied to the period |
-| `includedStart()` / `includedEnd()` | the effective boundaries after exclusions are applied |
-| `includesStart()` / `includesEnd()` | whether each original boundary is included |
-| `granularity()` | the unit used for iteration and comparison |
+| `count()` | number of values yielded, including both effective boundaries |
+| `length()` | distance between the effective boundaries; a one-value period has length `0` |
+| `current()`, `key()`, `next()`, `rewind()`, `valid()` | standard iterator cursor operations |
 
-#### **Compare periods and boundary dates**
+Construction throws if exclusions leave the effective end before the effective start, so every valid period yields at least one value.
 
-`equals($other)` checks whether two periods have the same included boundaries at the current granularity.
+## Comparing and combining periods
 
-The remaining comparison methods inspect one included boundary against a `DateTime`:
+| Method | Result |
+| --- | --- |
+| `includes($date)` | whether a date lies within the effective boundaries |
+| `contains($other)` | whether the complete effective range of another period is contained |
+| `equals($other)` | whether effective boundaries and granularity match |
+| `overlapsWith($other)` | whether the effective ranges share at least one value |
+| `touches($other)` | whether one effective start equals the other effective end |
+| `overlap($other)` | shared range, or `null` |
+| `overlapAll(...$others)` | range shared with every argument, or `null` |
+| `overlapAny(...$others)` | collection of each non-empty pairwise overlap |
+| `gap($other)` | uncovered range between non-overlapping periods, or `null` |
+| `subtract($other)` | zero, one, or two remaining ranges as a collection |
+| `subtractAll(...$others)` | ranges remaining after every argument is removed |
+| `diffSymmetric($other)` | ranges present in only one of the two periods |
+| `renew()` | same-span period beginning at the original end, with the same granularity and exclusions |
+
+Boundary comparison methods operate on the effective start or end:
 
 | Boundary | Equal | Before | Before or equal | After | After or equal |
 | --- | --- | --- | --- | --- | --- |
 | start | `startEquals()` | `startsBefore()` | `startsBeforeOrEquals()` | `startsAfter()` | `startsAfterOrEquals()` |
 | end | `endEquals()` | `endsBefore()` | `endsBeforeOrEquals()` | `endsAfter()` | `endsAfterOrEquals()` |
 
-```php
-$period = new Period('2026-02-01', '2026-02-05');
+Most period-to-period operations require matching granularities and throw `LogicException` when they differ.
 
-$startsAfterJanuary = $period->startsAfter(new DateTime('2026-01-31'));
-$endsBy = $period->endsBeforeOrEquals(new DateTime('2026-02-07'));
-```
+## Period collections
 
-#### **Create the next period with the same length** (`renew()`)
-
-Creates a new period after the current one with the same length and boundary inclusion.
-
-### `PeriodCollection`
-
-#### **Add periods** (`add()`)
-
-Returns a new collection with the added periods appended.
-
-Arguments:
-- `$periods` (`Period[]`): the periods to add.
+Construct a collection from zero or more periods:
 
 ```php
-$a = new Period('2026-02-01', '2026-02-05');
-$b = new Period('2026-02-10', '2026-02-12');
+use Fyre\Utility\DateTime\PeriodCollection;
 
-$collection = new PeriodCollection($a);
-$withMore = $collection->add($b);
-```
-
-#### **Sort by start date** (`sort()`)
-
-Returns a new collection sorted by each period’s included start timestamp.
-
-```php
-$a = new Period('2026-02-10', '2026-02-12');
-$b = new Period('2026-02-01', '2026-02-05');
-
-$sorted = new PeriodCollection($a, $b)->sort();
-```
-
-#### **Remove duplicates** (`unique()`)
-
-Returns a new collection with duplicate periods removed. Periods are considered duplicates if they are equal according to `Period::equals()`.
-
-```php
-$a = new Period('2026-02-01', '2026-02-05');
-$b = new Period('2026-02-01', '2026-02-05');
-
-$unique = new PeriodCollection($a, $b)->unique();
-```
-
-#### **Get collection boundaries** (`boundaries()`)
-
-Returns the minimal `Period` covering all periods in the collection, or `null` if the collection is empty.
-
-```php
-$a = new Period('2026-02-01', '2026-02-05');
-$b = new Period('2026-02-10', '2026-02-12');
-
-$boundaries = new PeriodCollection($a, $b)->boundaries();
-```
-
-#### **Find gaps inside boundaries** (`gaps()`)
-
-Returns a new collection containing the uncovered ranges inside `boundaries()`.
-
-```php
-$a = new Period('2026-02-01', '2026-02-05');
-$b = new Period('2026-02-10', '2026-02-12');
-
-$gaps = new PeriodCollection($a, $b)->gaps();
-```
-
-#### **Intersect a period with every element** (`intersect()`)
-
-Intersects one period with every element in the collection and returns only the overlapping parts.
-
-Arguments:
-- `$other` (`Period`): the period to intersect with.
-
-```php
-$window = new Period('2026-02-04', '2026-02-11');
-$a = new Period('2026-02-01', '2026-02-05');
-$b = new Period('2026-02-10', '2026-02-12');
-
-$overlaps = new PeriodCollection($a, $b)->intersect($window);
-```
-
-#### **Subtract a set of periods** (`subtract()`)
-
-Subtracts every period in another collection from every period in this collection.
-
-Arguments:
-- `$others` (`PeriodCollection`): the collection to subtract.
-
-```php
-$available = new PeriodCollection(
-    new Period('2026-02-01', '2026-02-10')
+$periods = new PeriodCollection(
+    new Period('2026-02-01', '2026-02-05'),
+    new Period('2026-02-10', '2026-02-12')
 );
-
-$busy = new PeriodCollection(
-    new Period('2026-02-03', '2026-02-04'),
-    new Period('2026-02-07', '2026-02-08')
-);
-
-$remaining = $available->subtract($busy);
 ```
 
-#### **Get overlap for multiple collections** (`overlapAll()`)
+| Method | Result |
+| --- | --- |
+| `add(...$periods)` | new collection with periods appended |
+| `sort()` | new collection ordered by included start timestamp |
+| `unique()` | new collection retaining the first of each equal period |
+| `boundaries()` | minimal period spanning the collection, or `null` when empty |
+| `gaps()` | uncovered ranges within `boundaries()` |
+| `intersect($period)` | pairwise overlaps with one period |
+| `overlapAll(...$collections)` | intersection across every collection |
+| `subtract($collection)` | ranges left after removing another collection |
+| `count()` | number of periods |
+| `current()`, `key()`, `next()`, `rewind()`, `valid()` | standard iterator cursor operations |
 
-Returns a new collection containing the overlap of all provided collections (or a clone of the current collection if none are provided).
+Collections do not automatically sort, merge, or normalize their periods. Call `sort()` when order matters; `unique()` removes duplicates but does not merge adjacent or overlapping ranges.
 
-Arguments:
-- `$others` (`PeriodCollection[]`): the collections to compare against.
+## Mutation and materialization
+
+`Period` operations return new periods or collections. Its only changing state is the cursor used by `Iterator`.
+
+`PeriodCollection` methods also return new collections, but its `ArrayAccess` implementation mutates the original collection:
 
 ```php
-$a = new PeriodCollection(new Period('2026-02-01', '2026-02-10'));
-$b = new PeriodCollection(new Period('2026-02-05', '2026-02-12'));
-$c = new PeriodCollection(new Period('2026-02-08', '2026-02-20'));
-
-$overlap = $a->overlapAll($b, $c);
+$periods[] = new Period('2026-03-01', '2026-03-03');
+$periods[0] = new Period('2026-01-01', '2026-01-02');
+unset($periods[1]);
 ```
+
+Assigned values must be `Period` instances. Reading a missing index throws `OutOfBoundsException`. Unsetting a non-final index leaves a gap, and iteration stops at the first missing integer index; avoid `unset()` when later periods must remain iterable.
+
+These operations are implemented by `offsetExists()`, `offsetGet()`, `offsetSet()`, and `offsetUnset()`.
+
+Operations materialize their results immediately. There is no lazy period pipeline: large ranges can be iterated without first creating an array of dates, but collection operations build their returned period lists in memory.
 
 ## Behavior notes
 
-- `count()` and `length()` answer different questions: `count()` is “how many steps will iteration yield”, while `length()` is the distance between the included boundaries.
-- Boundary exclusion affects both iteration and operations like `includes()`; double-check whether you want to exclude `start`, `end`, or both.
-- Many period-to-period operations require matching granularities (for example: `overlap()`, `subtract()`, `contains()`, `equals()`). When granularities don’t match, these methods throw a `LogicException`.
-- `PeriodCollection` does not automatically sort, merge, or normalize periods. Use `sort()` when order matters.
-- `boundaries()` returns `null` for an empty collection.
+- Period comparisons use the date/time calendar operation matching the configured granularity.
+- A shared instant is an overlap only when it belongs to both periods after exclusions are applied.
+- `touches()` means the effective boundaries are equal; it does not mean two discrete periods are separated by exactly one unit.
+- A collection does not validate that all periods use the same granularity. Operations that compare incompatible periods can therefore throw later.
+- `boundaries()` uses the granularity and boundary inclusion of the periods supplying the earliest start and latest end.
+- `overlapAll()` with no additional collections returns a clone; subtracting an empty collection also returns a clone.
+- Both classes support instance macros; see [Macros](../core/macros.md).
 
 ## Related
 

@@ -1,417 +1,193 @@
 # Colors
 
-Use `Color` when you need to parse CSS-like color input, convert between color spaces, and format colors back to CSS.
+`Fyre\Utility\Color\Color` parses CSS colors, converts between color spaces, fits colors to a target gamut, and calculates compositing, luminance, and contrast.
 
-Concrete color spaces are represented by `Colors\*` classes such as `Srgb`, `Lab`, and `XyzD65`.
+Each value is an immutable concrete color such as `Srgb`, `Hsl`, `Lab`, or `XyzD65`.
 
 ## Table of Contents
 
-- [Start here](#start-here)
-- [Constants](#constants)
+- [Parse and convert a color](#parse-and-convert-a-color)
 - [Supported color spaces](#supported-color-spaces)
-- [Parsing and creating colors](#parsing-and-creating-colors)
-  - [Parse a CSS color string](#parse-a-css-color-string)
-  - [Create colors from channels](#create-colors-from-channels)
-- [Converting colors](#converting-colors)
-  - [Convert to a named space](#convert-to-a-named-space)
-  - [Fit a color to a target gamut](#fit-a-color-to-a-target-gamut)
-- [Formatting colors](#formatting-colors)
 - [Method guide](#method-guide)
-  - [Parsing and factories](#parsing-and-factories)
-  - [Conversion](#conversion)
-  - [Formatting and output](#formatting-and-output)
-  - [Alpha and helpers](#alpha-and-helpers)
-  - [Channel accessors (by space)](#channel-accessors-by-space)
+  - [Parsing](#parsing)
+  - [Channel factories](#channel-factories)
+  - [Conversion and gamut](#conversion-and-gamut)
+  - [Formatting](#formatting)
+  - [Alpha and analysis](#alpha-and-analysis)
+  - [Channel accessors](#channel-accessors)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Start here
+## Parse and convert a color
 
-This API is intentionally space-aware: each instance has a current color space, can convert to other spaces, and formats to the appropriate CSS representation for that space.
+Import the base class for format-preserving parsing and a concrete class when the result should be normalized immediately:
 
 ```php
 use Fyre\Utility\Color\Color;
 use Fyre\Utility\Color\Colors\Srgb;
 
-$raw = 'hsl(210 90% 55% / 70%)';
-
-// Parse without forcing a target space (returns a concrete Colors\* instance).
-$color = Color::createFromString($raw);
-
-// Parse and normalize into a specific space.
-$srgb = Srgb::createFromString($raw);
-
-// Convert to another space.
-$lab = $srgb->to('lab');
-
-// Accessibility helpers.
-$bg = Color::createFromString('#0f172a');
-$contrast = $bg->contrast(Color::createFromString('white'));
+$color = Color::createFromString('hsl(210 90% 55% / 70%)');
+$srgb = Srgb::createFromString('color(display-p3 1 0.2 0.2)');
+$css = $srgb
+    ->fitGamut('srgb')
+    ->toString();
 ```
 
-Examples below assume any referenced color classes are already imported when needed.
-
-## Constants
-
-`Color` exposes a public constant containing CSS named colors:
-
-- `Color::CSS_COLORS` maps lowercase CSS color names (for example: `rebeccapurple`) to hex strings (for example: `#663399`).
-
-This list is used by `label()` for nearest-name lookup, and can also be used for name-aware formatting in `Rgb::toString()` and `Hex::toString()`.
+Calling `Color::createFromString()` returns the concrete space represented by the input. Calling the inherited method on `Srgb` or another concrete class converts the parsed value to that class.
 
 ## Supported color spaces
 
-Color spaces are implemented as concrete classes under `Fyre\Utility\Color\Colors`:
+| Family | Classes and `to()` identifiers |
+| --- | --- |
+| display encodings | `Hex` (`hex`), `Rgb` (`rgb`) |
+| RGB profiles | `Srgb` (`srgb`), `SrgbLinear` (`srgb-linear`), `DisplayP3` (`display-p3`), `DisplayP3Linear` (`display-p3-linear`), `A98Rgb` (`a98-rgb`), `ProPhotoRgb` (`prophoto-rgb`), `Rec2020` (`rec2020`) |
+| cylindrical | `Hsl` (`hsl`), `Hwb` (`hwb`) |
+| perceptual | `Lab` (`lab`), `Lch` (`lch`), `OkLab` (`oklab`), `OkLch` (`oklch`) |
+| reference | `XyzD50` (`xyz-d50`), `XyzD65` (`xyz-d65`) |
 
-- Hex: `Hex`
-- RGB (0–255-style channels): `Rgb`
-- RGB-like 0–1 profiles: `Srgb`, `SrgbLinear`, `DisplayP3`, `DisplayP3Linear`, `A98Rgb`, `ProPhotoRgb`, `Rec2020`
-- Polar/cylindrical: `Hsl`, `Hwb`
-- Perceptual: `Lab`, `Lch`, `OkLab`, `OkLch`
-- Reference: `XyzD50`, `XyzD65`
+Concrete classes live under `Fyre\Utility\Color\Colors`.
 
-In practice, most application code can stay in `srgb` and convert when you need a specific output format or analysis (wide-gamut output, perceptual comparisons, contrast checks, or gamut fitting).
+`Color::CSS_COLORS` maps lowercase CSS names to hex strings. Parsing and `label()` use this table; `Rgb` and `Hex` can also use it when name output is enabled.
 
-When converting with `to(string $space)`, use one of these space identifiers:
+## Method guide
 
-```text
-a98-rgb, display-p3, display-p3-linear, hex, hsl, hwb, lab, lch, oklab, oklch,
-prophoto-rgb, rec2020, rgb, srgb, srgb-linear, xyz-d50, xyz-d65
-```
+The methods below use the imports and color instances established above.
 
-## Parsing and creating colors
+### Parsing
 
-### Parse a CSS color string
-
-Use `Color::createFromString()` when you want to accept typical CSS-like input:
+#### **Parse a CSS color** (`createFromString()`)
 
 ```php
-$raw = 'rgba(255, 0, 0, 0.5)';
-
-// Returns a concrete space matching the input (Rgb here).
-$color = Color::createFromString($raw);
-
-// Parse and immediately normalize into a target space.
-$srgb = Srgb::createFromString($raw);
+Color::createFromString(string $string): static
 ```
 
-Supported inputs include:
+Supported input includes:
 
-- Named CSS colors (for example: `"rebeccapurple"`, `"hotpink"`)
-- `"transparent"` (parsed as RGB with `alpha = 0`)
-- Hex strings: `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`
-- Functional forms: `rgb(...)`, `rgba(...)`, `hsl(...)`, `hsla(...)`, `hwb(...)`, `lab(...)`, `lch(...)`, `oklab(...)`, `oklch(...)`
-- `color(...)` values:
-  - `color(srgb ...)`, `color(srgb-linear ...)`
-  - `color(display-p3 ...)`, `color(display-p3-linear ...)`
-  - `color(a98-rgb ...)`, `color(prophoto-rgb ...)`, `color(rec2020 ...)`
-  - `color(xyz-d50 ...)`, `color(xyz ...)` / `color(xyz-d65 ...)`
+- CSS named colors and `transparent`
+- `#rgb`, `#rgba`, `#rrggbb`, and `#rrggbbaa`
+- `rgb()`, `rgba()`, `hsl()`, `hsla()`, `hwb()`, `lab()`, `lch()`, `oklab()`, and `oklch()`
+- `color()` with `srgb`, `srgb-linear`, `display-p3`, `display-p3-linear`, `a98-rgb`, `prophoto-rgb`, `rec2020`, `xyz-d50`, `xyz`, or `xyz-d65`
 
-Parsing details:
+Parsing is case-insensitive and normalizes whitespace. Functions require three channels and accept one optional alpha. Modern space-separated notation uses `/` before alpha; legacy comma notation is accepted for RGB, HSL, and HWB, but separators cannot be mixed.
 
-- Whitespace is normalized and parsing is case-insensitive.
-- Functional notation requires exactly three channels and accepts one optional alpha value. Space-separated alpha uses `/`; legacy comma syntax is supported for RGB, HSL, and HWB, but separator styles cannot be mixed.
-- Numeric tokens support signs, decimals, percentages, and scientific notation, and must not contain trailing characters or unknown units.
-- Percent values are supported where CSS allows them.
-- CSS angle parsing supports plain degrees plus `%`, `grad`, `rad`, and `turn` units.
+Numbers may use signs, decimals, percentages where supported, and scientific notation. Angles accept degrees, `%`, `grad`, `rad`, and `turn`. Invalid syntax throws an `InvalidArgumentException`.
 
-### Create colors from channels
+### Channel factories
 
-If you already have numeric channels, use the `createFrom*()` factories. These factories are named for the source space, and the class you call them on determines the returned space.
+Every factory is inherited by each concrete class. The named source space determines how the channel values are interpreted; the class used for the call determines the returned space:
 
 ```php
 use Fyre\Utility\Color\Colors\Lab;
 
-// Create sRGB directly from sRGB channels (0..1).
-$brand = Srgb::createFromSrgb(0.12, 0.56, 0.92);
-
-// Create Lab by converting from sRGB channels.
-$brandLab = Lab::createFromSrgb(0.12, 0.56, 0.92);
-
-// Create sRGB by converting from HSL channels (hue in degrees, S/L in 0..100).
-$accent = Srgb::createFromHsl(330, 85, 55, 0.8);
-```
-
-## Converting colors
-
-### Convert to a named space
-
-Use `to(string $space)` to convert a color into a supported space name:
-
-```php
-$c = Color::createFromString('#0ea5e9');
-
-$lab = $c->to('lab');
-$p3 = $c->to('display-p3');
-```
-
-Convenience methods also exist for common conversions, such as `toHex()`, `toRgb()`, `toHsl()`, `toSrgb()`, `toXyzD65()`, and others.
-
-### Fit a color to a target gamut
-
-Use `fitGamut()` to fit the color into a target space’s gamut by reducing OKLCH chroma. The returned color is in the current color space.
-
-Colors at or beyond the OKLCH lightness boundaries are fitted to black or white.
-
-Use this when you have a wide-gamut color (for example `display-p3`) but you need to output CSS for a smaller target gamut (most commonly `srgb`).
-
-```php
-use Fyre\Utility\Color\Colors\DisplayP3;
-
-$p3 = DisplayP3::createFromString('color(display-p3 1 0.2 0.2)');
-$fitted = $p3->fitGamut('srgb'); // still DisplayP3, but adjusted to fit sRGB gamut
-```
-
-## Formatting colors
-
-All colors are stringable; `__toString()` calls `toString()`:
-
-```php
-$c = Color::createFromString('hsl(210 90% 55% / 70%)');
-
-(string) $c;
-$c->toHex()->toString();
-```
-
-Formatting depends on the concrete color space:
-
-- `Hex` formats as `#rgb/#rgba/#rrggbb/#rrggbbaa` (optionally shortened)
-- `Rgb` formats as `rgb(r g b / a%)`
-- `Hsl`, `Hwb`, `Lab`, `Lch`, `OkLab`, `OkLch` format as their CSS functional form
-- Other spaces format as `color(<space> <c1> <c2> <c3> / <alpha>)`
-
-Common workflow: parse input -> normalize to the output space -> format as CSS.
-
-```php
-$css = Color::createFromString('color(display-p3 1 0.2 0.2)')
-    ->fitGamut('srgb')
-    ->toSrgb()
-    ->toString();
-```
-
-## Method guide
-
-### Parsing and factories
-
-#### **Parse a CSS color string** (`createFromString()`)
-
-Parses a CSS-like color string and returns a concrete `Colors\*` instance. When called as `Color::createFromString()`, the returned type generally matches the input format; when called as `<Space>::createFromString()`, the parsed color is converted into that space.
-
-Arguments:
-- `$string` (`string`): the CSS-like color string.
-
-Throws:
-- `InvalidArgumentException` if the string is not a supported/valid color format.
-
-```php
-$any = Color::createFromString('#0ea5e9');
-$srgb = Srgb::createFromString('#0ea5e9');
-```
-
-#### **Create from channels in a specific source space** (`createFrom*()`)
-
-Creates a color from explicit channel values. These factories are defined on `Color` and inherited by all spaces; call them on the class you want back:
-
-- `createFromRgb(float $red, float $green, float $blue, float $alpha = 1)`
-- `createFromHex(...)` is not provided; use `createFromString('#...')` or `toHex()`
-- `createFromSrgb(float $red, float $green, float $blue, float $alpha = 1)`
-- `createFromSrgbLinear(float $red, float $green, float $blue, float $alpha = 1)`
-- `createFromDisplayP3(float $red, float $green, float $blue, float $alpha = 1)`
-- `createFromDisplayP3Linear(float $red, float $green, float $blue, float $alpha = 1)`
-- `createFromA98Rgb(float $red, float $green, float $blue, float $alpha = 1)`
-- `createFromProPhotoRgb(float $red, float $green, float $blue, float $alpha = 1)`
-- `createFromRec2020(float $red, float $green, float $blue, float $alpha = 1)`
-- `createFromHsl(float $hue, float $saturation, float $lightness, float $alpha = 1)`
-- `createFromHwb(float $hue, float $whiteness, float $blackness, float $alpha = 1)`
-- `createFromLab(float $lightness, float $a, float $b, float $alpha = 1)`
-- `createFromLch(float $lightness, float $chroma, float $hue, float $alpha = 1)`
-- `createFromOkLab(float $lightness, float $a, float $b, float $alpha = 1)`
-- `createFromOkLch(float $lightness, float $chroma, float $hue, float $alpha = 1)`
-- `createFromXyzD50(float $x, float $y, float $z, float $alpha = 1)`
-- `createFromXyzD65(float $x, float $y, float $z, float $alpha = 1)`
-
-```php
 $srgb = Srgb::createFromRgb(14, 165, 233);
 $lab = Lab::createFromRgb(14, 165, 233);
 ```
 
-### Conversion
+| Source family | Factories |
+| --- | --- |
+| 0–255 RGB | `createFromRgb($red = 0, $green = 0, $blue = 0, $alpha = 1)` |
+| RGB profiles | `createFromSrgb()`, `createFromSrgbLinear()`, `createFromDisplayP3()`, `createFromDisplayP3Linear()`, `createFromA98Rgb()`, `createFromProPhotoRgb()`, `createFromRec2020()` |
+| cylindrical | `createFromHsl()`, `createFromHwb()` |
+| perceptual | `createFromLab()`, `createFromLch()`, `createFromOkLab()`, `createFromOkLch()` |
+| reference | `createFromXyzD50()`, `createFromXyzD65()` |
 
-#### **Get the current space name** (`space()`)
+Every method accepts three `float` channels followed by `float $alpha = 1`; each channel also defaults to `0`. Hex input has no channel factory—parse a hex string or call `toHex()`.
 
-Returns the color space identifier for the current concrete class (for example: `srgb`, `lab`, `xyz-d65`).
+Concrete classes can also be constructed directly with their native channels:
 
-```php
-$c = Color::createFromString('#0ea5e9');
-$space = $c->space();
-```
+| Spaces | Constructor channels |
+| --- | --- |
+| `Rgb`, `Hex`, and RGB profiles | red, green, blue, alpha |
+| `Hsl` | hue, saturation, lightness, alpha |
+| `Hwb` | hue, whiteness, blackness, alpha |
+| `Lab`, `OkLab` | lightness, a, b, alpha |
+| `Lch`, `OkLch` | lightness, chroma, hue, alpha |
+| `XyzD50`, `XyzD65` | x, y, z, alpha |
 
-#### **Convert to a named space** (`to()`)
-
-Converts the color to one of the supported space names.
-
-Arguments:
-- `$space` (`string`): the target space name (for example: `lab`, `display-p3`, `xyz-d65`).
-
-```php
-$c = Color::createFromString('#0ea5e9');
-$xyz = $c->to('xyz-d65');
-```
-
-#### **Fit to a target gamut** (`fitGamut()`)
-
-Fits the color into the target gamut by reducing OKLCH chroma. Supported target spaces are:
-
-- `a98-rgb`, `display-p3`, `display-p3-linear`, `prophoto-rgb`, `rec2020`, `rgb`, `srgb`, `srgb-linear`
-
-Arguments:
-- `$space` (`string`): the target gamut space.
+All constructor arguments default to `0`, except alpha, which defaults to `1`:
 
 ```php
-$c = Color::createFromString('color(display-p3 1 0.2 0.2)');
-$fitted = $c->fitGamut('srgb');
+$srgb = new Srgb(0.1, 0.6, 0.9, 0.8);
 ```
 
-### Formatting and output
+### Conversion and gamut
+
+| Method | Behavior |
+| --- | --- |
+| `space(): string` | current `to()` identifier |
+| `to(string $space): Color` | convert to a supported named space; an empty or current identifier returns the same instance |
+| `fitGamut(string $space = 'srgb'): static` | reduce OKLCH chroma until the color fits the target gamut, then return it in the original concrete space |
+
+Convenience conversions cover every supported target:
+
+```text
+toA98Rgb(), toDisplayP3(), toDisplayP3Linear(), toHex(), toHsl(), toHwb(),
+toLab(), toLch(), toOkLab(), toOkLch(), toProPhotoRgb(), toRec2020(),
+toRgb(), toSrgb(), toSrgbLinear(), toXyzD50(), toXyzD65()
+```
+
+`fitGamut()` supports `a98-rgb`, `display-p3`, `display-p3-linear`, `prophoto-rgb`, `rec2020`, `rgb`, `srgb`, and `srgb-linear`. It returns the current instance when the converted color is already in gamut. Lightness outside the OKLCH range is clamped to black or white with zero chroma.
+
+### Formatting
 
 #### **Format as CSS** (`toString()`)
 
-Returns a CSS color string appropriate to the concrete color space. By default, alpha is included if it is less than `1`.
-
-Arguments:
-- `$alpha` (`bool|null`): whether to include the alpha component (`null` uses the default rule).
-- `$precision` (`int`): Decimal precision for formatted components.
-
 ```php
-$c = Color::createFromString('lab(50% 60 30 / 0.7)');
-$s = $c->toString();
+toString(bool|null $alpha = null, int $precision = 2): string
 ```
 
-`Rgb` and `Hex` also support additional formatting options:
+`null` includes alpha only when it is below `1`. Output follows the concrete space:
 
-- `Rgb::toString(..., bool $name = false)` optionally emits CSS names (or `transparent`) when possible.
-- `Hex::toString(..., bool $shortenHex = true, bool $name = false)` optionally shortens hex output and/or emits names.
+| Class | Output |
+| --- | --- |
+| `Hex` | hexadecimal, optionally shortened |
+| `Rgb` | `rgb()` |
+| `Hsl`, `Hwb`, `Lab`, `Lch`, `OkLab`, `OkLch` | matching CSS function |
+| other profiles and reference spaces | `color(<space> ...)` |
 
-#### **String casting** (`__toString()`)
+`Rgb::toString()` adds `bool $name = false`. `Hex::toString()` adds `bool $shortenHex = true` and `bool $name = false`. Name output emits a CSS name, including `transparent`, when possible.
 
-Casts the color to a string by calling `toString()`.
+Casting a color to `string` calls `toString()`.
 
-```php
-$c = Color::createFromString('#0ea5e9');
-$s = (string) $c;
-```
+### Alpha and analysis
 
-### Alpha and helpers
+| Method | Behavior |
+| --- | --- |
+| `getAlpha(): float` | current alpha in `0..1` |
+| `withAlpha(float $alpha): static` | clone with a clamped alpha |
+| `composite(Color $background): static` | source-over composite in sRGB, returned as the foreground's concrete class |
+| `luma(): float` | relative luminance calculated through sRGB |
+| `contrast(Color $other): float` | WCAG-style luminance contrast ratio |
+| `label(): string` | nearest `CSS_COLORS` name by channel distance in the current space |
 
-#### **Read alpha** (`getAlpha()`)
-
-Returns the current alpha value.
-
-```php
-$c = Color::createFromString('rgb(0 0 0 / 50%)');
-$a = $c->getAlpha();
-```
-
-#### **Clone with alpha** (`withAlpha()`)
-
-Clones the color with a new alpha value.
-
-Arguments:
-- `$alpha` (`float`): the new alpha value.
+`contrast()` requires both colors to be fully opaque and otherwise throws a `LogicException`. Convert before `label()` when the comparison should occur in a specific space:
 
 ```php
-$c = Color::createFromString('#0ea5e9');
-$semi = $c->withAlpha(0.5);
+$name = $color->toSrgb()->label();
+$ratio = Color::createFromString('#0f172a')
+    ->contrast(Color::createFromString('white'));
 ```
 
-#### **Composite over a background** (`composite()`)
+### Channel accessors
 
-Composites this color over a background color using source-over alpha compositing in sRGB. The result uses the foreground color's concrete class.
+Every concrete color exposes public readonly channel and `alpha` properties, plus `toArray()` with the same named channels. Getter methods and immutable `with*()` methods follow the space:
 
-Arguments:
-- `$background` (`Color`): the background color.
-
-```php
-$foreground = Color::createFromString('rgb(255 255 255 / 50%)');
-$background = Color::createFromString('#000');
-$result = $foreground->composite($background);
-```
-
-#### **Relative luminance** (`luma()`)
-
-Returns the relative luminance, computed via sRGB.
-
-```php
-$c = Color::createFromString('#0ea5e9');
-$l = $c->luma();
-```
-
-#### **Contrast ratio** (`contrast()`)
-
-Calculates the contrast ratio between this color and another color using relative luminance.
-
-Both colors must be fully opaque.
-
-Arguments:
-- `$other` (`Color`): the other color.
-
-```php
-$bg = Color::createFromString('#0f172a');
-$ratio = $bg->contrast(Color::createFromString('white'));
-```
-
-#### **Nearest CSS name** (`label()`)
-
-Returns the closest CSS named color by comparing channel distance within the current color space.
-
-```php
-$c = Color::createFromString('#663399');
-$name = $c->label(); // "rebeccapurple"
-```
-
-### Channel accessors (by space)
-
-All concrete colors expose their components via `toArray()`:
-
-- `toArray()` returns an associative array of components for the current space (including `alpha`). The keys depend on the concrete class (for example: `red/green/blue`, `hue/saturation/lightness`, `x/y/z`).
-
-Many spaces also expose getters and “with*” cloning helpers:
-
-- RGB-like (`Rgb`, `Srgb`, `SrgbLinear`, `DisplayP3`, `DisplayP3Linear`, `A98Rgb`, `ProPhotoRgb`, `Rec2020`):
-  - `getRed()`, `getGreen()`, `getBlue()`
-  - `withRed()`, `withGreen()`, `withBlue()`
-- `Hsl`:
-  - `getHue()`, `getSaturation()`, `getLightness()`
-  - `withHue()`, `withSaturation()`, `withLightness()`
-- `Hwb`:
-  - `getHue()`, `getWhiteness()`, `getBlackness()`
-  - `withHue()`, `withWhiteness()`, `withBlackness()`
-- `Lab` and `OkLab`:
-  - `getLightness()`, `getA()`, `getB()`
-  - `withLightness()`, `withA()`, `withB()`
-- `Lch` and `OkLch`:
-  - `getLightness()`, `getChroma()`, `getHue()`
-  - `withLightness()`, `withChroma()`, `withHue()`
-- `XyzD50` and `XyzD65`:
-  - `getX()`, `getY()`, `getZ()`
-  - `withX()`, `withY()`, `withZ()`
+| Spaces | Getters and cloning methods |
+| --- | --- |
+| RGB-like spaces | `getRed()`, `getGreen()`, `getBlue()` and `withRed()`, `withGreen()`, `withBlue()` |
+| `Hsl` | `getHue()`, `getSaturation()`, `getLightness()`, `withHue()`, `withSaturation()`, `withLightness()` |
+| `Hwb` | `getHue()`, `getWhiteness()`, `getBlackness()`, `withHue()`, `withWhiteness()`, `withBlackness()` |
+| `Lab`, `OkLab` | `getLightness()`, `getA()`, `getB()`, `withLightness()`, `withA()`, `withB()` |
+| `Lch`, `OkLch` | `getLightness()`, `getChroma()`, `getHue()`, `withLightness()`, `withChroma()`, `withHue()` |
+| `XyzD50`, `XyzD65` | `getX()`, `getY()`, `getZ()`, `withX()`, `withY()`, `withZ()` |
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
-- Alpha values are clamped to `0..1` on construction, and hue values are wrapped to `0..360`.
-- Other channels are required to be finite numbers, but are not generally clamped (to avoid conversion clipping).
-- `Color::createFromString()` normalizes whitespace and is case-insensitive, and `"transparent"` is treated as an RGB color with alpha `0`.
-- Percent values follow CSS-style reference ranges (space-specific).
-- In `rgb()` / `rgba()`, channel percentages are relative to `255`.
-- In `hsl()` / `hsla()` / `hwb()`, percentages map directly to `0..100`.
-- In `lab()` / `lch()`, lightness percentages map to `0..100` and other channels use CSS reference ranges.
-- In `oklab()` / `oklch()`, percentages map to the CSS reference ranges for those spaces.
-- In `color(<profile> ...)`, percentages map to `0..1` component values.
-- For `lch()` and `oklch()`, negative chroma values are clamped to `0` during parsing.
-- `label()` compares named colors within the current space; convert first if you need labeling in a specific space (for example: `->toSrgb()->label()`).
-- `to()` and `fitGamut()` throw `InvalidArgumentException` for unsupported space names.
+- Construction clamps alpha to `0..1`, wraps hue to `0..360`, and rejects non-finite channel values. Other channels generally remain unclamped to avoid clipping during conversion.
+- CSS percentage reference ranges depend on the space: RGB profiles map to their component scale, RGB channels to `0..255`, and HSL/HWB saturation-like channels to `0..100`.
+- Parsing clamps negative `lch()` and `oklch()` chroma to `0`.
+- `label()` compares Euclidean channel distance in the current color space; it is not a perceptual guarantee unless the chosen space provides that property.
+- `to()` and `fitGamut()` throw an `InvalidArgumentException` for unsupported non-empty space names.
 
 ## Related
 

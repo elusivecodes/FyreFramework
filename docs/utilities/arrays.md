@@ -1,718 +1,191 @@
 # Array Helpers
 
-`Arr` (`Fyre\Utility\Arr`) is a static array utility class for common transformations, selection helpers, and thin wrappers around built-in PHP array functions (with consistent argument ordering).
+`Fyre\Utility\Arr` provides static helpers for plain PHP arrays, including dot paths, selection, searching, transformations, and wrappers around common native functions.
 
-If you want fluent, chainable pipelines for sequences (with operations like `map()`, `filter()`, and `reduce()`), use [Collections](collections.md) instead.
+Use [Collections](collections.md) when a lazy, chainable sequence is more useful than an immediate array result.
 
 ## Table of Contents
 
-- [Start here](#start-here)
+- [Common operations](#common-operations)
 - [Constants](#constants)
 - [Method guide](#method-guide)
-  - [Dot-path helpers](#dot-path-helpers)
-  - [Shape helpers](#shape-helpers)
-  - [Selecting keys and values](#selecting-keys-and-values)
-  - [Searching and matching](#searching-and-matching)
-  - [Predicates](#predicates)
-  - [Transformations](#transformations)
-  - [Set-like operations](#set-like-operations)
-  - [Slicing, padding, and chunking](#slicing-padding-and-chunking)
-  - [Stack/queue helpers (by reference)](#stackqueue-helpers-by-reference)
-  - [Miscellaneous helpers](#miscellaneous-helpers)
+  - [Dot paths](#dot-paths)
+  - [Shape and selection](#shape-and-selection)
+  - [Searching and predicates](#searching-and-predicates)
+  - [Transforming and comparing](#transforming-and-comparing)
+  - [Slicing and mutation](#slicing-and-mutation)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Start here
+## Common operations
 
-Use `Arr` when you already have a plain PHP array and want a focused, explicit operation: dot-path lookups/updates, flattening, selecting keys/values, searching, and small transformations.
+Import `Arr` once and pass the source array as the first argument:
 
 ```php
 use Fyre\Utility\Arr;
 
 $data = [
     'items' => [
-        ['name' => 'A'],
+        ['name' => 'First'],
         [],
     ],
 ];
 
-// Dot-path lookups
-$name = Arr::getDot($data, 'items.0.name');          // "A"
-$missing = Arr::getDot($data, 'items.1.name', 'N/A'); // "N/A"
-
-// Dot-path updates (with wildcard)
-$data = Arr::setDot($data, 'items.*.name', 'Unknown', false);
-
-// Transformations
-$ids = Arr::map([10, 20, 30], static fn(int $v, int $k): int => (int) ($v / 10)); // [1, 2, 3]
-$nonEmpty = Arr::filter(['a' => 1, 'b' => 0]); // ['a' => 1]
+$first = Arr::getDot($data, 'items.0.name');
+$data = Arr::setDot($data, 'items.*.active', true);
+$names = Arr::pluckDot($data['items'], 'name');
 ```
+
+`$first` is `First`. `$names` is `['First', null]` because `pluckDot()` includes one result per input row and uses `null` for a missing path.
+
+Most methods return a new array. Only `pop()`, `push()`, `shift()`, `unshift()`, and `splice()` mutate their array argument.
 
 ## Constants
 
-`Arr` exposes a small set of constants that mirror common PHP flags used by some methods:
+| Group | Constants | Used by |
+| --- | --- | --- |
+| counting | `COUNT_NORMAL`, `COUNT_RECURSIVE` | `count()` |
+| filtering | `FILTER_BOTH`, `FILTER_KEY`, `FILTER_VALUE` | `filter()` |
+| sorting/comparison | `SORT_LOCALE`, `SORT_NATURAL`, `SORT_NUMERIC`, `SORT_REGULAR`, `SORT_STRING` | `sort()` and `unique()` |
 
-- Counting modes for `count()`:
-  - `Arr::COUNT_NORMAL`
-  - `Arr::COUNT_RECURSIVE`
-- Filter callback modes for `filter()`:
-  - `Arr::FILTER_BOTH` (value and key)
-  - `Arr::FILTER_KEY` (key only)
-  - `Arr::FILTER_VALUE` (value only)
-- Sort flags for `sort()` and comparison flags for `unique()`:
-  - `Arr::SORT_LOCALE`, `Arr::SORT_NATURAL`, `Arr::SORT_NUMERIC`, `Arr::SORT_REGULAR`, `Arr::SORT_STRING`
+The values mirror the corresponding PHP constants.
 
 ## Method guide
 
-### Dot-path helpers
+The methods below use the imported `Arr` class from [Common operations](#common-operations).
 
-#### **Retrieve a value by dot-path** (`getDot()`)
+### Dot paths
 
-Arguments:
-- `$array` (`array`): the input array.
-- `$key` (`string`): the dot-notated path (for example: `items.0.name`).
-- `$default` (`mixed`): the fallback value if the path does not exist.
+Dot paths traverse nested array keys. A key with a `null` value still exists for `hasDot()` because lookup uses `array_key_exists()`.
 
-```php
-$value = Arr::getDot(['a' => ['b' => 1]], 'a.b'); // 1
-$missing = Arr::getDot(['a' => []], 'a.b', 0);    // 0
-```
+| Method | Behavior |
+| --- | --- |
+| `getDot(array $array, string $key, mixed $default = null): mixed` | return a nested value or `$default` when any segment is missing or not an array |
+| `hasDot(array $array, string $key): bool` | check that every nested key exists |
+| `setDot(array $array, string $key, mixed $value, bool $overwrite = true): array` | set a nested value, creating intermediate arrays as needed |
+| `forgetDot(array $array, string $key): array` | remove a nested key, leaving the input unchanged when the path is missing |
+| `pluckDot(array $arrays, string $key): array` | return the value at `$key` from every row |
 
-#### **Check whether a dot-path exists** (`hasDot()`)
-
-Returns `true` only if every segment exists as an array key.
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$key` (`string`): the dot-notated path (for example: `items.0.name`).
+Only `setDot()` supports `*` segments. A wildcard applies the remaining path to every child at that level; non-array children are replaced with arrays. `$overwrite` affects only the final key:
 
 ```php
-Arr::hasDot(['a' => ['b' => null]], 'a.b'); // true
-Arr::hasDot(['a' => []], 'a.b');           // false
-```
-
-#### **Set a value by dot-path** (`setDot()`)
-
-Creates intermediate arrays as needed. If `$overwrite` is `false`, an existing final key is left unchanged.
-
-`setDot()` supports a `*` wildcard segment to apply the remaining path to every child at that level (for example: `items.*.name`).
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$key` (`string`): the dot-notated path (for example: `items.*.name`).
-- `$value` (`mixed`): the value to set.
-- `$overwrite` (`bool`): whether to overwrite an existing final key.
-
-```php
-$data = [
-    'items' => [
-        ['name' => 'A'],
+$items = Arr::setDot(
+    [
+        ['name' => 'First'],
         [],
     ],
-];
+    '*.name',
+    'Untitled',
+    false
+);
 
-$data = Arr::setDot($data, 'items.*.name', 'Unknown', false);
+// [
+//     ['name' => 'First'],
+//     ['name' => 'Untitled'],
+// ]
 ```
 
-#### **Remove a key by dot-path** (`forgetDot()`)
+### Shape and selection
 
-If the path does not exist, the original array is returned unchanged.
+| Method | Return behavior |
+| --- | --- |
+| `dot(array $array, string|null $prefix = null, array &$result = []): array` | flatten nested arrays to dot-separated keys; objects and other values remain terminal |
+| `flatten(array $array, int $maxDepth = 1, array &$result = []): array` | flatten nested arrays into a reindexed list up to `$maxDepth` |
+| `divide(array $array): array` | return `[array_keys($array), array_values($array)]` |
+| `wrap(mixed $value): array` | return arrays unchanged, `[]` for `null`, or `[$value]` otherwise |
+| `fill(int $amount, mixed $value): array` | create a list containing `$amount` copies of `$value` |
+| `range(float\|int\|string $start, float\|int\|string $end, float\|int $step = 1): array` | create an inclusive native PHP range |
+| `keys(array $array): array` | return all keys |
+| `values(array $array): array` | return all values as a reindexed list |
+| `only(array $array, array $keys): array` | preserve entries whose keys are in `$keys`, using strict comparison |
+| `except(array $array, array $keys): array` | preserve entries whose keys are not in `$keys`, using strict comparison |
+| `column(array $arrays, int\|string $key): array` | return one column from a list of rows |
+| `index(array $array, int\|string $key): array` | index rows by one column |
+| `combine(array $keys, array $values): array` | use one array as keys and another as values |
+| `join(array $array, string $separator = ','): string` | concatenate values with `$separator` |
 
-Arguments:
-- `$array` (`array`): the input array.
-- `$key` (`string`): the dot-notated path (for example: `items.0.name`).
+`flatten()` throws an `InvalidArgumentException` when `$maxDepth` is below `1`. Both `dot()` and `flatten()` accept a result array by reference for recursive or advanced use; ordinary callers should omit it.
 
 ```php
-$data = Arr::forgetDot(['a' => ['b' => 1]], 'a.b'); // ['a' => []]
+Arr::dot(['user' => ['id' => 10, 'name' => 'Ada']]);
+// ['user.id' => 10, 'user.name' => 'Ada']
+
+Arr::flatten([1, [2, [3]]], 1); // [1, 2, [3]]
+Arr::flatten([1, [2, [3]]], 2); // [1, 2, 3]
 ```
 
-#### **Pluck dot-path values from rows** (`pluckDot()`)
+### Searching and predicates
 
-Extracts the dot-path value from each row and returns a list of values.
+Callbacks in this group receive `(value, key)`.
 
-Arguments:
-- `$arrays` (`array`): the input rows.
-- `$key` (`string`): the dot-notated path to extract from each row.
+| Method | Return behavior |
+| --- | --- |
+| `hasKey(array $array, int\|string $key): bool` | whether the key exists, including when its value is `null` |
+| `includes(array $array, mixed $value, bool $strict = false): bool` | whether the value occurs |
+| `find(array $array, callable $callback, mixed $default = null): mixed` | first matching value or `$default` |
+| `findLast(array $array, callable $callback, mixed $default = null): mixed` | last matching value or `$default` |
+| `findKey(array $array, callable $callback): mixed` | first matching key or `null` |
+| `findLastKey(array $array, callable $callback): mixed` | last matching key or `null` |
+| `first(array $array): mixed` | first value or `null` for an empty array |
+| `last(array $array): mixed` | last value or `null` for an empty array |
+| `indexOf(array $array, mixed $value, bool $strict = false): false\|int\|string` | first matching key or `false` |
+| `lastIndexOf(array $array, mixed $value, bool $strict = false): false\|int\|string` | last matching key or `false` |
+| `every(array $array, callable $callback): bool` | whether every element passes |
+| `some(array $array, callable $callback): bool` | whether at least one element passes |
+| `none(array $array, callable $callback): bool` | whether no elements pass |
+| `isArray(mixed $value): bool` | whether the value is an array |
+| `isList(array $array): bool` | whether keys are consecutive integers starting at `0` |
+| `count(array $array, int $mode = Arr::COUNT_NORMAL): int` | count at the selected depth |
+
+`count()` accepts only `COUNT_NORMAL` and `COUNT_RECURSIVE`; other modes throw an `InvalidArgumentException`.
+
+### Transforming and comparing
+
+| Method | Behavior |
+| --- | --- |
+| `map(array $array, callable $callback): array` | call `(value, key)` and preserve each original key |
+| `filter(array $array, callable|null $callback = null, int $mode = Arr::FILTER_BOTH): array` | keep matching entries and preserve keys |
+| `reduce(array $array, callable $callback, mixed $initial = null): mixed` | reduce with a `(carry, value)` callback |
+| `merge(array ...$arrays): array` | apply native `array_merge()` semantics |
+| `collapse(array $array, array ...$replacements): array` | recursively replace values with `array_replace_recursive()` |
+| `reverse(array $array, bool $preserveKeys = false): array` | reverse values, optionally preserving keys |
+| `shuffle(array $array): array` | shuffle and return a reindexed list |
+| `sort(array $array, Closure\|int $sort = Arr::SORT_NATURAL): array` | sort and return a reindexed list using a flag or comparison closure |
+| `unique(array $array, int $flags = Arr::SORT_REGULAR): array` | remove duplicate values while retaining the first occurrence's key |
+| `diff(array $array, array ...$arrays): array` | preserve values absent from every comparison array |
+| `intersect(array $array, array ...$arrays): array` | preserve values present in every comparison array |
+
+With no callback, `filter()` removes falsey values using native `array_filter()` behavior. With a callback, its default mode is `FILTER_BOTH`, so the callback receives both value and key. Use `FILTER_VALUE` or `FILTER_KEY` to receive only one argument.
+
+### Slicing and mutation
+
+| Method | Mutation | Return behavior |
+| --- | --- | --- |
+| `chunk(array $array, int $size, bool $preserveKeys = false): array` | none | list of chunks; throws when `$size < 1` |
+| `slice(array $array, int $offset = 0, int|null $length = null, bool $preserveKeys = false): array` | none | selected slice |
+| `pad(array $array, int $size, mixed $value): array` | none | padded copy; a negative size pads on the left |
+| `randomValue(array $array): mixed` | none | random value, or `null` for an empty array |
+| `pop(array &$array): mixed` | removes the last entry | removed value or `null` |
+| `push(array &$array, mixed ...$values): int` | appends values | new count |
+| `shift(array &$array): mixed` | removes the first entry | removed value or `null` |
+| `unshift(array &$array, mixed ...$values): int` | prepends values | new count |
+| `splice(array &$array, int $offset, int|null $length = null, mixed $replacement = []): array` | removes a range and inserts replacements | removed values |
 
 ```php
-$rows = [
-    ['user' => ['id' => 1]],
-    ['user' => ['id' => 2]],
-];
+$values = [1, 2, 3, 4];
+$removed = Arr::splice($values, 1, 2, ['a']);
 
-$ids = Arr::pluckDot($rows, 'user.id'); // [1, 2]
+// $values === [1, 'a', 4]
+// $removed === [2, 3]
 ```
-
-### Shape helpers
-
-#### **Flatten nested arrays to dot keys** (`dot()`)
-
-Flattens only nested arrays; non-array values (including objects) are treated as terminal values.
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$prefix` (`string|null`): optional dot-prefix to apply to all keys.
-
-```php
-$flat = Arr::dot(['a' => ['b' => 1, 'c' => 2]]);
-// ['a.b' => 1, 'a.c' => 2]
-```
-
-#### **Flatten nested arrays to a list** (`flatten()`)
-
-Flattens up to `$maxDepth` levels into a single list of values.
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$maxDepth` (`int`): how many levels to flatten.
-
-```php
-$values = Arr::flatten([1, [2, 3], [4, [5]]], 1); // [1, 2, 3, 4, [5]]
-$deep = Arr::flatten([1, [2, 3], [4, [5]]], 3);   // [1, 2, 3, 4, 5]
-```
-
-#### **Split keys and values** (`divide()`)
-
-Returns a two-element array: `[keys, values]`.
-
-Arguments:
-- `$array` (`array`): the input array.
-
-```php
-[$keys, $values] = Arr::divide(['a' => 1, 'b' => 2]); // [['a', 'b'], [1, 2]]
-```
-
-#### **Wrap a value as an array** (`wrap()`)
-
-Returns the value unchanged if it is already an array. Returns `[]` for `null`, otherwise returns `[$value]`.
-
-Arguments:
-- `$value` (`mixed`): the value to wrap.
-
-```php
-Arr::wrap(null);        // []
-Arr::wrap('a');         // ['a']
-Arr::wrap(['a', 'b']);  // ['a', 'b']
-```
-
-#### **Fill an array with a value** (`fill()`)
-
-Creates an array with `$amount` elements, all set to `$value`.
-
-Arguments:
-- `$amount` (`int`): the number of elements to insert.
-- `$value` (`mixed`): the value to repeat.
-
-```php
-$items = Arr::fill(3, 'x'); // ['x', 'x', 'x']
-```
-
-#### **Create a range of values** (`range()`)
-
-Creates an array of values from `$start` to `$end` (inclusive).
-
-Arguments:
-- `$start` (`float|int|string`): the first value in the sequence.
-- `$end` (`float|int|string`): the last value in the sequence.
-- `$step` (`float|int`): the increment between values.
-
-```php
-$values = Arr::range(1, 5); // [1, 2, 3, 4, 5]
-```
-
-### Selecting keys and values
-
-#### **Get all keys** (`keys()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-
-```php
-$keys = Arr::keys(['a' => 1, 'b' => 2]); // ['a', 'b']
-```
-
-#### **Get all values** (`values()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-
-```php
-$values = Arr::values(['a' => 1, 'b' => 2]); // [1, 2]
-```
-
-#### **Keep only the specified keys** (`only()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$keys` (`array`): the keys to keep.
-
-```php
-$subset = Arr::only(['a' => 1, 'b' => 2], ['b']); // ['b' => 2]
-```
-
-#### **Exclude the specified keys** (`except()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$keys` (`array`): the keys to exclude.
-
-```php
-$rest = Arr::except(['a' => 1, 'b' => 2], ['b']); // ['a' => 1]
-```
-
-#### **Extract a column from rows** (`column()`)
-
-Arguments:
-- `$arrays` (`array`): the input rows.
-- `$key` (`int|string`): the column key to extract.
-
-```php
-$names = Arr::column([['name' => 'A'], ['name' => 'B']], 'name'); // ['A', 'B']
-```
-
-#### **Index rows by a column** (`index()`)
-
-Indexes a list of rows by a key from each row.
-
-Arguments:
-- `$array` (`array`): the input rows.
-- `$key` (`int|string`): the column to use as the new array key.
-
-```php
-$rows = [
-    ['id' => 10, 'name' => 'A'],
-    ['id' => 20, 'name' => 'B'],
-];
-
-$byId = Arr::index($rows, 'id');
-// [10 => ['id' => 10, 'name' => 'A'], 20 => ['id' => 20, 'name' => 'B']]
-```
-
-#### **Combine keys and values** (`combine()`)
-
-Arguments:
-- `$keys` (`array`): the keys.
-- `$values` (`array`): the values.
-
-```php
-$map = Arr::combine(['a', 'b'], [1, 2]); // ['a' => 1, 'b' => 2]
-```
-
-#### **Join string values** (`join()`)
-
-Arguments:
-- `$array` (`string[]`): the input strings.
-- `$separator` (`string`): the separator to join with.
-
-```php
-$text = Arr::join(['a', 'b', 'c'], ','); // "a,b,c"
-```
-
-### Searching and matching
-
-#### **Check whether a key exists** (`hasKey()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$key` (`int|string`): the key to check for.
-
-```php
-Arr::hasKey(['a' => null], 'a'); // true
-```
-
-#### **Check whether a value exists** (`includes()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$value` (`mixed`): the value to search for.
-- `$strict` (`bool`): whether to perform a strict comparison.
-
-```php
-Arr::includes([1, '1'], '1');        // true
-Arr::includes([1, '1'], '1', true);  // true (strict)
-Arr::includes([1], '1', true);       // false (strict)
-```
-
-#### **Find the first value matching a predicate** (`find()`)
-
-Returns the first matching value, otherwise `$default`.
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$callback` (`callable`): Receives `(value, key)` and returns `true` for a match.
-- `$default` (`mixed`): the fallback value when no match is found.
-
-```php
-$value = Arr::find([1, 2, 3], static fn(int $v, int $k): bool => $v > 1); // 2
-```
-
-#### **Find the last value matching a predicate** (`findLast()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$callback` (`callable`): Receives `(value, key)` and returns `true` for a match.
-- `$default` (`mixed`): the fallback value when no match is found.
-
-```php
-$value = Arr::findLast([1, 2, 3], static fn(int $v, int $k): bool => $v > 1); // 3
-```
-
-#### **Find the first key matching a predicate** (`findKey()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$callback` (`callable`): Receives `(value, key)` and returns `true` for a match.
-
-```php
-$key = Arr::findKey(['a' => 1, 'b' => 2], static fn(int $v, string $k): bool => $v > 1); // 'b'
-```
-
-#### **Find the last key matching a predicate** (`findLastKey()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$callback` (`callable`): Receives `(value, key)` and returns `true` for a match.
-
-```php
-$key = Arr::findLastKey(['a' => 1, 'b' => 2], static fn(int $v, string $k): bool => $v > 1); // 'b'
-```
-
-#### **Get the first element** (`first()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-
-```php
-$first = Arr::first([10, 20]); // 10
-```
-
-#### **Get the last element** (`last()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-
-```php
-$last = Arr::last([10, 20]); // 20
-```
-
-#### **Find the first index/key of a value** (`indexOf()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$value` (`mixed`): the value to search for.
-- `$strict` (`bool`): whether to perform a strict comparison.
-
-```php
-Arr::indexOf(['a', 'b', 'a'], 'a'); // 0
-```
-
-#### **Find the last index/key of a value** (`lastIndexOf()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$value` (`mixed`): the value to search for.
-- `$strict` (`bool`): whether to perform a strict comparison.
-
-```php
-Arr::lastIndexOf(['a', 'b', 'a'], 'a'); // 2
-```
-
-### Predicates
-
-#### **Check whether every element passes** (`every()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$callback` (`callable`): Receives `(value, key)` and returns `true` to pass.
-
-```php
-$ok = Arr::every([2, 4, 6], static fn(int $v, int $k): bool => $v % 2 === 0); // true
-```
-
-#### **Check whether some elements pass** (`some()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$callback` (`callable`): Receives `(value, key)` and returns `true` to pass.
-
-```php
-$ok = Arr::some([1, 2, 3], static fn(int $v, int $k): bool => $v > 2); // true
-```
-
-#### **Check whether no elements pass** (`none()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$callback` (`callable`): Receives `(value, key)` and returns `true` to pass.
-
-```php
-$ok = Arr::none([1, 2, 3], static fn(int $v, int $k): bool => $v < 0); // true
-```
-
-#### **Check whether a value is an array** (`isArray()`)
-
-Arguments:
-- `$value` (`mixed`): the value to test.
-
-```php
-Arr::isArray([]);      // true
-Arr::isArray('hello'); // false
-```
-
-#### **Check whether an array is a list** (`isList()`)
-
-Arguments:
-- `$array` (`array`): the array to test.
-
-```php
-Arr::isList([10, 20]);         // true
-Arr::isList([1 => 'a', 2 => 'b']); // false
-```
-
-#### **Count elements** (`count()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$mode` (`int`): the counting mode (`Arr::COUNT_NORMAL` or `Arr::COUNT_RECURSIVE`).
-
-```php
-Arr::count([1, 2, 3]);                   // 3
-Arr::count(['a' => ['b' => 1]], Arr::COUNT_RECURSIVE); // 2
-```
-
-### Transformations
-
-#### **Map values** (`map()`)
-
-The callback receives `(value, key)` and the result preserves the original keys.
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$callback` (`callable`): Receives `(value, key)` and returns the mapped value.
-
-```php
-$out = Arr::map(['a' => 1, 'b' => 2], static fn(int $v, string $k): int => $v * 10);
-// ['a' => 10, 'b' => 20]
-```
-
-#### **Filter values** (`filter()`)
-
-When a callback is provided, `filter()` defaults to passing both `(value, key)` to the callback.
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$callback` (`callable|null`): Receives `(value, key)` and returns `true` to keep the item.
-- `$mode` (`int`): Callback mode (`Arr::FILTER_BOTH`, `Arr::FILTER_KEY`, or `Arr::FILTER_VALUE`).
-
-```php
-$out = Arr::filter(['a' => 1, 'b' => 2], static fn(int $v, string $k): bool => $k === 'b');
-// ['b' => 2]
-```
-
-#### **Reduce to a single value** (`reduce()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$callback` (`callable`): Receives `(carry, value)` and returns the new carry.
-- `$initial` (`mixed`): the initial carry value.
-
-```php
-$sum = Arr::reduce([1, 2, 3], static fn(int $carry, int $v): int => $carry + $v, 0); // 6
-```
-
-#### **Merge arrays** (`merge()`)
-
-Arguments:
-- `$arrays` (`array ...`): the arrays to merge.
-
-```php
-$out = Arr::merge(['a' => 1], ['b' => 2]); // ['a' => 1, 'b' => 2]
-```
-
-#### **Recursively replace values** (`collapse()`)
-
-Replaces values from later arrays into the first array recursively.
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$replacements` (`array ...`): the replacement arrays.
-
-```php
-$out = Arr::collapse(['a' => ['b' => 1]], ['a' => ['b' => 2, 'c' => 3]]);
-// ['a' => ['b' => 2, 'c' => 3]]
-```
-
-#### **Reverse elements** (`reverse()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$preserveKeys` (`bool`): whether to preserve the array keys.
-
-```php
-$out = Arr::reverse(['a' => 1, 'b' => 2], true); // ['b' => 2, 'a' => 1]
-```
-
-#### **Shuffle elements** (`shuffle()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-
-#### **Sort elements** (`sort()`)
-
-Sorts using either a sort flag (default: natural) or a custom comparison closure.
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$sort` (`Closure|int`): a comparison closure or an `Arr::SORT_*` constant.
-
-```php
-$out = Arr::sort(['10', '2']); // ['2', '10'] (natural sort)
-```
-
-#### **Remove duplicate values** (`unique()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$flags` (`int`): the comparison mode (an `Arr::SORT_*` constant).
-
-```php
-$out = Arr::unique([1, 1, 2]); // [0 => 1, 2 => 2]
-```
-
-### Set-like operations
-
-#### **Difference** (`diff()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$arrays` (`array ...`): the arrays to compare against.
-
-```php
-$out = Arr::diff([1, 2, 3], [2]); // [0 => 1, 2 => 3]
-```
-
-#### **Intersection** (`intersect()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$arrays` (`array ...`): the arrays to compare against.
-
-```php
-$out = Arr::intersect([1, 2, 3], [2, 3]); // [1 => 2, 2 => 3]
-```
-
-### Slicing, padding, and chunking
-
-#### **Split into chunks** (`chunk()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$size` (`int`): the chunk size.
-- `$preserveKeys` (`bool`): whether to preserve the array keys.
-
-```php
-$chunks = Arr::chunk([1, 2, 3, 4], 2); // [[1, 2], [3, 4]]
-```
-
-#### **Extract a slice** (`slice()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$offset` (`int`): the starting offset.
-- `$length` (`int|null`): the slice length.
-- `$preserveKeys` (`bool`): whether to preserve the array keys.
-
-```php
-$out = Arr::slice([1, 2, 3, 4], 1, 2); // [2, 3]
-```
-
-#### **Pad to a length** (`pad()`)
-
-Arguments:
-- `$array` (`array`): the input array.
-- `$size` (`int`): the target size (negative pads to the left).
-- `$value` (`mixed`): the pad value.
-
-```php
-$out = Arr::pad([1, 2], 4, 0); // [1, 2, 0, 0]
-```
-
-#### **Splice by reference** (`splice()`)
-
-Removes a section (starting at `$offset`) and optionally inserts a replacement.
-
-Arguments:
-- `$array` (`array`): the input array (passed by reference).
-- `$offset` (`int`): the starting offset.
-- `$length` (`int|null`): the number of items to remove.
-- `$replacement` (`mixed`): the replacement value(s) to insert.
-
-```php
-$array = [1, 2, 3, 4];
-$removed = Arr::splice($array, 1, 2, ['a']);
-// $array is now [1, 'a', 4]
-// $removed is [2, 3]
-```
-
-### Stack/queue helpers (by reference)
-
-#### **Pop from the end** (`pop()`)
-
-Arguments:
-- `$array` (`array`): the input array (passed by reference).
-
-```php
-$array = [1, 2];
-$last = Arr::pop($array); // 2
-```
-
-#### **Push onto the end** (`push()`)
-
-Arguments:
-- `$array` (`array`): the input array (passed by reference).
-- `$values` (`mixed ...`): the values to push.
-
-```php
-$array = [1];
-Arr::push($array, 2, 3); // 3 (new count)
-```
-
-#### **Shift from the start** (`shift()`)
-
-Arguments:
-- `$array` (`array`): the input array (passed by reference).
-
-```php
-$array = [1, 2];
-$first = Arr::shift($array); // 1
-```
-
-#### **Unshift onto the start** (`unshift()`)
-
-Arguments:
-- `$array` (`array`): the input array (passed by reference).
-- `$values` (`mixed ...`): the values to unshift.
-
-```php
-$array = [2, 3];
-Arr::unshift($array, 1); // 3 (new count)
-```
-
-### Miscellaneous helpers
-
-#### **Get a random value** (`randomValue()`)
-
-Returns `null` for an empty array.
-
-Arguments:
-- `$array` (`array`): the input array.
 
 ## Behavior notes
 
-- `filter()` defaults to `Arr::FILTER_BOTH`, so callbacks receive `(value, key)` (unlike PHP’s default `array_filter()` usage which typically passes only the value).
-- `setDot()` creates intermediate arrays, supports `*` wildcard segments, and respects `$overwrite` only for the final segment.
-- Methods like `sort()`, `shuffle()`, and `reverse()` (when `$preserveKeys` is `false`) produce reindexed lists, so they are best used with list-style arrays.
-- `dot()` and `flatten()` only recurse into nested arrays; other value types are treated as terminal values.
+- Methods return copies unless their signature accepts `array &$array`; assigning the result is therefore required for `setDot()`, `forgetDot()`, sorting, filtering, and other transformations.
+- `sort()`, `shuffle()`, and `reverse()` with `$preserveKeys = false` reindex values, while `filter()`, `unique()`, `diff()`, and `intersect()` preserve surviving keys.
+- `dot()` and `flatten()` recurse only into arrays. Objects, collections, and other traversables remain terminal values.
+- `combine()`, `fill()`, `range()`, `pad()`, and the other native wrappers retain PHP's native validation and error behavior unless this page states otherwise.
+- `Arr` supports static macros.
 
 ## Related
 

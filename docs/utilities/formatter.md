@@ -1,13 +1,13 @@
 # Formatter
 
-Use `Formatter` when you want locale-aware formatting for numbers, currency, dates, times, and human-readable lists.
+`Fyre\Utility\Formatter` formats numbers, currencies, dates, times, and lists with PHP's `intl` extension.
 
-It wraps PHP's `intl` formatters and gives you one place to apply locale and currency defaults.
+Use the [Format helper](../view/helpers.md#format-and-form-helpers) for the same operations in a view.
 
 ## Table of Contents
 
-- [Start here](#start-here)
-- [Configuration and defaults](#configuration-and-defaults)
+- [Configure formatting defaults](#configure-formatting-defaults)
+- [Format values](#format-values)
 - [Method guide](#method-guide)
   - [Numbers and currency](#numbers-and-currency)
   - [Dates and times](#dates-and-times)
@@ -16,228 +16,114 @@ It wraps PHP's `intl` formatters and gives you one place to apply locale and cur
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Start here
+## Configure formatting defaults
 
-Use `Formatter` when you want consistent presentation of user-facing values without managing ICU patterns or `intl` formatter instances yourself.
-
-In views, you will usually access the same behavior through the [Format helper](../view/helpers.md#format-and-form-helpers).
+Construct the formatter with the application `Config`:
 
 ```php
 use Fyre\Core\Config;
-use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\Formatter;
 
-$config = new Config();
+$config = new Config()
+    ->set('App.defaultLocale', 'en_US')
+    ->set('App.defaultCurrency', 'USD');
+
 $formatter = new Formatter($config);
-$formatter->setDefaultLocale('en_US');
 ```
 
-Format values via a `Formatter` instance:
+`App.defaultCurrency` defaults to `USD`. When `App.defaultLocale` is absent or `null`, `getDefaultLocale()` uses `locale_get_default()`.
+
+`setDefaultLocale()` and `setDefaultCurrency()` change the defaults on this formatter instance; they do not write back to `Config`.
+
+## Format values
 
 ```php
-echo $formatter->number(1234.567);      // "1,234.567"
-echo $formatter->currency(123.456);     // "$123.46"
-echo $formatter->percent(0.123);        // "12%"
+use Fyre\Utility\DateTime\DateTime;
 
-$dt = new DateTime('2026-02-01 11:59:59');
-echo $formatter->datetime($dt);         // e.g. "02/01/2026, 11:59 AM"
+$amount = $formatter->currency(123.456);
+$percentage = $formatter->percent(0.123);
+$date = $formatter->date(new DateTime('2026-02-01'));
+$names = $formatter->list(['Ada', 'Grace', 'Linus']);
 ```
 
-Or format directly from a template using the Format helper:
-
-```php
-echo $this->Format->currency(123);
-echo $this->Format->list(['A', 'B', 'C']);
-
-$dt = new DateTime('2026-02-01 11:59:59');
-echo $this->Format->time($dt);
-```
-
-## Configuration and defaults
-
-`Formatter` reads defaults from the `Config` instance it is constructed with:
-
-- `App.defaultLocale` → the default locale
-- `App.defaultCurrency` → the default currency (defaults to `USD` when not configured)
-
-If the default locale is not configured, `Formatter` falls back to `locale_get_default()`.
-
-You can also override defaults at runtime:
-
-```php
-$formatter->setDefaultLocale('en_US');
-$formatter->setDefaultCurrency('USD');
-```
+Output depends on the locale and installed ICU data. For `en_US`, these commonly produce `$123.46`, `12%`, `2/1/2026`, and `Ada, Grace, and Linus`, but applications should not assume locale-generated punctuation or spacing is stable across locales and ICU versions.
 
 ## Method guide
 
-Examples below assume you already have a `$formatter` instance, and `DateTime` is imported when needed.
+The methods below use the `$formatter` configured above.
 
 ### Numbers and currency
 
-#### **Format a number** (`number()`)
+| Method | Formatter behavior |
+| --- | --- |
+| `number(float\|int\|string $value, string|null $locale = null): string` | locale-aware decimal number |
+| `currency(float\|int\|string $value, string|null $currency = null, string|null $locale = null): string` | accounting-style currency using the selected or default ISO currency code |
+| `percent(float\|int\|string $value, string|null $locale = null): string` | locale-aware percent; `0.12` represents 12 percent |
 
-Formats a value using locale-aware number formatting.
-
-Arguments:
-- `$value` (`float|int|string`): the value to format.
-- `$locale` (`string|null`): the locale override (or `null` to use the default locale).
-
-```php
-echo $formatter->number(1234);        // "1,234" (in en_US)
-echo $formatter->number(1234.567);    // "1,234.567"
-echo $formatter->number(1234.5, 'de_DE');
-```
-
-#### **Format a currency amount** (`currency()`)
-
-Formats a value as a currency string using the accounting currency style.
-
-Arguments:
-- `$value` (`float|int|string`): the amount to format.
-- `$currency` (`string|null`): the currency code override (or `null` to use the default currency).
-- `$locale` (`string|null`): the locale override (or `null` to use the default locale).
-
-```php
-echo $formatter->currency(123);                 // "$123.00" (in en_US)
-echo $formatter->currency(123.456);             // "$123.46"
-echo $formatter->currency(123, 'GBP', 'en_GB'); // "£123.00"
-```
-
-#### **Format a percent** (`percent()`)
-
-Formats a value as a percent string.
-
-Arguments:
-- `$value` (`float|int|string`): the value to format.
-- `$locale` (`string|null`): the locale override (or `null` to use the default locale).
-
-```php
-echo $formatter->percent(1);      // "100%"
-echo $formatter->percent(0.123);  // "12%"
-```
+All three methods cast `$value` to `float`. They are presentation helpers, not arbitrary-precision decimal formatters.
 
 ### Dates and times
 
-All date/time methods format `DateTime` values using ICU patterns (not PHP’s `date()` patterns). For ICU formatting concepts, see [Date/time](datetime.md).
+These methods accept `Fyre\Utility\DateTime\DateTime` and use ICU patterns rather than PHP `date()` patterns:
 
-If you provide a locale or time zone and it differs from the `DateTime` value’s current settings, the `DateTime` instance is cloned with the new settings before formatting.
+| Method | Default ICU skeleton |
+| --- | --- |
+| `date(DateTime $value, string|null $format = null, string|null $timeZone = null, string|null $locale = null): string` | `yyyyMMdd` |
+| `time(DateTime $value, string|null $format = null, string|null $timeZone = null, string|null $locale = null): string` | `jmm` |
+| `datetime(DateTime $value, string|null $format = null, string|null $timeZone = null, string|null $locale = null): string` | `yyyyMMddjmm` |
 
-#### **Format a date/time** (`datetime()`)
-
-Formats a `DateTime` as a localized date/time string.
-
-Arguments:
-- `$value` (`DateTime`): the `DateTime` value.
-- `$format` (`string|null`): the ICU pattern to use (or `null` to use a locale-derived default).
-- `$timeZone` (`string|null`): a time zone override (for example `America/New_York`).
-- `$locale` (`string|null`): a locale override (for example `ar`).
+When `$format` is omitted, `IntlDatePatternGenerator` converts the skeleton into a locale-appropriate pattern. An explicit pattern produces predictable fields while the locale still controls localized names and symbols:
 
 ```php
-$dt = new DateTime('2026-02-01 11:59:59');
-echo $formatter->datetime($dt); // e.g. "02/01/2026, 11:59 AM" (in en_US)
+$value = new DateTime('2026-02-01 11:59:59', 'Australia/Brisbane');
 
-echo $formatter->datetime($dt, 'yyyy-MM-dd HH:mm:ss', 'America/New_York', 'ar');
+$result = $formatter->datetime(
+    $value,
+    'yyyy-MM-dd HH:mm:ss',
+    'America/New_York',
+    'en_US'
+);
 ```
 
-#### **Format a date** (`date()`)
-
-Formats a `DateTime` as a localized date string.
-
-Arguments:
-- `$value` (`DateTime`): the `DateTime` value.
-- `$format` (`string|null`): the ICU pattern to use (or `null` to use a locale-derived default).
-- `$timeZone` (`string|null`): a time zone override.
-- `$locale` (`string|null`): a locale override.
-
-```php
-$date = new DateTime('2026-02-01');
-echo $formatter->date($date);
-echo $formatter->date($date, 'yyyy-MM-dd', locale: 'ar');
-```
-
-#### **Format a time** (`time()`)
-
-Formats a `DateTime` as a localized time string.
-
-Arguments:
-- `$value` (`DateTime`): the `DateTime` value.
-- `$format` (`string|null`): the ICU pattern to use (or `null` to use a locale-derived default).
-- `$timeZone` (`string|null`): a time zone override.
-- `$locale` (`string|null`): a locale override.
-
-```php
-$dt = new DateTime('2026-02-01 11:59:59');
-echo $formatter->time($dt);
-echo $formatter->time($dt, 'HH:mm:ss', 'America/New_York', 'ar');
-```
+Locale and time-zone overrides are applied to immutable clones; the supplied `DateTime` is unchanged.
 
 ### Lists
 
-#### **Format a natural-language list** (`list()`)
-
-Formats an array of values into a localized, natural-language list.
-
-Arguments:
-- `$data` (`array<string>`): the items to format.
-- `$conjunction` (`string|null`): the conjunction (`"and"`, `"or"`, or `null` for “units” formatting).
-- `$width` (`string`): the width (`"wide"`, `"short"`, or `"narrow"`).
-- `$locale` (`string|null`): the locale override (or `null` to use the default locale).
+#### **Format a localized list** (`list()`)
 
 ```php
-echo $formatter->list(['A', 'B', 'C']); // "A, B, and C" (in en_US)
-echo $formatter->list(['A', 'B', 'C'], 'or', locale: 'ru_RU');
+list(
+    array $data,
+    string|null $conjunction = 'and',
+    string $width = 'wide',
+    string|null $locale = null
+): string
 ```
+
+| Argument | Accepted behavior |
+| --- | --- |
+| `$conjunction` | `and`, `or`, or any other value (including `null`) for units-style formatting |
+| `$width` | `short`, `narrow`, or any other value for wide formatting |
+| `$locale` | explicit locale or `null` for the formatter default |
+
+The input must be an array of strings.
 
 ### Defaults
 
-#### **Get the default locale** (`getDefaultLocale()`)
-
-Returns the locale used when you omit the `$locale` argument.
-
-```php
-$locale = $formatter->getDefaultLocale();
-```
-
-#### **Set the default locale** (`setDefaultLocale()`)
-
-Sets the default locale used when you omit the `$locale` argument.
-
-Arguments:
-- `$locale` (`string|null`): the locale (or `null` to revert to `locale_get_default()`).
-
-```php
-$formatter->setDefaultLocale('en_US');
-```
-
-#### **Get the default currency** (`getDefaultCurrency()`)
-
-Returns the currency code used when you omit the `$currency` argument.
-
-```php
-$currency = $formatter->getDefaultCurrency();
-```
-
-#### **Set the default currency** (`setDefaultCurrency()`)
-
-Sets the default currency code used when you omit the `$currency` argument.
-
-Arguments:
-- `$currency` (`string`): the currency code.
-
-```php
-$formatter->setDefaultCurrency('USD');
-```
+| Method | Behavior |
+| --- | --- |
+| `getDefaultLocale(): string` | configured locale or current `locale_get_default()` value |
+| `setDefaultLocale(string|null $locale): static` | set an instance default; `null` restores runtime locale fallback |
+| `getDefaultCurrency(): string` | current default currency code |
+| `setDefaultCurrency(string $currency): static` | set the instance currency default |
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
-- `number()`, `percent()`, and `currency()` cast the value to `float`; avoid using them for arbitrary-precision decimals.
-- `percent()` formats values using the `intl` percent style (for example `0.12` formats as `"12%"`).
-- `date()`, `time()`, and `datetime()` only accept `Fyre\Utility\DateTime\DateTime` (not PHP’s native `DateTimeInterface`).
-- If you omit `$format` for `date()`, `time()`, or `datetime()`, the pattern is derived from a skeleton via `IntlDatePatternGenerator`.
-- These utilities require the PHP `intl` extension (`NumberFormatter`, `IntlListFormatter`, and `IntlDatePatternGenerator`).
+- The PHP `intl` extension must provide `NumberFormatter`, `IntlListFormatter`, and `IntlDatePatternGenerator`.
+- Formatter objects and generated date patterns are cached per formatter instance by locale, style, and pattern where applicable.
+- Number and list formatting can vary with locale and ICU version, including whitespace characters and punctuation.
+- `date()`, `time()`, and `datetime()` accept only Fyre's `DateTime`, not PHP's `DateTimeInterface`.
+- `Formatter` supports instance macros.
 
 ## Related
 

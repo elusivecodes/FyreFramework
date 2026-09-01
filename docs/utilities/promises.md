@@ -1,252 +1,139 @@
 # Promises
 
-Use promises when you want to represent a value later and compose follow-up work with `then()`, `catch()`, and `finally()` instead of nested callbacks.
-
-Use `Promise` when the work can run in the current process and you mainly want chaining. Use `AsyncPromise` for CLI workloads you want to run in a forked child process and wait on later.
+Use `Promise` (`Fyre\Utility\Promise\Promise`) to represent a value or failure and compose follow-up work with `then()`, `catch()`, and `finally()`. Use `AsyncPromise` for CLI work that should run in a forked child process.
 
 ## Table of Contents
 
-- [Start here](#start-here)
-- [Choosing `Promise` or `AsyncPromise`](#choosing-promise-or-asyncpromise)
-- [Environment requirements](#environment-requirements)
-- [Method guide](#method-guide)
-  - [Chaining (`PromiseInterface`)](#chaining-promiseinterface)
-  - [Creating and converting (`Promise`)](#creating-and-converting-promise)
-  - [Waiting and composition (`Promise`)](#waiting-and-composition-promise)
-  - [Running work in a child process (`AsyncPromise`)](#running-work-in-a-child-process-asyncpromise)
+- [Synchronous promises](#synchronous-promises)
+- [Chaining](#chaining)
+- [Combining promises](#combining-promises)
+- [Async promises](#async-promises)
+- [Settlement and materialization](#settlement-and-materialization)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Start here
+## Synchronous promises
 
-`Promise` is synchronous and best for "wrap this operation and chain handlers". `AsyncPromise` is for CPU-bound or blocking work you want to run in parallel from a CLI process.
+`Promise` executes its callback immediately in the current process. A zero-argument callback fulfills with its return value:
 
 ```php
 use Fyre\Utility\Promise\Promise;
 
-$promise = new Promise(function(): string {
-    return 'ready';
-});
+$promise = new Promise(static fn(): string => 'ready');
 
-$value = $promise
+$result = $promise
     ->then(static fn(string $value): string => strtoupper($value))
     ->then(static fn(string $value): string => $value.'!');
 
-echo Promise::await($value); // "READY!"
+echo Promise::await($result); // READY!
 ```
+
+A callback with parameters receives resolve and reject closures. Only the first call settles the promise; an exception thrown before settlement rejects it.
+
+```php
+use Closure;
+
+$promise = new Promise(
+    static function(Closure $resolve, Closure $reject): void {
+        $resolve('ready');
+    }
+);
+```
+
+| Method | Result |
+| --- | --- |
+| `resolve($value = null)` | returns an existing `PromiseInterface` unchanged, or wraps a value as fulfilled |
+| `reject($reason = null)` | creates a rejected promise; `null` becomes an empty `RuntimeException` |
+| `await($promise)` | returns the fulfilled value or throws the rejection reason |
+
+## Chaining
+
+The `PromiseInterface` contract is shared by synchronous, asynchronous, fulfilled, and rejected promises:
+
+| Method | When it runs | Chain result |
+| --- | --- | --- |
+| `then($onFulfilled, $onRejected = null)` | matching fulfillment or rejection handler | handler's value or promise |
+| `catch($onRejected)` | rejection | handler's value or promise |
+| `finally($onFinally)` | either outcome | original outcome unless cleanup throws or returns a rejected promise |
+
+Handlers run as soon as the promise settles. Returning a `PromiseInterface` adopts that promise's outcome; returning any other value fulfills the next promise. A thrown exception rejects the next promise.
+
+```php
+use RuntimeException;
+
+$value = Promise::reject(new RuntimeException('Unavailable'))
+    ->catch(static fn(RuntimeException $e): string => 'fallback')
+    ->finally(static function(): void {
+        // Release resources.
+    });
+```
+
+A promise cannot resolve with itself, and attempting to settle the same pending `Promise` more than once raises `LogicException`.
+
+## Combining promises
+
+Combination methods accept arrays containing promises, plain values, or both:
+
+| Method | Fulfillment | Rejection | Empty input |
+| --- | --- | --- | --- |
+| `all($values)` | all results with the original keys | first rejected item | empty array |
+| `any($values)` | first fulfilled value | `RuntimeException` after every item rejects | `RuntimeException` |
+| `race($values)` | first settled value | first settled rejection | `null` |
+
+```php
+$result = Promise::await(Promise::all([
+    'first' => Promise::resolve(1),
+    'second' => 2,
+]));
+```
+
+For already-settled synchronous values, "first" follows input iteration order. For `AsyncPromise` values, the methods repeatedly poll until they can determine the result.
+
+## Async promises
+
+`AsyncPromise` executes the callback in a forked child process and sends its result back over a Unix socket:
 
 ```php
 use Closure;
 use Fyre\Utility\Promise\AsyncPromise;
-use Fyre\Utility\Promise\Promise;
 
-$promise = new AsyncPromise(function(Closure $resolve, Closure $reject): void {
-    $resolve(['pid' => getmypid()]);
-});
+$promise = new AsyncPromise(
+    static function(Closure $resolve, Closure $reject): void {
+        $resolve(['pid' => getmypid()]);
+    }
+);
 
 $result = Promise::await($promise);
 ```
 
-## Choosing `Promise` or `AsyncPromise`
+The callback must accept the resolve and reject closures and must call one of them. A zero-argument async callback cannot return its value to the parent.
 
-A promise can settle in one of two ways:
+| Method | Behavior |
+| --- | --- |
+| `wait()` | blocks, polling every 100 milliseconds until the child settles |
+| `cancel($message = null)` | kills and reaps a pending child, then rejects with `CancelledPromiseException` |
 
-- Fulfilled: produces a value.
-- Rejected: produces a rejection reason (`Throwable`).
+`AsyncPromise` requires the `pcntl`, `posix`, and `sockets` extensions and a SAPI that supports `pcntl_fork()`, normally CLI on a Unix-like platform. Both fulfilled values and rejection reasons cross the socket through PHP serialization and must be serializable.
 
-Chaining happens through `PromiseInterface`:
+The maximum child runtime is 300 seconds. A child still running beyond that limit, or reported as stopped, is cancelled during polling.
 
-- `then()` runs an “on fulfilled” handler (and optionally an “on rejected” handler).
-- `catch()` runs only when rejected.
-- `finally()` runs once settled and preserves the original outcome.
+## Settlement and materialization
 
-Handlers may return either a plain value or another `PromiseInterface`. When a handler returns a promise, the chain waits for that returned promise to settle before continuing.
+Synchronous promises settle during construction or callback execution. Chaining them does not defer work or schedule it on an event loop.
 
-To create a promise:
+An async child's result is not applied to the parent-side promise until it is polled. Drive it with `wait()`, `Promise::await()`, or one of the combination methods. `all()`, `any()`, and `race()` poll async children in a tight loop; use direct `wait()` or `await()` when busy polling is undesirable.
 
-- `Promise` supports a zero-argument callback (the return value becomes the fulfillment value), or a callback that receives `resolve`/`reject` callbacks.
-- `AsyncPromise` runs the callback in a child process; the callback should accept `resolve`/`reject` parameters and call exactly one of them.
-
-## Environment requirements
-
-`AsyncPromise` depends on forking and IPC and is only suitable when the runtime allows it:
-
-- Requires `pcntl`, `posix`, and `sockets` extensions.
-- Requires a SAPI/environment that supports `pcntl_fork()` (typically CLI on Unix-like systems).
-- Long-running CLI workloads are a natural fit, such as a queue [Worker](../queue/worker.md).
-
-If the environment can’t fork or serialize results reliably, prefer `Promise` (synchronous) or push the work into a dedicated process (for example, a queue worker).
-
-## Method guide
-
-Use `Promise::await()` when you want to block and unwrap the final value.
-
-Examples below assume `Promise` refers to `Fyre\Utility\Promise\Promise` and `AsyncPromise` refers to `Fyre\Utility\Promise\AsyncPromise`.
-
-### Chaining (`PromiseInterface`)
-
-#### **Transform a settled value** (`then()`)
-
-Runs `$onFulfilled` when the promise fulfills and `$onRejected` when it rejects. If the selected callback returns a `PromiseInterface`, it is awaited before the chain continues.
-
-Arguments:
-- `$onFulfilled` (`Closure|null`): the fulfillment callback.
-- `$onRejected` (`Closure|null`): the rejection callback (receives `Throwable|null`).
-
-```php
-$value = Promise::resolve(1)
-    ->then(static fn(int $value): int => $value + 1)
-    ->then(static fn(int $value): int => $value * 2);
-```
-
-#### **Handle rejection** (`catch()`)
-
-Runs `$onRejected` if the promise is rejected. If the callback returns a `PromiseInterface`, it is awaited before the chain continues.
-
-Arguments:
-- `$onRejected` (`Closure`): the rejection callback (receives `Throwable|null`).
-
-```php
-use Throwable;
-
-$value = Promise::reject()
-    ->catch(static function(Throwable|null $reason): string {
-        return $reason?->getMessage() ?? 'failed';
-    });
-```
-
-#### **Run a cleanup callback** (`finally()`)
-
-Runs `$onFinally` once the promise is settled (fulfilled or rejected). The chain resolves/rejects with the original outcome unless the `finally` callback fails (throws or returns a rejected promise).
-
-Arguments:
-- `$onFinally` (`Closure`): the settled callback.
-
-```php
-$value = Promise::resolve('ok')
-    ->finally(static function(): void {
-        // cleanup
-    });
-```
-
-### Creating and converting (`Promise`)
-
-#### **Wrap a value as a promise** (`Promise::resolve()`)
-
-If `$value` is already a `PromiseInterface`, it is returned as-is. Otherwise, a fulfilled promise is returned for the value.
-
-Arguments:
-- `$value` (`mixed`): the value (or promise) to resolve.
-
-```php
-$promise = Promise::resolve(123);
-```
-
-#### **Create a rejected promise** (`Promise::reject()`)
-
-Creates a rejected promise. If no reason is provided, a `RuntimeException` is used.
-
-Arguments:
-- `$reason` (`Throwable|null`): the rejection reason.
-
-```php
-use Exception;
-
-$promise = Promise::reject(new Exception('nope'));
-```
-
-### Waiting and composition (`Promise`)
-
-#### **Block for a promise result** (`Promise::await()`)
-
-Returns the fulfillment value, or throws the rejection reason. For `AsyncPromise`, this blocks until the child process settles.
-
-Arguments:
-- `$promise` (`PromiseInterface`): the promise to await.
-
-```php
-$value = Promise::await(Promise::resolve('done'));
-```
-
-#### **Wait for all values** (`Promise::all()`)
-
-Resolves once all items fulfill, producing an array of values using the same keys as the input array. Rejects on the first rejection.
-
-Arguments:
-- `$promisesOrValues` (`mixed[]`): Promises or raw values.
-
-```php
-$all = Promise::all([
-    'a' => Promise::resolve(1),
-    'b' => 2,
-]);
-```
-
-#### **Wait for any successful value** (`Promise::any()`)
-
-Resolves with the first fulfilled value. If every item rejects (or the input array is empty), the returned promise rejects.
-
-Arguments:
-- `$promisesOrValues` (`mixed[]`): Promises or raw values.
-
-```php
-$any = Promise::any([Promise::reject(), Promise::resolve(3)]);
-```
-
-#### **Settle with the first result** (`Promise::race()`)
-
-Resolves or rejects with the first item to settle. If the input array is empty, it fulfills with `null`.
-
-Arguments:
-- `$promisesOrValues` (`mixed[]`): Promises or raw values.
-
-```php
-$race = Promise::race([Promise::resolve('first'), Promise::resolve('second')]);
-```
-
-### Running work in a child process (`AsyncPromise`)
-
-#### **Wait for settlement** (`AsyncPromise::wait()`)
-
-Blocks the current process until the child process fulfills, rejects, or is cancelled.
-
-```php
-use Closure;
-
-$promise = new AsyncPromise(function(Closure $resolve, Closure $reject): void {
-    $resolve('ok');
-});
-
-$promise->wait();
-```
-
-#### **Cancel a pending promise** (`AsyncPromise::cancel()`)
-
-Kills the child process (SIGKILL) and rejects the promise with `CancelledPromiseException`. If the promise has already settled, this does nothing.
-
-Arguments:
-- `$message` (`string|null`): an optional cancellation message.
-
-```php
-use Closure;
-
-$promise = new AsyncPromise(function(Closure $resolve, Closure $reject): void {
-    // ...
-});
-
-$promise->cancel('No longer needed');
-```
+Combination methods materialize their output arrays. `all()` retains the input keys; `any()` and `race()` return a single value.
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
-- Handlers run synchronously when a promise settles; there is no event loop or scheduler.
-- Unhandled rejections are not silent: a rejected promise can throw its rejection reason when it is destroyed if no rejection handler was attached via `then()`/`catch()`/`finally()`.
-- `AsyncPromise` does not settle on its own; you must drive it by calling `wait()`, by calling `Promise::await()`, or by passing it into `Promise::all()`/`any()`/`race()`.
-- `AsyncPromise` transfers results over a socket; both fulfillment values and rejection reasons must be serializable.
-- `Promise::all()`/`any()`/`race()` poll `AsyncPromise` instances in a tight loop (no sleep). If you need to avoid busy polling, call `wait()`/`await()` on the async promises directly.
-- `AsyncPromise` auto-cancels if the child process exceeds its maximum runtime (default 300 seconds) or is stopped, rejecting with `CancelledPromiseException`.
+- Rejection reasons are always `Throwable` instances. Calling `reject()` without one creates a `RuntimeException`.
+- Unhandled rejections are not silent: a rejected promise may throw its reason during destruction when no rejection handler was attached.
+- Attaching an `onRejected` callback through `then()`, `catch()`, or `finally()` marks that rejection as handled.
+- After `all()`, `any()`, or `race()` has its result, remaining async promises are ignored rather than cancelled. Rejection handlers are attached to prevent abandoned rejection errors.
+- If a child exits without sending a valid serialized result, the parent throws `RuntimeException` when it polls the socket.
+- `cancel()` does nothing after settlement and may throw if the child cannot be killed or reaped.
+- `Promise` supports instance and static macros; see [Macros](../core/macros.md).
 
 ## Related
 
