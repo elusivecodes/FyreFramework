@@ -8,7 +8,6 @@ They keep code short while routing real work through the same underlying service
 
 - [Start here](#start-here)
 - [When to use helpers](#when-to-use-helpers)
-- [Helper patterns](#helper-patterns)
 - [Helper reference](#helper-reference)
   - [Engine and container](#engine-and-container)
   - [Configuration, environment, and i18n](#configuration-environment-and-i18n)
@@ -94,21 +93,7 @@ final class DashboardController
 }
 ```
 
-## Helper patterns
-
-Most helpers do one of three things:
-
-- resolve a shared service and return it (`auth()`, `cache()`, `db()`, `model()`)
-- resolve a shared service and perform a common call (`config()`, `__()`, `route()`, `json()`, `view()`)
-- provide a small runtime convenience (`env()`, `collect()`, `now()`, `dump()`, `dd()`, `abort()`)
-
-That keeps the global surface area small and lets the container remain the single integration point for the real work.
-
 ## Helper reference
-
-This section is a usage-first guide to the built-in helper functions, grouped by the area of the framework they interact with.
-
-Helpers are optional sugar. Many helpers below map directly to services you can also receive via dependency injection.
 
 ### Engine and container
 
@@ -279,96 +264,21 @@ $url = asset('app.css', true);
 
 ### Authentication and authorization
 
-#### **Access Auth** (`auth()`)
-
-Returns the shared `Auth` service.
-
-```php
-$auth = auth();
-```
-
-#### **Get the current user** (`user()`)
-
-Returns the current authenticated user (or `null`).
-
-```php
-$currentUser = user();
-```
-
-#### **Check login state** (`logged_in()`)
-
-Returns `true` when a user is logged in.
-
-```php
-if (!logged_in()) {
-    // ...
-}
-```
-
-#### **Authorize an action** (`authorize()`)
-
-Authorizes an access rule (throws on failure).
-
-Arguments:
-- `$rule` (`string`): access rule name.
-- `...$args` (`mixed`): additional rule arguments.
+| Helper | Result |
+| --- | --- |
+| `auth()` | shared `Auth` service |
+| `user()` | current user, or `null` |
+| `logged_in()` | whether a user is logged in |
+| `authorize($rule, ...$args)` | authorize a rule, throwing when denied |
+| `can($rule, ...$args)` | whether a rule is allowed |
+| `cannot($rule, ...$args)` | whether a rule is denied |
+| `can_any($rules, ...$args)` | whether any listed rule is allowed |
+| `can_none($rules, ...$args)` | whether every listed rule is denied |
 
 ```php
 authorize('edit', $post);
-```
 
-#### **Check access** (`can()`)
-
-Returns `true` when an access rule is allowed.
-
-Arguments:
-- `$rule` (`string`): access rule name.
-- `...$args` (`mixed`): additional rule arguments.
-
-```php
-if (can('edit', $post)) {
-    // ...
-}
-```
-
-#### **Check access (negative)** (`cannot()`)
-
-Returns `true` when an access rule is denied.
-
-Arguments:
-- `$rule` (`string`): access rule name.
-- `...$args` (`mixed`): additional rule arguments.
-
-```php
-if (cannot('delete', $post)) {
-    // ...
-}
-```
-
-#### **Check whether any rule matches** (`can_any()`)
-
-Returns `true` when any rule in the list is allowed.
-
-Arguments:
-- `$rules` (`string[]`): access rule names.
-- `...$args` (`mixed`): additional rule arguments.
-
-```php
 if (can_any(['edit', 'publish'], $post)) {
-    // ...
-}
-```
-
-#### **Check whether none match** (`can_none()`)
-
-Returns `true` when none of the rules are allowed.
-
-Arguments:
-- `$rules` (`string[]`): access rule names.
-- `...$args` (`mixed`): additional rule arguments.
-
-```php
-if (can_none(['delete', 'ban'], $post)) {
     // ...
 }
 ```
@@ -413,60 +323,13 @@ echo escape($title);
 
 ### Data and services
 
-#### **Get a cache handler** (`cache()`)
-
-Returns a configured cache handler.
-
-Arguments:
-- `$key` (`string`): cache config key (default `default`).
-
-```php
-$cache = cache();
-```
-
-#### **Get a database connection** (`db()`)
-
-Returns a configured database connection.
-
-Arguments:
-- `$key` (`string`): connection config key (default `default`).
-
-```php
-$db = db();
-```
-
-#### **Get a model instance** (`model()`)
-
-Returns a model instance from the model registry.
-
-Arguments:
-- `$alias` (`string`): model alias.
-
-```php
-$users = model('Users');
-```
-
-#### **Create an email builder** (`email()`)
-
-Creates a new `Email` instance for the configured mailer.
-
-Arguments:
-- `$key` (`string`): mailer config key (default `default`).
-
-```php
-$email = email();
-```
-
-#### **Get an encryption handler** (`encryption()`)
-
-Returns a configured encryption handler.
-
-Arguments:
-- `$key` (`string`): encryption config key (default `default`).
-
-```php
-$encrypter = encryption();
-```
+| Helper | Result |
+| --- | --- |
+| `cache($key = 'default')` | configured cache handler |
+| `db($key = 'default')` | configured database connection |
+| `model($alias)` | model from the registry |
+| `email($key = 'default')` | new email for the configured mailer |
+| `encryption($key = 'default')` | configured encryption handler |
 
 #### **Queue a job** (`queue()`)
 
@@ -495,59 +358,20 @@ $boolean = type('boolean');
 
 ### Utility
 
-#### **Create a collection** (`collect()`)
-
-Creates a new `Collection`.
-
-Arguments:
-- `$source` (`array|Closure|JsonSerializable|Traversable|null`): source values.
-
-```php
-$items = collect([1, 2, 3]);
-```
-
-#### **Get the current time** (`now()`)
-
-Creates a new `DateTime` set to now.
-
-```php
-$now = now();
-```
+| Helper | Result |
+| --- | --- |
+| `collect($source)` | new `Collection` containing the source values |
+| `now()` | new `DateTime` set to the current time |
 
 ### Debugging
 
-#### **Dump values** (`dump()`)
-
-Dumps values using `var_dump()`.
-
-```php
-dump($data);
-```
-
-#### **Dump and die** (`dd()`)
-
-Dumps values and stops execution.
-
-```php
-dd($data);
-```
-
-#### **Log a message** (`log_message()`)
-
-Logs a message via the log manager.
-
-Arguments:
-- `$type` (`string`): log type (e.g. `error`, `info`).
-- `$message` (`string`): message.
-- `$data` (`array`): optional context.
-
-```php
-log_message('error', 'Something went wrong');
-```
+| Helper | Effect |
+| --- | --- |
+| `dump(...$data)` | dump values using `var_dump()` |
+| `dd(...$data)` | dump values and stop execution |
+| `log_message($type, $message, $data = [])` | write through the log manager |
 
 ## Behavior notes
-
-A few behaviors are worth keeping in mind:
 
 - Helpers rely on the shared `Engine` instance, so set that instance early in bootstrap when you rely on loader mappings or discovery features.
 - `abort()` supports a fixed set of status codes (`400`, `401`, `403`, `404`, `405`, `406`, `409`, `410`, `501`, `503`). Other codes throw `InternalServerException` with the provided code.

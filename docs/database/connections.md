@@ -16,14 +16,12 @@ Most applications define a single `default` connection and only add more when th
   - [SQLite](#sqlite)
 - [Selecting a connection](#selecting-a-connection)
 - [Building one-off connections](#building-one-off-connections)
+- [Managing connections](#managing-connections)
 - [Running queries](#running-queries)
+- [Transactions](#transactions)
 - [Database locks](#database-locks)
+- [Connection utilities](#connection-utilities)
 - [Troubleshooting](#troubleshooting)
-- [Method guide](#method-guide)
-  - [`ConnectionManager`](#connectionmanager)
-  - [`Connection`](#connection)
-  - [`MysqlConnection`](#mysqlconnection)
-  - [`PostgresConnection`](#postgresconnection)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -199,6 +197,21 @@ $temp = $connections->build([
 ]);
 ```
 
+## Managing connections
+
+`ConnectionManager` keeps configuration and loaded instances separate. The first call to `use($key)` builds a connection; later calls return that same instance.
+
+| Method | Purpose |
+| --- | --- |
+| `getConfig($key = null)` | read one configuration, or all configurations |
+| `hasConfig($key = 'default')` | check whether a configuration exists |
+| `isLoaded($key = 'default')` | check whether a connection has been built |
+| `setConfig($key, $options)` | add a runtime configuration |
+| `unload($key = 'default')` | remove a configuration and its loaded connection |
+| `clear()` | remove every configuration and loaded connection |
+
+`setConfig()` throws when the key already exists. Unload the existing entry before replacing it.
+
 ## Running queries
 
 Once you have a `Connection`, most day-to-day database work is done through query builder objects. Each builder compiles to SQL and executes through the connection (usually via `Query::execute()`).
@@ -229,6 +242,25 @@ Prefer bound values wherever possible. Query builders bind values by default (vi
 - Use `Connection::rawQuery()` only when you specifically need the underlying `PDOStatement`.
 - Avoid embedding user input into literals or raw snippets; see [Raw SQL fragments](queries.md#raw-sql-fragments).
 
+## Transactions
+
+Use `transactional()` for work that should commit together. An exception rolls the transaction back and is rethrown; returning `false` rolls it back and returns `false`.
+
+```php
+$saved = $db->transactional(function($db) {
+    $db->insert()
+        ->into('audit_log')
+        ->values([['event' => 'user.created']])
+        ->execute();
+
+    return true;
+});
+```
+
+For manual control, use `begin()`, `commit()`, and `rollback()`. Nested transactions use savepoints, and `getSavePointLevel()` returns the current nesting level.
+
+`afterCommit($callback, $priority = 1, $key = null)` schedules work after the outermost commit. When no transaction is active, the callback runs immediately. A key can be used to replace an already queued callback.
+
 ## Database locks
 
 Use `Lock` when work must not run concurrently for the same name:
@@ -253,6 +285,23 @@ app db:lock:setup --db=default
 
 The migration runner initializes this storage automatically before an actual migrate or rollback operation. `Lock::acquire()` does not perform DDL. Expired lock rows are not removed automatically, but they do not prevent their lock names from being acquired again. Only the current owner can refresh or release an active lock. Run or schedule `app db:lock:purge --db=default` to remove expired rows.
 
+## Connection utilities
+
+| Method | Purpose |
+| --- | --- |
+| `affectedRows()` | get the affected row count from the latest statement |
+| `insertId()` | get the last inserted ID from PDO |
+| `getConfig()` | inspect this connection's merged configuration |
+| `inTransaction()` | check whether a transaction is active |
+| `getCharset()` / `setCharset($charset)` | read or change the connection charset |
+| `version()` | get the database server version |
+| `disconnect()` | close the PDO connection |
+| `enableQueryLogging()` / `disableQueryLogging()` | control logging for this instance |
+| `enableForeignKeys()` / `disableForeignKeys()` | control foreign-key checks |
+| `truncate($tableName)` | truncate a table using driver-specific SQL |
+
+`MysqlConnection::getCollation()` returns the current MySQL collation. `PostgresConnection::getSchema()` reads the configured schema and `setSchema($schema)` changes its search path.
+
 ## Troubleshooting
 
 Common issues when setting up connections:
@@ -263,483 +312,10 @@ Common issues when setting up connections:
 - If SQLite reports “unable to open database file”, verify the directory for your SQLite file exists and is writable by the PHP process. Use an absolute path if your working directory differs between environments.
 - If query logging is enabled but nothing is written, `log: true` emits debug-level logs with the `queries` scope. Ensure your logger is configured for `debug` and includes the `queries` scope (see the example under [Example configuration](#example-configuration)).
 
-## Method guide
-
-### `ConnectionManager`
-
-#### **Get a shared connection** (`use()`)
-
-Returns the connection instance for a config key. The first call builds it from config, and later calls return the same loaded instance.
-
-Arguments:
-- `$key` (`string`): the connection key (defaults to `default`).
-
-```php
-$db = $connections->use();
-$reporting = $connections->use('reporting');
-```
-
-#### **Build a connection instance** (`build()`)
-
-Builds a new connection instance from an options array (without storing or sharing it). The options must include a valid `className` that extends `Fyre\DB\Connection`.
-
-Arguments:
-- `$options` (`array<string, mixed>`): connection options including `className`.
-
-```php
-use Fyre\DB\Handlers\Sqlite\SqliteConnection;
-
-$db = $connections->build([
-    'className' => SqliteConnection::class,
-    'database' => ':memory:',
-]);
-```
-
-#### **Read stored configuration** (`getConfig()`)
-
-Returns the stored config array. When called with no key, it returns all stored configs.
-
-Arguments:
-- `$key` (`string|null`): the connection key, or `null` to return all configs.
-
-```php
-$all = $connections->getConfig();
-$default = $connections->getConfig('default');
-```
-
-#### **Check whether a config exists** (`hasConfig()`)
-
-Returns whether a config key has been registered.
-
-Arguments:
-- `$key` (`string`): the connection key (defaults to `default`).
-
-```php
-if ($connections->hasConfig('reporting')) {
-    $connections->use('reporting');
-}
-```
-
-#### **Check whether a connection is loaded** (`isLoaded()`)
-
-Returns whether a loaded connection instance exists for a key.
-
-Arguments:
-- `$key` (`string`): the connection key (defaults to `default`).
-
-```php
-if (!$connections->isLoaded('analytics')) {
-    $connections->use('analytics');
-}
-```
-
-#### **Register a config** (`setConfig()`)
-
-Registers a config key and options array. Throws if the key already exists.
-
-Arguments:
-- `$key` (`string`): the connection key to register.
-- `$options` (`array<string, mixed>`): connection options including `className`.
-
-```php
-use Fyre\DB\Handlers\Sqlite\SqliteConnection;
-
-$connections->setConfig('temp', [
-    'className' => SqliteConnection::class,
-    'database' => ':memory:',
-]);
-```
-
-#### **Remove a config and loaded connection** (`unload()`)
-
-Removes both the stored config and any loaded connection for that key.
-
-Arguments:
-- `$key` (`string`): the connection key (defaults to `default`).
-
-```php
-$connections->unload('analytics');
-```
-
-#### **Clear all configs and loaded connections** (`clear()`)
-
-Clears all stored configs and all loaded connections.
-
-```php
-$connections->clear();
-```
-
-### `Connection`
-
-Once you have a connection, these are the methods you will use most often.
-
-```php
-$db = $connections->use();
-// You can also do: $db = db();
-```
-
-#### **Create a SELECT query** (`select()`)
-
-Creates a `SelectQuery` for building and executing `SELECT` statements.
-
-Arguments:
-- `$fields` (`array<mixed>|string`): the fields to select (defaults to `'*'`).
-
-```php
-$result = $db->select(['id', 'email'])
-    ->from('users')
-    ->where(['active' => 1])
-    ->execute();
-```
-
-#### **Create an INSERT query** (`insert()`)
-
-Creates an `InsertQuery` for inserting rows.
-
-```php
-$db->insert()
-    ->into('users')
-    ->values([['email' => 'a@example.com']])
-    ->execute();
-```
-
-#### **Create an INSERT FROM SELECT query** (`insertFrom()`)
-
-Creates an `InsertFromQuery` for inserting rows from another query.
-
-Arguments:
-- `$from` (`Closure|LiteralExpression|SelectQuery|string`): the select query (or other supported source) to insert from.
-- `$columns` (`string[]`): the target columns.
-
-```php
-$from = $db->select(['id', 'email'])
-    ->from('users')
-    ->where(['active' => 1]);
-
-$db->insertFrom($from, ['id', 'email'])
-    ->into('active_users')
-    ->execute();
-```
-
-#### **Create an UPDATE query** (`update()`)
-
-Creates an `UpdateQuery` for updating rows.
-
-Arguments:
-- `$table` (`array|string|null`): the table name (or list of tables), if you want to set it up-front.
-
-```php
-$db->update('users')
-    ->set(['active' => 0])
-    ->where(['last_login <' => '2025-01-01'])
-    ->execute();
-```
-
-#### **Create a DELETE query** (`delete()`)
-
-Creates a `DeleteQuery` for deleting rows.
-
-Arguments:
-- `$alias` (`array|string`): the alias (or aliases) to delete.
-
-```php
-$db->delete()
-    ->from('sessions')
-    ->where(['expires <' => time()])
-    ->execute();
-```
-
-#### **Create a batch UPDATE query** (`updateBatch()`)
-
-Creates an `UpdateBatchQuery`, typically used to update multiple rows with a single statement.
-
-Arguments:
-- `$table` (`string|null`): the table name.
-
-```php
-$db->updateBatch('users')
-    ->set(
-        [
-            ['id' => 1, 'active' => 1],
-            ['id' => 2, 'active' => 0],
-        ],
-        'id'
-    )
-    ->execute();
-```
-
-#### **Create an UPSERT query** (`upsert()`)
-
-Creates an `UpsertQuery` for inserting rows and updating on conflict, when supported by the current driver.
-
-Arguments:
-- `$conflictKeys` (`array|string`): the conflict key (or keys).
-
-```php
-$db->upsert('id')
-    ->into('users')
-    ->values([['id' => 1, 'email' => 'a@example.com']])
-    ->execute();
-```
-
-#### **Execute parameterized SQL** (`execute()`)
-
-Executes SQL using a prepared statement with bound parameters and returns a `ResultSet`.
-
-Arguments:
-- `$sql` (`string`): the SQL string (positional `?` or named `:param` placeholders).
-- `$params` (`array<int|string, mixed>`): the values to bind.
-
-```php
-$result = $db->execute(
-    'SELECT id FROM users WHERE email = :email',
-    ['email' => 'a@example.com']
-);
-```
-
-#### **Read affected row count** (`affectedRows()`)
-
-Returns the number of affected rows for the most recent executed statement.
-
-```php
-$db->update('users')
-    ->set(['active' => 1])
-    ->where(['id' => 1])
-    ->execute();
-
-$affected = $db->affectedRows();
-```
-
-#### **Create a named lock** (`lock()`)
-
-Creates a database-backed named lock. Locks use a table-based lease consistently across all supported handlers.
-
-Arguments:
-- `$name` (`string`): the lock name, up to 255 characters.
-- `$expires` (`int`): the lock lifetime in seconds (default: `300`).
-
-```php
-$lock = $db->lock('daily-report', 60);
-```
-
-#### **Run a query directly** (`query()`)
-
-Executes a raw SQL query and returns a `ResultSet`.
-
-```php
-$result = $db->query('SELECT 1');
-```
-
-For deeper coverage of binding, literals, and safe raw fragments, see [Database queries](queries.md) (especially [Binding and expressions](queries.md#binding-and-expressions) and [Raw SQL fragments](queries.md#raw-sql-fragments)).
-
-#### **Run work in a transaction** (`transactional()`)
-
-Executes a callback inside a transaction. If the callback throws, the transaction is rolled back and the exception is rethrown. If the callback returns `false`, the transaction is rolled back and `false` is returned.
-
-Arguments:
-- `$callback` (`Closure(Connection): mixed`): the callback to run.
-
-```php
-$ok = $db->transactional(function($db) {
-    $db->insert()
-        ->into('audit_log')
-        ->values([['event' => 'test']])
-        ->execute();
-
-    return false;
-});
-```
-
-#### **Begin a transaction** (`begin()`)
-
-Begins a transaction (or a savepoint when nested transactions are enabled).
-
-```php
-$db->begin();
-```
-
-#### **Commit a transaction** (`commit()`)
-
-Commits the current transaction (or releases a savepoint when nested).
-
-```php
-$db->commit();
-```
-
-#### **Roll back a transaction** (`rollback()`)
-
-Rolls back the current transaction (or rolls back to a savepoint when nested).
-
-```php
-$db->rollback();
-```
-
-#### **Get the transaction nesting level** (`getSavePointLevel()`)
-
-Returns the current transaction nesting level (0 when not in a transaction).
-
-```php
-$level = $db->getSavePointLevel();
-```
-
-#### **Run callbacks after commit** (`afterCommit()`)
-
-Queues a callback to run after the outermost transaction is committed. If no transaction is active, the callback runs immediately.
-
-Arguments:
-- `$callback` (`Closure`): the callback.
-- `$priority` (`int`): the callback priority.
-- `$key` (`string|null`): an optional key to replace an existing queued callback.
-
-```php
-$db->begin();
-
-$db->afterCommit(fn() => null);
-
-$db->commit();
-```
-
-#### **Get the last insert id** (`insertId()`)
-
-Returns the last inserted id from the underlying PDO connection.
-
-```php
-$id = $db->insertId();
-```
-
-#### **Read the connection config** (`getConfig()`)
-
-Returns the merged connection configuration for this instance (base defaults, handler defaults, and your provided options).
-
-```php
-$config = $db->getConfig();
-```
-
-#### **Check whether a transaction is active** (`inTransaction()`)
-
-Returns whether a transaction is currently in progress.
-
-```php
-if ($db->inTransaction()) {
-    $db->rollback();
-}
-```
-
-#### **Read or set the connection charset** (`getCharset()`, `setCharset()`)
-
-Reads the current connection charset, or sets it for the current connection.
-
-Arguments:
-- `$charset` (`string`): the charset to set.
-
-```php
-$current = $db->getCharset();
-$db->setCharset($current);
-```
-
-#### **Read the server version** (`version()`)
-
-Returns the database server version string.
-
-```php
-$version = $db->version();
-```
-
-#### **Disconnect from the database** (`disconnect()`)
-
-Disconnects the underlying PDO connection and returns whether it was disconnected.
-
-```php
-$db->disconnect();
-```
-
-#### **Enable or disable query logging** (`enableQueryLogging()`, `disableQueryLogging()`)
-
-Enables or disables query logging for this connection instance.
-
-```php
-$db->enableQueryLogging();
-$db->disableQueryLogging();
-```
-
-#### **Enable or disable foreign key checks** (`enableForeignKeys()`, `disableForeignKeys()`)
-
-Enables or disables foreign key checks for the current connection, using the driver-specific implementation.
-
-```php
-$db->disableForeignKeys();
-$db->enableForeignKeys();
-```
-
-#### **Truncate a table** (`truncate()`)
-
-Truncates a table using the driver-specific implementation.
-
-Arguments:
-- `$tableName` (`string`): the table to truncate.
-
-```php
-$db->truncate('audit_log');
-```
-
-### `MysqlConnection`
-
-#### **Get the connection collation** (`getCollation()`)
-
-Returns the current MySQL collation for the connection.
-
-```php
-use Fyre\DB\Handlers\Mysql\MysqlConnection;
-
-$db = db();
-
-if ($db instanceof MysqlConnection) {
-    $collation = $db->getCollation();
-}
-```
-
-### `PostgresConnection`
-
-#### **Get the active schema** (`getSchema()`)
-
-Returns the schema name configured on the connection.
-
-```php
-use Fyre\DB\Handlers\Postgres\PostgresConnection;
-
-$db = db();
-
-if ($db instanceof PostgresConnection) {
-    $schema = $db->getSchema();
-}
-```
-
-#### **Set the active schema** (`setSchema()`)
-
-Sets the schema search path for the connection.
-
-Arguments:
-- `$schema` (`string`): the schema name.
-
-```php
-use Fyre\DB\Handlers\Postgres\PostgresConnection;
-
-$db = db();
-
-if ($db instanceof PostgresConnection) {
-    $db->setSchema('public');
-}
-```
-
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
-- `ConnectionManager::use()` builds the connection the first time a key is requested and returns that same loaded instance on later calls.
 - Connection handlers connect during construction, so credential, host, and database-name errors usually surface as soon as you call `use()` or `build()`.
 - Building fails when a config is missing `className` or `className` does not extend `Fyre\DB\Connection`.
-- `ConnectionManager::setConfig()` throws when the key already exists; use `unload()` or `clear()` before registering it again.
-- Nested transactions use savepoints when you call `begin()` inside an active transaction.
 - For file-backed SQLite databases, the handler applies `mask` when creating a new database file.
 
 ## Related

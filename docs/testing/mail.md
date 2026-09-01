@@ -8,14 +8,7 @@ The trait swaps configured mailers to a test handler, captures sent messages in 
 
 - [Start here](#start-here)
 - [Sending and asserting email](#sending-and-asserting-email)
-- [Common assertion groups](#common-assertion-groups)
-- [Method guide](#method-guide)
-  - [Counting and presence](#counting-and-presence)
-  - [Recipients and headers](#recipients-and-headers)
-  - [Subject](#subject)
-  - [Body](#body)
-  - [Attachments](#attachments)
-  - [Message access](#message-access)
+- [Assertion reference](#assertion-reference)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -26,8 +19,6 @@ The usual workflow is:
 1. Use `EmailTestTrait` in your test case.
 2. Run the code that sends email through `MailManager`.
 3. Assert on the captured messages.
-
-Methods with an `At` suffix target a specific email by 1-based index.
 
 ## Sending and asserting email
 
@@ -61,346 +52,36 @@ final class PasswordResetMailTest extends TestCase
 }
 ```
 
-## Common assertion groups
+## Assertion reference
 
-The helpers fall into a few practical groups:
+Every assertion accepts an optional final `$message` argument for the PHPUnit failure message. Helpers ending in `At()` add a 1-based `$at` argument before it and inspect only that captured email.
 
-- count and presence: `assertMailCount()`, `assertNoMailSent()`
-- recipients and headers: `assertMailSentTo()`, `assertMailSentFrom()`, `assertMailSentWithCc()`, `assertMailSentWithBcc()`, `assertMailSentWithReplyTo()`, `assertMailSentWithSender()`
-- subject and body: `assertMailSubjectContains()`, `assertMailContains()`, `assertMailContainsText()`, `assertMailContainsHtml()`
-- attachments and message access: `assertMailContainsAttachment()`, `getMessages()`
-
-Every helper that ends in `At()` checks a specific captured email by 1-based index.
-
-## Method guide
-
-Most examples assume you’re in a `TestCase` using `EmailTestTrait`.
-
-### Counting and presence
-
-#### **Assert the number of sent emails** (`assertMailCount()`)
-
-Asserts that exactly `$count` emails were sent.
-
-Arguments:
-- `$count` (`int`): the expected number of emails.
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailCount(1);
-```
-
-#### **Assert that no emails were sent** (`assertNoMailSent()`)
-
-Asserts that no emails were sent.
-
-Arguments:
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertNoMailSent();
-```
+Use `assertMailCount($count)` for an exact count and `assertNoMailSent()` when no email should have been delivered.
 
 ### Recipients and headers
 
-#### **Assert an email was sent to an address** (`assertMailSentTo()`)
-
-Asserts that at least one captured email has the address in its `To` recipients.
-
-Arguments:
-- `$address` (`string`): the expected email address.
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailSentTo('user@example.com');
-```
-
-#### **Assert a specific email was sent to an address** (`assertMailSentToAt()`)
-
-Asserts that email `#{$at}` has the address in its `To` recipients.
-
-Arguments:
-- `$address` (`string`): the expected email address.
-- `$at` (`int`): the email index (1-based).
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailSentToAt('user@example.com', 1);
-```
-
-#### **Assert an email was sent from an address** (`assertMailSentFrom()`)
-
-Asserts that at least one captured email has the address in its `From` header.
-
-Arguments:
-- `$address` (`string`): the expected email address.
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailSentFrom('no-reply@example.com');
-```
-
-#### **Assert a specific email was sent from an address** (`assertMailSentFromAt()`)
-
-Asserts that email `#{$at}` has the address in its `From` header.
-
-Arguments:
-- `$address` (`string`): the expected email address.
-- `$at` (`int`): the email index (1-based).
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailSentFromAt('no-reply@example.com', 1);
-```
-
-#### **Assert an email has a BCC recipient** (`assertMailSentWithBcc()`)
-
-Asserts that at least one captured email has the address in its `Bcc` recipients.
-
-Arguments:
-- `$address` (`string`): the expected email address.
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailSentWithBcc('audit@example.com');
-```
-
-#### **Assert a specific email has a BCC recipient** (`assertMailSentWithBccAt()`)
-
-Asserts that email `#{$at}` has the address in its `Bcc` recipients.
-
-Arguments:
-- `$address` (`string`): the expected email address.
-- `$at` (`int`): the email index (1-based).
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailSentWithBccAt('audit@example.com', 1);
-```
-
-#### **Assert an email has a CC recipient** (`assertMailSentWithCc()`)
-
-Asserts that at least one captured email has the address in its `Cc` recipients.
-
-Arguments:
-- `$address` (`string`): the expected email address.
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailSentWithCc('cc@example.com');
-```
-
-#### **Assert a specific email has a CC recipient** (`assertMailSentWithCcAt()`)
-
-Asserts that email `#{$at}` has the address in its `Cc` recipients.
-
-Arguments:
-- `$address` (`string`): the expected email address.
-- `$at` (`int`): the email index (1-based).
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailSentWithCcAt('cc@example.com', 1);
-```
-
-#### **Assert an email has a reply-to recipient** (`assertMailSentWithReplyTo()`)
-
-Asserts that at least one captured email has the address in its `Reply-To` recipients.
-
-Arguments:
-- `$address` (`string`): the expected email address.
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailSentWithReplyTo('support@example.com');
-```
-
-#### **Assert a specific email has a reply-to recipient** (`assertMailSentWithReplyToAt()`)
-
-Asserts that email `#{$at}` has the address in its `Reply-To` recipients.
-
-Arguments:
-- `$address` (`string`): the expected email address.
-- `$at` (`int`): the email index (1-based).
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailSentWithReplyToAt('support@example.com', 1);
-```
-
-#### **Assert an email has a sender address** (`assertMailSentWithSender()`)
-
-Asserts that at least one captured email has the address in its `Sender` header.
-
-Arguments:
-- `$address` (`string`): the expected email address.
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailSentWithSender('mailer@example.com');
-```
-
-#### **Assert a specific email has a sender address** (`assertMailSentWithSenderAt()`)
-
-Asserts that email `#{$at}` has the address in its `Sender` header.
-
-Arguments:
-- `$address` (`string`): the expected email address.
-- `$at` (`int`): the email index (1-based).
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailSentWithSenderAt('mailer@example.com', 1);
-```
-
-### Subject
-
-#### **Assert an email subject contains a string** (`assertMailSubjectContains()`)
-
-Asserts that at least one captured email subject contains `$needle`.
-
-Arguments:
-- `$needle` (`string`): the expected subject substring.
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailSubjectContains('Reset your password');
-```
-
-#### **Assert a specific email subject contains a string** (`assertMailSubjectContainsAt()`)
-
-Asserts that email `#{$at}` has a subject containing `$needle`.
-
-Arguments:
-- `$needle` (`string`): the expected subject substring.
-- `$at` (`int`): the email index (1-based).
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailSubjectContainsAt('Reset your password', 1);
-```
-
-### Body
-
-#### **Assert an email body contains a string** (`assertMailContains()`)
-
-Asserts that at least one captured email contains `$needle` in its full encoded body string.
-
-Arguments:
-- `$needle` (`string`): the expected substring.
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailContains('reset your password');
-```
-
-#### **Assert a specific email body contains a string** (`assertMailContainsAt()`)
-
-Asserts that email `#{$at}` contains `$needle` in its full encoded body string.
-
-Arguments:
-- `$needle` (`string`): the expected substring.
-- `$at` (`int`): the email index (1-based).
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailContainsAt('reset your password', 1);
-```
-
-#### **Assert an email text body contains a string** (`assertMailContainsText()`)
-
-Asserts that at least one captured email contains `$needle` in its text body.
-
-Arguments:
-- `$needle` (`string`): the expected text substring.
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailContainsText('reset your password');
-```
-
-#### **Assert a specific email text body contains a string** (`assertMailContainsTextAt()`)
-
-Asserts that email `#{$at}` contains `$needle` in its text body.
-
-Arguments:
-- `$needle` (`string`): the expected text substring.
-- `$at` (`int`): the email index (1-based).
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailContainsTextAt('reset your password', 1);
-```
-
-#### **Assert an email HTML body contains a string** (`assertMailContainsHtml()`)
-
-Asserts that at least one captured email contains `$needle` in its HTML body.
-
-Arguments:
-- `$needle` (`string`): the expected HTML substring.
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailContainsHtml('<a', 'Expected a link in the email body.');
-```
-
-#### **Assert a specific email HTML body contains a string** (`assertMailContainsHtmlAt()`)
-
-Asserts that email `#{$at}` contains `$needle` in its HTML body.
-
-Arguments:
-- `$needle` (`string`): the expected HTML substring.
-- `$at` (`int`): the email index (1-based).
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailContainsHtmlAt('<a', 1);
-```
-
-### Attachments
-
-#### **Assert an email contains an attachment** (`assertMailContainsAttachment()`)
-
-Asserts that at least one captured email has an attachment with the given `$filename`.
-
-Arguments:
-- `$filename` (`string`): the expected attachment filename.
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailContainsAttachment('invoice.pdf');
-```
-
-#### **Assert a specific email contains an attachment** (`assertMailContainsAttachmentAt()`)
-
-Asserts that email `#{$at}` has an attachment with the given `$filename`.
-
-Arguments:
-- `$filename` (`string`): the expected attachment filename.
-- `$at` (`int`): the email index (1-based).
-- `$message` (`string`): the message to display on failure.
-
-```php
-$this->assertMailContainsAttachmentAt('invoice.pdf', 1);
-```
-
-### Message access
-
-#### **Read captured email messages** (`getMessages()`)
-
-Returns the captured `Email` messages. When `$at` is provided, this returns either an array with a single message (if that index exists) or an empty array.
-
-Arguments:
-- `$at` (`int|null`): the email index (1-based), or `null` for all messages.
-
-```php
-$messages = $this->getMessages();
-$first = $this->getMessages(1);
-```
+| Match | Any captured email | Email at `$at` |
+| --- | --- | --- |
+| To recipient | `assertMailSentTo($address)` | `assertMailSentToAt($address, $at)` |
+| From address | `assertMailSentFrom($address)` | `assertMailSentFromAt($address, $at)` |
+| Cc recipient | `assertMailSentWithCc($address)` | `assertMailSentWithCcAt($address, $at)` |
+| Bcc recipient | `assertMailSentWithBcc($address)` | `assertMailSentWithBccAt($address, $at)` |
+| Reply-To address | `assertMailSentWithReplyTo($address)` | `assertMailSentWithReplyToAt($address, $at)` |
+| Sender address | `assertMailSentWithSender($address)` | `assertMailSentWithSenderAt($address, $at)` |
+
+### Subject, body, and attachments
+
+| Match | Any captured email | Email at `$at` |
+| --- | --- | --- |
+| subject substring | `assertMailSubjectContains($needle)` | `assertMailSubjectContainsAt($needle, $at)` |
+| complete encoded body | `assertMailContains($needle)` | `assertMailContainsAt($needle, $at)` |
+| text body | `assertMailContainsText($needle)` | `assertMailContainsTextAt($needle, $at)` |
+| HTML body | `assertMailContainsHtml($needle)` | `assertMailContainsHtmlAt($needle, $at)` |
+| attachment filename | `assertMailContainsAttachment($filename)` | `assertMailContainsAttachmentAt($filename, $at)` |
+
+`getMessages()` returns every captured `Email`. Passing a 1-based index returns an array containing that message, or an empty array when it does not exist.
 
 ## Behavior notes
-
-A few behaviors are worth keeping in mind:
 
 - `...At()` methods use 1-based indexing. If the index is out of range, the assertion behaves like “no emails matched”.
 - `assertMailContains()` searches the full encoded body string. Prefer `assertMailContainsText()` / `assertMailContainsHtml()` when you want to target a specific body type.

@@ -4,26 +4,13 @@ Use `Fyre\Http\Uri` when you need to inspect or modify a URL, build links, or wo
 
 ## Table of Contents
 
-- [Start here](#start-here)
 - [Creating URIs](#creating-uris)
-- [Method guide](#method-guide)
-  - [String output](#string-output)
-  - [Reading URI components](#reading-uri-components)
-  - [Updating URI components](#updating-uri-components)
-  - [Working with query parameters](#working-with-query-parameters)
-  - [Resolving relative URIs](#resolving-relative-uris)
-  - [Working with path segments](#working-with-path-segments)
+- [Reading and updating components](#reading-and-updating-components)
+- [Working with query parameters](#working-with-query-parameters)
+- [Resolving relative URIs](#resolving-relative-uris)
+- [Working with path segments](#working-with-path-segments)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
-
-## Start here
-
-Common uses for `Uri` are:
-
-- reading and updating the path, host, query string, or fragment
-- adding, removing, or replacing query parameters
-- resolving relative URLs against a known base URL
-- reading path segments when routing or building links
 
 ## Creating URIs
 
@@ -51,263 +38,62 @@ $uri = $uriFactory->createUri('https://example.com/posts/42');
 
 The concrete `Fyre\Http\Factories\UriFactory` also provides `createFromServer()` for deriving a URI from server parameters. `ServerRequestFactory` uses this when marshalling global or explicit server data. See [HTTP Factories](factories.md) for the complete request-creation paths.
 
-## Method guide
+## Reading and updating components
 
-`Uri` instances are immutable. Any method that updates a value returns a new instance.
+`Uri` instances are immutable: every `with*` method returns a new instance. Use `getUri()` or cast the object to `string` to read the complete URI.
 
-### String output
+| Component | Read | Replace |
+| --- | --- | --- |
+| scheme | `getScheme()` | `withScheme($scheme)` |
+| authority | `getAuthority()` | `withAuthority($authority)` |
+| user information | `getUserInfo()` | `withUserInfo($user, $password = null)` |
+| host | `getHost()` | `withHost($host)` |
+| port | `getPort()` | `withPort($port)` |
+| path | `getPath()` | `withPath($path)` |
+| raw query string | `getQuery()` | `withQuery($query)` |
+| fragment | `getFragment()` | `withFragment($fragment)` |
 
-#### **Get the full URI string** (`getUri()`)
-
-Get the full URI string representation.
+Related updates can be chained:
 
 ```php
-$asString = $uri->getUri();
+$apiUri = $uri
+    ->withScheme('https')
+    ->withHost('api.example.com')
+    ->withPath('/v1/posts')
+    ->withQuery('page=2');
 ```
 
-#### **Cast the URI to a string** (`__toString()`)
+`withAuthority()` preserves the current path, query, and fragment. It uses the current scheme when present and otherwise creates a scheme-relative URI beginning with `//`.
 
-Cast the URI to a string (equivalent to the underlying URI’s string representation).
+## Working with query parameters
 
-```php
-$asString = (string) $uri;
-```
+`getQueryParams()` parses the query into an array. Use the immutable query helpers when you want to work with keys rather than manually rebuilding the raw query string:
 
-### Reading URI components
-
-#### **Read the path** (`getPath()`)
-
-Get the path component.
-
-```php
-$path = $uri->getPath();
-```
-
-#### **Read the raw query string** (`getQuery()`)
-
-Get the raw query string (without a leading `?`).
+| Method | Effect |
+| --- | --- |
+| `withQueryParams($query)` | replace the complete query from an array |
+| `withAddedQuery($key, $value)` | add or replace one value |
+| `withOnlyQuery($keys)` | retain only the listed keys |
+| `withoutQuery($keys)` | remove the listed keys |
 
 ```php
-$query = $uri->getQuery();
-```
-
-#### **Read the fragment** (`getFragment()`)
-
-Get the fragment (without a leading `#`).
-
-```php
-$fragment = $uri->getFragment();
-```
-
-#### **Read the host** (`getHost()`)
-
-Get the host name.
-
-```php
-$host = $uri->getHost();
-```
-
-#### **Read the scheme** (`getScheme()`)
-
-Get the scheme (for example, `https`).
-
-```php
-$scheme = $uri->getScheme();
-```
-
-#### **Read the port** (`getPort()`)
-
-Get the port, or `null` when no port is present in the URI.
-
-```php
-$port = $uri->getPort();
-```
-
-#### **Read the authority** (`getAuthority()`)
-
-Get the authority portion (user info, host, and optional port).
-
-```php
-$authority = $uri->getAuthority();
-```
-
-#### **Read user info** (`getUserInfo()`)
-
-Get user information in the form `username` or `username:password` (when a password is present).
-
-```php
-$userInfo = $uri->getUserInfo();
-```
-
-### Updating URI components
-
-#### **Update the path** (`withPath()`)
-
-Return a new URI with an updated path.
-
-Arguments:
-- `$path` (`string`): the new path.
-
-```php
-$withPath = $uri->withPath('/docs');
-```
-
-#### **Update the query string** (`withQuery()`)
-
-Return a new URI with an updated query string.
-
-Arguments:
-- `$query` (`string`): the query string (a leading `?` is accepted).
-
-```php
-$withQuery = $uri->withQuery('?q=fyre&page=2');
-```
-
-#### **Update the fragment** (`withFragment()`)
-
-Return a new URI with an updated fragment.
-
-Arguments:
-- `$fragment` (`string`): the fragment (a leading `#` is accepted).
-
-```php
-$withFragment = $uri->withFragment('#comments');
-```
-
-#### **Update the host** (`withHost()`)
-
-Return a new URI with an updated host.
-
-Arguments:
-- `$host` (`string`): the new host (empty string clears the host).
-
-```php
-$otherHost = $uri->withHost('api.example.com');
-```
-
-#### **Update the scheme** (`withScheme()`)
-
-Return a new URI with an updated scheme.
-
-Arguments:
-- `$scheme` (`string`): the new scheme.
-
-```php
-$https = $uri->withScheme('https');
-```
-
-#### **Update the port** (`withPort()`)
-
-Return a new URI with an updated port.
-
-Arguments:
-- `$port` (`int|null`): the new port, or `null` to remove it.
-
-```php
-$withPort = $uri->withPort(8443);
-```
-
-#### **Update user info** (`withUserInfo()`)
-
-Return a new URI with updated user information.
-
-Arguments:
-- `$user` (`string`): the username.
-- `$password` (`string|null`): the optional password.
-
-```php
-$withUser = $uri->withUserInfo('user', 'pass');
-```
-
-#### **Update authority** (`withAuthority()`)
-
-Return a new URI with an updated authority string, while keeping the existing path, query, and fragment. This uses the current scheme when present; otherwise it creates a scheme-relative URI (`//...`).
-
-Arguments:
-- `$authority` (`string`): the authority string.
-
-```php
-// Assumes the existing $uri has a path/query/fragment you want to preserve.
-$withAuthority = $uri->withAuthority('user:pass@api.example.com:8443');
-```
-
-### Working with query parameters
-
-#### **Read query parameters** (`getQueryParams()`)
-
-Parse the query string and return query parameters as an array.
-
-```php
-$params = $uri->getQueryParams();
-
-$q = $params['q'] ?? null;
-$page = $params['page'] ?? null;
-```
-
-#### **Replace query parameters** (`withQueryParams()`)
-
-Build a query string from an array and return a new URI with the updated query.
-
-Arguments:
-- `$query` (`array<string, mixed>`): the query array.
-
-```php
-$updated = $uri->withQueryParams([
+$search = $uri->withQueryParams([
     'q' => 'fyre',
-    'page' => 3,
+    'page' => 2,
 ]);
+
+$nextPage = $search->withAddedQuery('page', 3);
+$publicQuery = $nextPage->withoutQuery(['debug']);
+$params = $publicQuery->getQueryParams();
 ```
 
-#### **Add or replace a query parameter** (`withAddedQuery()`)
+## Resolving relative URIs
 
-Return a new URI with the specified query key updated. This replaces any existing value for the key.
+`resolveRelativeUri($uri)` resolves another URI string against the current URI. A value containing a host is treated as absolute and returned as-is. A value beginning with `/` replaces the current path from the root.
 
-Arguments:
-- `$key` (`string`): the query key.
-- `$value` (`mixed`): the query value.
+Other relative paths use the current path as an RFC 3986 base. The final path segment is replaced unless the base path ends with `/`.
 
 ```php
-$withPage = $uri->withAddedQuery('page', 2);
-```
-
-#### **Keep only specific query keys** (`withOnlyQuery()`)
-
-Return a new URI that keeps only the specified query keys.
-
-Arguments:
-- `$keys` (`string[]`): the query keys to keep.
-
-```php
-$clean = $uri->withOnlyQuery(['q', 'page']);
-```
-
-#### **Remove specific query keys** (`withoutQuery()`)
-
-Return a new URI with the specified query keys removed.
-
-Arguments:
-- `$keys` (`string[]`): the query keys to remove.
-
-```php
-$noDebug = $uri->withoutQuery(['debug']);
-```
-
-### Resolving relative URIs
-
-#### **Resolve a relative URI** (`resolveRelativeUri()`)
-
-Resolve a URI string relative to the current URI.
-
-If `$uri` includes a host, it is treated as absolute and returned as-is.
-
-If `$uri` does not start with `/`, it is resolved using the current path as an RFC 3986 base. The last path segment is replaced unless the base path ends with `/`, so `/app/docs/page` resolves `assets/app.css` to `/app/docs/assets/app.css`.
-
-Arguments:
-- `$uri` (`string`): a URI string to resolve.
-
-```php
-use Fyre\Http\Uri;
-
 $base = Uri::createFromString('https://example.com/app/docs/page');
 
 $relative = (string) $base->resolveRelativeUri('assets/app.css');
@@ -320,39 +106,17 @@ $absolute = (string) $base->resolveRelativeUri('https://cdn.example.com/app.css'
 // https://cdn.example.com/app.css
 ```
 
-### Working with path segments
+## Working with path segments
 
-#### **Read all path segments** (`getSegments()`)
-
-Get the path split into segments (without leading/trailing slashes).
+`getSegments()` returns the path split into segments without leading or trailing slashes. `getSegment($segment)` reads a 1-based segment, and `getTotalSegments()` returns the segment count.
 
 ```php
 $segments = $uri->getSegments();
-```
-
-#### **Read a single path segment** (`getSegment()`)
-
-Read a single path segment by 1-based index.
-
-Arguments:
-- `$segment` (`int`): the segment index (1-based).
-
-```php
 $resource = $uri->getSegment(1);
 $id = $uri->getSegment(2);
 ```
 
-#### **Count path segments** (`getTotalSegments()`)
-
-Get the number of path segments.
-
-```php
-$total = $uri->getTotalSegments();
-```
-
 ## Behavior notes
-
-A few behaviors are worth keeping in mind:
 
 - `getSegment()` is 1-based and returns an empty string when the segment does not exist.
 - `getQueryParams()` uses `parse_str()`, so repeated keys can produce arrays and nested structures.

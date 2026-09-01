@@ -9,14 +9,11 @@ It can load images, normalize EXIF orientation, resize or crop them, apply basic
 - [Start here](#start-here)
 - [Environment checklist](#environment-checklist)
 - [Working with image instances](#working-with-image-instances)
-- [Method guide](#method-guide)
-  - [Creating images](#creating-images)
-  - [Dimensions](#dimensions)
-  - [Resizing and cropping](#resizing-and-cropping)
-  - [Orientation and transforms](#orientation-and-transforms)
-  - [Filters](#filters)
-  - [Color analysis](#color-analysis)
-  - [Output](#output)
+- [Creating images](#creating-images)
+- [Resizing and cropping](#resizing-and-cropping)
+- [Transforms and filters](#transforms-and-filters)
+- [Color analysis](#color-analysis)
+- [Output](#output)
 - [Output formats](#output-formats)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
@@ -65,313 +62,66 @@ $result = $image->fit(800, 800)->sharpen();
 
 Create a separate `Image` instance from the original file or bytes when you need to preserve an unmodified version.
 
-## Method guide
+## Creating images
 
-Examples below assume `Image` refers to `Fyre\Utility\Image`.
+| Method | Source |
+| --- | --- |
+| `Image::createFromFile($filePath)` | an image file |
+| `Image::createFromString($data)` | encoded image bytes |
 
-### Creating images
+`createFromFile()` records EXIF orientation when the extension is available, but does not apply it until you call `orient()`. Images created from bytes do not retain EXIF orientation.
 
-#### **Create from a file** (`createFromFile()`)
+An unreadable file raises a `RuntimeException`. Data that GD cannot decode raises an `InvalidArgumentException`.
 
-Reads an image file and creates an `Image` instance. EXIF orientation is recorded when the EXIF extension is available, but is not applied until you call `orient()`.
+## Resizing and cropping
 
-Arguments:
+Use `getWidth()` and `getHeight()` to read the current dimensions in pixels.
 
-- `$filePath` (`string`): the image file path.
+| Method | Result |
+| --- | --- |
+| `resize($width, $height)` | exact dimensions; may change the aspect ratio |
+| `fit($width, $height)` | proportional image within the given bounds |
+| `contain($width, $height, $background = 'transparent')` | proportional image centered on an exact-size canvas |
+| `cover($width, $height)` | proportional image filling the dimensions, cropped from the center |
+| `crop($x, $y, $width, $height)` | the selected rectangle |
 
-```php
-$image = Image::createFromFile('uploads/photo.jpg');
-```
+`fit()`, `contain()`, and `cover()` can upscale the source. A crop must remain within the current image bounds. Backgrounds accept a `Color` or a string understood by the [Colors](colors.md) utility and default to transparent.
 
-The method throws a `RuntimeException` when the file cannot be read and an `InvalidArgumentException` when its contents are not valid image data.
+## Transforms and filters
 
-#### **Create from image bytes** (`createFromString()`)
+| Method | Effect |
+| --- | --- |
+| `orient()` | apply the EXIF orientation recorded from a file |
+| `rotate($degrees, $background = 'transparent')` | rotate clockwise, filling exposed areas with a color |
+| `flipHorizontal()` | mirror across the vertical axis |
+| `flipVertical()` | mirror across the horizontal axis |
+| `blur($passes = 1)` | apply Gaussian blur one or more times |
+| `brightness($amount)` | adjust brightness from `-255` through `255` |
+| `contrast($amount)` | adjust contrast from `-100` through `100` |
+| `grayscale()` | remove color |
+| `pixelate($size)` | apply square pixel blocks |
+| `sharpen()` | apply GD's mean-removal filter |
 
-Creates an `Image` instance from encoded image data.
+`orient()` resets the stored orientation after applying it, so calling it again does not repeat the transformation. Rotation degrees are normalized to one full turn; the value must be finite. Blur passes and pixel size must be greater than zero.
 
-Arguments:
+## Color analysis
 
-- `$data` (`string`): the encoded image data.
+`dominantColor()` samples the image down to one pixel and returns a six-digit hexadecimal color such as `#0f172a`. It is a quick overall estimate, not a histogram of the most frequent source pixel.
 
-```php
-$bytes = file_get_contents('uploads/photo.png');
-$image = Image::createFromString($bytes);
-```
+## Output
 
-The method throws an `InvalidArgumentException` when GD cannot decode the data. Because there is no source file, EXIF orientation is not retained.
+| Method | Result |
+| --- | --- |
+| `save($filePath, $quality = 90, $overwrite = false)` | encode using the file extension and write to disk |
+| `toBinary($format = 'png', $quality = 90)` | encoded image bytes |
+| `toBase64($format = 'png', $quality = 90)` | Base64 without a data URI prefix |
+| `toDataUri($format = 'png', $quality = 90)` | a complete Base64 data URI |
 
-### Dimensions
-
-#### **Get the width** (`getWidth()`)
-
-Returns the current image width in pixels.
-
-```php
-$width = $image->getWidth();
-```
-
-#### **Get the height** (`getHeight()`)
-
-Returns the current image height in pixels.
-
-```php
-$height = $image->getHeight();
-```
-
-### Resizing and cropping
-
-#### **Resize to exact dimensions** (`resize()`)
-
-Resizes the image to an exact width and height. The aspect ratio is not preserved automatically.
-
-Arguments:
-
-- `$width` (`int`): the target width in pixels.
-- `$height` (`int`): the target height in pixels.
-
-```php
-$image->resize(640, 480);
-```
-
-#### **Fit within dimensions** (`fit()`)
-
-Resizes the image proportionally so that it fits within the specified maximum width and height.
-
-Arguments:
-
-- `$width` (`int`): the maximum width in pixels.
-- `$height` (`int`): the maximum height in pixels.
-
-```php
-$image->fit(800, 800);
-```
-
-The resulting image may be smaller than one target dimension. The method can also upscale images when the target bounds are larger than the source.
-
-#### **Contain within dimensions** (`contain()`)
-
-Fits the image proportionally, centers it on a canvas with the exact target dimensions, and fills any remaining area with a background color.
-
-Arguments:
-
-- `$width` (`int`): the target canvas width in pixels.
-- `$height` (`int`): the target canvas height in pixels.
-- `$background` (`Color|string`): the background color. Defaults to `transparent`.
-
-```php
-$image->contain(1200, 630, '#0f172a');
-```
-
-Color strings use the same parsing rules as the [Colors](colors.md) utility.
-
-#### **Cover dimensions** (`cover()`)
-
-Resizes the image proportionally until it covers the target dimensions, then crops the excess from the center.
-
-Arguments:
-
-- `$width` (`int`): the target width in pixels.
-- `$height` (`int`): the target height in pixels.
-
-```php
-$image->cover(1200, 630);
-```
-
-#### **Crop a rectangle** (`crop()`)
-
-Crops a rectangle from the current image.
-
-Arguments:
-
-- `$x` (`int`): the horizontal offset from the left edge.
-- `$y` (`int`): the vertical offset from the top edge.
-- `$width` (`int`): the crop width in pixels.
-- `$height` (`int`): the crop height in pixels.
-
-```php
-$image->crop(100, 50, 400, 300);
-```
-
-The crop rectangle must remain entirely within the current image bounds.
-
-### Orientation and transforms
-
-#### **Normalize EXIF orientation** (`orient()`)
-
-Applies the orientation detected by `createFromFile()` using rotations and flips.
-
-```php
-$image = Image::createFromFile('uploads/camera-photo.jpg');
-$image->orient();
-```
-
-After normalization, the stored orientation is reset. Calling `orient()` again does not apply the transformation twice.
-
-#### **Rotate clockwise** (`rotate()`)
-
-Rotates the image clockwise and fills exposed areas with a background color.
-
-Arguments:
-
-- `$degrees` (`float`): the clockwise rotation in degrees. The value must be finite.
-- `$background` (`Color|string`): the background color. Defaults to `transparent`.
-
-```php
-$image->rotate(45, '#fff');
-```
-
-Degrees are normalized to a full rotation, so rotating by `0` or a multiple of `360` leaves the image unchanged.
-
-#### **Flip horizontally** (`flipHorizontal()`)
-
-Mirrors the image across its vertical axis.
-
-```php
-$image->flipHorizontal();
-```
-
-#### **Flip vertically** (`flipVertical()`)
-
-Mirrors the image across its horizontal axis.
-
-```php
-$image->flipVertical();
-```
-
-### Filters
-
-#### **Blur the image** (`blur()`)
-
-Applies one or more Gaussian blur passes.
-
-Arguments:
-
-- `$passes` (`int`): the number of passes. Defaults to `1` and must be greater than `0`.
-
-```php
-$image->blur(2);
-```
-
-#### **Adjust brightness** (`brightness()`)
-
-Adjusts image brightness.
-
-Arguments:
-
-- `$amount` (`int`): the brightness adjustment from `-255` to `255`.
-
-```php
-$image->brightness(20);
-```
-
-#### **Adjust contrast** (`contrast()`)
-
-Adjusts image contrast.
-
-Arguments:
-
-- `$amount` (`int`): the contrast adjustment from `-100` to `100`.
-
-```php
-$image->contrast(15);
-```
-
-#### **Convert to grayscale** (`grayscale()`)
-
-Removes color from the image while retaining its dimensions.
-
-```php
-$image->grayscale();
-```
-
-#### **Pixelate the image** (`pixelate()`)
-
-Applies a pixelation filter using square blocks.
-
-Arguments:
-
-- `$size` (`int`): the pixel block size. It must be greater than `0`.
-
-```php
-$image->pixelate(8);
-```
-
-#### **Sharpen the image** (`sharpen()`)
-
-Applies GD's mean-removal filter to sharpen the image.
-
-```php
-$image->sharpen();
-```
-
-### Color analysis
-
-#### **Get the dominant color** (`dominantColor()`)
-
-Samples the image down to one pixel and returns the resulting color as a six-digit hexadecimal string.
-
-```php
-$color = $image->dominantColor(); // For example: "#0f172a"
-```
-
-This is a fast overall color estimate rather than a histogram of the most frequent source pixel.
-
-### Output
-
-#### **Save to a file** (`save()`)
-
-Encodes the image using the output file extension and writes it to disk.
-
-Arguments:
-
-- `$filePath` (`string`): the output file path, including a supported extension.
-- `$quality` (`int`): the output quality from `0` to `100`. Defaults to `90`.
-- `$overwrite` (`bool`): whether an existing file may be replaced. Defaults to `false`.
+Quality defaults to `90` and must be between `0` and `100`. `save()` does not replace an existing file unless `$overwrite` is `true`.
 
 ```php
 $image->save('tmp/photo.webp', quality: 85);
-$image->save('tmp/photo.jpg', overwrite: true);
-```
-
-#### **Get encoded bytes** (`toBinary()`)
-
-Encodes the current image and returns its binary contents.
-
-Arguments:
-
-- `$format` (`string`): the output format. Defaults to `png`.
-- `$quality` (`int`): the output quality from `0` to `100`. Defaults to `90`.
-
-```php
-$bytes = $image->toBinary('webp', 85);
-```
-
-#### **Get Base64 data** (`toBase64()`)
-
-Returns the encoded image as a Base64 string without a data URI prefix.
-
-Arguments:
-
-- `$format` (`string`): the output format. Defaults to `png`.
-- `$quality` (`int`): the output quality from `0` to `100`. Defaults to `90`.
-
-```php
-$base64 = $image->toBase64('png');
-```
-
-#### **Get a data URI** (`toDataUri()`)
-
-Returns the encoded image with its media type and Base64 data URI prefix.
-
-Arguments:
-
-- `$format` (`string`): the output format. Defaults to `png`.
-- `$quality` (`int`): the output quality from `0` to `100`. Defaults to `90`.
-
-```php
 $src = $image->toDataUri('webp', 85);
-
-echo '<img src="'.htmlspecialchars($src).'" alt="Preview">';
 ```
 
 ## Output formats
@@ -390,17 +140,10 @@ JPEG does not support transparency, so JPEG output is flattened onto a white bac
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
-- Transformations mutate the current `Image` and return the same instance.
 - Widths and heights passed to resize and crop methods must be greater than `0`.
-- `fit()`, `contain()`, and `cover()` may upscale the source image.
-- `createFromFile()` records EXIF orientation but does not apply it automatically; call `orient()` explicitly.
 - Without the EXIF extension, file images use the default orientation and `orient()` has no effect.
-- `save()` does not overwrite an existing file unless `$overwrite` is `true`.
 - `save()` chooses the format from the file extension, while in-memory output methods use their `$format` argument.
 - Unsupported formats, unavailable encoders, invalid quality values, and invalid geometry raise exceptions rather than returning `false`.
-- `dominantColor()` returns a one-pixel average-like sample, not the statistically most common pixel color.
 
 ## Related
 

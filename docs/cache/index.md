@@ -18,11 +18,7 @@ Use cache to store expensive values behind named cache handlers.
 - [Common operations](#common-operations)
   - [Tagged cache entries](#tagged-cache-entries)
   - [Cache locks](#cache-locks)
-- [Method guide](#method-guide)
-  - [`CacheManager`](#cachemanager)
-  - [`Cacher`](#cacher)
-  - [`Lock`](#lock)
-  - [`TaggedCacher`](#taggedcacher)
+- [API summary](#api-summary)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -227,281 +223,50 @@ try {
 }
 ```
 
-## Method guide
-
-This section focuses on the methods you are most likely to use when selecting handlers and caching values.
-
-Examples below assume `$caches` is a `CacheManager` instance, `$cache` is a `Cacher` instance, `$lock` is a `Lock` instance, and `$tagged` is a `TaggedCacher` instance.
-
-### `CacheManager`
-
-#### **Get a shared cache handler** (`use()`)
-
-Returns the shared cache handler instance for a config key.
-
-Arguments:
-- `$key` (`string`): the cache config key (defaults to `default`).
-
-```php
-$default = $caches->use();
-$redis = $caches->use('redis');
-```
-
-#### **Build a cache handler instance** (`build()`)
-
-Build a one-off handler from an options array without storing it on the manager.
-
-Arguments:
-- `$options` (`array<string, mixed>`): cache options including `className`.
-
-```php
-use Fyre\Cache\Handlers\Array\ArrayCacher;
-
-$cache = $caches->build([
-    'className' => ArrayCacher::class,
-    'prefix' => 'tmp_',
-]);
-```
-
-#### **Enable caching** (`enable()`)
-
-Enables caching.
-
-```php
-$caches->enable();
-```
-
-#### **Disable caching** (`disable()`)
-
-Disables caching.
-
-```php
-$caches->disable();
-```
-
-#### **Add configuration at runtime** (`setConfig()`)
-
-Stores a cache configuration under a key. The key must not already exist.
-
-Arguments:
-- `$key` (`string`): the cache config key.
-- `$options` (`array<string, mixed>`): cache options for the handler.
-
-```php
-use Fyre\Cache\Handlers\File\FileCacher;
-
-$caches->setConfig('local', [
-    'className' => FileCacher::class,
-    'path' => 'tmp/cache',
-]);
-```
-
-#### **Check whether caching is enabled** (`isEnabled()`)
-
-Returns whether caching is currently enabled.
-
-```php
-$enabled = $caches->isEnabled();
-```
-
-### `Cacher`
-
-#### **Get or compute a value** (`remember()`)
-
-Retrieves a value from the cache, or computes and stores a new value when the key is missing.
-
-Arguments:
-- `$key` (`string`): the cache key.
-- `$callback` (`Closure`): callback that generates the value on a miss.
-- `$expire` (`DateInterval|int|null`): time to live for this value, in seconds or as a `DateInterval` (defaults to the handler configuration).
-
-```php
-$value = $cache->remember('reports.latest', static fn() => buildLatestReport(), 600);
-```
-
-#### **Create a cache lock** (`lock()`)
-
-Creates an owner-specific lock for a cache key.
-
-Arguments:
-- `$key` (`string`): the lock key.
-- `$expires` (`int`): the lock lifetime in seconds (default: `30`).
-
-```php
-$lock = $cache->lock('reports.daily', 30);
-```
-
-#### **Run work under a lock** (`synchronized()`)
-
-Acquires a lock, executes a callback, and releases the lock when the callback finishes.
-
-Arguments:
-- `$key` (`string`): the lock key.
-- `$callback` (`Closure`): the callback to execute.
-- `$expires` (`int`): the lock lifetime in seconds (default: `30`).
-- `$wait` (`float`): the maximum number of seconds to wait (default: `0`).
-
-```php
-$report = $cache->synchronized(
-    'reports.daily',
-    static fn() => buildDailyReport()
-);
-```
-
-#### **Increment a numeric value** (`increment()`)
-
-Increments a cached numeric value.
-
-Arguments:
-- `$key` (`string`): the cache key.
-- `$amount` (`int`): amount to increment (default: `1`).
-
-```php
-$cache->increment('counters.reports_generated');
-```
-
-#### **Decrement a numeric value** (`decrement()`)
-
-Decrements a cached numeric value.
-
-Arguments:
-- `$key` (`string`): the cache key.
-- `$amount` (`int`): amount to decrement (default: `1`).
-
-```php
-$cache->decrement('counters.reports_generated');
-```
-
-#### **Create a tagged cache wrapper** (`tags()`)
-
-Returns a lightweight tagged cache wrapper.
-
-Arguments:
-- `$tags` (`string|string[]`): one or more tags.
-
-```php
-$users = $cache->tags('users');
-$users->set('user.1', $user, 300);
-```
-
-#### **Invalidate cache tags** (`invalidateTag()` / `invalidateTags()`)
-
-Invalidates one or more cache tags.
-
-Arguments:
-- `$tag` (`string`): the tag to invalidate.
-- `$tags` (`string[]`): the tags to invalidate.
-
-```php
-$cache->invalidateTag('users');
-$cache->invalidateTags(['users', 'active']);
-```
-
-### `Lock`
-
-#### **Acquire a lock** (`acquire()`)
-
-Attempts to acquire the lock for this owner.
-
-Arguments:
-- `$wait` (`float`): the maximum number of seconds to wait (default: `0`).
-
-```php
-$acquired = $lock->acquire(2);
-```
-
-#### **Refresh a lock** (`refresh()`)
-
-Extends the lifetime of an acquired lock using its configured expiration.
-
-```php
-$refreshed = $lock->refresh();
-```
-
-#### **Release a lock** (`release()`)
-
-Releases a lock owned by this object.
-
-```php
-$released = $lock->release();
-```
-
-### `TaggedCacher`
-
-#### **Get a tagged value** (`get()`)
-
-Retrieves a tagged cache value, returning the default if the key is missing or any of the tag versions no longer match.
-
-Arguments:
-- `$key` (`string`): the cache key.
-- `$default` (`mixed`): the default value when the tagged value is missing or stale.
-
-```php
-$user = $tagged->get('user.1');
-```
-
-#### **Set a tagged value** (`set()`)
-
-Stores a tagged cache value together with the current tag version snapshot.
-
-Arguments:
-- `$key` (`string`): the cache key.
-- `$value` (`mixed`): the value to store.
-- `$expire` (`DateInterval|int|null`): time to live for this value, in seconds or as a `DateInterval`.
-
-```php
-$tagged->set('user.1', $user, 300);
-```
-
-#### **Get or compute a tagged value** (`remember()`)
-
-Retrieves a tagged value, or computes and stores it when the tagged key is missing or stale.
-
-Arguments:
-- `$key` (`string`): the cache key.
-- `$callback` (`Closure`): callback that generates the value on a miss.
-- `$expire` (`DateInterval|int|null`): time to live for this value, in seconds or as a `DateInterval`.
-
-```php
-$user = $tagged->remember('user.1', static fn() => loadUser(1), 300);
-```
-
-#### **Delete a tagged value** (`delete()`)
-
-Deletes a tagged cache value for this tag namespace.
-
-Arguments:
-- `$key` (`string`): the cache key.
-
-```php
-$tagged->delete('user.1');
-```
-
-#### **Merge additional tags** (`tags()`)
-
-Returns a new tagged wrapper with additional tags merged into the current tag set.
-
-Arguments:
-- `$tags` (`string|string[]`): one or more tags to merge.
-
-```php
-$activeUsers = $cache->tags('users')->tags('active');
-```
+Call `refresh()` during long-running manual work to extend a lock's lifetime. It succeeds only while this object still owns the lock.
+
+## API summary
+
+### Cache manager
+
+| Method | Purpose |
+| --- | --- |
+| `use($key = 'default')` | get the shared handler for a configuration |
+| `build($options)` | build a one-off handler without storing it |
+| `getConfig($key = null)` | read one configuration, or all configurations |
+| `hasConfig($key = 'default')` | check whether a configuration exists |
+| `isLoaded($key = 'default')` | check whether a handler has been built |
+| `setConfig($key, $options)` | add a runtime configuration |
+| `unload($key = 'default')` | remove a configuration and its loaded handler |
+| `clear()` | remove every configuration and loaded handler |
+| `enable()` / `disable()` | control whether newly built handlers cache values |
+| `isEnabled()` | check the current manager state |
+
+### Cache operations
+
+| Method | Purpose |
+| --- | --- |
+| `remember($key, $callback, $expire = null)` | read a value or compute and store it on a miss |
+| `increment($key, $amount = 1)` / `decrement($key, $amount = 1)` | change a numeric value |
+| `tags($tags)` | create a tagged cache wrapper |
+| `invalidateTag($tag)` / `invalidateTags($tags)` | make tagged entries stale |
+| `lock($key, $expires = 30)` | create an owner-specific lock |
+| `synchronized($key, $callback, $expires = 30, $wait = 0)` | run a callback while holding a lock |
+
+`TaggedCacher` supports the normal `get()`, `set()`, `delete()`, and `remember()` operations within its tag namespace. Calling `tags()` on it returns a new wrapper with the additional tags merged in.
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
-- in debug mode, caching is often disabled, so newly resolved caches act like a no-op cache
-- disabling caching affects newly built handlers only; already-loaded cache instances keep behaving as before until they are rebuilt
-- cache keys cannot contain `{ } ( ) / \ @ :`
-- passing a zero or negative TTL to `set()` or `setMultiple()` deletes the affected entries, while `null` uses the handler's configured `expire` value
-- `FileCacher` needs a writable path, and its prefix cannot contain the system directory separator
-- `RedisCacher::clear()` needs a prefix unless `flushDatabase` is enabled
-- invalidating a tag is lazy: tagged values become stale and disappear on the next tagged read
-- `ArrayCacher` locks coordinate only with locks created by the same cacher instance, while file, Redis, and Memcached locks can coordinate across workers
-- `NullCacher` locks are no-ops and do not coordinate shared work
-- `synchronized()` throws a `CacheException` if it cannot acquire the lock within the configured wait time
+- In debug mode, caching is often disabled, so newly resolved caches act like a no-op cache.
+- Disabling caching affects newly built handlers only; already-loaded cache instances keep behaving as before until they are rebuilt.
+- Cache keys cannot contain `{ } ( ) / \ @ :`.
+- Passing a zero or negative TTL to `set()` or `setMultiple()` deletes the affected entries, while `null` uses the handler's configured `expire` value.
+- `FileCacher` needs a writable path, and its prefix cannot contain the system directory separator.
+- `RedisCacher::clear()` needs a prefix unless `flushDatabase` is enabled.
+- Invalidating a tag is lazy: tagged values become stale and disappear on the next tagged read.
+- `ArrayCacher` locks coordinate only with locks created by the same cacher instance, while file, Redis, and Memcached locks can coordinate across workers.
+- `NullCacher` locks are no-ops and do not coordinate shared work.
+- `synchronized()` throws a `CacheException` if it cannot acquire the lock within the configured wait time.
 
 ## Related
 

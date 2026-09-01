@@ -11,13 +11,6 @@ Use `Fyre\Http\ServerRequest` to read incoming request data, headers, uploaded f
 - [Inspecting request context](#inspecting-request-context)
 - [Locale and negotiation](#locale-and-negotiation)
 - [Request attributes](#request-attributes)
-- [Method guide](#method-guide)
-  - [Input data](#input-data)
-  - [Uploaded files](#uploaded-files)
-  - [Locale, negotiation, and user agent](#locale-negotiation-and-user-agent)
-  - [Attributes](#attributes)
-  - [Request context](#request-context)
-  - [Common request basics](#common-request-basics)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -59,11 +52,15 @@ $request = request();
 
 `ServerRequest` includes convenience accessors for the most common server-side request data:
 
-- query parameters
-- parsed body data
-- cookies
-- server parameters
-- environment values (via `getenv()`)
+| Source | Read a value | Read all values |
+| --- | --- | --- |
+| query parameters | `getQuery($key, $as = null)` | `getQueryParams()` |
+| parsed body | `getData($key, $as = null)` | `getParsedBody()` |
+| cookies | `getCookie($key, $as = null)` | `getCookieParams()` |
+| server parameters | `getServer($key, $as = null)` | `getServerParams()` |
+| environment | `getEnv($key, $as = null)` | — |
+
+`getEnv()` reads through `getenv()` rather than `$_ENV`.
 
 The current request resolved by the `Engine` is populated by `ServerRequestFactory::createFromGlobals()`, which imports the corresponding PHP superglobals and uses `php://input` as the request body. `ServerRequest` itself does not read those superglobals or derive its method, headers, URI, or uploaded files from server parameters. See [HTTP Factories](factories.md) for synthetic and non-global request creation.
 
@@ -82,7 +79,20 @@ $session = $request->getCookie('session');
 
 ## Working with uploaded files
 
-Uploaded files are exposed as `UploadedFile` objects and can be retrieved using dot-notation keys. For the current PHP request, `ServerRequestFactory::createFromGlobals()` normalizes `$_FILES` into these objects. See [Method guide → Uploaded files](#uploaded-files) for examples.
+Uploaded files are exposed as `UploadedFile` objects and can be retrieved using dot-notation keys. For the current PHP request, `ServerRequestFactory::createFromGlobals()` normalizes `$_FILES` into these objects.
+
+```php
+use Fyre\Http\UploadedFile;
+use const UPLOAD_ERR_OK;
+
+$file = $request->getUploadedFile('profile.avatar');
+
+if ($file instanceof UploadedFile && $file->getError() === UPLOAD_ERR_OK) {
+    $size = $file->getSize();
+}
+```
+
+Validate an upload's presence, size, and type before moving it. Generate a safe destination name instead of using the client-provided filename directly.
 
 ## Inspecting request context
 
@@ -108,6 +118,8 @@ return [
     ],
 ];
 ```
+
+`getTrustedProxies()` returns the configured list. With proxy trust enabled, `getClientIp()` walks `X-Forwarded-For` from right to left and returns the first untrusted valid address. `isSecure()` accepts forwarded HTTPS indicators only from a trusted proxy when a list is configured.
 
 ## Locale and negotiation
 
@@ -143,295 +155,21 @@ if ($contentType === '') {
 }
 ```
 
+`getLocale()` returns the selected locale. `withLocale($locale)` returns a new request and rejects locales that are not listed in `App.supportedLocales`. `getUserAgent()` returns the parsed `UserAgent` for the request's `User-Agent` header.
+
 ## Request attributes
 
 Attributes are request-scoped values that are not part of the HTTP message itself. They are commonly used by middleware to attach derived data (matched route, authenticated user, request IDs, and so on).
 
-Attributes are typically written by middleware and read by downstream middleware/handlers. See [Method guide → Attributes](#attributes) for the `getAttribute()`/`withAttribute()` helpers.
+Attributes are typically written by middleware and read by downstream middleware or handlers.
+
+- `getAttribute($key, $default = null)` reads a value.
+- `withAttribute($key, $value)` returns a request with the value added or replaced.
+- `withoutAttribute($key)` returns a request without that value.
 
 Router middleware stores matched placeholder values in the `routeArguments` attribute. Binding middleware replaces those values as each argument is resolved, so downstream middleware and handlers receive the bound values. See [Route Bindings](../routing/route-bindings.md).
 
-## Method guide
-
-This section focuses on the methods you’ll use most when working with `ServerRequest`.
-
-Most examples assume you already have a `$request` instance (via dependency injection). You can also set `$request = request();` (see [Helpers](../core/helpers.md)).
-
-### Input data
-
-#### **Read query values** (`getQuery()`)
-
-Reads from the request query parameters using dot-notation.
-
-Arguments:
-- `$key` (`string|null`): the key to read (use dot-notation). When `null`, returns the full query array.
-- `$as` (`string|null`): optional type identifier (for example `int`, `bool`).
-
-```php
-$page = $request->getQuery('page', 'int') ?? 1;
-```
-
-#### **Read all query parameters** (`getQueryParams()`)
-
-Returns the full request query array.
-
-```php
-$query = $request->getQueryParams();
-```
-
-#### **Read body values** (`getData()`)
-
-Reads from parsed body data using dot-notation.
-
-Arguments:
-- `$key` (`string|null`): the key to read (use dot-notation). When `null`, returns the full parsed body array.
-- `$as` (`string|null`): optional type identifier (for example `int`, `bool`).
-
-```php
-$title = $request->getData('post.title');
-```
-
-Alternate helper syntax (shorthand for `$request->getData(...)`):
-
-```php
-$title = request('post.title');
-$published = request('post.published', 'bool') ?? false;
-```
-
-#### **Read the parsed body array** (`getParsedBody()`)
-
-Returns the parsed request body.
-
-```php
-$data = $request->getParsedBody();
-```
-
-#### **Read cookies** (`getCookie()`)
-
-Reads from the request cookie parameters using dot-notation.
-
-Arguments:
-- `$key` (`string|null`): the key to read (use dot-notation). When `null`, returns the full cookie array.
-- `$as` (`string|null`): optional type identifier (for example `int`, `bool`).
-
-```php
-$session = $request->getCookie('session');
-```
-
-#### **Read server parameters** (`getServer()`)
-
-Reads from the request server parameters using dot-notation.
-
-Arguments:
-- `$key` (`string|null`): the key to read (use dot-notation). When `null`, returns the full server array.
-- `$as` (`string|null`): optional type identifier (for example `int`, `bool`).
-
-```php
-$method = $request->getServer('REQUEST_METHOD');
-```
-
-#### **Read environment variables** (`getEnv()`)
-
-Reads values using `getenv()` (not `$_ENV`).
-
-Arguments:
-- `$key` (`string`): the environment variable key.
-- `$as` (`string|null`): optional type identifier (for example `int`, `bool`).
-
-```php
-$debug = $request->getEnv('APP_DEBUG', 'bool') ?? false;
-```
-
-### Uploaded files
-
-#### **Read uploaded files** (`getUploadedFile()`)
-
-Returns an `UploadedFile` (or a nested array of uploads) from the request uploaded-file state using dot-notation.
-
-Arguments:
-- `$key` (`string|null`): the key to read (use dot-notation). When `null`, returns the full uploaded files structure.
-
-```php
-use Fyre\Http\UploadedFile;
-use const UPLOAD_ERR_OK;
-
-$file = $request->getUploadedFile('avatar');
-
-if ($file instanceof UploadedFile && $file->getError() === UPLOAD_ERR_OK) {
-    $size = $file->getSize();
-}
-```
-
-Notes:
-- Always validate uploads (size, extension/MIME, and that the upload is present) before moving them.
-- Avoid using the client-provided filename directly; generate a safe destination path/name instead.
-
-### Locale, negotiation, and user agent
-
-#### **Get the current locale** (`getLocale()`)
-
-Returns the selected locale, falling back to `getDefaultLocale()` when no locale has been set.
-
-```php
-$locale = $request->getLocale();
-```
-
-#### **Override the locale** (`withLocale()`)
-
-Returns a new request instance with the locale updated.
-
-This method only accepts locales listed in `App.supportedLocales`, and will throw if the locale is not supported.
-
-Arguments:
-- `$locale` (`string`): the locale.
-
-```php
-$request = $request->withLocale('en');
-```
-
-#### **Negotiate a value from request headers** (`negotiate()`)
-
-Negotiates a value from request headers for `content`, `encoding`, or `language`.
-
-Arguments:
-- `$type` (`'content'|'encoding'|'language'`): the negotiation type.
-- `$supported` (`string[]`): supported values.
-- `$strictMatch` (`bool`): whether to avoid a default fallback (applies to `content` negotiation).
-
-```php
-$language = $request->negotiate('language', ['en', 'en-US', 'fr']);
-```
-
-#### **Check whether the request prefers JSON** (`prefersJson()`)
-
-Returns `true` when content negotiation prefers `application/json` over `text/html`.
-
-```php
-if ($request->prefersJson()) {
-    // Return a JSON response.
-}
-```
-
-#### **Read the parsed user agent** (`getUserAgent()`)
-
-Returns the `UserAgent` built from the `User-Agent` header.
-
-```php
-$isRobot = $request->getUserAgent()->isRobot();
-```
-
-### Attributes
-
-#### **Read an attribute** (`getAttribute()`)
-
-Reads a request attribute value.
-
-Arguments:
-- `$key` (`string`): the attribute key.
-- `$default` (`mixed`): the default value when not present.
-
-```php
-$id = $request->getAttribute('request_id');
-```
-
-#### **Write an attribute** (`withAttribute()`)
-
-Returns a new request instance with an attribute added or replaced.
-
-Arguments:
-- `$key` (`string`): the attribute key.
-- `$value` (`mixed`): the value to set.
-
-```php
-$request = $request->withAttribute('request_id', 'abc123');
-```
-
-#### **Remove an attribute** (`withoutAttribute()`)
-
-Returns a new request instance without the given attribute key.
-
-Arguments:
-- `$key` (`string`): the attribute key.
-
-```php
-$request = $request->withoutAttribute('request_id');
-```
-
-### Request context
-
-#### **Get the client IP** (`getClientIp()`)
-
-Returns the client IP address for the request.
-
-By default, this uses `REMOTE_ADDR`. When proxy trust is enabled with no trusted proxy list, it uses the validated rightmost value from `X-Forwarded-For`. When proxies are listed, it walks the header right-to-left and returns the first untrusted address. Resolution stops at malformed addresses.
-
-```php
-$ip = $request->getClientIp();
-```
-
-#### **Get trusted proxies** (`getTrustedProxies()`)
-
-Returns the configured trusted proxy IPs.
-
-```php
-$trustedProxies = $request->getTrustedProxies();
-```
-
-#### **Check HTTPS** (`isSecure()`)
-
-Checks the `HTTPS` server parameter and common proxy headers (`X-Forwarded-Proto`, `Front-End-Https`). When a trusted proxy list is configured, the immediate remote address must be present in it.
-
-```php
-$secure = $request->isSecure();
-```
-
-#### **Check AJAX** (`isAjax()`)
-
-Checks for `X-Requested-With: xmlhttprequest`.
-
-```php
-$ajax = $request->isAjax();
-```
-
-#### **Check CLI runtime** (`isCli()`)
-
-Checks whether the runtime is `cli`.
-
-```php
-$cli = $request->isCli();
-```
-
-### Common request basics
-
-These are the standard request methods you will commonly use alongside the helpers above.
-
-#### **Read the HTTP method** (`getMethod()`)
-
-```php
-$method = $request->getMethod();
-```
-
-#### **Read the request URI** (`getUri()`)
-
-```php
-$uri = $request->getUri();
-```
-
-#### **Read a header value** (`getHeaderLine()`)
-
-```php
-$accept = $request->getHeaderLine('Accept');
-```
-
-#### **Read the request body** (`getBody()`)
-
-```php
-$body = (string) $request->getBody();
-```
-
 ## Behavior notes
-
-A few practical details are worth keeping in mind:
 
 - `getParsedBody()` always returns an array, but it throws `BadRequestException` when an `application/json` body is invalid or does not decode to an array.
 - `getParsedBody()` parses `application/x-www-form-urlencoded` bodies only for `PUT`, `PATCH`, and `DELETE` requests. Otherwise, it uses parsed body data supplied when the request was created or an empty array. `ServerRequestFactory::createFromGlobals()` supplies `$_POST` for the current PHP request when it is not empty.
