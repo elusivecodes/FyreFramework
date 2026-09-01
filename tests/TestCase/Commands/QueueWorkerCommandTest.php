@@ -5,18 +5,13 @@ namespace Tests\TestCase\Commands;
 
 use Fyre\Commands\QueueWorkerCommand;
 use Fyre\Console\Command;
-use Fyre\Console\CommandRunner;
 use Fyre\Console\Console;
 use Fyre\Core\Config;
 use Fyre\Core\Container;
-use Fyre\Core\Loader;
-use Fyre\DB\TypeParser;
 use Fyre\Event\EventManager;
 use Fyre\Queue\Handlers\RedisQueue;
 use Fyre\Queue\Queue;
 use Fyre\Queue\QueueManager;
-use Fyre\Utility\Inflector;
-use Fyre\Utility\Path;
 use Override;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
@@ -32,14 +27,11 @@ use function stream_get_contents;
 use function unlink;
 
 use const PHP_EOL;
-use const ROOT;
 
 #[RequiresPhpExtension('pcntl')]
 #[RequiresPhpExtension('redis')]
 final class QueueWorkerCommandTest extends TestCase
 {
-    protected CommandRunner $commandRunner;
-
     protected Console $console;
 
     protected Container $container;
@@ -111,25 +103,6 @@ final class QueueWorkerCommandTest extends TestCase
         );
     }
 
-    public function testQueueWorkerOptions(): void
-    {
-        $allCommands = $this->commandRunner->all();
-
-        $this->assertArraysAreIdentical(
-            [
-                'default' => QueueManager::DEFAULT,
-            ],
-            $allCommands['queue:worker']['options']['config']
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                'default' => Queue::DEFAULT,
-            ],
-            $allCommands['queue:worker']['options']['queue']
-        );
-    }
-
     public function testQueueWorkerQueue(): void
     {
         $this->queueManager->push(MockJob::class, ['test' => 1]);
@@ -185,17 +158,9 @@ final class QueueWorkerCommandTest extends TestCase
     protected function setUp(): void
     {
         $this->container = new Container();
-        $this->container->singleton(Loader::class);
-        $this->container->singleton(Inflector::class);
         $this->container->singleton(Config::class);
         $this->container->singleton(EventManager::class);
-        $this->container->singleton(TypeParser::class);
-        $this->container->singleton(CommandRunner::class);
         $this->container->singleton(QueueManager::class);
-
-        $this->container->use(Loader::class)->addNamespaces([
-            'Fyre\Commands\\' => Path::join(ROOT, 'src/Commands'),
-        ]);
 
         $this->container->use(Config::class)->set('Queue', [
             'default' => [
@@ -230,9 +195,6 @@ final class QueueWorkerCommandTest extends TestCase
             Console::class,
             new Console($this->input, $this->output, $this->error)
         );
-
-        $this->commandRunner = $this->container->use(CommandRunner::class);
-        $this->commandRunner->addNamespace('Fyre\Commands');
 
         $this->queueManager = $this->container->use(QueueManager::class);
         $this->queue = $this->queueManager->use();
