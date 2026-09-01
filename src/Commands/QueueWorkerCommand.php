@@ -27,16 +27,20 @@ class QueueWorkerCommand extends Command
     #[Override]
     protected array $options = [
         'config' => [
+            'help' => 'Queue configuration to use.',
             'default' => QueueManager::DEFAULT,
         ],
         'queue' => [
+            'help' => 'Queue name to process.',
             'default' => Queue::DEFAULT,
         ],
         'maxJobs' => [
+            'help' => 'Maximum jobs to process before stopping.',
             'as' => 'integer',
             'default' => 0,
         ],
         'maxRuntime' => [
+            'help' => 'Maximum seconds to run before stopping.',
             'as' => 'integer',
             'default' => 0,
         ],

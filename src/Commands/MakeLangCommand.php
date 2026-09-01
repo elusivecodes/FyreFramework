@@ -31,12 +31,18 @@ class MakeLangCommand extends Command
     #[Override]
     protected array $options = [
         'file' => [
+            'help' => 'Name of the language file to generate.',
             'text' => 'Please enter the language file',
             'required' => true,
         ],
-        'language' => [],
-        'path' => [],
+        'language' => [
+            'help' => 'Locale for the generated language file.',
+        ],
+        'path' => [
+            'help' => 'Base language path.',
+        ],
         'force' => [
+            'help' => 'Overwrite an existing file.',
             'as' => 'boolean',
             'default' => false,
         ],

@@ -31,13 +31,21 @@ class MakeCommandCommand extends Command
     #[Override]
     protected array $options = [
         'name' => [
+            'help' => 'Name of the command to generate.',
             'text' => 'Please enter a name for the command',
             'required' => true,
         ],
-        'alias' => [],
-        'description' => [],
-        'namespace' => [],
+        'alias' => [
+            'help' => 'Alias for the generated command.',
+        ],
+        'description' => [
+            'help' => 'Description for the generated command.',
+        ],
+        'namespace' => [
+            'help' => 'Namespace for the generated command.',
+        ],
         'force' => [
+            'help' => 'Overwrite an existing file.',
             'as' => 'boolean',
             'default' => false,
         ],

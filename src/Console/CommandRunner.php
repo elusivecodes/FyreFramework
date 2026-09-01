@@ -349,11 +349,11 @@ class CommandRunner
                 $default,
                 $option['required'] ? 'yes' : 'no',
                 implode(', ', $values),
-                $option['text'],
+                $option['help'],
             ];
         }
 
-        $this->io->table($data, ['Option', 'Type', 'Default', 'Required', 'Allowed Values', 'Prompt']);
+        $this->io->table($data, ['Option', 'Type', 'Default', 'Required', 'Allowed Values', 'Help']);
 
         return Command::CODE_SUCCESS;
     }
@@ -524,7 +524,7 @@ class CommandRunner
      * Normalizes command option metadata.
      *
      * @param array<string, mixed>|string $option The option metadata.
-     * @return array{text: string, values: array<mixed>|null, required: bool, as: string, default: mixed} The normalized option metadata.
+     * @return array{text: string, help: string, values: array<mixed>|null, required: bool, as: string, default: mixed} The normalized option metadata.
      */
     protected static function normalizeOption(array|string $option): array
     {
@@ -536,6 +536,7 @@ class CommandRunner
         }
 
         $option['text'] ??= '';
+        $option['help'] ??= '';
         $option['values'] ??= null;
         $option['required'] ??= false;
         $option['as'] ??= 'string';

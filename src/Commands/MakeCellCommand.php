@@ -29,14 +29,19 @@ class MakeCellCommand extends Command
     #[Override]
     protected array $options = [
         'name' => [
+            'help' => 'Name of the cell to generate.',
             'text' => 'Please enter a name for the cell',
             'required' => true,
         ],
         'method' => [
+            'help' => 'Method generated for the cell.',
             'default' => 'display',
         ],
-        'namespace' => [],
+        'namespace' => [
+            'help' => 'Namespace for the generated cell.',
+        ],
         'force' => [
+            'help' => 'Overwrite an existing file.',
             'as' => 'boolean',
             'default' => false,
         ],

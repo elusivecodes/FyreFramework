@@ -33,19 +33,25 @@ class MakeFixtureCommand extends Command
     #[Override]
     protected array $options = [
         'name' => [
+            'help' => 'Name of the fixture to generate.',
             'text' => 'Please enter a name for the fixture',
             'required' => true,
         ],
-        'namespace' => [],
+        'namespace' => [
+            'help' => 'Namespace for the generated fixture.',
+        ],
         'force' => [
+            'help' => 'Overwrite an existing file.',
             'as' => 'boolean',
             'default' => false,
         ],
         'data' => [
+            'help' => 'Populate the fixture with existing data.',
             'as' => 'boolean',
             'default' => false,
         ],
         'limit' => [
+            'help' => 'Maximum rows to include.',
             'as' => 'integer',
             'default' => 10,
         ],

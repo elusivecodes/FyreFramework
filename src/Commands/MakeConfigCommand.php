@@ -31,11 +31,15 @@ class MakeConfigCommand extends Command
     #[Override]
     protected array $options = [
         'file' => [
+            'help' => 'Name of the config file to generate.',
             'text' => 'Please enter the config file',
             'required' => true,
         ],
-        'path' => [],
+        'path' => [
+            'help' => 'Base config path.',
+        ],
         'force' => [
+            'help' => 'Overwrite an existing file.',
             'as' => 'boolean',
             'default' => false,
         ],

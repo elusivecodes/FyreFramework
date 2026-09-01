@@ -11,6 +11,7 @@ class OptionsCommand extends Command
     #[Override]
     protected array $options = [
         'value' => [
+            'help' => 'Value to use.',
             'text' => 'Which do you want?',
             'values' => [
                 'a',

@@ -27,6 +27,7 @@ class DbMigrationStatusCommand extends Command
     #[Override]
     protected array $options = [
         'db' => [
+            'help' => 'Database connection to use.',
             'default' => ConnectionManager::DEFAULT,
         ],
     ];

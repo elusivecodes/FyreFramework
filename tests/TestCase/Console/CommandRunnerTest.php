@@ -106,6 +106,7 @@ final class CommandRunnerTest extends TestCase
                     'description' => '',
                     'options' => [
                         'value' => [
+                            'help' => 'Value to use.',
                             'text' => 'Which do you want?',
                             'values' => [
                                 'a',
@@ -361,11 +362,11 @@ final class CommandRunnerTest extends TestCase
                 '  app options [options]'.PHP_EOL.
                 PHP_EOL.
                 'Options:'.PHP_EOL.
-                '+---------+--------+---------+----------+----------------+--------------------+'.PHP_EOL.
-                '| Option  | Type   | Default | Required | Allowed Values | Prompt             |'.PHP_EOL.
-                '+---------+--------+---------+----------+----------------+--------------------+'.PHP_EOL.
-                '| --value | string | a       | yes      | a, b, c        | Which do you want? |'.PHP_EOL.
-                '+---------+--------+---------+----------+----------------+--------------------+'.PHP_EOL,
+                '+---------+--------+---------+----------+----------------+---------------+'.PHP_EOL.
+                '| Option  | Type   | Default | Required | Allowed Values | Help          |'.PHP_EOL.
+                '+---------+--------+---------+----------+----------------+---------------+'.PHP_EOL.
+                '| --value | string | a       | yes      | a, b, c        | Value to use. |'.PHP_EOL.
+                '+---------+--------+---------+----------+----------------+---------------+'.PHP_EOL,
                 stream_get_contents($this->output)
             );
         }

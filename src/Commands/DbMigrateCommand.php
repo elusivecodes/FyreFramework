@@ -27,13 +27,16 @@ class DbMigrateCommand extends Command
     #[Override]
     protected array $options = [
         'db' => [
+            'help' => 'Database connection to use.',
             'default' => ConnectionManager::DEFAULT,
         ],
         'lockExpires' => [
+            'help' => 'Migration lock lifetime in seconds.',
             'as' => 'integer',
             'default' => 300,
         ],
         'dryRun' => [
+            'help' => 'Display the migration plan without executing it.',
             'as' => 'boolean',
             'default' => false,
         ],

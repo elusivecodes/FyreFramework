@@ -28,11 +28,15 @@ class MakeJobCommand extends Command
     #[Override]
     protected array $options = [
         'name' => [
+            'help' => 'Name of the job to generate.',
             'text' => 'Please enter a name for the job',
             'required' => true,
         ],
-        'namespace' => [],
+        'namespace' => [
+            'help' => 'Namespace for the generated job.',
+        ],
         'force' => [
+            'help' => 'Overwrite an existing file.',
             'as' => 'boolean',
             'default' => false,
         ],

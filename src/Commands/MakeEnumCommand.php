@@ -30,12 +30,18 @@ class MakeEnumCommand extends Command
     #[Override]
     protected array $options = [
         'name' => [
+            'help' => 'Name of the enum to generate.',
             'text' => 'Please enter a name for the enum',
             'required' => true,
         ],
-        'cases' => [],
-        'namespace' => [],
+        'cases' => [
+            'help' => 'Comma-separated enum cases.',
+        ],
+        'namespace' => [
+            'help' => 'Namespace for the generated enum.',
+        ],
         'force' => [
+            'help' => 'Overwrite an existing file.',
             'as' => 'boolean',
             'default' => false,
         ],

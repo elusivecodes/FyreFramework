@@ -28,11 +28,15 @@ class MakeMiddlewareCommand extends Command
     #[Override]
     protected array $options = [
         'name' => [
+            'help' => 'Name of the middleware to generate.',
             'text' => 'Please enter a name for the middleware',
             'required' => true,
         ],
-        'namespace' => [],
+        'namespace' => [
+            'help' => 'Namespace for the generated middleware.',
+        ],
         'force' => [
+            'help' => 'Overwrite an existing file.',
             'as' => 'boolean',
             'default' => false,
         ],

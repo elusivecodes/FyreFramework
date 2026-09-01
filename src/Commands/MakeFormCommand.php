@@ -28,11 +28,15 @@ class MakeFormCommand extends Command
     #[Override]
     protected array $options = [
         'name' => [
+            'help' => 'Name of the form to generate.',
             'text' => 'Please enter a name for the form',
             'required' => true,
         ],
-        'namespace' => [],
+        'namespace' => [
+            'help' => 'Namespace for the generated form.',
+        ],
         'force' => [
+            'help' => 'Overwrite an existing file.',
             'as' => 'boolean',
             'default' => false,
         ],

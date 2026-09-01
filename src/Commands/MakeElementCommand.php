@@ -31,11 +31,15 @@ class MakeElementCommand extends Command
     #[Override]
     protected array $options = [
         'template' => [
+            'help' => 'Name of the element to generate.',
             'text' => 'Please enter the element template',
             'required' => true,
         ],
-        'path' => [],
+        'path' => [
+            'help' => 'Base template path.',
+        ],
         'force' => [
+            'help' => 'Overwrite an existing file.',
             'as' => 'boolean',
             'default' => false,
         ],

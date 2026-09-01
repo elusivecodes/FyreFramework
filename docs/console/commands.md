@@ -311,15 +311,16 @@ class ClearCacheCommand extends Command
 
     protected array $options = [
         'cache' => [
-            'text' => 'Cache config key',
+            'help' => 'Cache configuration to use.',
             'default' => 'default',
         ],
         'key' => [
-            'text' => 'Cache key to delete',
+            'help' => 'Cache key to delete.',
+            'text' => 'Please enter the cache key',
             'required' => true,
         ],
         'force' => [
-            'text' => 'Skip confirmation',
+            'help' => 'Skip the confirmation prompt.',
             'as' => 'boolean',
             'default' => false,
         ],
@@ -361,7 +362,8 @@ Command options come from the command's `$options` property. Each option key map
 
 Supported metadata keys:
 
-- `text` (`string`) - prompt text
+- `help` (`string`) - description displayed in command help
+- `text` (`string`) - interactive prompt text
 - `required` (`bool`) - whether a value must be provided
 - `values` (`array|null`) - allowed values
 - `as` (`string`) - parse type (defaults to `string`)

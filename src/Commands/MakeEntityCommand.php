@@ -36,23 +36,32 @@ class MakeEntityCommand extends Command
     #[Override]
     protected array $options = [
         'name' => [
+            'help' => 'Name of the entity to generate.',
             'text' => 'Please enter a name for the entity',
             'required' => true,
         ],
-        'namespace' => [],
-        'table' => [],
+        'namespace' => [
+            'help' => 'Namespace for the generated entity.',
+        ],
+        'table' => [
+            'help' => 'Database table used for schema inference.',
+        ],
         'connection' => [
+            'help' => 'Database connection used for schema inference.',
             'default' => ConnectionManager::DEFAULT,
         ],
         'noFields' => [
+            'help' => 'Skip schema field annotations.',
             'as' => 'boolean',
             'default' => false,
         ],
         'noRelationships' => [
+            'help' => 'Skip relationship annotations.',
             'as' => 'boolean',
             'default' => false,
         ],
         'force' => [
+            'help' => 'Overwrite an existing file.',
             'as' => 'boolean',
             'default' => false,
         ],

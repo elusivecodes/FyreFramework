@@ -27,21 +27,26 @@ class DbRollbackCommand extends Command
     #[Override]
     protected array $options = [
         'db' => [
+            'help' => 'Database connection to use.',
             'default' => ConnectionManager::DEFAULT,
         ],
         'batches' => [
+            'help' => 'Number of migration batches to roll back.',
             'as' => 'integer',
             'default' => 1,
         ],
         'steps' => [
+            'help' => 'Number of migrations to roll back.',
             'as' => 'integer',
             'default' => null,
         ],
         'lockExpires' => [
+            'help' => 'Migration lock lifetime in seconds.',
             'as' => 'integer',
             'default' => 300,
         ],
         'dryRun' => [
+            'help' => 'Display the rollback plan without executing it.',
             'as' => 'boolean',
             'default' => false,
         ],

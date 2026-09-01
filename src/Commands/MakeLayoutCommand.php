@@ -31,11 +31,15 @@ class MakeLayoutCommand extends Command
     #[Override]
     protected array $options = [
         'template' => [
+            'help' => 'Name of the layout to generate.',
             'text' => 'Please enter the layout template',
             'required' => true,
         ],
-        'path' => [],
+        'path' => [
+            'help' => 'Base template path.',
+        ],
         'force' => [
+            'help' => 'Overwrite an existing file.',
             'as' => 'boolean',
             'default' => false,
         ],

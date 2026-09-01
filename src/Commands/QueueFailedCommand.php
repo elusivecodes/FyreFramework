@@ -32,12 +32,16 @@ class QueueFailedCommand extends Command
     #[Override]
     protected array $options = [
         'config' => [
+            'help' => 'Queue configuration to use.',
             'default' => QueueManager::DEFAULT,
         ],
         'queue' => [
+            'help' => 'Queue name to use.',
             'default' => Queue::DEFAULT,
         ],
-        'class' => [],
+        'class' => [
+            'help' => 'Filter jobs by class name.',
+        ],
     ];
 
     /**

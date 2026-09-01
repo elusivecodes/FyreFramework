@@ -48,43 +48,57 @@ class MakeModelCommand extends Command
     #[Override]
     protected array $options = [
         'name' => [
+            'help' => 'Name of the model to generate.',
             'text' => 'Please enter a name for the model',
             'required' => true,
         ],
-        'namespace' => [],
-        'table' => [],
+        'namespace' => [
+            'help' => 'Namespace for the generated model.',
+        ],
+        'table' => [
+            'help' => 'Database table used for schema inference.',
+        ],
         'connection' => [
+            'help' => 'Database connection used for schema inference.',
             'default' => ConnectionManager::DEFAULT,
         ],
         'noEntity' => [
+            'help' => 'Skip entity generation.',
             'as' => 'boolean',
             'default' => false,
         ],
         'noFields' => [
+            'help' => 'Skip schema field inference.',
             'as' => 'boolean',
             'default' => false,
         ],
         'noRelationships' => [
+            'help' => 'Skip relationship inference.',
             'as' => 'boolean',
             'default' => false,
         ],
         'noValidation' => [
+            'help' => 'Skip validator inference.',
             'as' => 'boolean',
             'default' => false,
         ],
         'noRules' => [
+            'help' => 'Skip rule inference.',
             'as' => 'boolean',
             'default' => false,
         ],
         'noTest' => [
+            'help' => 'Skip test generation.',
             'as' => 'boolean',
             'default' => false,
         ],
         'noFixture' => [
+            'help' => 'Skip fixture generation.',
             'as' => 'boolean',
             'default' => false,
         ],
         'force' => [
+            'help' => 'Overwrite existing files.',
             'as' => 'boolean',
             'default' => false,
         ],

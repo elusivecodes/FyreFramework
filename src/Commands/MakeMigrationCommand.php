@@ -30,11 +30,17 @@ class MakeMigrationCommand extends Command
     #[Override]
     protected array $options = [
         'name' => [
+            'help' => 'Name of the migration to generate.',
             'required' => true,
         ],
-        'version' => [],
-        'namespace' => [],
+        'version' => [
+            'help' => 'Version for the generated migration.',
+        ],
+        'namespace' => [
+            'help' => 'Namespace for the generated migration.',
+        ],
         'force' => [
+            'help' => 'Overwrite an existing file.',
             'as' => 'boolean',
             'default' => false,
         ],

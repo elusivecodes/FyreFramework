@@ -29,11 +29,15 @@ class MakePolicyCommand extends Command
     #[Override]
     protected array $options = [
         'name' => [
+            'help' => 'Name of the policy to generate.',
             'text' => 'Please enter a name for the policy',
             'required' => true,
         ],
-        'namespace' => [],
+        'namespace' => [
+            'help' => 'Namespace for the generated policy.',
+        ],
         'force' => [
+            'help' => 'Overwrite an existing file.',
             'as' => 'boolean',
             'default' => false,
         ],

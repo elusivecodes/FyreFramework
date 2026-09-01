@@ -29,11 +29,15 @@ class MakeHelperCommand extends Command
     #[Override]
     protected array $options = [
         'name' => [
+            'help' => 'Name of the helper to generate.',
             'text' => 'Please enter a name for the helper',
             'required' => true,
         ],
-        'namespace' => [],
+        'namespace' => [
+            'help' => 'Namespace for the generated helper.',
+        ],
         'force' => [
+            'help' => 'Overwrite an existing file.',
             'as' => 'boolean',
             'default' => false,
         ],

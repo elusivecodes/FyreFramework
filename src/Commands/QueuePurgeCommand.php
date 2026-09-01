@@ -29,15 +29,22 @@ class QueuePurgeCommand extends Command
 
     #[Override]
     protected array $options = [
-        'ids' => [],
+        'ids' => [
+            'help' => 'Comma-separated failed job IDs.',
+        ],
         'config' => [
+            'help' => 'Queue configuration to use.',
             'default' => QueueManager::DEFAULT,
         ],
         'queue' => [
+            'help' => 'Queue name to use.',
             'default' => Queue::DEFAULT,
         ],
-        'class' => [],
+        'class' => [
+            'help' => 'Filter jobs by class name.',
+        ],
         'force' => [
+            'help' => 'Skip the confirmation prompt.',
             'as' => 'boolean',
             'default' => false,
         ],

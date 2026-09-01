@@ -29,8 +29,12 @@ class QueueStatsCommand extends Command
 
     #[Override]
     protected array $options = [
-        'config' => [],
-        'queue' => [],
+        'config' => [
+            'help' => 'Queue configuration to display.',
+        ],
+        'queue' => [
+            'help' => 'Queue name to display.',
+        ],
     ];
 
     /**
