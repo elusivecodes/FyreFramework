@@ -4,28 +4,18 @@ Use the ORM when you want to work with database records as models, entities, and
 
 ## Table of Contents
 
-- [Start here](#start-here)
+- [ORM workflow](#orm-workflow)
 - [ORM overview](#orm-overview)
 - [Pages in this section](#pages-in-this-section)
 - [Related](#related)
 
-## Start here
+## ORM workflow
 
-Pick a path based on what you’re doing:
+Define table metadata and relationships on a [Model](models.md). Queries created through that model return [Entities](entities.md), which track field changes, errors, and related records.
 
-- **Defining your data layer**: start with [Models](models.md) (table metadata, schema, and persistence entry points)
-- **Working with record objects**: see [Entities](entities.md) (field access, dirty tracking, errors, and serialization)
-- **Querying**: see [Finding Data](finding.md) (`find()`/`get()`, `contain()`, and results)
-- **Writing changes**: see [Saving Data](saving.md) (create/patch entities, save workflows, and bulk updates)
-- **Removing records**: see [Deleting Data](deleting.md) (entity deletes, cascades, bulk deletes, soft deletes)
-- **Associations**: see [ORM Relationships](relationships.md) (contain, joins, save/delete coordination)
-- **Integrity checks**: see [Rule Sets](rulesets.md) (uniqueness, exists-in, and other model-level rules)
-- **Lifecycle hooks**: see [ORM Events](events.md) (find/parse/save/delete event attributes and listeners)
-- **Common model behavior**: see [ORM Traits](traits.md) (timestamps, soft deletes, and shared hooks)
+Use [Finding Data](finding.md) to load records, [Saving Data](saving.md) to create or update them, and [Deleting Data](deleting.md) to remove them. Add [Rule Sets](rulesets.md) for persistence integrity, [ORM Events](events.md) for lifecycle hooks, and [ORM Traits](traits.md) for reusable model behavior.
 
 ## ORM overview
-
-Most ORM work starts from a model and flows through entities:
 
 - **Models** represent a table and act as the entry point for querying and persistence.
 - **Entities** represent individual records, can contain related entities, and track changes and errors.

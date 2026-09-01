@@ -6,22 +6,16 @@ The section covers the base `TestCase`, fixtures, in-process HTTP and console te
 
 ## Table of Contents
 
-- [Start here](#start-here)
+- [Testing workflow](#testing-workflow)
 - [Installation](#installation)
 - [Testing overview](#testing-overview)
 - [Pages in this section](#pages-in-this-section)
 
-## Start here
+## Testing workflow
 
-Pick a path based on what you’re testing:
+Start with [`TestCase`](test-case.md) for the framework-aware PHPUnit base class. Add [Fixtures](fixtures.md) only for database state, and use the focused integration helpers for the boundary under test: [HTTP](integration.md), [outbound HTTP](http-client.md), [console](console.md), [mail](mail.md), or [logging](logging.md).
 
-- **Getting started with the base test case**: [`TestCase`](test-case.md)
-- **HTTP requests and responses**: [Integration Testing](integration.md)
-- **Database-backed code**: [Fixtures](fixtures.md)
-- **Outbound HTTP calls**: [HTTP Client Testing](http-client.md)
-- **Console commands**: [Console Testing](console.md)
-- **Email and logging**: [Email Testing](mail.md) and [Log Testing](logging.md)
-- **Performance checks**: [Timers](timers.md) or [Benchmark](benchmark.md)
+[Timers](timers.md) and [Benchmark](benchmark.md) measure code; they do not assert a performance threshold automatically.
 
 ## Installation
 

@@ -57,8 +57,6 @@ If you use `RouteHandler` as the fallback handler, router middleware must alread
 
 ## Behavior notes
 
-A few practical details are worth keeping in mind:
-
 - `RequestHandler` advances the underlying queue as it runs, so rewind the queue or use a fresh one before handling another request with the same instance.
 - Middleware groups run as nested queues and return control to the outer queue when they finish.
 - Each Fyre `ServerRequest` passed to `handle()` replaces the current scoped request instance in the container. This means a request modified by middleware is available to downstream code that resolves `ServerRequest` or `ServerRequestInterface` from the container.

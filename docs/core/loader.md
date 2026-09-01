@@ -42,7 +42,7 @@ $app = new Application($loader);
 
 Composer can autoload your classes, but the framework also needs to know where namespaces live so it can scan folders for features such as:
 
-- [Route discovery](../routing/route-discovery.md)
+- [Route Discovery](../routing/route-discovery.md)
 - [Console command discovery](../console/commands.md)
 - [Migration discovery](../database/migrations.md)
 
@@ -142,6 +142,6 @@ If you want the known paths for a namespace prefix rather than discovered subfol
 
 - [Engine](engine.md)
 - [Container](container.md)
-- [Route discovery](../routing/route-discovery.md)
+- [Route Discovery](../routing/route-discovery.md)
 - [Console Commands](../console/commands.md)
-- [Database Migrations](../database/migrations.md)
+- [Database migrations](../database/migrations.md)

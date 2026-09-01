@@ -179,8 +179,6 @@ if (!$worker->runOnce()) {
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
 - `Worker::run()` is not re-entrant, so calling it again on the same instance while it is already running does nothing.
 - `Worker::runOnce()` does not apply `maxJobs`, `maxRuntime`, `rest`, or `sleep`.
 - Stop signals are handled gracefully: the worker finishes the current job and then exits the loop.

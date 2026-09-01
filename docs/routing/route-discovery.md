@@ -251,8 +251,6 @@ If you configure a cache named `_routes`, discovered routes are cached per names
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
 - Use one route attribute per controller and per method.
 - If you want discovery to skip a controller or action, make `#[Hidden]` the route attribute on that class or method.
 - Public methods are route candidates, including inherited public methods. Constructors, destructors, and unannotated magic methods are ignored.

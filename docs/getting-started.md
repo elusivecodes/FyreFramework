@@ -220,8 +220,6 @@ Continue with the area that matches what you are building:
 
 ## Behavior notes
 
-A few setup details are worth keeping in mind:
-
 - The framework package does not prescribe an application directory layout or generate entry points; the Hello world layout is a minimal starting point.
 - Only enable and configure the subsystems your application uses.
 - Optional PHP extensions are required only when the corresponding feature is used.

@@ -4,38 +4,19 @@ HTTP covers incoming requests, outgoing responses, cookies, middleware, sessions
 
 ## Table of Contents
 
-- [Start here](#start-here)
+- [Request flow](#request-flow)
 - [HTTP overview](#http-overview)
 - [Pages in this section](#pages-in-this-section)
 
-## Start here
+## Request flow
 
-Pick the path that matches what you are doing:
+For an incoming request, start with [HTTP Requests](requests.md), build the application queue with [HTTP Middleware](middleware.md), and execute it through [Request Handler](request-handler.md). Routing middleware matches the request, and the route handler invokes the destination. The application then returns an [HTTP Response](responses.md).
 
-- **Handling incoming requests**: [HTTP Requests](requests.md) -> [HTTP Middleware](middleware.md) -> [Routing](../routing/index.md) -> [HTTP Responses](responses.md)
-- **Running the application flow**: [HTTP Middleware](middleware.md) -> [Request Handler](request-handler.md) -> [Routing](../routing/index.md)
-- **Working with sessions**: [Sessions](sessions.md)
-- **Working with cookies**: [Cookies](cookies.md)
-- **Calling external services**: [HTTP Client](client.md)
-- **Creating implementation-independent HTTP objects**: [HTTP Factories](factories.md)
-- **Working with URLs and user agents**: [URI](uri.md) and [User Agents](user-agents.md)
+[Sessions](sessions.md), [Cookies](cookies.md), and [User Agents](user-agents.md) add request-specific state or metadata around that flow. They can be read independently when that is the only feature you need.
 
 ## HTTP overview
 
-Most applications use the HTTP section in two ways:
-
-- **Inbound HTTP**: read a request, pass it through middleware, and return a response
-- **Outbound HTTP**: send requests to other services with the HTTP client
-
-The core pieces are straightforward:
-
-- `ServerRequest` gives you request data, headers, uploads, locale negotiation, and request attributes
-- `ClientResponse` and its subclasses help you return HTML, JSON, redirects, downloads, and cookies
-- `Cookie` and `CookieJar` represent cookies and scope them to matching request URIs
-- `MiddlewareQueue` and `RequestHandler` run shared request logic in order
-- routing matches the request and invokes the selected controller action or closure
-- `Session` manages per-user state across requests
-- `Client` makes outbound HTTP calls and returns client responses
+Inbound HTTP uses `ServerRequest`, middleware, routing, and `ClientResponse`. Outbound calls use [HTTP Client](client.md), while [HTTP Factories](factories.md) create implementation-independent PSR-7 objects through the PSR-17 contracts. [URI](uri.md) documents the URI value object shared by both sides.
 
 ## Pages in this section
 

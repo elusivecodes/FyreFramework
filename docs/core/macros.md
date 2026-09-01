@@ -6,26 +6,15 @@ Use them for small application-specific extensions that do not justify a subclas
 
 ## Table of Contents
 
-- [Method guide](#method-guide)
-  - [Instance macros](#instance-macros)
-  - [Static macros](#static-macros)
+- [Register instance macros](#register-instance-macros)
+- [Register static macros](#register-static-macros)
 - [Macro-enabled classes](#macro-enabled-classes)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Method guide
+## Register instance macros
 
-Register macros during application bootstrapping, before the first call. Use an instance macro when the callback needs `$this`; use a static macro for a class-level operation.
-
-### Instance macros
-
-#### **Register an instance macro** (`macro()`)
-
-Adds a macro that can be called on an object instance. A registered `Closure` is bound to the target object and its class scope when invoked.
-
-Arguments:
-- `$name` (`string`): macro name.
-- `$macro` (`callable`): macro callback.
+Register macros during application bootstrapping, before the first call. Use `macro(string $name, callable $macro): void` when the callback should be called on an object instance. A `Closure` is bound to that object and its class scope, so it can use `$this`:
 
 ```php
 use Fyre\Utility\Formatter;
@@ -38,34 +27,11 @@ $formatter = app(Formatter::class);
 $formatted = $formatter->usd(25);
 ```
 
-#### **Check whether a macro exists** (`hasMacro()`)
+Use `hasMacro(string $name): bool` to check a registration and `clearMacros(): void` to clear every instance macro registered for the class.
 
-Arguments:
-- `$name` (`string`): macro name.
+## Register static macros
 
-```php
-if (Formatter::hasMacro('usd')) {
-    // ...
-}
-```
-
-#### **Clear instance macros** (`clearMacros()`)
-
-Clears the instance macro registry for the class.
-
-```php
-Formatter::clearMacros();
-```
-
-### Static macros
-
-#### **Register a static macro** (`staticMacro()`)
-
-Adds a macro that can be called on the class. A registered `Closure` is bound to the class scope without an object when invoked.
-
-Arguments:
-- `$name` (`string`): macro name.
-- `$macro` (`callable`): macro callback.
+Use `staticMacro(string $name, callable $macro): void` when the callback should be called on the class. A `Closure` is bound to the class scope without an object:
 
 ```php
 use Fyre\Utility\Str;
@@ -77,24 +43,7 @@ Str::staticMacro('surround', static function (string $value, string $prefix, str
 $value = Str::surround('value', '[', ']');
 ```
 
-#### **Check whether a static macro exists** (`hasStaticMacro()`)
-
-Arguments:
-- `$name` (`string`): macro name.
-
-```php
-if (Str::hasStaticMacro('surround')) {
-    // ...
-}
-```
-
-#### **Clear static macros** (`clearStaticMacros()`)
-
-Clears the static macro registry for the class.
-
-```php
-Str::clearStaticMacros();
-```
+Use `hasStaticMacro(string $name): bool` to check a registration and `clearStaticMacros(): void` to clear every static macro registered for the class.
 
 ## Macro-enabled classes
 
@@ -120,6 +69,6 @@ Support is supplied by `MacroTrait` for instance macros and `StaticMacroTrait` f
 
 - [Core](index.md)
 - [Container](container.md)
-- [Language (Lang)](lang.md)
+- [Language (`Lang`)](lang.md)
 - [Loader](loader.md)
 - [Router](../routing/router.md)

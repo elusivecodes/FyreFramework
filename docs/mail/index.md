@@ -23,11 +23,9 @@ Most applications configure a default mailer for production and a debug or test 
 
 ## Start here
 
-Pick a path based on what you’re doing:
+Use this page to configure SMTP, sendmail, or debug transports. [Emails](emails.md) covers recipients, body formats, attachments, and sending; [Email Testing](../testing/mail.md) covers captured messages and assertions.
 
-- **Sending and building messages**: see [Emails](emails.md) (recipients, body format, attachments, return path).
-- **Configuring transports**: continue on this page (SMTP, sendmail, debug mailers).
-- **Testing email output**: see [Email Testing](../testing/mail.md) (debug mailer and assertions).
+For a typical application, configure the production transport as `default` and a debug transport for local development.
 
 ## Configuring mailers
 

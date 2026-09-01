@@ -343,5 +343,5 @@ Common issues when setting up connections:
 - [Database queries](queries.md)
 - [Schema](schema.md)
 - [Forge](forge.md)
-- [Database Migrations](migrations.md)
+- [Database migrations](migrations.md)
 - [Database types](types.md)

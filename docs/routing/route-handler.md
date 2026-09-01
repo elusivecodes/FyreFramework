@@ -44,8 +44,6 @@ This is the right place for per-route concerns like authorization, throttling, o
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
 - `RouteHandler` throws `Fyre\Router\Exceptions\RouterException` when the `route` request attribute is missing.
 - Route middleware only runs for the matched route. Use global middleware for concerns that should apply to every request.
 

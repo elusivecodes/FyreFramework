@@ -1,64 +1,31 @@
 # Helpers
 
-Use helpers when you want concise access to common framework tasks in templates, small callbacks, and other lightweight code paths.
-
-They keep code short while routing real work through the same underlying services.
+Helpers provide concise access to common framework services and small runtime operations. They are most useful in templates, route closures, and other short-lived code where injecting every dependency would obscure the task.
 
 ## Table of Contents
 
 - [Start here](#start-here)
-- [When to use helpers](#when-to-use-helpers)
+- [Choose helpers or dependency injection](#choose-helpers-or-dependency-injection)
 - [Helper reference](#helper-reference)
-  - [Engine and container](#engine-and-container)
-  - [Configuration, environment, and i18n](#configuration-environment-and-i18n)
-  - [HTTP and routing](#http-and-routing)
+  - [Engine, configuration, and language](#engine-configuration-and-language)
+  - [HTTP, routing, and sessions](#http-routing-and-sessions)
   - [Authentication and authorization](#authentication-and-authorization)
   - [Views and templates](#views-and-templates)
   - [Data and services](#data-and-services)
-  - [Utility](#utility)
-  - [Debugging](#debugging)
+  - [Utilities and debugging](#utilities-and-debugging)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
 ## Start here
 
-Use helpers when you want to:
-
-- Resolve a service from the container (`app()`) without threading the container everywhere.
-- Provide tiny, intention-revealing shortcuts (`auth()`, `cache()`, `request()`, `__()`).
-- Keep templates and small callbacks readable by avoiding long parameter lists.
-
-Nothing is “helper-only”. Most helpers are thin wrappers around services you can also access via dependency injection; a few are simple wrappers around runtime functions (for example `env()`, `dump()`/`dd()`, and `abort()`).
-
-In namespaced code, you can import helpers explicitly via `use function`:
+The helper functions are defined in `src/functions.php` and loaded by Composer. In namespaced code, import the helpers you use explicitly:
 
 ```php
-use function config;
+use function logged_in;
+use function redirect;
+use function route;
 use function view;
-```
 
-The helper functions are defined in `src/functions.php` and autoloaded via Composer.
-
-## When to use helpers
-
-Helpers are a good fit when code is naturally “ambient”:
-
-- view templates and small view helpers
-- quick controller closures or middleware callbacks
-- small scripts that run inside a configured framework runtime
-
-Prefer dependency injection in long-lived code (services, repositories, jobs, policies, controllers) where making dependencies explicit is valuable for testing and refactoring.
-
-Rule of thumb:
-
-- Use helpers in templates and small callbacks where readability matters most.
-- Use dependency injection when a dependency is part of a class’s contract (especially for test doubles and refactors).
-- If you find yourself calling many helpers in one class, it’s usually a sign to inject the underlying services instead.
-
-Example: using helpers in a small controller closure:
-
-```php
-// In a route closure or controller action:
 if (!logged_in()) {
     return redirect(route('login'));
 }
@@ -66,42 +33,7 @@ if (!logged_in()) {
 return view('dashboard');
 ```
 
-Example: the same idea with explicit dependencies (better for testable, long-lived classes):
-
-```php
-use Fyre\Auth\Auth;
-use Fyre\Http\RedirectResponse;
-use Fyre\Router\Router;
-use Fyre\View\View;
-
-final class DashboardController
-{
-    public function __construct(
-        private readonly Auth $auth,
-        private readonly Router $router,
-        private readonly View $view,
-    ) {}
-
-    public function index(): string|RedirectResponse
-    {
-        if (!$this->auth->isLoggedIn()) {
-            return new RedirectResponse($this->router->url('login'));
-        }
-
-        return $this->view->render('dashboard');
-    }
-}
-```
-
-## Helper reference
-
-### Engine and container
-
-#### **Get the application container or resolve a service** (`app()`)
-
-Arguments:
-- `$alias` (`string|null`): service alias/class name (or `null` to return the container).
-- `$arguments` (`array`): optional arguments forwarded to the container when resolving.
+Call `app()` without arguments when you need the shared `Engine`, or pass a service alias to resolve it from the container:
 
 ```php
 use Fyre\Core\Config;
@@ -110,285 +42,113 @@ $app = app();
 $config = app(Config::class);
 ```
 
-`app(SomeService::class)` is shorthand for resolving a service from the container. It is equivalent to:
+## Choose helpers or dependency injection
+
+Use helpers when the dependency is naturally part of the current application context, especially in templates and small callbacks. Prefer constructor injection when a dependency is part of a class’s contract or needs to be replaced by a test double.
+
+Most helpers delegate to the same shared services available through the container. The main exceptions are small runtime wrappers such as `env()`, `dump()`, `dd()`, and `abort()`.
+
+## Helper reference
+
+### Engine, configuration, and language
+
+| Helper | Result |
+| --- | --- |
+| `app(string|null $alias = null, array $arguments = []): mixed` | shared `Engine` without an alias, or a service resolved with `Container::use()` |
+| `config(string|null $key = null, mixed $default = null): mixed` | shared `Config` without a key, or a dot-notation config value |
+| `env(string $name, mixed $default = null): mixed` | environment value, or the default when it is unset or empty |
+| `__(string $key, array $data = []): array\|string|null` | language value with optional placeholder data |
+
+### HTTP, routing, and sessions
+
+| Helper | Result |
+| --- | --- |
+| `request(string|null $key = null, string|null $as = null): mixed` | current `ServerRequest` without arguments, or request data parsed through `getData()` |
+| `response(): ClientResponse` | new response resolved through the response factory binding |
+| `json(mixed $data, bool $stream = false): ClientResponse` | JSON response; streaming emits an iterable as a JSON array |
+| `route(string $name, array $arguments = [], string|null $scheme = null, string|null $host = null, int|null $port = null, bool|null $full = null): string` | URL generated from a route alias, placeholders, and optional origin overrides |
+| `redirect(string\|Uri $uri, int $code = 302, array $options = []): RedirectResponse` | redirect response for a URI |
+| `abort(int $code = 500, string|null $message = null): void` | throws the HTTP exception mapped to the status code |
+| `session(string|null $key = null, mixed $value = null): mixed` | current `Session`, a stored value, or the result of writing a value |
+| `asset(string $path, bool $full = false): string` | normalized asset URL, optionally resolved against `App.baseUri` |
+
+`route()` accepts optional `$scheme`, `$host`, `$port`, and `$full` arguments after the route arguments. It throws `RouterException` when the alias is missing, a required placeholder is absent, or a value does not match its route pattern.
+
+Both request and response objects are immutable. Return the value produced by response `with*()` methods:
 
 ```php
-$app = app();
-$service = $app->use(SomeService::class);
+return response()
+    ->withStatus(202)
+    ->withJson(['queued' => true]);
 ```
 
-### Configuration, environment, and i18n
-
-#### **Read config values or access Config** (`config()`)
-
-Returns the `Config` instance when called with no arguments, or a config value when a key is provided.
-
-Arguments:
-- `$key` (`string|null`): dot-notation key (or `null` to return the config instance).
-- `$default` (`mixed`): default value when the key is missing.
+Call `session()` with no arguments for the session object, one argument to read, or two arguments to write:
 
 ```php
-$config = config();
-$debug = config('App.debug', false);
-```
-
-#### **Read an environment variable** (`env()`)
-
-Arguments:
-- `$name` (`string`): environment variable name.
-- `$default` (`mixed`): default value when not set (or empty).
-
-```php
-$env = env('APP_ENV', 'production');
-```
-
-#### **Translate a message** (`__()`)
-
-Arguments:
-- `$key` (`string`): language key (e.g. `Validation.required`).
-- `$data` (`array`): optional placeholder data.
-
-```php
-$message = __('Validation.required', ['field' => 'email']);
-```
-
-### HTTP and routing
-
-#### **Access request data or the request object** (`request()`)
-
-Returns the request object with no arguments, or reads request data when a key is provided.
-
-Arguments:
-- `$key` (`string|null`): request data key (or `null` to return the request object).
-- `$as` (`string|null`): optional cast/type hint.
-
-```php
-$request = request();
-$email = request('email');
-```
-
-#### **Create a response** (`response()`)
-
-Resolves a `ClientResponse` from the container.
-
-Because responses are immutable, return the instance produced by `with*` calls.
-
-```php
-$response = response();
-```
-
-#### **Return JSON** (`json()`)
-
-Creates a JSON response (shorthand for `response()->withJson($data, $stream)`).
-
-Arguments:
-- `$data` (`mixed`): value to JSON-encode.
-- `$stream` (`bool`): whether to stream an iterable as a JSON array (defaults to `false`).
-
-```php
-return json(['ok' => true]);
-```
-
-```php
-return json($items, stream: true);
-```
-
-#### **Build a URL for a named route** (`route()`)
-
-Builds a URL for a named route.
-
-Arguments:
-- `$name` (`string`): route alias.
-- `$arguments` (`array`): route arguments.
-- `$scheme` (`string|null`): optional scheme override.
-- `$host` (`string|null`): optional host override.
-- `$port` (`int|null`): optional port override.
-- `$full` (`bool|null`): optional full URL override.
-
-Throws `RouterException` when a route alias does not exist, required arguments are missing, or a parameter value is invalid.
-
-```php
-$url = route('login');
-```
-
-#### **Redirect** (`redirect()`)
-
-Creates a redirect response.
-
-Arguments:
-- `$uri` (`string|Uri`): destination.
-- `$code` (`int`): status code (default `302`).
-- `$options` (`array`): redirect options.
-
-```php
-return redirect('/');
-```
-
-#### **Abort with an HTTP error** (`abort()`)
-
-Throws an HTTP exception for a status code.
-
-Arguments:
-- `$code` (`int`): status code.
-- `$message` (`string|null`): optional message.
-
-```php
-abort(404);
-```
-
-#### **Read/write session values or access Session** (`session()`)
-
-Returns the `Session` instance with no arguments, reads with one argument, and writes with two.
-
-Arguments:
-- `$key` (`string|null`): session key (or `null` to return the session instance).
-- `$value` (`mixed`): optional value to write.
-
-```php
-$session = session();
-$token = session('csrf');
+$step = session('wizard.step');
 session('wizard.step', 2);
-```
-
-#### **Build an asset URL** (`asset()`)
-
-Builds a URL for an asset path.
-
-Arguments:
-- `$path` (`string`): asset path.
-- `$full` (`bool`): when `true`, resolve relative to `App.baseUri`.
-
-```php
-$url = asset('app.css', true);
 ```
 
 ### Authentication and authorization
 
 | Helper | Result |
 | --- | --- |
-| `auth()` | shared `Auth` service |
-| `user()` | current user, or `null` |
-| `logged_in()` | whether a user is logged in |
-| `authorize($rule, ...$args)` | authorize a rule, throwing when denied |
-| `can($rule, ...$args)` | whether a rule is allowed |
-| `cannot($rule, ...$args)` | whether a rule is denied |
-| `can_any($rules, ...$args)` | whether any listed rule is allowed |
-| `can_none($rules, ...$args)` | whether every listed rule is denied |
-
-```php
-authorize('edit', $post);
-
-if (can_any(['edit', 'publish'], $post)) {
-    // ...
-}
-```
+| `auth(): Auth` | shared authentication service |
+| `user(): Entity|null` | current authenticated user |
+| `logged_in(): bool` | whether a user is logged in |
+| `authorize(string $rule, mixed ...$args): void` | authorize a rule and throw when access is denied |
+| `can(string $rule, mixed ...$args): bool` | whether a rule is allowed |
+| `cannot(string $rule, mixed ...$args): bool` | whether a rule is denied |
+| `can_any(array $rules, mixed ...$args): bool` | whether any listed rule is allowed |
+| `can_none(array $rules, mixed ...$args): bool` | whether every listed rule is denied |
 
 ### Views and templates
 
-#### **Render a template** (`view()`)
-
-Renders a view template, optionally selecting a layout.
-
-Arguments:
-- `$template` (`string`): template name.
-- `$data` (`array`): view data.
-- `$layout` (`string|null`): optional layout.
-
-```php
-echo view('home', ['title' => 'Welcome']);
-```
-
-#### **Render an element/partial** (`element()`)
-
-Renders an element/partial.
-
-Arguments:
-- `$file` (`string`): element file name.
-- `$data` (`array`): view data.
-
-```php
-echo element('nav', ['active' => 'home']);
-```
-
-#### **Escape HTML** (`escape()`)
-
-Escapes a string for use in HTML.
-
-Arguments:
-- `$string` (`string`): string to escape.
-
-```php
-echo escape($title);
-```
+| Helper | Result |
+| --- | --- |
+| `view(string $template, array $data = [], string|null $layout = null): string` | rendered template using the selected or default layout |
+| `element(string $file, array $data = []): string` | rendered element with its local data |
+| `escape(string $string): string` | string escaped for HTML |
 
 ### Data and services
 
 | Helper | Result |
 | --- | --- |
-| `cache($key = 'default')` | configured cache handler |
-| `db($key = 'default')` | configured database connection |
-| `model($alias)` | model from the registry |
-| `email($key = 'default')` | new email for the configured mailer |
-| `encryption($key = 'default')` | configured encryption handler |
+| `cache(string $key = 'default'): Cacher` | shared configured cache handler |
+| `db(string $key = 'default'): Connection` | shared configured database connection |
+| `model(string $alias): Model` | shared model resolved by alias |
+| `email(string $key = 'default'): Email` | new email from the configured mailer |
+| `encryption(string $key = 'default'): Encrypter` | shared configured encryption handler |
+| `queue(string $className, array $arguments = [], array $options = []): void` | enqueue a job through the shared queue manager |
+| `type(string|null $type = null): Type\|TypeParser` | shared `TypeParser` without a name, or the named type handler |
 
-#### **Queue a job** (`queue()`)
-
-Pushes a job onto the configured queue.
-
-Arguments:
-- `$className` (`class-string`): job class name.
-- `$arguments` (`array`): job arguments.
-- `$options` (`array`): job options.
-
-```php
-queue(SendEmailJob::class, ['userId' => 123]);
-```
-
-#### **Get the type parser or resolve a type** (`type()`)
-
-Returns the type parser with no arguments, or resolves a type by name when a type is provided.
-
-Arguments:
-- `$type` (`string|null`): type name (or `null` to return the type parser).
-
-```php
-$typeParser = type();
-$boolean = type('boolean');
-```
-
-### Utility
+### Utilities and debugging
 
 | Helper | Result |
 | --- | --- |
-| `collect($source)` | new `Collection` containing the source values |
-| `now()` | new `DateTime` set to the current time |
-
-### Debugging
-
-| Helper | Effect |
-| --- | --- |
-| `dump(...$data)` | dump values using `var_dump()` |
-| `dd(...$data)` | dump values and stop execution |
-| `log_message($type, $message, $data = [])` | write through the log manager |
+| `collect(array\|Closure\|JsonSerializable\|Traversable|null $source): Collection` | new collection containing the source values |
+| `now(): DateTime` | new date/time value for the current instant |
+| `dump(mixed ...$data): void` | dump values with `var_dump()` |
+| `dd(mixed ...$data): void` | dump values and stop execution |
+| `log_message(string $type, string $message, array $data = []): void` | write through the shared log manager |
 
 ## Behavior notes
 
-- Helpers rely on the shared `Engine` instance, so set that instance early in bootstrap when you rely on loader mappings or discovery features.
-- `abort()` supports a fixed set of status codes (`400`, `401`, `403`, `404`, `405`, `406`, `409`, `410`, `501`, `503`). Other codes throw `InternalServerException` with the provided code.
-- `cache()` returns a no-op cache handler when caching is disabled (by default, cache is disabled when `App.debug` is enabled).
-- `env()` treats an empty string as “not set” and returns the default value.
-- `dump()` wraps output in `<pre>` tags when not running in CLI, and uses `var_dump()`.
-- `request()` returns the request object when called with no arguments. When called with arguments it reads request data via `getData($key, $as)`.
-- `route()` can throw when a route alias does not exist, required arguments are missing, or a parameter value is invalid.
-- `session()` returns the session object when called with no arguments. With one argument it reads, and with two it writes.
-- `view()` uses `App.defaultLayout` when no layout is provided.
-- `asset($path, true)` resolves relative to `App.baseUri`. `asset($path, false)` treats `$path` as-is.
+- Helpers that resolve services rely on the shared `Engine`; set the application instance during bootstrap when loader mappings or discovery features matter.
+- `abort()` directly maps status codes `400`, `401`, `403`, `404`, `405`, `406`, `409`, `410`, `501`, and `503`. Other codes produce an `InternalServerException` carrying the supplied code.
+- `cache()` returns a no-op handler when caching is disabled. By default, caching is disabled while `App.debug` is enabled.
+- `env()` treats both an unset variable and an empty string as missing.
+- `dump()` wraps its output in `<pre>` outside CLI and uses `var_dump()` for each value.
+- `view()` uses `App.defaultLayout` when no layout is supplied.
+- `asset($path, true)` resolves the path relative to `App.baseUri`; `asset($path, false)` treats it as-is.
 
 ## Related
 
-- [Container](container.md)
 - [Engine](engine.md)
+- [Container](container.md)
 - [Config](config.md)
-- [Lang](lang.md)
-- [Auth](../auth/index.md)
+- [Language (`Lang`)](lang.md)
+- [Authentication](../auth/authentication.md)
 - [HTTP](../http/index.md)
+- [Routing](../routing/index.md)
+- [View](../view/index.md)

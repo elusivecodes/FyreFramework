@@ -4,35 +4,20 @@ Routing covers route definition, request matching, route dispatch, URL generatio
 
 ## Table of Contents
 
-- [Start here](#start-here)
+- [Routing flow](#routing-flow)
 - [Routing overview](#routing-overview)
 - [Pages in this section](#pages-in-this-section)
 - [Related](#related)
 
-## Start here
+## Routing flow
 
-Pick a path based on what you’re doing:
+Define paths, methods, placeholders, aliases, and groups with [Router](router.md). Router middleware matches the incoming request, then [Route Handler](route-handler.md) runs route middleware and invokes the selected destination.
 
-- **Defining routes**: start with [Router](router.md)
-- **Dispatching a matched route**: see [Route Handler](route-handler.md)
-- **Generating links from aliases**: see [URL Generation](url-generation.md)
-- **Resolving route parameters into typed or application-specific values**: see [Route Bindings](route-bindings.md)
-- **Using controller attributes and conventions**: see [Route Discovery](route-discovery.md)
+Use [URL Generation](url-generation.md) to build links from route aliases, [Route Bindings](route-bindings.md) to replace placeholder values before dispatch, and [Route Discovery](route-discovery.md) to register controller routes from attributes and conventions.
 
 ## Routing overview
 
-Most applications use routing in three ways:
-
-- define paths, placeholders, route groups, and aliases
-- dispatch the matched route after routing has completed
-- generate stable links from route aliases instead of hard-coded paths
-
-The main pieces are straightforward:
-
-- `Router` defines routes, matches requests, and generates URLs
-- `RouteHandler` dispatches the matched route and any route middleware
-- route bindings replace raw route values with custom values, ORM entities, or enum cases
-- route discovery builds routes from controller attributes and conventions
+Routing separates registration and matching from dispatch. `Router` owns the route collection, request matching, and URL generation; `RouteHandler` consumes the matched route stored on the request. Bindings and discovery are optional layers around those two responsibilities.
 
 ## Pages in this section
 

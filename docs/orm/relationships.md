@@ -347,8 +347,6 @@ $users = $Users->find()
 
 Each user in this example receives up to three posts. When several source entities are loaded together, the ORM applies the limit with a window query. `DISTINCT` and `UNION` queries cannot use per-source limits.
 
-Example:
-
 ```php
 $users = $Users->find()
     ->contain([
@@ -499,8 +497,6 @@ Unlink behavior is relationship-aware:
 For `ManyToMany`, unlinking removes rows from the junction model/table; it does not delete the target entities.
 
 ## Behavior notes
-
-A few behaviors are worth keeping in mind:
 
 - Invalid relationship names in `contain()` throw an ORM exception during normalization.
 - Relationship properties cannot conflict with real table columns; use `propertyName` to avoid collisions.

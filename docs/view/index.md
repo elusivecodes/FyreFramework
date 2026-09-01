@@ -4,23 +4,15 @@ Use the view layer when you want to render PHP templates, wrap them in layouts, 
 
 ## Table of Contents
 
-- [Start here](#start-here)
-- [View overview](#view-overview)
+- [Rendering workflow](#rendering-workflow)
 - [Pages in this section](#pages-in-this-section)
 - [Related](#related)
 
-## Start here
+## Rendering workflow
 
-Pick a path based on what you’re doing:
+Start with [Templates](templates.md) to render view data through templates, layouts, elements, and blocks. Add [Helpers](helpers.md) for reusable template utilities, the [Form helper](forms.md) for form markup, and [Cells](cells.md) when a component needs its own action and template.
 
-- **Rendering templates and layouts**: start with [Templates](templates.md) (data, elements, blocks, template lookup)
-- **Generating form markup in templates**: see [Forms (view helper)](forms.md) (opening forms, field helpers, and defaults)
-- **Using or creating template utilities**: see [Helpers](helpers.md) (built-in helpers and custom helpers)
-- **Building “component-like” renderables**: see [Cells](cells.md) (actions, templates, and passing data)
-
-## View overview
-
-The view layer turns templates plus view data into strings, usually HTML. `View` renders templates, layouts, and elements; helpers and cells provide reusable rendering behavior around them.
+The view layer returns rendered strings, usually HTML. HTTP responses remain responsible for status codes, headers, and sending that output to the client.
 
 ## Pages in this section
 

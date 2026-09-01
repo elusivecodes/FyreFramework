@@ -55,12 +55,7 @@ The `queue($className, $arguments, $options)` helper pushes a job through the sh
 
 ## Queue overview
 
-Most applications use the queue layer in four ways:
-
-- configure one or more named handlers through [Config](../core/config.md)
-- separate workloads into logical queue names such as `emails` or `search`
-- push plain PHP job classes with arguments and delivery options
-- run workers that consume and execute those jobs
+A queue setup has four parts: a configured handler, logical queue names such as `emails` or `search`, PHP job classes with their delivery options, and workers that consume those jobs.
 
 Two queue settings are easy to confuse:
 

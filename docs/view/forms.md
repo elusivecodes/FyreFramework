@@ -187,5 +187,5 @@ When CSRF middleware has attached a `csrf` request attribute, `open()` automatic
 - [Templates](templates.md)
 - [Helpers](helpers.md)
 - [Form](../form/index.md)
-- [Validation rules](../form/rules.md)
+- [Validation Rules](../form/rules.md)
 - [CSRF](../security/csrf.md)

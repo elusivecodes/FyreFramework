@@ -7,34 +7,14 @@ These docs cover the framework APIs your application uses. Project layout, entry
 ## Table of Contents
 
 - [Start here](#start-here)
-- [Framework overview](#framework-overview)
 - [Release and support](#release-and-support)
 - [Pages in this section](#pages-in-this-section)
 
 ## Start here
 
-Pick a path based on what you are building:
+New applications should begin with [Getting Started](getting-started.md). For an HTTP application, continue through [Core](core/index.md), [HTTP](http/index.md), and [Routing](routing/index.md). Add [Database](database/index.md) and [ORM](orm/index.md), [Auth](auth/index.md) and [Security](security/index.md), or [View](view/index.md) and [Form](form/index.md) when the application needs them.
 
-- **New applications**: [Getting Started](getting-started.md)
-- **Core services**: [Core](core/index.md) → [Engine](core/engine.md) → [Container](core/container.md)
-- **HTTP applications**: [HTTP](http/index.md) → [Routing](routing/index.md)
-- **Data and persistence**: [Database](database/index.md) → [ORM](orm/index.md)
-- **Auth and security**: [Auth](auth/index.md), [Security](security/index.md)
-- **Shared services**: [Events](events/index.md), [Logging](logging/index.md), [Mail](mail/index.md), [Cache](cache/index.md), [Queue](queue/index.md)
-- **Rendering and forms**: [View](view/index.md), [Form](form/index.md)
-- **Tooling and tests**: [Console](console/index.md), [Testing](testing/index.md), [Utilities](utilities/index.md)
-
-## Framework overview
-
-Most applications touch a few main areas:
-
-- **Core**: container, configuration, language, helpers, and the default `Engine`
-- **HTTP and routing**: requests, responses, middleware, sessions, and route handling
-- **Database and ORM**: connections, queries, models, entities, and relationships
-- **Shared services**: auth, security, cache, events, logging, mail, and queue processing
-- **Presentation and forms**: templates, helpers, forms, and validation
-
-Start with the section you need most, then follow the related links from there.
+[Console](console/index.md) covers command-line entry points and framework commands. [Testing](testing/index.md) covers the PHPUnit integration, fixtures, and boundary-specific helpers.
 
 ## Release and support
 

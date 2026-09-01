@@ -138,7 +138,7 @@ class UsersModel extends Model
 }
 ```
 
-`getValidator()` lazily creates a validator through the container and passes it to `buildValidator()`. Use `setValidator()` when you need to replace that instance directly. For validator APIs and built-in rules, see [Form Validators](../form/validators.md) and [Validation rules](../form/rules.md).
+`getValidator()` lazily creates a validator through the container and passes it to `buildValidator()`. Use `setValidator()` when you need to replace that instance directly. For validator APIs and built-in rules, see [Form Validators](../form/validators.md) and [Validation Rules](../form/rules.md).
 
 ### Saving and deleting entities
 

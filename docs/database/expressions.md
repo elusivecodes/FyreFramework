@@ -309,8 +309,6 @@ $query = $db->select([
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
 - Expressions are compiled for the active database handler, so equivalent expressions can produce different SQL across MySQL, MariaDB, PostgreSQL, and SQLite.
 - Database support still applies. In particular, window functions, frame types, exclusions, JSON operations, and casts depend on the database version and selected data types.
 - Values remain bound unless they are wrapped in a `LiteralExpression` or supplied through another raw SQL path.

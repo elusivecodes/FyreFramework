@@ -51,7 +51,7 @@ Use the rule combination that matches the input contract:
 
 Presence uses `array_key_exists()`, so `null` counts as present. `required()` is intentionally stricter: it uses `isset()`, so `null` fails.
 
-See [Validation rules](rules.md) for the complete grouped rule catalog and factory-specific skip behavior.
+See [Validation Rules](rules.md) for the complete grouped rule catalog and factory-specific skip behavior.
 
 ## Write custom rules
 
@@ -128,7 +128,7 @@ See [Language](../core/lang.md) for loading and formatting language keys.
 
 ## Related
 
-- [Validation rules](rules.md)
+- [Validation Rules](rules.md)
 - [Forms](forms.md)
 - [Models](../orm/models.md)
 - [Language](../core/lang.md)

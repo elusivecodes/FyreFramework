@@ -609,8 +609,6 @@ Decorator callbacks should therefore return non-null values.
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
 - Casting a query to string uses `Query::__toString()` → `sql()` with no binder, so values are inlined/quoted instead of using placeholders.
 - Identifier strings are quoted only when they match the supported identifier forms; do not use query identifiers as a sanitization mechanism for user input.
 - Numeric keys in condition/data arrays are treated as raw SQL fragments and bypass value binding.

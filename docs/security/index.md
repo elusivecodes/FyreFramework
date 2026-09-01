@@ -4,32 +4,22 @@ Security covers CSRF protection, Content Security Policy, encryption, and rate l
 
 ## Table of Contents
 
-- [Start here](#start-here)
+- [Choose a control](#choose-a-control)
 - [Security overview](#security-overview)
 - [Pages in this section](#pages-in-this-section)
 
-## Start here
+## Choose a control
 
-Pick a path based on what you’re trying to protect:
-
-- **Browser form submissions**: start with [CSRF](csrf.md)
-- **HTML response hardening**: start with [Content Security Policy (CSP)](csp.md)
-- **Abusive traffic**: start with [Rate Limiting](rate-limiting.md)
-- **Sensitive values outside the process**: start with [Encryption](encryption.md)
+| Risk | Control |
+| --- | --- |
+| forged browser requests that use a visitor's authenticated session | [CSRF](csrf.md) |
+| scripts, styles, or other resources loaded outside an approved policy | [Content Security Policy (CSP)](csp.md) |
+| excessive requests from a client or application-defined identity | [Rate Limiting](rate-limiting.md) |
+| sensitive values stored or transported outside the process | [Encryption](encryption.md) |
 
 ## Security overview
 
-Most applications use the security section in two ways:
-
-- **At the HTTP boundary**: middleware and response headers protect requests and responses
-- **At storage boundaries**: encryption protects values that leave the process
-
-The main pieces are straightforward:
-
-- `CsrfProtection` issues and validates CSRF tokens
-- `ContentSecurityPolicy` builds CSP headers and works with nonce helpers
-- `RateLimiterMiddleware` throttles requests based on identifiers and cost
-- `EncryptionManager` gives you named encrypters for encrypting and decrypting values
+CSRF, CSP, and rate limiting protect different parts of the HTTP boundary and may be combined. Encryption protects values at storage or transport boundaries; it does not replace access control, secure transport, or password hashing.
 
 ## Pages in this section
 

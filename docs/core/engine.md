@@ -135,8 +135,6 @@ Namespace and path defaults are also added for the usual application locations, 
 
 ## Behavior notes
 
-A few practical details are worth keeping in mind:
-
 - If you rely on loader-driven discovery features, set the shared application instance yourself instead of relying on lazy `getInstance()` creation.
 - Shared services are cached only when you resolve them without manual constructor arguments.
 - Override `middleware()` when you want to change the default application middleware queue.

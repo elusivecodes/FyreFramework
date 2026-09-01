@@ -4,19 +4,16 @@ Console covers running framework commands, generating files, and building intera
 
 ## Table of Contents
 
-- [Start here](#start-here)
+- [Command workflow](#command-workflow)
 - [Console overview](#console-overview)
 - [Pages in this section](#pages-in-this-section)
 - [Related](#related)
 
-## Start here
+## Command workflow
 
-Pick a path based on what you are doing:
+Run the application entry point without a command, or with `--help`, to list available commands. [Console Commands](commands.md) documents the built-in commands, `make:*` generators, command options, and custom command classes.
 
-- **Running built-in commands**: start with [Console Commands](commands.md)
-- **Generating classes and files**: see the [Make commands](commands.md#make-commands)
-- **Writing your own command**: start with [Creating a command](commands.md#creating-a-command)
-- **Printing output or prompting in a command**: see [Console I/O](console.md)
+Inside a command, use [Console I/O](console.md) for styled output, tables, progress indicators, and prompts. Non-interactive commands should avoid prompts unless the operation needs confirmation.
 
 ## Console overview
 
@@ -36,5 +33,5 @@ If you are writing a command class, extend `Fyre\Console\Command`, define an ali
 ## Related
 
 - [Console Testing](../testing/console.md) - execute commands and assert output in tests
-- [Database Migrations](../database/migrations.md) - migration commands and migration workflow
+- [Database migrations](../database/migrations.md) - migration commands and migration workflow
 - [Queue Worker](../queue/worker.md) - running queue workers from the console

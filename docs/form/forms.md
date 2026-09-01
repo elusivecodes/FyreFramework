@@ -161,7 +161,7 @@ Errors are keyed by field and each value is an array of messages. `set()` and `s
 ## Related
 
 - [Validators](validators.md)
-- [Validation rules](rules.md)
+- [Validation Rules](rules.md)
 - [Forms (view helper)](../view/forms.md)
 - [Database types](../database/types.md)
 - [HTTP Requests](../http/requests.md)

@@ -61,7 +61,7 @@ app --version
 app -V
 ```
 
-The global `help` and `version` options, including their `h` and `V` short forms, are reserved and should not be used as custom command option keys.
+The `help` and `h` option keys are reserved for command help. The global `--version` and `-V` forms are recognized in the command position, before any command arguments.
 
 Command input follows a few simple rules:
 
@@ -116,7 +116,7 @@ app db:migrate --dry-run
 app db:migrate --lock-expires=600
 ```
 
-See [Database Migrations](../database/migrations.md) for the migration workflow itself.
+See [Database migrations](../database/migrations.md) for the migration workflow itself.
 
 #### `db:rollback`
 
@@ -387,6 +387,6 @@ If you add new namespaces after commands have already been discovered, call `cle
 
 - [Console](index.md)
 - [Console I/O](console.md)
-- [Database Migrations](../database/migrations.md)
+- [Database migrations](../database/migrations.md)
 - [Queue](../queue/index.md)
 - [Queue Worker](../queue/worker.md)

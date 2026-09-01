@@ -116,8 +116,6 @@ To configure the base URI, set `App.baseUri` in your application config (see [Co
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
 - `Router::url()` throws `Fyre\Router\Exceptions\RouterException` when the alias does not exist.
 - `Router::url()` throws `Fyre\Router\Exceptions\RouterException` when a required placeholder value is missing from `$arguments`.
 - `Router::url()` throws `Fyre\Router\Exceptions\RouterException` when a placeholder value does not match the route’s pattern (or the default single-segment pattern).

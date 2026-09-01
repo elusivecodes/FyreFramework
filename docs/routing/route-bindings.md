@@ -96,7 +96,7 @@ $router->get(
 
 When using route discovery, you can define the placeholder name directly in the attribute path. If you rely on discovery conventions, placeholder segments generated from method parameters use the parameter name as-is (for example `$postId` becomes `{postId}`), which keeps them compatible with bindings.
 
-When you only need the raw matched route value rather than a bound entity, `#[RouteArgument('postId')]` can inject it directly; see [Contextual attributes](../core/contextual-attributes.md).
+When a parameter name differs from the route key, `#[RouteArgument('postId')]` can select that argument explicitly; see [Contextual attributes](../core/contextual-attributes.md). It reads the current request value, so binding middleware may already have replaced it.
 
 ```php
 use Fyre\Router\Attributes\Get;
@@ -249,7 +249,7 @@ When multiple entity parameters are bound, bindings pass the most recently resol
 
 In practice:
 
-- put parameters in parent -> child order (for example `$post` then `$comment`)
+- put parameters in parent → child order (for example `$post` then `$comment`)
 - ensure the ORM relationships needed for scoping exist (see [ORM Relationships](../orm/relationships.md))
 
 ### Example
@@ -266,8 +266,6 @@ $router->get(
 In this example, `$comment` is resolved with `$post` as the parent.
 
 ## Behavior notes
-
-A few behaviors are worth keeping in mind:
 
 - Binding only runs when a route matched and `routeArguments` is not empty.
 - Automatic entity and enum binding only considers parameters with a single named type. Custom callbacks can resolve parameters with other type declarations.

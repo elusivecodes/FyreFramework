@@ -4,31 +4,20 @@ Use the database layer when you want to connect to SQL databases, run queries, i
 
 ## Table of Contents
 
-- [Start here](#start-here)
+- [Database workflow](#database-workflow)
 - [Database overview](#database-overview)
 - [Pages in this section](#pages-in-this-section)
 - [Related](#related)
 
-## Start here
+## Database workflow
 
-Pick a path based on what you’re doing:
+Configure a named [database connection](connections.md), then use the [query builder](queries.md) for reads and writes. [Query expressions](expressions.md) cover conditions, calculated values, aggregates, and windows that are shared across query types.
 
-- **Connecting to a database**: [Database connections](connections.md) for drivers, config, and selecting a connection
-- **Reading and writing data with SQL**: [Database queries](queries.md) for query builders, binding, and `ResultSet`
-- **Building conditions and calculated fields**: [Query expressions](expressions.md) for conditions, functions, aggregates, and windows
-- **Inspecting an existing database**: [Schema](schema.md) for tables, columns, indexes, and constraints
-- **Changing schema from code**: [Forge](forge.md) for table creation, modification, and generated SQL
-- **Applying schema changes over time**: [Database migrations](migrations.md) for planning, status, dry runs, locking, and rollback
-- **Coordinating database-backed work**: [Database locks](connections.md#database-locks) for named leases
-- **Controlling value conversion**: [Database types](types.md) for parsing, binding, and custom types
+Use [Schema](schema.md) to inspect existing structures and [Forge](forge.md) to create or modify them. Put versioned application changes in [Database migrations](migrations.md). [Database types](types.md) control value conversion, and [database locks](connections.md#database-locks) coordinate database-backed work across processes.
 
 ## Database overview
 
-Most database work in Fyre falls into three areas:
-
-- **Connections**: define one or more named databases and resolve the connection you want to use.
-- **Queries**: build SQL with bound values and reusable expressions, then work with results through `ResultSet`.
-- **Schema tooling**: inspect existing tables, change schema, and apply migrations over time.
+The database layer provides lower-level SQL and schema APIs. Use it directly when you need explicit queries or schema control; use the [ORM](../orm/index.md) when records are better represented as models, entities, and relationships.
 
 ## Pages in this section
 

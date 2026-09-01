@@ -33,7 +33,7 @@ Use auth middleware when you want to:
 - adds the `user` request attribute (the resolved user, or `null`)
 - after the downstream handler returns, calls `beforeResponse()` on all authenticators with the current user from `Auth`
 
-For default middleware alias mappings, see [HTTP Middleware](../http/middleware.md#default-middleware-aliases-engine).
+For default middleware alias mappings, see [HTTP Middleware](../http/middleware.md#built-in-middleware).
 
 Register `auth` as global middleware so the current user is available throughout the request. When an authenticator succeeds, `AuthMiddleware` logs that user into the shared `Auth` instance for the rest of the request lifecycle, so downstream middleware and handlers can read the same resolved user through both request attributes and `Auth`.
 
@@ -135,8 +135,6 @@ $router->get('admin', AdminController::class, middleware: ['can:admin']);
 In a typical application, `auth` runs globally to establish request auth context, and `authenticated`, `unauthenticated`, and `can` are applied as route middleware where needed.
 
 ## Behavior notes
-
-A few behaviors are worth keeping in mind:
 
 - `AuthenticatedMiddleware`, `UnauthenticatedMiddleware`, and `AuthorizedMiddleware` read authentication state from `Auth`, so `auth` middleware should run earlier in the pipeline.
 - `AuthorizedMiddleware` uses the `routeArguments` request attribute for argument substitution, so it must run after router middleware has set route attributes (typically as route middleware). If you use route bindings, ensure `AuthorizedMiddleware` runs after `SubstituteBindingsMiddleware` (the `bindings` alias) so substitutions can use bound entities.

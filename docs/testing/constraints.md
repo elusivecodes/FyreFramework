@@ -87,8 +87,6 @@ Session constraints assert session values using dot-path keys.
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
 - Response-body constraints cast the body stream to a string. Seekable response bodies are rewound by the stream, so repeated assertions inspect the full body without manual rewinding.
 
 ## Related
