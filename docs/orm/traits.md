@@ -17,9 +17,6 @@ You can also write your own traits to share model helpers or event-based behavio
   - [When timestamps are set](#when-timestamps-are-set)
   - [Timestamp configuration](#timestamp-configuration)
 - [Custom traits](#custom-traits)
-- [Method guide](#method-guide)
-  - [`SoftDeleteTrait` methods](#softdeletetrait-methods)
-- [Behavior notes](#behavior-notes)
 - [Related](#related)
 
 ## Start here
@@ -29,7 +26,7 @@ The built-in traits cover two common cases:
 - `SoftDeleteTrait` for deleted-at style records and restore or purge helpers
 - `TimestampsTrait` for automatic created and modified fields
 
-Most examples on this page assume you already have a model instance such as `$Users`.
+The examples use a model instance named `$Users`; see [Models](models.md) for model resolution and configuration.
 
 ## `SoftDeleteTrait`
 
@@ -41,6 +38,8 @@ Soft deletes do not remove rows. Instead, the trait sets a configured deleted fi
 
 Normal `find()` queries exclude deleted rows unless you opt in to include them.
 
+The trait implements this through a `BeforeDelete` listener and sets the deleted field as a temporary entity value. Calling `delete(..., events: false)` bypasses the listener and permanently deletes the row.
+
 ### Query helpers
 
 The trait adds helpers that change that default:
@@ -48,7 +47,11 @@ The trait adds helpers that change that default:
 - `findWithDeleted(...)` — returns all records, including soft-deleted ones.
 - `findOnlyDeleted(...)` — returns only soft-deleted records.
 
-Both methods are wrappers around `Model::find(..., deleted: true)`:
+Both methods are wrappers around `Model::find(..., deleted: true)`.
+
+They accept the same query arguments as `Model::find()`, including `conditions` and `having` callbacks.
+
+The default exclusion is applied by a `BeforeFind` listener. Queries built with `events: false` bypass it; use the helpers when you intentionally need deleted rows.
 
 ```php
 use Fyre\ORM\Model;
@@ -82,6 +85,8 @@ When the trait is enabled, calling `Model::delete($entity)` performs a soft dele
 
 The trait implements `purge()` and `purgeMany()` as wrappers around `delete()` / `deleteMany()` with `purge: true`.
 
+Both purge methods accept the same `cascade` and `events` options as their corresponding delete methods.
+
 When cascading soft deletes, dependent `hasOne`/`hasMany` relationships that also use `SoftDeleteTrait` are unlinked before the delete completes.
 
 ### Restore
@@ -95,6 +100,17 @@ Restore clears the deleted field (sets it to `null`) and saves. When restoring d
 
 - finds dependent `hasOne`/`hasMany` children that are deleted, and
 - restores them in the same transaction (only when the target model also uses `SoftDeleteTrait`).
+
+`restore()` and `restoreMany()` accept the normal save options (`saveRelated`, `checkRules`, `checkExists`, `events`, and `clean`) plus `dependents`. All default to `true`.
+
+```php
+$user = $Users->findOnlyDeleted()->first();
+if ($user) {
+    $Users->restore($user);
+}
+```
+
+If restoring an entity or one of its dependents fails, the transaction is rolled back.
 
 ### Configuration
 
@@ -126,6 +142,8 @@ When a save proceeds to persistence, the trait sets timestamps to `DateTime::now
 Both fields are set as temporary values on the entity (`temporary: true`) right before persistence.
 
 Saving an existing entity with no dirty fields returns before the `BeforeSave` event, so its timestamps are not changed.
+
+Timestamping is implemented by that event listener, so `save(..., events: false)` bypasses it.
 
 ### Timestamp configuration
 
@@ -178,109 +196,6 @@ class UsersModel extends Model
     use AuditTrait;
 }
 ```
-
-## Method guide
-
-This guide focuses on the public helper methods added by `SoftDeleteTrait`. `TimestampsTrait` does not add public helper methods; it is configured via `$createdField` / `$modifiedField`.
-
-### `SoftDeleteTrait` methods
-
-#### **Find with deleted** (`findWithDeleted()`)
-
-Returns a `SelectQuery` that includes soft-deleted rows (equivalent to calling `find(..., deleted: true)`).
-
-This method accepts the same query arguments as `Model::find()`, including closure and `ConditionExpression` values for `conditions` and `having`.
-
-```php
-$withDeleted = $Users->findWithDeleted()->toArray();
-```
-
-#### **Find only deleted** (`findOnlyDeleted()`)
-
-Returns a `SelectQuery` filtered to only soft-deleted rows.
-
-This method accepts the same query arguments as `Model::find()`, including closure and `ConditionExpression` values for `conditions` and `having`.
-
-```php
-$deleted = $Users->findOnlyDeleted()->toArray();
-```
-
-#### **Restore** (`restore()`)
-
-Clears the deleted field (sets it to `null`) and saves the entity, restoring it from a soft delete.
-
-Arguments:
-- `$entity` (`Entity`): the entity to restore.
-- `$saveRelated` (`bool`): whether to save related entities.
-- `$checkRules` (`bool`): whether to run the model rule set.
-- `$checkExists` (`bool`): whether to check that the entity exists.
-- `$events` (`bool`): whether to trigger events.
-- `$clean` (`bool`): whether to clean the entity after saving.
-- `$dependents` (`bool`): whether to restore dependent children.
-- `...$options` (`mixed`): additional save options.
-
-```php
-$Users->restore($entity);
-```
-
-#### **Restore many** (`restoreMany()`)
-
-Restores many entities from soft deletes.
-
-Arguments:
-- `$entities` (`iterable<Entity>`): the entities to restore.
-- `$saveRelated` (`bool`): whether to save related entities.
-- `$checkRules` (`bool`): whether to run the model rule set.
-- `$checkExists` (`bool`): whether to check that the entities exist.
-- `$events` (`bool`): whether to trigger events.
-- `$clean` (`bool`): whether to clean the entities after saving.
-- `$dependents` (`bool`): whether to restore dependent children.
-- `...$options` (`mixed`): additional save options.
-
-```php
-$Users->restoreMany($entities);
-```
-
-#### **Purge** (`purge()`)
-
-Permanently deletes an entity (a hard delete).
-
-Arguments:
-- `$entity` (`Entity`): the entity to delete.
-- `$cascade` (`bool`): whether to delete related children.
-- `$events` (`bool`): whether to trigger events.
-- `...$options` (`mixed`): additional delete options.
-
-```php
-if (!$Users->purge($entity)) {
-    // handle failure
-}
-```
-
-#### **Purge many** (`purgeMany()`)
-
-Permanently deletes many entities (a hard delete).
-
-Arguments:
-- `$entities` (`iterable<Entity>`): the entities to delete.
-- `$cascade` (`bool`): whether to delete related children.
-- `$events` (`bool`): whether to trigger events.
-- `...$options` (`mixed`): additional delete options.
-
-```php
-$Users->purgeMany($entities);
-```
-
-## Behavior notes
-
-A few behaviors are worth keeping in mind:
-
-- Soft delete is implemented in a `BeforeDelete` event handler; if you call `delete(..., events: false)` you’ll bypass the trait and perform a hard delete.
-- Default querying filters deleted rows via a `BeforeFind` handler. If you need deleted rows, use `findWithDeleted()` / `findOnlyDeleted()` (or pass `deleted: true` when building a query).
-- Soft delete sets the deleted field as a temporary value on the entity (`temporary: true`) before saving.
-- Restore runs inside a transaction. If dependent restore fails, the entire restore operation rolls back.
-- Timestamping is implemented in a `BeforeSave` event handler; if you call `save(..., events: false)` you’ll bypass the trait.
-- Timestamps are only set when the relevant column exists in the model schema.
 
 ## Related
 
