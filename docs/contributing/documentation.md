@@ -30,6 +30,8 @@ The docs should feel:
 
 Prefer helping the reader do the next thing over explaining how the subsystem is implemented.
 
+Consistency should make the documentation easier to navigate, but it should not make every page use the same template. Choose a structure that suits the material, then apply the shared writing and formatting conventions below.
+
 ## Page openings
 
 Most API and feature pages start with one or two short paragraphs that explain what the feature is for and when a reader would choose it. Vary the wording to suit the subject; do not force every page into the same opening formula.
@@ -50,7 +52,61 @@ Only keep implementation detail in the opening when it is necessary for correct 
 
 ## Page structure
 
-Non-index pages can use the following order when each section adds something useful:
+Choose the dominant purpose of the page before deciding which sections it needs. A page can combine more than one of the following structures, but it should not repeat the same material in workflow and reference sections.
+
+### Index pages
+
+Use an index page to introduce a subsystem and direct readers to the appropriate topic:
+
+1. `# Section title`
+2. short section summary
+3. `## Table of Contents`
+4. optional `## Start here`
+5. `## <Section> overview`
+6. `## Pages in this section`
+7. optional `## Related`
+
+Use `Start here` to help readers choose a path through the subsystem, rather than restating the page list.
+
+### Workflow and feature pages
+
+Use a workflow or feature page when readers primarily need to configure something, complete a task, or understand how features work together:
+
+1. `# Title`
+2. short purpose and any prerequisites
+3. `## Table of Contents`
+4. optional `## Start here` with the shortest useful path
+5. task-oriented usage sections
+6. optional troubleshooting or cross-cutting behavior notes
+7. optional `## Related`
+
+Explain options and caveats beside the task they affect. Do not repeat the workflow in a method-by-method reference at the end of the page.
+
+### API reference pages
+
+Use an API reference page when readers need to look up a stable collection of methods, helpers, arguments, or return behavior:
+
+1. `# Title`
+2. short description of the API and its intended use
+3. `## Table of Contents`
+4. any setup or shared context needed by the examples
+5. methods grouped by class, purpose, or operation
+6. optional cross-cutting behavior notes
+7. optional `## Related`
+
+An API reference does not need a `Start here` section when the first method group is the natural entry point. Prefer exact signatures, defaults, return behavior, and focused examples over a narrative walkthrough.
+
+### Contract and catalog pages
+
+Use tables or concise lists when the page primarily catalogs commands, events, middleware aliases, configuration keys, or other exact contracts. Preserve names, payloads, defaults, and ordering where they are part of the public contract. Add prose only when it helps readers choose or use an entry.
+
+### Operations and policy pages
+
+Operational pages should document command syntax, side effects, safety considerations, status output, and recovery steps. Policy pages should state guarantees and responsibilities directly. Neither needs a `Start here`, `Method guide`, or `Behavior notes` section unless it adds information that does not fit naturally elsewhere.
+
+### General ordering
+
+When none of the preceding structures fits exactly, use the following order and include only the sections that add useful information:
 
 1. `# Title`
 2. one or two short intro paragraphs
@@ -60,16 +116,6 @@ Non-index pages can use the following order when each section adds something use
 6. optional `## Method guide`
 7. optional `## Behavior notes`
 8. optional `## Related`
-
-Index pages can use the following order:
-
-1. `# Section title`
-2. short section summary
-3. `## Table of Contents`
-4. optional `## Start here`
-5. `## <Section> overview`
-6. `## Pages in this section`
-7. optional `## Related`
 
 Use `## Start here` when a page has several possible entry points or needs a short workflow before the detailed material. Omit it when the introduction or first usage section already provides the practical entry point, and do not use it to repeat the table of contents.
 
@@ -110,7 +156,7 @@ Those headings are only worth using when the content genuinely needs them.
 
 ## Lists
 
-Use bullets heavily, but use them intentionally:
+Use bullets when they make the content easier to scan:
 
 - use short bullets for workflows, options, section navigation, and “pages in this section”
 - use full-sentence bullets for behavior notes
@@ -138,10 +184,11 @@ When documenting methods:
 
 Keep examples short and focused on the documented behavior.
 
-Method guide is optional:
+A method guide is optional:
 
 - Include `## Method guide` when the page documents a stable public API surface (classes, methods, helpers) where readers benefit from a skimmable reference.
 - Omit it when the page is primarily conceptual, workflow-driven, or already structured around a small number of focused examples.
+- Do not repeat methods already explained adequately in the main usage sections. Either keep the page task-focused or make the method guide the primary reference structure.
 - Do not add an example that merely assigns the return value of the method being described. Use examples to demonstrate output, interaction between methods, edge cases, or behavior that is not apparent from the signature.
 - Group closely related accessors and convenience methods when documenting each one separately would repeat the same explanation.
 - A method guide does not need to enumerate every public method when the remaining methods are self-explanatory or already covered by the task-focused sections.
@@ -155,6 +202,7 @@ Behavior notes document gotchas that affect real-world usage.
 - Write notes as complete sentences (prefer bullets).
 - Avoid “label: explanation” formatting, especially with `**bold labels**:`. Prefer sentence-form bullets that read naturally.
 - Keep this section short. If a note is only interesting as an implementation detail, it probably does not belong here.
+- Put behavior beside the relevant task when it applies only to that task. Reserve a separate section for behavior that affects several parts of the page.
 
 ## Examples
 
