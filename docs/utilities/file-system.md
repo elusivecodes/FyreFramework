@@ -6,15 +6,16 @@ For path-only operations (join/normalize/resolve, basename/dirname, etc), see [P
 
 ## Table of Contents
 
-- [Start here](#start-here)
+- [Common operations](#common-operations)
 - [Constants](#constants)
 - [Method guide](#method-guide)
-  - [`Folder`](#folder)
-  - [`File`](#file)
+  - [Folder operations](#folder-operations)
+  - [File contents and handles](#file-contents-and-handles)
+  - [File management and metadata](#file-management-and-metadata)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Start here
+## Common operations
 
 Both classes normalize the input path using `Path::resolve()` in the constructor.
 
@@ -63,12 +64,6 @@ $file
     ->close();
 ```
 
-Copy while preserving permissions and timestamps:
-
-```php
-$file->copy('tmp/cache/routes.backup.json', false);
-```
-
 ## Constants
 
 `File` exposes constants that mirror PHP’s `flock()` operations:
@@ -79,444 +74,62 @@ $file->copy('tmp/cache/routes.backup.json', false);
 
 ## Method guide
 
-Examples below assume you already have a `$file` or `$folder` instance, depending on the method being demonstrated.
+### Folder operations
 
-### `Folder`
+| Method | Behavior |
+| --- | --- |
+| `exists()` | checks whether the path exists and is a directory |
+| `create($permissions = 0755)` | creates the directory |
+| `contents()` | returns the direct children as `File` and `Folder` objects |
+| `isEmpty()` | checks for direct children |
+| `size()` | returns the recursive filesystem size |
+| `copy($destination, $overwrite = true)` | recursively copies the folder |
+| `move($destination, $overwrite = true)` | copies, deletes the source, and returns the destination instance |
+| `empty()` | removes the folder's contents |
+| `delete()` | removes the folder and its contents |
+| `path()` / `name()` | return the resolved path or final path segment |
 
-#### **Check whether a folder exists** (`exists()`)
+### File contents and handles
 
-Returns `true` when the resolved path exists and is a directory.
+`contents()` reads the complete file without opening a persistent handle. For incremental I/O, call `open()`, perform one or more handle operations, and finish with `close()`.
 
-```php
-$ok = $folder->exists();
-```
+| Method | Behavior |
+| --- | --- |
+| `open($mode = 'r')` / `close()` | open or close the stored file handle |
+| `read($length)` / `write($data)` | read or write through the open handle |
+| `truncate($size = 0)` | truncate the open file |
+| `seek($offset)`, `tell()`, `rewind()` | move or inspect the file pointer |
+| `ended()` | check whether the pointer has reached end-of-file |
+| `csv($length = 0, $separator = ',', $enclosure = '"', $escape = '\\')` | parse the next CSV row |
+| `lock($operation = null)` / `unlock()` | acquire or release an advisory file lock |
 
-#### **Create a folder** (`create()`)
-
-Creates the directory (recursively) using the supplied permissions.
-
-Arguments:
-- `$permissions` (`int`): the directory permissions.
-
-```php
-$folder->create(0755);
-```
-
-#### **List direct children** (`contents()`)
-
-Returns `File` and `Folder` objects for the folder’s direct children.
-
-```php
-$items = $folder->contents();
-```
-
-#### **Check whether a folder is empty** (`isEmpty()`)
-
-Returns `true` when the directory has no children.
+Mutating handle methods return the `File` instance so they can be chained:
 
 ```php
-$empty = $folder->isEmpty();
+$file
+    ->open('c+')
+    ->lock(File::LOCK_EXCLUSIVE)
+    ->truncate()
+    ->write($contents)
+    ->unlock()
+    ->close();
 ```
 
-#### **Get the total size** (`size()`)
-
-Returns the total size (in bytes) of the folder contents, recursively.
-
-```php
-$bytes = $folder->size();
-```
-
-#### **Copy a folder** (`copy()`)
-
-Recursively copies the folder contents to a destination.
-
-Arguments:
-- `$destination` (`string`): the destination path.
-- `$overwrite` (`bool`): whether to overwrite existing files.
-
-```php
-$folder->copy('tmp/cache.backup', false);
-```
-
-#### **Move a folder** (`move()`)
-
-Moves the folder by copying to the destination and then deleting the original.
-
-Arguments:
-- `$destination` (`string`): the destination path.
-- `$overwrite` (`bool`): whether to overwrite existing files.
-
-```php
-$moved = $folder->move('tmp/cache.old');
-```
-
-#### **Empty a folder** (`empty()`)
-
-Deletes all children recursively, leaving the folder itself in place.
-
-```php
-$folder->empty();
-```
-
-#### **Delete a folder** (`delete()`)
-
-Empties the folder and then removes the directory itself.
-
-```php
-$folder->delete();
-```
-
-#### **Get the resolved folder path** (`path()`)
-
-Returns the resolved path for the folder.
-
-```php
-$path = $folder->path();
-```
-
-#### **Get the folder name** (`name()`)
-
-Returns the last path segment.
-
-```php
-$name = $folder->name();
-```
-
-### `File`
-
-#### **Check whether a file exists** (`exists()`)
-
-Returns `true` when the resolved path exists and is a regular file.
-
-```php
-$ok = $file->exists();
-```
-
-#### **Read the full contents** (`contents()`)
-
-Reads the full file into a string.
-
-```php
-$contents = $file->contents();
-```
-
-#### **Open a file handle** (`open()`)
-
-Opens a file handle using a PHP `fopen()` mode string.
-
-Arguments:
-- `$mode` (`string`): the `fopen()` mode (for example: `'r'`, `'c+'`).
-
-```php
-$file->open('r');
-```
-
-#### **Close a file handle** (`close()`)
-
-Closes the current file handle.
-
-```php
-$file->open('r')->close();
-```
-
-#### **Read from an open handle** (`read()`)
-
-Reads a number of bytes from the current position.
-
-Arguments:
-- `$length` (`int`): the number of bytes to read.
-
-```php
-$file->open('r');
-$chunk = $file->read(1024);
-$file->close();
-```
-
-#### **Write to an open handle** (`write()`)
-
-Writes a string to the file at the current position.
-
-Arguments:
-- `$data` (`string`): the data to write.
-
-```php
-$file = new File('tmp/cache/routes.json', true);
-$file->open('c+')->truncate()->write("{}\n")->close();
-```
-
-#### **Truncate an open handle** (`truncate()`)
-
-Truncates the file to a size (defaults to `0`).
-
-Arguments:
-- `$size` (`int`): the size to truncate to (in bytes).
-
-```php
-$file = new File('tmp/cache/routes.json', true);
-$file->open('c+')->truncate()->close();
-```
-
-#### **Move the file pointer** (`seek()`)
-
-Moves the pointer to an absolute byte offset.
-
-Arguments:
-- `$offset` (`int`): the new pointer position.
-
-```php
-$file->open('r')->seek(0)->close();
-```
-
-#### **Get the file pointer position** (`tell()`)
-
-Returns the current pointer offset.
-
-```php
-$file->open('r');
-$pos = $file->tell();
-$file->close();
-```
-
-#### **Rewind the file pointer** (`rewind()`)
-
-Rewinds the pointer to the beginning of the file.
-
-```php
-$file->open('r')->rewind()->close();
-```
-
-#### **Check for end-of-file** (`ended()`)
-
-Returns `true` if the pointer is at EOF.
-
-```php
-$file->open('r');
-$atEnd = $file->ended();
-$file->close();
-```
-
-#### **Parse a CSV row** (`csv()`)
-
-Reads and parses a CSV row from the current pointer position.
-
-Arguments:
-- `$length` (`int`): the maximum length to parse.
-- `$separator` (`string`): the field separator.
-- `$enclosure` (`string`): the field enclosure character.
-- `$escape` (`string`): the escape character.
-
-```php
-$file = new File('tmp/cache/data.csv');
-$file->open('r');
-$row = $file->csv();
-$file->close();
-```
-
-#### **Lock an open handle** (`lock()`)
-
-Locks the open file handle using `flock()`.
-
-Arguments:
-- `$operation` (`int|null`): the lock operation (defaults to `File::LOCK_SHARED`).
-
-```php
-$file = new File('tmp/cache/routes.json', true);
-$file->open('c+')->lock(File::LOCK_EXCLUSIVE)->write("{}\n")->unlock()->close();
-```
-
-#### **Unlock an open handle** (`unlock()`)
-
-Releases a lock on the open handle.
-
-```php
-$file = new File('tmp/cache/routes.json', true);
-$file->open('c+')->lock()->unlock()->close();
-```
-
-#### **Copy a file** (`copy()`)
-
-Copies the file to a destination, optionally refusing to overwrite.
-
-Arguments:
-- `$destination` (`string`): the destination path.
-- `$overwrite` (`bool`): whether to overwrite an existing destination file.
-
-```php
-$file->copy('tmp/cache/routes.backup.json', false);
-```
-
-#### **Delete a file** (`delete()`)
-
-Deletes the file from disk.
-
-```php
-$file->delete();
-```
-
-#### **Create a file** (`create()`)
-
-Creates the file (and its parent folder if needed).
-
-```php
-$file->create();
-```
-
-#### **Touch a file** (`touch()`)
-
-Updates the modified time and access time, creating the file if needed.
-
-Arguments:
-- `$time` (`int|null`): the modified time (defaults to current time).
-- `$accessTime` (`int|null`): the access time (defaults to `$time`).
-
-```php
-$file = new File('tmp/cache/routes.json', true);
-$file->touch();
-```
-
-#### **Get the file size** (`size()`)
-
-Returns the file size (in bytes).
-
-```php
-$bytes = $file->size();
-```
-
-#### **Get the MIME type** (`mimeType()`)
-
-Returns a MIME type derived from file contents.
-
-```php
-$type = $file->mimeType();
-```
-
-#### **Check readability** (`isReadable()`)
-
-Returns whether the current process can read the file.
-
-```php
-$ok = $file->isReadable();
-```
-
-#### **Check writability** (`isWritable()`)
-
-Returns whether the current process can write to the file.
-
-```php
-$ok = $file->isWritable();
-```
-
-#### **Check executability** (`isExecutable()`)
-
-Returns whether the file is executable.
-
-```php
-$file = new File('tmp/cache/script.sh');
-$ok = $file->isExecutable();
-```
-
-#### **Read octal permissions** (`permissions()`)
-
-Returns the file permissions as an octal string (for example: `'644'`).
-
-```php
-$perms = $file->permissions();
-```
-
-#### **Change file permissions** (`chmod()`)
-
-Updates the file permissions.
-
-Arguments:
-- `$permissions` (`int`): the permissions.
-
-```php
-$file->chmod(0644);
-```
-
-#### **Get modified time** (`modifiedTime()`)
-
-Returns the file modified time.
-
-```php
-$modified = $file->modifiedTime();
-```
-
-#### **Get access time** (`accessTime()`)
-
-Returns the file access time.
-
-```php
-$accessed = $file->accessTime();
-```
-
-#### **Get file owner** (`owner()`)
-
-Returns the file owner ID.
-
-```php
-$owner = $file->owner();
-```
-
-#### **Get file group** (`group()`)
-
-Returns the file group ID.
-
-```php
-$group = $file->group();
-```
-
-#### **Get the resolved file path** (`path()`)
-
-Returns the resolved path to the file.
-
-```php
-$path = $file->path();
-```
-
-#### **Get the parent folder** (`folder()`)
-
-Returns the `Folder` for the file’s directory.
-
-```php
-$folder = $file->folder();
-```
-
-#### **Get the base name** (`baseName()`)
-
-Returns the final path segment for the file.
-
-```php
-$name = $file->baseName();
-```
-
-#### **Get the directory name** (`dirName()`)
-
-Returns the directory portion of the path.
-
-```php
-$dir = $file->dirName();
-```
-
-#### **Get the extension** (`extension()`)
-
-Returns the file extension (without the dot).
-
-```php
-$ext = $file->extension();
-```
-
-#### **Get the file name** (`fileName()`)
-
-Returns the filename without its extension.
-
-```php
-$name = $file->fileName();
-```
+### File management and metadata
+
+| Method | Behavior |
+| --- | --- |
+| `create()` | creates the file and any missing parent directory |
+| `copy($destination, $overwrite = true)` | copies the file and preserves its permissions and timestamps |
+| `delete()` | removes the file |
+| `touch($time = null, $accessTime = null)` | updates its timestamps |
+| `chmod($permissions)` | changes its permissions |
+| `exists()`, `isReadable()`, `isWritable()`, `isExecutable()` | inspect file state |
+| `size()`, `mimeType()`, `permissions()` | return file metadata |
+| `modifiedTime()`, `accessTime()`, `owner()`, `group()` | return timestamps and ownership |
+| `path()`, `folder()`, `baseName()`, `dirName()`, `extension()`, `fileName()` | return path components |
 
 ## Behavior notes
-
-A few behaviors are worth keeping in mind:
 
 - `File` methods that operate on a handle (for example: `read()`, `write()`, `seek()`, `tell()`, `csv()`, `lock()`, and `truncate()`) require a prior `open()` call and throw when the handle is not valid.
 - `File::lock()` defaults to a shared lock when `$operation` is `null` (use `File::LOCK_EXCLUSIVE` for an exclusive lock).

@@ -2,11 +2,10 @@
 
 Use `Collection` (`Fyre\Utility\Collection`) when you want fluent, chainable pipelines for a sequence of values.
 
-For array-first helpers like dot-path access and flattening, see [Array Helpers](arrays.md).
+For array-first helpers like dot-path access and flattening, see [Array Helpers](arrays.md). `collect($source)` is shorthand for creating a `Collection`; see [Helpers](../core/helpers.md).
 
 ## Table of Contents
 
-- [Start here](#start-here)
 - [Working with lazy collections](#working-with-lazy-collections)
   - [When collections materialize](#when-collections-materialize)
 - [Building pipelines](#building-pipelines)
@@ -29,45 +28,6 @@ For array-first helpers like dot-path access and flattening, see [Array Helpers]
   - [Convenience methods](#convenience-methods)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
-
-## Start here
-
-Use `Collection` when you want readable, chainable transformations over a sequence of values (especially when the underlying data may be produced lazily). Most transformation methods return a new `Collection`, and values are typically only computed when you iterate or materialize the result.
-
-If you already have a plain array and you want a single operation (or a couple of explicit steps), see [Array Helpers](arrays.md).
-`collect($source)` is the shorthand for creating a `Collection`; see [Helpers](../core/helpers.md).
-
-```php
-use Fyre\Utility\Collection;
-
-$users = new Collection([
-    ['id' => 10, 'role' => 'admin', 'profile' => ['email' => 'a@example.com']],
-    ['id' => 11, 'role' => 'user', 'profile' => ['email' => 'b@example.com']],
-    ['id' => 12, 'role' => 'user', 'profile' => ['email' => 'c@example.com']],
-]);
-
-$emails = $users
-    ->filter(static fn(array $user): bool => $user['role'] === 'user')
-    ->extract('profile.email')
-    ->toList();
-```
-
-`Collection::range()` is a convenient way to build a numeric sequence:
-
-```php
-$values = Collection::range(1, 10)
-    ->map(static fn(int $value): int => $value * $value)
-    ->take(3)
-    ->toList();
-```
-
-The same kind of pipeline can start from `collect()`:
-
-```php
-$emails = collect($users)
-    ->extract('profile.email')
-    ->toList();
-```
 
 ## Working with lazy collections
 
@@ -179,17 +139,11 @@ $labels = $categories
 
 This section focuses on the methods you’ll use most when working with `Collection`.
 
-Examples below assume `Collection` is already imported.
-
 ### Creating collections
 
 #### **Create an empty collection** (`empty()`)
 
 Creates a `Collection` with no items.
-
-```php
-$items = Collection::empty();
-```
 
 #### **Create a numeric range** (`range()`)
 
@@ -619,10 +573,6 @@ $values = new Collection([1, 2, 3])
 
 Randomizes item order.
 
-```php
-$values = new Collection([1, 2, 3])->shuffle()->toList();
-```
-
 #### **Return unique items** (`unique()`)
 
 Returns the unique items based on an extracted value.
@@ -812,10 +762,6 @@ $labels = new Collection([
 
 Returns the items in the collection as an array.
 
-```php
-$array = new Collection(['a' => 1])->toArray();
-```
-
 #### **Materialize as a list** (`toList()`)
 
 Returns the values in the collection as a list (re-indexed numerically).
@@ -828,25 +774,13 @@ $list = new Collection(['a' => 1, 'b' => 2])->toList(); // [1, 2]
 
 Returns a JSON string representation of the collection.
 
-```php
-$json = new Collection(['a' => 1])->toJson();
-```
-
 #### **Cache computed values** (`cache()`)
 
 Caches computed values so that iterating the resulting collection reuses values.
 
-```php
-$cached = Collection::range(1, 3)->cache();
-```
-
 #### **Collect computed values** (`collect()`)
 
 Collects computed values into a new, eager collection.
-
-```php
-$eager = Collection::range(1, 3)->collect();
-```
 
 ### Convenience methods
 
@@ -901,10 +835,6 @@ $value = new Collection(['a', 'b', 'c'])->join(', ', ' and '); // "a, b and c"
 
 Returns a random item, or `null` if the collection is empty.
 
-```php
-$value = new Collection([1, 2, 3])->randomValue();
-```
-
 #### **Include only specific keys** (`only()`)
 
 Returns a collection with only the specified keys.
@@ -932,8 +862,6 @@ $subset = new Collection(['a' => 1, 'b' => 2])
 ```
 
 ## Behavior notes
-
-A few behaviors are worth keeping in mind:
 
 - When constructing a `Collection` with a `Closure`, the closure is expected to return a fresh `array` or `Iterator` each time the collection is iterated. Reusing the same iterator instance can lead to partially-consumed results.
 - `count()` fully iterates lazy sources to determine the count.

@@ -64,8 +64,6 @@ $nonEmpty = Arr::filter(['a' => 1, 'b' => 0]); // ['a' => 1]
 
 ## Method guide
 
-Examples on this page assume `Arr` refers to `Fyre\Utility\Arr`.
-
 ### Dot-path helpers
 
 #### **Retrieve a value by dot-path** (`getDot()`)
@@ -559,10 +557,6 @@ $out = Arr::reverse(['a' => 1, 'b' => 2], true); // ['b' => 2, 'a' => 1]
 Arguments:
 - `$array` (`array`): the input array.
 
-```php
-$out = Arr::shuffle([1, 2, 3]);
-```
-
 #### **Sort elements** (`sort()`)
 
 Sorts using either a sort flag (default: natural) or a custom comparison closure.
@@ -713,13 +707,7 @@ Returns `null` for an empty array.
 Arguments:
 - `$array` (`array`): the input array.
 
-```php
-$value = Arr::randomValue(['a', 'b', 'c']);
-```
-
 ## Behavior notes
-
-A few behaviors are worth keeping in mind:
 
 - `filter()` defaults to `Arr::FILTER_BOTH`, so callbacks receive `(value, key)` (unlike PHP’s default `array_filter()` usage which typically passes only the value).
 - `setDot()` creates intermediate arrays, supports `*` wildcard segments, and respects `$overwrite` only for the final segment.

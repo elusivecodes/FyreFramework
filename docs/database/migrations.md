@@ -7,7 +7,6 @@ In most applications you write migration classes and run them through the consol
 ## Table of Contents
 
 - [Start here](#start-here)
-- [Migration workflow](#migration-workflow)
 - [Writing migrations](#writing-migrations)
 - [Migration discovery](#migration-discovery)
   - [Naming rules](#naming-rules)
@@ -20,7 +19,6 @@ In most applications you write migration classes and run them through the consol
   - [Migrate](#migrate)
   - [Rollback](#rollback)
 - [Migration history](#migration-history)
-- [Behavior notes](#behavior-notes)
 - [Related](#related)
 
 ## Start here
@@ -33,6 +31,8 @@ In a typical application:
 
 Each connection keeps its own migration history in the `fyre__migrations` table, so you can run `migrate()` repeatedly without reapplying the same migration.
 
+Migration classes use [Forge](forge.md) to describe DDL changes, while `MigrationRunner` handles discovery, ordering, execution, and history.
+
 Minimal example running migrations from code:
 
 ```php
@@ -42,43 +42,6 @@ $runner = app(MigrationRunner::class);
 
 $runner->migrate();
 ```
-
-Migration execution is not automatically wrapped in a transaction. If you need all-or-nothing behavior (and your driver supports transactional DDL), wrap the DDL in a transaction inside your migration’s `up()` / `down()` methods, or design migrations to be safe to rerun after a partial failure.
-
-Example (inside a migration):
-
-```php
-public function up(): void
-{
-    $this->forge->getConnection()->transactional(function(): void {
-        $this->forge->createTable(
-            'roles',
-            [
-                'name' => ['length' => 100],
-            ],
-            [
-                'name' => ['unique' => true],
-            ]
-        );
-    });
-}
-```
-
-## Migration workflow
-
-Migrations sit on top of [Forge](forge.md): you describe the change in a migration class, and Forge executes the DDL for the current connection driver.
-
-Most migration work comes down to three pieces:
-
-- `Migration` is the base class you extend to define changes.
-- `MigrationRunner` discovers migrations and runs `up()` / `down()`.
-- `MigrationHistory` stores applied migrations for a connection.
-
-Typical workflow:
-
-- write migrations as classes that extend `Migration`
-- register namespaces for discovery on `MigrationRunner`
-- run `migrate()` and `rollback()` as needed
 
 ## Writing migrations
 
@@ -91,7 +54,7 @@ Within a migration, the current `Forge` instance is available as `$this->forge`.
 
 For DDL operations and options, see [Forge](forge.md).
 
-Example migration class
+Example migration class:
 
 ```php
 use Fyre\DB\Migration\Migration;
@@ -117,6 +80,27 @@ class Migration_20240201_CreateRoles extends Migration
     }
 }
 ```
+
+Migration execution is not automatically wrapped in a transaction. If you need all-or-nothing behavior and the driver supports transactional DDL, manage the transaction inside the migration or design the change to be safely rerun after a partial failure:
+
+```php
+public function up(): void
+{
+    $this->forge->getConnection()->transactional(function(): void {
+        $this->forge->createTable(
+            'roles',
+            [
+                'name' => ['length' => 100],
+            ],
+            [
+                'name' => ['unique' => true],
+            ]
+        );
+    });
+}
+```
+
+If a migration does not implement `up()` or `down()`, the runner skips that direction without raising an error.
 
 ## Migration discovery
 
@@ -147,7 +131,7 @@ Discovery behavior:
 
 ## Running migrations
 
-`MigrationRunner` applies migrations in order and records execution in `MigrationHistory`. Execution is not automatically wrapped in a transaction.
+`MigrationRunner` applies migrations in order and records execution in `MigrationHistory`.
 
 ### Via console commands
 
@@ -173,13 +157,7 @@ $rollbackSteps = $runner->getRollbackMigrations(null, 3);
 
 Both methods return migrations as `migration name => migration class`, in execution order. If a selected rollback migration is recorded but its implementation cannot be discovered, `getRollbackMigrations()` throws a `DbException`.
 
-Use `getStatus()` to inspect all discovered and recorded migrations:
-
-```php
-$status = $runner->getStatus();
-```
-
-Each status row contains `migration`, `status`, and `batch`. Rows are naturally sorted by migration name and use the following statuses:
+`getStatus()` returns all discovered and recorded migrations. Each row contains `migration`, `status`, and `batch`, and rows are naturally sorted by migration name:
 
 - `up` — discovered and recorded
 - `down` — discovered but not recorded; `batch` is `null`
@@ -211,10 +189,6 @@ Migration execution fails immediately when another process owns the lock. Before
 After `migrate()` or `rollback()`, `getLastMigrationCount()` returns the number of migrations recorded or removed by that operation.
 
 To target a specific connection, call `setConnection()` before running (for example `$runner->setConnection(db('reporting'));`).
-
-```php
-$runner->migrate();
-```
 
 ### Rollback
 
@@ -249,18 +223,6 @@ History behavior used by `MigrationRunner`:
 - `MigrationHistory::getNextBatch()` determines the next batch number for a migrate run
 - `MigrationHistory::checkTable()` initializes the migration history table
 - `MigrationHistory::add()` and `MigrationHistory::delete()` record and remove entries
-
-## Behavior notes
-
-A few behaviors are worth keeping in mind:
-
-- `migrate()` skips any migration name already present in history.
-- Migration plans use the same selection logic as execution.
-- Migration status and dry-run planning do not create the migration history table.
-- Migration status and dry-run planning do not acquire the migration lock.
-- `rollback()` throws and preserves the history entry when the corresponding migration class cannot be found.
-- Migration execution is not automatically wrapped in a transaction.
-- If a migration does not implement `up()` or `down()`, the missing method is skipped and execution continues.
 
 ## Related
 

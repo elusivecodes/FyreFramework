@@ -32,14 +32,11 @@ Prefer helping the reader do the next thing over explaining how the subsystem is
 
 ## Page openings
 
-Most API and feature pages start with one or two short paragraphs:
-
-1. a direct opening sentence, often ``Use `Thing` when you want to...``
-2. an optional second sentence that narrows the common case (for example `Most applications...`)
+Most API and feature pages start with one or two short paragraphs that explain what the feature is for and when a reader would choose it. Vary the wording to suit the subject; do not force every page into the same opening formula.
 
 Good openings are concrete and user-facing:
 
-- ``Use `Fyre\Http\Client` when your application needs to call external APIs, webhooks, or internal HTTP services.``
+- ``Fyre\Http\Client sends requests to external APIs, webhooks, and internal HTTP services.``
 - `Use route bindings when you want route placeholders to resolve to ORM entities before your controller action or closure runs.`
 
 Avoid openings that read like internals or architecture notes:
@@ -53,28 +50,28 @@ Only keep implementation detail in the opening when it is necessary for correct 
 
 ## Page structure
 
-Most non-index pages follow this order:
+Non-index pages can use the following order when each section adds something useful:
 
 1. `# Title`
 2. one or two short intro paragraphs
 3. `## Table of Contents`
-4. `## Start here`
+4. optional `## Start here`
 5. core usage sections
 6. optional `## Method guide`
-7. `## Behavior notes`
-8. `## Related`
+7. optional `## Behavior notes`
+8. optional `## Related`
 
-Most index pages follow this order:
+Index pages can use the following order:
 
 1. `# Section title`
 2. short section summary
 3. `## Table of Contents`
-4. `## Start here`
+4. optional `## Start here`
 5. `## <Section> overview`
 6. `## Pages in this section`
 7. optional `## Related`
 
-Use `## Start here` for the practical entry point on most pages.
+Use `## Start here` when a page has several possible entry points or needs a short workflow before the detailed material. Omit it when the introduction or first usage section already provides the practical entry point, and do not use it to repeat the table of contents.
 
 Prefer `Start here` over generic sections like `Purpose` or `How it works`.
 
@@ -145,13 +142,16 @@ Method guide is optional:
 
 - Include `## Method guide` when the page documents a stable public API surface (classes, methods, helpers) where readers benefit from a skimmable reference.
 - Omit it when the page is primarily conceptual, workflow-driven, or already structured around a small number of focused examples.
+- Do not add an example that merely assigns the return value of the method being described. Use examples to demonstrate output, interaction between methods, edge cases, or behavior that is not apparent from the signature.
+- Group closely related accessors and convenience methods when documenting each one separately would repeat the same explanation.
+- A method guide does not need to enumerate every public method when the remaining methods are self-explanatory or already covered by the task-focused sections.
 
 ## Behavior notes
 
 Behavior notes document gotchas that affect real-world usage.
 
 - Do not include full examples or code blocks in `## Behavior notes`.
-- Start the section with a plain sentence such as `A few behaviors are worth keeping in mind:` and then list the behaviors as bullets.
+- Start with a short sentence when one helps the transition, then list the behaviors as bullets.
 - Write notes as complete sentences (prefer bullets).
 - Avoid “label: explanation” formatting, especially with `**bold labels**:`. Prefer sentence-form bullets that read naturally.
 - Keep this section short. If a note is only interesting as an implementation detail, it probably does not belong here.

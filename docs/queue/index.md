@@ -20,10 +20,6 @@ Queue lets you push jobs, delay them, retry them with backoff, retain terminal f
 - [Inspecting queues](#inspecting-queues)
 - [Recovering failed jobs](#recovering-failed-jobs)
 - [Lifecycle events](#lifecycle-events)
-- [Method guide](#method-guide)
-  - [`QueueManager`](#queuemanager)
-  - [`Queue`](#queue-1)
-  - [`Message`](#message)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -108,7 +104,7 @@ $queue = $queues->use('default');
 $stats = $queue->stats();
 ```
 
-If you need a one-off handler without storing it under a config key, use `QueueManager::build()`; see the [Method guide](#method-guide).
+If you need a one-off handler without storing it under a config key, pass its options directly to `QueueManager::build()`. Runtime configuration is available through `getConfig()` and `setConfig()`; `setConfig()` requires a key that has not already been registered.
 
 ## Built-in queue handlers
 
@@ -228,27 +224,20 @@ $stats = $queue->stats('search');
 - `failed` - failed execution attempts since the last reset, including attempts that were retried
 - `total` - delivery attempts made available since the last reset, including retries and recovered reservations
 
+`reset($queue)` clears the `completed`, `failed`, and `total` counters. `clear($queue)` removes ready, delayed, and reserved jobs together with their uniqueness keys, but leaves statistics and retained terminal failures intact.
+
 You can also inspect queue stats from the CLI using `queue:stats`; see [Console Commands](../console/commands.md#queuestats).
 
-```php
-$commandRunner->handle(['app', 'queue:stats']);
-$commandRunner->handle(['app', 'queue:stats', '--config', 'default', '--queue', 'search']);
+```bash
+app queue:stats
+app queue:stats --config=default --queue=search
 ```
 
 ## Recovering failed jobs
 
 Use `Queue::getFailed()` to inspect terminal failures retained for a queue. Records are indexed by their 32-character job ID and remain until they are retried or forgotten.
 
-```php
-$failures = $queue->getFailed('search');
-```
-
 Use `retryFailed()` to construct and enqueue a fresh `Message` from the stored config. Its retry attempt count starts again at zero, and the retained record is removed only when the message is accepted by the queue. Use `forgetFailed()` to remove a retained record without retrying it.
-
-```php
-$queue->retryFailed($id, 'search');
-$queue->forgetFailed($id, 'search');
-```
 
 The same operations are available through the console. `queue:failed` displays the failure time in UTC.
 
@@ -276,224 +265,7 @@ The worker dispatches queue lifecycle events through the event system:
 
 For event listening patterns, see [Events](../events/index.md).
 
-## Method guide
-
-Examples below assume `$queues` is a `QueueManager` instance, `$queue` is a `Queue` instance, and `$message` is a `Message` instance.
-
-### `QueueManager`
-
-#### **Push a job** (`push()`)
-
-Queue a job as a class and method call.
-
-Arguments:
-- `$className` (`class-string`): job class name.
-- `$arguments` (`array<string, mixed>`): arguments passed to the job method.
-- `$options` (`array<string, mixed>`): message options such as `queue`, `delay`, `expires`, and `unique`.
-
-```php
-$queues->push(GenerateReportJob::class, [
-    'reportId' => 123,
-], [
-    'queue' => 'reports',
-    'delay' => 10,
-]);
-```
-
-#### **Use a configured handler** (`use()`)
-
-Get a shared handler instance for a config key.
-
-Arguments:
-- `$key` (`string`): handler config key (default: `default`).
-
-```php
-$stats = $queues->use()->stats();
-```
-
-#### **Build a one-off handler** (`build()`)
-
-Build a handler directly from an options array without storing it under a config key.
-
-Arguments:
-- `$options` (`array<string, mixed>`): handler options, including `className`.
-
-```php
-use Fyre\Queue\Handlers\RedisQueue;
-
-$tempQueue = $queues->build([
-    'className' => RedisQueue::class,
-    'host' => '127.0.0.1',
-    'port' => 6379,
-]);
-
-$tempQueue->reset();
-```
-
-#### **Read handler config** (`getConfig()`)
-
-Get all queue configs or one config by key.
-
-Arguments:
-- `$key` (`string|null`): config key, or `null` for all configs.
-
-```php
-$allConfigs = $queues->getConfig();
-$defaultConfig = $queues->getConfig('default');
-```
-
-#### **Set handler config** (`setConfig()`)
-
-Register a new queue config at runtime.
-
-The key must not already exist.
-
-Arguments:
-- `$key` (`string`): config key.
-- `$options` (`array<string, mixed>`): handler options.
-
-```php
-use Fyre\Queue\Handlers\RedisQueue;
-
-$queues->setConfig('reports', [
-    'className' => RedisQueue::class,
-    'host' => '127.0.0.1',
-    'port' => 6379,
-    'database' => 2,
-]);
-```
-
-### `Queue`
-
-#### **List queue names** (`queues()`)
-
-Return the set of queue names known to the handler.
-
-```php
-$queueNames = $queue->queues();
-```
-
-#### **Read queue stats** (`stats()`)
-
-Return queue statistics for a queue name.
-
-Arguments:
-- `$queue` (`string`): queue name (default: `default`).
-
-```php
-$stats = $queue->stats('search');
-```
-
-#### **Clear a queue** (`clear()`)
-
-Remove all pending items from a queue.
-
-Arguments:
-- `$queue` (`string`): queue name (default: `default`).
-
-```php
-$queue->clear('search');
-```
-
-#### **Reset queue statistics** (`reset()`)
-
-Reset the stored counters for a queue.
-
-Arguments:
-- `$queue` (`string`): queue name (default: `default`).
-
-```php
-$queue->reset('search');
-```
-
-#### **Read failed jobs** (`getFailed()`)
-
-Return terminal failures indexed by job ID.
-
-Arguments:
-- `$queue` (`string`): queue name (default: `default`).
-
-```php
-$failures = $queue->getFailed('search');
-```
-
-#### **Retry a failed job** (`retryFailed()`)
-
-Enqueue a fresh message from a retained failure and remove the failure when enqueueing succeeds.
-
-Arguments:
-- `$id` (`string`): failed job ID.
-- `$queue` (`string`): queue name (default: `default`).
-
-```php
-$retried = $queue->retryFailed($id, 'search');
-```
-
-#### **Forget a failed job** (`forgetFailed()`)
-
-Remove a retained failure without retrying it.
-
-Arguments:
-- `$id` (`string`): failed job ID.
-- `$queue` (`string`): queue name (default: `default`).
-
-```php
-$forgotten = $queue->forgetFailed($id, 'search');
-```
-
-### `Message`
-
-#### **Validate a message** (`isValid()`)
-
-Check whether the target class and method exist.
-
-```php
-$ok = $message->isValid();
-```
-
-#### **Check readiness** (`isReady()`)
-
-Check whether a message is ready to run.
-
-```php
-$ready = $message->isReady();
-```
-
-#### **Check expiry** (`isExpired()`)
-
-Check whether a message has expired.
-
-```php
-$expired = $message->isExpired();
-```
-
-#### **Retry decisions** (`shouldRetry()`)
-
-Check whether a message should be retried.
-
-```php
-$shouldRetry = $message->shouldRetry();
-```
-
-#### **Get the retry delay** (`getRetryDelay()`)
-
-Return the backoff delay for the current retry attempt.
-
-```php
-$delay = $message->getRetryDelay();
-```
-
-#### **Get a uniqueness hash** (`getHash()`)
-
-Get a stable hash based on the class name, method, and arguments.
-
-```php
-$hash = $message->getHash();
-```
-
 ## Behavior notes
-
-A few behaviors are worth keeping in mind:
 
 - `delay` and `expires` are converted into absolute `after` and `before` timestamps when the `Message` is created.
 - Invalid messages are skipped and emit `Queue.invalid`; expired messages are dropped silently.

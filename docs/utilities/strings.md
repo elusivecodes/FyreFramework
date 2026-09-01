@@ -4,7 +4,7 @@
 
 ## Table of Contents
 
-- [Start here](#start-here)
+- [Common operations](#common-operations)
 - [Constants](#constants)
 - [Method guide](#method-guide)
   - [Casing and identifiers](#casing-and-identifiers)
@@ -17,13 +17,9 @@
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Start here
-
-Use `Str` when you want consistent, reusable string operations without pulling in extra dependencies. It is an abstract class with static methods. Most methods are thin wrappers around PHP string functions, with a few convenience helpers for identifier-style casing.
+## Common operations
 
 For pluralization/singularization and convention helpers for class/table names, see [Inflection](inflection.md).
-
-Examples on this page assume `Str` refers to `Fyre\Utility\Str`.
 
 ```php
 $class = Str::pascal('user_profile'); // "UserProfile"
@@ -565,10 +561,6 @@ Arguments:
 - `$string` (`string`): the input string.
 - `$flags` (`int`): the escaping flags (combine `Str::ENT_*` constants).
 
-```php
-$value = Str::escape('<a href="?q=test">link</a>');
-```
-
 #### **Transliterate to ASCII** (`transliterate()`)
 
 Attempts to transliterate UTF-8 text to ASCII using `iconv()`.
@@ -626,8 +618,6 @@ $ok = Str::isString('hello'); // true
 ```
 
 ## Behavior notes
-
-A few behaviors are worth keeping in mind:
 
 - `chunk()`, `length()`, `limit()`, `slice()`, and `replaceAt()` operate on bytes (via `str_split()`, `strlen()`, `substr()`, and `substr_replace()`), which can split multi-byte UTF-8 characters.
 - `after()`, `afterLast()`, `before()`, and `beforeLast()` return the original string when the search string is empty or not found.

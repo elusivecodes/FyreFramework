@@ -8,17 +8,14 @@ For single instants (time zones, localization, calendar-aware diffs), see [Date/
 
 ## Table of Contents
 
-- [Start here](#start-here)
-- [Choosing `Period` or `PeriodCollection`](#choosing-period-or-periodcollection)
+- [Common operations](#common-operations)
 - [Method guide](#method-guide)
   - [`Period`](#period)
   - [`PeriodCollection`](#periodcollection)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
-## Start here
-
-Use `Period` when you need to represent a range as a sequence of evenly-stepped values (for example, each day from Feb 1 to Feb 5), and you want range operations like overlap, gap, and subtraction. Use `PeriodCollection` when you need to treat multiple periods as a set (for example, subtract many busy ranges from an availability window and then find the gaps).
+## Common operations
 
 Create a period, iterate it, and subtract a blocked range:
 
@@ -53,14 +50,7 @@ $boundaries = $collection->boundaries(); // Period|null
 $gaps = $collection->gaps(); // PeriodCollection
 ```
 
-## Choosing `Period` or `PeriodCollection`
-
-- Use `Period` when you need a bounded range at a specific granularity (days, hours, months, …) and you want range operations (overlap, gap, subtract).
-- Use `PeriodCollection` when you need to work with many ranges as a set (normalize/sort, find gaps, subtract another set).
-
 ## Method guide
-
-Examples below assume any referenced `DateTime`, `Period`, and `PeriodCollection` classes are already imported when needed.
 
 ### `Period`
 
@@ -252,227 +242,36 @@ $a = new Period('2026-02-01', '2026-02-05');
 $len = $a->length(); // 4
 ```
 
-#### **Get the original start boundary** (`start()`)
+#### **Inspect boundaries and configuration**
 
-Returns the original start boundary value used to construct the period.
+| Method | Result |
+| --- | --- |
+| `start()` / `end()` | the original boundary values supplied to the period |
+| `includedStart()` / `includedEnd()` | the effective boundaries after exclusions are applied |
+| `includesStart()` / `includesEnd()` | whether each original boundary is included |
+| `granularity()` | the unit used for iteration and comparison |
 
-```php
-$p = new Period('2026-02-01', '2026-02-05', 'day', 'end');
+#### **Compare periods and boundary dates**
 
-$start = $p->start();
-```
+`equals($other)` checks whether two periods have the same included boundaries at the current granularity.
 
-#### **Get the original end boundary** (`end()`)
+The remaining comparison methods inspect one included boundary against a `DateTime`:
 
-Returns the original end boundary value used to construct the period.
-
-```php
-$p = new Period('2026-02-01', '2026-02-05', 'day', 'start');
-
-$end = $p->end();
-```
-
-#### **Get the included start boundary** (`includedStart()`)
-
-Returns the effective start boundary after applying the excluded boundary setting.
+| Boundary | Equal | Before | Before or equal | After | After or equal |
+| --- | --- | --- | --- | --- | --- |
+| start | `startEquals()` | `startsBefore()` | `startsBeforeOrEquals()` | `startsAfter()` | `startsAfterOrEquals()` |
+| end | `endEquals()` | `endsBefore()` | `endsBeforeOrEquals()` | `endsAfter()` | `endsAfterOrEquals()` |
 
 ```php
-$p = new Period('2026-02-01', '2026-02-05', 'day', 'start');
+$period = new Period('2026-02-01', '2026-02-05');
 
-$includedStart = $p->includedStart();
-```
-
-#### **Get the included end boundary** (`includedEnd()`)
-
-Returns the effective end boundary after applying the excluded boundary setting.
-
-```php
-$p = new Period('2026-02-01', '2026-02-05', 'day', 'end');
-
-$includedEnd = $p->includedEnd();
-```
-
-#### **Check whether the start is included** (`includesStart()`)
-
-Returns whether the original start boundary is included in the period.
-
-```php
-$p = new Period('2026-02-01', '2026-02-05', 'day', 'start');
-
-$includesStart = $p->includesStart(); // false
-```
-
-#### **Check whether the end is included** (`includesEnd()`)
-
-Returns whether the original end boundary is included in the period.
-
-```php
-$p = new Period('2026-02-01', '2026-02-05', 'day', 'end');
-
-$includesEnd = $p->includesEnd(); // false
-```
-
-#### **Get the granularity** (`granularity()`)
-
-Returns the granularity used for stepping and comparisons (`'year'`, `'month'`, `'day'`, `'hour'`, `'minute'`, `'second'`).
-
-```php
-$p = new Period('2026-02-01', '2026-02-05', 'hour');
-$granularity = $p->granularity(); // "hour"
-```
-
-#### **Check equality** (`equals()`)
-
-Checks whether two periods have the same included start and included end (at the current granularity).
-
-Arguments:
-- `$other` (`Period`): the period to compare against.
-
-```php
-$a = new Period('2026-02-01', '2026-02-05');
-$b = new Period('2026-02-01', '2026-02-05');
-
-$ok = $a->equals($b); // true
-```
-
-#### **Check whether the period starts on a date** (`startEquals()`)
-
-Checks whether the included start boundary matches a date (at the current granularity).
-
-Arguments:
-- `$date` (`DateTime`): the date to compare against.
-
-```php
-$p = new Period('2026-02-01', '2026-02-05');
-
-$ok = $p->startEquals(new DateTime('2026-02-01')); // true
-```
-
-#### **Check whether the period starts before a date** (`startsBefore()`)
-
-Checks whether the included start boundary is before a date (at the current granularity).
-
-Arguments:
-- `$date` (`DateTime`): the date to compare against.
-
-```php
-$p = new Period('2026-02-01', '2026-02-05');
-
-$before = $p->startsBefore(new DateTime('2026-02-03')); // true
-```
-
-#### **Check whether the period starts on or before a date** (`startsBeforeOrEquals()`)
-
-Checks whether the included start boundary is before or equal to a date (at the current granularity).
-
-Arguments:
-- `$date` (`DateTime`): the date to compare against.
-
-```php
-$p = new Period('2026-02-01', '2026-02-05');
-
-$ok = $p->startsBeforeOrEquals(new DateTime('2026-02-01')); // true
-```
-
-#### **Check whether the period starts after a date** (`startsAfter()`)
-
-Checks whether the included start boundary is after a date (at the current granularity).
-
-Arguments:
-- `$date` (`DateTime`): the date to compare against.
-
-```php
-$p = new Period('2026-02-01', '2026-02-05');
-
-$ok = $p->startsAfter(new DateTime('2026-01-31')); // true
-```
-
-#### **Check whether the period starts on or after a date** (`startsAfterOrEquals()`)
-
-Checks whether the included start boundary is after or equal to a date (at the current granularity).
-
-Arguments:
-- `$date` (`DateTime`): the date to compare against.
-
-```php
-$p = new Period('2026-02-01', '2026-02-05');
-
-$ok = $p->startsAfterOrEquals(new DateTime('2026-02-01')); // true
-```
-
-#### **Check whether the period ends on a date** (`endEquals()`)
-
-Checks whether the included end boundary matches a date (at the current granularity).
-
-Arguments:
-- `$date` (`DateTime`): the date to compare against.
-
-```php
-$p = new Period('2026-02-01', '2026-02-05');
-
-$ok = $p->endEquals(new DateTime('2026-02-05')); // true
-```
-
-#### **Check whether the period ends before a date** (`endsBefore()`)
-
-Checks whether the included end boundary is before a date (at the current granularity).
-
-Arguments:
-- `$date` (`DateTime`): the date to compare against.
-
-```php
-$p = new Period('2026-02-01', '2026-02-05');
-
-$ok = $p->endsBefore(new DateTime('2026-02-10')); // true
-```
-
-#### **Check whether the period ends on or before a date** (`endsBeforeOrEquals()`)
-
-Checks whether the included end boundary is before or equal to a date (at the current granularity).
-
-Arguments:
-- `$date` (`DateTime`): the date to compare against.
-
-```php
-$p = new Period('2026-02-01', '2026-02-05');
-
-$ok = $p->endsBeforeOrEquals(new DateTime('2026-02-05')); // true
-```
-
-#### **Check whether the period ends after a date** (`endsAfter()`)
-
-Checks whether the included end boundary is after a date (at the current granularity).
-
-Arguments:
-- `$date` (`DateTime`): the date to compare against.
-
-```php
-$p = new Period('2026-02-01', '2026-02-05');
-
-$ok = $p->endsAfter(new DateTime('2026-02-03')); // true
-```
-
-#### **Check whether the period ends on or after a date** (`endsAfterOrEquals()`)
-
-Checks whether the included end boundary is after or equal to a date (at the current granularity).
-
-Arguments:
-- `$date` (`DateTime`): the date to compare against.
-
-```php
-$p = new Period('2026-02-01', '2026-02-05');
-
-$ok = $p->endsAfterOrEquals(new DateTime('2026-02-05')); // true
+$startsAfterJanuary = $period->startsAfter(new DateTime('2026-01-31'));
+$endsBy = $period->endsBeforeOrEquals(new DateTime('2026-02-07'));
 ```
 
 #### **Create the next period with the same length** (`renew()`)
 
 Creates a new period after the current one with the same length and boundary inclusion.
-
-```php
-$p = new Period('2026-02-01', '2026-02-05');
-$next = $p->renew();
-```
 
 ### `PeriodCollection`
 
@@ -586,8 +385,6 @@ $overlap = $a->overlapAll($b, $c);
 ```
 
 ## Behavior notes
-
-A few behaviors are worth keeping in mind:
 
 - `count()` and `length()` answer different questions: `count()` is “how many steps will iteration yield”, while `length()` is the distance between the included boundaries.
 - Boundary exclusion affects both iteration and operations like `includes()`; double-check whether you want to exclude `start`, `end`, or both.
