@@ -9,6 +9,7 @@ All response objects are immutable, so every `with*` call returns a new instance
 - [Start here](#start-here)
 - [Choosing a response type](#choosing-a-response-type)
 - [Common response patterns](#common-response-patterns)
+- [Client response helpers](#client-response-helpers)
 - [Streaming JSON responses](#streaming-json-responses)
 - [Redirect responses](#redirect-responses)
   - [Example: simple redirect](#example-simple-redirect)
@@ -18,12 +19,6 @@ All response objects are immutable, so every `with*` call returns a new instance
   - [Example: download generated content](#example-download-generated-content)
   - [Header defaults](#header-defaults)
 - [Emitting responses](#emitting-responses)
-- [Method guide](#method-guide)
-  - [`ClientResponse`](#clientresponse)
-  - [`RedirectResponse`](#redirectresponse)
-  - [`DownloadResponse`](#downloadresponse)
-  - [`ResponseEmitter`](#responseemitter)
-- [Behavior notes](#behavior-notes)
 - [Related](#related)
 
 ## Start here
@@ -55,37 +50,40 @@ Pick the response type that matches what you’re trying to send:
 
 `ClientResponse` is the usual choice for server responses. It gives you a sensible default content type, plus helpers for JSON, XML, cookies, cache headers, and dates.
 
-### Example: build a response
+`response()` resolves a `ClientResponse` from the container, and `json($data)` is shorthand for `response()->withJson($data)` (see [Helpers](../core/helpers.md)):
 
 ```php
-use Fyre\Http\ClientResponse;
-
-$response = new ClientResponse([
-    'statusCode' => 200,
-    'body' => 'Hello',
-]);
+return json(['ok' => true]);
 ```
 
-### Example: return JSON
+Cookies can be added and expired on the same immutable response:
 
 ```php
-use Fyre\Http\ClientResponse;
-
-$response = new ClientResponse()
-    ->withJson(['ok' => true]);
-```
-
-### Example: set and expire cookies
-
-```php
-use Fyre\Http\ClientResponse;
-
-$response = new ClientResponse()
+$response = response()
     ->withCookie('session', 'abc123', httpOnly: true, secure: true)
     ->withExpiredCookie('legacy_session');
 ```
 
-`response()` resolves a `ClientResponse` from the container, and `json($data)` is shorthand for `response()->withJson($data)` (see [Helpers](../core/helpers.md)).
+Cookies added with `withCookie()` and `withExpiredCookie()` are stored separately from the response headers. `ResponseEmitter` writes them when the response is sent.
+
+## Client response helpers
+
+`ClientResponse` inherits the standard PSR-7 methods for status codes, headers, protocol version, and body streams. These additional helpers cover common server responses:
+
+| Method | Result |
+| --- | --- |
+| `withContentType($mimeType, $charset = 'UTF-8')` | set the `Content-Type` header |
+| `withJson($data, $stream = false)` | set an `application/json` body |
+| `withXml($data)` | set an `application/xml` body from a `SimpleXMLElement` |
+| `withCookie($name, $value, ...)` | add a response cookie |
+| `withExpiredCookie($name, ...)` | add an expired response cookie |
+| `getCookie($name)` / `getCookies()` | read response cookies |
+| `hasCookie($name)` | check for a response cookie by name |
+| `withDisabledCache()` | set `Cache-Control: no-store, max-age=0, no-cache` |
+| `withDate($date)` | set a UTC `Date` header |
+| `withLastModified($date)` | set a UTC `Last-Modified` header |
+
+Date helpers accept a framework `DateTime`, a `DateTimeInterface`, a Unix timestamp, or a parseable string.
 
 ## Streaming JSON responses
 
@@ -118,7 +116,7 @@ If encoding fails after output has started, the client may receive incomplete JS
 ```php
 use Fyre\Http\RedirectResponse;
 
-$response = new RedirectResponse('/login');
+return new RedirectResponse('/login');
 ```
 
 `redirect($uri, $code, $options)` resolves a `RedirectResponse` via the container (see [Helpers](../core/helpers.md)).
@@ -143,7 +141,7 @@ To avoid this adjustment for `GET` requests, use a redirect code other than `302
 ```php
 use Fyre\Http\DownloadResponse;
 
-$response = DownloadResponse::createFromFile(
+return DownloadResponse::createFromFile(
     '/path/to/report.pdf',
     'report.pdf'
 );
@@ -154,7 +152,7 @@ $response = DownloadResponse::createFromFile(
 ```php
 use Fyre\Http\DownloadResponse;
 
-$response = DownloadResponse::createFromString(
+return DownloadResponse::createFromString(
     'Example export content',
     'export.txt',
     'text/plain'
@@ -185,247 +183,7 @@ $emitter->emit($response);
 
 Most applications do not create the emitter directly because the framework handles response emission for you, but it is useful in custom entry points.
 
-## Method guide
-
-This section focuses on the most-used response methods, grouped by class.
-
-Most examples assume you already have a `$response` instance (via dependency injection). You can also set `$response = response();` (see [Helpers](../core/helpers.md)). Examples commonly reassign `$response` to emphasize immutability.
-
-Examples below assume relevant classes are already imported when needed.
-
-### `ClientResponse`
-
-#### **Set the content type** (`withContentType()`)
-
-Sets the `Content-Type` header with a MIME type and optional charset.
-
-Arguments:
-- `$mimeType` (`string`): the MIME type (for example `application/json`).
-- `$charset` (`string`): the charset (defaults to `UTF-8`).
-
-```php
-$response = $response->withContentType('text/plain');
-```
-
-#### **Write a JSON body** (`withJson()`)
-
-Sets `Content-Type` to `application/json`. By default, the data is encoded immediately as pretty-printed JSON. Streaming incrementally encodes an iterable as a compact JSON array.
-
-Arguments:
-- `$data` (`mixed`): the data to encode.
-- `$stream` (`bool`): whether to stream an iterable as a JSON array (defaults to `false`).
-
-```php
-$response = $response->withJson([
-    'ok' => true,
-]);
-```
-
-```php
-$response = $response->withJson($items, stream: true);
-```
-
-#### **Write an XML body** (`withXml()`)
-
-Sets `Content-Type` to `application/xml` and writes the XML body.
-
-Arguments:
-- `$data` (`SimpleXMLElement`): the XML document.
-
-```php
-$xml = new SimpleXMLElement('<root/>');
-$xml->addChild('ok', '1');
-
-$response = $response->withXml($xml);
-```
-
-#### **Set a header (replace existing values)** (`withHeader()`)
-
-Sets a header and replaces any existing values for that header.
-
-Arguments:
-- `$name` (`string`): the header name.
-- `$value` (`mixed`): a string/number value, or an array of values.
-
-```php
-$response = $response->withHeader('X-Request-Id', 'abc123');
-```
-
-#### **Add header values** (`withAddedHeader()`)
-
-Adds values to a header. If the header does not exist, it is created.
-
-Arguments:
-- `$name` (`string`): the header name.
-- `$value` (`mixed`): a string/number value, or an array of values.
-
-```php
-$response = $response
-    ->withAddedHeader('Cache-Control', 'no-store')
-    ->withAddedHeader('Cache-Control', 'max-age=0');
-```
-
-#### **Remove a header** (`withoutHeader()`)
-
-Removes a header entirely.
-
-Arguments:
-- `$name` (`string`): the header name.
-
-```php
-$response = $response
-    ->withHeader('X-Debug', '1')
-    ->withoutHeader('X-Debug');
-```
-
-#### **Add a cookie** (`withCookie()`)
-
-Adds a cookie to the response cookie collection. These cookies are emitted later by `ResponseEmitter` (they are not written to a `Set-Cookie` header by this method).
-
-Arguments:
-- `$name` (`string`): the cookie name.
-- `$value` (`string`): the cookie value.
-- `$expires` (`Fyre\Utility\DateTime\DateTime|int|null`): expiration time (`DateTime` or UNIX timestamp).
-- `$path` (`string`): cookie path (defaults to `/`).
-- `$domain` (`string`): cookie domain.
-- `$httpOnly` (`bool`): whether the cookie is HTTP only.
-- `$secure` (`bool`): whether the cookie is secure.
-- `$sameSite` (`string`): same-site mode (`lax`, `strict`, `none`).
-
-```php
-$response = $response
-    ->withCookie('session', 'abc123', httpOnly: true, secure: true);
-```
-
-#### **Expire a cookie** (`withExpiredCookie()`)
-
-Convenience wrapper that adds an expired cookie for the given name.
-
-Arguments:
-- `$name` (`string`): the cookie name.
-- `$path` (`string`): cookie path (defaults to `/`).
-- `$domain` (`string`): cookie domain.
-- `$httpOnly` (`bool`): whether the cookie is HTTP only.
-- `$secure` (`bool`): whether the cookie is secure.
-- `$sameSite` (`string`): same-site mode (`lax`, `strict`, `none`).
-
-```php
-$response = $response->withExpiredCookie('session');
-```
-
-#### **Disable caching** (`withDisabledCache()`)
-
-Sets `Cache-Control` to `no-store`, `max-age=0`, and `no-cache`.
-
-Arguments: none.
-
-```php
-$response = $response->withDisabledCache();
-```
-
-#### **Set the Date header** (`withDate()`)
-
-Sets the `Date` header (formatted in UTC).
-
-Arguments:
-- `$date` (`Fyre\Utility\DateTime\DateTime|DateTimeInterface|int|string`): a date value (timestamps and parseable strings are supported).
-
-```php
-$response = $response->withDate('2026-01-31 12:00:00');
-```
-
-#### **Set the Last-Modified header** (`withLastModified()`)
-
-Sets the `Last-Modified` header (formatted in UTC).
-
-Arguments:
-- `$date` (`Fyre\Utility\DateTime\DateTime|DateTimeInterface|int|string`): a date value (timestamps and parseable strings are supported).
-
-```php
-$response = $response->withLastModified(1700000000);
-```
-
-#### **Set status and reason phrase** (`withStatus()`)
-
-Sets the HTTP status code and optional reason phrase. If you pass an empty reason phrase (or omit it), a default phrase is used when available for the status code.
-
-Arguments:
-- `$code` (`int`): the status code (must be `100`–`599`).
-- `$reasonPhrase` (`string`): optional reason phrase.
-
-```php
-$response = $response->withStatus(404);
-```
-
-### `RedirectResponse`
-
-#### **Create a redirect response** (`__construct()`)
-
-Sets the `Location` header and a redirect status code.
-
-Arguments:
-- `$uri` (`string|Psr\Http\Message\UriInterface`): the URI to redirect to.
-- `$code` (`int`): the initial status code (defaults to `302`).
-- `$options` (`array`): response options (headers, protocol version, and so on).
-
-```php
-$response = new RedirectResponse('/login', 302);
-```
-
-### `DownloadResponse`
-
-#### **Create a download from a file** (`createFromFile()`)
-
-Creates a response with a file-backed stream body and common download headers.
-
-Arguments:
-- `$path` (`string`): the file path.
-- `$filename` (`string|null`): the download filename (defaults to the file basename).
-- `$mimeType` (`string|null`): the MIME type (auto-detected when omitted).
-- `$options` (`array`): response options (headers, protocol version, and so on).
-
-```php
-$response = DownloadResponse::createFromFile('/path/to/report.pdf');
-```
-
-#### **Create a download from a string** (`createFromString()`)
-
-Creates a response with an in-memory stream body and common download headers.
-
-Arguments:
-- `$content` (`string`): the content to send.
-- `$filename` (`string`): the download filename.
-- `$mimeType` (`string|null`): the MIME type (auto-detected when omitted).
-- `$options` (`array`): response options (headers, protocol version, and so on).
-
-```php
-$response = DownloadResponse::createFromString('Example export content', 'export.txt');
-```
-
-### `ResponseEmitter`
-
-#### **Emit a response** (`emit()`)
-
-Sends a `Psr\Http\Message\ResponseInterface` to the client using PHP’s `header()` / `http_response_code()` and streams the body.
-
-Arguments:
-- `$response` (`Psr\Http\Message\ResponseInterface`): the response to send.
-- `$request` (`Psr\Http\Message\ServerRequestInterface|null`): the current request, used to suppress the body for `HEAD` requests.
-
-```php
-$emitter = new ResponseEmitter();
-$emitter->emit($response, $request);
-```
-
-## Behavior notes
-
-A few behaviors are worth keeping in mind:
-
-- Response objects are immutable, so remember to keep the value returned by each `with*` call.
-- `ClientResponse::withCookie()` stores cookies in a response cookie collection, and `ResponseEmitter` emits them when sending the response.
-- `ResponseEmitter` sends headers and cookies but suppresses the body for `HEAD` when the current request is provided, and for informational (`1xx`), `204`, and `304` responses.
-- Streamed JSON bodies are read-only and non-seekable, and JSON encoding occurs as the body is read.
-- When the request method is available and the protocol version is `>= 1.1`, non-`GET` redirects force `303`, and `GET` redirects convert a default `302` to `307`.
+Pass the current request as the optional second argument when emitting manually. Bodies are suppressed for `HEAD` requests, informational responses, `204`, and `304`.
 
 ## Related
 

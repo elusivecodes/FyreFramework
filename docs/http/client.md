@@ -9,6 +9,7 @@ It gives you convenient verb methods, an in-memory cookie jar, optional redirect
 - [Start here](#start-here)
 - [Making requests](#making-requests)
   - [Sending JSON](#sending-json)
+  - [Sending prepared requests](#sending-prepared-requests)
 - [Configuration](#configuration)
 - [Redirects and cookies](#redirects-and-cookies)
   - [Redirect behavior](#redirect-behavior)
@@ -22,9 +23,6 @@ It gives you convenient verb methods, an in-memory cookie jar, optional redirect
   - [Mock handler](#mock-handler)
   - [Custom handlers](#custom-handlers)
 - [Testing](#testing)
-- [Method guide](#method-guide)
-  - [`Client`](#client)
-  - [`Response`](#response)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
@@ -43,6 +41,8 @@ Create a `Client`, then use the verb methods (`get()`, `post()`, …). Each verb
 - a URL (absolute, or relative when `baseUrl` is set)
 - `$data` as either an array (query parameters for `GET`, or encoded body for other methods) or a string (query string for `GET`, raw body for other methods)
 - optional per-request `$options` to override the client configuration
+
+The available methods are `get()`, `post()`, `put()`, `patch()`, `delete()`, `head()`, `options()`, and `trace()`.
 
 ```php
 use Fyre\Http\Client;
@@ -75,6 +75,14 @@ $response = $client->post('/events', [
 
 $payload = $response->getJson();
 ```
+
+### Sending prepared requests
+
+Use `send($request, $options = [])` when you already have a PSR-7 request but still want client redirects, cookies, mocks, and per-request options.
+
+`sendRequest($request)` is the strict PSR-18 path: it delegates directly to the configured handler and bypasses those client conveniences.
+
+You can seed the client's cookie jar with `addCookie($cookie)`. Use `getHandler()` when you need direct access to the configured transport.
 
 ## Configuration
 
@@ -142,15 +150,17 @@ Malformed cookies, invalid domains, `Secure` cookies received over HTTP, invalid
 
 `Client\Response` gives you the usual response information plus a few convenience helpers for client-side tasks.
 
-```php
-use Fyre\Http\Client;
-
-$client = new Client();
-```
-
 ### Check status and read headers
 
-Use `isOk()` when you want a simple “good enough to proceed” check (`200`-`399`), or read the status and headers directly:
+Use the status helper that matches the range you accept:
+
+| Method | Matches |
+| --- | --- |
+| `isSuccess()` | `200` through `299` |
+| `isOk()` | `200` through `399` |
+| `isRedirect()` | `301`, `302`, `303`, `307`, or `308` |
+
+You can also read the status and headers directly:
 
 ```php
 $response = $client->get('https://api.example.com/status');
@@ -226,188 +236,8 @@ If you need to register mocks manually, `Client` provides a static mock facility
 
 Mocks are global to the `Client` class (static), so ensure they’re cleared between tests (the trait does this automatically).
 
-## Method guide
-
-If you are calling a service repeatedly, keep a single `Client` and reuse it so cookies and configuration persist.
-
-### `Client`
-
-#### **Make a GET request** (`get()`)
-
-Performs a `GET` request. When `$data` is an array, it is treated as query parameters; when it is a string, it is treated as a query string.
-
-Other verb methods follow the same argument conventions: `delete()`, `head()`, `options()`, `patch()`, `put()`, and `trace()`.
-
-Arguments:
-- `$url` (`string`): the request URL (absolute, or relative when `baseUrl` is set).
-- `$data` (`array<string, mixed>|string`): query parameters (array) or a query string.
-- `$options` (`array<string, mixed>`): per-request overrides (for example `headers`, `timeout`, `maxRedirects`).
-
-```php
-$response = $client->get('https://api.example.com/users', [
-    'page' => 2,
-]);
-```
-
-#### **Make a POST request** (`post()`)
-
-Performs a `POST` request. When `$data` is an array, it is encoded into the request body.
-
-Arguments:
-- `$url` (`string`): the request URL.
-- `$data` (`array<string, mixed>|string`): data to encode (array) or a raw body string.
-- `$options` (`array<string, mixed>`): per-request overrides.
-
-```php
-$response = $client->post('https://api.example.com/events', [
-    'name' => 'signup',
-], [
-    'headers' => [
-        'Content-Type' => 'application/json',
-    ],
-]);
-```
-
-#### **Send a request with client conveniences** (`send()`)
-
-Sends a `RequestInterface` using the configured handler (or the mock handler when active). This is the method that applies redirect following (via `maxRedirects`) and the cookie jar.
-
-Arguments:
-- `$request` (`RequestInterface`): the request to send.
-- `$options` (`array<string, mixed>`): per-request overrides (merged with the client defaults).
-
-```php
-use Fyre\Http\Client\Request;
-
-$request = new Request('https://example.com', [
-    'method' => 'GET',
-]);
-
-$response = $client->send($request, [
-    'maxRedirects' => 3,
-]);
-```
-
-#### **Send a request directly** (`sendRequest()`)
-
-Implements `Psr\Http\Client\ClientInterface::sendRequest()` by delegating directly to the configured handler.
-
-Arguments:
-- `$request` (`RequestInterface`): the request to send.
-
-```php
-use Fyre\Http\Client\Request;
-
-$request = new Request('https://example.com', [
-    'method' => 'GET',
-]);
-
-$response = $client->sendRequest($request);
-```
-
-#### **Add a cookie to the cookie jar** (`addCookie()`)
-
-Adds a `Cookie` to the client’s cookie jar.
-
-Arguments:
-- `$cookie` (`Cookie`): the cookie to add.
-
-```php
-use Fyre\Http\Cookie\Cookie;
-
-$cookie = new Cookie('token', 'abc123', [
-    'domain' => 'api.example.com',
-    'hostOnly' => true,
-    'secure' => true,
-]);
-
-$client->addCookie($cookie);
-```
-
-### `Response`
-
-`Client\Response` includes the usual response methods like `getStatusCode()`, `getHeaderLine()`, and `getBody()`, in addition to the helpers below.
-
-```php
-$response = $client->get('https://api.example.com/status');
-```
-
-#### **Read the status code** (`getStatusCode()`)
-
-Returns the HTTP status code.
-
-```php
-$status = $response->getStatusCode();
-```
-
-#### **Read a header value** (`getHeaderLine()`)
-
-Returns a header’s values as a single comma-separated string.
-
-```php
-$contentType = $response->getHeaderLine('Content-Type');
-```
-
-#### **Read the response body** (`getBody()`)
-
-Returns the response body stream.
-
-```php
-$body = (string) $response->getBody();
-```
-
-#### **Read response cookies** (`getCookies()`)
-
-Returns cookies parsed from the response `Set-Cookie` headers.
-
-```php
-$cookies = $response->getCookies();
-```
-
-#### **Read a response cookie** (`getCookie()`)
-
-Returns the first cookie matching the provided cookie name.
-
-Arguments:
-- `$name` (`string`): the cookie name.
-
-```php
-$session = $response->getCookie('session');
-```
-
-#### **Decode JSON** (`getJson()`)
-
-Decodes the response body as JSON and returns the decoded data.
-
-```php
-$data = $response->getJson();
-```
-
-#### **Check whether the response is OK** (`isOk()`)
-
-Returns `true` for successful and redirect responses (`200`-`399`).
-
-```php
-if ($response->isOk()) {
-    // ...
-}
-```
-
-#### **Check whether the response is a redirect** (`isRedirect()`)
-
-Returns `true` when the status code is `301`, `302`, `303`, `307`, or `308`.
-
-```php
-if ($response->isRedirect()) {
-    // ...
-}
-```
-
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
-- `Client::sendRequest()` bypasses redirect following, cookie handling, mocks, and client options. Use `send()` or the verb methods for normal application code.
 - When `auth.type` is set to `digest`, the client may make an initial `401` challenge request before retrying with credentials.
 - When you pass array `$data` to non-`GET` requests, the request body encoding depends on the request `Content-Type`. If it does not start with `application/json`, the request is encoded as either `multipart/form-data` (when files/streams are present) or `application/x-www-form-urlencoded`, and `Content-Type` is set accordingly.
 - Query parameters are merged recursively when building the final URI (including when the URL already contains a query string).
