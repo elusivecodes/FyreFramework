@@ -1,6 +1,6 @@
 # Cache
 
-Use cache to store expensive values behind named cache handlers.
+Cache expensive values behind named handlers, invalidate related entries with tags, and coordinate shared work with cache locks.
 
 ## Table of Contents
 
@@ -19,18 +19,19 @@ Use cache to store expensive values behind named cache handlers.
   - [Tagged cache entries](#tagged-cache-entries)
   - [Cache locks](#cache-locks)
 - [API summary](#api-summary)
-- [Behavior notes](#behavior-notes)
 - [Related](#related)
 
 ## Start here
 
-Most applications follow the same flow:
+After configuring a `default` handler, use `remember()` for the common read-or-compute path:
 
-- define one or more named caches in config
-- resolve a cache with `CacheManager::use()` or the `cache()` helper
-- use `remember()` for values you want to compute on a miss
-- use tags when you want to invalidate groups of cached values
-- use locks when shared work must not run concurrently
+```php
+$report = cache()->remember(
+    'report.123',
+    static fn() => buildReport(123),
+    300
+);
+```
 
 ## Configuring caches
 
@@ -40,9 +41,11 @@ Cache configuration is read from the `Cache` key in your config (see [Config](..
 
 These options apply to all handlers:
 
-- `className` (`class-string<Fyre\Cache\Cacher>`): the cache handler class to build (for example `FileCacher::class`).
-- `prefix` (`string`): a string applied to every cache key (default: `''`).
-- `expire` (`int|null`): default TTL in seconds, used when a method call does not provide an explicit TTL (default: `null`).
+| Option | Type | Default | Purpose |
+| --- | --- | --- | --- |
+| `className` | `class-string<Fyre\Cache\Cacher>` | required | cache handler class to build |
+| `prefix` | `string` | `''` | value prepended to every cache key |
+| `expire` | `int|null` | `null` | default TTL in seconds when a call does not supply one |
 
 Handler-specific options are documented below.
 
@@ -77,9 +80,7 @@ The options below are specific to the built-in handlers under `Fyre\Cache\Handle
 
 ### Array handler
 
-Caches values in an in-memory array for the current PHP process (`Fyre\Cache\Handlers\Array\ArrayCacher`).
-
-- No handler-specific options.
+`Fyre\Cache\Handlers\Array\ArrayCacher` keeps values in memory for the current PHP process. It has no handler-specific options.
 
 ### File handler
 
@@ -87,10 +88,12 @@ Caches values on the filesystem (`Fyre\Cache\Handlers\File\FileCacher`).
 
 Make sure the configured `path` exists or can be created, and is writable by the PHP process.
 
-Options:
+| Option | Type | Default | Purpose |
+| --- | --- | --- | --- |
+| `path` | `string` | `/tmp/cache` | directory containing cache files |
+| `mode` | `int` | `0640` | permissions applied when a new cache file is created |
 
-- `path` (`string`): default `/tmp/cache` (in an application, you’ll usually set this to something like `tmp/cache`)
-- `mode` (`int`): default `0640` (applied when creating a new cache file)
+The file handler rejects a `prefix` containing the system directory separator.
 
 ### Redis handler
 
@@ -98,17 +101,19 @@ Caches values using Redis (`Fyre\Cache\Handlers\Redis\RedisCacher`).
 
 Requires `ext-redis` and a reachable Redis server.
 
-Options:
+| Option | Type | Default |
+| --- | --- | --- |
+| `host` | `string` | `127.0.0.1` |
+| `password` | `string|null` | `null` |
+| `port` | `int|string` | `6379` |
+| `database` | `int|string|null` | `null` |
+| `timeout` | `int|string` | `0` |
+| `persist` | `bool` | `true` |
+| `flushDatabase` | `bool` | `false` |
+| `tls` | `bool` | `false` |
+| `ssl` | `array{key: string|null, cert: string|null, ca: string|null}` | all values `null` |
 
-- `host` (`string`): default `127.0.0.1`
-- `password` (`string|null`): default `null`
-- `port` (`int|string`): default `6379`
-- `database` (`int|string|null`): default `null`
-- `timeout` (`int|string`): default `0`
-- `persist` (`bool`): default `true`
-- `flushDatabase` (`bool`): default `false` (allows `clear()` to flush the selected Redis database when no `prefix` is configured)
-- `tls` (`bool`): default `false`
-- `ssl` (`array`): keys `key`, `cert`, `ca` (all default `null`)
+`clear()` requires a non-empty `prefix` unless `flushDatabase` is enabled. Enabling `flushDatabase` allows an unprefixed handler to flush the selected Redis database.
 
 ### Memcached handler
 
@@ -116,23 +121,21 @@ Caches values using Memcached (`Fyre\Cache\Handlers\Memcached\MemcachedCacher`).
 
 Requires `ext-memcached` and a reachable Memcached server.
 
-Options:
-
-- `host` (`string`): default `127.0.0.1`
-- `port` (`int|string`): default `11211`
-- `weight` (`int`): default `1`
+| Option | Type | Default |
+| --- | --- | --- |
+| `host` | `string` | `127.0.0.1` |
+| `port` | `int|string` | `11211` |
+| `weight` | `int` | `1` |
 
 ### Null handler
 
-No-op handler (`Fyre\Cache\Handlers\Null\NullCacher`). Reads always return the provided default, writes are ignored, `increment()` returns `$amount`, and `decrement()` returns `-$amount` without persisting a counter.
-
-- No handler-specific options.
+`Fyre\Cache\Handlers\Null\NullCacher` is a no-op handler with no handler-specific options. Reads return the provided default, writes are ignored, `increment()` returns `$amount`, and `decrement()` returns `-$amount` without persisting a counter.
 
 ## Using a cache
 
 Use a config key to choose which named cache to work with. When no key is provided, `default` is used.
 
-When caching is disabled, newly resolved caches behave like a no-op cache, so reads miss and writes are ignored. This is common in debug mode.
+When caching is disabled, newly built caches resolve to a shared `NullCacher`, so reads miss and writes are ignored. `CacheManager` starts disabled when `App.debug` is enabled. Enabling or disabling the manager does not replace handlers that have already been loaded; unload or clear them before resolving them again.
 
 ```php
 use Fyre\Cache\CacheManager;
@@ -167,6 +170,8 @@ $value = $cache->remember('report.123', static fn() => buildReport(), 300);
 
 $cache->increment('counters.reports_generated');
 ```
+
+Stored keys cannot contain `{`, `}`, `(`, `)`, `/`, `\`, `@`, or `:`. Validation applies before the configured prefix is added. A `null` TTL uses the handler's configured `expire`; a zero or negative TTL deletes the affected entry.
 
 ### Tagged cache entries
 
@@ -225,6 +230,16 @@ try {
 
 Call `refresh()` during long-running manual work to extend a lock's lifetime. It succeeds only while this object still owns the lock.
 
+Lock scope depends on the handler:
+
+| Handler | Coordination scope |
+| --- | --- |
+| array | locks created by the same cacher instance |
+| file, Redis, or Memcached | workers that share the same backend |
+| null | no coordination |
+
+`synchronized()` throws a `CacheException` when the lock cannot be acquired within `wait`. The lock expiry must be greater than zero, and the wait time cannot be negative.
+
 ## API summary
 
 ### Cache manager
@@ -254,19 +269,6 @@ Call `refresh()` during long-running manual work to extend a lock's lifetime. It
 | `synchronized($key, $callback, $expires = 30, $wait = 0)` | run a callback while holding a lock |
 
 `TaggedCacher` supports the normal `get()`, `set()`, `delete()`, and `remember()` operations within its tag namespace. Calling `tags()` on it returns a new wrapper with the additional tags merged in.
-
-## Behavior notes
-
-- In debug mode, caching is often disabled, so newly resolved caches act like a no-op cache.
-- Disabling caching affects newly built handlers only; already-loaded cache instances keep behaving as before until they are rebuilt.
-- Cache keys cannot contain `{ } ( ) / \ @ :`.
-- Passing a zero or negative TTL to `set()` or `setMultiple()` deletes the affected entries, while `null` uses the handler's configured `expire` value.
-- `FileCacher` needs a writable path, and its prefix cannot contain the system directory separator.
-- `RedisCacher::clear()` needs a prefix unless `flushDatabase` is enabled.
-- Invalidating a tag is lazy: tagged values become stale and disappear on the next tagged read.
-- `ArrayCacher` locks coordinate only with locks created by the same cacher instance, while file, Redis, and Memcached locks can coordinate across workers.
-- `NullCacher` locks are no-ops and do not coordinate shared work.
-- `synchronized()` throws a `CacheException` if it cannot acquire the lock within the configured wait time.
 
 ## Related
 

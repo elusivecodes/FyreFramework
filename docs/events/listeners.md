@@ -7,7 +7,7 @@ Listener classes work with `EventManager`: you implement `EventListenerInterface
 ## Table of Contents
 
 - [Start here](#start-here)
-- [Declaring listener methods](#declaring-listener-methods)
+- [Listener contract](#listener-contract)
   - [Listening to named events](#listening-to-named-events)
   - [Listening to object events](#listening-to-object-events)
   - [Listening to multiple events](#listening-to-multiple-events)
@@ -18,35 +18,27 @@ Listener classes work with `EventManager`: you implement `EventListenerInterface
 
 ## Start here
 
-The usual listener-class workflow is:
+Define and register a listener class in four steps:
 
 1. Implement `EventListenerInterface`.
 2. Add `#[On]` to the methods that should handle events.
 3. Register the listener instance with `EventManager::addListener()`.
 4. Remove it later with `removeListener()` if needed.
 
-```php
-use Fyre\Event\Attributes\On;
-use Fyre\Event\Event;
-use Fyre\Event\EventListenerInterface;
+The interface is a marker; the `#[On]` attributes define the actual event contract.
 
-final class AuditListener implements EventListenerInterface
-{
-    #[On('User.created')]
-    public function onUserCreated(Event $event, string $id): void
-    {
-        // ...
-    }
-}
-```
+## Listener contract
 
-## Declaring listener methods
+| Event form | `#[On]` name | Method arguments |
+| --- | --- | --- |
+| named `Fyre\Event\Event` | the event name, such as `User.created` | the `Event` first, then each data value in order; data keys are discarded |
+| another event object | the event class name | the event object only |
+
+The optional second `#[On]` argument is the integer priority. Lower values run first; when it is omitted, `EventManager::PRIORITY_NORMAL` is used.
 
 ### Listening to named events
 
-Use `#[On('Some.event')]` to listen to a named `Event`. The method receives the `Event` instance first, followed by each value from the event’s data (keys are not passed as arguments).
-
-See [Dispatching a named `Event`](event-manager.md#dispatching-a-named-event) for how listener arguments are passed.
+Use `#[On('Some.event')]` to listen to a named `Event`:
 
 ```php
 use Fyre\Event\Attributes\On;
@@ -66,9 +58,7 @@ final class AuditListener implements EventListenerInterface
 
 ### Listening to object events
 
-To listen to an object event, use the event class name in `#[On(...)]`.
-
-For object events, the listener method receives the event object as the only argument.
+For an object event, use its class name in `#[On(...)]`:
 
 ```php
 use Fyre\Event\Attributes\On;
@@ -89,7 +79,7 @@ final class RegistrationListener implements EventListenerInterface
 
 ### Listening to multiple events
 
-`On` is repeatable, so you can attach it more than once (either on the same method, or across multiple methods).
+`On` is repeatable, so one method can handle several events:
 
 ```php
 use Fyre\Event\Attributes\On;
@@ -129,7 +119,7 @@ $eventManager->removeListener($listener);
 
 ## Discovery and caching
 
-When you call `addListener()`, the event manager discovers the methods marked with `#[On]` and registers them as callbacks.
+When you call `addListener()`, the event manager discovers public and protected methods marked with `#[On]` and registers them as callbacks. Private methods are not discovered.
 
 That discovery is cached in memory per listener class. If a cache configuration exists under the key `_events`, the metadata is also stored through the cache layer.
 
@@ -148,16 +138,12 @@ return [
 ];
 ```
 
-When listener attributes or method names change, clear the `_events` cache before new event managers are built. An existing `EventManager` keeps an in-memory copy; restart the process, or call `EventManager::clear()` and register its listeners again.
+When listener attributes or method names change, clear the `_events` cache before building new event managers. An existing manager keeps its in-memory metadata; restart the process, or call `clear()` and register its listeners again.
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
-- Public and protected methods can be discovered. Private handlers won’t be registered.
-- If the `On` priority argument is omitted, the event manager uses `EventManager::PRIORITY_NORMAL`.
-- For named `Event` dispatch, handler parameters must match what is actually passed: the `Event` instance first, then event data values only (keys are not passed).
-- For object event dispatch, the handler receives only the event object.
+- `removeListener()` must receive the same listener instance that was passed to `addListener()` so its bound method callbacks can be matched.
+- Listener method parameters must match the dispatch arguments in the contract table; the manager does not adapt payload names to parameter names.
 - Clearing the `_events` cache does not update metadata already loaded by an existing `EventManager`.
 
 ## Related

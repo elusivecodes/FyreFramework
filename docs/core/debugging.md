@@ -10,10 +10,7 @@ It gives `var_dump()` and tools that respect `__debugInfo()` a structured view o
 - [Masking sensitive values](#masking-sensitive-values)
   - [Mask an entire property](#mask-an-entire-property)
   - [Mask nested array keys](#mask-nested-array-keys)
-- [How values are displayed](#how-values-are-displayed)
-- [Method guide](#method-guide)
-  - [`DebugTrait`](#debugtrait)
-- [Behavior notes](#behavior-notes)
+- [Debug output](#debug-output)
 - [Related](#related)
 
 ## Start here
@@ -33,7 +30,7 @@ class Job
 }
 ```
 
-That gives the class a `__debugInfo()` implementation so debuggers and `var_dump()` can show useful data without dumping every raw property blindly.
+The trait supplies `__debugInfo()`, which is used by `var_dump()` and other tools that respect PHP's debug representation.
 
 ## Masking sensitive values
 
@@ -75,37 +72,21 @@ class ConnectionConfig
 }
 ```
 
-## How values are displayed
+## Debug output
 
-`DebugTrait` keeps debug output readable by applying a few rules:
+Calling `__debugInfo()` returns a structured array containing the class name and initialized properties visible from the class's scope.
 
-- masked values become `[*****]`, except `null` and empty strings
-- other scalar values and `null` are left as they are
-- arrays are expanded only to a limited depth
-- non-scalar objects and resources are reduced to a type label such as `[stdClass]`
+| Value | Debug representation |
+| --- | --- |
+| a masked non-empty value | `[*****]` |
+| a scalar, `null`, or an empty string | the original value |
+| an array within the depth limit | a recursively processed array |
+| an array beyond `DEBUG_MAX_DEPTH` (default `3`) | `[...]` |
+| an object or resource | its debug type, such as `[stdClass]` |
 
-## Method guide
+Uninitialized typed properties are skipped. Once an array reaches the depth limit it is collapsed as a whole, so nested masking rules are not applied below that point.
 
-### `DebugTrait`
-
-#### **Get debug info** (`__debugInfo()`)
-
-Returns the structured array used for debug output.
-
-```php
-use Fyre\Utility\FileSystem\File;
-
-$info = new File('/path/to/file.txt')->__debugInfo();
-```
-
-## Behavior notes
-
-A few practical details are worth keeping in mind:
-
-- `__debugInfo()` includes only properties visible to the current scope.
-- Uninitialized typed properties are skipped.
-- Arrays deeper than the maximum debug depth are collapsed before nested-key masking can continue.
-- If you use `DebugTrait`, treat the output as potentially user-visible and mask secrets by default.
+Treat debug output as potentially visible outside local development. Mark secrets explicitly rather than relying on their current value or nesting depth.
 
 ## Related
 

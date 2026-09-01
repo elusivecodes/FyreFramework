@@ -1,39 +1,27 @@
 # Logging
 
-Use the logging subsystem when you want to configure handlers and write PSR-3 log messages.
-
-Most applications configure one or more handlers, then write messages through `LogManager`.
+Configure one or more PSR-3 handlers, then use `Fyre\Log\LogManager` to write to a specific handler or every handler that matches a level and scope.
 
 ## Table of Contents
 
 - [Start here](#start-here)
 - [Configuring handlers](#configuring-handlers)
   - [Common handler options](#common-handler-options)
-  - [Scope filtering example](#scope-filtering-example)
   - [`FileLogger` options](#filelogger-options)
   - [`ConsoleLogger` options](#consolelogger-options)
   - [Example configuration](#example-configuration)
 - [Built-in handlers](#built-in-handlers)
-  - [File handler](#file-handler)
-  - [Console handler](#console-handler)
-  - [Array handler](#array-handler)
 - [Writing log messages](#writing-log-messages)
   - [Fan-out with `handle()`](#fan-out-with-handle)
   - [A single handler with `use()`](#a-single-handler-with-use)
   - [Escape interpolation placeholders](#escape-interpolation-placeholders)
-- [Method guide](#method-guide)
-  - [`LogManager`](#logmanager)
+- [Managing handlers](#managing-handlers)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
 ## Start here
 
-Most applications do two things:
-
-1. configure one or more handlers under the `Log` config key, and
-2. call `LogManager::handle()` (fan-out) or `LogManager::use()` (a single handler).
-
-Minimal config (for example `config/app.php`):
+Configure a handler under the `Log` key in `config/app.php`:
 
 ```php
 use Fyre\Log\Handlers\FileLogger;
@@ -64,10 +52,12 @@ Handler configuration is read from the `Log` key in your config (see [Config](..
 
 These options apply to all handlers that extend `Fyre\Log\Logger`:
 
-- `className` (`class-string<Fyre\Log\Logger>`): the handler class to build.
-- `levels` (`string|string[]|null`): allowed levels, or `null` to allow all levels (default: `null`).
-- `scopes` (`string|string[]|null`): allowed scopes, `[]` to match only unscoped messages, or `null` to allow all scopes (default: `[]`).
-- `dateFormat` (`string`): date format used when the handler includes timestamps in formatted output (default: `Y-m-d H:i:s`).
+| Option | Type | Default | Purpose |
+| --- | --- | --- | --- |
+| `className` | `class-string<Fyre\Log\Logger>` | required | handler class to build |
+| `levels` | `string|string[]|null` | `null` | allowed levels; `null` allows every level |
+| `scopes` | `string|string[]|null` | `[]` | allowed scopes; `[]` matches only unscoped messages and `null` matches every scope |
+| `dateFormat` | `string` | `Y-m-d H:i:s` | timestamp format used by handlers that include dates |
 
 Both `levels` and `scopes` accept a single string, a list of strings, or `null`:
 
@@ -90,51 +80,39 @@ return [
 ];
 ```
 
-### Scope filtering example
+Scope matching is exact:
 
-The default `scopes` value is `[]`, which means the handler matches only unscoped messages (`scope: null`).
+| Configured `scopes` | Messages accepted |
+| --- | --- |
+| `[]` | unscoped messages only |
+| `null` | all scoped and unscoped messages |
+| `'payments'` | messages whose scope includes `payments` |
+| `['payments', 'security']` | messages whose scope includes either value |
 
-```php
-use Fyre\Log\Handlers\FileLogger;
-
-return [
-    'Log' => [
-        // scopes: [] (default) → matches only unscoped messages
-        'default' => [
-            'className' => FileLogger::class,
-        ],
-
-        // matches only messages logged with scope: 'payments'
-        'payments' => [
-            'className' => FileLogger::class,
-            'scopes' => ['payments'],
-        ],
-
-        // scopes: null → matches any scope (including unscoped)
-        'all' => [
-            'className' => FileLogger::class,
-            'scopes' => null,
-        ],
-    ],
-];
-```
+These filters are applied by `LogManager::handle()`. Calling PSR-3 methods directly on a handler returned by `use()` writes to that handler without running its level or scope filter.
 
 ### `FileLogger` options
 
-`FileLogger` (the `Fyre\Log\Handlers\FileLogger` handler) supports these additional options:
+`FileLogger` (`Fyre\Log\Handlers\FileLogger`) supports these additional options:
 
-- `path` (`string`): the folder to write log files into (default: `<system temp>/fyre/logs`). If it does not exist, the handler attempts to create it. For durable production logs, configure an application-owned path explicitly.
-- `file` (`string|null`): the base filename (without extension) to write to. When `null`, the log level is used (one file per level).
-- `suffix` (`string|null`): a suffix appended to the base filename. When running under CLI, `-cli` is used by default when `suffix` is not specified.
-- `extension` (`string`): file extension without the leading dot (default: `log`). Set to an empty string to omit the extension.
-- `maxSize` (`int`): the file size threshold (in bytes) that triggers rotation (default: `1048576`).
-- `mask` (`int|null`): permissions applied when creating a new log file (only when the target file does not already exist).
+| Option | Type | Default | Purpose |
+| --- | --- | --- | --- |
+| `path` | `string` | `<system temp>/fyre/logs` | directory containing log files |
+| `file` | `string|null` | `null` | base file name; `null` uses the log level |
+| `suffix` | `string|null` | `null` | suffix after the base name; CLI defaults to `-cli` when omitted |
+| `extension` | `string` | `log` | extension without a leading dot; an empty string omits it |
+| `maxSize` | `int` | `1048576` | size in bytes at which the active file is rotated |
+| `mask` | `int|null` | `null` | permissions applied when a new file is created |
+
+The directory is created when necessary. For durable production logs, configure an application-owned path explicitly.
 
 ### `ConsoleLogger` options
 
-`ConsoleLogger` (the `Fyre\Log\Handlers\ConsoleLogger` handler) supports this additional option:
+`ConsoleLogger` (`Fyre\Log\Handlers\ConsoleLogger`) adds one option:
 
-- `stream` (`string`): the writable stream URI (default: `php://stderr`).
+| Option | Type | Default | Purpose |
+| --- | --- | --- | --- |
+| `stream` | `string` | `php://stderr` | writable stream URI |
 
 ### Example configuration
 
@@ -164,26 +142,19 @@ return [
 
 ## Built-in handlers
 
-Fyre includes a small set of handlers under `Fyre\Log\Handlers\*`. You can define custom handlers by extending `Fyre\Log\Logger` and referencing the class in `className`.
+Fyre includes these handlers under `Fyre\Log\Handlers\*`. Custom handlers extend `Fyre\Log\Logger` and are selected through `className`.
 
-### File handler
+| Handler | Use |
+| --- | --- |
+| `FileLogger` | writes timestamped messages to files and rotates each active file at `maxSize` |
+| `ConsoleLogger` | writes timestamped messages to a stream, normally standard error |
+| `ArrayLogger` | keeps messages without timestamps in memory for inspection, primarily in tests |
 
-`FileLogger` writes formatted messages to files under `path`. By default, it writes one file per log level (for example, `error.log` for web requests and `error-cli.log` for CLI processes). Set `file` to write all levels into a single file.
-
-For durable production logs, prefer a writable application folder like `tmp/logs` over the temporary default.
-
-### Console handler
-
-`ConsoleLogger` writes timestamped messages to `php://stderr` by default. Set `stream` to `php://stdout` when logs should be written to standard output instead.
-
-### Array handler
-
-`ArrayLogger` stores formatted messages in memory for later inspection. This is primarily useful for tests and assertions.
-
-For most test assertions, prefer [Log Testing](../testing/logging.md).
+By default, `FileLogger` uses one file per level: `error.log` for a web request and `error-cli.log` for a CLI process. Set `file` to combine levels in one file. For test assertions, prefer [Log Testing](../testing/logging.md).
 
 ## Writing log messages
-Handlers are PSR-3 loggers, so you can call `$logger->info()`, `$logger->error()`, etc.
+
+Handlers are PSR-3 loggers, so you can call `$logger->info()`, `$logger->error()`, and the other standard level methods.
 
 ### Fan-out with `handle()`
 
@@ -220,137 +191,29 @@ $logs->handle('info', 'User id: {id}; literal placeholder: \{id}', ['id' => 123]
 
 The escaped `\{id}` placeholder is written as `{id}` without the backslash.
 
-## Method guide
+Context values are serialized when possible. Values that cannot be converted are written as `[unhandled type Type]`.
 
-This section focuses on the methods you’re most likely to use directly when configuring handlers and writing messages.
+When they are not supplied in the context array, the special placeholders `{get_vars}`, `{post_vars}`, `{server_vars}`, `{session_vars}`, and `{backtrace}` read directly from request or runtime state. They can expose secrets or personal data, so avoid them in production logs unless the output is known to be safe.
 
-Examples below assume `$logs` is a `LogManager` instance.
+## Managing handlers
 
-### `LogManager`
-
-#### **Dispatch a message to handlers** (`handle()`)
-
-Validate the log level and forward the message to all configured handlers that can handle the level and scope.
-
-Arguments:
-- `$level` (`string`): the log level (one of `emergency`, `alert`, `critical`, `error`, `warning`, `notice`, `info`, `debug`).
-- `$message` (`string`): the message to log.
-- `$data` (`array<string, mixed>`): context values for message interpolation (defaults to `[]`).
-- `$scope` (`array|string|null`): the scope(s) for handler filtering (defaults to `null`).
-
-```php
-$logs->handle('warning', 'Rate limit exceeded for {ip}', ['ip' => '127.0.0.1'], 'security');
-```
-
-#### **Get a handler** (`use()`)
-
-Returns the handler for a config key. The first call creates it from config, and later calls return the same handler.
-
-Arguments:
-- `$key` (`string`): the handler config key (defaults to `default`).
-
-```php
-$logs->use()->error('Something went wrong');
-```
-
-#### **Build a handler instance** (`build()`)
-
-Build a one-off handler from an options array without storing it on the manager.
-
-Arguments:
-- `$options` (`array<string, mixed>`): handler options including `className`.
-
-```php
-use Fyre\Log\Handlers\ArrayLogger;
-
-$logger = $logs->build([
-    'className' => ArrayLogger::class,
-    'levels' => ['debug', 'info'],
-]);
-```
-
-#### **Register a handler config** (`setConfig()`)
-
-Register a handler config at runtime.
-
-Arguments:
-- `$key` (`string`): the handler key to register.
-- `$options` (`array<string, mixed>`): handler options including `className`.
-
-```php
-use Fyre\Log\Handlers\ArrayLogger;
-
-$logs->setConfig('buffer', [
-    'className' => ArrayLogger::class,
-    'levels' => ['debug', 'info'],
-]);
-```
-
-#### **Read stored configuration** (`getConfig()`)
-
-Returns the stored config array. When called with no key, it returns all stored configs.
-
-Arguments:
-- `$key` (`string|null`): the handler key, or `null` to return all configs.
-
-```php
-$all = $logs->getConfig();
-$default = $logs->getConfig('default');
-```
-
-#### **Check for stored configuration** (`hasConfig()`)
-
-Returns whether a handler config exists.
-
-Arguments:
-- `$key` (`string`): the handler config key (defaults to `default`).
-
-```php
-$configured = $logs->hasConfig('buffer');
-```
-
-#### **Check whether a handler is loaded** (`isLoaded()`)
-
-Returns whether a shared handler instance has been created by `use()` or `handle()`.
-
-Arguments:
-- `$key` (`string`): the handler config key (defaults to `default`).
-
-```php
-$loaded = $logs->isLoaded('buffer');
-```
-
-#### **Unload a handler** (`unload()`)
-
-Remove a handler instance and its stored configuration.
-
-Arguments:
-- `$key` (`string`): the handler config key (defaults to `default`).
-
-```php
-$logs->unload('buffer');
-```
-
-#### **Clear all handlers** (`clear()`)
-
-Remove all handler instances and stored configurations.
-
-```php
-$logs->clear();
-```
+| Task | Method | Behavior |
+| --- | --- | --- |
+| Write to matching handlers | `handle($level, $message, $data = [], $scope = null)` | validates the level, then writes to every configured handler whose level and scope filters match |
+| Resolve a shared handler | `use($key = 'default')` | builds the configured handler on first use and reuses it afterward |
+| Build a one-off handler | `build($options)` | builds from `className` without storing the result |
+| Add runtime config | `setConfig($key, $options)` | rejects a key that is already configured |
+| Read config | `getConfig($key = null)` | returns one config or all configs |
+| Check config | `hasConfig($key = 'default')` | reports whether the key is configured |
+| Check loaded state | `isLoaded($key = 'default')` | reports whether the shared handler has been built |
+| Unload a handler | `unload($key = 'default')` | removes both the shared instance and its config |
+| Reset the manager | `clear()` | removes every shared instance and config |
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
-- `LogManager::handle()` validates levels against the supported list and is case-sensitive, so `error` is valid but `ERROR` is not.
-- Scope filtering is opt-in: when a handler has the default `scopes` value of `[]`, it matches only when `scope` is `null`. Passing a scope will skip those handlers unless `scopes` is configured (or `scopes` is `null`).
-- `FileLogger` creates its configured `path` when necessary and rotates the active file after it reaches `maxSize`.
-- `ConsoleLogger` writes timestamped messages to `php://stderr` by default.
-- `ArrayLogger` keeps messages in memory only and stores them without timestamps.
-- Message interpolation supports `{key}` placeholders from your context array and special keys like `{get_vars}`, `{post_vars}`, `{server_vars}`, `{session_vars}`, and `{backtrace}`. Escape a placeholder with a backslash (for example, `\{id}`) to write it literally without the backslash.
-- Context values that cannot be converted to strings are written using an `[unhandled type Type]` placeholder.
-- Be careful with the special interpolation keys: `{get_vars}`, `{post_vars}`, `{server_vars}`, `{session_vars}`, and `{backtrace}` can include secrets or personal data. Avoid logging them in production unless you are sure the output is safe.
+- `LogManager::handle()` accepts `emergency`, `alert`, `critical`, `error`, `warning`, `notice`, `info`, and `debug`. Level matching is case-sensitive, and any other value causes a `BadMethodCallException`.
+- `FileLogger` throws when its path cannot be created or `maxSize` is not positive. Once constructed, file and stream write failures are suppressed rather than raised as logging exceptions.
+- `ConsoleLogger` requires `stream` to be a string. An unavailable stream leaves the handler unable to write but does not make later `log()` calls throw.
 
 ## Related
 

@@ -1,45 +1,30 @@
 # Language (`Lang`)
 
-Use `Fyre\Core\Lang` to load translated messages from language files and return the best match for the current locale.
-
-When you provide placeholder data, messages are formatted using ICU `MessageFormatter`.
+`Fyre\Core\Lang` loads translated messages for the current locale. Messages with placeholder data are formatted with ICU `MessageFormatter`.
 
 ## Table of Contents
 
 - [Start here](#start-here)
 - [Language files and keys](#language-files-and-keys)
-- [Loading and precedence](#loading-and-precedence)
-  - [Locale resolution](#locale-resolution)
-  - [Example: path precedence](#example-path-precedence)
-- [Message formatting](#message-formatting)
-- [Where `Lang` is used](#where-lang-is-used)
-- [Method guide](#method-guide)
-  - [Looking up messages](#looking-up-messages)
-  - [Managing paths](#managing-paths)
-  - [Setting locales](#setting-locales)
-  - [Clearing loaded data](#clearing-loaded-data)
+- [Locale fallback](#locale-fallback)
+- [Loading and overriding](#loading-and-overriding)
+- [Formatting messages](#formatting-messages)
+- [Managing language state](#managing-language-state)
+- [Framework usage](#framework-usage)
 - [Behavior notes](#behavior-notes)
 - [Related](#related)
 
 ## Start here
 
-Use `Lang` when you want to:
-
-- load translated messages from language files
-- return the best match for the current locale
-- format messages with placeholder data
-
-In application code, you will often use the global `__()` helper as a shortcut for `Lang::get()`; see [Helpers](helpers.md).
-
-In a typical application, `Engine` adds the app language path when `LANG` is defined, and also adds the framework’s built-in `lang` directory. Most applications just load language files lazily as keys are requested and call `__()`:
+In a typical application, `Engine` adds the directory identified by the `LANG` constant and the framework's built-in `lang` directory as language paths. Lookups load the required files lazily:
 
 ```php
-$message = __('Validation.required', ['field' => 'email']);
+$message = __('Validation.required', [
+    'field' => 'email',
+]);
 ```
 
-`__()` can return a string (for message keys) or an array (when you request a whole file key like `__('Validation')`).
-
-If you prefer dependency injection, inject `Lang` and call `get()`:
+The `__()` helper delegates to the shared `Lang` instance; see [Helpers](helpers.md). You can inject `Lang` when you prefer an explicit dependency:
 
 ```php
 use Fyre\Core\Lang;
@@ -50,95 +35,68 @@ function handler(Lang $lang): string|null
 }
 ```
 
-If you are composing the runtime manually, or want to extend the default language paths, add paths during bootstrapping:
+When composing the runtime manually, add language paths during bootstrapping:
 
 ```php
-use Fyre\Core\Lang;
-
-function boot(Lang $lang): void
-{
-    $lang->addPath('/path/to/lang');
-}
+$lang->addPath('/path/to/lang');
 ```
 
 ## Language files and keys
 
-`Lang` expects each language file to be a PHP file that returns an array. Files are organized by locale directory inside each configured path:
+Each language file is a PHP file that returns an array and lives under a locale directory:
 
-- `<path>/<locale>/<File>.php`
-
-Lookup keys use dot notation:
-
-- The **first segment** is treated as the language **file name** (used as-is).
-- The **remaining segments** index into the returned array (also using dot notation).
-
-Example lookups:
-
-```php
-$allValidationMessages = __('Validation');
-
-$requiredMessage = __('Validation.required', [
-    'field' => 'email',
-]);
+```text
+<language path>/<locale>/<File>.php
 ```
 
-## Loading and precedence
-
-`Lang` caches language data per file name. The first time you request a key like `Validation.required`, `Lang` loads and merges all matching `Validation.php` files and stores the merged result for subsequent lookups.
-
-Changing locales clears that cache. Adding or removing paths affects only future loads unless you also clear the loaded data.
-
-When loading a file, two kinds of precedence are applied:
-
-- **Locale precedence**: fallbacks are loaded first, and more-specific / higher-precedence locales override earlier values.
-- **Path precedence**: paths are searched in the order returned by `Lang::getPaths()`, and later paths override earlier paths.
-
-### Locale resolution
-
-`Lang` uses two locale values:
-
-- **Current locale**: `Lang::getLocale()` / `Lang::setLocale()`
-- **Default locale**: `Lang::getDefaultLocale()` / `Lang::setDefaultLocale()` (defaults to `App.defaultLocale` from [Config](config.md), falling back to the system locale)
-
-For each of these (default and current), locales are:
-
-- canonicalized (so `en-US` becomes `en_US`)
-- normalized to lowercase for folder lookups (so `en_US` becomes `en_us`)
-- split on `_` to build variants from least-specific to most-specific (for example, `en`, then `en_us`)
-
-Example locale folders:
-
-- `en-US` → `en_us` (falls back to `en`)
-- `en_US` → `en_us` (falls back to `en`)
-
-If the current locale differs from the default locale, default-locale variants are included as fallbacks (lower precedence than the current locale variants).
-
-### Example: path precedence
-
-When the same language file exists in multiple paths, later paths override earlier paths.
-
-For example, if `/path/to/lang/en_us/Validation.php` contains a `required` message, and your app adds a second path with an override:
+The first segment of a lookup key is the file name. Remaining segments address values within its returned array:
 
 ```php
-use Fyre\Core\Lang;
-
-function boot(Lang $lang): void
-{
-    $lang->addPath('/path/to/lang');
-    $lang->addPath('/path/to/lang-overrides');
-}
+$messages = __('Validation');
+$required = __('Validation.required', ['field' => 'email']);
 ```
 
-Then messages in `/path/to/lang-overrides/<locale>/...` take precedence over messages in `/path/to/lang/<locale>/...` for the same keys.
+File names and array keys are used as written. Locale directory names are lowercase, such as `en` and `en_us`.
 
-## Message formatting
+## Locale fallback
 
-`Lang::get()` formats a message only when:
+`Lang` tracks a default locale and an optional current locale. The default initially comes from `App.defaultLocale`; if that setting is absent, PHP's system locale is used.
 
-- the resolved value is a non-empty string, and
-- you pass a non-empty `$data` array.
+Locale values are canonicalized and converted to lowercase for directory lookup. Each locale is then expanded from least to most specific:
 
-Formatting is performed using `MessageFormatter::formatMessage()` with the active locale. This supports ICU-style placeholders, including numeric (`{0}`) and named (`{field}`) arguments:
+```text
+en-US → en → en_us
+```
+
+When the current locale differs from the default locale, default-locale variants are loaded first as fallbacks. Current-locale variants then override them.
+
+```php
+$lang->setDefaultLocale('en-US');
+$lang->setLocale('fr-CA');
+```
+
+Passing `null` to `setLocale()` makes the current locale fall back to the default. Passing `null` to `setDefaultLocale()` makes it fall back to PHP's system locale. Either setter clears the loaded-message cache so subsequent lookups use the new locale order.
+
+## Loading and overriding
+
+The first lookup for a file loads all matching files and caches the merged array. Files are merged in this order:
+
+1. Default locale before current locale.
+2. Less-specific locale before more-specific locale.
+3. Earlier language path before later language path.
+
+Later values therefore replace earlier values. To override application translations, add the override directory after the base directory:
+
+```php
+$lang->addPath('/path/to/lang');
+$lang->addPath('/path/to/lang-overrides');
+```
+
+Paths are normalized with `Fyre\Utility\Path::resolve()`, and equivalent paths are not added twice. Adding or removing a path does not invalidate files already loaded; change paths before lookup, or call `clear()` and add the required paths again.
+
+## Formatting messages
+
+`get()` formats a result only when the result is a non-empty string and the supplied data array is not empty. Both numeric and named ICU placeholders are supported:
 
 ```php
 $message = __('Validation.between', [
@@ -148,111 +106,38 @@ $message = __('Validation.between', [
 ]);
 ```
 
-If the resolved value is an array (for example, requesting the whole file key), `Lang::get()` returns the array as-is.
+Requesting a whole file returns its array without formatting.
 
-## Where `Lang` is used
+## Managing language state
 
-- [Form Validators](../form/validators.md) — `Fyre\Form\Validator` looks up default rule messages under `Validation.*` when a rule fails and no explicit message is provided.
-- [ORM](../orm/index.md) — rules in `Fyre\ORM\RuleSet` look up messages under `RuleSet.*`.
-- Console tooling — `make:lang` defaults to `Lang::getDefaultLocale()` and the first configured language path (see [Make commands](../console/commands.md#make-commands)).
+| Task | Method | Behavior |
+| --- | --- | --- |
+| Look up a message or file | `get($key, $data = [])` | loads the file lazily and formats a non-empty string when data is supplied |
+| Read the active locale | `getLocale()` | returns the current locale, or the default locale when none is set |
+| Change the active locale | `setLocale($locale = null)` | sets the current locale and clears loaded messages |
+| Read the default locale | `getDefaultLocale()` | returns the configured default or PHP's system locale |
+| Change the default locale | `setDefaultLocale($locale = null)` | sets the default locale and clears loaded messages |
+| Add a language path | `addPath($path, $prepend = false)` | normalizes and adds a unique path |
+| Remove a language path | `removePath($path)` | normalizes the path before matching it |
+| Inspect language paths | `getPaths()` | returns paths in merge order |
+| Reset language data | `clear()` | removes loaded messages and all language paths; locales are retained |
 
-## Method guide
+## Framework usage
 
-This section focuses on the `Lang` methods you’ll use day-to-day: configuring paths, looking up messages, and switching locales.
-
-Unless noted otherwise, examples below assume you already have a `Lang` instance (for example, via dependency injection).
-
-### Looking up messages
-
-#### **Get a message (or file array)** (`get()`)
-
-Looks up a key using dot notation. If you request just the file name (no dot), you’ll get the file’s array (when available).
-
-In application code, `__()` is a shorthand for `Lang::get()`; see [Helpers](helpers.md).
-
-Arguments:
-- `$key` (`string`): a key like `Validation.required`.
-- `$data` (`array`): optional placeholder data for message formatting.
-
-```php
-$message = __('Validation.required', ['field' => 'email']);
-```
-
-### Managing paths
-
-#### **Add a language path** (`addPath()`)
-
-Adds a directory to search for language files. Paths are normalized, and duplicates are ignored.
-
-When multiple paths define the same key, later paths win. Use `$prepend = true` only when you want the new path to have *lower* precedence.
-
-Arguments:
-- `$path` (`string`): the path to add.
-- `$prepend` (`bool`): whether to prepend the path.
-
-```php
-$lang->addPath('/path/to/lang');
-```
-
-#### **Inspect or remove paths** (`getPaths()` / `removePath()`)
-
-`removePath()` normalizes the supplied path before comparison, just like `addPath()`.
-
-```php
-$paths = $lang->getPaths();
-$lang->removePath('/path/to/lang');
-```
-
-### Setting locales
-
-#### **Get or set the current locale** (`getLocale()` / `setLocale()`)
-
-Sets the active locale used for lookups and formatting. Changing the locale clears the internal cache of loaded language data.
-
-Arguments:
-- `$locale` (`string|null`): the locale to set (or `null` to fall back to the default locale).
-
-```php
-$lang->setLocale('en-US');
-$locale = $lang->getLocale();
-```
-
-#### **Get or set the default locale** (`getDefaultLocale()` / `setDefaultLocale()`)
-
-Sets the default locale used when no current locale is set. Changing the default locale clears the internal cache of loaded language data.
-
-Arguments:
-- `$locale` (`string|null`): the locale to set (or `null` to fall back to the system default locale).
-
-```php
-$lang->setDefaultLocale('en');
-$default = $lang->getDefaultLocale();
-```
-
-### Clearing loaded data
-
-#### **Clear loaded language data** (`clear()`)
-
-Clears both loaded messages and configured paths.
-
-```php
-$lang->clear();
-```
+| Feature | Language keys |
+| --- | --- |
+| [Form Validators](../form/validators.md) | default validation messages under `Validation.*` |
+| [ORM](../orm/index.md) | rule messages under `RuleSet.*` |
+| [Make Commands](../console/commands.md#make-commands) | `make:lang` uses the default locale and first configured language path |
 
 ## Behavior notes
 
-A few behaviors are worth keeping in mind:
-
-- Missing keys return `null`. If you request just a file name and the file is not found, you get an empty array.
-- Locale directory names are matched using lowercase (for example, `en_us`), because resolved locale values are lowercased for folder lookups.
-- Locale variants are derived by splitting on `_` *after* canonicalization, so locales like `en-US` also fall back to `en`.
-- `setLocale()` and `setDefaultLocale()` clear the internal cache of loaded language data.
-- If you add or remove paths after a file has already been loaded, previously loaded files are not automatically reloaded.
-- If message formatting fails, `Lang::get()` returns an empty string.
+- A missing nested key returns `null`; requesting a missing file by its file-only key returns an empty array.
+- If ICU message formatting fails, `get()` returns an empty string.
+- Language files are expected to return arrays.
 
 ## Related
 
 - [Config](config.md)
+- [Helpers](helpers.md)
 - [Container](container.md)
-- [Form Validators](../form/validators.md)
-- [ORM](../orm/index.md)

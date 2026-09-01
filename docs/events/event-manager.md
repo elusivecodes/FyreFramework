@@ -19,21 +19,12 @@ It supports direct callbacks, listener classes that use `#[On]`, the framework's
 - [Dispatching from classes](#dispatching-from-classes)
 - [Listener ordering](#listener-ordering)
 - [Parent event managers](#parent-event-managers)
-- [Method guide](#method-guide)
-  - [Listener registration](#listener-registration)
-  - [Dispatching](#dispatching)
-  - [Utilities](#utilities)
-- [Behavior notes](#behavior-notes)
+- [Manager operations](#manager-operations)
 - [Related](#related)
 
 ## Start here
 
-The usual event workflow is:
-
-1. Get an `EventManager` instance.
-2. Register a callback with `on()` or a listener class with `addListener()`.
-3. Dispatch a named `Event` or another event object.
-4. Stop propagation when you need later listeners to be skipped.
+Resolve the event manager, register a callback, then trigger the event:
 
 ```php
 use Fyre\Event\Event;
@@ -116,9 +107,14 @@ For the fuller listener-class workflow, see [Event Listeners](listeners.md).
 
 ## Dispatching events
 
-`dispatch()` returns the event object, so you can inspect any changes made by listeners afterward.
+`dispatch()` returns the same event object, so you can inspect changes made by listeners afterward.
 
 `EventManager` implements PSR-14 `EventDispatcherInterface` and `ListenerProviderInterface`. The framework `Event` class implements `StoppableEventInterface`.
+
+| Event object | Listener key | Callback arguments | Propagation stops when |
+| --- | --- | --- | --- |
+| `Fyre\Event\Event` | `Event::getName()` | the `Event`, followed by the values from `Event::getData()` | `stopPropagation()` is called or a listener sets the result to `false` |
+| any other object | the object's exact class name | the event object only | the object implements `StoppableEventInterface` and reports that propagation is stopped |
 
 ### Dispatching a named `Event`
 
@@ -170,7 +166,7 @@ To make an object event stoppable, implement `StoppableEventInterface` and retur
 
 ### Using `trigger()`
 
-`trigger()` is a convenience for dispatching a named `Event`. It creates a new `Event`, dispatches it, and returns the `Event` instance.
+`trigger()` is a convenience for dispatching a named `Event`. It creates an event with a null subject, dispatches it, and returns the `Event` instance.
 
 ```php
 use Fyre\Event\Event;
@@ -199,13 +195,13 @@ $subject = $event->getSubject();
 $result = $event->getResult();
 ```
 
-The main methods are:
-
-- `getName()` returns the event identifier.
-- `getSubject()` returns the object or value the event relates to.
-- `getData()` and `setData()` read or replace the positional values passed to named-event listeners.
-- `getResult()` and `setResult()` let listeners share a result through the event.
-- `stopPropagation()` prevents later listeners and parent managers from receiving the event.
+| Value | Methods | Dispatch behavior |
+| --- | --- | --- |
+| name | `getName()` | selects the registered listener group |
+| subject | `getSubject()` | available to listeners through the event; not passed separately |
+| data | `getData()`, `setData()` | values are passed after the event object; array keys are discarded |
+| result | `getResult()`, `setResult()` | a result of `false` stops propagation after the current listener |
+| propagation state | `isPropagationStopped()`, `stopPropagation()` | stopped events skip later listeners and the parent manager |
 
 ## Dispatching from classes
 
@@ -247,6 +243,8 @@ Callbacks are executed in ascending priority order (lower values run first).
 
 If `on()` is called without a priority, `PRIORITY_NORMAL` is used.
 
+The sorted callback list is cached after first use. Calling `on()` or `off()` invalidates the cached order for that listener group.
+
 ## Parent event managers
 
 Use a parent event manager when you want local listeners plus a shared higher-level listener set.
@@ -258,132 +256,19 @@ When a parent manager is configured:
 
 This is useful when you want request-scoped or subsystem-specific listeners in a child manager, while still keeping shared process-wide listeners in a parent manager.
 
-## Method guide
+## Manager operations
 
-This section covers the methods you are most likely to use directly.
-
-### Listener registration
-
-#### **Register a callback** (`on()`)
-
-Register a callback for an event identifier (a named event string or an event object class name).
-
-Arguments:
-- `$name` (`string`): the event identifier.
-- `$callback` (`callable`): the callback to register.
-- `$priority` (`int|null`): the callback priority (lower values run first).
-
-```php
-use Fyre\Event\EventManager;
-
-$eventManager->on('User.created', $callback, EventManager::PRIORITY_HIGH);
-```
-
-#### **Remove callbacks** (`off()`)
-
-Remove callbacks for an event identifier, optionally removing only a single callback.
-
-Arguments:
-- `$name` (`string`): the event identifier.
-- `$callback` (`callable|null`): the callback to remove, or `null` to remove all callbacks for the identifier.
-
-```php
-$eventManager->off('User.created');
-```
-
-#### **Register a listener class** (`addListener()`)
-
-Register a listener object that uses `#[On]` attributes.
-
-Arguments:
-- `$listener` (`EventListenerInterface`): the listener object to register.
-
-```php
-$eventManager->addListener($listener);
-```
-
-#### **Remove a listener class** (`removeListener()`)
-
-Remove callbacks previously registered via `addListener()`. Pass the same listener instance that was registered.
-
-Arguments:
-- `$listener` (`EventListenerInterface`): the listener object to unregister.
-
-```php
-$eventManager->removeListener($listener);
-```
-
-### Dispatching
-
-#### **Dispatch an event** (`dispatch()`)
-
-Dispatch an event object to all matching listeners.
-
-Arguments:
-- `$event` (`object`): the event to dispatch.
-
-```php
-use Fyre\Event\Event;
-
-$eventManager->dispatch(new Event('Mail.sent'));
-```
-
-#### **Trigger a named event** (`trigger()`)
-
-Create and dispatch a named `Event` with a null subject.
-
-Arguments:
-- `$name` (`string`): the event name.
-- `...$args` (`mixed`): the event data values.
-
-```php
-$event = $eventManager->trigger('Cache.miss', 'users:42');
-```
-
-### Utilities
-
-#### **Check whether callbacks exist** (`has()`)
-
-Check whether any callbacks are registered for an event identifier on the current manager.
-
-Arguments:
-- `$name` (`string`): the event identifier.
-
-```php
-if ($eventManager->has('User.created')) {
-    // ...
-}
-```
-
-#### **Resolve callbacks for an event** (`getListenersForEvent()`)
-
-Returns the matching callbacks registered on the current manager in priority order. Parent-manager callbacks are dispatched separately and are not included in this list.
-
-Arguments:
-- `$event` (`object`): the event used to resolve the identifier.
-
-```php
-$listeners = $eventManager->getListenersForEvent($event);
-```
-
-#### **Clear all callbacks** (`clear()`)
-
-Remove all registered callbacks (including those registered via listener classes) and any cached ordering.
-
-```php
-$eventManager->clear();
-```
-
-## Behavior notes
-
-A few behaviors are worth keeping in mind:
-
-- Listener ordering is by ascending priority (lower values run first).
-- For `Event`, callbacks receive the `Event` instance first, then the event data values only (keys are not passed).
-- For object events, listeners receive only the event object.
-- If the event implements `StoppableEventInterface` (including `Event`), dispatch stops before the next listener when propagation has been stopped, and parent dispatch is skipped.
-- For `Event`, if a listener sets the result to `false`, the event manager calls `Event::stopPropagation()` after that listener runs.
-- `getListenersForEvent()` returns callbacks from the current manager only; `dispatch()` handles parent managers separately.
+| Task | Method | Notes |
+| --- | --- | --- |
+| Register a callback | `on($name, $callback, $priority = null)` | uses `PRIORITY_NORMAL` when priority is omitted |
+| Remove callbacks | `off($name, $callback = null)` | removes the matching callback, or every callback for the name when none is supplied |
+| Register an attributed listener | `addListener($listener)` | discovers its `#[On]` methods |
+| Remove an attributed listener | `removeListener($listener)` | pass the same listener instance that was registered |
+| Dispatch an object | `dispatch($event)` | returns the dispatched object |
+| Trigger a named event | `trigger($name, ...$args)` | creates an `Event` with a null subject and `$args` as its data |
+| Check a listener group | `has($name)` | checks only the current manager |
+| Resolve callbacks | `getListenersForEvent($event)` | returns current-manager callbacks in priority order; parent callbacks are not included |
+| Remove all callbacks | `clear()` | also clears discovered listener metadata and cached ordering held by this manager |
 
 ## Related
 
