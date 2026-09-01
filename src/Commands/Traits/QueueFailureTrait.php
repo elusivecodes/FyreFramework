@@ -13,7 +13,7 @@ use function explode;
 use function trim;
 
 /**
- * Provides failed queue message filtering.
+ * Provides failed queue job filtering.
  *
  * @internal
  *
@@ -22,13 +22,13 @@ use function trim;
 trait QueueFailureTrait
 {
     /**
-     * Returns filtered failed messages.
+     * Returns filtered failed jobs.
      *
      * @param Queue $handler The Queue handler.
      * @param string $queue The queue name.
-     * @param string|null $ids The comma-separated failed message identifiers.
+     * @param string|null $ids The comma-separated failed job identifiers.
      * @param string|null $class The job class name.
-     * @return array<string, FailedMessageData> The failed messages indexed by identifier.
+     * @return array<string, FailedMessageData> The failed jobs indexed by identifier.
      */
     protected static function getFilteredFailures(
         Queue $handler,

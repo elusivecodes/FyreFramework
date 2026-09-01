@@ -67,7 +67,7 @@ The worker handles results like this:
 - Throwing an exception marks the job as failed and emits `Queue.exception`.
 - Any other return value marks the job as successful and emits `Queue.success`.
 
-When a failure is retryable, the message's `backoff` option controls when it becomes available again. When retries are exhausted or disabled, `RedisQueue` retains the message and its failure metadata for inspection, retry, or removal. See [Recovering failed jobs](index.md#recovering-failed-jobs).
+When a failure is retryable, the job's `backoff` option controls when it becomes available again. When retries are exhausted or disabled, `RedisQueue` retains the job and its failure metadata for inspection, retry, or removal. See [Recovering failed jobs](index.md#recovering-failed-jobs).
 
 Before each valid job runs, the worker clears scoped container services so each job gets a fresh scoped state; see [Container](../core/container.md).
 

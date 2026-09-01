@@ -237,7 +237,7 @@ $commandRunner->handle(['app', 'queue:stats', '--config', 'default', '--queue', 
 
 ## Recovering failed jobs
 
-Use `Queue::getFailed()` to inspect terminal failures retained for a queue. Records are indexed by their 32-character message ID and remain until they are retried or forgotten.
+Use `Queue::getFailed()` to inspect terminal failures retained for a queue. Records are indexed by their 32-character job ID and remain until they are retried or forgotten.
 
 ```php
 $failures = $queue->getFailed('search');
@@ -251,6 +251,8 @@ $queue->forgetFailed($id, 'search');
 ```
 
 The same operations are available through the console. `queue:failed` displays the failure time in UTC.
+
+`queue:retry` and `queue:purge` request confirmation whenever at least one failure matches, including when explicit IDs are supplied. Use `--force` to skip confirmation in non-interactive scripts.
 
 ```bash
 app queue:failed --config=default --queue=search --class='App\Jobs\SearchIndexJob'
@@ -404,9 +406,9 @@ Arguments:
 $queue->reset('search');
 ```
 
-#### **Read failed messages** (`getFailed()`)
+#### **Read failed jobs** (`getFailed()`)
 
-Return terminal failures indexed by message ID.
+Return terminal failures indexed by job ID.
 
 Arguments:
 - `$queue` (`string`): queue name (default: `default`).
@@ -415,24 +417,24 @@ Arguments:
 $failures = $queue->getFailed('search');
 ```
 
-#### **Retry a failed message** (`retryFailed()`)
+#### **Retry a failed job** (`retryFailed()`)
 
 Enqueue a fresh message from a retained failure and remove the failure when enqueueing succeeds.
 
 Arguments:
-- `$id` (`string`): failed message ID.
+- `$id` (`string`): failed job ID.
 - `$queue` (`string`): queue name (default: `default`).
 
 ```php
 $retried = $queue->retryFailed($id, 'search');
 ```
 
-#### **Forget a failed message** (`forgetFailed()`)
+#### **Forget a failed job** (`forgetFailed()`)
 
 Remove a retained failure without retrying it.
 
 Arguments:
-- `$id` (`string`): failed message ID.
+- `$id` (`string`): failed job ID.
 - `$queue` (`string`): queue name (default: `default`).
 
 ```php

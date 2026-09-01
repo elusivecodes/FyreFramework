@@ -25,7 +25,7 @@ class QueueFailedCommand extends Command
     protected string|null $alias = 'queue:failed';
 
     #[Override]
-    protected string $description = 'Display failed queue messages.';
+    protected string $description = 'Display failed queue jobs.';
 
     #[Override]
     protected array $options = [

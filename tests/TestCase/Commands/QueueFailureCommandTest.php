@@ -24,6 +24,7 @@ use Tests\Mock\Queue\TestQueue;
 use function array_keys;
 use function fclose;
 use function fopen;
+use function fwrite;
 use function rewind;
 use function stream_get_contents;
 
@@ -112,6 +113,7 @@ final class QueueFailureCommandTest extends TestCase
             Command::CODE_SUCCESS,
             $this->commandRunner->run('queue:purge', [
                 '11111111111111111111111111111111,22222222222222222222222222222222',
+                'force' => true,
             ])
         );
 
@@ -142,6 +144,7 @@ final class QueueFailureCommandTest extends TestCase
             $this->commandRunner->run('queue:purge', [
                 'config' => 'other',
                 'queue' => 'emails',
+                'force' => true,
             ])
         );
 
@@ -157,12 +160,63 @@ final class QueueFailureCommandTest extends TestCase
             Command::CODE_SUCCESS,
             $this->commandRunner->run('queue:purge', [
                 'class' => MockJob::class,
+                'force' => true,
             ])
         );
 
         $this->assertSame(
             ['22222222222222222222222222222222'],
             array_keys($this->queueManager->use()->getFailed())
+        );
+    }
+
+    public function testQueuePurgeConfirm(): void
+    {
+        fwrite($this->input, 'y'.PHP_EOL);
+        rewind($this->input);
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('queue:purge')
+        );
+
+        $this->assertSame(
+            [],
+            $this->queueManager->use()->getFailed()
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;33mPurge 2 failed queue job(s)?\033[0m".PHP_EOL.
+            " (\033[2;36my\033[0m/\033[1;36mn\033[0m)".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
+    public function testQueuePurgeConfirmDecline(): void
+    {
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('queue:purge', [
+                '11111111111111111111111111111111',
+            ])
+        );
+
+        $this->assertSame(
+            [
+                '22222222222222222222222222222222',
+                '11111111111111111111111111111111',
+            ],
+            array_keys($this->queueManager->use()->getFailed())
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;33mPurge 1 failed queue job(s)?\033[0m".PHP_EOL.
+            " (\033[2;36my\033[0m/\033[1;36mn\033[0m)".PHP_EOL,
+            stream_get_contents($this->output)
         );
     }
 
@@ -173,6 +227,7 @@ final class QueueFailureCommandTest extends TestCase
             $this->commandRunner->run('queue:retry', [
                 'config' => 'other',
                 'queue' => 'emails',
+                'force' => true,
             ])
         );
 
@@ -214,6 +269,7 @@ final class QueueFailureCommandTest extends TestCase
             Command::CODE_SUCCESS,
             $this->commandRunner->run('queue:retry', [
                 'class' => MockJob::class,
+                'force' => true,
             ])
         );
 
@@ -228,12 +284,46 @@ final class QueueFailureCommandTest extends TestCase
         );
     }
 
+    public function testQueueRetryConfirm(): void
+    {
+        fwrite($this->input, 'y'.PHP_EOL);
+        rewind($this->input);
+
+        $this->assertSame(
+            Command::CODE_SUCCESS,
+            $this->commandRunner->run('queue:retry', [
+                '33333333333333333333333333333333',
+                'config' => 'other',
+                'queue' => 'emails',
+            ])
+        );
+
+        $this->assertSame(
+            [],
+            $this->queueManager->use('other')->getFailed('emails')
+        );
+
+        $this->assertCount(
+            1,
+            TestQueue::getMessages()
+        );
+
+        rewind($this->output);
+
+        $this->assertSame(
+            "\033[0;33mRetry 1 failed queue job(s)?\033[0m".PHP_EOL.
+            " (\033[2;36my\033[0m/\033[1;36mn\033[0m)".PHP_EOL,
+            stream_get_contents($this->output)
+        );
+    }
+
     public function testQueueRetryIds(): void
     {
         $this->assertSame(
             Command::CODE_SUCCESS,
             $this->commandRunner->run('queue:retry', [
                 '11111111111111111111111111111111,22222222222222222222222222222222',
+                'force' => true,
             ])
         );
 

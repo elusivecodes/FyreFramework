@@ -11,6 +11,7 @@ use Fyre\Queue\QueueManager;
 use Override;
 
 use function array_keys;
+use function count;
 
 /**
  * Implements the queue purge console command.
@@ -23,7 +24,7 @@ class QueuePurgeCommand extends Command
     protected string|null $alias = 'queue:purge';
 
     #[Override]
-    protected string $description = 'Purge failed queue messages.';
+    protected string $description = 'Purge failed queue jobs.';
 
     #[Override]
     protected array $options = [
@@ -35,6 +36,10 @@ class QueuePurgeCommand extends Command
             'default' => Queue::DEFAULT,
         ],
         'class' => [],
+        'force' => [
+            'as' => 'boolean',
+            'default' => false,
+        ],
     ];
 
     /**
@@ -55,15 +60,31 @@ class QueuePurgeCommand extends Command
      *
      * @param string $config The queue config key.
      * @param string $queue The queue name.
-     * @param string|null $ids The comma-separated failed message identifiers.
+     * @param string|null $ids The comma-separated failed job identifiers.
      * @param string|null $class The job class name.
+     * @param bool $force Whether to skip confirmation.
      * @return int|null The exit code.
      */
-    public function run(string $config, string $queue, string|null $ids = null, string|null $class = null): int|null
-    {
+    public function run(
+        string $config,
+        string $queue,
+        string|null $ids = null,
+        string|null $class = null,
+        bool $force = false
+    ): int|null {
         $handler = $this->queueManager->use($config);
         $failureIds = static::getFilteredFailures($handler, $queue, $ids, $class)
             |> array_keys(...);
+
+        if ($failureIds === []) {
+            return static::CODE_SUCCESS;
+        }
+
+        $count = count($failureIds);
+
+        if (!$force && !$this->io->confirm('Purge '.$count.' failed queue job(s)?', false)) {
+            return static::CODE_SUCCESS;
+        }
 
         $result = static::CODE_SUCCESS;
 
@@ -72,7 +93,7 @@ class QueuePurgeCommand extends Command
                 continue;
             }
 
-            $this->io->error('Failed queue message could not be purged: '.$id);
+            $this->io->error('Failed queue job could not be purged: '.$id);
             $result = static::CODE_ERROR;
         }
 

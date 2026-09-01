@@ -222,14 +222,15 @@ $commandRunner->handle(['app', 'queue:failed', '--queue', 'emails', '--class', '
 
 #### `queue:purge`
 
-Removes retained failures without retrying them. If IDs are omitted, all failures matching the queue and optional class filter are removed.
+Removes retained failures without retrying them. If IDs are omitted, all failures matching the queue and optional class filter are selected. The command requests confirmation whenever at least one failure matches.
 
 Options:
 
-- `ids` (`string|null`): comma-separated failed message IDs; may be supplied as the first positional value
+- `ids` (`string|null`): comma-separated failed job IDs; may be supplied as the first positional value
 - `config` (`string`): queue handler config key (default: `QueueManager::DEFAULT`)
 - `queue` (`string`): queue name (default: `Queue::DEFAULT`)
 - `class` (`string|null`): limit removal to one job class
+- `force` (`bool`): skip confirmation (default: `false`)
 
 Examples:
 
@@ -237,6 +238,7 @@ Examples:
 app queue:purge 0123456789abcdef0123456789abcdef,abcdef0123456789abcdef0123456789 --queue=emails
 app queue:purge --ids=0123456789abcdef0123456789abcdef,abcdef0123456789abcdef0123456789 --queue=emails
 app queue:purge --queue=emails --class='App\Jobs\SendEmailJob'
+app queue:purge --queue=emails --force
 ```
 
 ```php
@@ -251,14 +253,15 @@ $commandRunner->handle([
 
 #### `queue:retry`
 
-Enqueues fresh messages from retained failures and removes each retained record when enqueueing succeeds. If IDs are omitted, all failures matching the queue and optional class filter are retried.
+Requeues retained failed jobs and removes each retained record when enqueueing succeeds. If IDs are omitted, all failures matching the queue and optional class filter are selected. The command requests confirmation whenever at least one failure matches.
 
 Options:
 
-- `ids` (`string|null`): comma-separated failed message IDs; may be supplied as the first positional value
+- `ids` (`string|null`): comma-separated failed job IDs; may be supplied as the first positional value
 - `config` (`string`): queue handler config key (default: `QueueManager::DEFAULT`)
 - `queue` (`string`): queue name (default: `Queue::DEFAULT`)
 - `class` (`string|null`): limit retries to one job class
+- `force` (`bool`): skip confirmation (default: `false`)
 
 Examples:
 
@@ -266,6 +269,7 @@ Examples:
 app queue:retry 0123456789abcdef0123456789abcdef,abcdef0123456789abcdef0123456789 --queue=emails
 app queue:retry --ids=0123456789abcdef0123456789abcdef,abcdef0123456789abcdef0123456789 --queue=emails
 app queue:retry --queue=emails --class='App\Jobs\SendEmailJob'
+app queue:retry --queue=emails --force
 ```
 
 ```php
