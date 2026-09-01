@@ -12,17 +12,14 @@ use Fyre\Utility\Path;
 use Override;
 use RuntimeException;
 
-use function array_key_exists;
 use function chmod;
 use function fclose;
+use function fflush;
 use function file_exists;
-use function file_get_contents;
-use function file_put_contents;
 use function flock;
 use function fopen;
 use function ftruncate;
 use function fwrite;
-use function is_array;
 use function is_dir;
 use function is_numeric;
 use function is_resource;
@@ -33,11 +30,12 @@ use function sprintf;
 use function str_contains;
 use function str_starts_with;
 use function stream_get_contents;
+use function substr;
 use function time;
 use function unlink;
-use function unserialize;
 
 use const LOCK_EX;
+use const LOCK_SH;
 
 /**
  * Caches values on the filesystem.
@@ -137,8 +135,6 @@ class FileCacher extends Cacher
 
     /**
      * {@inheritDoc}
-     *
-     * Note: Values are stored as a serialized array containing `data` and `expires`.
      */
     #[Override]
     public function get(string $key, mixed $default = null): mixed
@@ -146,26 +142,33 @@ class FileCacher extends Cacher
         $key = $this->prepareKey($key);
         $filePath = Path::join($this->path, $key);
 
-        $contents = @file_get_contents($filePath);
+        $handle = @fopen($filePath, 'rb');
 
-        if ($contents === false) {
+        if (!is_resource($handle)) {
             return $default;
         }
 
-        $data = unserialize($contents);
+        try {
+            if (!@flock($handle, LOCK_SH)) {
+                return $default;
+            }
 
-        if (
-            !is_array($data) ||
-            !array_key_exists('data', $data) ||
-            !array_key_exists('expires', $data) ||
-            ($data['expires'] !== null && $data['expires'] <= time())
-        ) {
+            $entry = $this->readEntry($handle);
+        } finally {
+            @fclose($handle);
+        }
+
+        if ($entry === false) {
+            return $default;
+        }
+
+        if ($entry === null || $entry->isExpired()) {
             @unlink($filePath);
 
             return $default;
         }
 
-        return $data['data'];
+        return $entry->getData();
     }
 
     /**
@@ -181,56 +184,50 @@ class FileCacher extends Cacher
 
         $chmod = !file_exists($filePath);
 
-        $handle = @fopen($filePath, 'c+');
+        $handle = @fopen($filePath, 'c+b');
 
         if (!is_resource($handle)) {
             return false;
         }
 
-        @flock($handle, LOCK_EX);
+        try {
+            if (!@flock($handle, LOCK_EX)) {
+                return false;
+            }
+
+            $entry = $this->readEntry($handle);
+
+            if ($entry === false) {
+                return false;
+            }
+
+            if ($entry === null || $entry->isExpired()) {
+                $entry = new CacheEntry(0, null);
+            }
+
+            $value = $entry->getData();
+
+            if (!is_numeric($value)) {
+                return false;
+            }
+
+            $value = (int) $value + $amount;
+
+            if (!$this->writeEntry(
+                $handle,
+                new CacheEntry($value, $entry->getExpires())
+            )) {
+                return false;
+            }
+        } finally {
+            @fclose($handle);
+        }
 
         if ($chmod) {
             @chmod($filePath, $this->config['mode']);
         }
 
-        $contents = @stream_get_contents($handle);
-
-        if ($contents === false) {
-            @fclose($handle);
-
-            return false;
-        }
-
-        $data = unserialize($contents);
-
-        if ($data === false) {
-            $data = [
-                'data' => 0,
-                'expires' => null,
-            ];
-        }
-
-        if (!is_numeric($data['data'])) {
-            @fclose($handle);
-
-            return false;
-        }
-
-        if ($data['expires'] !== null && $data['expires'] <= time()) {
-            $data['data'] = 0;
-            $data['expires'] = null;
-        } else {
-            $data['data'] = (int) $data['data'];
-        }
-
-        $data['data'] += $amount;
-
-        @ftruncate($handle, 0);
-        @rewind($handle);
-        @fwrite($handle, serialize($data));
-        @fclose($handle);
-
-        return $data['data'];
+        return $value;
     }
 
     /**
@@ -249,9 +246,28 @@ class FileCacher extends Cacher
     }
 
     /**
-     * {@inheritDoc}
+     * Reads a cache entry.
      *
-     * Note: Values are stored as a serialized array containing `data` and `expires`.
+     * @param resource $handle The file handle.
+     * @return CacheEntry|false|null The cache entry, false on failure, or null if the data is not valid.
+     */
+    protected function readEntry(mixed $handle): CacheEntry|false|null
+    {
+        if (!@rewind($handle)) {
+            return false;
+        }
+
+        $contents = @stream_get_contents($handle);
+
+        if ($contents === false) {
+            return false;
+        }
+
+        return CacheEntry::createFromString($contents);
+    }
+
+    /**
+     * {@inheritDoc}
      */
     #[Override]
     protected function setValue(string $key, mixed $value, int|null $expires): bool
@@ -264,13 +280,21 @@ class FileCacher extends Cacher
 
         $chmod = !file_exists($filePath);
 
-        $data = serialize([
-            'data' => $value,
-            'expires' => $expires,
-        ]);
+        $handle = @fopen($filePath, 'c+b');
 
-        if (file_put_contents($filePath, $data, LOCK_EX) === false) {
+        if (!is_resource($handle)) {
             return false;
+        }
+
+        try {
+            if (
+                !@flock($handle, LOCK_EX) ||
+                !$this->writeEntry($handle, new CacheEntry($value, $expires))
+            ) {
+                return false;
+            }
+        } finally {
+            @fclose($handle);
         }
 
         if ($chmod) {
@@ -278,5 +302,33 @@ class FileCacher extends Cacher
         }
 
         return true;
+    }
+
+    /**
+     * Writes a cache entry.
+     *
+     * @param resource $handle The file handle.
+     * @param CacheEntry $entry The cache entry.
+     * @return bool Whether the cache entry was written.
+     */
+    protected function writeEntry(mixed $handle, CacheEntry $entry): bool
+    {
+        $data = serialize($entry);
+
+        if (!@rewind($handle) || !@ftruncate($handle, 0)) {
+            return false;
+        }
+
+        while ($data !== '') {
+            $written = @fwrite($handle, $data);
+
+            if ($written === false || $written === 0) {
+                return false;
+            }
+
+            $data = substr($data, $written);
+        }
+
+        return @fflush($handle);
     }
 }

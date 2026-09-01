@@ -75,7 +75,7 @@ class QueueFailedCommand extends Command
         uksort(
             $failures,
             static function(string $a, string $b) use ($failures): int {
-                $order = $failures[$b]['failedAt'] <=> $failures[$a]['failedAt'];
+                $order = $failures[$b]->getFailedAt() <=> $failures[$a]->getFailedAt();
 
                 if ($order !== 0) {
                     return $order;
@@ -87,14 +87,14 @@ class QueueFailedCommand extends Command
 
         $data = [];
         foreach ($failures as $id => $failure) {
-            $message = $failure['message'];
-            $exception = $failure['exception'];
+            $message = $failure->getMessage()->getConfig();
+            $exceptionClass = $failure->getExceptionClass();
 
             $data[] = [
                 $id,
                 $message['className'].'::'.$message['method'],
-                gmdate('Y-m-d\TH:i:s\Z', $failure['failedAt']),
-                $exception === null ? '-' : $exception['class'].': '.$exception['message'],
+                gmdate('Y-m-d\TH:i:s\Z', $failure->getFailedAt()),
+                $exceptionClass === null ? '-' : $exceptionClass.': '.$failure->getExceptionMessage(),
             ];
         }
 

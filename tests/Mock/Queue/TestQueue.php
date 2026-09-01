@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\Mock\Queue;
 
+use Fyre\Queue\FailedMessage;
 use Fyre\Queue\Message;
 use Fyre\Queue\Queue;
 use Override;
@@ -16,7 +17,7 @@ class TestQueue extends Queue
     protected static array $messages = [];
 
     /**
-     * @var array<string, array<string, mixed>>
+     * @var array<string, array<string, FailedMessage>>
      */
     protected array $failures = [];
 
@@ -94,7 +95,7 @@ class TestQueue extends Queue
     {
         $failure = $this->failures[$queue][$id] ?? null;
 
-        if ($failure === null || !$this->push(new Message($failure['message']))) {
+        if ($failure === null || !$this->push($failure->getMessage())) {
             return false;
         }
 
@@ -106,7 +107,7 @@ class TestQueue extends Queue
     /**
      * Sets the failed messages.
      *
-     * @param array<string, array<string, mixed>> $failures The failed messages indexed by queue and identifier.
+     * @param array<string, array<string, FailedMessage>> $failures The failed messages indexed by queue and identifier.
      */
     public function setFailed(array $failures): void
     {

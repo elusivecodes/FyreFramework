@@ -6,6 +6,7 @@ namespace Fyre\Queue\Handlers;
 use Fyre\Core\Attributes\SensitivePropertyArray;
 use Fyre\Core\Container;
 use Fyre\Queue\Exceptions\QueueException;
+use Fyre\Queue\FailedMessage;
 use Fyre\Queue\Message;
 use Fyre\Queue\Queue;
 use InvalidArgumentException;
@@ -15,12 +16,9 @@ use RedisException;
 use Throwable;
 use WeakMap;
 
-use function array_key_exists;
 use function bin2hex;
 use function explode;
 use function in_array;
-use function is_array;
-use function is_int;
 use function is_string;
 use function random_bytes;
 use function serialize;
@@ -35,8 +33,6 @@ use function unserialize;
  *
  * Uses a Redis list for queued messages, sorted sets for delayed and processing messages,
  * and hashes for uniqueness checks and failed messages.
- *
- * @phpstan-import-type FailedMessageData from Queue
  */
 class RedisQueue extends Queue
 {
@@ -222,18 +218,7 @@ class RedisQueue extends Queue
             return $this->settle($message, 'retry', $payload, $retryAt);
         }
 
-        $failure = serialize([
-            'message' => $message->getConfig(),
-            'failedAt' => time(),
-            'exception' => $exception ? [
-                'class' => $exception::class,
-                'message' => $exception->getMessage(),
-                'code' => $exception->getCode(),
-                'file' => $exception->getFile(),
-                'line' => $exception->getLine(),
-                'trace' => $exception->getTraceAsString(),
-            ] : null,
-        ]);
+        $failure = serialize(new FailedMessage($message, time(), $exception));
 
         $this->settle($message, 'failed', failure: $failure);
 
@@ -410,7 +395,7 @@ class RedisQueue extends Queue
             return false;
         }
 
-        if (!$this->push(new Message($failure['message']))) {
+        if (!$this->push($failure->getMessage())) {
             return false;
         }
 
@@ -673,40 +658,19 @@ class RedisQueue extends Queue
      * Parses serialized failure data.
      *
      * @param string $failure The serialized failure data.
-     * @return FailedMessageData|null The failure data.
+     * @return FailedMessage|null The failure data.
      */
-    protected static function parseFailure(string $failure): array|null
+    protected static function parseFailure(string $failure): FailedMessage|null
     {
-        $failure = @unserialize($failure);
-
-        if (
-            !is_array($failure) ||
-            !is_array($failure['message'] ?? null) ||
-            !is_int($failure['failedAt'] ?? null) ||
-            !array_key_exists('exception', $failure)
-        ) {
+        try {
+            $failure = @unserialize($failure);
+        } catch (Throwable) {
             return null;
         }
 
-        $exception = $failure['exception'];
-
-        if (
-            $exception !== null &&
-            (
-                !is_array($exception) ||
-                !is_string($exception['class'] ?? null) ||
-                !is_string($exception['message'] ?? null) ||
-                !is_int($exception['code'] ?? null) ||
-                !is_string($exception['file'] ?? null) ||
-                !is_int($exception['line'] ?? null) ||
-                !is_string($exception['trace'] ?? null)
-            )
-        ) {
-            return null;
-        }
-
-        /** @var FailedMessageData $failure */
-        return $failure;
+        return $failure instanceof FailedMessage ?
+            $failure :
+            null;
     }
 
     /**

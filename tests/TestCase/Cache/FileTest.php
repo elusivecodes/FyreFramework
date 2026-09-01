@@ -22,10 +22,12 @@ use Tests\TestCase\Cache\Cacher\RememberTestTrait;
 use Tests\TestCase\Cache\Cacher\TagsTestTrait;
 use Throwable;
 
+use function file_put_contents;
 use function mkdir;
 use function pcntl_fork;
 use function pcntl_waitpid;
 use function rmdir;
+use function serialize;
 use function usleep;
 
 final class FileTest extends TestCase
@@ -141,6 +143,46 @@ final class FileTest extends TestCase
         );
 
         $this->assertFileDoesNotExist('cache/prefix.__lock__.test');
+    }
+
+    public function testMalformedLock(): void
+    {
+        file_put_contents('cache/prefix.__lock__.test', 'invalid');
+
+        $lock = $this->cacher->lock('test');
+
+        $this->assertTrue(
+            $lock->acquire()
+        );
+        $this->assertTrue(
+            $lock->release()
+        );
+    }
+
+    public function testMalformedValue(): void
+    {
+        file_put_contents('cache/prefix.test', 'invalid');
+
+        $this->assertSame(
+            'default',
+            $this->cacher->get('test', 'default')
+        );
+    }
+
+    public function testMalformedValueIncrement(): void
+    {
+        file_put_contents('cache/prefix.test', serialize([
+            'data' => 1,
+        ]));
+
+        $this->assertSame(
+            2,
+            $this->cacher->increment('test', 2)
+        );
+        $this->assertSame(
+            2,
+            $this->cacher->get('test')
+        );
     }
 
     #[Override]

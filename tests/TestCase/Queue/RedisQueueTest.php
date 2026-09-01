@@ -6,6 +6,7 @@ namespace Tests\TestCase\Queue;
 use Closure;
 use Fyre\Core\Config;
 use Fyre\Core\Container;
+use Fyre\Queue\FailedMessage;
 use Fyre\Queue\Handlers\RedisQueue;
 use Fyre\Queue\Message;
 use Fyre\Queue\Queue;
@@ -132,34 +133,45 @@ final class RedisQueueTest extends TestCase
 
         $failure = $failures[$id];
 
+        $this->assertInstanceOf(
+            FailedMessage::class,
+            $failure
+        );
         $this->assertArraysAreIdentical(
             $message->getConfig(),
-            $failure['message']
+            $failure->getMessage()->getConfig()
         );
         $this->assertGreaterThanOrEqual(
             $failedAt,
-            $failure['failedAt']
+            $failure->getFailedAt()
         );
         $this->assertLessThanOrEqual(
             time(),
-            $failure['failedAt']
+            $failure->getFailedAt()
         );
-
-        $failureException = $failure['exception'];
-
-        $this->assertIsArray(
-            $failureException
+        $this->assertSame(
+            RuntimeException::class,
+            $failure->getExceptionClass()
         );
-        $this->assertArraysAreIdentical(
-            [
-                'class' => RuntimeException::class,
-                'message' => 'Test failure.',
-                'code' => 5,
-                'file' => $exception->getFile(),
-                'line' => $exception->getLine(),
-                'trace' => $exception->getTraceAsString(),
-            ],
-            $failureException
+        $this->assertSame(
+            'Test failure.',
+            $failure->getExceptionMessage()
+        );
+        $this->assertSame(
+            5,
+            $failure->getExceptionCode()
+        );
+        $this->assertSame(
+            $exception->getFile(),
+            $failure->getExceptionFile()
+        );
+        $this->assertSame(
+            $exception->getLine(),
+            $failure->getExceptionLine()
+        );
+        $this->assertSame(
+            $exception->getTraceAsString(),
+            $failure->getExceptionTrace()
         );
     }
 
@@ -187,7 +199,7 @@ final class RedisQueueTest extends TestCase
             $id
         );
         $this->assertNull(
-            $failures[$id]['exception']
+            $failures[$id]->getExceptionClass()
         );
         $this->assertTrue(
             $this->queue->forgetFailed($id)
@@ -212,7 +224,7 @@ final class RedisQueueTest extends TestCase
         ]);
     }
 
-    public function testMalformedFailureException(): void
+    public function testMalformedFailure(): void
     {
         $connection = Closure::bind(function(): Redis {
             /** @var RedisQueue $this */
@@ -221,13 +233,7 @@ final class RedisQueueTest extends TestCase
 
         $id = '11111111111111111111111111111111';
 
-        $connection->hSet('queue:default:failures', $id, serialize([
-            'message' => [],
-            'failedAt' => time(),
-            'exception' => [
-                'class' => RuntimeException::class,
-            ],
-        ]));
+        $connection->hSet('queue:default:failures', $id, serialize(['invalid']));
 
         $failures = $this->queue->getFailed();
         $this->queue->forgetFailed($id);

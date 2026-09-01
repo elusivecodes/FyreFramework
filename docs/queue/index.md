@@ -230,7 +230,7 @@ app queue:stats --config=default --queue=search
 
 ## Recovering failed jobs
 
-Use `Queue::getFailed()` to inspect terminal failures retained for a queue. Records are indexed by their 32-character job ID and remain until they are retried or forgotten.
+Use `Queue::getFailed()` to inspect terminal failures retained for a queue. The returned `FailedMessage` records are indexed by their 32-character job ID and remain until they are retried or forgotten.
 
 Use `retryFailed()` to construct and enqueue a fresh `Message` from the stored config. Its retry attempt count starts again at zero, and the retained record is removed only when the message is accepted by the queue. Use `forgetFailed()` to remove a retained record without retrying it.
 

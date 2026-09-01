@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Fyre\Commands\Traits;
 
+use Fyre\Queue\FailedMessage;
 use Fyre\Queue\Queue;
 
 use function array_fill_keys;
@@ -16,8 +17,6 @@ use function trim;
  * Provides failed queue job filtering.
  *
  * @internal
- *
- * @phpstan-import-type FailedMessageData from Queue
  */
 trait QueueFailureTrait
 {
@@ -28,7 +27,7 @@ trait QueueFailureTrait
      * @param string $queue The queue name.
      * @param string|null $ids The comma-separated failed job identifiers.
      * @param string|null $class The job class name.
-     * @return array<string, FailedMessageData> The failed jobs indexed by identifier.
+     * @return array<string, FailedMessage> The failed jobs indexed by identifier.
      */
     protected static function getFilteredFailures(
         Queue $handler,
@@ -54,7 +53,7 @@ trait QueueFailureTrait
         if ($class !== null) {
             $failures = array_filter(
                 $failures,
-                static fn(array $failure): bool => $failure['message']['className'] === $class
+                static fn(FailedMessage $failure): bool => $failure->getMessage()->getConfig()['className'] === $class
             );
         }
 

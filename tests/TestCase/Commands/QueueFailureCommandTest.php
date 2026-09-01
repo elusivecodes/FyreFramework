@@ -11,6 +11,8 @@ use Fyre\Core\Container;
 use Fyre\Core\Loader;
 use Fyre\DB\TypeParser;
 use Fyre\Event\EventManager;
+use Fyre\Queue\FailedMessage;
+use Fyre\Queue\Message;
 use Fyre\Queue\Queue;
 use Fyre\Queue\QueueManager;
 use Fyre\Utility\Inflector;
@@ -473,35 +475,27 @@ final class QueueFailureCommandTest extends TestCase
         $queue = $this->queueManager->use();
         $queue->setFailed([
             'default' => [
-                '22222222222222222222222222222222' => [
-                    'message' => [
+                '22222222222222222222222222222222' => new FailedMessage(
+                    new Message([
                         'className' => RuntimeException::class,
                         'method' => 'run',
                         'arguments' => [],
                         'config' => QueueManager::DEFAULT,
                         'queue' => Queue::DEFAULT,
-                    ],
-                    'failedAt' => 1640995260,
-                    'exception' => null,
-                ],
-                '11111111111111111111111111111111' => [
-                    'message' => [
+                    ]),
+                    1640995260
+                ),
+                '11111111111111111111111111111111' => new FailedMessage(
+                    new Message([
                         'className' => MockJob::class,
                         'method' => 'run',
                         'arguments' => [],
                         'config' => QueueManager::DEFAULT,
                         'queue' => Queue::DEFAULT,
-                    ],
-                    'failedAt' => 1640995200,
-                    'exception' => [
-                        'class' => RuntimeException::class,
-                        'message' => 'Job failed.',
-                        'code' => 0,
-                        'file' => '/app/src/MockJob.php',
-                        'line' => 10,
-                        'trace' => '',
-                    ],
-                ],
+                    ]),
+                    1640995200,
+                    new RuntimeException('Job failed.')
+                ),
             ],
         ]);
 
@@ -509,17 +503,16 @@ final class QueueFailureCommandTest extends TestCase
         $otherQueue = $this->queueManager->use('other');
         $otherQueue->setFailed([
             'emails' => [
-                '33333333333333333333333333333333' => [
-                    'message' => [
+                '33333333333333333333333333333333' => new FailedMessage(
+                    new Message([
                         'className' => MockJob::class,
                         'method' => 'run',
                         'arguments' => [],
                         'config' => 'other',
                         'queue' => 'emails',
-                    ],
-                    'failedAt' => 1640995320,
-                    'exception' => null,
-                ],
+                    ]),
+                    1640995320
+                ),
             ],
         ]);
 

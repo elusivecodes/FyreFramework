@@ -15,19 +15,6 @@ use function array_replace;
  *
  * Queue handlers are responsible for pushing and popping {@see Message} instances and for
  * tracking basic queue statistics.
- *
- * @phpstan-type FailedMessageData array{
- *     message: array<string, mixed>,
- *     failedAt: int,
- *     exception: array{
- *         class: class-string<Throwable>,
- *         message: string,
- *         code: int,
- *         file: string,
- *         line: int,
- *         trace: string
- *     }|null
- * }
  */
 abstract class Queue
 {
@@ -102,7 +89,7 @@ abstract class Queue
      * Returns the failed messages.
      *
      * @param string $queue The queue name.
-     * @return array<string, FailedMessageData> The failed messages indexed by identifier.
+     * @return array<string, FailedMessage> The failed messages indexed by identifier.
      */
     abstract public function getFailed(string $queue = self::DEFAULT): array;
 

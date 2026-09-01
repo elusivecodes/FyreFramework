@@ -6,7 +6,6 @@ namespace Fyre\Cache\Handlers\File;
 use Fyre\Cache\Lock;
 use Override;
 
-use function array_key_exists;
 use function chmod;
 use function clearstatcache;
 use function fclose;
@@ -16,17 +15,14 @@ use function fopen;
 use function fstat;
 use function ftruncate;
 use function fwrite;
-use function is_array;
-use function is_int;
 use function is_resource;
-use function is_string;
 use function rewind;
 use function serialize;
 use function stat;
 use function stream_get_contents;
+use function substr;
 use function time;
 use function unlink;
-use function unserialize;
 
 use const LOCK_EX;
 
@@ -71,14 +67,14 @@ class FileLock extends Lock
 
             $now = time();
 
-            if ($lock && $lock['expires'] > $now) {
+            if ($lock && !$lock->isExpired($now)) {
                 return false;
             }
 
-            return $this->writeLock($handle, [
-                'expires' => $now + $this->expires,
-                'owner' => $this->owner,
-            ]);
+            return $this->writeLock(
+                $handle,
+                new LockEntry($now + $this->expires, $this->owner)
+            );
         } finally {
             @fclose($handle);
         }
@@ -131,9 +127,9 @@ class FileLock extends Lock
      * Reads the lock data.
      *
      * @param resource $handle The file handle.
-     * @return array{expires: int, owner: string}|false|null The lock data, false on failure, or null if no valid lock exists.
+     * @return false|LockEntry|null The lock data, false on failure, or null if no valid lock exists.
      */
-    protected function readLock(mixed $handle): array|false|null
+    protected function readLock(mixed $handle): false|LockEntry|null
     {
         if (!@rewind($handle)) {
             return false;
@@ -145,19 +141,7 @@ class FileLock extends Lock
             return false;
         }
 
-        $lock = @unserialize($contents);
-
-        if (
-            !is_array($lock) ||
-            !array_key_exists('expires', $lock) ||
-            !array_key_exists('owner', $lock) ||
-            !is_int($lock['expires']) ||
-            !is_string($lock['owner'])
-        ) {
-            return null;
-        }
-
-        return $lock;
+        return LockEntry::createFromString($contents);
     }
 
     /**
@@ -175,19 +159,20 @@ class FileLock extends Lock
         try {
             $lock = $this->readLock($handle);
 
-            if (!$lock || $lock['owner'] !== $this->owner) {
+            if (!$lock || !$lock->isOwnedBy($this->owner)) {
                 return false;
             }
 
             $now = time();
 
-            if ($lock['expires'] <= $now) {
+            if ($lock->isExpired($now)) {
                 return false;
             }
 
-            $lock['expires'] = $now + $this->expires;
-
-            return $this->writeLock($handle, $lock);
+            return $this->writeLock(
+                $handle,
+                new LockEntry($now + $this->expires, $this->owner)
+            );
         } finally {
             @fclose($handle);
         }
@@ -210,8 +195,8 @@ class FileLock extends Lock
 
             if (
                 !$lock ||
-                $lock['owner'] !== $this->owner ||
-                $lock['expires'] <= time()
+                !$lock->isOwnedBy($this->owner) ||
+                $lock->isExpired()
             ) {
                 return false;
             }
@@ -226,21 +211,27 @@ class FileLock extends Lock
      * Writes the lock data.
      *
      * @param resource $handle The file handle.
-     * @param array{expires: int, owner: string}|null $lock The lock data.
+     * @param LockEntry|null $lock The lock data.
      * @return bool Whether the lock data was written.
      */
-    protected function writeLock(mixed $handle, array|null $lock): bool
+    protected function writeLock(mixed $handle, LockEntry|null $lock): bool
     {
         $data = $lock === null ?
             '' :
             serialize($lock);
 
-        if (
-            !@rewind($handle) ||
-            !@ftruncate($handle, 0) ||
-            ($data !== '' && @fwrite($handle, $data) === false)
-        ) {
+        if (!@rewind($handle) || !@ftruncate($handle, 0)) {
             return false;
+        }
+
+        while ($data !== '') {
+            $written = @fwrite($handle, $data);
+
+            if ($written === false || $written === 0) {
+                return false;
+            }
+
+            $data = substr($data, $written);
         }
 
         return @fflush($handle);
