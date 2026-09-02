@@ -6,12 +6,15 @@ namespace Fyre\TestSuite\Traits;
 use Closure;
 use Fyre\Http\Client;
 use Fyre\Http\Client\Response;
+use Fyre\TestSuite\TestCase;
 use PHPUnit\Framework\Attributes\After;
 
 /**
  * Test case helpers for HTTP client assertions.
  *
  * Provides helpers for mocking {@see Client} responses and clearing mocks after each test.
+ *
+ * @phpstan-require-extends TestCase
  */
 trait HttpClientTestTrait
 {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Fyre\View\Form\Traits;
 
 use Fyre\Form\Validator;
+use Fyre\View\Form\Context;
 
 use function count;
 use function max;
@@ -16,6 +17,8 @@ use function min;
  * possible.
  *
  * @internal
+ *
+ * @phpstan-require-extends Context
  */
 trait ValidationTrait
 {

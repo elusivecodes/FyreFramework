@@ -14,6 +14,7 @@ use Fyre\DB\Types\StringType;
 use Fyre\DB\Types\TextType;
 use Fyre\DB\Types\TimeType;
 use Fyre\Form\Schema;
+use Fyre\View\Form\Context;
 
 use function pow;
 
@@ -23,6 +24,8 @@ use function pow;
  * These helpers derive HTML-oriented field metadata (type, min/max) from the form schema.
  *
  * @internal
+ *
+ * @phpstan-require-extends Context
  */
 trait FormSchemaTrait
 {

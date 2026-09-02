@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Fyre\Commands\Traits;
 
+use Fyre\Console\Command;
 use Fyre\Queue\FailedMessage;
 use Fyre\Queue\Queue;
 
@@ -17,6 +18,8 @@ use function trim;
  * Provides failed queue job filtering.
  *
  * @internal
+ *
+ * @phpstan-require-extends Command
  */
 trait QueueFailureTrait
 {

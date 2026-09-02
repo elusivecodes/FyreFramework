@@ -3,12 +3,15 @@ declare(strict_types=1);
 
 namespace Fyre\ORM\Queries\Traits;
 
+use Fyre\DB\Query;
 use Fyre\ORM\Model;
 
 /**
  * Adds model awareness to ORM queries.
  *
  * @internal
+ *
+ * @phpstan-require-extends Query
  */
 trait ModelTrait
 {

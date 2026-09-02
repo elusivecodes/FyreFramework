@@ -18,6 +18,7 @@ use Fyre\DB\Types\StringType;
 use Fyre\DB\Types\TextType;
 use Fyre\DB\Types\TimeType;
 use Fyre\Utility\EnumHelper;
+use Fyre\View\Form\Context;
 
 use function array_combine;
 use function assert;
@@ -32,6 +33,8 @@ use function pow;
  * database schema.
  *
  * @internal
+ *
+ * @phpstan-require-extends Context
  */
 trait DbSchemaTrait
 {
