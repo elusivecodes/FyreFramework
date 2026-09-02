@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\Http\ServerRequest;
 
 use Fyre\Http\ServerRequest;
-use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Date;
 
 use function putenv;
 
@@ -40,12 +40,12 @@ trait EnvTestTrait
         $value = $request->getEnv('value', 'date');
 
         $this->assertInstanceOf(
-            DateTime::class,
+            Date::class,
             $value
         );
 
         $this->assertSame(
-            '2024-12-31T00:00:00.000+00:00',
+            '2024-12-31',
             $value->toIsoString()
         );
     }

@@ -315,5 +315,8 @@ class Date extends AbstractDateTime
         $this->calendar->set(IntlCalendar::FIELD_MINUTE, 0);
         $this->calendar->set(IntlCalendar::FIELD_SECOND, 0);
         $this->calendar->set(IntlCalendar::FIELD_MILLISECOND, 0);
+
+        // Resolve the normalized fields before later calendar adjustments.
+        $this->calendar->getTime() |> $this->calendar->setTime(...);
     }
 }

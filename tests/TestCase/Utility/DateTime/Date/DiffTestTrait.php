@@ -24,6 +24,7 @@ trait DiffTestTrait
             'months relative' => ['diffInMonths', [2018, 2, 1], [2018, 1, 2], true, 1],
             'months exact' => ['diffInMonths', [2018, 2, 1], [2018, 1, 2], false, 0],
             'weeks' => ['diffInWeeks', [2018, 8, 23], [2018, 6, 15], true, 10],
+            'weeks exact' => ['diffInWeeks', [2018, 8, 23], [2018, 6, 15], false, 9],
             'weeks negative' => ['diffInWeeks', [2018, 5, 15], [2018, 6, 23], true, -5],
             'years' => ['diffInYears', [2018], [2016], true, 2],
             'years negative' => ['diffInYears', [2016], [2018], true, -2],
