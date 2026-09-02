@@ -63,7 +63,7 @@ The methods below use the objects created above.
 | `contents(): string` | read all bytes without using the stored handle |
 | `copy(string $destination, bool $overwrite = true): static` | copy to an existing parent directory and preserve permissions and timestamps; return the source object |
 | `delete(): static` | unlink the file |
-| `touch(int|null $time = null, int|null $accessTime = null): static` | set timestamps, defaulting both to the current time |
+| `touch(int\|null $time = null, int\|null $accessTime = null): static` | set timestamps, defaulting both to the current time |
 | `chmod(int $permissions): static` | change permissions |
 
 `copy()` overwrites by default. It does not create the destination's parent folder.
@@ -82,7 +82,7 @@ The methods below use the objects created above.
 | `rewind(): static` | move to offset `0` |
 | `ended(): bool` | whether the end-of-file indicator is set |
 | `csv(int $length = 0, string $separator = ',', string $enclosure = '"', string $escape = '\\'): array` | parse the next CSV row; a negative length throws |
-| `lock(int|null $operation = null): static` | acquire an advisory lock; `null` means `LOCK_SHARED` |
+| `lock(int\|null $operation = null): static` | acquire an advisory lock; `null` means `LOCK_SHARED` |
 | `unlock(): static` | release the advisory lock |
 
 Every method in this table requires a valid stored handle except `open()`. Reaching EOF in `csv()` is treated as a failed read and throws rather than returning `false`.

@@ -89,7 +89,7 @@ $items = Arr::setDot(
 
 | Method | Return behavior |
 | --- | --- |
-| `dot(array $array, string|null $prefix = null, array &$result = []): array` | flatten nested arrays to dot-separated keys; objects and other values remain terminal |
+| `dot(array $array, string\|null $prefix = null, array &$result = []): array` | flatten nested arrays to dot-separated keys; objects and other values remain terminal |
 | `flatten(array $array, int $maxDepth = 1, array &$result = []): array` | flatten nested arrays into a reindexed list up to `$maxDepth` |
 | `divide(array $array): array` | return `[array_keys($array), array_values($array)]` |
 | `wrap(mixed $value): array` | return arrays unchanged, `[]` for `null`, or `[$value]` otherwise |
@@ -144,7 +144,7 @@ Callbacks in this group receive `(value, key)`.
 | Method | Behavior |
 | --- | --- |
 | `map(array $array, callable $callback): array` | call `(value, key)` and preserve each original key |
-| `filter(array $array, callable|null $callback = null, int $mode = Arr::FILTER_BOTH): array` | keep matching entries and preserve keys |
+| `filter(array $array, callable\|null $callback = null, int $mode = Arr::FILTER_BOTH): array` | keep matching entries and preserve keys |
 | `reduce(array $array, callable $callback, mixed $initial = null): mixed` | reduce with a `(carry, value)` callback |
 | `merge(array ...$arrays): array` | apply native `array_merge()` semantics |
 | `collapse(array $array, array ...$replacements): array` | recursively replace values with `array_replace_recursive()` |
@@ -162,14 +162,14 @@ With no callback, `filter()` removes falsey values using native `array_filter()`
 | Method | Mutation | Return behavior |
 | --- | --- | --- |
 | `chunk(array $array, int $size, bool $preserveKeys = false): array` | none | list of chunks; throws when `$size < 1` |
-| `slice(array $array, int $offset = 0, int|null $length = null, bool $preserveKeys = false): array` | none | selected slice |
+| `slice(array $array, int $offset = 0, int\|null $length = null, bool $preserveKeys = false): array` | none | selected slice |
 | `pad(array $array, int $size, mixed $value): array` | none | padded copy; a negative size pads on the left |
 | `randomValue(array $array): mixed` | none | random value, or `null` for an empty array |
 | `pop(array &$array): mixed` | removes the last entry | removed value or `null` |
 | `push(array &$array, mixed ...$values): int` | appends values | new count |
 | `shift(array &$array): mixed` | removes the first entry | removed value or `null` |
 | `unshift(array &$array, mixed ...$values): int` | prepends values | new count |
-| `splice(array &$array, int $offset, int|null $length = null, mixed $replacement = []): array` | removes a range and inserts replacements | removed values |
+| `splice(array &$array, int $offset, int\|null $length = null, mixed $replacement = []): array` | removes a range and inserts replacements | removed values |
 
 ```php
 $values = [1, 2, 3, 4];

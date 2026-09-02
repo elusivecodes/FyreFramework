@@ -82,7 +82,7 @@ The examples and return values below use the imported `Str` class from [Common o
 | `beforeLast(string $string, string $search): string` | content before the last match |
 | `length(string $string): int` | byte length |
 | `limit(string $string, int $limit = 100, string $append = '…'): string` | at most `$limit` bytes, followed by `$append` only when truncated |
-| `slice(string $string, int $start, int|null $length = null): string` | a byte-based substring using `substr()` |
+| `slice(string $string, int $start, int\|null $length = null): string` | a byte-based substring using `substr()` |
 
 The boundary helpers return the original string when `$search` is empty or absent:
 

@@ -54,22 +54,22 @@ Most helpers delegate to the same shared services available through the containe
 
 | Helper | Result |
 | --- | --- |
-| `app(string|null $alias = null, array $arguments = []): mixed` | shared `Engine` without an alias, or a service resolved with `Container::use()` |
-| `config(string|null $key = null, mixed $default = null): mixed` | shared `Config` without a key, or a dot-notation config value |
+| `app(string\|null $alias = null, array $arguments = []): mixed` | shared `Engine` without an alias, or a service resolved with `Container::use()` |
+| `config(string\|null $key = null, mixed $default = null): mixed` | shared `Config` without a key, or a dot-notation config value |
 | `env(string $name, mixed $default = null): mixed` | environment value, or the default when it is unset or empty |
-| `__(string $key, array $data = []): array\|string|null` | language value with optional placeholder data |
+| `__(string $key, array $data = []): array\|string\|null` | language value with optional placeholder data |
 
 ### HTTP, routing, and sessions
 
 | Helper | Result |
 | --- | --- |
-| `request(string|null $key = null, string|null $as = null): mixed` | current `ServerRequest` without arguments, or request data parsed through `getData()` |
+| `request(string\|null $key = null, string\|null $as = null): mixed` | current `ServerRequest` without arguments, or request data parsed through `getData()` |
 | `response(): ClientResponse` | new response resolved through the response factory binding |
 | `json(mixed $data, bool $stream = false): ClientResponse` | JSON response; streaming emits an iterable as a JSON array |
-| `route(string $name, array $arguments = [], string|null $scheme = null, string|null $host = null, int|null $port = null, bool|null $full = null): string` | URL generated from a route alias, placeholders, and optional origin overrides |
+| `route(string $name, array $arguments = [], string\|null $scheme = null, string\|null $host = null, int\|null $port = null, bool\|null $full = null): string` | URL generated from a route alias, placeholders, and optional origin overrides |
 | `redirect(string\|Uri $uri, int $code = 302, array $options = []): RedirectResponse` | redirect response for a URI |
-| `abort(int $code = 500, string|null $message = null): void` | throws the HTTP exception mapped to the status code |
-| `session(string|null $key = null, mixed $value = null): mixed` | current `Session`, a stored value, or the result of writing a value |
+| `abort(int $code = 500, string\|null $message = null): void` | throws the HTTP exception mapped to the status code |
+| `session(string\|null $key = null, mixed $value = null): mixed` | current `Session`, a stored value, or the result of writing a value |
 | `asset(string $path, bool $full = false): string` | normalized asset URL, optionally resolved against `App.baseUri` |
 
 `route()` accepts optional `$scheme`, `$host`, `$port`, and `$full` arguments after the route arguments. It throws `RouterException` when the alias is missing, a required placeholder is absent, or a value does not match its route pattern.
@@ -94,7 +94,7 @@ session('wizard.step', 2);
 | Helper | Result |
 | --- | --- |
 | `auth(): Auth` | shared authentication service |
-| `user(): Entity|null` | current authenticated user |
+| `user(): Entity\|null` | current authenticated user |
 | `logged_in(): bool` | whether a user is logged in |
 | `authorize(string $rule, mixed ...$args): void` | authorize a rule and throw when access is denied |
 | `can(string $rule, mixed ...$args): bool` | whether a rule is allowed |
@@ -106,7 +106,7 @@ session('wizard.step', 2);
 
 | Helper | Result |
 | --- | --- |
-| `view(string $template, array $data = [], string|null $layout = null): string` | rendered template using the selected or default layout |
+| `view(string $template, array $data = [], string\|null $layout = null): string` | rendered template using the selected or default layout |
 | `element(string $file, array $data = []): string` | rendered element with its local data |
 | `escape(string $string): string` | string escaped for HTML |
 
@@ -120,13 +120,13 @@ session('wizard.step', 2);
 | `email(string $key = 'default'): Email` | new email from the configured mailer |
 | `encryption(string $key = 'default'): Encrypter` | shared configured encryption handler |
 | `queue(string $className, array $arguments = [], array $options = []): void` | enqueue a job through the shared queue manager |
-| `type(string|null $type = null): Type\|TypeParser` | shared `TypeParser` without a name, or the named type handler |
+| `type(string\|null $type = null): Type\|TypeParser` | shared `TypeParser` without a name, or the named type handler |
 
 ### Utilities and debugging
 
 | Helper | Result |
 | --- | --- |
-| `collect(array\|Closure\|JsonSerializable\|Traversable|null $source): Collection` | new collection containing the source values |
+| `collect(array\|Closure\|JsonSerializable\|Traversable\|null $source): Collection` | new collection containing the source values |
 | `now(): DateTime` | new date/time value for the current instant |
 | `dump(mixed ...$data): void` | dump values with `var_dump()` |
 | `dd(mixed ...$data): void` | dump values and stop execution |

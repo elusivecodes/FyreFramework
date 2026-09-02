@@ -55,8 +55,8 @@ These options apply to all handlers that extend `Fyre\Log\Logger`:
 | Option | Type | Default | Purpose |
 | --- | --- | --- | --- |
 | `className` | `class-string<Fyre\Log\Logger>` | required | handler class to build |
-| `levels` | `string|string[]|null` | `null` | allowed levels; `null` allows every level |
-| `scopes` | `string|string[]|null` | `[]` | allowed scopes; `[]` matches only unscoped messages and `null` matches every scope |
+| `levels` | `string\|string[]\|null` | `null` | allowed levels; `null` allows every level |
+| `scopes` | `string\|string[]\|null` | `[]` | allowed scopes; `[]` matches only unscoped messages and `null` matches every scope |
 | `dateFormat` | `string` | `Y-m-d H:i:s` | timestamp format used by handlers that include dates |
 
 Both `levels` and `scopes` accept a single string, a list of strings, or `null`:
@@ -98,11 +98,11 @@ These filters are applied by `LogManager::handle()`. Calling PSR-3 methods direc
 | Option | Type | Default | Purpose |
 | --- | --- | --- | --- |
 | `path` | `string` | `<system temp>/fyre/logs` | directory containing log files |
-| `file` | `string|null` | `null` | base file name; `null` uses the log level |
-| `suffix` | `string|null` | `null` | suffix after the base name; CLI defaults to `-cli` when omitted |
+| `file` | `string\|null` | `null` | base file name; `null` uses the log level |
+| `suffix` | `string\|null` | `null` | suffix after the base name; CLI defaults to `-cli` when omitted |
 | `extension` | `string` | `log` | extension without a leading dot; an empty string omits it |
 | `maxSize` | `int` | `1048576` | size in bytes at which the active file is rotated |
-| `mask` | `int|null` | `null` | permissions applied when a new file is created |
+| `mask` | `int\|null` | `null` | permissions applied when a new file is created |
 
 The directory is created when necessary. For durable production logs, configure an application-owned path explicitly.
 

@@ -118,7 +118,7 @@ Use `MysqlConnection::class` as `className`.
 | `username` | `string` | `''` |
 | `password` | `string` | `''` |
 | `database` | `string` | `''` |
-| `port` | `int|string` | `'3306'` |
+| `port` | `int\|string` | `'3306'` |
 | `charset` | `string` | `utf8mb4` |
 | `collation` | `string` | `utf8mb4_unicode_ci` |
 | `compress` | `bool` | `false` |
@@ -139,7 +139,7 @@ Use `PostgresConnection::class` as `className`.
 | `username` | `string` | `''` |
 | `password` | `string` | `''` |
 | `database` | `string` | `''` |
-| `port` | `int|string` | `'5432'` |
+| `port` | `int\|string` | `'5432'` |
 | `charset` | `string` | `utf8` |
 | `schema` | `string` | `public` |
 | `persist` | `bool` | `false` |
@@ -156,8 +156,8 @@ Use `SqliteConnection::class` as `className`.
 | --- | --- | --- |
 | `database` | `string` | `:memory:` |
 | `mask` | `int` | `0644` |
-| `cache` | `string|null` | `null` |
-| `mode` | `string|null` | `null` |
+| `cache` | `string\|null` | `null` |
+| `mode` | `string\|null` | `null` |
 | `persist` | `bool` | `false` |
 | `flags` | `array` | `[]` |
 

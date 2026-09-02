@@ -147,7 +147,7 @@ These methods return new collections. Except where the materialization table say
 | --- | --- |
 | `extract(array\|Closure\|string $valuePath): static` | reindexed extracted values |
 | `indexBy(array\|Closure\|string $keyPath): static` | original items keyed by extracted values |
-| `combine(array\|Closure\|string $keyPath, array\|Closure\|string|null $valuePath = null): static` | extracted keys mapped to extracted values or complete items |
+| `combine(array\|Closure\|string $keyPath, array\|Closure\|string\|null $valuePath = null): static` | extracted keys mapped to extracted values or complete items |
 | `groupBy(array\|Closure\|string $keyPath): static` | extracted keys mapped to lists of matching items |
 | `countBy(array\|Closure\|string $keyPath): static` | extracted keys mapped to item counts |
 
@@ -163,8 +163,8 @@ These methods return new collections. Except where the materialization table say
 | `some(Closure $callback): bool` | whether any item passes; stops at the first match |
 | `none(Closure $callback): bool` | whether no item passes; stops at the first match |
 | `includes(mixed $value): bool` | whether a value is strictly identical |
-| `indexOf(mixed $value): int\|string|null` | key of the first strictly identical value |
-| `lastIndexOf(mixed $value): int\|string|null` | key of the last strictly identical value; materializes through `reverse()` |
+| `indexOf(mixed $value): int\|string\|null` | key of the first strictly identical value |
+| `lastIndexOf(mixed $value): int\|string\|null` | key of the last strictly identical value; materializes through `reverse()` |
 | `first(): mixed` | first value or `null` |
 | `last(): mixed` | last value or `null`; materializes through `reverse()` |
 | `isEmpty(): bool` | whether iteration yields no first item |
@@ -176,10 +176,10 @@ These methods return new collections. Except where the materialization table say
 | Method | Behavior |
 | --- | --- |
 | `sort(Closure\|int $callback = Collection::SORT_NATURAL, bool $descending = false): static` | sort values with a comparison closure or sort flag while preserving keys |
-| `sortBy(array\|Closure\|string|null $valuePath = null, int $sort = Collection::SORT_NATURAL, bool $descending = false): static` | sort by extracted values while preserving keys |
+| `sortBy(array\|Closure\|string\|null $valuePath = null, int $sort = Collection::SORT_NATURAL, bool $descending = false): static` | sort by extracted values while preserving keys |
 | `reverse(): static` | reverse iteration order while preserving keys |
 | `shuffle(): static` | randomize order and reindex values |
-| `unique(array\|Closure\|string|null $valuePath = null, bool $strict = false): static` | retain the first item for each extracted value and preserve its key |
+| `unique(array\|Closure\|string\|null $valuePath = null, bool $strict = false): static` | retain the first item for each extracted value and preserve its key |
 | `keys(): static` | yield source keys as a reindexed sequence |
 | `values(): static` | yield source values as a reindexed sequence |
 | `flip(): static` | use each value as a key and its original key as the value |
@@ -192,11 +192,11 @@ The optional path defaults to the complete item.
 
 | Method | Return behavior |
 | --- | --- |
-| `sumOf(array\|Closure\|string|null $valuePath = null): mixed` | sum, starting at `0` |
-| `avg(array\|Closure\|string|null $valuePath = null): float|null` | mean of non-`null` values, or `null` when none remain |
-| `min(array\|Closure\|string|null $valuePath = null): mixed` | minimum extracted value or `null` |
-| `max(array\|Closure\|string|null $valuePath = null): mixed` | maximum extracted value or `null` |
-| `median(array\|Closure\|string|null $valuePath = null): mixed` | sorted median of non-`null` values or `null` |
+| `sumOf(array\|Closure\|string\|null $valuePath = null): mixed` | sum, starting at `0` |
+| `avg(array\|Closure\|string\|null $valuePath = null): float\|null` | mean of non-`null` values, or `null` when none remain |
+| `min(array\|Closure\|string\|null $valuePath = null): mixed` | minimum extracted value or `null` |
+| `max(array\|Closure\|string\|null $valuePath = null): mixed` | maximum extracted value or `null` |
+| `median(array\|Closure\|string\|null $valuePath = null): mixed` | sorted median of non-`null` values or `null` |
 
 For an even number of values, `median()` returns the arithmetic mean of the middle pair.
 
@@ -204,7 +204,7 @@ For an even number of values, `median()` returns the arithmetic mean of the midd
 
 | Method | Behavior |
 | --- | --- |
-| `dot(int\|string|null $prefix = null): static` | recursively flatten arrays and traversables to dot-separated keys |
+| `dot(int\|string\|null $prefix = null): static` | recursively flatten arrays and traversables to dot-separated keys |
 | `flatten(int $maxDepth = PHP_INT_MAX): static` | recursively flatten arrays and traversables into a reindexed value sequence |
 | `nest(array\|Closure\|string $idPath = 'id', array\|Closure\|string $parentPath = 'parent_id', string $nestingKey = 'children'): static` | build a parent/child tree, with unresolved parents left at the root |
 | `listNested(string $order = 'desc', string $nestingKey = 'children'): static` | traverse an existing tree in `desc`, `asc`, or `leaves` order |
@@ -234,7 +234,7 @@ $labels = new Collection([
 | `jsonSerialize(): array` | materialized data with `JsonSerializable` items serialized and objects with callable `toArray()` converted |
 | `collect(): static` | a new eager array-backed snapshot |
 | `cache(): static` | a new lazy, progressively cached collection |
-| `join(string $glue, string|null $finalGlue = null): string` | materialized string, optionally using a distinct final separator |
+| `join(string $glue, string\|null $finalGlue = null): string` | materialized string, optionally using a distinct final separator |
 
 Casting a collection to a string calls `toJson()`. PHP serialization materializes the collection; unserialization restores an array-backed collection.
 

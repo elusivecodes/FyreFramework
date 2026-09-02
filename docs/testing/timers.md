@@ -74,7 +74,7 @@ The examples above establish the shared `$timer` instance used by these methods.
 | Method | Return | Behavior |
 | --- | --- | --- |
 | `has($name)` | `bool` | check whether a timer exists |
-| `get($name)` | `array|null` | return timer data without changing it |
+| `get($name)` | `array\|null` | return timer data without changing it |
 | `isStopped($name)` | `bool` | check whether the timer has an end reading |
 | `all()` | `array<string, array>` | return all timer data keyed by name |
 | `count()` | `int` | return the number of stored timers; also available through `count($timer)` |

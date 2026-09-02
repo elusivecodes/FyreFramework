@@ -50,7 +50,7 @@ $cookie = new Cookie('token', 'abc123', [
 
 | Option | Type | Default | Meaning |
 | --- | --- | --- | --- |
-| `expires` | `int|null` | `null` | expiration as a Unix timestamp |
+| `expires` | `int\|null` | `null` | expiration as a Unix timestamp |
 | `path` | `string` | `/` | request path scope |
 | `domain` | `string` | `''` | domain used for request matching |
 | `hostOnly` | `bool` | `false` | require an exact host match |

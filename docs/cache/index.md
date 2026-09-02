@@ -45,7 +45,7 @@ These options apply to all handlers:
 | --- | --- | --- | --- |
 | `className` | `class-string<Fyre\Cache\Cacher>` | required | cache handler class to build |
 | `prefix` | `string` | `''` | value prepended to every cache key |
-| `expire` | `int|null` | `null` | default TTL in seconds when a call does not supply one |
+| `expire` | `int\|null` | `null` | default TTL in seconds when a call does not supply one |
 
 Handler-specific options are documented below.
 
@@ -104,14 +104,14 @@ Requires `ext-redis` and a reachable Redis server.
 | Option | Type | Default |
 | --- | --- | --- |
 | `host` | `string` | `127.0.0.1` |
-| `password` | `string|null` | `null` |
-| `port` | `int|string` | `6379` |
-| `database` | `int|string|null` | `null` |
-| `timeout` | `int|string` | `0` |
+| `password` | `string\|null` | `null` |
+| `port` | `int\|string` | `6379` |
+| `database` | `int\|string\|null` | `null` |
+| `timeout` | `int\|string` | `0` |
 | `persist` | `bool` | `true` |
 | `flushDatabase` | `bool` | `false` |
 | `tls` | `bool` | `false` |
-| `ssl` | `array{key: string|null, cert: string|null, ca: string|null}` | all values `null` |
+| `ssl` | `array{key: string\|null, cert: string\|null, ca: string\|null}` | all values `null` |
 
 `clear()` requires a non-empty `prefix` unless `flushDatabase` is enabled. Enabling `flushDatabase` allows an unprefixed handler to flush the selected Redis database.
 
@@ -124,7 +124,7 @@ Requires `ext-memcached` and a reachable Memcached server.
 | Option | Type | Default |
 | --- | --- | --- |
 | `host` | `string` | `127.0.0.1` |
-| `port` | `int|string` | `11211` |
+| `port` | `int\|string` | `11211` |
 | `weight` | `int` | `1` |
 
 ### Null handler

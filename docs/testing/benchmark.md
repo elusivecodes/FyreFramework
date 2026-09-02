@@ -96,7 +96,7 @@ Each callback runs `$iterations` times. Values below `1` throw an `InvalidArgume
 
 | Method | Return | Behavior |
 | --- | --- | --- |
-| `get($name)` | `callable|null` | return one callback or `null` when missing |
+| `get($name)` | `callable\|null` | return one callback or `null` when missing |
 | `has($name)` | `bool` | check whether a name is registered |
 | `all()` | `array<string, callable>` | return every callback keyed by name |
 | `count()` | `int` | return the number of callbacks; also available through `count($benchmark)` |

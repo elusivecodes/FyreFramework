@@ -129,15 +129,15 @@ Common column options are:
 
 | Option | Type | Purpose |
 | --- | --- | --- |
-| `type` | `class-string<Type>|string` | portable type handler class or driver-specific type name |
-| `length` | `int|null` | maximum length where supported |
-| `precision` | `int|null` | numeric precision |
-| `scale` | `int|null` | numeric scale |
-| `fractionalSeconds` | `int|null` | fractional-second precision |
+| `type` | `class-string<Type>\|string` | portable type handler class or driver-specific type name |
+| `length` | `int\|null` | maximum length where supported |
+| `precision` | `int\|null` | numeric precision |
+| `scale` | `int\|null` | numeric scale |
+| `fractionalSeconds` | `int\|null` | fractional-second precision |
 | `nullable` | `bool` | allow `NULL` values |
 | `unsigned` | `bool` | use an unsigned numeric type where supported |
-| `default` | `bool|float|int|string|LiteralExpression|null` | scalar default, SQL expression, or no default |
-| `comment` | `string|null` | column comment where supported |
+| `default` | `bool\|float\|int\|string\|LiteralExpression\|null` | scalar default, SQL expression, or no default |
+| `comment` | `string\|null` | column comment where supported |
 | `autoIncrement` | `bool` | use the driver's auto-increment behavior |
 
 Prefer type classes from `Fyre\DB\Types` for portable definitions. Use a driver type string only when the schema deliberately depends on that database.
@@ -162,10 +162,10 @@ Use `addIndex()` and `dropIndex()` to manage indexes. A built `Table` accepts th
 
 | Option | Type | Purpose |
 | --- | --- | --- |
-| `columns` | `string|string[]` | columns in the index; defaults to the index name |
+| `columns` | `string\|string[]` | columns in the index; defaults to the index name |
 | `unique` | `bool` | create a unique index |
 | `primary` | `bool` | create a primary key and imply `unique` |
-| `type` | `string|null` | driver-specific index type, normalized to lowercase |
+| `type` | `string\|null` | driver-specific index type, normalized to lowercase |
 
 ```php
 $forge->build('users')
@@ -187,11 +187,11 @@ Use `addForeignKey()` and `dropForeignKey()` to manage foreign-key constraints:
 
 | Option | Type | Purpose |
 | --- | --- | --- |
-| `columns` | `string|string[]` | local columns; defaults to the foreign-key name |
+| `columns` | `string\|string[]` | local columns; defaults to the foreign-key name |
 | `referencedTable` | `string` | referenced table |
-| `referencedColumns` | `string|string[]` | referenced columns |
-| `onUpdate` | `string|null` | update action |
-| `onDelete` | `string|null` | delete action |
+| `referencedColumns` | `string\|string[]` | referenced columns |
+| `onUpdate` | `string\|null` | update action |
+| `onDelete` | `string\|null` | delete action |
 
 ```php
 $forge->addForeignKey('posts', 'fk_posts_user_id', [
