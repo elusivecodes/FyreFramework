@@ -89,11 +89,13 @@ declare(strict_types=1);
 use Fyre\Core\Engine;
 use Fyre\Core\Loader;
 use Fyre\Http\MiddlewareQueue;
+use Override;
 
 $composer = require __DIR__.'/vendor/autoload.php';
 
 final class Application extends Engine
 {
+    #[Override]
     public function middleware(MiddlewareQueue $queue): MiddlewareQueue
     {
         return $queue

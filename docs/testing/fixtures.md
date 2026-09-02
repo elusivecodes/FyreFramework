@@ -25,9 +25,11 @@ Extend `Fyre\TestSuite\Fixture\Fixture` and set the protected `$data` property:
 namespace Tests\Fixtures;
 
 use Fyre\TestSuite\Fixture\Fixture;
+use Override;
 
 final class ItemsFixture extends Fixture
 {
+    #[Override]
     protected iterable $data = [
         [
             'id' => 1,
@@ -51,9 +53,11 @@ Set the `$fixtures` property once on the test class to load those aliases before
 
 ```php
 use Fyre\TestSuite\TestCase;
+use Override;
 
 final class ItemsTableTest extends TestCase
 {
+    #[Override]
     protected array $fixtures = ['Items'];
 
     public function testFindsFixtureRows(): void
@@ -100,8 +104,10 @@ Fixtures ignore nested relationship data by default. Set `$associated` to the re
 ```php
 final class ItemsFixture extends Fixture
 {
+    #[Override]
     protected array|string|null $associated = 'Comments';
 
+    #[Override]
     protected iterable $data = [
         [
             'name' => 'First item',

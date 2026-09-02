@@ -27,7 +27,7 @@ use function route;
 use function view;
 
 if (!logged_in()) {
-    return redirect(route('login'));
+    return route('login') |> redirect(...);
 }
 
 return view('dashboard');

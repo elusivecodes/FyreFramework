@@ -60,9 +60,11 @@ Define relationships in a model’s `initialize()` method using the relationship
 
 ```php
 use Fyre\ORM\Model;
+use Override;
 
 class UsersModel extends Model
 {
+    #[Override]
     public function initialize(): void
     {
         $this->hasOne('Addresses');
@@ -79,11 +81,13 @@ You can also define relationships using model attributes. Attributes are loaded 
 use Fyre\ORM\Attributes\HasMany;
 use Fyre\ORM\Attributes\HasOne;
 use Fyre\ORM\Model;
+use Override;
 
 #[HasOne('Addresses')]
 #[HasMany('Posts')]
 class UsersModel extends Model
 {
+    #[Override]
     public function initialize(): void
     {
         // Additional configuration is still fine here.
@@ -110,9 +114,11 @@ Override the property name with `propertyName`:
 
 ```php
 use Fyre\ORM\Model;
+use Override;
 
 class PostsModel extends Model
 {
+    #[Override]
     public function initialize(): void
     {
         $this->belongsTo('Users', [
@@ -136,9 +142,11 @@ Define it using `initialize()`:
 
 ```php
 use Fyre\ORM\Model;
+use Override;
 
 class PostsModel extends Model
 {
+    #[Override]
     public function initialize(): void
     {
         $this->belongsTo('Users', [
@@ -170,9 +178,11 @@ Define it using `initialize()`:
 
 ```php
 use Fyre\ORM\Model;
+use Override;
 
 class UsersModel extends Model
 {
+    #[Override]
     public function initialize(): void
     {
         $this->hasOne('Addresses', [
@@ -205,9 +215,11 @@ Define it using `initialize()`:
 
 ```php
 use Fyre\ORM\Model;
+use Override;
 
 class UsersModel extends Model
 {
+    #[Override]
     public function initialize(): void
     {
         $this->hasMany('Posts', [
@@ -242,9 +254,11 @@ Define it using `initialize()`:
 
 ```php
 use Fyre\ORM\Model;
+use Override;
 
 class PostsModel extends Model
 {
+    #[Override]
     public function initialize(): void
     {
         $this->manyToMany('Tags', [
@@ -413,9 +427,11 @@ Set a default strategy on the relationship:
 
 ```php
 use Fyre\ORM\Model;
+use Override;
 
 class UsersModel extends Model
 {
+    #[Override]
     public function initialize(): void
     {
         $this->hasMany('Posts')

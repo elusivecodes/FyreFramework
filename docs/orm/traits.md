@@ -114,19 +114,24 @@ If restoring an entity or one of its dependents fails, the transaction is rolled
 
 ### Configuration
 
-Override these properties in your model to change column names:
+Set these properties in your model's `initialize()` method to change column names:
 
 - `$deletedField` (default: `'deleted'`)
 
 ```php
 use Fyre\ORM\Model;
 use Fyre\ORM\Traits\SoftDeleteTrait;
+use Override;
 
 class PostsModel extends Model
 {
     use SoftDeleteTrait;
 
-    protected string $deletedField = 'deleted_at';
+    #[Override]
+    public function initialize(): void
+    {
+        $this->deletedField = 'deleted_at';
+    }
 }
 ```
 
@@ -147,7 +152,7 @@ Timestamping is implemented by that event listener, so `save(..., events: false)
 
 ### Timestamp configuration
 
-Override these properties in your model to change column names:
+Set these properties in your model's `initialize()` method to change column names:
 
 - `$createdField` (default: `'created'`)
 - `$modifiedField` (default: `'modified'`)
@@ -155,13 +160,18 @@ Override these properties in your model to change column names:
 ```php
 use Fyre\ORM\Model;
 use Fyre\ORM\Traits\TimestampsTrait;
+use Override;
 
 class UsersModel extends Model
 {
     use TimestampsTrait;
 
-    protected string $createdField = 'created_at';
-    protected string $modifiedField = 'updated_at';
+    #[Override]
+    public function initialize(): void
+    {
+        $this->createdField = 'created_at';
+        $this->modifiedField = 'updated_at';
+    }
 }
 ```
 

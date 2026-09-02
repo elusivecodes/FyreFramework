@@ -40,6 +40,7 @@ Factories can be injected into any container-built class:
 
 ```php
 use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 
 class ApiRequestBuilder
@@ -49,7 +50,7 @@ class ApiRequestBuilder
         protected StreamFactoryInterface $streamFactory
     ) {}
 
-    public function build(): \Psr\Http\Message\RequestInterface
+    public function build(): RequestInterface
     {
         return $this->requestFactory
             ->createRequest('POST', 'https://api.example.com/events')

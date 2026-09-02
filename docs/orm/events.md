@@ -47,9 +47,11 @@ Registering listeners directly on the model is a straightforward way to keep beh
 use Fyre\Event\Event;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Model;
+use Override;
 
 class UsersModel extends Model
 {
+    #[Override]
     public function initialize(): void
     {
         $this->getEventManager()->on('ORM.beforeSave', static function(Event $event, Entity $entity, array $options): void {

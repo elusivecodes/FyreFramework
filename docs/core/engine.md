@@ -29,6 +29,7 @@ use Fyre\Core\Config;
 use Fyre\Core\Engine;
 use Fyre\Http\MiddlewareQueue;
 use Fyre\Log\LogManager;
+use Override;
 use Psr\Log\LoggerInterface;
 
 class Application extends Engine
@@ -43,6 +44,7 @@ class Application extends Engine
         $config->load('bootstrap');
     }
 
+    #[Override]
     public function middleware(MiddlewareQueue $queue): MiddlewareQueue
     {
         return $queue

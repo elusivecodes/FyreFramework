@@ -27,7 +27,7 @@ class ExampleCommand extends Command
     {
         $this->io->success('Finished.');
 
-        return self::CODE_SUCCESS;
+        return static::CODE_SUCCESS;
     }
 }
 ```

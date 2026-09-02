@@ -303,13 +303,17 @@ namespace App\Commands;
 use Fyre\Cache\CacheManager;
 use Fyre\Console\Command;
 use Fyre\Console\Console;
+use Override;
 
 class ClearCacheCommand extends Command
 {
+    #[Override]
     protected string|null $alias = 'app:clear-cache';
 
+    #[Override]
     protected string $description = 'Delete a cache key.';
 
+    #[Override]
     protected array $options = [
         'cache' => [
             'help' => 'Cache configuration to use.',
@@ -337,13 +341,13 @@ class ClearCacheCommand extends Command
     public function run(string $cache, string $key, bool $force): int
     {
         if (!$force && !$this->io->confirm('Delete cache key "'.$key.'"?', false)) {
-            return self::CODE_SUCCESS;
+            return static::CODE_SUCCESS;
         }
 
         $this->cacheManager->use($cache)->delete($key);
         $this->io->success('Deleted: '.$key);
 
-        return self::CODE_SUCCESS;
+        return static::CODE_SUCCESS;
     }
 }
 ```

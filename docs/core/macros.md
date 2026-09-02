@@ -19,7 +19,7 @@ Register macros during application bootstrapping, before the first call. Use `ma
 ```php
 use Fyre\Utility\Formatter;
 
-Formatter::macro('usd', function (float|int|string $value): string {
+Formatter::macro('usd', function(float|int|string $value): string {
     return $this->currency($value, 'USD');
 });
 
@@ -36,7 +36,7 @@ Use `staticMacro(string $name, callable $macro): void` when the callback should 
 ```php
 use Fyre\Utility\Str;
 
-Str::staticMacro('surround', static function (string $value, string $prefix, string $suffix): string {
+Str::staticMacro('surround', static function(string $value, string $prefix, string $suffix): string {
     return $prefix.$value.$suffix;
 });
 

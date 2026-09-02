@@ -246,7 +246,7 @@ If you need to generate the login URL for redirects, `Auth::getLoginUrl()` uses 
 - `getLoginUrl(string|UriInterface|null $redirect = null): string`
 
 ```php
-$loginUrl = $auth->getLoginUrl($request->getUri());
+$loginUrl = $request->getUri() |> $auth->getLoginUrl(...);
 ```
 
 ## Identifying users with Identifier

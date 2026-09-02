@@ -110,11 +110,11 @@ If there is no current user and the callback’s first parameter does not allow 
 ```php
 use Fyre\ORM\Entity;
 
-$access->before(function(Entity $user, string $rule, mixed ...$args): bool|null {
+$access->before(static function(Entity $user, string $rule, mixed ...$args): bool|null {
     return $user->is_admin ? true : null;
 });
 
-$access->after(function(Entity|null $user, string $rule, bool|null $result, mixed ...$args): bool|null {
+$access->after(static function(Entity|null $user, string $rule, bool|null $result, mixed ...$args): bool|null {
     if ($result !== null) {
         return null;
     }

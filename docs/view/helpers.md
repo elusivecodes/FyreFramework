@@ -99,9 +99,11 @@ Application helpers use the `{Name}Helper` naming convention and normally live u
 namespace App\Helpers;
 
 use Fyre\View\Helper;
+use Override;
 
 class BreadcrumbsHelper extends Helper
 {
+    #[Override]
     protected static array $defaults = [
         'separator' => ' / ',
     ];

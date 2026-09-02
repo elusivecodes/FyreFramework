@@ -139,9 +139,11 @@ Extend `Fyre\DB\Type`, override the conversions you need, and map the class to a
 
 ```php
 use Fyre\DB\Type;
+use Override;
 
 class UuidType extends Type
 {
+    #[Override]
     public function parse(mixed $value): string|null
     {
         if ($value === null) {

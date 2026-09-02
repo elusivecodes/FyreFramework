@@ -45,9 +45,11 @@ use Fyre\Form\Form;
 use Fyre\Form\Rule;
 use Fyre\Form\Schema;
 use Fyre\Form\Validator;
+use Override;
 
 class RegisterForm extends Form
 {
+    #[Override]
     public function buildSchema(Schema $schema): Schema
     {
         return $schema
@@ -55,6 +57,7 @@ class RegisterForm extends Form
             ->addField('password', ['type' => 'string']);
     }
 
+    #[Override]
     public function buildValidator(Validator $validator): Validator
     {
         return $validator
@@ -64,6 +67,7 @@ class RegisterForm extends Form
             ->add('password', Rule::minLength(12));
     }
 
+    #[Override]
     protected function process(array $data): bool
     {
         // Persist the validated, parsed data.

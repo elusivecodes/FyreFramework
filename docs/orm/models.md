@@ -56,9 +56,11 @@ If you need to override the table name, use `setTable()`.
 
 ```php
 use Fyre\ORM\Model;
+use Override;
 
 class UsersModel extends Model
 {
+    #[Override]
     public function initialize(): void
     {
         $this->setTable('users');
@@ -125,9 +127,11 @@ Use model validation for input-shape and field-level checks such as required fie
 use Fyre\Form\Rule;
 use Fyre\Form\Validator;
 use Fyre\ORM\Model;
+use Override;
 
 class UsersModel extends Model
 {
+    #[Override]
     public function buildValidator(Validator $validator): Validator
     {
         return $validator

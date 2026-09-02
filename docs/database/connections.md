@@ -251,7 +251,9 @@ Prefer bound values wherever possible. Query builders bind values by default (vi
 Use `transactional()` for work that should commit together. An exception rolls the transaction back and is rethrown; returning `false` rolls it back and returns `false`.
 
 ```php
-$saved = $db->transactional(function($db) {
+use Fyre\DB\Connection;
+
+$saved = $db->transactional(static function(Connection $db): bool {
     $db->insert()
         ->into('audit_log')
         ->values([['event' => 'user.created']])

@@ -35,9 +35,11 @@ Bindings are performed by `SubstituteBindingsMiddleware`, which is mapped by def
 ```php
 use Fyre\Core\Engine;
 use Fyre\Http\MiddlewareQueue;
+use Override;
 
 class Application extends Engine
 {
+    #[Override]
     public function middleware(MiddlewareQueue $queue): MiddlewareQueue
     {
         return $queue

@@ -56,9 +56,11 @@ Override `Model::buildRules(RuleSet $rules): RuleSet` in your model to register 
 ```php
 use Fyre\ORM\Model;
 use Fyre\ORM\RuleSet;
+use Override;
 
 class UsersModel extends Model
 {
+    #[Override]
     public function buildRules(RuleSet $rules): RuleSet
     {
         return $rules
@@ -85,12 +87,14 @@ Custom rules usually:
 use Fyre\ORM\Entity;
 use Fyre\ORM\Model;
 use Fyre\ORM\RuleSet;
+use Override;
 
 class UsersModel extends Model
 {
+    #[Override]
     public function buildRules(RuleSet $rules): RuleSet
     {
-        return $rules->add(function(Entity $entity): bool {
+        return $rules->add(static function(Entity $entity): bool {
             $email = (string) $entity->get('email');
 
             if ($email === '') {
@@ -99,6 +103,7 @@ class UsersModel extends Model
 
             if (!str_ends_with($email, '@example.com')) {
                 $entity->setError('email', 'invalid');
+
                 return false;
             }
 
@@ -117,12 +122,14 @@ use Fyre\Core\Lang;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Model;
 use Fyre\ORM\RuleSet;
+use Override;
 
 class UsersModel extends Model
 {
+    #[Override]
     public function buildRules(RuleSet $rules): RuleSet
     {
-        return $rules->add(function(Entity $entity, Model $model, Lang $lang): bool {
+        return $rules->add(static function(Entity $entity, Model $model, Lang $lang): bool {
             if (!$entity->isNew()) {
                 return true;
             }
@@ -133,6 +140,7 @@ class UsersModel extends Model
 
             $message = $lang->get('RuleSet.isClean', ['fields' => 'created_by']) ?? $model->getAlias().' requires a creator';
             $entity->setError('created_by', $message);
+
             return false;
         });
     }
