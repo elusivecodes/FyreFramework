@@ -9,6 +9,8 @@ use Override;
 /**
  * Provides XYZ channel accessors.
  *
+ * @internal
+ *
  * @phpstan-require-extends Color
  */
 trait XyzTrait

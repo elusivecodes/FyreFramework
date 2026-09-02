@@ -9,6 +9,8 @@ use InvalidArgumentException;
 /**
  * Adds per-group LIMIT/OFFSET support to queries.
  *
+ * @internal
+ *
  * @phpstan-require-extends Query
  */
 trait GroupLimitTrait

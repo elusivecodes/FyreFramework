@@ -13,6 +13,8 @@ use function min;
 
 /**
  * Implements a form context backed by a Form.
+ *
+ * @internal
  */
 class FormContext extends Context
 {

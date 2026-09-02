@@ -11,6 +11,8 @@ use Fyre\DB\Query;
 /**
  * Adds UNION / UNION ALL support to queries.
  *
+ * @internal
+ *
  * @phpstan-require-extends Query
  */
 trait UnionTrait

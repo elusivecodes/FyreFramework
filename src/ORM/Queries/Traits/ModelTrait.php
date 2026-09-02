@@ -7,6 +7,8 @@ use Fyre\ORM\Model;
 
 /**
  * Adds model awareness to ORM queries.
+ *
+ * @internal
  */
 trait ModelTrait
 {

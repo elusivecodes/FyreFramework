@@ -10,6 +10,8 @@ use function array_merge;
 /**
  * Adds ORDER BY clause support to queries.
  *
+ * @internal
+ *
  * @phpstan-require-extends Query
  */
 trait OrderByTrait

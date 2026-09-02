@@ -8,6 +8,8 @@ use Fyre\DB\Query;
 /**
  * Adds support for appending raw SQL after the main query (e.g. `RETURNING`).
  *
+ * @internal
+ *
  * @phpstan-require-extends Query
  */
 trait EpilogTrait

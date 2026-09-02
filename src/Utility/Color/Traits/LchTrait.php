@@ -9,6 +9,8 @@ use Override;
 /**
  * Provides LCH channel accessors.
  *
+ * @internal
+ *
  * @phpstan-require-extends Color
  */
 trait LchTrait

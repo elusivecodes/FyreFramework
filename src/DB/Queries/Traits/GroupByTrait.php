@@ -10,6 +10,8 @@ use function array_merge;
 /**
  * Adds GROUP BY clause support to queries.
  *
+ * @internal
+ *
  * @phpstan-require-extends Query
  */
 trait GroupByTrait

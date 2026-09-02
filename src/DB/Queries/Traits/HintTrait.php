@@ -16,6 +16,8 @@ use function trim;
 /**
  * Adds optimizer hint support to queries.
  *
+ * @internal
+ *
  * @phpstan-require-extends Query
  */
 trait HintTrait

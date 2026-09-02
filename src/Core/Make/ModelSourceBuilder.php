@@ -60,6 +60,8 @@ use const PHP_EOL;
 /**
  * Builds model source code from schema metadata.
  *
+ * @internal
+ *
  * @phpstan-type EnumData array{field: string, className: string, cases: string, values: string[]}
  * @phpstan-type RelationshipData array{type: 'belongsTo'|'hasMany'|'hasOne'|'manyToMany', alias: string, targetModel: string, foreignKey: string[], bindingKey: string[], nullable: bool, options: array<string, string>}
  * @phpstan-type ModelRelationshipData array{type: 'belongsTo'|'hasMany'|'hasOne'|'manyToMany', alias: string, targetModel: string, targetModelClass: string, foreignKey: string[], bindingKey: string[], nullable: bool, options: array<string, string>}

@@ -13,6 +13,8 @@ use const LOCK_EX;
 
 /**
  * Represents a file produced by a generator.
+ *
+ * @internal
  */
 class GeneratedFile
 {

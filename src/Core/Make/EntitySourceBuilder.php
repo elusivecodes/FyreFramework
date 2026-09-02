@@ -34,6 +34,8 @@ use const PHP_EOL;
 /**
  * Builds entity source code from schema metadata.
  *
+ * @internal
+ *
  * @phpstan-import-type RelationshipData from ModelSourceBuilder
  *
  * @phpstan-type EntityRelationshipData array{property: string, type: string, className: string}

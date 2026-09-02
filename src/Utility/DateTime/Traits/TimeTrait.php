@@ -10,6 +10,8 @@ use function strtolower;
 /**
  * Provides shared time operations.
  *
+ * @internal
+ *
  * @phpstan-require-extends AbstractDateTime
  */
 trait TimeTrait

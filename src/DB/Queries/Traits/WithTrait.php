@@ -8,6 +8,8 @@ use Fyre\DB\Query;
 /**
  * Adds WITH (common table expression) support to queries.
  *
+ * @internal
+ *
  * @phpstan-require-extends Query
  */
 trait WithTrait

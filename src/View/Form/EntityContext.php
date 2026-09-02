@@ -25,6 +25,8 @@ use function min;
  *
  * Supports dot notation for traversing related entities/arrays when resolving values and
  * deriving field metadata from models.
+ *
+ * @internal
  */
 class EntityContext extends Context
 {

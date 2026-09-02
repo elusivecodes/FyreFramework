@@ -8,6 +8,8 @@ use Fyre\DB\Query;
 /**
  * Adds INSERT INTO clause support to queries.
  *
+ * @internal
+ *
  * @phpstan-require-extends Query
  */
 trait IntoTrait

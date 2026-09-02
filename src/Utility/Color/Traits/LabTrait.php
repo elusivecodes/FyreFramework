@@ -9,6 +9,8 @@ use Override;
 /**
  * Provides LAB channel accessors.
  *
+ * @internal
+ *
  * @phpstan-require-extends Color
  */
 trait LabTrait

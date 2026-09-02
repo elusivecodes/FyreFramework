@@ -21,6 +21,8 @@ use function pow;
  * Adds schema-driven helpers to form contexts.
  *
  * These helpers derive HTML-oriented field metadata (type, min/max) from the form schema.
+ *
+ * @internal
  */
 trait FormSchemaTrait
 {

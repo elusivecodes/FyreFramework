@@ -16,6 +16,8 @@ use function trim;
 /**
  * Provides enum case parsing.
  *
+ * @internal
+ *
  * @phpstan-type ParsedEnumCases (
  *     array{cases: array<string, null>, stringBacked: false}|
  *     array{cases: array<string, string>, stringBacked: true}

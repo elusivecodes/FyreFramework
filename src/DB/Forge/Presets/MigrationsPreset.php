@@ -13,6 +13,8 @@ use Override;
 
 /**
  * Provides the migration history table definition.
+ *
+ * @internal
  */
 class MigrationsPreset extends Preset
 {

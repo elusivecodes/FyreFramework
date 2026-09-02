@@ -16,6 +16,8 @@ use function sprintf;
 /**
  * Adds JOIN clause support to queries.
  *
+ * @internal
+ *
  * @phpstan-require-extends Query
  */
 trait JoinTrait

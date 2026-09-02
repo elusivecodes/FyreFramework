@@ -9,6 +9,8 @@ use Override;
 /**
  * Provides RGB channel accessors.
  *
+ * @internal
+ *
  * @phpstan-require-extends Color
  */
 trait RgbTrait

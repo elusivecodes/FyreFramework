@@ -30,6 +30,8 @@ use function pow;
  *
  * These helpers derive HTML-oriented field metadata (type, min/max, options) from the
  * database schema.
+ *
+ * @internal
  */
 trait DbSchemaTrait
 {

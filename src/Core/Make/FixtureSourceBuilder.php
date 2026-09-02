@@ -19,6 +19,8 @@ use const PHP_EOL;
 
 /**
  * Builds fixture source code.
+ *
+ * @internal
  */
 class FixtureSourceBuilder
 {

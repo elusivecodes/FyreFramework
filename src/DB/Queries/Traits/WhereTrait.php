@@ -13,6 +13,8 @@ use function is_array;
 /**
  * Adds WHERE clause support to queries.
  *
+ * @internal
+ *
  * @phpstan-require-extends Query
  */
 trait WhereTrait

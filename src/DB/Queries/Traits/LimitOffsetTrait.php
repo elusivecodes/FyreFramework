@@ -9,6 +9,8 @@ use InvalidArgumentException;
 /**
  * Adds LIMIT/OFFSET clause support to queries.
  *
+ * @internal
+ *
  * @phpstan-require-extends Query
  */
 trait LimitOffsetTrait

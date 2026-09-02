@@ -12,6 +12,8 @@ use function strtolower;
 /**
  * Provides shared date operations.
  *
+ * @internal
+ *
  * @phpstan-require-extends AbstractDateTime
  */
 trait DateTrait

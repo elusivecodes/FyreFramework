@@ -12,6 +12,8 @@ use const PHP_EOL;
 
 /**
  * Builds test case source code.
+ *
+ * @internal
  */
 class TestSourceBuilder
 {

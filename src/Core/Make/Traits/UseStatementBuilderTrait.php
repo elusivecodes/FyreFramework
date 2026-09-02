@@ -16,6 +16,8 @@ use const PHP_EOL;
 
 /**
  * Provides class use statement generation.
+ *
+ * @internal
  */
 trait UseStatementBuilderTrait
 {

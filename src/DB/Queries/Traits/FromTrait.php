@@ -8,6 +8,8 @@ use Fyre\DB\Query;
 /**
  * Adds FROM clause support to queries.
  *
+ * @internal
+ *
  * @phpstan-require-extends Query
  */
 trait FromTrait

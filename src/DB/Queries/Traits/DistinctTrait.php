@@ -8,6 +8,8 @@ use Fyre\DB\Query;
 /**
  * Adds DISTINCT support to SELECT queries.
  *
+ * @internal
+ *
  * @phpstan-require-extends Query
  */
 trait DistinctTrait

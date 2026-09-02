@@ -9,6 +9,8 @@ use InvalidArgumentException;
 /**
  * Adds LIMIT clause support to queries.
  *
+ * @internal
+ *
  * @phpstan-require-extends Query
  */
 trait LimitTrait

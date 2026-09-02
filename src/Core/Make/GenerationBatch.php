@@ -10,6 +10,8 @@ use function sprintf;
 
 /**
  * Collects and saves generated files.
+ *
+ * @internal
  */
 class GenerationBatch
 {

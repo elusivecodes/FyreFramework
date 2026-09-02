@@ -13,6 +13,8 @@ use function is_array;
 /**
  * Adds HAVING clause support to queries.
  *
+ * @internal
+ *
  * @phpstan-require-extends Query
  */
 trait HavingTrait

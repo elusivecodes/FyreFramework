@@ -14,6 +14,8 @@ use const PHP_EOL;
 
 /**
  * Builds enum source code.
+ *
+ * @internal
  */
 class EnumSourceBuilder
 {

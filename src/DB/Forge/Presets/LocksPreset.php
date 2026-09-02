@@ -12,6 +12,8 @@ use Override;
 
 /**
  * Provides the framework lock table definition.
+ *
+ * @internal
  */
 class LocksPreset extends Preset
 {

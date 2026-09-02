@@ -14,6 +14,8 @@ use function min;
  *
  * These helpers derive UI constraints from validator rules (e.g. min/max, required) where
  * possible.
+ *
+ * @internal
  */
 trait ValidationTrait
 {
