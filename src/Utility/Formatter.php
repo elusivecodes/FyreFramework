@@ -6,7 +6,10 @@ namespace Fyre\Utility;
 use Fyre\Core\Config;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
+use Fyre\Utility\DateTime\AbstractDateTime;
+use Fyre\Utility\DateTime\Date;
 use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Time;
 use IntlDatePatternGenerator;
 use IntlListFormatter;
 use NumberFormatter;
@@ -76,20 +79,20 @@ class Formatter
     }
 
     /**
-     * Formats a DateTime as a date string.
+     * Formats a date value as a date string.
      *
-     * @param DateTime $value The DateTime.
+     * @param Date|DateTime $value The date value.
      * @param string|null $format The format.
      * @param string|null $timeZone The time zone.
      * @param string|null $locale The locale.
      * @return string The date string.
      */
-    public function date(DateTime $value, string|null $format = null, string|null $timeZone = null, string|null $locale = null): string
+    public function date(Date|DateTime $value, string|null $format = null, string|null $timeZone = null, string|null $locale = null): string
     {
         $locale ??= $this->getDefaultLocale();
         $format ??= $this->getBestDateFormat($locale, 'yyyyMMdd');
 
-        return $this->datetime($value, $format, $timeZone, $locale);
+        return $this->formatDateTimeValue($value, $format, $timeZone, $locale);
     }
 
     /**
@@ -108,15 +111,7 @@ class Formatter
         $locale ??= $this->getDefaultLocale();
         $format ??= $this->getBestDateFormat($locale, 'yyyyMMddjmm');
 
-        if ($value->getLocale() !== $locale) {
-            $value = $value->withLocale($locale);
-        }
-
-        if ($timeZone && $value->getTimeZone() !== $timeZone) {
-            $value = $value->withTimeZone($timeZone);
-        }
-
-        return $value->format($format);
+        return $this->formatDateTimeValue($value, $format, $timeZone, $locale);
     }
 
     /**
@@ -222,20 +217,42 @@ class Formatter
     }
 
     /**
-     * Formats a DateTime as a time string.
+     * Formats a time value as a time string.
      *
-     * @param DateTime $value The DateTime.
+     * @param DateTime|Time $value The time value.
      * @param string|null $format The format.
      * @param string|null $timeZone The time zone.
      * @param string|null $locale The locale.
      * @return string The time string.
      */
-    public function time(DateTime $value, string|null $format = null, string|null $timeZone = null, string|null $locale = null): string
+    public function time(DateTime|Time $value, string|null $format = null, string|null $timeZone = null, string|null $locale = null): string
     {
         $locale ??= $this->getDefaultLocale();
         $format ??= $this->getBestDateFormat($locale, 'jmm');
 
-        return $this->datetime($value, $format, $timeZone, $locale);
+        return $this->formatDateTimeValue($value, $format, $timeZone, $locale);
+    }
+
+    /**
+     * Formats a date/time value.
+     *
+     * @param AbstractDateTime $value The date/time value.
+     * @param string $format The format.
+     * @param string|null $timeZone The time zone.
+     * @param string $locale The locale.
+     * @return string The formatted value.
+     */
+    protected function formatDateTimeValue(AbstractDateTime $value, string $format, string|null $timeZone, string $locale): string
+    {
+        if ($value->getLocale() !== $locale) {
+            $value = $value->withLocale($locale);
+        }
+
+        if ($value instanceof DateTime && $timeZone && $value->getTimeZone() !== $timeZone) {
+            $value = $value->withTimeZone($timeZone);
+        }
+
+        return $value->format($format);
     }
 
     /**

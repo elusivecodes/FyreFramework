@@ -6,6 +6,7 @@ namespace Fyre\DB\Types;
 use DateTimeInterface;
 use DateTimeZone;
 use Fyre\DB\Type;
+use Fyre\Utility\DateTime\AbstractDateTime;
 use Fyre\Utility\DateTime\DateTime;
 use Override;
 use Throwable;
@@ -21,9 +22,13 @@ use const FILTER_VALIDATE_INT;
  * Supports parsing from timestamps, {@see DateTimeInterface} instances, and strings in a set
  * of common date-time formats. When configured, values are converted between server and user
  * time zones when reading from or writing to the database.
+ *
+ * @template TValue of AbstractDateTime = DateTime
  */
 class DateTimeType extends Type
 {
+    protected bool $convertTimeZones = true;
+
     /**
      * @var string[]
      */
@@ -49,32 +54,44 @@ class DateTimeType extends Type
     protected string|null $userTimeZone = null;
 
     /**
+     * @var class-string<TValue>
+     */
+    protected string $valueClass = DateTime::class;
+
+    /**
      * {@inheritDoc}
      *
-     * @return DateTime|null The DateTime instance.
+     * @return TValue|null The date/time value.
      */
     #[Override]
-    public function fromDatabase(mixed $value): DateTime|null
+    public function fromDatabase(mixed $value): AbstractDateTime|null
     {
         if ($value === null) {
             return null;
         }
 
+        $valueClass = $this->valueClass;
         $timestamp = filter_var($value, FILTER_VALIDATE_INT);
 
         if ($timestamp !== false) {
-            $date = DateTime::createFromTimestamp((int) $timestamp, $this->serverTimeZone);
+            $date = $valueClass::createFromTimestamp((int) $timestamp, $this->serverTimeZone);
         } else if (is_string($value)) {
-            $timeZoneName = $this->serverTimeZone ?? DateTime::now()->getTimeZone();
+            $timeZoneName = $this->serverTimeZone ?? $valueClass::getDefaultTimeZone();
             $timeZone = new DateTimeZone($timeZoneName);
 
-            $date = new \DateTime($value, $timeZone);
-            $date = DateTime::createFromNativeDateTime($date, $this->userTimeZone);
+            $nativeDateTime = new \DateTime($value, $timeZone);
+            $targetTimeZone = $this->getTargetTimeZone($nativeDateTime);
+            $date = $valueClass::createFromNativeDateTime($nativeDateTime, $targetTimeZone);
         } else {
             return null;
         }
 
-        if ($this->userTimeZone && $date->getTimeZone() !== $this->userTimeZone) {
+        if (
+            $this->convertTimeZones &&
+            $this->userTimeZone &&
+            $date instanceof DateTime &&
+            $date->getTimeZone() !== $this->userTimeZone
+        ) {
             $date = $date->withTimeZone($this->userTimeZone);
         }
 
@@ -112,38 +129,49 @@ class DateTimeType extends Type
     }
 
     /**
+     * Returns the date/time value class.
+     *
+     * @return class-string<TValue> The value class.
+     */
+    public function getValueClass(): string
+    {
+        return $this->valueClass;
+    }
+
+    /**
      * {@inheritDoc}
      *
-     * @return DateTime|null The DateTime instance.
+     * @return TValue|null The date/time value.
      */
     #[Override]
-    public function parse(mixed $value): DateTime|null
+    public function parse(mixed $value): AbstractDateTime|null
     {
         if ($value === null) {
             return null;
         }
 
         $date = null;
-
+        $valueClass = $this->valueClass;
         $timestamp = filter_var($value, FILTER_VALIDATE_INT);
 
         if ($timestamp !== false) {
-            $date = DateTime::createFromTimestamp((int) $timestamp, $this->userTimeZone);
-        } else if ($value instanceof DateTime) {
+            $date = $valueClass::createFromTimestamp((int) $timestamp, $this->userTimeZone);
+        } else if ($value instanceof $valueClass) {
             $date = $value;
         } else if ($value instanceof DateTimeInterface) {
-            $date = DateTime::createFromNativeDateTime($value, $this->userTimeZone);
+            $targetTimeZone = $this->getTargetTimeZone($value);
+            $date = $valueClass::createFromNativeDateTime($value, $targetTimeZone);
         } else if (is_string($value)) {
             if ($this->localeFormat) {
                 try {
-                    $date = DateTime::createFromFormat($this->localeFormat, $value, $this->userTimeZone);
+                    $date = $valueClass::createFromFormat($this->localeFormat, $value, $this->userTimeZone);
                 } catch (Throwable $e) {
                     $date = null;
                 }
             }
 
             if ($date === null) {
-                $timeZoneName = $this->userTimeZone ?? DateTime::getDefaultTimeZone();
+                $timeZoneName = $this->userTimeZone ?? $valueClass::getDefaultTimeZone();
                 $timeZone = new DateTimeZone($timeZoneName);
 
                 foreach ($this->formats as $format) {
@@ -153,7 +181,8 @@ class DateTimeType extends Type
                         continue;
                     }
 
-                    $date = DateTime::createFromNativeDateTime($tempDate, $this->userTimeZone);
+                    $targetTimeZone = $this->getTargetTimeZone($tempDate);
+                    $date = $valueClass::createFromNativeDateTime($tempDate, $targetTimeZone);
                     break;
                 }
             }
@@ -215,12 +244,30 @@ class DateTimeType extends Type
             return null;
         }
 
-        if ($this->serverTimeZone && $value->getTimeZone() !== $this->serverTimeZone) {
+        if (
+            $this->convertTimeZones &&
+            $value instanceof DateTime &&
+            $this->serverTimeZone &&
+            $value->getTimeZone() !== $this->serverTimeZone
+        ) {
             $value = $value->withTimeZone($this->serverTimeZone);
         }
 
         return $value
             ->toNativeDateTime()
             ->format($this->serverFormat);
+    }
+
+    /**
+     * Returns the target time zone for a native DateTime value.
+     *
+     * @param DateTimeInterface $dateTime The native DateTime value.
+     * @return string|null The target time zone.
+     */
+    protected function getTargetTimeZone(DateTimeInterface $dateTime): string|null
+    {
+        return $this->convertTimeZones ?
+            $this->userTimeZone :
+            $dateTime->format('e');
     }
 }

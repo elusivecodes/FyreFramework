@@ -3,16 +3,19 @@ declare(strict_types=1);
 
 namespace Fyre\DB\Types;
 
-use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Date;
 use Override;
 
 /**
  * Represents a date value type.
  *
- * Values are normalized to the start of the day.
+ * @extends DateTimeType<Date>
  */
 class DateType extends DateTimeType
 {
+    #[Override]
+    protected bool $convertTimeZones = false;
+
     /**
      * @var string[]
      */
@@ -27,29 +30,6 @@ class DateType extends DateTimeType
     #[Override]
     protected string|null $serverTimeZone = 'UTC';
 
-    /**
-     * {@inheritDoc}
-     *
-     * @return DateTime|null The DateTime instance.
-     */
     #[Override]
-    public function fromDatabase(mixed $value): DateTime|null
-    {
-        $date = parent::fromDatabase($value);
-
-        return $date?->startOfDay();
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return DateTime|null The DateTime instance.
-     */
-    #[Override]
-    public function parse(mixed $value): DateTime|null
-    {
-        $date = parent::parse($value);
-
-        return $date?->startOfDay();
-    }
+    protected string $valueClass = Date::class;
 }

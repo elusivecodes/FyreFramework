@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Fyre\Utility\DateTime;
 
+use DateMalformedStringException;
+use DateTimeImmutable;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Core\Traits\StaticMacroTrait;
 use Fyre\Utility\DateTime\Traits\DateTrait;
@@ -44,6 +46,29 @@ class Date extends AbstractDateTime
         $dateArray[1]--;
 
         return array_combine(['year', 'month', 'date'], $dateArray) |> $date->withCalendarFields(...);
+    }
+
+    /**
+     * Creates a new Date from an ISO 8601 date string.
+     *
+     * @param string $dateString The date string.
+     * @param string|null $timeZone The source time zone.
+     * @param string|null $locale The locale to use.
+     * @return static The new Date instance.
+     *
+     * @throws DateMalformedStringException If the date string is not valid ISO 8601.
+     */
+    #[Override]
+    public static function createFromIsoString(string $dateString, string|null $timeZone = null, string|null $locale = null): static
+    {
+        $timeZone = static::parseTimeZone($timeZone);
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $dateString, $timeZone);
+
+        if ($date === false || $date->format('Y-m-d') !== $dateString) {
+            throw new DateMalformedStringException('Date string is not valid ISO 8601.');
+        }
+
+        return static::createFromNativeDateTime($date, $timeZone->getName(), $locale);
     }
 
     /**
@@ -217,7 +242,7 @@ class Date extends AbstractDateTime
     #[Override]
     public function toIsoString(): string
     {
-        return $this->format('yyyy-MM-dd');
+        return $this->toNativeDateTime()->format('Y-m-d');
     }
 
     /**

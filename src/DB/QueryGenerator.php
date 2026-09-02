@@ -20,7 +20,10 @@ use Fyre\DB\Queries\SelectQuery;
 use Fyre\DB\Queries\UpdateBatchQuery;
 use Fyre\DB\Queries\UpdateQuery;
 use Fyre\DB\Queries\UpsertQuery;
+use Fyre\Utility\DateTime\AbstractDateTime;
+use Fyre\Utility\DateTime\Date;
 use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Time;
 use Fyre\Utility\EnumHelper;
 use InvalidArgumentException;
 use UnitEnum;
@@ -1538,8 +1541,15 @@ abstract class QueryGenerator
             $value = EnumHelper::normalizeValue($value);
         }
 
-        if ($value instanceof DateTime) {
-            $value = $this->typeParser->use('datetime')->toDatabase($value);
+        if ($value instanceof AbstractDateTime) {
+            $type = match (true) {
+                $value instanceof Date => 'date',
+                $value instanceof DateTime => 'datetime',
+                $value instanceof Time => 'time',
+                default => throw new InvalidArgumentException('Date/time value is not supported.'),
+            };
+
+            $value = $this->typeParser->use($type)->toDatabase($value);
         }
 
         if ($binder && $quote) {

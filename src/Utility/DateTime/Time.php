@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Fyre\Utility\DateTime;
 
+use DateMalformedStringException;
+use DateTimeImmutable;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Core\Traits\StaticMacroTrait;
 use Fyre\Utility\DateTime\Traits\TimeTrait;
@@ -11,6 +13,7 @@ use Override;
 
 use function array_combine;
 use function array_pad;
+use function str_contains;
 
 /**
  * Represents an immutable time of day.
@@ -43,6 +46,30 @@ class Time extends AbstractDateTime
         $timeArray = array_pad($timeArray, 4, 0);
 
         return array_combine(['hour', 'minute', 'second', 'millisecond'], $timeArray) |> $time->withCalendarFields(...);
+    }
+
+    /**
+     * Creates a new Time from an ISO 8601 time string.
+     *
+     * @param string $dateString The time string.
+     * @param string|null $timeZone The source time zone.
+     * @param string|null $locale The locale to use.
+     * @return static The new Time instance.
+     *
+     * @throws DateMalformedStringException If the time string is not valid ISO 8601.
+     */
+    #[Override]
+    public static function createFromIsoString(string $dateString, string|null $timeZone = null, string|null $locale = null): static
+    {
+        $timeZone = static::parseTimeZone($timeZone);
+        $format = str_contains($dateString, '.') ? 'H:i:s.v' : 'H:i:s';
+        $time = DateTimeImmutable::createFromFormat('!'.$format, $dateString, $timeZone);
+
+        if ($time === false || $time->format($format) !== $dateString) {
+            throw new DateMalformedStringException('Time string is not valid ISO 8601.');
+        }
+
+        return static::createFromNativeDateTime($time, $timeZone->getName(), $locale);
     }
 
     /**
@@ -131,9 +158,9 @@ class Time extends AbstractDateTime
     #[Override]
     public function toIsoString(): string
     {
-        return $this->getMilliseconds() ?
-            $this->format('HH:mm:ss.SSS') :
-            $this->format('HH:mm:ss');
+        $format = $this->getMilliseconds() ? 'H:i:s.v' : 'H:i:s';
+
+        return $this->toNativeDateTime()->format($format);
     }
 
     /**

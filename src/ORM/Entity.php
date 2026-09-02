@@ -6,7 +6,7 @@ namespace Fyre\ORM;
 use ArrayAccess;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
-use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\AbstractDateTime;
 use InvalidArgumentException;
 use JsonSerializable;
 use Override;
@@ -1139,14 +1139,14 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
         if (
             is_object($a) &&
             !($a instanceof Entity) &&
-            !($a instanceof DateTime) &&
+            !($a instanceof AbstractDateTime) &&
             $a == $b
         ) {
             return true;
         }
 
-        if ($a instanceof DateTime && $b instanceof DateTime) {
-            return $a->isSame($b);
+        if ($a instanceof AbstractDateTime && $b instanceof AbstractDateTime) {
+            return $a::class === $b::class && $a->getTime() === $b->getTime();
         }
 
         return false;

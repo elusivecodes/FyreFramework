@@ -17,7 +17,6 @@ use Fyre\DB\Types\SetType;
 use Fyre\ORM\Entity;
 use Fyre\ORM\EntityLocator;
 use Fyre\ORM\Relationship;
-use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\Inflector;
 use InvalidArgumentException;
 use ReflectionClass;
@@ -227,10 +226,12 @@ class EntitySourceBuilder
         $imports = [Entity::class];
 
         foreach ($fields as $column) {
+            $type = $column->type();
+
             if ($column->hasEnumClass()) {
                 $imports[] = (string) $column->getEnumClass();
-            } else if ($column->type() instanceof DateTimeType) {
-                $imports[] = DateTime::class;
+            } else if ($type instanceof DateTimeType) {
+                $imports[] = $type->getValueClass();
             }
         }
 
@@ -261,7 +262,7 @@ class EntitySourceBuilder
                 $columnType instanceof IntegerType => 'int',
                 $columnType instanceof DecimalType => 'string',
                 $columnType instanceof FloatType => 'float',
-                $columnType instanceof DateTimeType => new ReflectionClass(DateTime::class)->getShortName(),
+                $columnType instanceof DateTimeType => new ReflectionClass($columnType->getValueClass())->getShortName(),
                 $columnType instanceof BinaryType => 'resource',
                 $columnType instanceof JsonType, $columnType instanceof SetType => 'array',
                 default => 'string',
