@@ -5,6 +5,8 @@ namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
 use Fyre\Utility\DateTime\Date;
+use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Time;
 
 trait DateTestTrait
 {
@@ -53,6 +55,34 @@ trait DateTestTrait
         $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([])
+        );
+    }
+
+    public function testDateRejectsDateTime(): void
+    {
+        $this->validator->add('test', Rule::date());
+
+        $this->assertArraysAreIdentical(
+            [
+                'test' => ['invalid'],
+            ],
+            $this->validator->validate([
+                'test' => DateTime::now(),
+            ])
+        );
+    }
+
+    public function testDateRejectsTime(): void
+    {
+        $this->validator->add('test', Rule::date());
+
+        $this->assertArraysAreIdentical(
+            [
+                'test' => ['invalid'],
+            ],
+            $this->validator->validate([
+                'test' => Time::now(),
+            ])
         );
     }
 

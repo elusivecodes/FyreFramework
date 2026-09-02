@@ -13,8 +13,12 @@ use Fyre\Core\Make;
 use Fyre\Core\Make\EntitySourceBuilder;
 use Fyre\Core\Make\ModelSourceBuilder;
 use Fyre\DB\ConnectionManager;
+use Fyre\DB\Schema\Column;
 use Fyre\DB\Schema\SchemaRegistry;
 use Fyre\DB\TypeParser;
+use Fyre\DB\Types\DateTimeType;
+use Fyre\DB\Types\DateType;
+use Fyre\DB\Types\TimeType;
 use Fyre\Event\EventManager;
 use Fyre\ORM\EntityLocator;
 use Fyre\ORM\ModelRegistry;
@@ -86,6 +90,74 @@ final class MakeEntityTest extends TestCase
                 '{body}' => '    //',
             ]),
             $filePath
+        );
+    }
+
+    public function testMakeEntityDateField(): void
+    {
+        $column = $this->createStub(Column::class);
+        $column->method('getName')->willReturn('published_on');
+        $column->method('type')->willReturn(new DateType());
+
+        $source = $this->container->use(EntitySourceBuilder::class)
+            ->build(
+                'Example\Entities',
+                'Post',
+                [$column],
+                []
+            );
+
+        $this->assertSame(
+            Make::loadStub('entity', [
+                '{namespace}' => 'Example\Entities',
+                '{class}' => 'Post',
+                '{uses}' => implode(PHP_EOL, [
+                    'use Fyre\ORM\Entity;',
+                    'use Fyre\Utility\DateTime\Date;',
+                ]),
+                '{docblock}' => implode(PHP_EOL, [
+                    '/**',
+                    ' * @property Date $published_on',
+                    ' */',
+                    '',
+                ]),
+                '{body}' => '    //',
+            ]),
+            $source
+        );
+    }
+
+    public function testMakeEntityDateTimeField(): void
+    {
+        $column = $this->createStub(Column::class);
+        $column->method('getName')->willReturn('created_at');
+        $column->method('type')->willReturn(new DateTimeType());
+
+        $source = $this->container->use(EntitySourceBuilder::class)
+            ->build(
+                'Example\Entities',
+                'Post',
+                [$column],
+                []
+            );
+
+        $this->assertSame(
+            Make::loadStub('entity', [
+                '{namespace}' => 'Example\Entities',
+                '{class}' => 'Post',
+                '{uses}' => implode(PHP_EOL, [
+                    'use Fyre\ORM\Entity;',
+                    'use Fyre\Utility\DateTime\DateTime;',
+                ]),
+                '{docblock}' => implode(PHP_EOL, [
+                    '/**',
+                    ' * @property DateTime $created_at',
+                    ' */',
+                    '',
+                ]),
+                '{body}' => '    //',
+            ]),
+            $source
         );
     }
 
@@ -268,6 +340,40 @@ final class MakeEntityTest extends TestCase
                     '/**',
                     ' * @property Author $author',
                     ' * @property Tag[] $tags',
+                    ' */',
+                    '',
+                ]),
+                '{body}' => '    //',
+            ]),
+            $source
+        );
+    }
+
+    public function testMakeEntityTimeField(): void
+    {
+        $column = $this->createStub(Column::class);
+        $column->method('getName')->willReturn('starts_at');
+        $column->method('type')->willReturn(new TimeType());
+
+        $source = $this->container->use(EntitySourceBuilder::class)
+            ->build(
+                'Example\Entities',
+                'Post',
+                [$column],
+                []
+            );
+
+        $this->assertSame(
+            Make::loadStub('entity', [
+                '{namespace}' => 'Example\Entities',
+                '{class}' => 'Post',
+                '{uses}' => implode(PHP_EOL, [
+                    'use Fyre\ORM\Entity;',
+                    'use Fyre\Utility\DateTime\Time;',
+                ]),
+                '{docblock}' => implode(PHP_EOL, [
+                    '/**',
+                    ' * @property Time $starts_at',
                     ' */',
                     '',
                 ]),

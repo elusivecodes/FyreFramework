@@ -4,6 +4,9 @@ declare(strict_types=1);
 namespace Tests\TestCase\ORM\Entity;
 
 use Fyre\ORM\Entity;
+use Fyre\Utility\DateTime\Date;
+use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Time;
 use stdClass;
 
 trait DirtyTestTrait
@@ -68,6 +71,32 @@ trait DirtyTestTrait
         );
     }
 
+    public function testIsDirtyFalseSetEqualDate(): void
+    {
+        $entity = new Entity([
+            'test' => Date::createFromArray([2022, 1, 1]),
+        ]);
+
+        $entity->set('test', Date::createFromArray([2022, 1, 1]));
+
+        $this->assertFalse(
+            $entity->isDirty('test')
+        );
+    }
+
+    public function testIsDirtyFalseSetEqualDateTime(): void
+    {
+        $entity = new Entity([
+            'test' => DateTime::createFromArray([2022, 1, 1, 12, 30, 15]),
+        ]);
+
+        $entity->set('test', DateTime::createFromArray([2022, 1, 1, 12, 30, 15]));
+
+        $this->assertFalse(
+            $entity->isDirty('test')
+        );
+    }
+
     public function testIsDirtyFalseSetEqualObject(): void
     {
         $value = new stdClass();
@@ -80,6 +109,19 @@ trait DirtyTestTrait
         $newValue = new stdClass();
         $newValue->test = 1;
         $entity->set('test', $newValue);
+
+        $this->assertFalse(
+            $entity->isDirty('test')
+        );
+    }
+
+    public function testIsDirtyFalseSetEqualTime(): void
+    {
+        $entity = new Entity([
+            'test' => Time::createFromArray([12, 30, 15]),
+        ]);
+
+        $entity->set('test', Time::createFromArray([12, 30, 15]));
 
         $this->assertFalse(
             $entity->isDirty('test')
@@ -116,6 +158,61 @@ trait DirtyTestTrait
 
         $this->assertFalse(
             $entity->isDirty('invalid')
+        );
+    }
+
+    public function testIsDirtySetDifferentClass(): void
+    {
+        $date = Date::createFromArray([1970, 1, 1]);
+        $time = Time::createFromArray([0]);
+
+        $entity = new Entity([
+            'test' => $date,
+        ]);
+
+        $entity->set('test', $time);
+
+        $this->assertTrue(
+            $entity->isDirty('test')
+        );
+    }
+
+    public function testIsDirtySetDifferentDate(): void
+    {
+        $entity = new Entity([
+            'test' => Date::createFromArray([2022, 1, 1]),
+        ]);
+
+        $entity->set('test', Date::createFromArray([2022, 1, 2]));
+
+        $this->assertTrue(
+            $entity->isDirty('test')
+        );
+    }
+
+    public function testIsDirtySetDifferentDateTime(): void
+    {
+        $entity = new Entity([
+            'test' => DateTime::createFromArray([2022, 1, 1, 12, 30, 15]),
+        ]);
+
+        $entity->set('test', DateTime::createFromArray([2022, 1, 1, 12, 30, 16]));
+
+        $this->assertTrue(
+            $entity->isDirty('test')
+        );
+    }
+
+    public function testIsDirtySetDifferentTime(): void
+    {
+        $entity = new Entity([
+            'test' => Time::createFromArray([12, 30, 15]),
+        ]);
+
+        $entity->set('test', Time::createFromArray([12, 30, 16]));
+
+        $this->assertTrue(
+            $entity->isDirty('test')
         );
     }
 

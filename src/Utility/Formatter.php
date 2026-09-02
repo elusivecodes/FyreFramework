@@ -12,6 +12,7 @@ use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Time;
 use IntlDatePatternGenerator;
 use IntlListFormatter;
+use InvalidArgumentException;
 use NumberFormatter;
 
 use function locale_get_default;
@@ -83,9 +84,11 @@ class Formatter
      *
      * @param Date|DateTime $value The date value.
      * @param string|null $format The format.
-     * @param string|null $timeZone The time zone.
+     * @param string|null $timeZone The time zone (DateTime values only).
      * @param string|null $locale The locale.
      * @return string The date string.
+     *
+     * @throws InvalidArgumentException If a time zone is provided for a Date value.
      */
     public function date(Date|DateTime $value, string|null $format = null, string|null $timeZone = null, string|null $locale = null): string
     {
@@ -221,9 +224,11 @@ class Formatter
      *
      * @param DateTime|Time $value The time value.
      * @param string|null $format The format.
-     * @param string|null $timeZone The time zone.
+     * @param string|null $timeZone The time zone (DateTime values only).
      * @param string|null $locale The locale.
      * @return string The time string.
+     *
+     * @throws InvalidArgumentException If a time zone is provided for a Time value.
      */
     public function time(DateTime|Time $value, string|null $format = null, string|null $timeZone = null, string|null $locale = null): string
     {
@@ -241,9 +246,15 @@ class Formatter
      * @param string|null $timeZone The time zone.
      * @param string $locale The locale.
      * @return string The formatted value.
+     *
+     * @throws InvalidArgumentException If a time zone is provided for a Date or Time value.
      */
     protected function formatDateTimeValue(AbstractDateTime $value, string $format, string|null $timeZone, string $locale): string
     {
+        if ($timeZone !== null && !($value instanceof DateTime)) {
+            throw new InvalidArgumentException('Time zone overrides are only supported for DateTime values.');
+        }
+
         if ($value->getLocale() !== $locale) {
             $value = $value->withLocale($locale);
         }

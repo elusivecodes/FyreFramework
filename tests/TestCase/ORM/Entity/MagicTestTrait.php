@@ -5,7 +5,9 @@ namespace Tests\TestCase\ORM\Entity;
 
 use Fyre\Http\Uri;
 use Fyre\ORM\Entity;
+use Fyre\Utility\DateTime\Date;
 use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Time;
 use Tests\Mock\Entities\MagicEntity;
 
 use function json_encode;
@@ -353,6 +355,18 @@ trait MagicTestTrait
         );
     }
 
+    public function testToJsonDate(): void
+    {
+        $entity = new Entity([
+            'test' => Date::createFromArray([2022, 1, 1]),
+        ]);
+
+        $this->assertSame(
+            json_encode(['test' => '2022-01-01'], JSON_PRETTY_PRINT),
+            $entity->toJson()
+        );
+    }
+
     public function testToJsonDateTime(): void
     {
         $entity = new Entity([
@@ -392,6 +406,18 @@ trait MagicTestTrait
         $this->assertSame(
             json_encode($parent->toArray(), JSON_PRETTY_PRINT),
             $parent->toJson()
+        );
+    }
+
+    public function testToJsonTime(): void
+    {
+        $entity = new Entity([
+            'test' => Time::createFromArray([12, 30, 15]),
+        ]);
+
+        $this->assertSame(
+            json_encode(['test' => '12:30:15'], JSON_PRETTY_PRINT),
+            $entity->toJson()
         );
     }
 }

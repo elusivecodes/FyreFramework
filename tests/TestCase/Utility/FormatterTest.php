@@ -8,8 +8,11 @@ use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\DB\TypeParser;
+use Fyre\Utility\DateTime\Date;
 use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Time;
 use Fyre\Utility\Formatter;
+use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
 
@@ -60,6 +63,36 @@ final class FormatterTest extends TestCase
             '01/01/2022',
             $this->formatter->date($date)
         );
+    }
+
+    public function testDateDate(): void
+    {
+        $date = Date::createFromArray([2022, 1, 1]);
+
+        $this->assertSame(
+            '01/01/2022',
+            $this->formatter->date($date)
+        );
+    }
+
+    public function testDateDateLocale(): void
+    {
+        $date = Date::createFromArray([2022, 1, 1]);
+
+        $this->assertSame(
+            '٢٠٢٢-٠١-٠١',
+            $this->formatter->date($date, 'yyyy-MM-dd', locale: 'ar-AR')
+        );
+    }
+
+    public function testDateDateTimeZone(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Time zone overrides are only supported for DateTime values.');
+
+        $date = Date::createFromArray([2022, 1, 1]);
+
+        $this->formatter->date($date, 'yyyy-MM-dd', 'America/New_York');
     }
 
     public function testDateOptions(): void
@@ -206,6 +239,42 @@ final class FormatterTest extends TestCase
             '٠٦:٥٩:٥٩',
             $this->formatter->time($date, 'HH:mm:ss', 'America/New_York', 'ar-AR')
         );
+    }
+
+    public function testTimeTime(): void
+    {
+        $time = Time::createFromArray([11, 59, 59]);
+
+        $formatted = str_replace(
+            ["\u{00A0}", "\u{202F}"],
+            ' ',
+            $this->formatter->time($time)
+        );
+
+        $this->assertSame(
+            '11:59 AM',
+            $formatted
+        );
+    }
+
+    public function testTimeTimeLocale(): void
+    {
+        $time = Time::createFromArray([11, 59, 59]);
+
+        $this->assertSame(
+            '١١:٥٩:٥٩',
+            $this->formatter->time($time, 'HH:mm:ss', locale: 'ar-AR')
+        );
+    }
+
+    public function testTimeTimeZone(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Time zone overrides are only supported for DateTime values.');
+
+        $time = Time::createFromArray([0, 30]);
+
+        $this->formatter->time($time, 'HH:mm:ss', 'America/New_York');
     }
 
     #[Override]

@@ -56,21 +56,21 @@ The methods below use the `$formatter` configured above.
 
 | Method | Formatter behavior |
 | --- | --- |
-| `number(float\|int\|string $value, string|null $locale = null): string` | locale-aware decimal number |
-| `currency(float\|int\|string $value, string|null $currency = null, string|null $locale = null): string` | accounting-style currency using the selected or default ISO currency code |
-| `percent(float\|int\|string $value, string|null $locale = null): string` | locale-aware percent; `0.12` represents 12 percent |
+| `number(float\|int\|string $value, string\|null $locale = null): string` | locale-aware decimal number |
+| `currency(float\|int\|string $value, string\|null $currency = null, string\|null $locale = null): string` | accounting-style currency using the selected or default ISO currency code |
+| `percent(float\|int\|string $value, string\|null $locale = null): string` | locale-aware percent; `0.12` represents 12 percent |
 
 All three methods cast `$value` to `float`. They are presentation helpers, not arbitrary-precision decimal formatters.
 
 ### Dates and times
 
-These methods accept `Fyre\Utility\DateTime\DateTime` and use ICU patterns rather than PHP `date()` patterns:
+These methods accept the matching `Fyre\Utility\DateTime` value classes and use ICU patterns rather than PHP `date()` patterns:
 
 | Method | Default ICU skeleton |
 | --- | --- |
-| `date(DateTime $value, string|null $format = null, string|null $timeZone = null, string|null $locale = null): string` | `yyyyMMdd` |
-| `time(DateTime $value, string|null $format = null, string|null $timeZone = null, string|null $locale = null): string` | `jmm` |
-| `datetime(DateTime $value, string|null $format = null, string|null $timeZone = null, string|null $locale = null): string` | `yyyyMMddjmm` |
+| `date(Date\|DateTime $value, string\|null $format = null, string\|null $timeZone = null, string\|null $locale = null): string` | `yyyyMMdd` |
+| `time(DateTime\|Time $value, string\|null $format = null, string\|null $timeZone = null, string\|null $locale = null): string` | `jmm` |
+| `datetime(DateTime $value, string\|null $format = null, string\|null $timeZone = null, string\|null $locale = null): string` | `yyyyMMddjmm` |
 
 When `$format` is omitted, `IntlDatePatternGenerator` converts the skeleton into a locale-appropriate pattern. An explicit pattern produces predictable fields while the locale still controls localized names and symbols:
 
@@ -85,7 +85,7 @@ $result = $formatter->datetime(
 );
 ```
 
-Locale and time-zone overrides are applied to immutable clones; the supplied `DateTime` is unchanged.
+Locale and time-zone overrides are applied to immutable clones; the supplied value is unchanged. Time-zone overrides apply only to `DateTime`. Passing one with `Date` or `Time` throws an `InvalidArgumentException` because those values do not contain a time zone.
 
 ### Lists
 
@@ -113,7 +113,7 @@ The input must be an array of strings.
 | Method | Behavior |
 | --- | --- |
 | `getDefaultLocale(): string` | configured locale or current `locale_get_default()` value |
-| `setDefaultLocale(string|null $locale): static` | set an instance default; `null` restores runtime locale fallback |
+| `setDefaultLocale(string\|null $locale): static` | set an instance default; `null` restores runtime locale fallback |
 | `getDefaultCurrency(): string` | current default currency code |
 | `setDefaultCurrency(string $currency): static` | set the instance currency default |
 
@@ -122,7 +122,7 @@ The input must be an array of strings.
 - The PHP `intl` extension must provide `NumberFormatter`, `IntlListFormatter`, and `IntlDatePatternGenerator`.
 - Formatter objects and generated date patterns are cached per formatter instance by locale, style, and pattern where applicable.
 - Number and list formatting can vary with locale and ICU version, including whitespace characters and punctuation.
-- `date()`, `time()`, and `datetime()` accept only Fyre's `DateTime`, not PHP's `DateTimeInterface`.
+- `date()` accepts Fyre's `Date` or `DateTime`, `time()` accepts `DateTime` or `Time`, and `datetime()` accepts `DateTime`. They do not accept PHP's `DateTimeInterface`.
 - `Formatter` supports instance macros.
 
 ## Related
