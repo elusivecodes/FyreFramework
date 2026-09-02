@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\View\Helpers\Form\Context\Form;
 
 use Fyre\Form\Rule;
-use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Date;
 
 trait DateTestTrait
 {
@@ -14,7 +14,7 @@ trait DateTestTrait
             'type' => 'date',
         ]);
 
-        $this->form->set('value', DateTime::createFromArray([2022, 1, 1]));
+        $this->form->set('value', Date::createFromArray([2022, 1, 1]));
 
         $this->view->Form->open($this->form);
 

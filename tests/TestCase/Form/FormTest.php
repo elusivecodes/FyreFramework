@@ -13,7 +13,7 @@ use Fyre\Form\Form;
 use Fyre\Form\Rule;
 use Fyre\Form\Schema;
 use Fyre\Form\Validator;
-use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Date;
 use Fyre\Utility\Path;
 use Override;
 use PHPUnit\Framework\TestCase;
@@ -76,7 +76,7 @@ final class FormTest extends TestCase
 
         $data = $form->getData();
 
-        $this->assertInstanceOf(DateTime::class, $data['start']);
+        $this->assertInstanceOf(Date::class, $data['start']);
 
         $data['start'] = $data['start']->toIsoString();
 
@@ -85,7 +85,7 @@ final class FormTest extends TestCase
                 'title' => 'This is a test',
                 'user_id' => 1,
                 'value' => '1.1',
-                'start' => '2026-01-01T00:00:00.000+00:00',
+                'start' => '2026-01-01',
                 'bool' => true,
             ],
             $data
@@ -177,7 +177,7 @@ final class FormTest extends TestCase
         );
 
         $this->assertInstanceOf(
-            DateTime::class,
+            Date::class,
             $form->get('start')
         );
     }

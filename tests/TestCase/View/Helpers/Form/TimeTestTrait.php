@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\View\Helpers\Form;
 
 use Closure;
-use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Time;
 use Fyre\View\View;
 
 trait TimeTestTrait
@@ -137,12 +137,12 @@ trait TimeTestTrait
 
     public function testTimeValueDefault(): void
     {
-        $now = DateTime::createFromArray([2022, 1, 1]);
+        $time = Time::createFromArray([0, 0]);
 
         $this->assertSame(
             '<input id="time" name="time" type="time" value="00:00" />',
             $this->view->Form->time('time', [
-                'default' => $now,
+                'default' => $time,
             ])
         );
     }

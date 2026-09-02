@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\View\Helpers\Form\Context\Mysql;
 
 use Fyre\Form\Rule;
-use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Date;
 
 trait DateTestTrait
 {
@@ -19,7 +19,7 @@ trait DateTestTrait
         SQL);
 
         $entity = $this->model->newEntity([
-            'value' => DateTime::createFromArray([2022, 1, 1]),
+            'value' => Date::createFromArray([2022, 1, 1]),
         ]);
 
         $this->view->Form->open($entity);

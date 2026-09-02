@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\View\Helpers\Form;
 
 use Closure;
-use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Date;
 use Fyre\View\View;
 
 trait DateTestTrait
@@ -137,12 +137,12 @@ trait DateTestTrait
 
     public function testDateValueDefault(): void
     {
-        $now = DateTime::createFromArray([2022, 1, 1]);
+        $date = Date::createFromArray([2022, 1, 1]);
 
         $this->assertSame(
             '<input id="date" name="date" type="date" value="2022-01-01" />',
             $this->view->Form->date('date', [
-                'default' => $now,
+                'default' => $date,
             ])
         );
     }

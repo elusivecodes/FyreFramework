@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
-use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Date;
 
 trait DateTestTrait
 {
@@ -15,7 +15,7 @@ trait DateTestTrait
         $this->assertArraysAreIdentical(
             [],
             $this->validator->validate([
-                'test' => DateTime::now(),
+                'test' => Date::now(),
             ])
         );
     }

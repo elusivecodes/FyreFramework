@@ -12,7 +12,7 @@ use Fyre\Core\Loader;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Event\Event;
 use Fyre\Event\EventManager;
-use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Date;
 use Fyre\Utility\Inflector;
 use Override;
 use PHPUnit\Framework\TestCase;
@@ -298,7 +298,7 @@ final class CommandRunnerTest extends TestCase
 
     public function testHandleCommandArgumentTypeOptionValue(): void
     {
-        $date = DateTime::now()->toNativeDateTime()->format('Y-m-d');
+        $date = Date::now()->toIsoString();
 
         $this->assertSame(
             0,

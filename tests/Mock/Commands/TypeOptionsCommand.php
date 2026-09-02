@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Tests\Mock\Commands;
 
 use Fyre\Console\Command;
-use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Date;
 use Override;
 
 class TypeOptionsCommand extends Command
@@ -18,9 +18,9 @@ class TypeOptionsCommand extends Command
         ],
     ];
 
-    public function run(DateTime $test): int
+    public function run(Date $test): int
     {
-        return $test->isSameDay(DateTime::now()) ?
+        return $test->isSameDay(Date::now()) ?
             static::CODE_SUCCESS :
             static::CODE_ERROR;
     }
