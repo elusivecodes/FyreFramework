@@ -53,7 +53,7 @@ Examples include:
 - **HTTP**: `Client`, `Client\Request`, `ClientResponse`, `ServerRequest`, `Stream`, and `Uri`
 - **Database and ORM**: connections, queries, result sets, models, and entities
 - **Routing**: `Router` and route classes
-- **Utilities**: `Arr`, `Collection`, `DateTime`, `Formatter`, `Image`, `Path`, and `Str`
+- **Utilities**: `Arr`, `Collection`, `Date`, `DateTime`, `Formatter`, `Image`, `Path`, `Str`, and `Time`
 
 Support is supplied by `MacroTrait` for instance macros and `StaticMacroTrait` for static macros. Some classes use both.
 

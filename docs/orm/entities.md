@@ -89,6 +89,8 @@ $dirty = $entity->getDirty();
 
 Pass `fallback: false` to `getOriginal()` when the absence of an original value should throw an `InvalidArgumentException`.
 
+Date and time values are equal for dirty tracking only when they have the same concrete class and millisecond value. Replacing a `Date`, `DateTime`, or `Time` with an equivalent instance of the same class does not mark the field dirty. Different concrete classes remain dirty even when their normalized timestamps match.
+
 Cleaning resets state for persisted entities:
 
 - `clean()` clears dirty state, errors/invalid values, and sets current fields as original.
@@ -129,6 +131,14 @@ Serialization is driven by visibility rules:
 - `toArray()` converts nested entities recursively.
 - `toArray(true)` also converts `JsonSerializable` and `Stringable` values where possible.
 - `toJson()` returns a pretty-printed JSON representation.
+
+Framework date and time values use these JSON representations:
+
+| Value | Serialized representation |
+| --- | --- |
+| `Date` | `YYYY-MM-DD` |
+| `DateTime` | RFC 3339 with milliseconds in UTC, for example `2022-01-01T00:00:00.000+00:00` |
+| `Time` | `HH:mm:ss`, or `HH:mm:ss.v` when milliseconds are non-zero |
 
 ```php
 $entity->setHidden(['password']);

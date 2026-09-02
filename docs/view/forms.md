@@ -137,6 +137,8 @@ The type must match one of the supported helper methods listed below; unsupporte
 | hidden | `hidden()` | fixed hidden type without a required attribute |
 | multiline | `textarea()` | name, ID, placeholder, value, required, and maximum length |
 
+The `date()`, `datetime()`, and `time()` helpers parse resolved values through the `date`, `datetime`, and `time` DB types respectively before formatting them for their HTML controls.
+
 Every field method accepts an attribute array. Explicit attributes override derived values.
 
 ### Choice controls

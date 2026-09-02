@@ -38,15 +38,19 @@ $formatter = new Formatter($config);
 ## Format values
 
 ```php
+use Fyre\Utility\DateTime\Date;
 use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Time;
 
 $amount = $formatter->currency(123.456);
 $percentage = $formatter->percent(0.123);
-$date = $formatter->date(new DateTime('2026-02-01'));
+$date = $formatter->date(Date::createFromArray([2026, 2, 1]));
+$dateTime = $formatter->datetime(new DateTime('2026-02-01 11:59:59'));
+$time = $formatter->time(Time::createFromArray([11, 59]));
 $names = $formatter->list(['Ada', 'Grace', 'Linus']);
 ```
 
-Output depends on the locale and installed ICU data. For `en_US`, these commonly produce `$123.46`, `12%`, `2/1/2026`, and `Ada, Grace, and Linus`, but applications should not assume locale-generated punctuation or spacing is stable across locales and ICU versions.
+For `en_US`, `$amount`, `$percentage`, and `$names` are commonly `$123.46`, `12%`, and `Ada, Grace, and Linus`. All output depends on the locale and installed ICU data, so applications should not assume locale-generated punctuation or spacing is stable across locales and ICU versions.
 
 ## Method guide
 
@@ -85,7 +89,7 @@ $result = $formatter->datetime(
 );
 ```
 
-Locale and time-zone overrides are applied to immutable clones; the supplied value is unchanged. Time-zone overrides apply only to `DateTime`. Passing one with `Date` or `Time` throws an `InvalidArgumentException` because those values do not contain a time zone.
+Locale and time-zone overrides are applied to immutable clones; the supplied value is unchanged. `Date` and `Time` are normalized to UTC while preserving their calendar date or time-of-day fields. They are not shiftable instants, so passing a time-zone override for either type throws an `InvalidArgumentException`. Time-zone overrides apply only to `DateTime`.
 
 ### Lists
 

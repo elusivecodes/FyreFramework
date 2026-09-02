@@ -134,11 +134,13 @@ These rules compare the current field value against another field in the same in
 
 These rules validate through the DB type parser:
 
-- `Rule::date()`
-- `Rule::dateTime()`
-- `Rule::time()`
+| Rule | DB type | Framework value |
+| --- | --- | --- |
+| `Rule::date()` | `date` | `Date` |
+| `Rule::dateTime()` | `datetime` | `DateTime` |
+| `Rule::time()` | `time` | `Time` |
 
-They skip missing and empty values by default; other values must parse successfully.
+They skip missing and empty values by default; other values must parse successfully. Existing framework date/time objects must have the matching concrete class: each rule rejects instances of the other two classes.
 
 ## Related
 

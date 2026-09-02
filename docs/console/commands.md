@@ -265,6 +265,8 @@ Common generators:
 - `make:template` - generate a template
 - `make:test` - generate a test case
 
+When schema fields are included, `make:entity` maps `date`, `datetime`, and `time` columns to matching `Date`, `DateTime`, and `Time` property types and adds the required imports.
+
 ```bash
 app make:controller Posts
 app make:enum Status --cases=Draft:draft,Published:published
