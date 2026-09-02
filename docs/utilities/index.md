@@ -16,7 +16,7 @@ Most utility APIs are reference-first: open the page for the type of value you a
 | [Strings](strings.md), [Inflection](inflection.md), [Array Helpers](arrays.md), [Collections](collections.md) | transforming text and in-memory data |
 | [Math](math.md), [Colors](colors.md), [Formatter](formatter.md) | numeric operations, color values, and locale-aware presentation |
 | [Paths](paths.md), [File System](file-system.md), [Images](image.md), [PDF](pdf.md) | paths, storage, and generated media |
-| [Date/time](datetime.md), [Periods](periods.md), [Promises](promises.md) | instants, ranges, and deferred or forked work |
+| [Date/time](datetime.md), [Periods](periods.md), [Promises](promises.md) | dates, instants, times of day, ranges, and deferred or forked work |
 
 Most classes live under `Fyre\Utility`; date/time values live under `Fyre\Utility\DateTime`. Platform requirements, extension dependencies, mutation, and materialization behavior are documented on the relevant page.
 
@@ -44,6 +44,6 @@ Most classes live under `Fyre\Utility`; date/time values live under `Fyre\Utilit
 
 ### Date/time, Periods, and Promises
 
-- [Date/time](datetime.md) - immutable instants with locale-aware formatting
+- [Date/time](datetime.md) - immutable dates, instants, and times of day with locale-aware formatting
 - [Periods](periods.md) - ranges and set operations over ranges
 - [Promises](promises.md) - synchronous and forked async promises
