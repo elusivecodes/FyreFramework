@@ -59,17 +59,21 @@ trait CreateTestTrait
         );
     }
 
-    public function testCreateFromArrayWithLocaleAndTimeZone(): void
+    public function testCreateFromArrayWithLocale(): void
     {
-        $date = Date::createFromArray(
-            [2019, 1, 1],
-            'Australia/Brisbane',
-            'ar-eg'
+        $this->assertSame(
+            'ar-eg',
+            Date::createFromArray([2019, 1, 1], locale: 'ar-eg')->getLocale()
         );
+    }
 
-        $this->assertArraysAreIdentical(
-            ['2019-01-01', 'UTC', 'ar-eg'],
-            [$date->toIsoString(), $date->getTimeZone(), $date->getLocale()]
+    public function testCreateFromArrayWithTimeZone(): void
+    {
+        $this->assertSame(
+            '2019-01-01 00:00:00.000 UTC',
+            Date::createFromArray([2019, 1, 1], 'Australia/Brisbane')
+                ->toNativeDateTime()
+                ->format('Y-m-d H:i:s.v e')
         );
     }
 
@@ -100,17 +104,21 @@ trait CreateTestTrait
         );
     }
 
-    public function testCreateFromIsoStringWithLocaleAndTimeZone(): void
+    public function testCreateFromIsoStringWithLocale(): void
     {
-        $date = Date::createFromIsoString(
-            '2019-01-01',
-            'Australia/Brisbane',
-            'ar-eg'
+        $this->assertSame(
+            'ar-eg',
+            Date::createFromIsoString('2019-01-01', locale: 'ar-eg')->getLocale()
         );
+    }
 
-        $this->assertArraysAreIdentical(
-            ['2019-01-01', 'UTC', 'ar-eg'],
-            [$date->toIsoString(), $date->getTimeZone(), $date->getLocale()]
+    public function testCreateFromIsoStringWithTimeZone(): void
+    {
+        $this->assertSame(
+            '2019-01-01 00:00:00.000 UTC',
+            Date::createFromIsoString('2019-01-01', 'Australia/Brisbane')
+                ->toNativeDateTime()
+                ->format('Y-m-d H:i:s.v e')
         );
     }
 
@@ -140,19 +148,33 @@ trait CreateTestTrait
 
     public function testNow(): void
     {
-        $date = Date::now('Australia/Brisbane', 'ar-eg');
+        $this->assertSame(
+            '00:00:00.000',
+            Date::now()->toNativeDateTime()->format('H:i:s.v')
+        );
+    }
 
+    public function testNowInstanceOf(): void
+    {
         $this->assertInstanceOf(
             Date::class,
-            $date
+            Date::now()
         );
-        $this->assertArraysAreIdentical(
-            ['UTC', 'ar-eg', '00:00:00.000'],
-            [
-                $date->getTimeZone(),
-                $date->getLocale(),
-                $date->toNativeDateTime()->format('H:i:s.v'),
-            ]
+    }
+
+    public function testNowWithLocale(): void
+    {
+        $this->assertSame(
+            'ar-eg',
+            Date::now(locale: 'ar-eg')->getLocale()
+        );
+    }
+
+    public function testNowWithTimeZone(): void
+    {
+        $this->assertSame(
+            'UTC',
+            Date::now('Australia/Brisbane')->getTimeZone()
         );
     }
 }

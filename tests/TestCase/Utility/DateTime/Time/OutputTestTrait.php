@@ -15,6 +15,14 @@ trait OutputTestTrait
         );
     }
 
+    public function testToIsoString(): void
+    {
+        $this->assertSame(
+            '12:30:15.123',
+            Time::createFromArray([12, 30, 15, 123])->toIsoString()
+        );
+    }
+
     public function testToIsoStringWithLocale(): void
     {
         $this->assertSame(

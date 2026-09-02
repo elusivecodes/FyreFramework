@@ -15,6 +15,14 @@ trait OutputTestTrait
         );
     }
 
+    public function testToIsoString(): void
+    {
+        $this->assertSame(
+            '2019-01-01',
+            Date::createFromArray([2019, 1, 1])->toIsoString()
+        );
+    }
+
     public function testToIsoStringWithLocale(): void
     {
         $this->assertSame(
