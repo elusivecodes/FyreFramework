@@ -3,8 +3,9 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\TypeParser;
 
-use DateTime;
 use Fyre\DB\Types\TimeType;
+use Fyre\Utility\DateTime\Date;
+use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Time;
 
 trait TimeTestTrait
@@ -80,6 +81,18 @@ trait TimeTestTrait
         );
     }
 
+    public function testTimeGetValueClass(): void
+    {
+        $timeParser = $this->type->use('time');
+
+        $this->assertInstanceOf(TimeType::class, $timeParser);
+
+        $this->assertSame(
+            Time::class,
+            $timeParser->getValueClass()
+        );
+    }
+
     public function testTimeParse(): void
     {
         $time = $this->type->use('time')->parse('08:59:11');
@@ -92,6 +105,20 @@ trait TimeTestTrait
         $this->assertSame(
             '08:59:11',
             $time->toIsoString()
+        );
+    }
+
+    public function testTimeParseDate(): void
+    {
+        $this->assertNull(
+            $this->type->use('time')->parse(Date::createFromArray([2021, 12, 31]))
+        );
+    }
+
+    public function testTimeParseDateTime(): void
+    {
+        $this->assertNull(
+            $this->type->use('time')->parse(DateTime::createFromArray([2021, 12, 31, 22, 59, 11]))
         );
     }
 
@@ -152,7 +179,7 @@ trait TimeTestTrait
 
     public function testTimeParseNative(): void
     {
-        $time = new DateTime('@1640991551');
+        $time = new \DateTime('@1640991551');
 
         $this->assertSame(
             '22:59:11',

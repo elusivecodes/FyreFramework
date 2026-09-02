@@ -3,9 +3,10 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\TypeParser;
 
-use DateTime;
 use Fyre\DB\Types\DateType;
 use Fyre\Utility\DateTime\Date;
+use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Time;
 
 trait DateTestTrait
 {
@@ -72,6 +73,18 @@ trait DateTestTrait
         );
     }
 
+    public function testDateGetValueClass(): void
+    {
+        $dateParser = $this->type->use('date');
+
+        $this->assertInstanceOf(DateType::class, $dateParser);
+
+        $this->assertSame(
+            Date::class,
+            $dateParser->getValueClass()
+        );
+    }
+
     public function testDateParse(): void
     {
         $date = $this->type->use('date')->parse('2022-01-01');
@@ -92,8 +105,15 @@ trait DateTestTrait
         $date = Date::createFromTimestamp(1640991551);
 
         $this->assertSame(
-            '2021-12-31',
-            $this->type->use('date')->parse($date)->toIsoString()
+            $date,
+            $this->type->use('date')->parse($date)
+        );
+    }
+
+    public function testDateParseDateTime(): void
+    {
+        $this->assertNull(
+            $this->type->use('date')->parse(DateTime::createFromArray([2021, 12, 31]))
         );
     }
 
@@ -154,7 +174,7 @@ trait DateTestTrait
 
     public function testDateParseNative(): void
     {
-        $date = new DateTime('@1640991551');
+        $date = new \DateTime('@1640991551');
 
         $this->assertSame(
             '2021-12-31',
@@ -166,6 +186,13 @@ trait DateTestTrait
     {
         $this->assertNull(
             $this->type->use('date')->parse(null)
+        );
+    }
+
+    public function testDateParseTime(): void
+    {
+        $this->assertNull(
+            $this->type->use('date')->parse(Time::createFromArray([22, 59, 11]))
         );
     }
 

@@ -7,7 +7,9 @@ use Fyre\DB\Expressions\ConditionExpression;
 use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Queries\SelectQuery;
 use Fyre\DB\Query;
+use Fyre\Utility\DateTime\Date;
 use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Time;
 use Tests\Mock\Enums\State;
 use Tests\Mock\Enums\Status;
 
@@ -102,6 +104,19 @@ trait WhereTestTrait
                 ->from('test')
                 ->where([
                     'value IN' => static fn(): SelectQuery => $query,
+                ])
+                ->sql()
+        );
+    }
+
+    public function testWhereDate(): void
+    {
+        $this->assertSame(
+            'SELECT * FROM `test` WHERE `value` = \'2020-01-02\'',
+            $this->db->select()
+                ->from('test')
+                ->where([
+                    'value' => Date::createFromArray([2020, 1, 2]),
                 ])
                 ->sql()
         );
@@ -437,6 +452,19 @@ trait WhereTestTrait
                 ->where([
                     'value IN' => $this->db->select(['id'])
                         ->from('test'),
+                ])
+                ->sql()
+        );
+    }
+
+    public function testWhereTime(): void
+    {
+        $this->assertSame(
+            'SELECT * FROM `test` WHERE `value` = \'12:30:15\'',
+            $this->db->select()
+                ->from('test')
+                ->where([
+                    'value' => Time::createFromArray([12, 30, 15]),
                 ])
                 ->sql()
         );
