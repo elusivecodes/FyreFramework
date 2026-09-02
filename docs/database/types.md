@@ -32,7 +32,7 @@ Types are used throughout the framework:
 
 - ORM hydration and form marshalling use schema column types.
 - Forms, the view `FormHelper`, requests, and console options can parse raw input explicitly.
-- Query binding converts values such as `Fyre\Utility\DateTime\DateTime` into database-safe strings.
+- Query binding converts framework `Date`, `DateTime`, and `Time` values into database-safe strings.
 - Schema columns and result metadata can resolve a type from driver information.
 
 ## Resolve type handlers
@@ -94,7 +94,7 @@ The built-in identifiers and their PHP behavior are:
 | --- | --- |
 | `binary` | converts a database binary string to a readable stream resource |
 | `boolean`, `bool` | validates a boolean; `null` and `''` become `null` |
-| `date` | parses a `DateTime` and normalizes it to the start of the day |
+| `date` | parses a calendar date into a framework `Date` value |
 | `datetime` | parses timestamps, date-time strings, `DateTimeInterface`, and framework `DateTime` values |
 | `datetime-fractional` | behaves like `datetime` with fractional seconds in the database format |
 | `datetime-timezone` | behaves like `datetime` with fractional seconds and a timezone offset |
@@ -106,24 +106,52 @@ The built-in identifiers and their PHP behavior are:
 | `set` | converts between comma-separated database strings and PHP arrays |
 | `string` | casts scalars and `Stringable` objects; other values become `null` |
 | `text` | currently behaves like `string` |
-| `time` | parses a time into a framework `DateTime` instance |
+| `time` | parses a time of day into a framework `Time` value |
 
 ### Date and time types
 
-`datetime` accepts:
+The date and time identifiers use distinct application value classes:
+
+| Identifier | PHP value | Default database output |
+| --- | --- | --- |
+| `date` | `Fyre\Utility\DateTime\Date` | `Y-m-d` |
+| `datetime` | `Fyre\Utility\DateTime\DateTime` | `Y-m-d H:i:s` |
+| `datetime-fractional` | `Fyre\Utility\DateTime\DateTime` | `Y-m-d H:i:s.u` |
+| `datetime-timezone` | `Fyre\Utility\DateTime\DateTime` | `Y-m-d H:i:s.uP` |
+| `time` | `Fyre\Utility\DateTime\Time` | `H:i:s.v` |
+
+The date and time handlers accept:
 
 - integer timestamps and integer-formatted strings
-- `Fyre\Utility\DateTime\DateTime` instances
+- an instance of the handler's framework value class
 - any `DateTimeInterface` implementation
-- strings in common formats or a configured locale format
+- strings in the formats supported by that handler or its configured locale format
 
-Configure its shared handler with:
+`parse()` returns an existing instance unchanged when it already matches the handler's value class. The framework date/time classes are otherwise intentionally not interchangeable:
+
+- `date` rejects framework `DateTime` and `Time` values.
+- `datetime`, `datetime-fractional`, and `datetime-timezone` reject framework `Date` and `Time` values.
+- `time` rejects framework `Date` and `DateTime` values.
+
+Use `getValueClass()` to retrieve the framework class produced by a date or time handler:
+
+```php
+$dateClass = type('date')->getValueClass();
+$dateTimeClass = type('datetime')->getValueClass();
+$timeClass = type('time')->getValueClass();
+```
+
+Configure a resolved date or time handler with:
 
 - `getLocaleFormat()` and `setLocaleFormat()`
 - `getServerTimeZone()` and `setServerTimeZone()`
 - `getUserTimeZone()` and `setUserTimeZone()`
 
-The `date` and `time` types use a server timezone of UTC for database conversion. Because handler instances are cached, changing date-time configuration affects later conversions performed through the same `TypeParser`.
+`DateTime` values can be shifted between the configured user and server timezones during database conversion. `Date` and `Time` preserve their calendar date or time-of-day fields and do not undergo timezone shifting. Their normalized UTC representation does not change those fields.
+
+ORM hydration and form marshalling use the schema column type, so `date`, `datetime*`, and `time` columns produce `Date`, `DateTime`, and `Time` values respectively.
+
+Handler instances are cached, so changing date-time configuration affects later conversions performed through the same `TypeParser`.
 
 ### JSON
 
