@@ -5,11 +5,10 @@ namespace Fyre\Http\Session\Handlers;
 
 use Fyre\DB\Connection;
 use Fyre\DB\ConnectionManager;
-use Fyre\DB\Schema\SchemaRegistry;
-use Fyre\DB\Schema\Table;
+use Fyre\DB\Expressions\FunctionExpression;
+use Fyre\DB\Query;
 use Fyre\Http\Session\Session;
 use Fyre\Http\Session\SessionHandler;
-use Fyre\Utility\DateTime\DateTime;
 use Override;
 
 use function is_resource;
@@ -35,8 +34,6 @@ class DatabaseSessionHandler extends SessionHandler
 
     protected Connection $db;
 
-    protected Table $schemaTable;
-
     protected string $table;
 
     /**
@@ -44,13 +41,11 @@ class DatabaseSessionHandler extends SessionHandler
      *
      * @param Session $session The Session.
      * @param ConnectionManager $connectionManager The ConnectionManager.
-     * @param SchemaRegistry $schemaRegistry The SchemaRegistry.
      * @param array<string, mixed> $options The options for the handler.
      */
     public function __construct(
         Session $session,
         protected ConnectionManager $connectionManager,
-        protected SchemaRegistry $schemaRegistry,
         array $options = []
     ) {
         parent::__construct($session, $options);
@@ -84,14 +79,14 @@ class DatabaseSessionHandler extends SessionHandler
     #[Override]
     public function gc(int $expires): false|int
     {
-        $maxLife = DateTime::now()->subSeconds($expires);
-
         $this->db->delete()
             ->from($this->table)
             ->where([
-                'modified <' => $this->schemaTable->column('modified')
-                    ->type()
-                    ->toDatabase($maxLife),
+                'modified <' => static fn(Query $query): FunctionExpression => $query->func()->dateSub(
+                    $query->func()->now(),
+                    $expires,
+                    'second'
+                ),
             ])
             ->execute();
 
@@ -110,9 +105,6 @@ class DatabaseSessionHandler extends SessionHandler
         $this->db = $this->connectionManager->use($this->config['connectionKey']);
 
         $this->table = $path;
-
-        $this->schemaTable = $this->schemaRegistry->use($this->db)
-            ->table($this->table);
 
         return true;
     }
@@ -159,13 +151,9 @@ class DatabaseSessionHandler extends SessionHandler
             return false;
         }
 
-        $now = DateTime::now();
-
         $this->db->update($this->table)
             ->set([
-                'modified' => $this->schemaTable->column('modified')
-                    ->type()
-                    ->toDatabase($now),
+                'modified' => static fn(Query $query): FunctionExpression => $query->func()->now(),
             ])
             ->where([
                 'id' => $sessionId,
@@ -185,7 +173,6 @@ class DatabaseSessionHandler extends SessionHandler
             return false;
         }
 
-        $maxLife = DateTime::now()->subSeconds((int) $this->config['expires']);
         $result = $this->db
             ->select([
                 'id',
@@ -193,9 +180,11 @@ class DatabaseSessionHandler extends SessionHandler
             ->from($this->table)
             ->where([
                 'id' => $sessionId,
-                'modified >=' => $this->schemaTable->column('modified')
-                    ->type()
-                    ->toDatabase($maxLife),
+                'modified >=' => fn(Query $query): FunctionExpression => $query->func()->dateSub(
+                    $query->func()->now(),
+                    (int) $this->config['expires'],
+                    'second'
+                ),
             ])
             ->execute()
             ->first();
@@ -213,20 +202,14 @@ class DatabaseSessionHandler extends SessionHandler
             return false;
         }
 
-        $now = DateTime::now();
-
         $this->db->upsert(['id'])
             ->into($this->table)
             ->values([
                 [
                     'id' => $sessionId,
                     'data' => $data,
-                    'created' => $this->schemaTable->column('created')
-                        ->type()
-                        ->toDatabase($now),
-                    'modified' => $this->schemaTable->column('modified')
-                        ->type()
-                        ->toDatabase($now),
+                    'created' => static fn(Query $query): FunctionExpression => $query->func()->now(),
+                    'modified' => static fn(Query $query): FunctionExpression => $query->func()->now(),
                 ],
             ], [
                 'created',
