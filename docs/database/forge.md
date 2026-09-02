@@ -147,12 +147,33 @@ Scalar defaults are quoted by the driver. Wrap a deliberate SQL expression in `L
 ```php
 use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Types\DateTimeType;
+use Fyre\DB\Types\DateType;
+use Fyre\DB\Types\TimeType;
 
-$forge->addColumn('roles', 'created', [
-    'type' => DateTimeType::class,
-    'default' => new LiteralExpression('CURRENT_TIMESTAMP'),
-]);
+$forge->build('events')
+    ->addColumn('event_date', [
+        'type' => DateType::class,
+    ])
+    ->addColumn('created_at', [
+        'type' => DateTimeType::class,
+        'default' => new LiteralExpression('CURRENT_TIMESTAMP'),
+    ])
+    ->addColumn('start_time', [
+        'type' => TimeType::class,
+        'fractionalSeconds' => 3,
+    ])
+    ->execute();
 ```
+
+These portable classes map to the corresponding driver type family:
+
+| Type class | MySQL/MariaDB | PostgreSQL | SQLite |
+| --- | --- | --- | --- |
+| `DateType` | `DATE` | `DATE` | `DATE` |
+| `DateTimeType` | `DATETIME` | `TIMESTAMP WITHOUT TIME ZONE` | `DATETIME` |
+| `TimeType` | `TIME` | `TIME WITHOUT TIME ZONE` | `TIME` |
+
+The generated SQL can include a precision suffix. Set `fractionalSeconds` to `3` on a `TimeType` column when it must retain the millisecond precision of framework `Time` values.
 
 When `changeColumn()` changes the column type, its previous `length` and `precision` are cleared unless replacements are supplied.
 
