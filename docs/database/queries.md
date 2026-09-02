@@ -90,7 +90,46 @@ The compiler also recognizes a few special value types:
 - `LiteralExpression` is emitted as raw SQL (no binding).
 - `Closure` values are invoked as `fn(Query $query, ValueBinder|null $binder): mixed` during compilation.
 - `SelectQuery` values compile as subqueries.
-- `Fyre\Utility\DateTime\DateTime` values are converted via the connection’s type system.
+- Framework date and time values are converted through the connection's type system before binding.
+
+The selected type depends on the concrete value class:
+
+| PHP value | Type identifier |
+| --- | --- |
+| `Fyre\Utility\DateTime\Date` | `date` |
+| `Fyre\Utility\DateTime\DateTime` | `datetime` |
+| `Fyre\Utility\DateTime\Time` | `time` |
+
+For example, date and time values in a condition are converted before they are stored in the binder:
+
+```php
+use Fyre\DB\ValueBinder;
+use Fyre\Utility\DateTime\Date;
+use Fyre\Utility\DateTime\DateTime;
+use Fyre\Utility\DateTime\Time;
+
+$query = $db->select('*')
+    ->from('events')
+    ->where([
+        'event_date' => Date::createFromArray([2024, 1, 2]),
+        'starts_at' => DateTime::createFromArray([2024, 1, 2, 10, 30], 'UTC'),
+        'local_time' => Time::createFromArray([10, 30, 15, 125]),
+    ]);
+
+$binder = new ValueBinder();
+$sql = $query->sql($binder);
+$bindings = $binder->bindings();
+```
+
+`$sql` contains placeholders `:p0`, `:p1`, and `:p2`. The exact bound values are:
+
+```php
+[
+    'p0' => '2024-01-02',
+    'p1' => '2024-01-02 10:30:00',
+    'p2' => '10:30:15.125',
+]
+```
 
 To embed a raw SQL fragment, create a literal with `$query->literal()`.
 
@@ -99,22 +138,6 @@ Identifier strings that match the supported syntax are quoted using the current 
 Use `$query->identifier()` when a general expression value is specifically an identifier, and `$query->literal()` when it is deliberately raw SQL. Identifiers and raw fragments must be application-controlled; binding does not make user-supplied identifiers or SQL safe.
 
 For conditions, cases, functions, aggregates, and windows, see [Query expressions](expressions.md).
-
-Example compiling with an explicit binder:
-
-```php
-use Fyre\DB\ValueBinder;
-
-$query = $db->select('*')
-    ->from('users')
-    ->where(['id' => 42]);
-
-$binder = new ValueBinder();
-$sql = $query->sql($binder);
-$bindings = $binder->bindings();
-```
-
-`$sql` contains placeholders like `:p0`, while `$bindings` contains the values to bind.
 
 ### Condition arrays
 
