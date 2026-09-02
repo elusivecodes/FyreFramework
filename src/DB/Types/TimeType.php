@@ -29,7 +29,7 @@ class TimeType extends DateTimeType
     ];
 
     #[Override]
-    protected string $serverFormat = 'H:i:s';
+    protected string $serverFormat = 'H:i:s.v';
 
     #[Override]
     protected string|null $serverTimeZone = 'UTC';

@@ -289,7 +289,17 @@ trait TimeTestTrait
         $time = Time::createFromTimestamp(1640991551);
 
         $this->assertSame(
-            '22:59:11',
+            '22:59:11.000',
+            $this->type->use('time')->toDatabase($time)
+        );
+    }
+
+    public function testTimeToDatabaseFractional(): void
+    {
+        $time = Time::createFromArray([22, 59, 11, 123]);
+
+        $this->assertSame(
+            '22:59:11.123',
             $this->type->use('time')->toDatabase($time)
         );
     }
@@ -312,7 +322,7 @@ trait TimeTestTrait
         $time = Time::createFromTimestamp(1640991551);
 
         $this->assertSame(
-            '22:59:11',
+            '22:59:11.000',
             $timeParser->toDatabase($time)
         );
     }
@@ -320,7 +330,7 @@ trait TimeTestTrait
     public function testTimeToDatabaseString(): void
     {
         $this->assertSame(
-            '22:59:11',
+            '22:59:11.000',
             $this->type->use('time')->toDatabase('22:59:11')
         );
     }

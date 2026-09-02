@@ -460,7 +460,7 @@ trait WhereTestTrait
     public function testWhereTime(): void
     {
         $this->assertSame(
-            'SELECT * FROM `test` WHERE `value` = \'12:30:15\'',
+            'SELECT * FROM `test` WHERE `value` = \'12:30:15.000\'',
             $this->db->select()
                 ->from('test')
                 ->where([
