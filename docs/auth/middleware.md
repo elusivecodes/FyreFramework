@@ -117,8 +117,6 @@ When access is denied:
 - If the request negotiates to JSON (`Accept` header), it throws `ForbiddenException` (HTTP 403).
 - Otherwise (HTML + not logged in), it redirects to `Auth::getLoginUrl($request->getUri())`.
 
-Use inline arguments such as `can:admin`.
-
 Usage example (with route arguments):
 
 ```php

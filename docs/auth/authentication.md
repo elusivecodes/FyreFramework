@@ -34,11 +34,11 @@ This page covers authenticator configuration, request flow, identity management,
 
 Use `Auth` when you want to:
 
-- Attempt a login using credentials (via `Identifier`)
-- Log in or log out a known user
-- Temporarily impersonate another user in session-authenticated applications
-- Check whether a user is logged in
-- Retrieve the current user entity
+- attempt a login using credentials (via `Identifier`)
+- log in or log out a known user
+- temporarily impersonate another user in session-authenticated applications
+- check whether a user is logged in
+- retrieve the current user entity
 
 `Auth` also coordinates authenticators that resolve request identities and persist them between requests. Session and cookie identities are stateful, while token identities apply only to the request that supplied the token. Once a user has been resolved, `Auth` also provides `access()` as the authorization entry point for that user; see [Authorization](authorization.md).
 
@@ -153,9 +153,9 @@ Fyre includes three built-in authenticators. Each authenticator receives its lis
 
 Reads an identity value from the session and loads the user from the model configured by `Identifier`.
 
-- `sessionKey` (`string`): the session key used to store the identity (default: `'auth'`)
-- `sessionField` (`string`): the user field stored in the session and used for lookup (default: `'id'`)
-- `impersonatorSessionKey` (`string`): the session key used to store the original identity during impersonation (default: `'authImpersonator'`)
+- `sessionKey` (`string`): the session key used to store the identity (default: `'auth'`).
+- `sessionField` (`string`): the user field stored in the session and used for lookup (default: `'id'`).
+- `impersonatorSessionKey` (`string`): the session key used to store the original identity during impersonation (default: `'authImpersonator'`).
 
 When login changes the stored identity, the authenticator rotates the session ID before storing the new value. Logout removes the session value and rotates the session ID again.
 
@@ -165,11 +165,11 @@ When login changes the stored identity, the authenticator rotates the session ID
 
 Reads a remember-me cookie and validates it against the stored user. Login can queue a cookie for the next response, while logout or an invalid payload queues it for deletion. A queued cookie is always generated from the user passed to `login()`, even if the current user changes before the response is sent.
 
-- `cookieName` (`string`): the cookie name (default: `'auth'`)
-- `cookieOptions` (`array<string, mixed>`): options passed to `Cookie` (default: `['httpOnly' => true]`)
-- `identifierField` (`string`): the user field stored in the cookie (default: `'email'`)
-- `passwordField` (`string`): the password-hash field used to invalidate old cookies after password changes (default: `'password'`)
-- `salt` (`string|null`): an optional secret HMAC key included when deriving the cookie token (default: `null`)
+- `cookieName` (`string`): the cookie name (default: `'auth'`).
+- `cookieOptions` (`array<string, mixed>`): options passed to `Cookie` (default: `['httpOnly' => true]`).
+- `identifierField` (`string`): the user field stored in the cookie (default: `'email'`).
+- `passwordField` (`string`): the password-hash field used to invalidate old cookies after password changes (default: `'password'`).
+- `salt` (`string|null`): an optional secret HMAC key included when deriving the cookie token (default: `null`).
 
 Within `CookieAuthenticator`, `cookieOptions.expires` is a lifetime in seconds and is converted to an absolute expiry when the cookie is written. If it is omitted, the result is a browser-session cookie. Set `cookieOptions.secure` to `true` when the application uses HTTPS.
 
@@ -181,10 +181,10 @@ For remember-me cookies, configure `salt` with a stable application secret. Chan
 
 Loads the user by a token read from a request header or query parameter.
 
-- `tokenHeader` (`string|null`): the request header to inspect (default: `'Authorization'`)
-- `tokenHeaderPrefix` (`string|null`): the prefix stripped from the header value (default: `'Bearer'`)
-- `tokenQuery` (`string|null`): a query parameter used when the header is absent (default: `null`)
-- `tokenField` (`string`): the user field matched against the token (default: `'token'`)
+- `tokenHeader` (`string|null`): the request header to inspect (default: `'Authorization'`).
+- `tokenHeaderPrefix` (`string|null`): the prefix stripped from the header value (default: `'Bearer'`).
+- `tokenQuery` (`string|null`): a query parameter used when the header is absent (default: `null`).
+- `tokenField` (`string`): the user field matched against the token (default: `'token'`).
 
 The configured header takes precedence. The query parameter is checked only when that header is absent.
 
@@ -240,7 +240,7 @@ Impersonation temporarily replaces the effective user while retaining the origin
 
 The application is responsible for authorizing the operation. Always perform the authorization check before starting impersonation, because authorization uses the current effective user.
 
-An identity resolved by `TokenAuthenticator` cannot impersonate another user. Calling `login()` or `attempt()` directly also does not establish an impersonation-capable authentication source; redirect and start impersonation from a subsequent session-authenticated request.
+An identity resolved by `TokenAuthenticator` cannot impersonate another user. Calling `login()` or `attempt()` directly also does not establish an impersonation-capable authentication source. Redirect first, then start impersonation from the subsequent session-authenticated request.
 
 ### Starting impersonation
 
