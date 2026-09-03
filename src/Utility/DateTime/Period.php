@@ -82,26 +82,31 @@ class Period implements Countable, Iterator
     protected readonly Date|DateTime $start;
 
     /**
-     * Checks the compatibility of two date values.
+     * Checks the compatibility of two periods.
      *
-     * @param Date|DateTime $a The first date.
-     * @param Date|DateTime $b The second date.
+     * @template TFirst of Date|DateTime
+     * @template TSecond of Date|DateTime
      *
-     * @phpstan-assert TDate $a
-     * @phpstan-assert TDate $b
+     * @param Period<TFirst> $a The first Period.
+     * @param Period<TSecond> $b The second Period.
      *
-     * @throws InvalidArgumentException If the date types don't match.
+     * @throws LogicException If the date type or granularity doesn't match.
      */
-    public static function checkDateType(Date|DateTime $a, Date|DateTime $b): void
+    public static function checkCompatibility(Period $a, Period $b): void
     {
-        if ($a::class === $b::class) {
+        static::checkDateType($a->start(), $b->start());
+
+        $aGranularity = $a->granularity();
+        $bGranularity = $b->granularity();
+
+        if ($aGranularity === $bGranularity) {
             return;
         }
 
-        throw new InvalidArgumentException(sprintf(
-            'Date type `%s` must match other date type `%s`.',
-            $a::class,
-            $b::class
+        throw new LogicException(sprintf(
+            'Period granularity `%s` must match other period granularity `%s`.',
+            $aGranularity,
+            $bGranularity
         ));
     }
 
@@ -749,31 +754,26 @@ class Period implements Countable, Iterator
     }
 
     /**
-     * Checks the compatibility of two periods.
+     * Checks the compatibility of two date values.
      *
-     * @template TFirst of Date|DateTime
-     * @template TSecond of Date|DateTime
+     * @param Date|DateTime $a The first date.
+     * @param Date|DateTime $b The second date.
      *
-     * @param Period<TFirst> $a The first Period.
-     * @param Period<TSecond> $b The second Period.
+     * @phpstan-assert TDate $a
+     * @phpstan-assert TDate $b
      *
-     * @throws LogicException If the date type or granularity doesn't match.
+     * @throws InvalidArgumentException If the date types don't match.
      */
-    protected static function checkCompatibility(Period $a, Period $b): void
+    protected static function checkDateType(Date|DateTime $a, Date|DateTime $b): void
     {
-        static::checkDateType($a->start(), $b->start());
-
-        $aGranularity = $a->granularity();
-        $bGranularity = $b->granularity();
-
-        if ($aGranularity === $bGranularity) {
+        if ($a::class === $b::class) {
             return;
         }
 
-        throw new LogicException(sprintf(
-            'Period granularity `%s` must match other period granularity `%s`.',
-            $aGranularity,
-            $b->granularity()
+        throw new InvalidArgumentException(sprintf(
+            'Date type `%s` must match other date type `%s`.',
+            $a::class,
+            $b::class
         ));
     }
 

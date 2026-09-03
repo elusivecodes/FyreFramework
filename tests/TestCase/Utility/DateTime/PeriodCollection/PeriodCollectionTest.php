@@ -10,6 +10,7 @@ use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Period;
 use Fyre\Utility\DateTime\PeriodCollection;
 use InvalidArgumentException;
+use LogicException;
 use OutOfBoundsException;
 use PHPUnit\Framework\TestCase;
 
@@ -81,6 +82,42 @@ final class PeriodCollectionTest extends TestCase
         $this->assertCount(
             0,
             $collection2
+        );
+    }
+
+    public function testAddGranularityMismatch(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessageIs('Period granularity `day` must match other period granularity `hour`.');
+
+        $period1 = new Period(
+            DateTime::createFromArray([2022, 1, 1]),
+            DateTime::createFromArray([2022, 1, 10])
+        );
+        $period2 = new Period(
+            DateTime::createFromArray([2022, 1, 1]),
+            DateTime::createFromArray([2022, 1, 10]),
+            'hour'
+        );
+
+        new PeriodCollection($period1)->add($period2);
+    }
+
+    public function testConstructorGranularityMismatch(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessageIs('Period granularity `day` must match other period granularity `hour`.');
+
+        new PeriodCollection(
+            new Period(
+                DateTime::createFromArray([2022, 1, 1]),
+                DateTime::createFromArray([2022, 1, 10])
+            ),
+            new Period(
+                DateTime::createFromArray([2022, 1, 1]),
+                DateTime::createFromArray([2022, 1, 10]),
+                'hour'
+            )
         );
     }
 

@@ -55,10 +55,10 @@ class PeriodCollection implements Countable, Iterator
         }
 
         $periods = $this->periods;
-        $firstPeriodStart = array_shift($periods)->start();
+        $firstPeriod = array_shift($periods);
 
         foreach ($periods as $period) {
-            Period::checkDateType($firstPeriodStart, $period->start());
+            Period::checkCompatibility($firstPeriod, $period);
         }
     }
 
