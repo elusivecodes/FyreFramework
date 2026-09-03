@@ -34,7 +34,9 @@ $router->discoverRoutes([
 ]);
 ```
 
-For routing basics, see [Router](router.md). For URL generation, see [URL Generation](url-generation.md).
+For controller construction, action arguments, and responses, see [Controllers](controllers.md).
+For routing basics, see [Router](router.md). For URL generation, see
+[URL Generation](url-generation.md).
 
 ## Route attributes
 
@@ -258,6 +260,7 @@ If you configure a cache named `_routes`, discovered routes are cached per names
 
 ## Related
 
+- [Controllers](controllers.md)
 - [Router](router.md)
 - [Route Bindings](route-bindings.md)
 - [URL Generation](url-generation.md)

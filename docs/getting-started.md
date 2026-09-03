@@ -215,6 +215,7 @@ Continue with the area that matches what you are building:
 - [Config](core/config.md) - define and load application configuration
 - [HTTP Middleware](http/middleware.md) - assemble the HTTP request pipeline
 - [Routing](routing/index.md) - define routes and dispatch request handlers
+- [Controllers](routing/controllers.md) - organize route actions with dependency injection, responses, and views
 - [Console](console/index.md) - build and run console commands
 - [Database](database/index.md) - configure connections and build queries
 - [ORM](orm/index.md) - work with models, entities, and relationships
@@ -230,5 +231,6 @@ Continue with the area that matches what you are building:
 
 - [Core](core/index.md)
 - [HTTP](http/index.md)
+- [Controllers](routing/controllers.md)
 - [Console](console/index.md)
 - [Testing](testing/index.md)

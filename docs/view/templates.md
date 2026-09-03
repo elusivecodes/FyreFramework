@@ -35,6 +35,9 @@ return view('blog/index', [
 
 The helper creates a `View`, supplies the data, uses `App.defaultLayout` when no layout is passed, and returns the rendered string. Work with an injected `View` directly when you need to configure it over several calls.
 
+For the complete flow from a matched route through a controller action to a rendered template,
+see [Controllers](../routing/controllers.md).
+
 Most examples on this page are shown from either:
 
 - application code (using a `$view` instance), or
@@ -237,6 +240,7 @@ Listeners for `View.afterRender`, `View.afterLayout`, and `View.afterElement` ca
 ## Related
 
 - [View](index.md)
+- [Controllers](../routing/controllers.md)
 - [Helpers](helpers.md)
 - [Cells](cells.md)
 - [Forms (view helper)](forms.md)

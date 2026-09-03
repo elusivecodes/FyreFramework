@@ -73,6 +73,9 @@ $router->get('posts', PostsController::class);
 $router->get('posts/{id}', [PostsController::class, 'show'], as: 'posts.show');
 ```
 
+Controllers are built and invoked through the container. See [Controllers](controllers.md) for
+constructor injection, action arguments, route bindings, responses, and view rendering.
+
 ### Matching by scheme/host/port
 
 Scheme, host, and port constraints are optional. If provided, they must match the incoming request URI.
@@ -290,6 +293,7 @@ $router->discoverRoutes(['Your\Controllers']);
 ## Related
 
 - [Routing](index.md)
+- [Controllers](controllers.md)
 - [URL Generation](url-generation.md)
 - [Route Handler](route-handler.md)
 - [Route Bindings](route-bindings.md)

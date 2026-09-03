@@ -280,6 +280,7 @@ In this example, `$comment` is resolved with `$post` as the parent.
 
 ## Related
 
+- [Controllers](controllers.md)
 - [Router](router.md)
 - [Route Discovery](route-discovery.md)
 - [URL Generation](url-generation.md)
