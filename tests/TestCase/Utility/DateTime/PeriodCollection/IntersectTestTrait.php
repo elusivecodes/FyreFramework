@@ -3,128 +3,125 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\DateTime\PeriodCollection;
 
+use Fyre\Utility\DateTime\Date;
+use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Period;
 use Fyre\Utility\DateTime\PeriodCollection;
+use PHPUnit\Framework\Attributes\DataProvider;
+
+use function count;
 
 trait IntersectTestTrait
 {
-    public function testIntersect(): void
+    /**
+     * @return array<string, array{array<int, array{int[], int[], 'both'|'none'}>, array{int[], int[], 'both'|'none'}, array<int, array{int[], int[], 'both'|'none'}>}>
+     */
+    public static function intersectProvider(): array
     {
-        $period1 = new Period('2022-01-01', '2022-01-05');
-        $period2 = new Period('2022-01-10', '2022-01-15');
-        $collection1 = new PeriodCollection($period1, $period2);
-
-        $period3 = new Period('2022-01-03', '2022-01-13');
-        $collection2 = $collection1->intersect($period3);
-
-        $this->assertInstanceOf(
-            PeriodCollection::class,
-            $collection2
-        );
-
-        $this->assertCount(
-            2,
-            $collection2
-        );
-
-        $this->assertSame(
-            '2022-01-03T00:00:00.000+00:00',
-            $collection2[0]->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-05T00:00:00.000+00:00',
-            $collection2[0]->end()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-10T00:00:00.000+00:00',
-            $collection2[1]->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-13T00:00:00.000+00:00',
-            $collection2[1]->end()->toIsoString()
-        );
-
-        $this->assertTrue(
-            $collection2[0]->includesStart()
-        );
-
-        $this->assertTrue(
-            $collection2[0]->includesEnd()
-        );
-
-        $this->assertTrue(
-            $collection2[1]->includesStart()
-        );
-
-        $this->assertTrue(
-            $collection2[1]->includesEnd()
-        );
+        return [
+            'intersections' => [
+                [
+                    [[2022, 1, 1], [2022, 1, 5], 'none'],
+                    [[2022, 1, 10], [2022, 1, 15], 'none'],
+                ],
+                [[2022, 1, 3], [2022, 1, 13], 'none'],
+                [
+                    [[2022, 1, 3], [2022, 1, 5], 'none'],
+                    [[2022, 1, 10], [2022, 1, 13], 'none'],
+                ],
+            ],
+            'excluded boundaries' => [
+                [
+                    [[2022, 1, 1], [2022, 1, 5], 'both'],
+                    [[2022, 1, 10], [2022, 1, 15], 'both'],
+                ],
+                [[2022, 1, 3], [2022, 1, 13], 'both'],
+                [
+                    [[2022, 1, 3], [2022, 1, 5], 'both'],
+                    [[2022, 1, 10], [2022, 1, 13], 'both'],
+                ],
+            ],
+            'empty' => [[], [[2022, 1, 3], [2022, 1, 13], 'none'], []],
+        ];
     }
 
-    public function testIntersectEmpty(): void
+    /**
+     * @param array<int, array{int[], int[], 'both'|'none'}> $periodData
+     * @param array{int[], int[], 'both'|'none'} $otherData
+     * @param array<int, array{int[], int[], 'both'|'none'}> $expected
+     */
+    #[DataProvider('intersectProvider')]
+    public function testIntersect(array $periodData, array $otherData, array $expected): void
     {
-        $collection1 = new PeriodCollection();
+        $periods = [];
 
-        $period3 = new Period('2022-01-03', '2022-01-13');
-        $collection2 = $collection1->intersect($period3);
+        foreach ($periodData as [$start, $end, $boundaries]) {
+            $periods[] = new Period(
+                DateTime::createFromArray($start),
+                DateTime::createFromArray($end),
+                excludeBoundaries: $boundaries
+            );
+        }
 
-        $this->assertCount(
-            0,
-            $collection2
+        [$otherStart, $otherEnd, $otherBoundaries] = $otherData;
+        $other = new Period(
+            DateTime::createFromArray($otherStart),
+            DateTime::createFromArray($otherEnd),
+            excludeBoundaries: $otherBoundaries
         );
+
+        $intersections = new PeriodCollection(...$periods)->intersect($other);
+
+        $this->assertCount(count($expected), $intersections);
+
+        foreach ($expected as $index => [$start, $end, $boundaries]) {
+            $intersection = $intersections->get($index);
+
+            $this->assertInstanceOf(DateTime::class, $intersection->start());
+            $this->assertInstanceOf(DateTime::class, $intersection->end());
+            $this->assertSame(DateTime::createFromArray($start)->toIsoString(), $intersection->start()->toIsoString());
+            $this->assertSame(DateTime::createFromArray($end)->toIsoString(), $intersection->end()->toIsoString());
+            $this->assertSame($boundaries, Period::getBoundaries($intersection->includesStart(), $intersection->includesEnd()));
+        }
     }
 
-    public function testIntersectExclude(): void
+    /**
+     * @param array<int, array{int[], int[], 'both'|'none'}> $periodData
+     * @param array{int[], int[], 'both'|'none'} $otherData
+     * @param array<int, array{int[], int[], 'both'|'none'}> $expected
+     */
+    #[DataProvider('intersectProvider')]
+    public function testIntersectDate(array $periodData, array $otherData, array $expected): void
     {
-        $period1 = new Period('2022-01-01', '2022-01-05', excludeBoundaries: 'both');
-        $period2 = new Period('2022-01-10', '2022-01-15', excludeBoundaries: 'both');
-        $collection1 = new PeriodCollection($period1, $period2);
+        $periods = [];
 
-        $period3 = new Period('2022-01-03', '2022-01-13', excludeBoundaries: 'both');
-        $collection2 = $collection1->intersect($period3);
+        foreach ($periodData as [$start, $end, $boundaries]) {
+            $periods[] = new Period(
+                Date::createFromArray($start),
+                Date::createFromArray($end),
+                excludeBoundaries: $boundaries
+            );
+        }
 
-        $this->assertCount(
-            2,
-            $collection2
+        [$otherStart, $otherEnd, $otherBoundaries] = $otherData;
+        $other = new Period(
+            Date::createFromArray($otherStart),
+            Date::createFromArray($otherEnd),
+            excludeBoundaries: $otherBoundaries
         );
 
-        $this->assertSame(
-            '2022-01-03T00:00:00.000+00:00',
-            $collection2[0]->start()->toIsoString()
-        );
+        $intersections = new PeriodCollection(...$periods)->intersect($other);
 
-        $this->assertSame(
-            '2022-01-05T00:00:00.000+00:00',
-            $collection2[0]->end()->toIsoString()
-        );
+        $this->assertCount(count($expected), $intersections);
 
-        $this->assertSame(
-            '2022-01-10T00:00:00.000+00:00',
-            $collection2[1]->start()->toIsoString()
-        );
+        foreach ($expected as $index => [$start, $end, $boundaries]) {
+            $intersection = $intersections->get($index);
 
-        $this->assertSame(
-            '2022-01-13T00:00:00.000+00:00',
-            $collection2[1]->end()->toIsoString()
-        );
-
-        $this->assertFalse(
-            $collection2[0]->includesStart()
-        );
-
-        $this->assertFalse(
-            $collection2[0]->includesEnd()
-        );
-
-        $this->assertFalse(
-            $collection2[1]->includesStart()
-        );
-
-        $this->assertFalse(
-            $collection2[1]->includesEnd()
-        );
+            $this->assertInstanceOf(Date::class, $intersection->start());
+            $this->assertInstanceOf(Date::class, $intersection->end());
+            $this->assertSame(Date::createFromArray($start)->toIsoString(), $intersection->start()->toIsoString());
+            $this->assertSame(Date::createFromArray($end)->toIsoString(), $intersection->end()->toIsoString());
+            $this->assertSame($boundaries, Period::getBoundaries($intersection->includesStart(), $intersection->includesEnd()));
+        }
     }
 }

@@ -3,48 +3,56 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\DateTime\Period;
 
+use Fyre\Utility\DateTime\Date;
 use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Period;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait StartsBeforeOrEqualsTestTrait
 {
-    public function testStartsBeforeOrEquals(): void
+    /**
+     * @return array<string, array{int[], 'none'|'start', bool}>
+     */
+    public static function startsBeforeOrEqualsProvider(): array
     {
-        $this->assertTrue(
-            new Period('2022-01-01', '2022-01-15')
-                ->startsBeforeOrEquals(new DateTime('2022-01-01'))
-        );
+        return [
+            'equal' => [[2022, 1, 1], 'none', true],
+            'after' => [[2022, 1, 2], 'none', true],
+            'before' => [[2021, 12, 31], 'none', false],
+            'excluded start' => [[2022, 1, 1], 'start', false],
+            'included start' => [[2022, 1, 2], 'start', true],
+        ];
     }
 
-    public function testStartsBeforeOrEqualsAfter(): void
+    /**
+     * @param int[] $date
+     * @param 'none'|'start' $excludeBoundaries
+     */
+    #[DataProvider('startsBeforeOrEqualsProvider')]
+    public function testStartsBeforeOrEquals(array $date, string $excludeBoundaries, bool $expected): void
     {
-        $this->assertTrue(
-            new Period('2022-01-01', '2022-01-15')
-                ->startsBeforeOrEquals(new DateTime('2022-01-02'))
+        $period = new Period(
+            DateTime::createFromArray([2022, 1, 1]),
+            DateTime::createFromArray([2022, 1, 15]),
+            excludeBoundaries: $excludeBoundaries
         );
+
+        $this->assertSame($expected, $period->startsBeforeOrEquals(DateTime::createFromArray($date)));
     }
 
-    public function testStartsBeforeOrEqualsAfterExcludeStart(): void
+    /**
+     * @param int[] $date
+     * @param 'none'|'start' $excludeBoundaries
+     */
+    #[DataProvider('startsBeforeOrEqualsProvider')]
+    public function testStartsBeforeOrEqualsDate(array $date, string $excludeBoundaries, bool $expected): void
     {
-        $this->assertFalse(
-            new Period('2022-01-01', '2022-01-15', excludeBoundaries: 'start')
-                ->startsBeforeOrEquals(new DateTime('2022-01-01'))
+        $period = new Period(
+            Date::createFromArray([2022, 1, 1]),
+            Date::createFromArray([2022, 1, 15]),
+            excludeBoundaries: $excludeBoundaries
         );
-    }
 
-    public function testStartsBeforeOrEqualsBefore(): void
-    {
-        $this->assertFalse(
-            new Period('2022-01-01', '2022-01-15')
-                ->startsBeforeOrEquals(new DateTime('2021-12-31'))
-        );
-    }
-
-    public function testStartsBeforeOrEqualsBeforeExcludeStart(): void
-    {
-        $this->assertFalse(
-            new Period('2022-01-01', '2022-01-15', excludeBoundaries: 'start')
-                ->startsBeforeOrEquals(new DateTime('2021-12-31'))
-        );
+        $this->assertSame($expected, $period->startsBeforeOrEquals(Date::createFromArray($date)));
     }
 }

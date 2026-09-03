@@ -5,9 +5,12 @@ namespace Tests\TestCase\Utility\DateTime\PeriodCollection;
 
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
+use Fyre\Utility\DateTime\Date;
+use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Period;
 use Fyre\Utility\DateTime\PeriodCollection;
 use InvalidArgumentException;
+use OutOfBoundsException;
 use PHPUnit\Framework\TestCase;
 
 use function class_uses;
@@ -24,8 +27,14 @@ final class PeriodCollectionTest extends TestCase
     {
         $collection1 = new PeriodCollection();
 
-        $period1 = new Period('2022-01-05', '2022-01-15');
-        $period2 = new Period('2022-01-01', '2022-01-10');
+        $period1 = new Period(
+            DateTime::createFromArray([2022, 1, 5]),
+            DateTime::createFromArray([2022, 1, 15])
+        );
+        $period2 = new Period(
+            DateTime::createFromArray([2022, 1, 1]),
+            DateTime::createFromArray([2022, 1, 10])
+        );
         $collection2 = $collection1->add($period1, $period2);
 
         $this->assertNotSame(
@@ -37,6 +46,26 @@ final class PeriodCollectionTest extends TestCase
             2,
             $collection2
         );
+    }
+
+    public function testAddDateTypeMismatch(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Date type `Fyre\\Utility\\DateTime\\Date` must match other date type `Fyre\\Utility\\DateTime\\DateTime`.');
+
+        $period1 = new Period(
+            Date::createFromArray([2022, 1, 1]),
+            Date::createFromArray([2022, 1, 10])
+        );
+        $period2 = new Period(
+            DateTime::createFromArray([2022, 1, 1]),
+            DateTime::createFromArray([2022, 1, 10])
+        );
+
+        $collection = new PeriodCollection($period1);
+
+        // @phpstan-ignore argument.type
+        $collection->add($period2);
     }
 
     public function testAddEmpty(): void
@@ -63,10 +92,53 @@ final class PeriodCollectionTest extends TestCase
         );
     }
 
+    public function testGet(): void
+    {
+        $period1 = new Period(
+            DateTime::createFromArray([2022, 1, 1]),
+            DateTime::createFromArray([2022, 1, 10])
+        );
+        $period2 = new Period(
+            DateTime::createFromArray([2022, 1, 5]),
+            DateTime::createFromArray([2022, 1, 15])
+        );
+        $collection = new PeriodCollection($period1, $period2);
+
+        $this->assertSame(
+            $period1,
+            $collection->get(0)
+        );
+
+        $this->assertSame(
+            $period2,
+            $collection->get(1)
+        );
+    }
+
+    public function testGetInvalidIndex(): void
+    {
+        $this->expectException(OutOfBoundsException::class);
+        $this->expectExceptionMessageIs('Period index `1` does not exist.');
+
+        $period = new Period(
+            DateTime::createFromArray([2022, 1, 1]),
+            DateTime::createFromArray([2022, 1, 10])
+        );
+        $collection = new PeriodCollection($period);
+
+        $collection->get(1);
+    }
+
     public function testIteration(): void
     {
-        $period1 = new Period('2022-01-01', '2022-01-10');
-        $period2 = new Period('2022-01-05', '2022-01-15');
+        $period1 = new Period(
+            DateTime::createFromArray([2022, 1, 1]),
+            DateTime::createFromArray([2022, 1, 10])
+        );
+        $period2 = new Period(
+            DateTime::createFromArray([2022, 1, 5]),
+            DateTime::createFromArray([2022, 1, 15])
+        );
         $collection = new PeriodCollection($period1, $period2);
 
         $dates = [];
@@ -96,72 +168,16 @@ final class PeriodCollectionTest extends TestCase
         );
     }
 
-    public function testOffsetExists(): void
-    {
-        $period = new Period('2022-01-01', '2022-01-10');
-        $collection = new PeriodCollection($period);
-
-        $this->assertTrue(isset($collection[0]));
-        $this->assertFalse(isset($collection[1]));
-    }
-
-    public function testOffsetGet(): void
-    {
-        $period1 = new Period('2022-01-01', '2022-01-10');
-        $period2 = new Period('2022-01-05', '2022-01-15');
-        $collection = new PeriodCollection($period1, $period2);
-
-        $this->assertSame(
-            $period1,
-            $collection[0]
-        );
-
-        $this->assertSame(
-            $period2,
-            $collection[1]
-        );
-    }
-
-    public function testOffsetSet(): void
-    {
-        $period1 = new Period('2022-01-01', '2022-01-10');
-        $period2 = new Period('2022-01-05', '2022-01-15');
-        $collection = new PeriodCollection($period1, $period2);
-
-        $period3 = new Period('2022-01-10', '2022-01-20');
-        $collection[1] = $period3;
-
-        $this->assertSame(
-            $period3,
-            $collection[1]
-        );
-    }
-
-    public function testOffsetSetInvalidValue(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageIs('Period value must be an instance of Period.');
-
-        $collection = new PeriodCollection();
-
-        // @phpstan-ignore argument.type
-        $collection->offsetSet(null, 'invalid');
-    }
-
-    public function testOffsetUnset(): void
-    {
-        $period = new Period('2022-01-01', '2022-01-10');
-        $collection = new PeriodCollection($period);
-
-        unset($collection[0]);
-
-        $this->assertFalse(isset($collection[0]));
-    }
-
     public function testSort(): void
     {
-        $period1 = new Period('2022-01-05', '2022-01-15');
-        $period2 = new Period('2022-01-01', '2022-01-10');
+        $period1 = new Period(
+            DateTime::createFromArray([2022, 1, 5]),
+            DateTime::createFromArray([2022, 1, 15])
+        );
+        $period2 = new Period(
+            DateTime::createFromArray([2022, 1, 1]),
+            DateTime::createFromArray([2022, 1, 10])
+        );
         $collection1 = new PeriodCollection($period1, $period2);
 
         $collection2 = $collection1->sort();
@@ -183,13 +199,32 @@ final class PeriodCollectionTest extends TestCase
 
         $this->assertSame(
             $period2,
-            $collection2[0]
+            $collection2->get(0)
         );
 
         $this->assertSame(
             $period1,
-            $collection2[1]
+            $collection2->get(1)
         );
+    }
+
+    public function testSortDate(): void
+    {
+        $period1 = new Period(
+            Date::createFromArray([2022, 1, 5]),
+            Date::createFromArray([2022, 1, 15])
+        );
+        $period2 = new Period(
+            Date::createFromArray([2022, 1, 1]),
+            Date::createFromArray([2022, 1, 10])
+        );
+
+        $collection = new PeriodCollection($period1, $period2)->sort();
+
+        $this->assertSame($period2, $collection->get(0));
+        $this->assertSame($period1, $collection->get(1));
+        $this->assertInstanceOf(Date::class, $collection->get(0)->start());
+        $this->assertInstanceOf(Date::class, $collection->get(1)->start());
     }
 
     public function testSortEmpty(): void
@@ -210,10 +245,22 @@ final class PeriodCollectionTest extends TestCase
 
     public function testUnique(): void
     {
-        $period1 = new Period('2022-01-05', '2022-01-15');
-        $period2 = new Period('2022-01-01', '2022-01-10');
-        $period3 = new Period('2022-01-01', '2022-01-10');
-        $period4 = new Period('2022-01-01', '2022-01-05');
+        $period1 = new Period(
+            DateTime::createFromArray([2022, 1, 5]),
+            DateTime::createFromArray([2022, 1, 15])
+        );
+        $period2 = new Period(
+            DateTime::createFromArray([2022, 1, 1]),
+            DateTime::createFromArray([2022, 1, 10])
+        );
+        $period3 = new Period(
+            DateTime::createFromArray([2022, 1, 1]),
+            DateTime::createFromArray([2022, 1, 10])
+        );
+        $period4 = new Period(
+            DateTime::createFromArray([2022, 1, 1]),
+            DateTime::createFromArray([2022, 1, 5])
+        );
         $collection1 = new PeriodCollection($period1, $period2, $period3, $period4);
 
         $collection2 = $collection1->unique();
@@ -235,18 +282,42 @@ final class PeriodCollectionTest extends TestCase
 
         $this->assertSame(
             $period1,
-            $collection2[0]
+            $collection2->get(0)
         );
 
         $this->assertSame(
             $period2,
-            $collection2[1]
+            $collection2->get(1)
         );
 
         $this->assertSame(
             $period4,
-            $collection2[2]
+            $collection2->get(2)
         );
+    }
+
+    public function testUniqueDate(): void
+    {
+        $period1 = new Period(
+            Date::createFromArray([2022, 1, 1]),
+            Date::createFromArray([2022, 1, 10])
+        );
+        $period2 = new Period(
+            Date::createFromArray([2022, 1, 1]),
+            Date::createFromArray([2022, 1, 10])
+        );
+        $period3 = new Period(
+            Date::createFromArray([2022, 1, 1]),
+            Date::createFromArray([2022, 1, 5])
+        );
+
+        $collection = new PeriodCollection($period1, $period2, $period3)->unique();
+
+        $this->assertCount(2, $collection);
+        $this->assertSame($period1, $collection->get(0));
+        $this->assertSame($period3, $collection->get(1));
+        $this->assertInstanceOf(Date::class, $collection->get(0)->start());
+        $this->assertInstanceOf(Date::class, $collection->get(1)->start());
     }
 
     public function testUniqueEmpty(): void

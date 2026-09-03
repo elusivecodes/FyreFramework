@@ -3,124 +3,116 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\DateTime\PeriodCollection;
 
+use Fyre\Utility\DateTime\Date;
+use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Period;
 use Fyre\Utility\DateTime\PeriodCollection;
+use PHPUnit\Framework\Attributes\DataProvider;
+
+use function count;
 
 trait GapsTestTrait
 {
-    public function testGaps(): void
+    /**
+     * @return array<string, array{array<int, array{int[], int[], 'end'|'none'|'start'}>, array<int, array{int[], int[], 'both'|'none'}>}>
+     */
+    public static function gapsProvider(): array
     {
-        $period1 = new Period('2022-01-01', '2022-01-05');
-        $period2 = new Period('2022-01-10', '2022-01-15');
-        $collection1 = new PeriodCollection($period1, $period2);
-
-        $collection2 = $collection1->gaps();
-
-        $this->assertInstanceOf(
-            PeriodCollection::class,
-            $collection2
-        );
-
-        $this->assertCount(
-            1,
-            $collection2
-        );
-
-        $this->assertSame(
-            '2022-01-05T00:00:00.000+00:00',
-            $collection2[0]->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-10T00:00:00.000+00:00',
-            $collection2[0]->end()->toIsoString()
-        );
-
-        $this->assertFalse(
-            $collection2[0]->includesStart()
-        );
-
-        $this->assertFalse(
-            $collection2[0]->includesEnd()
-        );
+        return [
+            'gap' => [
+                [
+                    [[2022, 1, 1], [2022, 1, 5], 'none'],
+                    [[2022, 1, 10], [2022, 1, 15], 'none'],
+                ],
+                [
+                    [[2022, 1, 5], [2022, 1, 10], 'both'],
+                ],
+            ],
+            'excluded boundaries' => [
+                [
+                    [[2022, 1, 1], [2022, 1, 5], 'end'],
+                    [[2022, 1, 10], [2022, 1, 15], 'start'],
+                ],
+                [
+                    [[2022, 1, 5], [2022, 1, 10], 'none'],
+                ],
+            ],
+            'multiple gaps' => [
+                [
+                    [[2022, 1, 1], [2022, 1, 5], 'none'],
+                    [[2022, 1, 10], [2022, 1, 15], 'none'],
+                    [[2022, 1, 20], [2022, 1, 25], 'none'],
+                ],
+                [
+                    [[2022, 1, 5], [2022, 1, 10], 'both'],
+                    [[2022, 1, 15], [2022, 1, 20], 'both'],
+                ],
+            ],
+            'empty' => [[], []],
+        ];
     }
 
-    public function testGapsEmpty(): void
+    /**
+     * @param array<int, array{int[], int[], 'end'|'none'|'start'}> $periodData
+     * @param array<int, array{int[], int[], 'both'|'none'}> $expected
+     */
+    #[DataProvider('gapsProvider')]
+    public function testGaps(array $periodData, array $expected): void
     {
-        $collection1 = new PeriodCollection();
+        $periods = [];
 
-        $collection2 = $collection1->gaps();
+        foreach ($periodData as [$start, $end, $boundaries]) {
+            $periods[] = new Period(
+                DateTime::createFromArray($start),
+                DateTime::createFromArray($end),
+                excludeBoundaries: $boundaries
+            );
+        }
 
-        $this->assertCount(
-            0,
-            $collection2
-        );
+        $gaps = new PeriodCollection(...$periods)->gaps();
+
+        $this->assertCount(count($expected), $gaps);
+
+        foreach ($expected as $index => [$start, $end, $boundaries]) {
+            $gap = $gaps->get($index);
+
+            $this->assertInstanceOf(DateTime::class, $gap->start());
+            $this->assertInstanceOf(DateTime::class, $gap->end());
+            $this->assertSame(DateTime::createFromArray($start)->toIsoString(), $gap->start()->toIsoString());
+            $this->assertSame(DateTime::createFromArray($end)->toIsoString(), $gap->end()->toIsoString());
+            $this->assertSame($boundaries, Period::getBoundaries($gap->includesStart(), $gap->includesEnd()));
+        }
     }
 
-    public function testGapsExclude(): void
+    /**
+     * @param array<int, array{int[], int[], 'end'|'none'|'start'}> $periodData
+     * @param array<int, array{int[], int[], 'both'|'none'}> $expected
+     */
+    #[DataProvider('gapsProvider')]
+    public function testGapsDate(array $periodData, array $expected): void
     {
-        $period1 = new Period('2022-01-01', '2022-01-05', excludeBoundaries: 'end');
-        $period2 = new Period('2022-01-10', '2022-01-15', excludeBoundaries: 'start');
-        $collection1 = new PeriodCollection($period1, $period2);
+        $periods = [];
 
-        $collection2 = $collection1->gaps();
+        foreach ($periodData as [$start, $end, $boundaries]) {
+            $periods[] = new Period(
+                Date::createFromArray($start),
+                Date::createFromArray($end),
+                excludeBoundaries: $boundaries
+            );
+        }
 
-        $this->assertCount(
-            1,
-            $collection2
-        );
+        $gaps = new PeriodCollection(...$periods)->gaps();
 
-        $this->assertSame(
-            '2022-01-05T00:00:00.000+00:00',
-            $collection2[0]->start()->toIsoString()
-        );
+        $this->assertCount(count($expected), $gaps);
 
-        $this->assertSame(
-            '2022-01-10T00:00:00.000+00:00',
-            $collection2[0]->end()->toIsoString()
-        );
+        foreach ($expected as $index => [$start, $end, $boundaries]) {
+            $gap = $gaps->get($index);
 
-        $this->assertTrue(
-            $collection2[0]->includesStart()
-        );
-
-        $this->assertTrue(
-            $collection2[0]->includesEnd()
-        );
-    }
-
-    public function testGapsMultiple(): void
-    {
-        $period1 = new Period('2022-01-01', '2022-01-05');
-        $period2 = new Period('2022-01-10', '2022-01-15');
-        $period3 = new Period('2022-01-20', '2022-01-25');
-        $collection1 = new PeriodCollection($period1, $period2, $period3);
-
-        $collection2 = $collection1->gaps();
-
-        $this->assertCount(
-            2,
-            $collection2
-        );
-
-        $this->assertSame(
-            '2022-01-05T00:00:00.000+00:00',
-            $collection2[0]->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-10T00:00:00.000+00:00',
-            $collection2[0]->end()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $collection2[1]->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-20T00:00:00.000+00:00',
-            $collection2[1]->end()->toIsoString()
-        );
+            $this->assertInstanceOf(Date::class, $gap->start());
+            $this->assertInstanceOf(Date::class, $gap->end());
+            $this->assertSame(Date::createFromArray($start)->toIsoString(), $gap->start()->toIsoString());
+            $this->assertSame(Date::createFromArray($end)->toIsoString(), $gap->end()->toIsoString());
+            $this->assertSame($boundaries, Period::getBoundaries($gap->includesStart(), $gap->includesEnd()));
+        }
     }
 }

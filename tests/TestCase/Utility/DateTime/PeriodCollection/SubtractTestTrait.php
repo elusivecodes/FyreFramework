@@ -3,87 +3,127 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\DateTime\PeriodCollection;
 
+use Fyre\Utility\DateTime\Date;
+use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Period;
 use Fyre\Utility\DateTime\PeriodCollection;
+use PHPUnit\Framework\Attributes\DataProvider;
+
+use function count;
 
 trait SubtractTestTrait
 {
-    public function testSubtract(): void
+    /**
+     * @return array<string, array{array<int, array{int[], int[]}>, array<int, array{int[], int[]}>, array<int, array{int[], int[], 'end'|'none'|'start'}>}>
+     */
+    public static function collectionSubtractProvider(): array
     {
-        $period1 = new Period('2022-01-01', '2022-01-05');
-        $period2 = new Period('2022-01-10', '2022-01-15');
-        $collection1 = new PeriodCollection($period1, $period2);
-
-        $period3 = new Period('2022-01-02', '2022-01-03');
-        $period4 = new Period('2022-01-12', '2022-01-13');
-        $collection2 = new PeriodCollection($period3, $period4);
-
-        $collection3 = $collection1->subtract($collection2);
-
-        $this->assertInstanceOf(
-            PeriodCollection::class,
-            $collection3
-        );
-
-        $this->assertCount(
-            4,
-            $collection3
-        );
-
-        $this->assertSame(
-            '2022-01-01T00:00:00.000+00:00',
-            $collection3[0]->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-02T00:00:00.000+00:00',
-            $collection3[0]->end()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-03T00:00:00.000+00:00',
-            $collection3[1]->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-05T00:00:00.000+00:00',
-            $collection3[1]->end()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-10T00:00:00.000+00:00',
-            $collection3[2]->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-12T00:00:00.000+00:00',
-            $collection3[2]->end()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-13T00:00:00.000+00:00',
-            $collection3[3]->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $collection3[3]->end()->toIsoString()
-        );
+        return [
+            'subtract' => [
+                [
+                    [[2022, 1, 1], [2022, 1, 5]],
+                    [[2022, 1, 10], [2022, 1, 15]],
+                ],
+                [
+                    [[2022, 1, 2], [2022, 1, 3]],
+                    [[2022, 1, 12], [2022, 1, 13]],
+                ],
+                [
+                    [[2022, 1, 1], [2022, 1, 2], 'end'],
+                    [[2022, 1, 3], [2022, 1, 5], 'start'],
+                    [[2022, 1, 10], [2022, 1, 12], 'end'],
+                    [[2022, 1, 13], [2022, 1, 15], 'start'],
+                ],
+            ],
+            'empty subtraction' => [
+                [
+                    [[2022, 1, 1], [2022, 1, 5]],
+                    [[2022, 1, 10], [2022, 1, 15]],
+                ],
+                [],
+                [
+                    [[2022, 1, 1], [2022, 1, 5], 'none'],
+                    [[2022, 1, 10], [2022, 1, 15], 'none'],
+                ],
+            ],
+        ];
     }
 
-    public function testSubtractEmpty(): void
+    /**
+     * @param array<int, array{int[], int[]}> $periodData
+     * @param array<int, array{int[], int[]}> $otherData
+     * @param array<int, array{int[], int[], 'end'|'none'|'start'}> $expected
+     */
+    #[DataProvider('collectionSubtractProvider')]
+    public function testSubtract(array $periodData, array $otherData, array $expected): void
     {
-        $period1 = new Period('2022-01-01', '2022-01-05');
-        $period2 = new Period('2022-01-10', '2022-01-15');
-        $collection1 = new PeriodCollection($period1, $period2);
+        $periods = [];
+        foreach ($periodData as [$start, $end]) {
+            $periods[] = new Period(
+                DateTime::createFromArray($start),
+                DateTime::createFromArray($end)
+            );
+        }
 
-        $collection2 = new PeriodCollection();
+        $others = [];
+        foreach ($otherData as [$start, $end]) {
+            $others[] = new Period(
+                DateTime::createFromArray($start),
+                DateTime::createFromArray($end)
+            );
+        }
 
-        $collection3 = $collection1->subtract($collection2);
+        $subtractions = new PeriodCollection(...$periods)->subtract(new PeriodCollection(...$others));
 
-        $this->assertCount(
-            2,
-            $collection3
-        );
+        $this->assertCount(count($expected), $subtractions);
+
+        foreach ($expected as $index => [$start, $end, $boundaries]) {
+            $subtraction = $subtractions->get($index);
+
+            $this->assertInstanceOf(DateTime::class, $subtraction->start());
+            $this->assertInstanceOf(DateTime::class, $subtraction->end());
+            $this->assertSame(DateTime::createFromArray($start)->toIsoString(), $subtraction->start()->toIsoString());
+            $this->assertSame(DateTime::createFromArray($end)->toIsoString(), $subtraction->end()->toIsoString());
+            $this->assertSame($boundaries, Period::getBoundaries($subtraction->includesStart(), $subtraction->includesEnd()));
+        }
+    }
+
+    /**
+     * @param array<int, array{int[], int[]}> $periodData
+     * @param array<int, array{int[], int[]}> $otherData
+     * @param array<int, array{int[], int[], 'end'|'none'|'start'}> $expected
+     */
+    #[DataProvider('collectionSubtractProvider')]
+    public function testSubtractDate(array $periodData, array $otherData, array $expected): void
+    {
+        $periods = [];
+        foreach ($periodData as [$start, $end]) {
+            $periods[] = new Period(
+                Date::createFromArray($start),
+                Date::createFromArray($end)
+            );
+        }
+
+        $others = [];
+        foreach ($otherData as [$start, $end]) {
+            $others[] = new Period(
+                Date::createFromArray($start),
+                Date::createFromArray($end)
+            );
+        }
+
+        $subtractions = new PeriodCollection(...$periods)->subtract(new PeriodCollection(...$others));
+
+        $this->assertCount(count($expected), $subtractions);
+
+        foreach ($expected as $index => [$start, $end, $boundaries]) {
+            $subtraction = $subtractions->get($index);
+
+            $this->assertInstanceOf(Date::class, $subtraction->start());
+            $this->assertInstanceOf(Date::class, $subtraction->end());
+            $this->assertSame(Date::createFromArray($start)->toIsoString(), $subtraction->start()->toIsoString());
+            $this->assertSame(Date::createFromArray($end)->toIsoString(), $subtraction->end()->toIsoString());
+            $this->assertSame($boundaries, Period::getBoundaries($subtraction->includesStart(), $subtraction->includesEnd()));
+        }
     }
 }

@@ -3,126 +3,80 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\DateTime\Period;
 
+use Fyre\Utility\DateTime\Date;
+use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Period;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait RenewTestTrait
 {
-    public function testRenew(): void
+    /**
+     * @return array<string, array{'both'|'end'|'none'|'start'}>
+     */
+    public static function renewProvider(): array
     {
-        $period1 = new Period('2022-01-01', '2022-01-15');
-        $period2 = $period1->renew();
-
-        $this->assertInstanceOf(
-            Period::class,
-            $period2
-        );
-
-        $this->assertNotSame(
-            $period1,
-            $period2
-        );
-
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $period2->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-29T00:00:00.000+00:00',
-            $period2->end()->toIsoString()
-        );
+        return [
+            'include both' => ['none'],
+            'exclude both' => ['both'],
+            'exclude end' => ['end'],
+            'exclude start' => ['start'],
+        ];
     }
 
-    public function testRenewExcludeBoth(): void
+    /**
+     * @param 'both'|'end'|'none'|'start' $excludeBoundaries
+     */
+    #[DataProvider('renewProvider')]
+    public function testRenew(string $excludeBoundaries): void
     {
-        $period1 = new Period('2022-01-01', '2022-01-15', excludeBoundaries: 'both');
-        $period2 = $period1->renew();
-
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $period2->start()->toIsoString()
+        $period = new Period(
+            DateTime::createFromArray([2022, 1, 1]),
+            DateTime::createFromArray([2022, 1, 15]),
+            excludeBoundaries: $excludeBoundaries
         );
 
-        $this->assertSame(
-            '2022-01-29T00:00:00.000+00:00',
-            $period2->end()->toIsoString()
-        );
+        $renewed = $period->renew();
 
-        $this->assertFalse(
-            $period2->includesStart()
-        );
-
-        $this->assertFalse(
-            $period2->includesEnd()
-        );
+        $this->assertNotSame($period, $renewed);
+        $this->assertInstanceOf(DateTime::class, $renewed->start());
+        $this->assertInstanceOf(DateTime::class, $renewed->end());
+        $this->assertSame('2022-01-15T00:00:00.000+00:00', $renewed->start()->toIsoString());
+        $this->assertSame('2022-01-29T00:00:00.000+00:00', $renewed->end()->toIsoString());
+        $this->assertSame($period->includesStart(), $renewed->includesStart());
+        $this->assertSame($period->includesEnd(), $renewed->includesEnd());
     }
 
-    public function testRenewExcludeEnd(): void
+    /**
+     * @param 'both'|'end'|'none'|'start' $excludeBoundaries
+     */
+    #[DataProvider('renewProvider')]
+    public function testRenewDate(string $excludeBoundaries): void
     {
-        $period1 = new Period('2022-01-01', '2022-01-15', excludeBoundaries: 'end');
-        $period2 = $period1->renew();
-
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $period2->start()->toIsoString()
+        $period = new Period(
+            Date::createFromArray([2022, 1, 1]),
+            Date::createFromArray([2022, 1, 15]),
+            excludeBoundaries: $excludeBoundaries
         );
 
-        $this->assertSame(
-            '2022-01-29T00:00:00.000+00:00',
-            $period2->end()->toIsoString()
-        );
+        $renewed = $period->renew();
 
-        $this->assertTrue(
-            $period2->includesStart()
-        );
-
-        $this->assertFalse(
-            $period2->includesEnd()
-        );
-    }
-
-    public function testRenewExcludeStart(): void
-    {
-        $period1 = new Period('2022-01-01', '2022-01-15', excludeBoundaries: 'start');
-        $period2 = $period1->renew();
-
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $period2->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-29T00:00:00.000+00:00',
-            $period2->end()->toIsoString()
-        );
-
-        $this->assertFalse(
-            $period2->includesStart()
-        );
-
-        $this->assertTrue(
-            $period2->includesEnd()
-        );
+        $this->assertNotSame($period, $renewed);
+        $this->assertInstanceOf(Date::class, $renewed->start());
+        $this->assertInstanceOf(Date::class, $renewed->end());
+        $this->assertSame('2022-01-15', $renewed->start()->toIsoString());
+        $this->assertSame('2022-01-29', $renewed->end()->toIsoString());
+        $this->assertSame($period->includesStart(), $renewed->includesStart());
+        $this->assertSame($period->includesEnd(), $renewed->includesEnd());
     }
 
     public function testRenewGranularity(): void
     {
-        $period1 = new Period('2022-01-01', '2022-01-15', 'hour');
-        $period2 = $period1->renew();
-
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $period2->start()->toIsoString()
+        $period = new Period(
+            DateTime::createFromArray([2022, 1, 1]),
+            DateTime::createFromArray([2022, 1, 15]),
+            'hour'
         );
 
-        $this->assertSame(
-            '2022-01-29T00:00:00.000+00:00',
-            $period2->end()->toIsoString()
-        );
-
-        $this->assertSame(
-            'hour',
-            $period1->renew()->granularity()
-        );
+        $this->assertSame('hour', $period->renew()->granularity());
     }
 }

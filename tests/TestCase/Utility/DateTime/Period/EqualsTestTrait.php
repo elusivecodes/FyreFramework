@@ -3,59 +3,152 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\DateTime\Period;
 
+use Fyre\Utility\DateTime\Date;
+use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Period;
 use LogicException;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait EqualsTestTrait
 {
-    public function testEquals(): void
+    /**
+     * @return array<string, array{int[], int[], 'end'|'none'|'start', int[], int[], 'end'|'none'|'start', bool}>
+     */
+    public static function equalsProvider(): array
     {
-        $period1 = new Period('2022-01-01', '2022-01-15');
-        $period2 = new Period('2022-01-01', '2022-01-15');
-
-        $this->assertTrue(
-            $period1->equals($period2)
-        );
+        return [
+            'equal' => [
+                [2022, 1, 1],
+                [2022, 1, 15],
+                'none',
+                [2022, 1, 1],
+                [2022, 1, 15],
+                'none',
+                true,
+            ],
+            'end after' => [
+                [2022, 1, 1],
+                [2022, 1, 15],
+                'none',
+                [2022, 1, 1],
+                [2022, 1, 16],
+                'none',
+                false,
+            ],
+            'end after excluded' => [
+                [2022, 1, 1],
+                [2022, 1, 15],
+                'none',
+                [2022, 1, 1],
+                [2022, 1, 16],
+                'end',
+                true,
+            ],
+            'end before' => [
+                [2022, 1, 1],
+                [2022, 1, 15],
+                'none',
+                [2022, 1, 1],
+                [2022, 1, 14],
+                'none',
+                false,
+            ],
+            'end before excluded' => [
+                [2022, 1, 1],
+                [2022, 1, 15],
+                'end',
+                [2022, 1, 1],
+                [2022, 1, 14],
+                'none',
+                true,
+            ],
+            'start after' => [
+                [2022, 1, 1],
+                [2022, 1, 15],
+                'none',
+                [2022, 1, 2],
+                [2022, 1, 15],
+                'none',
+                false,
+            ],
+            'start after excluded' => [
+                [2022, 1, 1],
+                [2022, 1, 15],
+                'start',
+                [2022, 1, 2],
+                [2022, 1, 15],
+                'none',
+                true,
+            ],
+            'start before' => [
+                [2022, 1, 2],
+                [2022, 1, 15],
+                'none',
+                [2022, 1, 1],
+                [2022, 1, 15],
+                'none',
+                false,
+            ],
+            'start before excluded' => [
+                [2022, 1, 2],
+                [2022, 1, 15],
+                'none',
+                [2022, 1, 1],
+                [2022, 1, 15],
+                'start',
+                true,
+            ],
+        ];
     }
 
-    public function testEqualsEndAfter(): void
+    /**
+     * @param int[] $start1
+     * @param int[] $end1
+     * @param 'end'|'none'|'start' $excludeBoundaries1
+     * @param int[] $start2
+     * @param int[] $end2
+     * @param 'end'|'none'|'start' $excludeBoundaries2
+     */
+    #[DataProvider('equalsProvider')]
+    public function testEquals(array $start1, array $end1, string $excludeBoundaries1, array $start2, array $end2, string $excludeBoundaries2, bool $expected): void
     {
-        $period1 = new Period('2022-01-01', '2022-01-15');
-        $period2 = new Period('2022-01-01', '2022-01-16');
-
-        $this->assertFalse(
-            $period1->equals($period2)
+        $period1 = new Period(
+            DateTime::createFromArray($start1),
+            DateTime::createFromArray($end1),
+            excludeBoundaries: $excludeBoundaries1
         );
+        $period2 = new Period(
+            DateTime::createFromArray($start2),
+            DateTime::createFromArray($end2),
+            excludeBoundaries: $excludeBoundaries2
+        );
+
+        $this->assertSame($expected, $period1->equals($period2));
     }
 
-    public function testEqualsEndAfterExcludEnd(): void
+    /**
+     * @param int[] $start1
+     * @param int[] $end1
+     * @param 'end'|'none'|'start' $excludeBoundaries1
+     * @param int[] $start2
+     * @param int[] $end2
+     * @param 'end'|'none'|'start' $excludeBoundaries2
+     */
+    #[DataProvider('equalsProvider')]
+    public function testEqualsDate(array $start1, array $end1, string $excludeBoundaries1, array $start2, array $end2, string $excludeBoundaries2, bool $expected): void
     {
-        $period1 = new Period('2022-01-01', '2022-01-15');
-        $period2 = new Period('2022-01-01', '2022-01-16', excludeBoundaries: 'end');
-
-        $this->assertTrue(
-            $period1->equals($period2)
+        $period1 = new Period(
+            Date::createFromArray($start1),
+            Date::createFromArray($end1),
+            excludeBoundaries: $excludeBoundaries1
         );
-    }
-
-    public function testEqualsEndBefore(): void
-    {
-        $period1 = new Period('2022-01-01', '2022-01-15');
-        $period2 = new Period('2022-01-01', '2022-01-14');
-
-        $this->assertFalse(
-            $period1->equals($period2)
+        $period2 = new Period(
+            Date::createFromArray($start2),
+            Date::createFromArray($end2),
+            excludeBoundaries: $excludeBoundaries2
         );
-    }
 
-    public function testEqualsEndBeforeExcludeEnd(): void
-    {
-        $period1 = new Period('2022-01-01', '2022-01-15', excludeBoundaries: 'end');
-        $period2 = new Period('2022-01-01', '2022-01-14');
-
-        $this->assertTrue(
-            $period1->equals($period2)
-        );
+        $this->assertSame($expected, $period1->equals($period2));
     }
 
     public function testEqualsInvalidGranularity(): void
@@ -63,49 +156,16 @@ trait EqualsTestTrait
         $this->expectException(LogicException::class);
         $this->expectExceptionMessageIs('Period granularity `day` must match other period granularity `hour`.');
 
-        $period1 = new Period('2022-01-01', '2022-01-10');
-        $period2 = new Period('2022-01-15', '2022-01-20', 'hour');
+        $period1 = new Period(
+            DateTime::createFromArray([2022, 1, 1]),
+            DateTime::createFromArray([2022, 1, 10])
+        );
+        $period2 = new Period(
+            DateTime::createFromArray([2022, 1, 15]),
+            DateTime::createFromArray([2022, 1, 20]),
+            'hour'
+        );
 
         $period1->equals($period2);
-    }
-
-    public function testEqualsStartAfter(): void
-    {
-        $period1 = new Period('2022-01-01', '2022-01-15');
-        $period2 = new Period('2022-01-02', '2022-01-15');
-
-        $this->assertFalse(
-            $period1->equals($period2)
-        );
-    }
-
-    public function testEqualsStartAfterExcludeStart(): void
-    {
-        $period1 = new Period('2022-01-01', '2022-01-15', excludeBoundaries: 'start');
-        $period2 = new Period('2022-01-02', '2022-01-15');
-
-        $this->assertTrue(
-            $period1->equals($period2)
-        );
-    }
-
-    public function testEqualsStartBefore(): void
-    {
-        $period1 = new Period('2022-01-02', '2022-01-15');
-        $period2 = new Period('2022-01-01', '2022-01-15');
-
-        $this->assertFalse(
-            $period1->equals($period2)
-        );
-    }
-
-    public function testEqualsStartBeforeExcludeStart(): void
-    {
-        $period1 = new Period('2022-01-02', '2022-01-15');
-        $period2 = new Period('2022-01-01', '2022-01-15', excludeBoundaries: 'start');
-
-        $this->assertTrue(
-            $period1->equals($period2)
-        );
     }
 }

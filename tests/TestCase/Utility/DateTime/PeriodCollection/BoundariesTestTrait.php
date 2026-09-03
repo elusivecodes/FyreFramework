@@ -3,141 +3,127 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\DateTime\PeriodCollection;
 
+use Fyre\Utility\DateTime\Date;
+use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Period;
 use Fyre\Utility\DateTime\PeriodCollection;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait BoundariesTestTrait
 {
-    public function testBoundaries(): void
+    /**
+     * @return array<string, array{int[], int[], 'end'|'none'|'start', int[], int[], 'end'|'none'|'start', 'both'|'none'}>
+     */
+    public static function boundariesProvider(): array
     {
-        $period1 = new Period('2022-01-01', '2022-01-10');
-        $period2 = new Period('2022-01-05', '2022-01-15');
-        $collection = new PeriodCollection($period1, $period2);
-
-        $period3 = $collection->boundaries();
-
-        $this->assertInstanceOf(
-            Period::class,
-            $period3
-        );
+        return [
+            'ascending' => [
+                [2022, 1, 1],
+                [2022, 1, 10],
+                'none',
+                [2022, 1, 5],
+                [2022, 1, 15],
+                'none',
+                'none',
+            ],
+            'descending' => [
+                [2022, 1, 5],
+                [2022, 1, 15],
+                'none',
+                [2022, 1, 1],
+                [2022, 1, 10],
+                'none',
+                'none',
+            ],
+            'ascending excluded' => [
+                [2022, 1, 1],
+                [2022, 1, 10],
+                'start',
+                [2022, 1, 5],
+                [2022, 1, 15],
+                'end',
+                'both',
+            ],
+            'descending excluded' => [
+                [2022, 1, 5],
+                [2022, 1, 15],
+                'end',
+                [2022, 1, 1],
+                [2022, 1, 10],
+                'start',
+                'both',
+            ],
+        ];
     }
 
-    public function testBoundariesAfter(): void
+    /**
+     * @param int[] $start1
+     * @param int[] $end1
+     * @param 'end'|'none'|'start' $excludeBoundaries1
+     * @param int[] $start2
+     * @param int[] $end2
+     * @param 'end'|'none'|'start' $excludeBoundaries2
+     * @param 'both'|'none' $expectedBoundaries
+     */
+    #[DataProvider('boundariesProvider')]
+    public function testBoundaries(array $start1, array $end1, string $excludeBoundaries1, array $start2, array $end2, string $excludeBoundaries2, string $expectedBoundaries): void
     {
-        $period1 = new Period('2022-01-01', '2022-01-10');
-        $period2 = new Period('2022-01-05', '2022-01-15');
-        $collection = new PeriodCollection($period1, $period2);
-
-        $period3 = $collection->boundaries();
-
-        $this->assertInstanceOf(
-            Period::class,
-            $period3
+        $period1 = new Period(
+            DateTime::createFromArray($start1),
+            DateTime::createFromArray($end1),
+            excludeBoundaries: $excludeBoundaries1
+        );
+        $period2 = new Period(
+            DateTime::createFromArray($start2),
+            DateTime::createFromArray($end2),
+            excludeBoundaries: $excludeBoundaries2
         );
 
-        $this->assertSame(
-            '2022-01-01T00:00:00.000+00:00',
-            $period3->start()->toIsoString()
-        );
+        $boundaries = new PeriodCollection($period1, $period2)->boundaries();
 
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $period3->end()->toIsoString()
-        );
+        $this->assertInstanceOf(Period::class, $boundaries);
+        $this->assertInstanceOf(DateTime::class, $boundaries->start());
+        $this->assertInstanceOf(DateTime::class, $boundaries->end());
+        $this->assertSame('2022-01-01T00:00:00.000+00:00', $boundaries->start()->toIsoString());
+        $this->assertSame('2022-01-15T00:00:00.000+00:00', $boundaries->end()->toIsoString());
+        $this->assertSame($expectedBoundaries, Period::getBoundaries($boundaries->includesStart(), $boundaries->includesEnd()));
     }
 
-    public function testBoundariesAfterExclude(): void
+    /**
+     * @param int[] $start1
+     * @param int[] $end1
+     * @param 'end'|'none'|'start' $excludeBoundaries1
+     * @param int[] $start2
+     * @param int[] $end2
+     * @param 'end'|'none'|'start' $excludeBoundaries2
+     * @param 'both'|'none' $expectedBoundaries
+     */
+    #[DataProvider('boundariesProvider')]
+    public function testBoundariesDate(array $start1, array $end1, string $excludeBoundaries1, array $start2, array $end2, string $excludeBoundaries2, string $expectedBoundaries): void
     {
-        $period1 = new Period('2022-01-01', '2022-01-10', excludeBoundaries: 'start');
-        $period2 = new Period('2022-01-05', '2022-01-15', excludeBoundaries: 'end');
-        $collection = new PeriodCollection($period1, $period2);
-
-        $period3 = $collection->boundaries();
-
-        $this->assertInstanceOf(
-            Period::class,
-            $period3
+        $period1 = new Period(
+            Date::createFromArray($start1),
+            Date::createFromArray($end1),
+            excludeBoundaries: $excludeBoundaries1
+        );
+        $period2 = new Period(
+            Date::createFromArray($start2),
+            Date::createFromArray($end2),
+            excludeBoundaries: $excludeBoundaries2
         );
 
-        $this->assertSame(
-            '2022-01-01T00:00:00.000+00:00',
-            $period3->start()->toIsoString()
-        );
+        $boundaries = new PeriodCollection($period1, $period2)->boundaries();
 
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $period3->end()->toIsoString()
-        );
-
-        $this->assertFalse(
-            $period3->includesStart()
-        );
-
-        $this->assertFalse(
-            $period3->includesEnd()
-        );
-    }
-
-    public function testBoundariesBefore(): void
-    {
-        $period1 = new Period('2022-01-05', '2022-01-15');
-        $period2 = new Period('2022-01-01', '2022-01-10');
-        $collection = new PeriodCollection($period1, $period2);
-
-        $period3 = $collection->boundaries();
-
-        $this->assertInstanceOf(
-            Period::class,
-            $period3
-        );
-
-        $this->assertSame(
-            '2022-01-01T00:00:00.000+00:00',
-            $period3->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $period3->end()->toIsoString()
-        );
-    }
-
-    public function testBoundariesBeforeExclude(): void
-    {
-        $period1 = new Period('2022-01-05', '2022-01-15', excludeBoundaries: 'end');
-        $period2 = new Period('2022-01-01', '2022-01-10', excludeBoundaries: 'start');
-        $collection = new PeriodCollection($period1, $period2);
-
-        $period3 = $collection->boundaries();
-
-        $this->assertInstanceOf(
-            Period::class,
-            $period3
-        );
-
-        $this->assertSame(
-            '2022-01-01T00:00:00.000+00:00',
-            $period3->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $period3->end()->toIsoString()
-        );
-
-        $this->assertFalse(
-            $period3->includesStart()
-        );
-
-        $this->assertFalse(
-            $period3->includesEnd()
-        );
+        $this->assertInstanceOf(Period::class, $boundaries);
+        $this->assertInstanceOf(Date::class, $boundaries->start());
+        $this->assertInstanceOf(Date::class, $boundaries->end());
+        $this->assertSame('2022-01-01', $boundaries->start()->toIsoString());
+        $this->assertSame('2022-01-15', $boundaries->end()->toIsoString());
+        $this->assertSame($expectedBoundaries, Period::getBoundaries($boundaries->includesStart(), $boundaries->includesEnd()));
     }
 
     public function testBoundariesEmpty(): void
     {
-        $this->assertNull(
-            new PeriodCollection()->boundaries()
-        );
+        $this->assertNull(new PeriodCollection()->boundaries());
     }
 }

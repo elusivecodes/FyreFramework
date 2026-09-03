@@ -3,48 +3,116 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\DateTime\Period;
 
+use Fyre\Utility\DateTime\Date;
+use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Period;
-use Fyre\Utility\DateTime\PeriodCollection;
 use LogicException;
+use PHPUnit\Framework\Attributes\DataProvider;
+
+use function count;
 
 trait OverlapAnyTestTrait
 {
-    public function testOverlapAny(): void
+    /**
+     * @return array<string, array{int[], int[], array<int, array{int[], int[]}>, array<int, array{int[], int[]}>}>
+     */
+    public static function overlapAnyProvider(): array
     {
-        $period1 = new Period('2022-01-01', '2022-01-20');
-        $period2 = new Period('2022-01-10', '2022-01-20');
-        $period3 = new Period('2022-01-05', '2022-01-15');
-        $collection = $period1->overlapAny($period2, $period3);
+        return [
+            'overlaps' => [
+                [2022, 1, 1],
+                [2022, 1, 20],
+                [
+                    [[2022, 1, 10], [2022, 1, 20]],
+                    [[2022, 1, 5], [2022, 1, 15]],
+                ],
+                [
+                    [[2022, 1, 10], [2022, 1, 20]],
+                    [[2022, 1, 5], [2022, 1, 15]],
+                ],
+            ],
+            'no overlaps' => [
+                [2022, 1, 1],
+                [2022, 1, 5],
+                [
+                    [[2022, 1, 10], [2022, 1, 15]],
+                    [[2022, 1, 15], [2022, 1, 20]],
+                ],
+                [],
+            ],
+        ];
+    }
 
-        $this->assertInstanceOf(
-            PeriodCollection::class,
-            $collection
+    /**
+     * @param int[] $start
+     * @param int[] $end
+     * @param array<int, array{int[], int[]}> $otherData
+     * @param array<int, array{int[], int[]}> $expected
+     */
+    #[DataProvider('overlapAnyProvider')]
+    public function testOverlapAny(array $start, array $end, array $otherData, array $expected): void
+    {
+        $period = new Period(
+            DateTime::createFromArray($start),
+            DateTime::createFromArray($end)
         );
+        $others = [];
 
-        $this->assertCount(
-            2,
-            $collection
-        );
+        foreach ($otherData as [$otherStart, $otherEnd]) {
+            $others[] = new Period(
+                DateTime::createFromArray($otherStart),
+                DateTime::createFromArray($otherEnd)
+            );
+        }
 
-        $this->assertSame(
-            '2022-01-10T00:00:00.000+00:00',
-            $collection[0]->start()->toIsoString()
-        );
+        $overlaps = $period->overlapAny(...$others);
 
-        $this->assertSame(
-            '2022-01-20T00:00:00.000+00:00',
-            $collection[0]->end()->toIsoString()
-        );
+        $this->assertCount(count($expected), $overlaps);
 
-        $this->assertSame(
-            '2022-01-05T00:00:00.000+00:00',
-            $collection[1]->start()->toIsoString()
-        );
+        foreach ($expected as $index => [$expectedStart, $expectedEnd]) {
+            $overlap = $overlaps->get($index);
 
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $collection[1]->end()->toIsoString()
+            $this->assertInstanceOf(DateTime::class, $overlap->start());
+            $this->assertInstanceOf(DateTime::class, $overlap->end());
+            $this->assertSame(DateTime::createFromArray($expectedStart)->toIsoString(), $overlap->start()->toIsoString());
+            $this->assertSame(DateTime::createFromArray($expectedEnd)->toIsoString(), $overlap->end()->toIsoString());
+        }
+    }
+
+    /**
+     * @param int[] $start
+     * @param int[] $end
+     * @param array<int, array{int[], int[]}> $otherData
+     * @param array<int, array{int[], int[]}> $expected
+     */
+    #[DataProvider('overlapAnyProvider')]
+    public function testOverlapAnyDate(array $start, array $end, array $otherData, array $expected): void
+    {
+        $period = new Period(
+            Date::createFromArray($start),
+            Date::createFromArray($end)
         );
+        $others = [];
+
+        foreach ($otherData as [$otherStart, $otherEnd]) {
+            $others[] = new Period(
+                Date::createFromArray($otherStart),
+                Date::createFromArray($otherEnd)
+            );
+        }
+
+        $overlaps = $period->overlapAny(...$others);
+
+        $this->assertCount(count($expected), $overlaps);
+
+        foreach ($expected as $index => [$expectedStart, $expectedEnd]) {
+            $overlap = $overlaps->get($index);
+
+            $this->assertInstanceOf(Date::class, $overlap->start());
+            $this->assertInstanceOf(Date::class, $overlap->end());
+            $this->assertSame(Date::createFromArray($expectedStart)->toIsoString(), $overlap->start()->toIsoString());
+            $this->assertSame(Date::createFromArray($expectedEnd)->toIsoString(), $overlap->end()->toIsoString());
+        }
     }
 
     public function testOverlapAnyInvalidGranularity(): void
@@ -52,23 +120,20 @@ trait OverlapAnyTestTrait
         $this->expectException(LogicException::class);
         $this->expectExceptionMessageIs('Period granularity `day` must match other period granularity `hour`.');
 
-        $period1 = new Period('2022-01-01', '2022-01-30');
-        $period2 = new Period('2022-01-05', '2022-01-10');
-        $period3 = new Period('2022-01-15', '2022-01-20', 'hour');
+        $period1 = new Period(
+            DateTime::createFromArray([2022, 1, 1]),
+            DateTime::createFromArray([2022, 1, 30])
+        );
+        $period2 = new Period(
+            DateTime::createFromArray([2022, 1, 5]),
+            DateTime::createFromArray([2022, 1, 10])
+        );
+        $period3 = new Period(
+            DateTime::createFromArray([2022, 1, 15]),
+            DateTime::createFromArray([2022, 1, 20]),
+            'hour'
+        );
 
         $period1->overlapAny($period2, $period3);
-    }
-
-    public function testOverlapAnyNoOverlaps(): void
-    {
-        $period1 = new Period('2022-01-01', '2022-01-05');
-        $period2 = new Period('2022-01-10', '2022-01-15');
-        $period3 = new Period('2022-01-15', '2022-01-20');
-        $collection = $period1->overlapAny($period2, $period3);
-
-        $this->assertCount(
-            0,
-            $collection
-        );
     }
 }

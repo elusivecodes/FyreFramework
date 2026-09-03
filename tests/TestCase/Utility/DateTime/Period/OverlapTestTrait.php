@@ -3,141 +3,171 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\DateTime\Period;
 
+use Fyre\Utility\DateTime\Date;
+use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Period;
 use LogicException;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait OverlapTestTrait
 {
-    public function testOverlap(): void
+    /**
+     * @return array<string, array{int[], int[], 'end'|'none'|'start', int[], int[], 'end'|'none'|'start', array{int[], int[], 'end'|'none'|'start'}|null}>
+     */
+    public static function overlapProvider(): array
     {
-        $period1 = new Period('2022-01-01', '2022-01-15');
-        $period2 = new Period('2022-01-10', '2022-01-20');
-        $period3 = $period1->overlap($period2);
-
-        $this->assertInstanceOf(
-            Period::class,
-            $period3
-        );
+        return [
+            'overlap' => [
+                [2022, 1, 1],
+                [2022, 1, 15],
+                'none',
+                [2022, 1, 10],
+                [2022, 1, 20],
+                'none',
+                [[2022, 1, 10], [2022, 1, 15], 'none'],
+            ],
+            'excluded end' => [
+                [2022, 1, 1],
+                [2022, 1, 15],
+                'end',
+                [2022, 1, 10],
+                [2022, 1, 20],
+                'none',
+                [[2022, 1, 10], [2022, 1, 15], 'end'],
+            ],
+            'contained' => [
+                [2022, 1, 1],
+                [2022, 1, 20],
+                'none',
+                [2022, 1, 10],
+                [2022, 1, 15],
+                'none',
+                [[2022, 1, 10], [2022, 1, 15], 'none'],
+            ],
+            'contained excluded end' => [
+                [2022, 1, 1],
+                [2022, 1, 20],
+                'none',
+                [2022, 1, 10],
+                [2022, 1, 15],
+                'end',
+                [[2022, 1, 10], [2022, 1, 15], 'end'],
+            ],
+            'excluded other start' => [
+                [2022, 1, 1],
+                [2022, 1, 15],
+                'none',
+                [2022, 1, 10],
+                [2022, 1, 20],
+                'start',
+                [[2022, 1, 10], [2022, 1, 15], 'start'],
+            ],
+            'inside other' => [
+                [2022, 1, 10],
+                [2022, 1, 15],
+                'none',
+                [2022, 1, 1],
+                [2022, 1, 20],
+                'none',
+                [[2022, 1, 10], [2022, 1, 15], 'none'],
+            ],
+            'inside other excluded start' => [
+                [2022, 1, 10],
+                [2022, 1, 15],
+                'start',
+                [2022, 1, 1],
+                [2022, 1, 20],
+                'none',
+                [[2022, 1, 10], [2022, 1, 15], 'start'],
+            ],
+            'no overlap' => [
+                [2022, 1, 1],
+                [2022, 1, 10],
+                'none',
+                [2022, 1, 15],
+                [2022, 1, 20],
+                'none',
+                null,
+            ],
+        ];
     }
 
-    public function testOverlapEndAfter(): void
+    /**
+     * @param int[] $start1
+     * @param int[] $end1
+     * @param 'end'|'none'|'start' $excludeBoundaries1
+     * @param int[] $start2
+     * @param int[] $end2
+     * @param 'end'|'none'|'start' $excludeBoundaries2
+     * @param array{int[], int[], 'end'|'none'|'start'}|null $expected
+     */
+    #[DataProvider('overlapProvider')]
+    public function testOverlap(array $start1, array $end1, string $excludeBoundaries1, array $start2, array $end2, string $excludeBoundaries2, array|null $expected): void
     {
-        $period1 = new Period('2022-01-01', '2022-01-15');
-        $period2 = new Period('2022-01-10', '2022-01-20');
-        $period3 = $period1->overlap($period2);
-
-        $this->assertInstanceOf(
-            Period::class,
-            $period3
+        $period1 = new Period(
+            DateTime::createFromArray($start1),
+            DateTime::createFromArray($end1),
+            excludeBoundaries: $excludeBoundaries1
+        );
+        $period2 = new Period(
+            DateTime::createFromArray($start2),
+            DateTime::createFromArray($end2),
+            excludeBoundaries: $excludeBoundaries2
         );
 
-        $this->assertSame(
-            '2022-01-10T00:00:00.000+00:00',
-            $period3->start()->toIsoString()
-        );
+        $overlap = $period1->overlap($period2);
 
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $period3->end()->toIsoString()
-        );
+        if ($expected === null) {
+            $this->assertNull($overlap);
 
-        $this->assertTrue(
-            $period3->includesStart()
-        );
+            return;
+        }
 
-        $this->assertTrue(
-            $period3->includesEnd()
-        );
+        $this->assertInstanceOf(Period::class, $overlap);
+        $this->assertInstanceOf(DateTime::class, $overlap->start());
+        $this->assertInstanceOf(DateTime::class, $overlap->end());
+        $this->assertSame(DateTime::createFromArray($expected[0])->toIsoString(), $overlap->start()->toIsoString());
+        $this->assertSame(DateTime::createFromArray($expected[1])->toIsoString(), $overlap->end()->toIsoString());
+        $this->assertSame($expected[2], Period::getBoundaries($overlap->includesStart(), $overlap->includesEnd()));
     }
 
-    public function testOverlapEndAfterExcludeEnd(): void
+    /**
+     * @param int[] $start1
+     * @param int[] $end1
+     * @param 'end'|'none'|'start' $excludeBoundaries1
+     * @param int[] $start2
+     * @param int[] $end2
+     * @param 'end'|'none'|'start' $excludeBoundaries2
+     * @param array{int[], int[], 'end'|'none'|'start'}|null $expected
+     */
+    #[DataProvider('overlapProvider')]
+    public function testOverlapDate(array $start1, array $end1, string $excludeBoundaries1, array $start2, array $end2, string $excludeBoundaries2, array|null $expected): void
     {
-        $period1 = new Period('2022-01-01', '2022-01-15', excludeBoundaries: 'end');
-        $period2 = new Period('2022-01-10', '2022-01-20');
-        $period3 = $period1->overlap($period2);
-
-        $this->assertInstanceOf(
-            Period::class,
-            $period3
+        $period1 = new Period(
+            Date::createFromArray($start1),
+            Date::createFromArray($end1),
+            excludeBoundaries: $excludeBoundaries1
+        );
+        $period2 = new Period(
+            Date::createFromArray($start2),
+            Date::createFromArray($end2),
+            excludeBoundaries: $excludeBoundaries2
         );
 
-        $this->assertSame(
-            '2022-01-10T00:00:00.000+00:00',
-            $period3->start()->toIsoString()
-        );
+        $overlap = $period1->overlap($period2);
 
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $period3->end()->toIsoString()
-        );
+        if ($expected === null) {
+            $this->assertNull($overlap);
 
-        $this->assertTrue(
-            $period3->includesStart()
-        );
+            return;
+        }
 
-        $this->assertFalse(
-            $period3->includesEnd()
-        );
-    }
-
-    public function testOverlapEndBefore(): void
-    {
-        $period1 = new Period('2022-01-01', '2022-01-20');
-        $period2 = new Period('2022-01-10', '2022-01-15');
-        $period3 = $period1->overlap($period2);
-
-        $this->assertInstanceOf(
-            Period::class,
-            $period3
-        );
-
-        $this->assertSame(
-            '2022-01-10T00:00:00.000+00:00',
-            $period3->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $period3->end()->toIsoString()
-        );
-
-        $this->assertTrue(
-            $period3->includesStart()
-        );
-
-        $this->assertTrue(
-            $period3->includesEnd()
-        );
-    }
-
-    public function testOverlapEndBeforeExcludeEnd(): void
-    {
-        $period1 = new Period('2022-01-01', '2022-01-20');
-        $period2 = new Period('2022-01-10', '2022-01-15', excludeBoundaries: 'end');
-        $period3 = $period1->overlap($period2);
-
-        $this->assertInstanceOf(
-            Period::class,
-            $period3
-        );
-
-        $this->assertSame(
-            '2022-01-10T00:00:00.000+00:00',
-            $period3->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $period3->end()->toIsoString()
-        );
-
-        $this->assertTrue(
-            $period3->includesStart()
-        );
-
-        $this->assertFalse(
-            $period3->includesEnd()
-        );
+        $this->assertInstanceOf(Period::class, $overlap);
+        $this->assertInstanceOf(Date::class, $overlap->start());
+        $this->assertInstanceOf(Date::class, $overlap->end());
+        $this->assertSame(Date::createFromArray($expected[0])->toIsoString(), $overlap->start()->toIsoString());
+        $this->assertSame(Date::createFromArray($expected[1])->toIsoString(), $overlap->end()->toIsoString());
+        $this->assertSame($expected[2], Period::getBoundaries($overlap->includesStart(), $overlap->includesEnd()));
     }
 
     public function testOverlapInvalidGranularity(): void
@@ -145,139 +175,16 @@ trait OverlapTestTrait
         $this->expectException(LogicException::class);
         $this->expectExceptionMessageIs('Period granularity `day` must match other period granularity `hour`.');
 
-        $period1 = new Period('2022-01-01', '2022-01-10');
-        $period2 = new Period('2022-01-15', '2022-01-20', 'hour');
+        $period1 = new Period(
+            DateTime::createFromArray([2022, 1, 1]),
+            DateTime::createFromArray([2022, 1, 10])
+        );
+        $period2 = new Period(
+            DateTime::createFromArray([2022, 1, 15]),
+            DateTime::createFromArray([2022, 1, 20]),
+            'hour'
+        );
 
         $period1->overlap($period2);
-    }
-
-    public function testOverlapNoOverlap(): void
-    {
-        $period1 = new Period('2022-01-01', '2022-01-10');
-        $period2 = new Period('2022-01-15', '2022-01-20');
-
-        $this->assertNull(
-            $period1->overlap($period2)
-        );
-    }
-
-    public function testOverlapStartAfter(): void
-    {
-        $period1 = new Period('2022-01-01', '2022-01-15');
-        $period2 = new Period('2022-01-10', '2022-01-20');
-        $period3 = $period1->overlap($period2);
-
-        $this->assertInstanceOf(
-            Period::class,
-            $period3
-        );
-
-        $this->assertSame(
-            '2022-01-10T00:00:00.000+00:00',
-            $period3->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $period3->end()->toIsoString()
-        );
-
-        $this->assertTrue(
-            $period3->includesStart()
-        );
-
-        $this->assertTrue(
-            $period3->includesEnd()
-        );
-    }
-
-    public function testOverlapStartAfterExcludeStart(): void
-    {
-        $period1 = new Period('2022-01-01', '2022-01-15');
-        $period2 = new Period('2022-01-10', '2022-01-20', excludeBoundaries: 'start');
-        $period3 = $period1->overlap($period2);
-
-        $this->assertInstanceOf(
-            Period::class,
-            $period3
-        );
-
-        $this->assertSame(
-            '2022-01-10T00:00:00.000+00:00',
-            $period3->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $period3->end()->toIsoString()
-        );
-
-        $this->assertFalse(
-            $period3->includesStart()
-        );
-
-        $this->assertTrue(
-            $period3->includesEnd()
-        );
-    }
-
-    public function testOverlapStartBefore(): void
-    {
-        $period1 = new Period('2022-01-10', '2022-01-15');
-        $period2 = new Period('2022-01-01', '2022-01-20');
-        $period3 = $period1->overlap($period2);
-
-        $this->assertInstanceOf(
-            Period::class,
-            $period3
-        );
-
-        $this->assertSame(
-            '2022-01-10T00:00:00.000+00:00',
-            $period3->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $period3->end()->toIsoString()
-        );
-
-        $this->assertTrue(
-            $period3->includesStart()
-        );
-
-        $this->assertTrue(
-            $period3->includesEnd()
-        );
-    }
-
-    public function testOverlapStartBeforeExcludeStart(): void
-    {
-        $period1 = new Period('2022-01-10', '2022-01-15', excludeBoundaries: 'start');
-        $period2 = new Period('2022-01-01', '2022-01-20');
-        $period3 = $period1->overlap($period2);
-
-        $this->assertInstanceOf(
-            Period::class,
-            $period3
-        );
-
-        $this->assertSame(
-            '2022-01-10T00:00:00.000+00:00',
-            $period3->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-15T00:00:00.000+00:00',
-            $period3->end()->toIsoString()
-        );
-
-        $this->assertFalse(
-            $period3->includesStart()
-        );
-
-        $this->assertTrue(
-            $period3->includesEnd()
-        );
     }
 }

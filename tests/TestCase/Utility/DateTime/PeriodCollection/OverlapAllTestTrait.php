@@ -3,183 +3,160 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\DateTime\PeriodCollection;
 
+use Fyre\Utility\DateTime\Date;
+use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Period;
 use Fyre\Utility\DateTime\PeriodCollection;
+use PHPUnit\Framework\Attributes\DataProvider;
+
+use function array_slice;
+use function count;
 
 trait OverlapAllTestTrait
 {
-    public function testOverlapAll(): void
+    /**
+     * @return array<string, array{array<int, array<int, array{int[], int[], 'both'|'none'}>>, array<int, array{int[], int[], 'both'|'none'}>}>
+     */
+    public static function collectionOverlapAllProvider(): array
     {
-        $period1 = new Period('2022-01-01', '2022-01-05');
-        $period2 = new Period('2022-01-10', '2022-01-15');
-        $collection1 = new PeriodCollection($period1, $period2);
-
-        $period3 = new Period('2022-01-03', '2022-01-08');
-        $period4 = new Period('2022-01-08', '2022-01-13');
-        $collection2 = new PeriodCollection($period3, $period4);
-
-        $collection3 = $collection1->overlapAll($collection2);
-
-        $this->assertInstanceOf(
-            PeriodCollection::class,
-            $collection2
-        );
-
-        $this->assertCount(
-            2,
-            $collection3
-        );
-
-        $this->assertSame(
-            '2022-01-03T00:00:00.000+00:00',
-            $collection3[0]->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-05T00:00:00.000+00:00',
-            $collection3[0]->end()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-10T00:00:00.000+00:00',
-            $collection3[1]->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-13T00:00:00.000+00:00',
-            $collection3[1]->end()->toIsoString()
-        );
-
-        $this->assertTrue(
-            $collection2[0]->includesStart()
-        );
-
-        $this->assertTrue(
-            $collection2[0]->includesEnd()
-        );
-
-        $this->assertTrue(
-            $collection2[1]->includesStart()
-        );
-
-        $this->assertTrue(
-            $collection2[1]->includesEnd()
-        );
+        return [
+            'overlap' => [
+                [
+                    [
+                        [[2022, 1, 1], [2022, 1, 5], 'none'],
+                        [[2022, 1, 10], [2022, 1, 15], 'none'],
+                    ],
+                    [
+                        [[2022, 1, 3], [2022, 1, 8], 'none'],
+                        [[2022, 1, 8], [2022, 1, 13], 'none'],
+                    ],
+                ],
+                [
+                    [[2022, 1, 3], [2022, 1, 5], 'none'],
+                    [[2022, 1, 10], [2022, 1, 13], 'none'],
+                ],
+            ],
+            'excluded boundaries' => [
+                [
+                    [
+                        [[2022, 1, 1], [2022, 1, 5], 'both'],
+                        [[2022, 1, 10], [2022, 1, 15], 'both'],
+                    ],
+                    [
+                        [[2022, 1, 3], [2022, 1, 8], 'both'],
+                        [[2022, 1, 8], [2022, 1, 13], 'both'],
+                    ],
+                ],
+                [
+                    [[2022, 1, 3], [2022, 1, 5], 'both'],
+                    [[2022, 1, 10], [2022, 1, 13], 'both'],
+                ],
+            ],
+            'multiple collections' => [
+                [
+                    [
+                        [[2022, 1, 1], [2022, 1, 5], 'none'],
+                        [[2022, 1, 10], [2022, 1, 15], 'none'],
+                    ],
+                    [
+                        [[2022, 1, 3], [2022, 1, 8], 'none'],
+                        [[2022, 1, 8], [2022, 1, 13], 'none'],
+                    ],
+                    [
+                        [[2022, 1, 4], [2022, 1, 20], 'none'],
+                    ],
+                ],
+                [
+                    [[2022, 1, 4], [2022, 1, 5], 'none'],
+                    [[2022, 1, 10], [2022, 1, 13], 'none'],
+                ],
+            ],
+            'empty collection' => [
+                [
+                    [
+                        [[2022, 1, 1], [2022, 1, 5], 'none'],
+                        [[2022, 1, 10], [2022, 1, 15], 'none'],
+                    ],
+                    [],
+                ],
+                [],
+            ],
+        ];
     }
 
-    public function testOverlapAllEmpty(): void
+    /**
+     * @param array<int, array<int, array{int[], int[], 'both'|'none'}>> $collectionData
+     * @param array<int, array{int[], int[], 'both'|'none'}> $expected
+     */
+    #[DataProvider('collectionOverlapAllProvider')]
+    public function testOverlapAll(array $collectionData, array $expected): void
     {
-        $period1 = new Period('2022-01-01', '2022-01-05');
-        $period2 = new Period('2022-01-10', '2022-01-15');
-        $collection1 = new PeriodCollection($period1, $period2);
+        $collections = [];
 
-        $collection2 = new PeriodCollection();
+        foreach ($collectionData as $periodData) {
+            $periods = [];
 
-        $collection3 = $collection1->overlapAll($collection2);
+            foreach ($periodData as [$start, $end, $boundaries]) {
+                $periods[] = new Period(
+                    DateTime::createFromArray($start),
+                    DateTime::createFromArray($end),
+                    excludeBoundaries: $boundaries
+                );
+            }
 
-        $this->assertCount(
-            0,
-            $collection3
-        );
+            $collections[] = new PeriodCollection(...$periods);
+        }
+
+        $overlaps = $collections[0]->overlapAll(...array_slice($collections, 1));
+
+        $this->assertCount(count($expected), $overlaps);
+
+        foreach ($expected as $index => [$start, $end, $boundaries]) {
+            $overlap = $overlaps->get($index);
+
+            $this->assertInstanceOf(DateTime::class, $overlap->start());
+            $this->assertInstanceOf(DateTime::class, $overlap->end());
+            $this->assertSame(DateTime::createFromArray($start)->toIsoString(), $overlap->start()->toIsoString());
+            $this->assertSame(DateTime::createFromArray($end)->toIsoString(), $overlap->end()->toIsoString());
+            $this->assertSame($boundaries, Period::getBoundaries($overlap->includesStart(), $overlap->includesEnd()));
+        }
     }
 
-    public function testOverlapAllExclude(): void
+    /**
+     * @param array<int, array<int, array{int[], int[], 'both'|'none'}>> $collectionData
+     * @param array<int, array{int[], int[], 'both'|'none'}> $expected
+     */
+    #[DataProvider('collectionOverlapAllProvider')]
+    public function testOverlapAllDate(array $collectionData, array $expected): void
     {
-        $period1 = new Period('2022-01-01', '2022-01-05', excludeBoundaries: 'both');
-        $period2 = new Period('2022-01-10', '2022-01-15', excludeBoundaries: 'both');
-        $collection1 = new PeriodCollection($period1, $period2);
+        $collections = [];
 
-        $period3 = new Period('2022-01-03', '2022-01-08', excludeBoundaries: 'both');
-        $period4 = new Period('2022-01-08', '2022-01-13', excludeBoundaries: 'both');
-        $collection2 = new PeriodCollection($period3, $period4);
+        foreach ($collectionData as $periodData) {
+            $periods = [];
 
-        $collection3 = $collection1->overlapAll($collection2);
+            foreach ($periodData as [$start, $end, $boundaries]) {
+                $periods[] = new Period(
+                    Date::createFromArray($start),
+                    Date::createFromArray($end),
+                    excludeBoundaries: $boundaries
+                );
+            }
 
-        $this->assertInstanceOf(
-            PeriodCollection::class,
-            $collection2
-        );
+            $collections[] = new PeriodCollection(...$periods);
+        }
 
-        $this->assertCount(
-            2,
-            $collection3
-        );
+        $overlaps = $collections[0]->overlapAll(...array_slice($collections, 1));
 
-        $this->assertSame(
-            '2022-01-03T00:00:00.000+00:00',
-            $collection3[0]->start()->toIsoString()
-        );
+        $this->assertCount(count($expected), $overlaps);
 
-        $this->assertSame(
-            '2022-01-05T00:00:00.000+00:00',
-            $collection3[0]->end()->toIsoString()
-        );
+        foreach ($expected as $index => [$start, $end, $boundaries]) {
+            $overlap = $overlaps->get($index);
 
-        $this->assertSame(
-            '2022-01-10T00:00:00.000+00:00',
-            $collection3[1]->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-13T00:00:00.000+00:00',
-            $collection3[1]->end()->toIsoString()
-        );
-
-        $this->assertFalse(
-            $collection2[0]->includesStart()
-        );
-
-        $this->assertFalse(
-            $collection2[0]->includesEnd()
-        );
-
-        $this->assertFalse(
-            $collection2[1]->includesStart()
-        );
-
-        $this->assertFalse(
-            $collection2[1]->includesEnd()
-        );
-    }
-
-    public function testOverlapAllMultiple(): void
-    {
-        $period1 = new Period('2022-01-01', '2022-01-05');
-        $period2 = new Period('2022-01-10', '2022-01-15');
-        $collection1 = new PeriodCollection($period1, $period2);
-
-        $period3 = new Period('2022-01-03', '2022-01-08');
-        $period4 = new Period('2022-01-08', '2022-01-13');
-        $collection2 = new PeriodCollection($period3, $period4);
-
-        $period5 = new Period('2022-01-04', '2022-01-20');
-        $collection3 = new PeriodCollection($period5);
-
-        $collection4 = $collection1->overlapAll($collection2, $collection3);
-
-        $this->assertCount(
-            2,
-            $collection4
-        );
-
-        $this->assertSame(
-            '2022-01-04T00:00:00.000+00:00',
-            $collection4[0]->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-05T00:00:00.000+00:00',
-            $collection4[0]->end()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-10T00:00:00.000+00:00',
-            $collection4[1]->start()->toIsoString()
-        );
-
-        $this->assertSame(
-            '2022-01-13T00:00:00.000+00:00',
-            $collection4[1]->end()->toIsoString()
-        );
+            $this->assertInstanceOf(Date::class, $overlap->start());
+            $this->assertInstanceOf(Date::class, $overlap->end());
+            $this->assertSame(Date::createFromArray($start)->toIsoString(), $overlap->start()->toIsoString());
+            $this->assertSame(Date::createFromArray($end)->toIsoString(), $overlap->end()->toIsoString());
+            $this->assertSame($boundaries, Period::getBoundaries($overlap->includesStart(), $overlap->includesEnd()));
+        }
     }
 }
