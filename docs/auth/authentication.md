@@ -40,7 +40,7 @@ Use `Auth` when you want to:
 - Check whether a user is logged in
 - Retrieve the current user entity
 
-`Auth` also acts as the integration point for authenticators that persist identity between requests, such as sessions, cookies, and tokens. Once a user has been resolved, `Auth` also provides `access()` as the authorization entry point for that user; see [Authorization](authorization.md).
+`Auth` also coordinates authenticators that resolve request identities and persist them between requests. Session and cookie identities are stateful, while token identities apply only to the request that supplied the token. Once a user has been resolved, `Auth` also provides `access()` as the authorization entry point for that user; see [Authorization](authorization.md).
 
 In a typical HTTP app:
 
@@ -55,8 +55,8 @@ If you haven’t set up middleware yet, start with [Auth Middleware](middleware.
 On a normal HTTP request, authentication usually happens in middleware:
 
 1. `AuthMiddleware` adds the `auth` request attribute (the `Auth` instance).
-2. Authenticators are executed in order until one returns a user (first match wins).
-3. On success, the resolved user is logged into `Auth`.
+2. `Auth::authenticate()` executes authenticators in order until one returns a user (first match wins).
+3. On success, the resolved user becomes current in `Auth`. Stateful identities are also passed to the configured authenticators for persistence.
 4. The `user` request attribute is added (the resolved user, or `null`).
 5. After the downstream handler returns, `beforeResponse()` is called on all authenticators with the current user from `Auth`.
 
@@ -70,7 +70,7 @@ For configuration basics, see [Config](../core/config.md).
 
 `Auth.loginRoute` controls where unauthenticated HTML requests are redirected by middleware. This value is a *route alias* (the `as` name), not a URL path; see [Router aliases](../routing/router.md#aliases-and-url-generation). If not configured, it defaults to `login`.
 
-If you need custom authentication behavior, create your own authenticator class and add it to the stack alongside the built-in ones. Implement `ImpersonationAuthenticatorInterface` when a custom authenticator should support impersonation.
+If you need custom authentication behavior, create your own authenticator class and add it to the stack alongside the built-in ones. Implement `StatelessAuthenticatorInterface` when a resolved identity must apply only to the current request. Implement `ImpersonationAuthenticatorInterface` when the authenticator can safely support impersonation.
 
 ## Common setups
 
@@ -143,6 +143,8 @@ return [
 ];
 ```
 
+Token authentication is stateless. A successful token does not create or update session or cookie authentication state, even when those authenticators are also configured.
+
 ## Built-in authenticators
 
 Fyre includes three built-in authenticators. Each authenticator receives its listed options alongside `className`.
@@ -157,7 +159,7 @@ Reads an identity value from the session and loads the user from the model confi
 
 When login changes the stored identity, the authenticator rotates the session ID before storing the new value. Logout removes the session value and rotates the session ID again.
 
-`sessionKey` and `impersonatorSessionKey` must be different. `SessionAuthenticator` is the only built-in authenticator that supports user impersonation.
+`sessionKey` and `impersonatorSessionKey` must be different. `SessionAuthenticator` is the only built-in authenticator that supports user impersonation. The current request must have been authenticated by it before impersonation can start.
 
 ### `CookieAuthenticator`
 
@@ -171,6 +173,8 @@ Reads a remember-me cookie and validates it against the stored user. Login can q
 
 Within `CookieAuthenticator`, `cookieOptions.expires` is a lifetime in seconds and is converted to an absolute expiry when the cookie is written. If it is omitted, the result is a browser-session cookie. Set `cookieOptions.secure` to `true` when the application uses HTTPS.
 
+Cookie authentication is stateful. When `SessionAuthenticator` is also configured, a successful remember-me cookie establishes the session identity used on following requests.
+
 For remember-me cookies, configure `salt` with a stable application secret. Changing the configured identifier field, password hash, or salt invalidates existing cookies; invalid payloads are queued for deletion on the next response.
 
 ### `TokenAuthenticator`
@@ -183,6 +187,8 @@ Loads the user by a token read from a request header or query parameter.
 - `tokenField` (`string`): the user field matched against the token (default: `'token'`)
 
 The configured header takes precedence. The query parameter is checked only when that header is absent.
+
+`TokenAuthenticator` implements `StatelessAuthenticatorInterface`. Its resolved user is available through `Auth` and the request `user` attribute for the current request, but is not persisted by other authenticators and cannot start impersonation.
 
 Prefer a request header for bearer tokens. Query-string tokens can be exposed through URLs, logs, browser history, and referrer headers; enable `tokenQuery` only when the client cannot send a suitable header.
 
@@ -230,9 +236,11 @@ $auth->logout();
 
 ## Impersonating users
 
-Impersonation temporarily replaces the effective user while retaining the original user so it can be restored. It is intended for controlled administrative or support workflows and requires `SessionAuthenticator`.
+Impersonation temporarily replaces the effective user while retaining the original user so it can be restored. It is intended for controlled administrative or support workflows and requires the current request identity to have been resolved by `SessionAuthenticator`.
 
 The application is responsible for authorizing the operation. Always perform the authorization check before starting impersonation, because authorization uses the current effective user.
+
+An identity resolved by `TokenAuthenticator` cannot impersonate another user. Calling `login()` or `attempt()` directly also does not establish an impersonation-capable authentication source; redirect and start impersonation from a subsequent session-authenticated request.
 
 ### Starting impersonation
 

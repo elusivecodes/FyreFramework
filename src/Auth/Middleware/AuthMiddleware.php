@@ -30,29 +30,16 @@ class AuthMiddleware implements MiddlewareInterface
     /**
      * {@inheritDoc}
      *
-     * Note: The `auth` and `user` attributes are added to the request. Authenticators are executed in
-     * order until one returns a user. After the handler runs, `beforeResponse()` is called on all
-     * configured authenticators with the current user from Auth.
+     * Note: The `auth` and `user` attributes are added to the request. After the handler runs,
+     * `beforeResponse()` is called on all configured authenticators with the current user from Auth.
      */
     #[Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $request = $request->withAttribute('auth', $this->auth);
 
-        $user = null;
-
         $authenticators = $this->auth->authenticators();
-
-        foreach ($authenticators as $authenticator) {
-            $user = $authenticator->authenticate($request);
-
-            if (!$user) {
-                continue;
-            }
-
-            $this->auth->login($user);
-            break;
-        }
+        $user = $this->auth->authenticate($request);
 
         $response = $request->withAttribute('user', $user) |> $handler->handle(...);
 

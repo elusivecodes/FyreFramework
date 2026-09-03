@@ -28,14 +28,14 @@ Use auth middleware when you want to:
 `Fyre\Auth\Middleware\AuthMiddleware` (mapped as the `auth` alias) runs authentication for the request lifecycle.
 
 - adds the `auth` request attribute (the `Auth` instance)
-- executes configured authenticators in order until one returns a user (first match wins)
-- logs the user into `Auth` when an authenticator returns a user
+- delegates to `Auth::authenticate()`, which executes configured authenticators in order until one returns a user (first match wins)
+- sets the resolved user on `Auth` and persists it unless the successful authenticator is stateless
 - adds the `user` request attribute (the resolved user, or `null`)
 - after the downstream handler returns, calls `beforeResponse()` on all authenticators with the current user from `Auth`
 
 For default middleware alias mappings, see [HTTP Middleware](../http/middleware.md#built-in-middleware).
 
-Register `auth` as global middleware so the current user is available throughout the request. When an authenticator succeeds, `AuthMiddleware` logs that user into the shared `Auth` instance for the rest of the request lifecycle, so downstream middleware and handlers can read the same resolved user through both request attributes and `Auth`.
+Register `auth` as global middleware so the current user is available throughout the request. When an authenticator succeeds, downstream middleware and handlers can read the same resolved user through both request attributes and `Auth`. Stateless identities, including those resolved by `TokenAuthenticator`, are not persisted by session or cookie authenticators.
 
 In a typical `Engine::middleware()` queue, place it after `session` (so session-based authenticators can read the session):
 

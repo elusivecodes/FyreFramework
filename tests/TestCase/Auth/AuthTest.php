@@ -5,8 +5,10 @@ namespace Tests\TestCase\Auth;
 
 use Fyre\Auth\Auth;
 use Fyre\Auth\Authenticators\SessionAuthenticator;
+use Fyre\Auth\Authenticators\TokenAuthenticator;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
+use Fyre\Http\ServerRequest;
 use LogicException;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Authenticators\MockAuthenticator;
@@ -44,6 +46,57 @@ final class AuthTest extends TestCase
 
         $this->assertNull($authUser);
         $this->assertFalse($this->auth->isLoggedIn());
+    }
+
+    public function testAuthenticate(): void
+    {
+        $authenticator = $this->container->build(MockAuthenticator::class);
+        $this->auth->addAuthenticator($authenticator);
+
+        $request = $this->container->build(ServerRequest::class);
+
+        $user = $this->auth->authenticate($request);
+
+        $this->assertInstanceOf(User::class, $user);
+        $this->assertSame($user, $this->auth->user());
+    }
+
+    public function testAuthenticateDoesNotPersistStatelessIdentity(): void
+    {
+        $sessionAuthenticator = $this->container->build(SessionAuthenticator::class);
+        $tokenAuthenticator = $this->container->build(TokenAuthenticator::class);
+
+        $this->auth->addAuthenticator($sessionAuthenticator);
+        $this->auth->addAuthenticator($tokenAuthenticator);
+
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'headers' => [
+                    'Authorization' => 'Bearer Ew7tqx8kH6QsNe8SS0tVT0BX2LIRVQyl',
+                ],
+            ],
+        ]);
+
+        $user = $this->auth->authenticate($request);
+
+        $this->assertInstanceOf(User::class, $user);
+        $this->assertNull($this->session->get('auth'));
+    }
+
+    public function testAuthenticatePersistsStatefulIdentity(): void
+    {
+        $sessionAuthenticator = $this->container->build(SessionAuthenticator::class);
+        $authenticator = $this->container->build(MockAuthenticator::class);
+
+        $this->auth->addAuthenticator($sessionAuthenticator);
+        $this->auth->addAuthenticator($authenticator);
+
+        $request = $this->container->build(ServerRequest::class);
+
+        $user = $this->auth->authenticate($request);
+
+        $this->assertInstanceOf(User::class, $user);
+        $this->assertSame(1, $this->session->get('auth'));
     }
 
     public function testAuthenticator(): void
@@ -104,7 +157,8 @@ final class AuthTest extends TestCase
         $authenticator = $this->container->build(SessionAuthenticator::class);
         $this->auth->addAuthenticator($authenticator);
 
-        $this->login();
+        $this->session->set('auth', 1);
+        $this->container->build(ServerRequest::class) |> $this->auth->authenticate(...);
 
         $user = $this->identifier->identify('impersonated@test.com');
 
@@ -123,7 +177,8 @@ final class AuthTest extends TestCase
         $authenticator = $this->container->build(SessionAuthenticator::class);
         $this->auth->addAuthenticator($authenticator);
 
-        $this->login();
+        $this->session->set('auth', 1);
+        $this->container->build(ServerRequest::class) |> $this->auth->authenticate(...);
 
         $user = $this->identifier->identify('impersonated@test.com');
 
@@ -141,7 +196,8 @@ final class AuthTest extends TestCase
         $authenticator = $this->container->build(SessionAuthenticator::class);
         $this->auth->addAuthenticator($authenticator);
 
-        $this->login();
+        $this->session->set('auth', 1);
+        $this->container->build(ServerRequest::class) |> $this->auth->authenticate(...);
 
         $user = $this->auth->user();
 
@@ -165,6 +221,36 @@ final class AuthTest extends TestCase
         $this->auth->impersonate($user);
     }
 
+    public function testImpersonateStatelessIdentity(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessageIs('Impersonation requires a compatible authenticator.');
+
+        $sessionAuthenticator = $this->container->build(SessionAuthenticator::class);
+        $tokenAuthenticator = $this->container->build(TokenAuthenticator::class);
+
+        $this->auth->addAuthenticator($sessionAuthenticator);
+        $this->auth->addAuthenticator($tokenAuthenticator);
+
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'headers' => [
+                    'Authorization' => 'Bearer Ew7tqx8kH6QsNe8SS0tVT0BX2LIRVQyl',
+                ],
+            ],
+        ]);
+
+        $user = $this->auth->authenticate($request);
+
+        $this->assertInstanceOf(User::class, $user);
+
+        $targetUser = $this->identifier->identify('impersonated@test.com');
+
+        $this->assertInstanceOf(User::class, $targetUser);
+
+        $this->auth->impersonate($targetUser);
+    }
+
     public function testImpersonateUnsupported(): void
     {
         $this->expectException(LogicException::class);
@@ -184,7 +270,8 @@ final class AuthTest extends TestCase
         $authenticator = $this->container->build(SessionAuthenticator::class);
         $this->auth->addAuthenticator($authenticator);
 
-        $this->login();
+        $this->session->set('auth', 1);
+        $this->container->build(ServerRequest::class) |> $this->auth->authenticate(...);
 
         $user = $this->identifier->identify('impersonated@test.com');
 
@@ -205,7 +292,8 @@ final class AuthTest extends TestCase
         $authenticator = $this->container->build(SessionAuthenticator::class);
         $this->auth->addAuthenticator($authenticator);
 
-        $this->login();
+        $this->session->set('auth', 1);
+        $this->container->build(ServerRequest::class) |> $this->auth->authenticate(...);
 
         $user = $this->identifier->identify('impersonated@test.com');
 
@@ -246,7 +334,8 @@ final class AuthTest extends TestCase
         $authenticator = $this->container->build(SessionAuthenticator::class);
         $this->auth->addAuthenticator($authenticator);
 
-        $this->login();
+        $this->session->set('auth', 1);
+        $this->container->build(ServerRequest::class) |> $this->auth->authenticate(...);
 
         $user = $this->identifier->identify('impersonated@test.com');
 
@@ -271,7 +360,8 @@ final class AuthTest extends TestCase
         $authenticator = $this->container->build(SessionAuthenticator::class);
         $this->auth->addAuthenticator($authenticator);
 
-        $this->login();
+        $this->session->set('auth', 1);
+        $this->container->build(ServerRequest::class) |> $this->auth->authenticate(...);
 
         $user = $this->identifier->identify('impersonated@test.com');
 

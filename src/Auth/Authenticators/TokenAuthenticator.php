@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Fyre\Auth\Authenticators;
 
 use Fyre\Auth\Authenticator;
+use Fyre\Auth\StatelessAuthenticatorInterface;
 use Fyre\ORM\Entity;
 use Override;
 use Psr\Http\Message\ServerRequestInterface;
@@ -14,9 +15,9 @@ use function strlen;
 use function substr;
 
 /**
- * Authenticator that authenticates using tokens.
+ * Authenticator that authenticates requests using stateless tokens.
  */
-class TokenAuthenticator extends Authenticator
+class TokenAuthenticator extends Authenticator implements StatelessAuthenticatorInterface
 {
     /**
      * @var array<string, mixed>

@@ -296,6 +296,35 @@ final class AuthenticatorTest extends TestCase
         $this->assertTrue($cookie->isExpired());
     }
 
+    public function testCookieAuthenticatorPersistsSession(): void
+    {
+        $sessionAuthenticator = $this->container->build(SessionAuthenticator::class);
+        $cookieAuthenticator = $this->container->build(CookieAuthenticator::class);
+
+        $this->auth->addAuthenticator($sessionAuthenticator);
+        $this->auth->addAuthenticator($cookieAuthenticator);
+
+        $authUser = $this->identifier->identify('test@test.com');
+
+        $this->assertInstanceOf(User::class, $authUser);
+
+        $tokenHash = password_hash('test@test.com'.$authUser->password, PASSWORD_DEFAULT);
+        $auth = (string) json_encode(['test@test.com', $tokenHash]) |> rawurlencode(...);
+
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'cookies' => [
+                    'auth' => $auth,
+                ],
+            ],
+        ]);
+
+        $user = $this->auth->authenticate($request);
+
+        $this->assertInstanceOf(User::class, $user);
+        $this->assertSame(1, $this->session->get('auth'));
+    }
+
     public function testDebug(): void
     {
         $this->assertContains(

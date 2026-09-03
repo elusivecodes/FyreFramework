@@ -11,6 +11,7 @@ use Fyre\ORM\Entity;
 use Fyre\Router\Router;
 use InvalidArgumentException;
 use LogicException;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
 
 use function array_filter;
@@ -23,8 +24,8 @@ use function sprintf;
  * Coordinates authenticators and exposes the current authenticated user.
  *
  * Note: Authenticators are loaded from configuration and executed in order until one
- * returns an authenticated user. When a user is logged in or out, all configured
- * authenticators are notified so they can persist or clear state.
+ * returns an authenticated user. Stateful identities are persisted by all configured
+ * authenticators, while stateless identities apply only to the current request.
  */
 class Auth
 {
@@ -41,6 +42,8 @@ class Auth
     protected Identifier $identifier;
 
     protected string $loginRoute;
+
+    protected Authenticator|null $successfulAuthenticator = null;
 
     protected Entity|null $user = null;
 
@@ -141,6 +144,37 @@ class Auth
     }
 
     /**
+     * Attempts to authenticate a request using the configured authenticators.
+     *
+     * @param ServerRequestInterface $request The ServerRequest.
+     * @return Entity|null The Entity instance for the authenticated user or null if authentication fails.
+     */
+    public function authenticate(ServerRequestInterface $request): Entity|null
+    {
+        $this->successfulAuthenticator = null;
+
+        foreach ($this->authenticators as $authenticator) {
+            $user = $authenticator->authenticate($request);
+
+            if (!$user) {
+                continue;
+            }
+
+            if ($authenticator instanceof StatelessAuthenticatorInterface) {
+                $this->user = $user;
+            } else {
+                $this->login($user);
+            }
+
+            $this->successfulAuthenticator = $authenticator;
+
+            return $user;
+        }
+
+        return null;
+    }
+
+    /**
      * Returns an Authenticator by key.
      *
      * @param string $key The key.
@@ -204,7 +238,7 @@ class Auth
      * @param Entity $user The user to impersonate.
      * @return static The Auth instance.
      *
-     * @throws LogicException If no user is logged in or impersonation is not supported.
+     * @throws LogicException If no user is logged in or the current identity does not support impersonation.
      */
     public function impersonate(Entity $user): static
     {
@@ -268,6 +302,7 @@ class Auth
      */
     public function login(Entity $user, bool $rememberMe = false): static
     {
+        $this->successfulAuthenticator = null;
         $this->user = $user;
 
         foreach ($this->authenticators as $authenticator) {
@@ -286,6 +321,7 @@ class Auth
      */
     public function logout(): static
     {
+        $this->successfulAuthenticator = null;
         $this->user = null;
 
         foreach ($this->authenticators as $authenticator) {
@@ -324,18 +360,14 @@ class Auth
     }
 
     /**
-     * Returns the configured impersonation Authenticator.
+     * Returns the Authenticator that established the current identity when it supports impersonation.
      *
-     * @return ImpersonationAuthenticatorInterface|null The Authenticator instance, or null if none supports impersonation.
+     * @return ImpersonationAuthenticatorInterface|null The Authenticator instance, or null if it does not support impersonation.
      */
     protected function impersonationAuthenticator(): ImpersonationAuthenticatorInterface|null
     {
-        foreach ($this->authenticators as $authenticator) {
-            if ($authenticator instanceof ImpersonationAuthenticatorInterface) {
-                return $authenticator;
-            }
-        }
-
-        return null;
+        return $this->successfulAuthenticator instanceof ImpersonationAuthenticatorInterface ?
+            $this->successfulAuthenticator :
+            null;
     }
 }
