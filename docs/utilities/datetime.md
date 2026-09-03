@@ -192,7 +192,7 @@ Date clamping applies to `Date` and `DateTime` and is enabled by default. When `
 - `DateTime::getTimeZoneOffset()` returns minutes using the inverse sign of native `DateTimeZone::getOffset()`: `+10:00` is `-600`. `withTimeZoneOffset()` uses the same convention.
 - Arithmetic and field replacement use calendar operations. `DateTime` results around daylight-saving transitions can therefore differ from adding a fixed number of elapsed seconds.
 - `Date`, `DateTime`, and `Time` support instance and static macros; see [Macros](../core/macros.md).
-- `Period` accepts matching `Date` or `DateTime` boundaries. `Date` periods support only `year`, `month`, and `day` granularities; strings and `Time` instances are not accepted.
+- `Date` periods support only `year`, `month`, and `day` granularities; `DateTime` periods additionally support `hour`, `minute`, and `second`.
 
 ## Related
 
