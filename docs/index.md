@@ -16,6 +16,9 @@ New applications should begin with [Getting Started](getting-started.md). For an
 
 [Console](console/index.md) covers command-line entry points and framework commands. [Testing](testing/index.md) covers the PHPUnit integration, fixtures, and boundary-specific helpers.
 
+Before sending an application to production, use [Deployment](deployment.md) to review runtime
+configuration, storage, migrations, security controls, workers, and health checks.
+
 ## Release and support
 
 - [Changelog](../CHANGELOG.md) - user-visible changes, deprecations, and breaking changes
@@ -25,6 +28,7 @@ New applications should begin with [Getting Started](getting-started.md). For an
 ## Pages in this section
 
 - [Getting Started](getting-started.md) - requirements, installation, application bootstrap, and next steps
+- [Deployment](deployment.md) - prepare configuration, services, migrations, security, workers, and health checks for production
 - [Core](core/index.md) - configuration, language, helpers, the container, and the default engine
 - [HTTP](http/index.md) - requests, responses, middleware, sessions, and outbound HTTP calls
 - [Routing](routing/index.md) - route definition, matching, bindings, and URL generation

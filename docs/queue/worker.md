@@ -188,6 +188,7 @@ if (!$worker->runOnce()) {
 
 ## Related
 
+- [Deployment](../deployment.md)
 - [Queue](index.md)
 - [Console Commands](../console/commands.md)
 - [Events](../events/index.md)

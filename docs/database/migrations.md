@@ -266,6 +266,7 @@ Migration history reads are safe before setup:
 
 ## Related
 
+- [Deployment](../deployment.md)
 - [Database connections](connections.md)
 - [Database locks](connections.md#database-locks)
 - [Forge](forge.md)

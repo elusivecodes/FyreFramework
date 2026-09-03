@@ -28,6 +28,7 @@ Install the `fyre/framework` package and use individual subsystems as needed, or
 - **Run a complete application**: follow the [Hello world guide](docs/getting-started.md#hello-world-application).
 - **Build around the default application services**: see [Application bootstrap](#application-bootstrap).
 - **Organize route actions**: see [Controllers](docs/routing/controllers.md).
+- **Prepare for production**: follow the [Deployment guide](docs/deployment.md).
 - **Use a specific subsystem**: browse the [documentation](#documentation).
 
 ## Requirements
@@ -106,7 +107,9 @@ The [Hello world application](docs/getting-started.md#hello-world-application) c
 
 ## Documentation
 
-Start with [Getting Started](docs/getting-started.md) or browse the [documentation index](docs/index.md). You can also jump directly to the area you need:
+Start with [Getting Started](docs/getting-started.md), use [Deployment](docs/deployment.md) when
+preparing for production, or browse the [documentation index](docs/index.md). You can also jump
+directly to the area you need:
 
 - **Core services**: [Core](docs/core/index.md) → [Engine](docs/core/engine.md) → [Container](docs/core/container.md)
 - **HTTP applications**: [HTTP](docs/http/index.md) → [Routing](docs/routing/index.md) → [Controllers](docs/routing/controllers.md)
