@@ -222,7 +222,8 @@ final class PeriodTest extends TestCase
     {
         $end = new Period(
             DateTime::createFromArray([2022, 1, 1]),
-            DateTime::createFromArray([2022, 1, 10])
+            DateTime::createFromArray([2022, 1, 10]),
+            excludeBoundaries: 'end'
         )->end();
 
         $this->assertInstanceOf(

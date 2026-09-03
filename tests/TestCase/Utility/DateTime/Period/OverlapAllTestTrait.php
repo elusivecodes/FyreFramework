@@ -35,6 +35,12 @@ trait OverlapAllTestTrait
                 ],
                 null,
             ],
+            'no other periods' => [
+                [2022, 1, 1],
+                [2022, 1, 10],
+                [],
+                [[2022, 1, 1], [2022, 1, 10]],
+            ],
         ];
     }
 
