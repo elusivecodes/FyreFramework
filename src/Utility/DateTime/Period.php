@@ -11,16 +11,18 @@ use Iterator;
 use LogicException;
 use Override;
 
-use function assert;
 use function in_array;
-use function is_string;
 use function sprintf;
 use function strtolower;
 
 /**
  * Represents a date period with configurable boundaries.
  *
- * @implements Iterator<int, DateTime>
+ * @phpstan-type Granularity 'day'|'hour'|'minute'|'month'|'second'|'year'
+ *
+ * @template TDate of Date|DateTime = DateTime
+ *
+ * @implements Iterator<int, TDate>
  *
  * @phpstan-consistent-constructor
  */
@@ -36,6 +38,12 @@ class Period implements Countable, Iterator
         'none' => [true, true],
     ];
 
+    protected const DATE_GRANULARITIES = [
+        'year',
+        'month',
+        'day',
+    ];
+
     protected const GRANULARITIES = [
         'year',
         'month',
@@ -45,13 +53,22 @@ class Period implements Countable, Iterator
         'second',
     ];
 
-    protected readonly DateTime $end;
+    /**
+     * @var TDate
+     */
+    protected readonly Date|DateTime $end;
 
     protected readonly string $granularity;
 
-    protected readonly DateTime $includedEnd;
+    /**
+     * @var TDate
+     */
+    protected readonly Date|DateTime $includedEnd;
 
-    protected readonly DateTime $includedStart;
+    /**
+     * @var TDate
+     */
+    protected readonly Date|DateTime $includedStart;
 
     protected readonly bool $includesEnd;
 
@@ -59,7 +76,34 @@ class Period implements Countable, Iterator
 
     protected int $index = 0;
 
-    protected readonly DateTime $start;
+    /**
+     * @var TDate
+     */
+    protected readonly Date|DateTime $start;
+
+    /**
+     * Checks the compatibility of two date values.
+     *
+     * @param Date|DateTime $a The first date.
+     * @param Date|DateTime $b The second date.
+     *
+     * @phpstan-assert TDate $a
+     * @phpstan-assert TDate $b
+     *
+     * @throws InvalidArgumentException If the date types don't match.
+     */
+    public static function checkDateType(Date|DateTime $a, Date|DateTime $b): void
+    {
+        if ($a::class === $b::class) {
+            return;
+        }
+
+        throw new InvalidArgumentException(sprintf(
+            'Date type `%s` must match other date type `%s`.',
+            $a::class,
+            $b::class
+        ));
+    }
 
     /**
      * Returns the boundary string.
@@ -88,18 +132,20 @@ class Period implements Countable, Iterator
     /**
      * Constructs a Period.
      *
-     * @param DateTime|string $start The start date.
-     * @param DateTime|string $end The end date.
-     * @param 'day'|'hour'|'minute'|'month'|'second'|'year' $granularity The granularity.
+     * @param TDate $start The start date.
+     * @param TDate $end The end date.
+     * @param Granularity $granularity The granularity.
      * @param 'both'|'end'|'none'|'start' $excludeBoundaries Which boundaries to exclude from the period.
      *
      * @throws InvalidArgumentException If the granularity or boundaries are not valid.
      * @throws LogicException If the end date is before the start date.
      */
-    public function __construct(DateTime|string $start, DateTime|string $end, string $granularity = 'day', string $excludeBoundaries = 'none')
+    public function __construct(Date|DateTime $start, Date|DateTime $end, string $granularity = 'day', string $excludeBoundaries = 'none')
     {
-        $this->start = static::createDate($start);
-        $this->end = static::createDate($end);
+        static::checkDateType($start, $end);
+
+        $this->start = $start;
+        $this->end = $end;
 
         $granularity = strtolower($granularity);
         $excludeBoundaries = strtolower($excludeBoundaries);
@@ -107,6 +153,13 @@ class Period implements Countable, Iterator
         if (!in_array($granularity, static::GRANULARITIES, true)) {
             throw new InvalidArgumentException(sprintf(
                 'Granularity `%s` is not valid.',
+                $granularity
+            ));
+        }
+
+        if ($this->start instanceof Date && !in_array($granularity, static::DATE_GRANULARITIES, true)) {
+            throw new InvalidArgumentException(sprintf(
+                'Granularity `%s` is not valid for Date periods.',
                 $granularity
             ));
         }
@@ -144,12 +197,12 @@ class Period implements Countable, Iterator
     /**
      * Checks whether this period contains another Period.
      *
-     * @param Period $other The Period to compare against.
+     * @param Period<TDate> $other The Period to compare against.
      * @return bool Whether the period contains the other Period.
      */
     public function contains(Period $other): bool
     {
-        static::checkGranularity($this, $other);
+        static::checkCompatibility($this, $other);
 
         return static::isSameOrBefore($this->includedStart, $other->includedStart(), $this->granularity) &&
             static::isSameOrAfter($this->includedEnd, $other->includedEnd(), $this->granularity);
@@ -169,10 +222,10 @@ class Period implements Countable, Iterator
     /**
      * Returns the date at the current index.
      *
-     * @return DateTime The date at the current index.
+     * @return TDate The date at the current index.
      */
     #[Override]
-    public function current(): DateTime
+    public function current(): Date|DateTime
     {
         return static::add($this->includedStart, $this->index, $this->granularity);
     }
@@ -180,31 +233,28 @@ class Period implements Countable, Iterator
     /**
      * Returns the symmetric difference between the periods.
      *
-     * @param Period $other The Period to compare against.
-     * @return PeriodCollection The new PeriodCollection instance with the non-overlapping periods.
+     * @param Period<TDate> $other The Period to compare against.
+     * @return PeriodCollection<TDate> The new PeriodCollection instance with the non-overlapping periods.
      */
     public function diffSymmetric(Period $other): PeriodCollection
     {
-        $collection = new PeriodCollection($this, $other);
         $overlap = $this->overlap($other);
 
         if (!$overlap) {
-            return $collection;
+            return new PeriodCollection($this, $other);
         }
 
-        $boundaries = $collection->boundaries();
-
-        assert($boundaries instanceof Period);
-
-        return $boundaries->subtract($overlap);
+        return $this->subtract($overlap)
+            ->add(...$other->subtract($overlap))
+            ->sort();
     }
 
     /**
      * Returns the end date.
      *
-     * @return DateTime The end date.
+     * @return TDate The end date.
      */
-    public function end(): DateTime
+    public function end(): Date|DateTime
     {
         return $this->end;
     }
@@ -212,10 +262,10 @@ class Period implements Countable, Iterator
     /**
      * Checks whether this period ends on a given date.
      *
-     * @param DateTime $date The DateTime to compare against.
+     * @param TDate $date The date to compare against.
      * @return bool Whether the period ends on a given date.
      */
-    public function endEquals(DateTime $date): bool
+    public function endEquals(Date|DateTime $date): bool
     {
         return static::isSame($this->includedEnd, $date, $this->granularity);
     }
@@ -223,10 +273,10 @@ class Period implements Countable, Iterator
     /**
      * Checks whether this period ends after a given date.
      *
-     * @param DateTime $date The DateTime to compare against.
+     * @param TDate $date The date to compare against.
      * @return bool Whether the period ends after a given date.
      */
-    public function endsAfter(DateTime $date): bool
+    public function endsAfter(Date|DateTime $date): bool
     {
         return static::isAfter($this->includedEnd, $date, $this->granularity);
     }
@@ -234,10 +284,10 @@ class Period implements Countable, Iterator
     /**
      * Checks whether this period ends on or after a given date.
      *
-     * @param DateTime $date The DateTime to compare against.
+     * @param TDate $date The date to compare against.
      * @return bool Whether the period ends on or after a given date.
      */
-    public function endsAfterOrEquals(DateTime $date): bool
+    public function endsAfterOrEquals(Date|DateTime $date): bool
     {
         return static::isSameOrAfter($this->includedEnd, $date, $this->granularity);
     }
@@ -245,10 +295,10 @@ class Period implements Countable, Iterator
     /**
      * Checks whether this period ends before a given date.
      *
-     * @param DateTime $date The DateTime to compare against.
+     * @param TDate $date The date to compare against.
      * @return bool Whether the period ends before a given date.
      */
-    public function endsBefore(DateTime $date): bool
+    public function endsBefore(Date|DateTime $date): bool
     {
         return static::isBefore($this->includedEnd, $date, $this->granularity);
     }
@@ -256,10 +306,10 @@ class Period implements Countable, Iterator
     /**
      * Checks whether this period ends on or before a given date.
      *
-     * @param DateTime $date The DateTime to compare against.
+     * @param TDate $date The date to compare against.
      * @return bool Whether the period ends on or before a given date.
      */
-    public function endsBeforeOrEquals(DateTime $date): bool
+    public function endsBeforeOrEquals(Date|DateTime $date): bool
     {
         return static::isSameOrBefore($this->includedEnd, $date, $this->granularity);
     }
@@ -267,12 +317,12 @@ class Period implements Countable, Iterator
     /**
      * Checks whether this period equals another Period.
      *
-     * @param Period $other The Period to compare against.
+     * @param Period<TDate> $other The Period to compare against.
      * @return bool Whether the period equals the other Period.
      */
     public function equals(Period $other): bool
     {
-        static::checkGranularity($this, $other);
+        static::checkCompatibility($this, $other);
 
         return static::isSame($this->includedStart, $other->includedStart(), $this->granularity) &&
             static::isSame($this->includedEnd, $other->includedEnd(), $this->granularity);
@@ -281,18 +331,18 @@ class Period implements Countable, Iterator
     /**
      * Returns the gap between the periods.
      *
-     * @param Period $other The Period to compare against.
+     * @param Period<TDate> $other The Period to compare against.
      * @return static|null The new Period instance representing the gap, or null if no gap exists.
      */
     public function gap(Period $other): static|null
     {
-        static::checkGranularity($this, $other);
+        static::checkCompatibility($this, $other);
 
         if ($this->overlapsWith($other)) {
             return null;
         }
 
-        if ($this->includedStart->isAfter($other->includedStart())) {
+        if (static::isAfter($this->includedStart, $other->includedStart())) {
             $first = $other;
             $second = $this;
         } else {
@@ -313,7 +363,7 @@ class Period implements Countable, Iterator
     /**
      * Returns the granularity.
      *
-     * @return 'day'|'hour'|'minute'|'month'|'second'|'year' The granularity.
+     * @return Granularity The granularity.
      */
     public function granularity(): string
     {
@@ -323,9 +373,9 @@ class Period implements Countable, Iterator
     /**
      * Returns the included end date.
      *
-     * @return DateTime The included end date.
+     * @return TDate The included end date.
      */
-    public function includedEnd(): DateTime
+    public function includedEnd(): Date|DateTime
     {
         return $this->includedEnd;
     }
@@ -333,9 +383,9 @@ class Period implements Countable, Iterator
     /**
      * Returns the included start date.
      *
-     * @return DateTime The included start date.
+     * @return TDate The included start date.
      */
-    public function includedStart(): DateTime
+    public function includedStart(): Date|DateTime
     {
         return $this->includedStart;
     }
@@ -343,10 +393,10 @@ class Period implements Countable, Iterator
     /**
      * Checks whether this period includes a given date.
      *
-     * @param DateTime $date The DateTime to compare against.
+     * @param TDate $date The date to compare against.
      * @return bool Whether the period includes a given date.
      */
-    public function includes(DateTime $date): bool
+    public function includes(Date|DateTime $date): bool
     {
         return static::isSameOrBefore($this->includedStart, $date, $this->granularity) &&
             static::isSameOrAfter($this->includedEnd, $date, $this->granularity);
@@ -408,20 +458,20 @@ class Period implements Countable, Iterator
     /**
      * Returns the overlap of the periods.
      *
-     * @param Period $other The Period to compare against.
+     * @param Period<TDate> $other The Period to compare against.
      * @return static|null The new Period instance representing the overlap, or null if no overlap exists.
      */
     public function overlap(Period $other): static|null
     {
-        static::checkGranularity($this, $other);
+        static::checkCompatibility($this, $other);
 
-        $startPeriod = $this->includedStart->isAfter($other->includedStart()) ?
+        $startPeriod = static::isAfter($this->includedStart, $other->includedStart()) ?
             $this : $other;
 
-        $endPeriod = $this->includedEnd->isBefore($other->includedEnd()) ?
+        $endPeriod = static::isBefore($this->includedEnd, $other->includedEnd()) ?
             $this : $other;
 
-        if ($startPeriod->includedStart->isAfter($endPeriod->includedEnd())) {
+        if (static::isAfter($startPeriod->includedStart, $endPeriod->includedEnd())) {
             return null;
         }
 
@@ -436,7 +486,7 @@ class Period implements Countable, Iterator
     /**
      * Returns the overlap of all the periods.
      *
-     * @param Period ...$others The periods to compare against.
+     * @param Period<TDate> ...$others The periods to compare against.
      * @return static|null The new Period instance representing the overlap, or null if no overlap exists.
      */
     public function overlapAll(Period ...$others): static|null
@@ -462,8 +512,8 @@ class Period implements Countable, Iterator
     /**
      * Returns the overlaps of any of the periods.
      *
-     * @param Period ...$others The periods to compare against.
-     * @return PeriodCollection The new PeriodCollection instance with the overlapping periods.
+     * @param Period<TDate> ...$others The periods to compare against.
+     * @return PeriodCollection<TDate> The new PeriodCollection instance with the overlapping periods.
      */
     public function overlapAny(Period ...$others): PeriodCollection
     {
@@ -485,12 +535,12 @@ class Period implements Countable, Iterator
     /**
      * Checks whether this period overlaps with another Period.
      *
-     * @param Period $other The Period to compare against.
+     * @param Period<TDate> $other The Period to compare against.
      * @return bool Whether the period overlaps with the other Period.
      */
     public function overlapsWith(Period $other): bool
     {
-        static::checkGranularity($this, $other);
+        static::checkCompatibility($this, $other);
 
         return static::isSameOrBefore($this->includedStart, $other->includedEnd(), $this->granularity) &&
             static::isSameOrAfter($this->includedEnd, $other->includedStart(), $this->granularity);
@@ -525,9 +575,9 @@ class Period implements Countable, Iterator
     /**
      * Returns the start date.
      *
-     * @return DateTime The start date.
+     * @return TDate The start date.
      */
-    public function start(): DateTime
+    public function start(): Date|DateTime
     {
         return $this->start;
     }
@@ -535,10 +585,10 @@ class Period implements Countable, Iterator
     /**
      * Checks whether this period starts on a given date.
      *
-     * @param DateTime $date The DateTime to compare against.
+     * @param TDate $date The date to compare against.
      * @return bool Whether the period starts on a given date.
      */
-    public function startEquals(DateTime $date): bool
+    public function startEquals(Date|DateTime $date): bool
     {
         return static::isSame($this->includedStart, $date, $this->granularity);
     }
@@ -546,10 +596,10 @@ class Period implements Countable, Iterator
     /**
      * Checks whether this period starts after a given date.
      *
-     * @param DateTime $date The DateTime to compare against.
+     * @param TDate $date The date to compare against.
      * @return bool Whether the period starts after a given date.
      */
-    public function startsAfter(DateTime $date): bool
+    public function startsAfter(Date|DateTime $date): bool
     {
         return static::isAfter($this->includedStart, $date, $this->granularity);
     }
@@ -557,10 +607,10 @@ class Period implements Countable, Iterator
     /**
      * Checks whether this period starts on or after a given date.
      *
-     * @param DateTime $date The DateTime to compare against.
+     * @param TDate $date The date to compare against.
      * @return bool Whether the period starts on or after a given date.
      */
-    public function startsAfterOrEquals(DateTime $date): bool
+    public function startsAfterOrEquals(Date|DateTime $date): bool
     {
         return static::isSameOrAfter($this->includedStart, $date, $this->granularity);
     }
@@ -568,10 +618,10 @@ class Period implements Countable, Iterator
     /**
      * Checks whether this period starts before a given date.
      *
-     * @param DateTime $date The DateTime to compare against.
+     * @param TDate $date The date to compare against.
      * @return bool Whether the period starts before a given date.
      */
-    public function startsBefore(DateTime $date): bool
+    public function startsBefore(Date|DateTime $date): bool
     {
         return static::isBefore($this->includedStart, $date, $this->granularity);
     }
@@ -579,10 +629,10 @@ class Period implements Countable, Iterator
     /**
      * Checks whether this period starts on or before a given date.
      *
-     * @param DateTime $date The DateTime to compare against.
+     * @param TDate $date The date to compare against.
      * @return bool Whether the period starts on or before a given date.
      */
-    public function startsBeforeOrEquals(DateTime $date): bool
+    public function startsBeforeOrEquals(Date|DateTime $date): bool
     {
         return static::isSameOrBefore($this->includedStart, $date, $this->granularity);
     }
@@ -590,12 +640,12 @@ class Period implements Countable, Iterator
     /**
      * Returns the inverse overlap of the periods.
      *
-     * @param Period $other The period to remove.
-     * @return PeriodCollection The new PeriodCollection instance with the remaining periods.
+     * @param Period<TDate> $other The period to remove.
+     * @return PeriodCollection<TDate> The new PeriodCollection instance with the remaining periods.
      */
     public function subtract(Period $other): PeriodCollection
     {
-        static::checkGranularity($this, $other);
+        static::checkCompatibility($this, $other);
 
         if (!$this->overlapsWith($other)) {
             return new PeriodCollection($this);
@@ -603,7 +653,7 @@ class Period implements Countable, Iterator
 
         $subtractions = [];
 
-        if ($this->includedStart->isBefore($other->includedStart())) {
+        if (static::isBefore($this->includedStart, $other->includedStart())) {
             $subtractions[] = new static(
                 $this->start,
                 $other->start(),
@@ -612,7 +662,7 @@ class Period implements Countable, Iterator
             );
         }
 
-        if ($this->includedEnd->isAfter($other->includedEnd())) {
+        if (static::isAfter($this->includedEnd, $other->includedEnd())) {
             $subtractions[] = new static(
                 $other->end(),
                 $this->end,
@@ -627,8 +677,8 @@ class Period implements Countable, Iterator
     /**
      * Returns the inverse overlap of all periods.
      *
-     * @param Period ...$others The periods to compare against.
-     * @return PeriodCollection The new PeriodCollection instance with the remaining periods.
+     * @param Period<TDate> ...$others The periods to compare against.
+     * @return PeriodCollection<TDate> The new PeriodCollection instance with the remaining periods.
      */
     public function subtractAll(Period ...$others): PeriodCollection
     {
@@ -644,12 +694,12 @@ class Period implements Countable, Iterator
     /**
      * Checks whether this period touches another Period.
      *
-     * @param Period $other The Period to compare against.
+     * @param Period<TDate> $other The Period to compare against.
      * @return bool Whether the period touches the other Period.
      */
     public function touches(Period $other): bool
     {
-        static::checkGranularity($this, $other);
+        static::checkCompatibility($this, $other);
 
         return static::isSame($this->includedStart, $other->includedEnd(), $this->granularity) ||
             static::isSame($this->includedEnd, $other->includedStart(), $this->granularity);
@@ -669,13 +719,24 @@ class Period implements Countable, Iterator
     /**
      * Adds an amount of time to a date (by granularity).
      *
-     * @param DateTime $date The DateTime.
+     * @template TValue of Date|DateTime
+     *
+     * @param TValue $date The date.
      * @param int $amount The amount of time to add.
-     * @param 'day'|'hour'|'minute'|'month'|'second'|'year'|null $granularity The granularity.
-     * @return DateTime The new DateTime instance with the added time.
+     * @param Granularity|null $granularity The granularity.
+     * @return TValue The new date instance with the added time.
      */
-    protected static function add(DateTime $date, int $amount, string|null $granularity = null): DateTime
+    protected static function add(Date|DateTime $date, int $amount, string|null $granularity = null): Date|DateTime
     {
+        if ($date instanceof Date) {
+            return match ($granularity) {
+                'day' => $date->addDays($amount),
+                'month' => $date->addMonths($amount),
+                'year' => $date->addYears($amount),
+                default => $date
+            };
+        }
+
         return match ($granularity) {
             'day' => $date->addDays($amount),
             'hour' => $date->addHours($amount),
@@ -688,15 +749,20 @@ class Period implements Countable, Iterator
     }
 
     /**
-     * Checks the granularity of two periods.
+     * Checks the compatibility of two periods.
      *
-     * @param Period $a The first Period.
-     * @param Period $b The second Period.
+     * @template TFirst of Date|DateTime
+     * @template TSecond of Date|DateTime
      *
-     * @throws LogicException If the granularity doesn't match.
+     * @param Period<TFirst> $a The first Period.
+     * @param Period<TSecond> $b The second Period.
+     *
+     * @throws LogicException If the date type or granularity doesn't match.
      */
-    protected static function checkGranularity(Period $a, Period $b): void
+    protected static function checkCompatibility(Period $a, Period $b): void
     {
+        static::checkDateType($a->start(), $b->start());
+
         $aGranularity = $a->granularity();
         $bGranularity = $b->granularity();
 
@@ -712,164 +778,114 @@ class Period implements Countable, Iterator
     }
 
     /**
-     * Creates a DateTime.
-     *
-     * @param DateTime|string $date The input date.
-     * @return DateTime The DateTime instance.
-     */
-    protected static function createDate(DateTime|string $date): DateTime
-    {
-        if (is_string($date)) {
-            return new DateTime($date);
-        }
-
-        return $date;
-    }
-
-    /**
      * Returns the difference between two dates (based on granularity).
      *
-     * @param DateTime $a The first date.
-     * @param DateTime $b The second date.
-     * @param 'day'|'hour'|'minute'|'month'|'second'|'year'|null $granularity The granularity.
+     * @param Date|DateTime $a The first date.
+     * @param Date|DateTime $b The second date.
+     * @param Granularity|null $granularity The granularity.
      * @return int The difference.
      */
-    protected static function diff(DateTime $a, DateTime $b, string|null $granularity = null): int
+    protected static function diff(Date|DateTime $a, Date|DateTime $b, string|null $granularity = null): int
     {
-        return match ($granularity) {
-            'day' => $a->diffInDays($b),
-            'hour' => $a->diffInHours($b),
-            'minute' => $a->diffInMinutes($b),
-            'month' => $a->diffInMonths($b),
-            'second' => $a->diffInSeconds($b),
-            'year' => $a->diffInYears($b),
-            default => $a->diff($b)
+        static::checkDateType($a, $b);
+
+        return match (true) {
+            $a instanceof Date && $b instanceof Date => match ($granularity) {
+                'day' => $a->diffInDays($b),
+                'month' => $a->diffInMonths($b),
+                'year' => $a->diffInYears($b),
+                default => $a->diff($b)
+            },
+            $a instanceof DateTime && $b instanceof DateTime => match ($granularity) {
+                'day' => $a->diffInDays($b),
+                'hour' => $a->diffInHours($b),
+                'minute' => $a->diffInMinutes($b),
+                'month' => $a->diffInMonths($b),
+                'second' => $a->diffInSeconds($b),
+                'year' => $a->diffInYears($b),
+                default => $a->diff($b)
+            },
+            default => throw new LogicException('Date type is not supported.')
         };
     }
 
     /**
      * Checks whether a date is after another date (based on granularity).
      *
-     * @param DateTime $a The first date.
-     * @param DateTime $b The second date.
-     * @param string|null $granularity The granularity.
+     * @param Date|DateTime $a The first date.
+     * @param Date|DateTime $b The second date.
+     * @param Granularity|null $granularity The granularity.
      * @return bool Whether the date is after the other date.
      */
-    protected static function isAfter(DateTime $a, DateTime $b, string|null $granularity = null): bool
+    protected static function isAfter(Date|DateTime $a, Date|DateTime $b, string|null $granularity = null): bool
     {
-        return match ($granularity) {
-            'day' => $a->isAfterDay($b),
-            'hour' => $a->isAfterHour($b),
-            'minute' => $a->isAfterMinute($b),
-            'month' => $a->isAfterMonth($b),
-            'second' => $a->isAfterSecond($b),
-            'year' => $a->isAfterYear($b),
-            default => $a->isAfter($b)
-        };
+        return static::diff($a, $b, $granularity) > 0;
     }
 
     /**
      * Checks whether a date is before another date (based on granularity).
      *
-     * @param DateTime $a The first date.
-     * @param DateTime $b The second date.
-     * @param string|null $granularity The granularity.
+     * @param Date|DateTime $a The first date.
+     * @param Date|DateTime $b The second date.
+     * @param Granularity|null $granularity The granularity.
      * @return bool Whether the date is before the other date.
      */
-    protected static function isBefore(DateTime $a, DateTime $b, string|null $granularity = null): bool
+    protected static function isBefore(Date|DateTime $a, Date|DateTime $b, string|null $granularity = null): bool
     {
-        return match ($granularity) {
-            'day' => $a->isBeforeDay($b),
-            'hour' => $a->isBeforeHour($b),
-            'minute' => $a->isBeforeMinute($b),
-            'month' => $a->isBeforeMonth($b),
-            'second' => $a->isBeforeSecond($b),
-            'year' => $a->isBeforeYear($b),
-            default => $a->isBefore($b)
-        };
+        return static::diff($a, $b, $granularity) < 0;
     }
 
     /**
      * Checks whether a date is the same as another date (based on granularity).
      *
-     * @param DateTime $a The first date.
-     * @param DateTime $b The second date.
-     * @param string|null $granularity The granularity.
+     * @param Date|DateTime $a The first date.
+     * @param Date|DateTime $b The second date.
+     * @param Granularity|null $granularity The granularity.
      * @return bool Whether the date is the same as the other date.
      */
-    protected static function isSame(DateTime $a, DateTime $b, string|null $granularity = null): bool
+    protected static function isSame(Date|DateTime $a, Date|DateTime $b, string|null $granularity = null): bool
     {
-        return match ($granularity) {
-            'day' => $a->isSameDay($b),
-            'hour' => $a->isSameHour($b),
-            'minute' => $a->isSameMinute($b),
-            'month' => $a->isSameMonth($b),
-            'second' => $a->isSameSecond($b),
-            'year' => $a->isSameYear($b),
-            default => $a->isSame($b)
-        };
+        return static::diff($a, $b, $granularity) === 0;
     }
 
     /**
      * Checks whether a date is the same as or after another date (based on granularity).
      *
-     * @param DateTime $a The first date.
-     * @param DateTime $b The second date.
-     * @param string|null $granularity The granularity.
+     * @param Date|DateTime $a The first date.
+     * @param Date|DateTime $b The second date.
+     * @param Granularity|null $granularity The granularity.
      * @return bool Whether the date is the same as or after the other date.
      */
-    protected static function isSameOrAfter(DateTime $a, DateTime $b, string|null $granularity = null): bool
+    protected static function isSameOrAfter(Date|DateTime $a, Date|DateTime $b, string|null $granularity = null): bool
     {
-        return match ($granularity) {
-            'day' => $a->isSameOrAfterDay($b),
-            'hour' => $a->isSameOrAfterHour($b),
-            'minute' => $a->isSameOrAfterMinute($b),
-            'month' => $a->isSameOrAfterMonth($b),
-            'second' => $a->isSameOrAfterSecond($b),
-            'year' => $a->isSameOrAfterYear($b),
-            default => $a->isSameOrAfter($b)
-        };
+        return static::diff($a, $b, $granularity) >= 0;
     }
 
     /**
      * Checks whether a date is the same as or before another date (based on granularity).
      *
-     * @param DateTime $a The first date.
-     * @param DateTime $b The second date.
-     * @param string|null $granularity The granularity.
+     * @param Date|DateTime $a The first date.
+     * @param Date|DateTime $b The second date.
+     * @param Granularity|null $granularity The granularity.
      * @return bool Whether the date is the same as or before the other date.
      */
-    protected static function isSameOrBefore(DateTime $a, DateTime $b, string|null $granularity = null): bool
+    protected static function isSameOrBefore(Date|DateTime $a, Date|DateTime $b, string|null $granularity = null): bool
     {
-        return match ($granularity) {
-            'day' => $a->isSameOrBeforeDay($b),
-            'hour' => $a->isSameOrBeforeHour($b),
-            'minute' => $a->isSameOrBeforeMinute($b),
-            'month' => $a->isSameOrBeforeMonth($b),
-            'second' => $a->isSameOrBeforeSecond($b),
-            'year' => $a->isSameOrBeforeYear($b),
-            default => $a->isSameOrBefore($b)
-        };
+        return static::diff($a, $b, $granularity) <= 0;
     }
 
     /**
      * Subtracts an amount of time from a date (by granularity).
      *
-     * @param DateTime $date The DateTime.
+     * @template TValue of Date|DateTime
+     *
+     * @param TValue $date The date.
      * @param int $amount The amount of time to subtract.
-     * @param string|null $granularity The granularity.
-     * @return DateTime The new DateTime instance with the subtracted time.
+     * @param Granularity|null $granularity The granularity.
+     * @return TValue The new date instance with the subtracted time.
      */
-    protected static function sub(DateTime $date, int $amount, string|null $granularity = null): DateTime
+    protected static function sub(Date|DateTime $date, int $amount, string|null $granularity = null): Date|DateTime
     {
-        return match ($granularity) {
-            'day' => $date->subDays($amount),
-            'hour' => $date->subHours($amount),
-            'minute' => $date->subMinutes($amount),
-            'month' => $date->subMonths($amount),
-            'second' => $date->subSeconds($amount),
-            'year' => $date->subYears($amount),
-            default => $date
-        };
+        return static::add($date, -$amount, $granularity);
     }
 }

@@ -3,19 +3,17 @@ declare(strict_types=1);
 
 namespace Fyre\Utility\DateTime;
 
-use ArrayAccess;
 use Countable;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
-use InvalidArgumentException;
 use Iterator;
 use OutOfBoundsException;
 use Override;
 
 use function array_filter;
+use function array_shift;
 use function array_slice;
 use function array_values;
-use function assert;
 use function count;
 use function sprintf;
 use function usort;
@@ -25,12 +23,13 @@ use const ARRAY_FILTER_USE_BOTH;
 /**
  * Represents a collection of date periods.
  *
- * @implements ArrayAccess<int, Period>
- * @implements Iterator<int, Period>
+ * @template TDate of Date|DateTime = DateTime
+ *
+ * @implements Iterator<int, Period<TDate>>
  *
  * @phpstan-consistent-constructor
  */
-class PeriodCollection implements ArrayAccess, Countable, Iterator
+class PeriodCollection implements Countable, Iterator
 {
     use DebugTrait;
     use MacroTrait;
@@ -38,24 +37,35 @@ class PeriodCollection implements ArrayAccess, Countable, Iterator
     protected int $index = 0;
 
     /**
-     * @var Period[]
+     * @var array<int, Period<TDate>>
      */
     protected array $periods;
 
     /**
      * Constructs a PeriodCollection.
      *
-     * @param Period ...$periods The periods.
+     * @param Period<TDate> ...$periods The periods.
      */
     public function __construct(Period ...$periods)
     {
         $this->periods = array_values($periods);
+
+        if (count($this->periods) < 2) {
+            return;
+        }
+
+        $periods = $this->periods;
+        $firstPeriodStart = array_shift($periods)->start();
+
+        foreach ($periods as $period) {
+            Period::checkDateType($firstPeriodStart, $period->start());
+        }
     }
 
     /**
      * Adds periods to the collection.
      *
-     * @param Period ...$periods The periods to add.
+     * @param Period<TDate> ...$periods The periods to add.
      * @return static The new PeriodCollection instance with the added periods.
      */
     public function add(Period ...$periods): static
@@ -66,7 +76,7 @@ class PeriodCollection implements ArrayAccess, Countable, Iterator
     /**
      * Returns the boundaries of the collection.
      *
-     * @return Period|null The minimal Period covering all periods in the collection, or null if the collection is empty.
+     * @return Period<TDate>|null The minimal Period covering all periods in the collection, or null if the collection is empty.
      */
     public function boundaries(): Period|null
     {
@@ -74,14 +84,15 @@ class PeriodCollection implements ArrayAccess, Countable, Iterator
             return null;
         }
 
-        $firstPeriod = $this->periods[0];
-        $lastPeriod = $this->periods[0];
-        foreach ($this as $period) {
-            if ($period->includedStart()->isBefore($firstPeriod->includedStart())) {
+        $periods = $this->periods;
+        $firstPeriod = $lastPeriod = array_shift($periods);
+
+        foreach ($periods as $period) {
+            if ($period->includedStart()->getTime() < $firstPeriod->includedStart()->getTime()) {
                 $firstPeriod = $period;
             }
 
-            if ($period->includedEnd()->isAfter($lastPeriod->includedEnd())) {
+            if ($period->includedEnd()->getTime() > $lastPeriod->includedEnd()->getTime()) {
                 $lastPeriod = $period;
             }
         }
@@ -108,7 +119,7 @@ class PeriodCollection implements ArrayAccess, Countable, Iterator
     /**
      * Returns the period at the current index.
      *
-     * @return Period The period at the current index.
+     * @return Period<TDate> The period at the current index.
      */
     #[Override]
     public function current(): Period
@@ -123,26 +134,44 @@ class PeriodCollection implements ArrayAccess, Countable, Iterator
      */
     public function gaps(): self
     {
-        if ($this->periods === []) {
-            return new static();
-        }
-
         $boundaries = $this->boundaries();
 
-        assert($boundaries instanceof Period);
+        if ($boundaries === null) {
+            return new static();
+        }
 
         return $boundaries->subtractAll(...$this->periods);
     }
 
     /**
+     * Returns the Period at an index.
+     *
+     * @param int $index The index.
+     * @return Period<TDate> The period at the given index.
+     *
+     * @throws OutOfBoundsException If the index is not set.
+     */
+    public function get(int $index): Period
+    {
+        if (!isset($this->periods[$index])) {
+            throw new OutOfBoundsException(sprintf(
+                'Period index `%s` does not exist.',
+                $index
+            ));
+        }
+
+        return $this->periods[$index];
+    }
+
+    /**
      * Intersects a period with every period in the collection.
      *
-     * @param Period $other The Period to compare against.
+     * @param Period<TDate> $other The Period to compare against.
      * @return static The new PeriodCollection instance with the overlapping periods.
      */
     public function intersect(Period $other): static
     {
-        $intersected = new static();
+        $periods = [];
 
         foreach ($this as $period) {
             $overlap = $other->overlap($period);
@@ -151,10 +180,10 @@ class PeriodCollection implements ArrayAccess, Countable, Iterator
                 continue;
             }
 
-            $intersected[] = $overlap;
+            $periods[] = $overlap;
         }
 
-        return $intersected;
+        return new static(...$periods);
     }
 
     /**
@@ -178,77 +207,11 @@ class PeriodCollection implements ArrayAccess, Countable, Iterator
     }
 
     /**
-     * Checks whether an index exists.
-     *
-     * @param int $index The index.
-     * @return bool Whether the index is set.
-     */
-    #[Override]
-    public function offsetExists(mixed $index): bool
-    {
-        return isset($this->periods[$index]);
-    }
-
-    /**
-     * Returns the Period at an index.
-     *
-     * @param int $index The index.
-     * @return Period The period at the given index.
-     *
-     * @throws OutOfBoundsException if the index is not set.
-     */
-    #[Override]
-    public function offsetGet(mixed $index): Period
-    {
-        if (!isset($this->periods[$index])) {
-            throw new OutOfBoundsException(sprintf(
-                'Period index `%s` does not exist.',
-                $index
-            ));
-        }
-
-        return $this->periods[$index];
-    }
-
-    /**
-     * Sets the period at an index.
-     *
-     * @param int|null $index The index.
-     * @param Period $value The period.
-     *
-     * @throws InvalidArgumentException If the value is not a Period.
-     */
-    #[Override]
-    public function offsetSet(mixed $index, mixed $value): void
-    {
-        if (!($value instanceof Period)) {
-            throw new InvalidArgumentException('Period value must be an instance of Period.');
-        }
-
-        if ($index === null) {
-            $this->periods[] = $value;
-        } else {
-            $this->periods[$index] = $value;
-        }
-    }
-
-    /**
-     * Unsets an index.
-     *
-     * @param int $index The index.
-     */
-    #[Override]
-    public function offsetUnset(mixed $index): void
-    {
-        unset($this->periods[$index]);
-    }
-
-    /**
      * Returns the overlap of all collections.
      *
      * Note: When no collections are provided, this returns a clone of the current PeriodCollection.
      *
-     * @param PeriodCollection ...$others The collections to compare against.
+     * @param PeriodCollection<TDate> ...$others The collections to compare against.
      * @return static The new PeriodCollection instance with the overlapping periods.
      */
     public function overlapAll(PeriodCollection ...$others): static
@@ -291,7 +254,7 @@ class PeriodCollection implements ArrayAccess, Countable, Iterator
     /**
      * Subtracts a PeriodCollection from this collection.
      *
-     * @param PeriodCollection $others The PeriodCollection to subtract.
+     * @param PeriodCollection<TDate> $others The PeriodCollection to subtract.
      * @return static The new PeriodCollection instance with the remaining periods.
      */
     public function subtract(PeriodCollection $others): static
@@ -300,14 +263,17 @@ class PeriodCollection implements ArrayAccess, Countable, Iterator
             return clone $this;
         }
 
-        $collection = new static();
+        $periods = [];
 
         foreach ($this as $period) {
             $subtracted = $period->subtractAll(...$others);
-            $collection = $collection->add(...$subtracted);
+
+            foreach ($subtracted as $subtraction) {
+                $periods[] = $subtraction;
+            }
         }
 
-        return $collection;
+        return new static(...$periods);
     }
 
     /**
@@ -352,22 +318,20 @@ class PeriodCollection implements ArrayAccess, Countable, Iterator
     /**
      * Returns the overlap of the collections.
      *
-     * @param PeriodCollection $others The PeriodCollection to compare against.
+     * @param PeriodCollection<TDate> $others The PeriodCollection to compare against.
      * @return static The new PeriodCollection instance with the overlapping periods.
      */
     protected function overlap(PeriodCollection $others): static
     {
-        if ($others->count() === 0) {
-            return new static();
-        }
-
-        $collection = new static();
+        $periods = [];
 
         foreach ($this as $period) {
             $overlaps = $period->overlapAny(...$others);
-            $collection = $collection->add(...$overlaps);
+            foreach ($overlaps as $overlap) {
+                $periods[] = $overlap;
+            }
         }
 
-        return $collection;
+        return new static(...$periods);
     }
 }
