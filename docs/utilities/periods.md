@@ -17,17 +17,25 @@ For individual date/time values, see [Date/time](datetime.md).
 ## Creating a period
 
 ```php
+use Fyre\Utility\DateTime\Date;
+use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Period;
 
-$period = new Period(
-    '2026-02-01',
-    '2026-02-05',
-    'day',
-    'none'
+$days = new Period(
+    Date::createFromArray([2026, 2, 1]),
+    Date::createFromArray([2026, 2, 5])
+);
+
+$hours = new Period(
+    DateTime::createFromArray([2026, 2, 1, 9]),
+    DateTime::createFromArray([2026, 2, 1, 17]),
+    'hour'
 );
 ```
 
-The start and end may be `DateTime` instances or strings accepted by `DateTime`. Granularity is one of `year`, `month`, `day`, `hour`, `minute`, or `second`.
+The start and end must both be `Date` instances or both be `DateTime` instances. String and `Time` boundaries are not accepted.
+
+`Date` periods support `year`, `month`, and `day` granularities. `DateTime` periods additionally support `hour`, `minute`, and `second`.
 
 The fourth argument identifies boundaries to exclude:
 
@@ -42,13 +50,13 @@ The fourth argument identifies boundaries to exclude:
 
 ## Boundaries, count, and iteration
 
-`start()` and `end()` return the original boundaries. `includedStart()` and `includedEnd()` return the effective boundaries after exclusions have advanced or reduced them by one unit. `includesStart()`, `includesEnd()`, and `granularity()` expose the remaining configuration.
+`start()` and `end()` return the original boundaries. `includedStart()` and `includedEnd()` return the effective boundaries after exclusions have advanced or reduced them by one unit. These methods preserve the concrete boundary type. `includesStart()`, `includesEnd()`, and `granularity()` expose the remaining configuration.
 
-A period is an `Iterator<int, DateTime>` and yields every included value at its granularity:
+A period yields every included value at its granularity, using the same `Date` or `DateTime` type as its boundaries:
 
 ```php
-foreach ($period as $date) {
-    echo $date->toDateString().PHP_EOL;
+foreach ($days as $date) {
+    echo $date->toIsoString().PHP_EOL;
 }
 ```
 
@@ -66,7 +74,7 @@ Construction throws if exclusions leave the effective end before the effective s
 | --- | --- |
 | `includes($date)` | whether a date lies within the effective boundaries |
 | `contains($other)` | whether the complete effective range of another period is contained |
-| `equals($other)` | whether effective boundaries and granularity match |
+| `equals($other)` | whether the effective boundaries match |
 | `overlapsWith($other)` | whether the effective ranges share at least one value |
 | `touches($other)` | whether one effective start equals the other effective end |
 | `overlap($other)` | shared range, or `null` |
@@ -85,24 +93,37 @@ Boundary comparison methods operate on the effective start or end:
 | start | `startEquals()` | `startsBefore()` | `startsBeforeOrEquals()` | `startsAfter()` | `startsAfterOrEquals()` |
 | end | `endEquals()` | `endsBefore()` | `endsBeforeOrEquals()` | `endsAfter()` | `endsAfterOrEquals()` |
 
-Most period-to-period operations require matching granularities and throw `LogicException` when they differ.
+Dates passed to boundary comparison methods must use the same concrete type as the period. Operations that compare periods require both periods to use the same concrete date type and granularity. A date-type mismatch throws `InvalidArgumentException`; a granularity mismatch throws `LogicException`.
+
+Use `Period::checkCompatibility($a, $b)` to validate these requirements directly.
 
 ## Period collections
 
 Construct a collection from zero or more periods:
 
 ```php
+use Fyre\Utility\DateTime\Date;
+use Fyre\Utility\DateTime\Period;
 use Fyre\Utility\DateTime\PeriodCollection;
 
 $periods = new PeriodCollection(
-    new Period('2026-02-01', '2026-02-05'),
-    new Period('2026-02-10', '2026-02-12')
+    new Period(
+        Date::createFromArray([2026, 2, 1]),
+        Date::createFromArray([2026, 2, 5])
+    ),
+    new Period(
+        Date::createFromArray([2026, 2, 10]),
+        Date::createFromArray([2026, 2, 12])
+    )
 );
 ```
+
+Every period in a collection must use the same concrete date type and granularity. This is validated when the collection is constructed and whenever periods are added.
 
 | Method | Result |
 | --- | --- |
 | `add(...$periods)` | new collection with periods appended |
+| `get($index)` | period at an index; throws `OutOfBoundsException` when missing |
 | `sort()` | new collection ordered by included start timestamp |
 | `unique()` | new collection retaining the first of each equal period |
 | `boundaries()` | minimal period spanning the collection, or `null` when empty |
@@ -117,28 +138,29 @@ Collections do not automatically sort, merge, or normalize their periods. Call `
 
 ## Mutation and materialization
 
-`Period` operations return new periods or collections. Its only changing state is the cursor used by `Iterator`.
-
-`PeriodCollection` methods also return new collections, but its `ArrayAccess` implementation mutates the original collection:
+Operations that produce periods or collections return new instances. Calling `add()`, for example, does not alter the original collection:
 
 ```php
-$periods[] = new Period('2026-03-01', '2026-03-03');
-$periods[0] = new Period('2026-01-01', '2026-01-02');
-unset($periods[1]);
+echo $periods->get(0)->start()->toIsoString(); // 2026-02-01
+
+$updated = $periods->add(
+    new Period(
+        Date::createFromArray([2026, 3, 1]),
+        Date::createFromArray([2026, 3, 3])
+    )
+);
 ```
 
-Assigned values must be `Period` instances. Reading a missing index throws `OutOfBoundsException`. Unsetting a non-final index leaves a gap, and iteration stops at the first missing integer index; avoid `unset()` when later periods must remain iterable.
-
-These operations are implemented by `offsetExists()`, `offsetGet()`, `offsetSet()`, and `offsetUnset()`.
+`PeriodCollection` does not implement `ArrayAccess`; use `get()` to read a period by index. The iterator cursor is the only changing state in either class.
 
 Operations materialize their results immediately. There is no lazy period pipeline: large ranges can be iterated without first creating an array of dates, but collection operations build their returned period lists in memory.
 
 ## Behavior notes
 
 - Period comparisons use the date/time calendar operation matching the configured granularity.
+- New periods and collections produced by operations retain the concrete boundary type.
 - A shared instant is an overlap only when it belongs to both periods after exclusions are applied.
 - `touches()` means the effective boundaries are equal; it does not mean two discrete periods are separated by exactly one unit.
-- A collection does not validate that all periods use the same granularity. Operations that compare incompatible periods can therefore throw later.
 - `boundaries()` uses the granularity and boundary inclusion of the periods supplying the earliest start and latest end.
 - `overlapAll()` with no additional collections returns a clone; subtracting an empty collection also returns a clone.
 - Both classes support instance macros; see [Macros](../core/macros.md).

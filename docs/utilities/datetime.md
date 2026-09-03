@@ -10,7 +10,7 @@ Use `Date`, `DateTime`, and `Time` from `Fyre\Utility\DateTime` for immutable ca
 
 All three extend `AbstractDateTime`, which provides their shared construction, locale, formatting, conversion, and serialization behavior. `Date` and `DateTime` provide calendar operations; `DateTime` and `Time` provide clock operations.
 
-For ranges and sets of ranges, see [Periods](periods.md). Period boundaries remain `DateTime` values rather than accepting `Date` or `Time`.
+For ranges and sets of ranges, see [Periods](periods.md). Period boundaries may be either `Date` or `DateTime` instances, but both boundaries must use the same concrete class. Strings and `Time` instances are not accepted.
 
 ## Table of Contents
 
@@ -192,7 +192,7 @@ Date clamping applies to `Date` and `DateTime` and is enabled by default. When `
 - `DateTime::getTimeZoneOffset()` returns minutes using the inverse sign of native `DateTimeZone::getOffset()`: `+10:00` is `-600`. `withTimeZoneOffset()` uses the same convention.
 - Arithmetic and field replacement use calendar operations. `DateTime` results around daylight-saving transitions can therefore differ from adding a fixed number of elapsed seconds.
 - `Date`, `DateTime`, and `Time` support instance and static macros; see [Macros](../core/macros.md).
-- `Period` accepts `DateTime` boundaries and strings parsed as `DateTime`; it does not accept `Date` or `Time`.
+- `Period` accepts matching `Date` or `DateTime` boundaries. `Date` periods support only `year`, `month`, and `day` granularities; strings and `Time` instances are not accepted.
 
 ## Related
 
