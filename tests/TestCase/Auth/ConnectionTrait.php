@@ -181,6 +181,15 @@ trait ConnectionTrait
 
         $Users->save($authUser);
 
+        $impersonatedUser = $Users->newEntity([
+            'username' => 'impersonated',
+            'email' => 'impersonated@test.com',
+            'password' => password_hash('test', PASSWORD_DEFAULT),
+            'token' => 'y1g36lcxEbF8vV1Vb9TlweqXJJhYKRSO',
+        ]);
+
+        $Users->save($impersonatedUser);
+
         $Posts = $this->modelRegistry->use('Posts');
 
         $authPosts = $Posts->newEntities([

@@ -52,6 +52,8 @@ class CookieAuthenticator extends Authenticator
     #[SensitivePropertyArray(['salt'])]
     protected array $config;
 
+    protected Entity|null $cookieUser = null;
+
     protected bool|null $sendCookie = null;
 
     /**
@@ -113,7 +115,7 @@ class CookieAuthenticator extends Authenticator
     /**
      * {@inheritDoc}
      *
-     * Writes or clears the cookie depending on whether the user is being remembered.
+     * Writes a cookie for the user queued by login, or clears the cookie after logout.
      */
     #[Override]
     public function beforeResponse(ResponseInterface $response, Entity|null $user = null): ResponseInterface
@@ -128,10 +130,10 @@ class CookieAuthenticator extends Authenticator
             );
         }
 
-        if ($user && $this->sendCookie === true) {
-            $identifier = $user->get($this->config['identifierField']);
+        if ($this->cookieUser && $this->sendCookie === true) {
+            $identifier = $this->cookieUser->get($this->config['identifierField']);
 
-            $token = $this->createToken($user);
+            $token = $this->createToken($this->cookieUser);
             $tokenHash = password_hash($token, PASSWORD_DEFAULT);
 
             $value = (string) json_encode([$identifier, $tokenHash]) |> rawurlencode(...);
@@ -161,6 +163,7 @@ class CookieAuthenticator extends Authenticator
     {
         if ($rememberMe) {
             $this->sendCookie = true;
+            $this->cookieUser = $user;
         }
     }
 
@@ -173,6 +176,7 @@ class CookieAuthenticator extends Authenticator
     public function logout(): void
     {
         $this->sendCookie = false;
+        $this->cookieUser = null;
     }
 
     /**

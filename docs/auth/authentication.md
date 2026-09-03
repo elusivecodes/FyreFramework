@@ -1,8 +1,8 @@
 # Authentication
 
-Use `Auth` to coordinate authenticators, resolve the current user, and manage login and logout consistently across the request lifecycle.
+Use `Auth` to coordinate authenticators, resolve the current user, and manage login, logout, and session-based impersonation consistently across the request lifecycle.
 
-This page covers authenticator configuration, request flow, and the `Auth` and `Identifier` APIs you will use most.
+This page covers authenticator configuration, request flow, identity management, and the `Auth` and `Identifier` APIs you will use most.
 
 ## Table of Contents
 
@@ -21,6 +21,10 @@ This page covers authenticator configuration, request flow, and the `Auth` and `
   - [Attempting a credential login](#attempting-a-credential-login)
   - [Logging in a known user](#logging-in-a-known-user)
   - [Logging out](#logging-out)
+- [Impersonating users](#impersonating-users)
+  - [Starting impersonation](#starting-impersonation)
+  - [Resolving the original user](#resolving-the-original-user)
+  - [Stopping impersonation](#stopping-impersonation)
 - [Resolving the current user](#resolving-the-current-user)
 - [Building the login URL](#building-the-login-url)
 - [Identifying users with Identifier](#identifying-users-with-identifier)
@@ -32,6 +36,7 @@ Use `Auth` when you want to:
 
 - Attempt a login using credentials (via `Identifier`)
 - Log in or log out a known user
+- Temporarily impersonate another user in session-authenticated applications
 - Check whether a user is logged in
 - Retrieve the current user entity
 
@@ -65,7 +70,7 @@ For configuration basics, see [Config](../core/config.md).
 
 `Auth.loginRoute` controls where unauthenticated HTML requests are redirected by middleware. This value is a *route alias* (the `as` name), not a URL path; see [Router aliases](../routing/router.md#aliases-and-url-generation). If not configured, it defaults to `login`.
 
-If you need custom authentication behavior, create your own authenticator class and add it to the stack alongside the built-in ones.
+If you need custom authentication behavior, create your own authenticator class and add it to the stack alongside the built-in ones. Implement `ImpersonationAuthenticatorInterface` when a custom authenticator should support impersonation.
 
 ## Common setups
 
@@ -148,12 +153,15 @@ Reads an identity value from the session and loads the user from the model confi
 
 - `sessionKey` (`string`): the session key used to store the identity (default: `'auth'`)
 - `sessionField` (`string`): the user field stored in the session and used for lookup (default: `'id'`)
+- `impersonatorSessionKey` (`string`): the session key used to store the original identity during impersonation (default: `'authImpersonator'`)
 
 When login changes the stored identity, the authenticator rotates the session ID before storing the new value. Logout removes the session value and rotates the session ID again.
 
+`sessionKey` and `impersonatorSessionKey` must be different. `SessionAuthenticator` is the only built-in authenticator that supports user impersonation.
+
 ### `CookieAuthenticator`
 
-Reads a remember-me cookie and validates it against the stored user. Login can queue a cookie for the next response, while logout or an invalid payload queues it for deletion.
+Reads a remember-me cookie and validates it against the stored user. Login can queue a cookie for the next response, while logout or an invalid payload queues it for deletion. A queued cookie is always generated from the user passed to `login()`, even if the current user changes before the response is sent.
 
 - `cookieName` (`string`): the cookie name (default: `'auth'`)
 - `cookieOptions` (`array<string, mixed>`): options passed to `Cookie` (default: `['httpOnly' => true]`)
@@ -214,11 +222,59 @@ $auth->login($user);
 
 ### Logging out
 
-`logout()` clears the current user and notifies every authenticator so it can clear persisted state:
+`logout()` clears the current user and notifies every authenticator so it can clear persisted state. This also clears any active impersonation:
 
 ```php
 $auth->logout();
 ```
+
+## Impersonating users
+
+Impersonation temporarily replaces the effective user while retaining the original user so it can be restored. It is intended for controlled administrative or support workflows and requires `SessionAuthenticator`.
+
+The application is responsible for authorizing the operation. Always perform the authorization check before starting impersonation, because authorization uses the current effective user.
+
+### Starting impersonation
+
+Call `Auth::impersonate(Entity $user): static` with the user that should become the effective identity:
+
+```php
+$auth->access()->authorize('impersonate', $targetUser);
+$auth->impersonate($targetUser);
+
+return $response->withLocation('/dashboard');
+```
+
+The session ID is rotated, the original user identifier is stored under `impersonatorSessionKey`, and the target identifier replaces the value under `sessionKey`.
+
+The target becomes the current user on the next request. Redirect immediately after calling `impersonate()` so `Auth::user()` and the immutable request `user` attribute continue to describe the same identity. A user cannot impersonate themselves, and nested impersonation is not supported.
+
+### Resolving the original user
+
+While `Auth::isImpersonating(): bool` returns `true`, `Auth::user(): Entity|null` returns the effective user and `Auth::impersonator(): Entity|null` returns the original user:
+
+```php
+if ($auth->isImpersonating()) {
+    $effectiveUser = $auth->user();
+    $originalUser = $auth->impersonator();
+}
+```
+
+Use both values when audit records need to distinguish who performed an action from whose identity was active. Authorization through `Auth::access()` continues to use the effective user.
+
+### Stopping impersonation
+
+Call `Auth::stopImpersonating(): static` to restore the original session identity:
+
+```php
+$auth->stopImpersonating();
+
+return $response->withLocation('/admin/users');
+```
+
+The session ID is rotated and the original user becomes current on the next request. Calling `stopImpersonating()` when impersonation is not active has no effect.
+
+Remember-me cookies are not changed by impersonation. They remain associated with the user originally passed to `login(..., rememberMe: true)`, so expiration of the impersonation session cannot authenticate the target through that cookie.
 
 ## Resolving the current user
 
@@ -226,6 +282,8 @@ From the `Auth` service, use these methods:
 
 - `user(): Entity|null`
 - `isLoggedIn(): bool`
+- `impersonator(): Entity|null`
+- `isImpersonating(): bool`
 
 Global helper alternatives:
 

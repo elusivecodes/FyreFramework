@@ -4,8 +4,10 @@ declare(strict_types=1);
 namespace Tests\TestCase\Auth;
 
 use Fyre\Auth\Auth;
+use Fyre\Auth\Authenticators\SessionAuthenticator;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
+use LogicException;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Authenticators\MockAuthenticator;
 use Tests\Mock\Entities\User;
@@ -97,6 +99,128 @@ final class AuthTest extends TestCase
         );
     }
 
+    public function testImpersonate(): void
+    {
+        $authenticator = $this->container->build(SessionAuthenticator::class);
+        $this->auth->addAuthenticator($authenticator);
+
+        $this->login();
+
+        $user = $this->identifier->identify('impersonated@test.com');
+
+        $this->assertInstanceOf(User::class, $user);
+
+        $this->auth->impersonate($user);
+
+        $this->assertSame(2, $this->session->get('auth'));
+    }
+
+    public function testImpersonateAlreadyImpersonating(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessageIs('A user is already being impersonated.');
+
+        $authenticator = $this->container->build(SessionAuthenticator::class);
+        $this->auth->addAuthenticator($authenticator);
+
+        $this->login();
+
+        $user = $this->identifier->identify('impersonated@test.com');
+
+        $this->assertInstanceOf(User::class, $user);
+
+        $this->auth->impersonate($user);
+        $this->auth->impersonate($user);
+    }
+
+    public function testImpersonateCurrentUser(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessageIs('A user cannot impersonate themselves.');
+
+        $authenticator = $this->container->build(SessionAuthenticator::class);
+        $this->auth->addAuthenticator($authenticator);
+
+        $this->login();
+
+        $user = $this->auth->user();
+
+        $this->assertInstanceOf(User::class, $user);
+
+        $this->auth->impersonate($user);
+    }
+
+    public function testImpersonateLoggedOut(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessageIs('A user must be logged in before impersonating another user.');
+
+        $authenticator = $this->container->build(SessionAuthenticator::class);
+        $this->auth->addAuthenticator($authenticator);
+
+        $user = $this->identifier->identify('impersonated@test.com');
+
+        $this->assertInstanceOf(User::class, $user);
+
+        $this->auth->impersonate($user);
+    }
+
+    public function testImpersonateUnsupported(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessageIs('Impersonation requires a compatible authenticator.');
+
+        $this->login();
+
+        $user = $this->identifier->identify('impersonated@test.com');
+
+        $this->assertInstanceOf(User::class, $user);
+
+        $this->auth->impersonate($user);
+    }
+
+    public function testImpersonator(): void
+    {
+        $authenticator = $this->container->build(SessionAuthenticator::class);
+        $this->auth->addAuthenticator($authenticator);
+
+        $this->login();
+
+        $user = $this->identifier->identify('impersonated@test.com');
+
+        $this->assertInstanceOf(User::class, $user);
+
+        $this->auth->impersonate($user);
+
+        $this->assertSame(1, $this->auth->impersonator()?->get('id'));
+    }
+
+    public function testImpersonatorNull(): void
+    {
+        $this->assertNull($this->auth->impersonator());
+    }
+
+    public function testIsImpersonating(): void
+    {
+        $authenticator = $this->container->build(SessionAuthenticator::class);
+        $this->auth->addAuthenticator($authenticator);
+
+        $this->login();
+
+        $user = $this->identifier->identify('impersonated@test.com');
+
+        $this->assertInstanceOf(User::class, $user);
+
+        $this->auth->impersonate($user);
+
+        $this->assertTrue($this->auth->isImpersonating());
+    }
+
+    public function testIsImpersonatingFalse(): void
+    {
+        $this->assertFalse($this->auth->isImpersonating());
+    }
+
     public function testIsLoggedIn(): void
     {
         $this->login();
@@ -117,12 +241,46 @@ final class AuthTest extends TestCase
         $this->assertFalse($this->auth->isLoggedIn());
     }
 
+    public function testLogoutStopsImpersonating(): void
+    {
+        $authenticator = $this->container->build(SessionAuthenticator::class);
+        $this->auth->addAuthenticator($authenticator);
+
+        $this->login();
+
+        $user = $this->identifier->identify('impersonated@test.com');
+
+        $this->assertInstanceOf(User::class, $user);
+
+        $this->auth->impersonate($user);
+        $this->auth->logout();
+
+        $this->assertFalse($this->auth->isImpersonating());
+    }
+
     public function testMacro(): void
     {
         $this->assertContains(
             MacroTrait::class,
             class_uses(Auth::class)
         );
+    }
+
+    public function testStopImpersonating(): void
+    {
+        $authenticator = $this->container->build(SessionAuthenticator::class);
+        $this->auth->addAuthenticator($authenticator);
+
+        $this->login();
+
+        $user = $this->identifier->identify('impersonated@test.com');
+
+        $this->assertInstanceOf(User::class, $user);
+
+        $this->auth->impersonate($user);
+        $this->auth->stopImpersonating();
+
+        $this->assertSame(1, $this->session->get('auth'));
     }
 
     public function testUser(): void

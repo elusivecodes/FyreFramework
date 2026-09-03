@@ -10,6 +10,7 @@ use Fyre\Core\Traits\MacroTrait;
 use Fyre\ORM\Entity;
 use Fyre\Router\Router;
 use InvalidArgumentException;
+use LogicException;
 use Psr\Http\Message\UriInterface;
 
 use function array_filter;
@@ -196,6 +197,59 @@ class Auth
     }
 
     /**
+     * Starts impersonating a user.
+     *
+     * Note: The impersonated identity takes effect on the next request.
+     *
+     * @param Entity $user The user to impersonate.
+     * @return static The Auth instance.
+     *
+     * @throws LogicException If no user is logged in or impersonation is not supported.
+     */
+    public function impersonate(Entity $user): static
+    {
+        if (!$this->user) {
+            throw new LogicException('A user must be logged in before impersonating another user.');
+        }
+
+        $authenticator = $this->impersonationAuthenticator();
+
+        if (!$authenticator) {
+            throw new LogicException('Impersonation requires a compatible authenticator.');
+        }
+
+        $authenticator->impersonate($this->user, $user);
+
+        return $this;
+    }
+
+    /**
+     * Returns the original user while impersonating.
+     *
+     * @return Entity|null The original user, or null if impersonation is not active.
+     */
+    public function impersonator(): Entity|null
+    {
+        $authenticator = $this->impersonationAuthenticator();
+
+        if (!$authenticator?->isImpersonating()) {
+            return null;
+        }
+
+        return $authenticator->impersonator();
+    }
+
+    /**
+     * Checks whether the current user is being impersonated.
+     *
+     * @return bool Whether impersonation is active.
+     */
+    public function isImpersonating(): bool
+    {
+        return $this->impersonationAuthenticator()?->isImpersonating() ?? false;
+    }
+
+    /**
      * Checks whether the current user is logged in.
      *
      * @return bool Whether the current user is logged in.
@@ -242,6 +296,24 @@ class Auth
     }
 
     /**
+     * Stops impersonating the current user.
+     *
+     * Note: The original identity is restored on the next request.
+     *
+     * @return static The Auth instance.
+     */
+    public function stopImpersonating(): static
+    {
+        $authenticator = $this->impersonationAuthenticator();
+
+        if ($authenticator?->isImpersonating()) {
+            $authenticator->stopImpersonating();
+        }
+
+        return $this;
+    }
+
+    /**
      * Returns the current user.
      *
      * @return Entity|null The Entity instance for the current user or null if no user is logged in.
@@ -249,5 +321,21 @@ class Auth
     public function user(): Entity|null
     {
         return $this->user;
+    }
+
+    /**
+     * Returns the configured impersonation Authenticator.
+     *
+     * @return ImpersonationAuthenticatorInterface|null The Authenticator instance, or null if none supports impersonation.
+     */
+    protected function impersonationAuthenticator(): ImpersonationAuthenticatorInterface|null
+    {
+        foreach ($this->authenticators as $authenticator) {
+            if ($authenticator instanceof ImpersonationAuthenticatorInterface) {
+                return $authenticator;
+            }
+        }
+
+        return null;
     }
 }

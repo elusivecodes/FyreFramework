@@ -5,21 +5,25 @@ namespace Fyre\Auth\Authenticators;
 
 use Fyre\Auth\Auth;
 use Fyre\Auth\Authenticator;
+use Fyre\Auth\ImpersonationAuthenticatorInterface;
 use Fyre\Http\Session\Session;
 use Fyre\ORM\Entity;
+use InvalidArgumentException;
+use LogicException;
 use Override;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
  * Authenticator that persists identity via the session.
  */
-class SessionAuthenticator extends Authenticator
+class SessionAuthenticator extends Authenticator implements ImpersonationAuthenticatorInterface
 {
     /**
      * @var array<string, mixed>
      */
     #[Override]
     protected static array $defaults = [
+        'impersonatorSessionKey' => 'authImpersonator',
         'sessionKey' => 'auth',
         'sessionField' => 'id',
     ];
@@ -37,6 +41,10 @@ class SessionAuthenticator extends Authenticator
         array $options = []
     ) {
         parent::__construct($auth, $options);
+
+        if ($this->config['sessionKey'] === $this->config['impersonatorSessionKey']) {
+            throw new InvalidArgumentException('Session keys for authentication and impersonation must be different.');
+        }
     }
 
     /**
@@ -47,19 +55,60 @@ class SessionAuthenticator extends Authenticator
     #[Override]
     public function authenticate(ServerRequestInterface $request): Entity|null
     {
-        $id = $this->session->get($this->config['sessionKey']);
+        return $this->session->get($this->config['sessionKey']) |> $this->findUser(...);
+    }
 
-        if (!$id) {
+    /**
+     * {@inheritDoc}
+     *
+     * Stores the original and impersonated user identifiers and refreshes the session.
+     *
+     * @throws LogicException If impersonation is already active, the users match, or the current user is not authenticated through the session.
+     */
+    #[Override]
+    public function impersonate(Entity $impersonator, Entity $user): void
+    {
+        if ($this->isImpersonating()) {
+            throw new LogicException('A user is already being impersonated.');
+        }
+
+        $sessionField = $this->config['sessionField'];
+        $impersonatorId = $impersonator->get($sessionField);
+        $userId = $user->get($sessionField);
+
+        if ($impersonatorId === $userId) {
+            throw new LogicException('A user cannot impersonate themselves.');
+        }
+
+        if ($this->session->get($this->config['sessionKey']) !== $impersonatorId) {
+            throw new LogicException('The current user is not authenticated through the session.');
+        }
+
+        $this->session->refresh(true);
+        $this->session->set($this->config['impersonatorSessionKey'], $impersonatorId);
+        $this->session->set($this->config['sessionKey'], $userId);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function impersonator(): Entity|null
+    {
+        if (!$this->isImpersonating()) {
             return null;
         }
 
-        $Model = $this->auth->identifier()->getModel();
+        return $this->session->get($this->config['impersonatorSessionKey']) |> $this->findUser(...);
+    }
 
-        return $Model->find()
-            ->where([
-                $Model->aliasField($this->config['sessionField']) => $id,
-            ])
-            ->first();
+    /**
+     * {@inheritDoc}
+     */
+    #[Override]
+    public function isImpersonating(): bool
+    {
+        return $this->session->has($this->config['impersonatorSessionKey']);
     }
 
     /**
@@ -75,6 +124,7 @@ class SessionAuthenticator extends Authenticator
 
         if ($this->session->get($sessionKey) !== $id) {
             $this->session->refresh(true);
+            $this->session->delete($this->config['impersonatorSessionKey']);
             $this->session->set($sessionKey, $id);
         }
     }
@@ -88,6 +138,47 @@ class SessionAuthenticator extends Authenticator
     public function logout(): void
     {
         $this->session->delete($this->config['sessionKey']);
+        $this->session->delete($this->config['impersonatorSessionKey']);
         $this->session->refresh(true);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * Restores the original user identifier and refreshes the session.
+     */
+    #[Override]
+    public function stopImpersonating(): void
+    {
+        if (!$this->isImpersonating()) {
+            return;
+        }
+
+        $id = $this->session->get($this->config['impersonatorSessionKey']);
+
+        $this->session->refresh(true);
+        $this->session->delete($this->config['impersonatorSessionKey']);
+        $this->session->set($this->config['sessionKey'], $id);
+    }
+
+    /**
+     * Finds a user by the configured session field.
+     *
+     * @param mixed $id The user identifier.
+     * @return Entity|null The Entity instance, or null if the user does not exist.
+     */
+    protected function findUser(mixed $id): Entity|null
+    {
+        if (!$id) {
+            return null;
+        }
+
+        $Model = $this->auth->identifier()->getModel();
+
+        return $Model->find()
+            ->where([
+                $Model->aliasField($this->config['sessionField']) => $id,
+            ])
+            ->first();
     }
 }

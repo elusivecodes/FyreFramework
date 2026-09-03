@@ -69,14 +69,14 @@ final class AuthenticatorTest extends TestCase
 
     public function testConstructInvalidAuthenticator(): void
     {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Authenticator `Invalid` must extend `Fyre\Auth\Authenticator`.');
+
         $this->container->use(Config::class)->set('Auth.authenticators', [
             [
                 'className' => 'Invalid',
             ],
         ]);
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageIs('Authenticator `Invalid` must extend `Fyre\Auth\Authenticator`.');
 
         $this->container->build(Auth::class);
     }
@@ -236,6 +236,28 @@ final class AuthenticatorTest extends TestCase
         $this->assertFalse($cookie->isExpired());
     }
 
+    public function testCookieAuthenticatorLoginRememberUser(): void
+    {
+        $authenticator = $this->container->build(CookieAuthenticator::class);
+
+        $user = $this->identifier->identify('test@test.com');
+        $otherUser = $this->identifier->identify('impersonated@test.com');
+
+        $this->assertInstanceOf(User::class, $user);
+        $this->assertInstanceOf(User::class, $otherUser);
+
+        $authenticator->login($user, true);
+
+        $response = $authenticator->beforeResponse(new ClientResponse(), $otherUser);
+
+        [$cookieString] = $response->getHeader('Set-Cookie');
+
+        $cookie = Cookie::createFromHeaderString($cookieString);
+        $data = json_decode(rawurldecode($cookie->getValue()), true);
+
+        $this->assertSame('test@test.com', $data[0]);
+    }
+
     public function testCookieAuthenticatorLogout(): void
     {
         $authenticator = $this->container->build(CookieAuthenticator::class);
@@ -303,6 +325,7 @@ final class AuthenticatorTest extends TestCase
                     'passwordField' => 'password',
                     'salt' => '[*****]',
                 ],
+                'cookieUser' => null,
                 'sendCookie' => null,
             ],
             $data
@@ -340,6 +363,18 @@ final class AuthenticatorTest extends TestCase
         );
 
         $this->assertTrue($this->auth->isLoggedIn());
+    }
+
+    public function testSessionAuthenticatorInvalidImpersonatorSessionKey(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Session keys for authentication and impersonation must be different.');
+
+        $this->container->build(SessionAuthenticator::class, [
+            'options' => [
+                'impersonatorSessionKey' => 'auth',
+            ],
+        ]);
     }
 
     public function testSessionAuthenticatorLogin(): void

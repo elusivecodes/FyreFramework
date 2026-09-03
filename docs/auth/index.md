@@ -9,7 +9,7 @@ Auth covers authentication (who the user is), authorization (what they can do), 
 
 ## Authentication flow
 
-Start by configuring how credentials identify a user in [Authentication](authentication.md). Add [Auth Middleware](middleware.md) to authenticate requests and make the current user available to application code. Then define and enforce application permissions with [Authorization](authorization.md).
+Start by configuring how credentials identify a user in [Authentication](authentication.md), including optional session-based user impersonation. Add [Auth Middleware](middleware.md) to authenticate requests and make the current user available to application code. Then define and enforce application permissions with [Authorization](authorization.md).
 
 Authentication establishes identity; authorization decides whether that identity may perform an action. Applications commonly use both, but their configuration and failure behavior remain separate.
 
