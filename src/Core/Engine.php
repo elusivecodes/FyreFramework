@@ -45,6 +45,7 @@ use Fyre\Router\Router;
 use Fyre\Security\ContentSecurityPolicy;
 use Fyre\Security\CsrfProtection;
 use Fyre\Security\Encryption\EncryptionManager;
+use Fyre\Security\Middleware\CorsMiddleware;
 use Fyre\Security\Middleware\CspMiddleware;
 use Fyre\Security\Middleware\CsrfProtectionMiddleware;
 use Fyre\TestSuite\Benchmark;
@@ -129,6 +130,7 @@ class Engine extends Container
                     ->map('authenticated', AuthenticatedMiddleware::class)
                     ->map('bindings', SubstituteBindingsMiddleware::class)
                     ->map('can', AuthorizedMiddleware::class)
+                    ->map('cors', CorsMiddleware::class)
                     ->map('csp', CspMiddleware::class)
                     ->map('csrf', CsrfProtectionMiddleware::class)
                     ->map('error', ErrorHandlerMiddleware::class)

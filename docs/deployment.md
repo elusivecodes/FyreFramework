@@ -250,15 +250,15 @@ See [CSRF](security/csrf.md) and [Content Security Policy](security/csp.md).
 
 ### CORS and rate limiting
 
-Fyre does not currently include a built-in CORS policy middleware. If browser clients access the
-application from another origin, register application middleware that validates allowed origins,
-methods, and request headers and handles preflight `OPTIONS` requests before authentication,
-CSRF, and routing. Do not treat CORS as authentication or authorization, and do not combine a
-wildcard allowed origin with credentialed browser requests.
+If browser clients access the application from another origin, register `CorsMiddleware` with an
+explicit allowlist. Place it before authentication, CSRF, and routing so it can handle preflight
+`OPTIONS` requests. Do not treat CORS as authentication or authorization, and do not combine a
+wildcard emitted origin with credentialed browser requests.
 
 Apply rate limiting to public or costly endpoints using a shared production cache so limits are
 consistent across application hosts. If limits use client IPs, configure trusted proxies first.
-See [HTTP Middleware](http/middleware.md) and [Rate Limiting](security/rate-limiting.md).
+See [CORS](security/cors.md), [HTTP Middleware](http/middleware.md), and
+[Rate Limiting](security/rate-limiting.md).
 
 ## Run queue workers
 

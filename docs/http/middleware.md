@@ -54,6 +54,7 @@ A queue entry may be a PSR-15 middleware instance, a middleware closure, or a st
 | `authenticated` | `AuthenticatedMiddleware` | require a logged-in user |
 | `unauthenticated` | `UnauthenticatedMiddleware` | require a logged-out user |
 | `can` | `AuthorizedMiddleware` | enforce an authorization rule |
+| `cors` | `CorsMiddleware` | apply Cross-Origin Resource Sharing policy and handle preflight requests |
 | `csrf` | `CsrfProtectionMiddleware` | validate CSRF tokens and apply response behavior |
 | `csp` | `CspMiddleware` | apply Content Security Policy headers |
 | `router` | `RouterMiddleware` | match the request and attach route context |
@@ -65,7 +66,7 @@ The default error renderer follows `App.debug`. With debugging disabled or absen
 
 Registering `ErrorHandler` also converts non-suppressed PHP errors into `ErrorException` instances.
 
-See [Authentication](../auth/authentication.md), [Authorization](../auth/authorization.md), [Auth Middleware](../auth/middleware.md), [CSRF](../security/csrf.md), [Content Security Policy](../security/csp.md), [Rate Limiting](../security/rate-limiting.md), [Router](../routing/router.md), and [Route Bindings](../routing/route-bindings.md) for feature-specific setup.
+See [Authentication](../auth/authentication.md), [Authorization](../auth/authorization.md), [Auth Middleware](../auth/middleware.md), [CORS](../security/cors.md), [CSRF](../security/csrf.md), [Content Security Policy](../security/csp.md), [Rate Limiting](../security/rate-limiting.md), [Router](../routing/router.md), and [Route Bindings](../routing/route-bindings.md) for feature-specific setup.
 
 ## Register aliases
 
@@ -148,6 +149,7 @@ For queue execution, fallback handling, and request scoping, see [Request Handle
 - [Router](../routing/router.md)
 - [Authentication](../auth/authentication.md)
 - [Authorization](../auth/authorization.md)
+- [CORS](../security/cors.md)
 - [CSRF](../security/csrf.md)
 - [Content Security Policy](../security/csp.md)
 - [Rate Limiting](../security/rate-limiting.md)
