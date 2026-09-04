@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Security;
 
+use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Http\ClientResponse;
@@ -21,7 +22,29 @@ use function class_uses;
 
 final class CorsMiddlewareTest extends TestCase
 {
+    protected Config $config;
+
     protected Container $container;
+
+    public function testConfigFallback(): void
+    {
+        $this->config->set('Cors.allowedOrigins', ['https://test.com']);
+        $middleware = new CorsMiddleware($this->container);
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'headers' => [
+                    'Origin' => 'https://test.com',
+                ],
+            ],
+        ]);
+
+        $response = $this->handle($middleware, $request);
+
+        $this->assertSame(
+            'https://test.com',
+            $response->getHeaderLine('Access-Control-Allow-Origin')
+        );
+    }
 
     public function testDebug(): void
     {
@@ -159,6 +182,9 @@ final class CorsMiddlewareTest extends TestCase
     protected function setUp(): void
     {
         $this->container = new Container();
+        $this->container->singleton(Config::class);
         $this->container->singleton(ResponseFactoryInterface::class, ResponseFactory::class);
+
+        $this->config = $this->container->use(Config::class);
     }
 }

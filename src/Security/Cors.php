@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Fyre\Security;
 
+use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Psr\Http\Message\ResponseInterface;
@@ -57,12 +58,15 @@ class Cors
      * Constructs a Cors.
      *
      * @param Container $container The Container.
-     * @param array<string, mixed> $options The CORS options.
+     * @param Config $config The Config.
+     * @param array<string, mixed>|null $options The CORS options.
      */
     public function __construct(
         protected Container $container,
-        array $options = []
+        Config $config,
+        array|null $options = null
     ) {
+        $options ??= $config->get('Cors', []);
         $options = array_replace(static::$defaults, $options);
 
         $this->options = $options;

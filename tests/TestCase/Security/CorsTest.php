@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Security;
 
+use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Http\ClientResponse;
@@ -16,14 +17,18 @@ use function class_uses;
 
 final class CorsTest extends TestCase
 {
+    protected Config $config;
+
     protected Container $container;
 
     public function testAddHeaders(): void
     {
-        $cors = new Cors($this->container, [
-            'allowCredentials' => true,
-            'allowedOrigins' => ['https://test.com'],
-            'exposedHeaders' => ['X-Test', 'X-Result'],
+        $cors = $this->container->build(Cors::class, [
+            'options' => [
+                'allowCredentials' => true,
+                'allowedOrigins' => ['https://test.com'],
+                'exposedHeaders' => ['X-Test', 'X-Result'],
+            ],
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
@@ -55,8 +60,10 @@ final class CorsTest extends TestCase
 
     public function testAddHeadersDeniedOrigin(): void
     {
-        $cors = new Cors($this->container, [
-            'allowedOrigins' => ['https://test.com'],
+        $cors = $this->container->build(Cors::class, [
+            'options' => [
+                'allowedOrigins' => ['https://test.com'],
+            ],
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
@@ -80,7 +87,7 @@ final class CorsTest extends TestCase
 
     public function testAddHeadersDisabled(): void
     {
-        $cors = new Cors($this->container);
+        $cors = $this->container->build(Cors::class);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'headers' => [
@@ -97,12 +104,14 @@ final class CorsTest extends TestCase
 
     public function testAddHeadersPreflight(): void
     {
-        $cors = new Cors($this->container, [
-            'allowCredentials' => true,
-            'allowedHeaders' => ['Content-Type', 'X-Test'],
-            'allowedMethods' => ['GET', 'POST'],
-            'allowedOrigins' => ['https://test.com'],
-            'maxAge' => 600,
+        $cors = $this->container->build(Cors::class, [
+            'options' => [
+                'allowCredentials' => true,
+                'allowedHeaders' => ['Content-Type', 'X-Test'],
+                'allowedMethods' => ['GET', 'POST'],
+                'allowedOrigins' => ['https://test.com'],
+                'maxAge' => 600,
+            ],
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
@@ -145,10 +154,12 @@ final class CorsTest extends TestCase
 
     public function testAddHeadersPreflightDenied(): void
     {
-        $cors = new Cors($this->container, [
-            'allowedHeaders' => ['Content-Type'],
-            'allowedMethods' => ['POST'],
-            'allowedOrigins' => ['https://test.com'],
+        $cors = $this->container->build(Cors::class, [
+            'options' => [
+                'allowedHeaders' => ['Content-Type'],
+                'allowedMethods' => ['POST'],
+                'allowedOrigins' => ['https://test.com'],
+            ],
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
@@ -172,9 +183,11 @@ final class CorsTest extends TestCase
 
     public function testAddHeadersPreflightMissingRequestMethod(): void
     {
-        $cors = new Cors($this->container, [
-            'allowedMethods' => ['*'],
-            'allowedOrigins' => ['*'],
+        $cors = $this->container->build(Cors::class, [
+            'options' => [
+                'allowedMethods' => ['*'],
+                'allowedOrigins' => ['*'],
+            ],
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
@@ -192,10 +205,12 @@ final class CorsTest extends TestCase
 
     public function testAddHeadersPreflightWildcard(): void
     {
-        $cors = new Cors($this->container, [
-            'allowedHeaders' => ['*'],
-            'allowedMethods' => ['*'],
-            'allowedOrigins' => ['*'],
+        $cors = $this->container->build(Cors::class, [
+            'options' => [
+                'allowedHeaders' => ['*'],
+                'allowedMethods' => ['*'],
+                'allowedOrigins' => ['*'],
+            ],
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
@@ -226,8 +241,10 @@ final class CorsTest extends TestCase
 
     public function testAddHeadersPreflightWildcardOriginVary(): void
     {
-        $cors = new Cors($this->container, [
-            'allowedOrigins' => ['*'],
+        $cors = $this->container->build(Cors::class, [
+            'options' => [
+                'allowedOrigins' => ['*'],
+            ],
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
@@ -249,8 +266,10 @@ final class CorsTest extends TestCase
 
     public function testAddHeadersWildcardOrigin(): void
     {
-        $cors = new Cors($this->container, [
-            'allowedOrigins' => ['*'],
+        $cors = $this->container->build(Cors::class, [
+            'options' => [
+                'allowedOrigins' => ['*'],
+            ],
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
@@ -271,8 +290,10 @@ final class CorsTest extends TestCase
 
     public function testCanHandleRequest(): void
     {
-        $cors = new Cors($this->container, [
-            'allowedOrigins' => ['https://test.com'],
+        $cors = $this->container->build(Cors::class, [
+            'options' => [
+                'allowedOrigins' => ['https://test.com'],
+            ],
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
@@ -287,7 +308,7 @@ final class CorsTest extends TestCase
 
     public function testCanHandleRequestDisabled(): void
     {
-        $cors = new Cors($this->container);
+        $cors = $this->container->build(Cors::class);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'headers' => [
@@ -301,12 +322,34 @@ final class CorsTest extends TestCase
 
     public function testCanHandleRequestMissingOrigin(): void
     {
-        $cors = new Cors($this->container, [
-            'allowedOrigins' => ['https://test.com'],
+        $cors = $this->container->build(Cors::class, [
+            'options' => [
+                'allowedOrigins' => ['https://test.com'],
+            ],
         ]);
         $request = $this->container->build(ServerRequest::class);
 
         $this->assertFalse($cors->canHandleRequest($request));
+    }
+
+    public function testConfigFallback(): void
+    {
+        $this->config->set('Cors.allowedOrigins', ['https://test.com']);
+        $cors = $this->container->build(Cors::class);
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'headers' => [
+                    'Origin' => 'https://test.com',
+                ],
+            ],
+        ]);
+
+        $response = $cors->addHeaders($request, new ClientResponse());
+
+        $this->assertSame(
+            'https://test.com',
+            $response->getHeaderLine('Access-Control-Allow-Origin')
+        );
     }
 
     public function testDebug(): void
@@ -319,7 +362,7 @@ final class CorsTest extends TestCase
 
     public function testIsPreflightRequest(): void
     {
-        $cors = new Cors($this->container);
+        $cors = $this->container->build(Cors::class);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'method' => 'OPTIONS',
@@ -334,7 +377,7 @@ final class CorsTest extends TestCase
 
     public function testIsPreflightRequestInvalidMethod(): void
     {
-        $cors = new Cors($this->container);
+        $cors = $this->container->build(Cors::class);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'method' => 'GET',
@@ -349,7 +392,7 @@ final class CorsTest extends TestCase
 
     public function testIsPreflightRequestMissingRequestMethod(): void
     {
-        $cors = new Cors($this->container);
+        $cors = $this->container->build(Cors::class);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'method' => 'OPTIONS',
@@ -359,10 +402,29 @@ final class CorsTest extends TestCase
         $this->assertFalse($cors->isPreflightRequest($request));
     }
 
+    public function testOptionsOverrideConfig(): void
+    {
+        $this->config->set('Cors.allowedOrigins', ['https://test.com']);
+        $cors = $this->container->build(Cors::class, [
+            'options' => [],
+        ]);
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'headers' => [
+                    'Origin' => 'https://test.com',
+                ],
+            ],
+        ]);
+
+        $this->assertFalse($cors->canHandleRequest($request));
+    }
+
     public function testShouldNotSkip(): void
     {
-        $cors = new Cors($this->container, [
-            'skipCheck' => static fn(ServerRequestInterface $request): bool => $request->getMethod() === 'GET',
+        $cors = $this->container->build(Cors::class, [
+            'options' => [
+                'skipCheck' => static fn(ServerRequestInterface $request): bool => $request->getMethod() === 'GET',
+            ],
         ]);
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
@@ -375,8 +437,10 @@ final class CorsTest extends TestCase
 
     public function testShouldSkip(): void
     {
-        $cors = new Cors($this->container, [
-            'skipCheck' => static fn(ServerRequestInterface $request): bool => $request->getMethod() === 'GET',
+        $cors = $this->container->build(Cors::class, [
+            'options' => [
+                'skipCheck' => static fn(ServerRequestInterface $request): bool => $request->getMethod() === 'GET',
+            ],
         ]);
         $request = $this->container->build(ServerRequest::class);
 
@@ -387,5 +451,8 @@ final class CorsTest extends TestCase
     protected function setUp(): void
     {
         $this->container = new Container();
+        $this->container->singleton(Config::class);
+
+        $this->config = $this->container->use(Config::class);
     }
 }

@@ -28,9 +28,9 @@ class CorsMiddleware implements MiddlewareInterface
      * Constructs a CorsMiddleware.
      *
      * @param Container $container The Container.
-     * @param array<string, mixed> $options The CORS options.
+     * @param array<string, mixed>|null $options The CORS options.
      */
-    public function __construct(Container $container, array $options = [])
+    public function __construct(Container $container, array|null $options = null)
     {
         $this->cors = $container->build(Cors::class, ['options' => $options]);
         $this->responseFactory = $container->use(ResponseFactoryInterface::class);
