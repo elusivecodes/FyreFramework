@@ -6,6 +6,7 @@ namespace Fyre\Security;
 use Fyre\Core\Traits\DebugTrait;
 use InvalidArgumentException;
 use Override;
+use Stringable;
 
 use function array_map;
 use function implode;
@@ -19,7 +20,7 @@ use function sprintf;
  *
  * This class is immutable; modifier methods return a cloned instance.
  */
-class Policy
+class Policy implements Stringable
 {
     use DebugTrait;
 

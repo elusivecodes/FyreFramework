@@ -12,6 +12,7 @@ use Override;
 use ReflectionClass;
 use ReflectionMethod;
 use RuntimeException;
+use Stringable;
 
 use function method_exists;
 use function preg_replace;
@@ -23,7 +24,7 @@ use function sprintf;
  * Cells execute an action method and then render a template using a child {@see View}
  * instance (without a layout).
  */
-abstract class Cell
+abstract class Cell implements Stringable
 {
     use DebugTrait;
     use MacroTrait;

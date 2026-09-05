@@ -6,6 +6,7 @@ namespace Fyre\Http\Cookie;
 use Fyre\Core\Traits\DebugTrait;
 use InvalidArgumentException;
 use Override;
+use Stringable;
 
 use function array_replace;
 use function array_shift;
@@ -39,7 +40,7 @@ use const INTL_IDNA_VARIANT_UTS46;
  *
  * @phpstan-consistent-constructor
  */
-class Cookie
+class Cookie implements Stringable
 {
     use DebugTrait;
 
