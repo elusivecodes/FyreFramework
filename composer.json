@@ -1,6 +1,6 @@
 {
     "name": "fyre/framework",
-    "description": "FyrePHP framework for MVC web apps with PSR-compliant HTTP, routing, ORM, cache, queue, and CLI tooling.",
+    "description": "Modular PHP framework with PSR-compliant HTTP handling, routing, ORM, templating, caching, queues, and CLI tools.",
     "keywords": [
         "framework",
         "fyre",
