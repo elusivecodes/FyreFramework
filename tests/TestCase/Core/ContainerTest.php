@@ -580,6 +580,62 @@ final class ContainerTest extends TestCase
         );
     }
 
+    public function testUseScopedAlias(): void
+    {
+        $this->container
+            ->scoped(InnerService::class)
+            ->singleton('service', InnerService::class);
+
+        $innerService = $this->container->use('service');
+
+        $this->assertSame(
+            $innerService,
+            $this->container->use(InnerService::class)
+        );
+
+        $this->container->clearScoped();
+
+        $newInnerService = $this->container->use('service');
+
+        $this->assertNotSame(
+            $innerService,
+            $newInnerService
+        );
+
+        $this->assertSame(
+            $newInnerService,
+            $this->container->use(InnerService::class)
+        );
+    }
+
+    public function testUseScopedAliasCached(): void
+    {
+        $this->container
+            ->scoped(InnerService::class)
+            ->singleton('service', InnerService::class);
+
+        $innerService = $this->container->use(InnerService::class);
+
+        $this->assertSame(
+            $innerService,
+            $this->container->use('service')
+        );
+
+        $this->container->clearScoped();
+
+        $newInnerService = $this->container->use('service');
+
+        $this->assertNotSame(
+            $innerService,
+            $newInnerService
+        );
+
+        $this->assertSame(
+            $newInnerService,
+            $this->container->use(InnerService::class)
+        );
+    }
+
     public function testUseScopedDependency(): void
     {
         $this->assertSame(
@@ -617,6 +673,85 @@ final class ContainerTest extends TestCase
 
         $this->assertNotSame(
             $innerService,
+            $this->container->use(InnerService::class)
+        );
+    }
+
+    public function testUseScopedTransientDependency(): void
+    {
+        $this->container
+            ->scoped(InnerService::class)
+            ->singleton(Service::class)
+            ->singleton('service', static fn(OuterService $outerService): OuterService => $outerService);
+
+        $service = $this->container->use(Service::class);
+        $outerService = $this->container->use('service');
+
+        $this->assertSame(
+            $outerService,
+            $this->container->use('service')
+        );
+
+        $this->assertSame(
+            $outerService->getInnerService(),
+            $this->container->use(InnerService::class)
+        );
+
+        $this->container->clearScoped();
+
+        $newOuterService = $this->container->use('service');
+
+        $this->assertNotSame(
+            $outerService,
+            $newOuterService
+        );
+
+        $this->assertNotSame(
+            $outerService->getInnerService(),
+            $newOuterService->getInnerService()
+        );
+
+        $this->assertSame(
+            $newOuterService->getInnerService(),
+            $this->container->use(InnerService::class)
+        );
+
+        $this->assertSame(
+            $service,
+            $this->container->use(Service::class)
+        );
+    }
+
+    public function testUseScopedTransientDependencyCached(): void
+    {
+        $this->container
+            ->scoped(InnerService::class)
+            ->singleton('service', static fn(OuterService $outerService): OuterService => $outerService);
+
+        $innerService = $this->container->use(InnerService::class);
+        $outerService = $this->container->use('service');
+
+        $this->assertSame(
+            $innerService,
+            $outerService->getInnerService()
+        );
+
+        $this->container->clearScoped();
+
+        $newOuterService = $this->container->use('service');
+
+        $this->assertNotSame(
+            $outerService,
+            $newOuterService
+        );
+
+        $this->assertNotSame(
+            $innerService,
+            $newOuterService->getInnerService()
+        );
+
+        $this->assertSame(
+            $newOuterService->getInnerService(),
             $this->container->use(InnerService::class)
         );
     }

@@ -453,6 +453,8 @@ class Container implements ContainerInterface
     public function use(string $alias, array $arguments = []): mixed
     {
         if (isset($this->instances[$alias]) && $arguments === []) {
+            $this->addDependenciesToStack([$this->instances[$alias]]);
+
             return $this->instances[$alias];
         }
 
@@ -491,6 +493,8 @@ class Container implements ContainerInterface
             array_pop($this->aliasStack);
         }
 
+        $this->addDependenciesToStack($dependencies);
+
         if (!$shared || $arguments !== []) {
             return $instance;
         }
@@ -504,7 +508,10 @@ class Container implements ContainerInterface
             }
         }
 
-        return $this->instances[$alias] = $instance;
+        $this->instances[$alias] = $instance;
+        $this->addDependenciesToStack([$instance]);
+
+        return $instance;
     }
 
     /**
