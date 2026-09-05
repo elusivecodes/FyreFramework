@@ -186,7 +186,7 @@ $user = $users->get('user.1');
 $cache->invalidateTag('users');
 ```
 
-Tags can be chained or provided as an array:
+Tags can be chained or provided as an array. Tags are compared as strings, and their order does not affect the cache namespace:
 
 ```php
 $activeUsers = $cache->tags('users')->tags('active');

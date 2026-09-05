@@ -18,6 +18,8 @@ use function serialize;
 use function sha1;
 use function sort;
 
+use const SORT_STRING;
+
 /**
  * Provides a tagged cache wrapper.
  *
@@ -59,7 +61,7 @@ class TaggedCacher
     ) {
         $this->tags = array_unique($this->tags) |> array_values(...);
 
-        sort($this->tags);
+        sort($this->tags, SORT_STRING);
     }
 
     /**

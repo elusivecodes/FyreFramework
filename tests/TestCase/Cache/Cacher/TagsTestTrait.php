@@ -23,6 +23,20 @@ trait TagsTestTrait
         ];
     }
 
+    /**
+     * @return array<string, array{string[], string[]}>
+     */
+    public static function equivalentTagSetsProvider(): array
+    {
+        return [
+            'alphabetical' => [['users', 'active'], ['active', 'users']],
+            'leading zero' => [['1', '01'], ['01', '1']],
+            'zero' => [['0', '00'], ['00', '0']],
+            'decimal' => [['1', '1.0'], ['1.0', '1']],
+            'exponent' => [['100', '1e2'], ['1e2', '100']],
+        ];
+    }
+
     public function testTaggedDelete(): void
     {
         $usersCache = $this->cacher->tags('users');
@@ -75,6 +89,21 @@ trait TagsTestTrait
         $this->assertSame(
             'second',
             $secondCache->get('user.1')
+        );
+    }
+
+    /**
+     * @param string[] $firstTags
+     * @param string[] $secondTags
+     */
+    #[DataProvider('equivalentTagSetsProvider')]
+    public function testTaggedGetSetEquivalentTags(array $firstTags, array $secondTags): void
+    {
+        $this->cacher->tags($firstTags)->set('user.1', 'value');
+
+        $this->assertSame(
+            'value',
+            $this->cacher->tags($secondTags)->get('user.1')
         );
     }
 
