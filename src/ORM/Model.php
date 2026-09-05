@@ -1881,6 +1881,10 @@ class Model implements EventListenerInterface
         }
 
         foreach ($data as $field => $value) {
+            if ($options['guard'] && !$entity->isAccessible($field)) {
+                continue;
+            }
+
             if (isset($errors[$field])) {
                 $entity->setInvalid($field, $value);
 
@@ -2032,6 +2036,13 @@ class Model implements EventListenerInterface
         $columns = $schema->columnNames();
         $primaryKeys = $this->getPrimaryKey();
         $autoIncrementKey = $this->getAutoIncrementKey();
+
+        if (!$entity->isNew() && $entity->extractOriginalChanged($primaryKeys) !== []) {
+            throw new OrmException(sprintf(
+                'Primary key values for model `%s` must not be changed.',
+                $this->getAlias()
+            ));
+        }
 
         $data = $entity->extractDirty($columns) |> $this->toDatabaseSchema(...);
 

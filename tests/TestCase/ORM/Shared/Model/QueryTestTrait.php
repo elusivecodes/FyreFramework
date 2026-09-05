@@ -5,6 +5,7 @@ namespace Tests\TestCase\ORM\Shared\Model;
 
 use Fyre\DB\Expressions\ConditionExpression;
 use Fyre\DB\Query;
+use Fyre\Event\Event;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Exceptions\OrmException;
 use Tests\Mock\Entities\Item;
@@ -597,6 +598,77 @@ trait QueryTestTrait
         );
     }
 
+    public function testUpdateChangedPrimaryKey(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $items = $Items->newEntities([
+            [
+                'name' => 'Test 1',
+            ],
+            [
+                'name' => 'Test 2',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+
+        $items[0]->set('id', $items[1]->id);
+        $items[0]->set('name', 'Updated');
+
+        $caught = null;
+
+        try {
+            $Items->save($items[0]);
+        } catch (OrmException $e) {
+            $caught = $e;
+        }
+
+        $this->assertInstanceOf(
+            OrmException::class,
+            $caught
+        );
+        $this->assertSame(
+            'Primary key values for model `Items` must not be changed.',
+            $caught->getMessage()
+        );
+        $this->assertArraysAreIdentical(
+            ['Test 1', 'Test 2'],
+            $Items->find(orderBy: ['id' => 'ASC'])
+                ->all()
+                ->map(static fn(Entity $item): string => $item->name)
+                ->toArray()
+        );
+        $this->assertSame(
+            0,
+            $this->db->getSavePointLevel()
+        );
+    }
+
+    public function testUpdateChangedPrimaryKeyInCallback(): void
+    {
+        $this->expectException(OrmException::class);
+        $this->expectExceptionMessageIs('Primary key values for model `Items` must not be changed.');
+
+        $Items = $this->modelRegistry->use('Items');
+        $item = $Items->newEntity([
+            'name' => 'Test',
+        ]);
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+
+        $item->set('name', 'Updated');
+
+        $Items->getEventManager()->on('ORM.beforeSave', static function(Event $event, Entity $entity): void {
+            $entity->set('id', 10);
+        });
+
+        $Items->save($item);
+    }
+
     public function testUpdateIncompleteCompositePrimaryKey(): void
     {
         $this->expectException(OrmException::class);
@@ -712,6 +784,55 @@ trait QueryTestTrait
                 static fn(Item $item): string => $item->name,
                 $items
             )
+        );
+    }
+
+    public function testUpdateManyChangedCompositePrimaryKey(): void
+    {
+        $CompositeItems = $this->modelRegistry->use('CompositeItems');
+        $items = $CompositeItems->newEntities([
+            [
+                'tenant_id' => 1,
+                'id' => 1,
+                'name' => 'Test 1',
+            ],
+            [
+                'tenant_id' => 2,
+                'id' => 1,
+                'name' => 'Test 2',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $CompositeItems->saveMany($items)
+        );
+
+        $items[0]->set('name', 'Updated 1');
+        $items[1]->set('tenant_id', 1);
+        $items[1]->set('name', 'Updated 2');
+
+        $caught = null;
+
+        try {
+            $CompositeItems->saveMany($items);
+        } catch (OrmException $e) {
+            $caught = $e;
+        }
+
+        $this->assertInstanceOf(
+            OrmException::class,
+            $caught
+        );
+        $this->assertArraysAreIdentical(
+            ['Test 1', 'Test 2'],
+            $CompositeItems->find(orderBy: ['tenant_id' => 'ASC'])
+                ->all()
+                ->map(static fn(Entity $item): string => $item->name)
+                ->toArray()
+        );
+        $this->assertSame(
+            0,
+            $this->db->getSavePointLevel()
         );
     }
 }

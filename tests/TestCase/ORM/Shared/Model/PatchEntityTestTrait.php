@@ -77,6 +77,32 @@ trait PatchEntityTestTrait
         );
     }
 
+    public function testPatchEntityAccessibleRevoke(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $item = $Items->newEmptyEntity();
+
+        $item->setAccess('*', false);
+        $item->setAccess('name', true);
+
+        $Items->patchEntity($item, [
+            'name' => 'Test',
+        ], accessible: [
+            'name' => false,
+        ]);
+
+        $this->assertNull(
+            $item->get('name')
+        );
+        $this->assertArraysAreIdentical(
+            [
+                '*' => false,
+                'name' => true,
+            ],
+            $item->getAccessible()
+        );
+    }
+
     public function testPatchEntityAssociated(): void
     {
         $Users = $this->modelRegistry->use('Users');
@@ -203,6 +229,69 @@ trait PatchEntityTestTrait
 
         $this->assertSame(
             'Test 1',
+            $address->user->name
+        );
+    }
+
+    public function testPatchEntityBelongsToInaccessible(): void
+    {
+        $Addresses = $this->modelRegistry->use('Addresses');
+        $address = $Addresses->newEntity([
+            'suburb' => 'Test',
+            'user' => [
+                'name' => 'Test 1',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Addresses->save($address)
+        );
+
+        $user = $address->user;
+        $address->setAccess('user', false);
+
+        $Addresses->patchEntity($address, [
+            'user' => [
+                'id' => $user->id,
+                'name' => 'Test 2',
+            ],
+        ]);
+
+        $this->assertSame(
+            $user,
+            $address->user
+        );
+        $this->assertSame(
+            'Test 1',
+            $user->name
+        );
+        $this->assertFalse(
+            $user->isDirty()
+        );
+        $this->assertTrue(
+            $Addresses->save($address)
+        );
+        $this->assertSame(
+            'Test 1',
+            $this->modelRegistry->use('Users')->get($user->id)?->name
+        );
+    }
+
+    public function testPatchEntityBelongsToWithoutGuard(): void
+    {
+        $Addresses = $this->modelRegistry->use('Addresses');
+        $address = $Addresses->newEmptyEntity();
+
+        $address->setAccess('user', false);
+
+        $Addresses->patchEntity($address, [
+            'user' => [
+                'name' => 'Test',
+            ],
+        ], guard: false);
+
+        $this->assertSame(
+            'Test',
             $address->user->name
         );
     }
@@ -390,6 +479,43 @@ trait PatchEntityTestTrait
         );
     }
 
+    public function testPatchEntityHasManyInaccessible(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $user = $Users->newEntity([
+            'name' => 'Test',
+            'posts' => [
+                [
+                    'title' => 'Test',
+                ],
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+
+        $posts = $user->posts;
+        $user->setAccess('posts', false);
+
+        $Users->patchEntity($user, [
+            'name' => 'Updated',
+            'posts' => [],
+        ]);
+
+        $this->assertSame(
+            $posts,
+            $user->posts
+        );
+        $this->assertTrue(
+            $Users->save($user)
+        );
+        $this->assertSame(
+            1,
+            $this->modelRegistry->use('Posts')->find()->count()
+        );
+    }
+
     public function testPatchEntityHasOne(): void
     {
         $Users = $this->modelRegistry->use('Users');
@@ -523,6 +649,29 @@ trait PatchEntityTestTrait
         $this->assertSame(
             'test1',
             $post->tags[0]->tag
+        );
+    }
+
+    public function testPatchEntityManyToManyOnlyIdsInaccessible(): void
+    {
+        $Posts = $this->modelRegistry->use('Posts');
+        $post = $Posts->newEmptyEntity();
+
+        $post->setAccess('tags', false);
+
+        $Posts->patchEntity($post, [
+            'tags' => [1],
+        ], associated: [
+            'Tags' => [
+                'onlyIds' => true,
+            ],
+        ]);
+
+        $this->assertNull(
+            $post->tags
+        );
+        $this->assertFalse(
+            $post->isDirty('tags')
         );
     }
 }

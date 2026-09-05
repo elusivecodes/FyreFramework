@@ -3,13 +3,19 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\Shared\Traits;
 
+use Error;
+use Fyre\DB\Exceptions\DbException;
 use Fyre\DB\Expressions\ConditionExpression;
 use Fyre\DB\Query;
+use Fyre\Event\Event;
+use Fyre\Event\EventManager;
+use Fyre\Log\LogManager;
 use Fyre\ORM\Entity;
 use Fyre\Utility\DateTime\DateTime;
 use Generator;
 use PHPUnit\Framework\Attributes\Before;
 use Tests\Mock\Entities\Address;
+use Throwable;
 
 trait SoftDeleteTestTrait
 {
@@ -408,6 +414,267 @@ trait SoftDeleteTestTrait
         );
     }
 
+    public function testRestoreCommitExceptionRollsBack(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $user = $Users->newEntity([
+            'name' => 'Test',
+        ]);
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+        $this->assertTrue(
+            $Users->delete($user)
+        );
+
+        $deleted = $user->deleted;
+        $connection = $this->getStubBuilder($this->db::class)
+            ->setConstructorArgs([
+                $this->container,
+                $this->container->use(EventManager::class),
+                $this->container->use(LogManager::class),
+                $this->db->getConfig(),
+            ])
+            ->onlyMethods(['transCommit'])
+            ->getStub();
+
+        $exception = new DbException('Commit failed.');
+        $connection->method('transCommit')->willThrowException($exception);
+
+        try {
+            $Users->setConnection($connection);
+            $caught = null;
+
+            try {
+                $Users->restore($user, dependents: false);
+            } catch (Throwable $e) {
+                $caught = $e;
+            }
+
+            $this->assertSame(
+                $exception,
+                $caught
+            );
+            $this->assertSame(
+                0,
+                $connection->getSavePointLevel()
+            );
+            $this->assertFalse(
+                $connection->inTransaction()
+            );
+            $this->assertSame(
+                0,
+                $Users->find()->count()
+            );
+            $this->assertSame(
+                $deleted,
+                $user->deleted
+            );
+            $this->assertSame(
+                [],
+                $user->getTemporaryFields()
+            );
+        } finally {
+            while ($connection->getSavePointLevel() > 0) {
+                $connection->rollback();
+            }
+
+            $connection->disconnect();
+        }
+    }
+
+    public function testRestoreDependents(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $Posts = $this->modelRegistry->use('Posts');
+        $Comments = $this->modelRegistry->use('Comments');
+
+        $Posts->Comments->setDependent(true);
+
+        $user = $Users->newEntity([
+            'name' => 'Test',
+            'posts' => [
+                [
+                    'title' => 'Test',
+                    'comments' => [
+                        [
+                            'content' => 'Test',
+                        ],
+                    ],
+                ],
+            ],
+        ], associated: ['Posts.Comments']);
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+        $this->assertTrue(
+            $Users->delete($user)
+        );
+        $this->assertSame(
+            0,
+            $Comments->find()->count()
+        );
+
+        $this->assertTrue(
+            $Users->restore($user)
+        );
+        $this->assertSame(
+            1,
+            $Users->find()->count()
+        );
+        $this->assertSame(
+            1,
+            $Posts->find()->count()
+        );
+        $this->assertSame(
+            1,
+            $Comments->find()->count()
+        );
+        $this->assertSame(
+            0,
+            $this->db->getSavePointLevel()
+        );
+        $this->assertNull(
+            $user->deleted
+        );
+    }
+
+    public function testRestoreExceptionRollsBackNestedTransaction(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $Posts = $this->modelRegistry->use('Posts');
+        $user = $Users->newEntity([
+            'name' => 'Test',
+            'posts' => [
+                [
+                    'title' => 'Test',
+                ],
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+        $this->assertTrue(
+            $Users->delete($user)
+        );
+
+        $deleted = $user->deleted;
+        $exception = new Error('Restore failed.');
+        $commits = [];
+
+        $this->db->begin();
+        $this->db->afterCommit(static function() use (&$commits): void {
+            $commits[] = 'outer';
+        });
+
+        $Posts->getEventManager()->on('ORM.afterSave', function() use (&$commits): void {
+            $this->db->afterCommit(static function() use (&$commits): void {
+                $commits[] = 'restore';
+            });
+        });
+        $Users->getEventManager()->on('ORM.afterSave', static function() use ($exception): void {
+            throw $exception;
+        });
+
+        $caught = null;
+
+        try {
+            $Users->restore($user);
+        } catch (Throwable $e) {
+            $caught = $e;
+        }
+
+        $this->assertSame(
+            $exception,
+            $caught
+        );
+        $this->assertSame(
+            1,
+            $this->db->getSavePointLevel()
+        );
+        $this->assertTrue(
+            $this->db->inTransaction()
+        );
+        $this->assertSame(
+            0,
+            $Users->find()->count()
+        );
+        $this->assertSame(
+            0,
+            $Posts->find()->count()
+        );
+        $this->assertSame(
+            $deleted,
+            $user->deleted
+        );
+        $this->assertSame(
+            [],
+            $user->getTemporaryFields()
+        );
+
+        $this->db->commit();
+
+        $this->assertSame(
+            ['outer'],
+            $commits
+        );
+    }
+
+    public function testRestoreFailureRollsBack(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $Posts = $this->modelRegistry->use('Posts');
+        $user = $Users->newEntity([
+            'name' => 'Test',
+            'posts' => [
+                [
+                    'title' => 'Test',
+                ],
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+        $this->assertTrue(
+            $Users->delete($user)
+        );
+
+        $deleted = $user->deleted;
+
+        $Users->getEventManager()->on('ORM.beforeSave', static function(Event $event): false {
+            $event->stopPropagation();
+
+            return false;
+        });
+
+        $this->assertFalse(
+            $Users->restore($user)
+        );
+        $this->assertSame(
+            0,
+            $this->db->getSavePointLevel()
+        );
+        $this->assertFalse(
+            $this->db->inTransaction()
+        );
+        $this->assertSame(
+            0,
+            $Users->find()->count()
+        );
+        $this->assertSame(
+            0,
+            $Posts->find()->count()
+        );
+        $this->assertSame(
+            $deleted,
+            $user->deleted
+        );
+    }
+
     public function testRestoreMany(): void
     {
         $Users = $this->modelRegistry->use('Users');
@@ -490,6 +757,45 @@ trait SoftDeleteTestTrait
         $this->assertSame(
             2,
             $Users->find()->count()
+        );
+    }
+
+    public function testRestoreWithoutDependents(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $Posts = $this->modelRegistry->use('Posts');
+        $user = $Users->newEntity([
+            'name' => 'Test',
+            'posts' => [
+                [
+                    'title' => 'Test',
+                ],
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+        $this->assertTrue(
+            $Users->delete($user)
+        );
+
+        $user = $Users->findWithDeleted()->first();
+
+        $this->assertInstanceOf(
+            Entity::class,
+            $user
+        );
+        $this->assertTrue(
+            $Users->restore($user, dependents: false)
+        );
+        $this->assertSame(
+            1,
+            $Users->find()->count()
+        );
+        $this->assertSame(
+            0,
+            $Posts->find()->count()
         );
     }
 

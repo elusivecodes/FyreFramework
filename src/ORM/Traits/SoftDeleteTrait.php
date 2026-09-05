@@ -392,62 +392,71 @@ trait SoftDeleteTrait
 
         $this->checkEntities($entities);
 
-        $options['dependents'] ??= true;
-
         $connection = $this->getConnection();
 
         $connection->begin();
+        $rollback = true;
 
-        if ($dependents) {
-            $relationships = $this->getDependentRelationships();
+        try {
+            if ($dependents) {
+                $relationships = $this->getDependentRelationships();
 
-            foreach ($relationships as $relationship) {
-                $target = $relationship->getTarget();
-                $conditions = new ConditionExpression();
-                $target->aliasField($this->deletedField) |> $conditions->isNotNull(...);
+                foreach ($relationships as $relationship) {
+                    $target = $relationship->getTarget();
+                    $conditions = new ConditionExpression();
+                    $target->aliasField($this->deletedField) |> $conditions->isNotNull(...);
 
-                $children = $relationship->findRelated(
-                    $entities,
-                    conditions: $conditions,
-                    deleted: true
-                )->toArray();
+                    $children = $relationship->findRelated(
+                        $entities,
+                        conditions: $conditions,
+                        deleted: true
+                    )->toArray();
 
-                if ($children !== [] && !$target->restoreMany(
-                    $children,
-                    $saveRelated,
-                    $checkRules,
-                    $checkExists,
-                    $events,
-                    $clean,
-                    $dependents,
-                    ...$options
-                )) {
-                    $connection->rollback();
+                    if ($children !== [] && !$target->restoreMany(
+                        $children,
+                        $saveRelated,
+                        $checkRules,
+                        $checkExists,
+                        $events,
+                        $clean,
+                        $dependents,
+                        ...$options
+                    )) {
+                        return false;
+                    }
+                }
+            }
 
-                    return false;
+            foreach ($entities as $entity) {
+                $entity->set($this->deletedField, null, temporary: true);
+            }
+
+            if (!$this->saveMany(
+                $entities,
+                $saveRelated,
+                $checkRules,
+                $checkExists,
+                $events,
+                $clean,
+                ...$options
+            )) {
+                return false;
+            }
+
+            $connection->commit();
+            $rollback = false;
+        } finally {
+            if ($rollback) {
+                $connection->rollback();
+
+                static::resetParents($entities, $this);
+                static::resetChildren($entities, $this);
+
+                foreach ($entities as $entity) {
+                    $entity->clearTemporaryFields();
                 }
             }
         }
-
-        foreach ($entities as $entity) {
-            $entity->set($this->deletedField, null, temporary: true);
-        }
-
-        if (!$this->saveMany(
-            $entities,
-            $saveRelated,
-            $checkRules,
-            $checkExists,
-            $events,
-            $clean,
-            ...$options
-        )) {
-            $connection->rollback();
-
-            return false;
-        }
-
-        $connection->commit();
 
         return true;
     }

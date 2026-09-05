@@ -846,6 +846,8 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
 
         if ($accessible !== $this->accessible['*']) {
             $this->accessible[$field] = $accessible;
+        } else if ($field !== '*') {
+            unset($this->accessible[$field]);
         }
 
         return $this;

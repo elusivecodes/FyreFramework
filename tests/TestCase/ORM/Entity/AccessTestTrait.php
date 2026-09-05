@@ -88,6 +88,48 @@ trait AccessTestTrait
         );
     }
 
+    public function testSetAccessReenable(): void
+    {
+        $entity = new Entity();
+
+        $entity->setAccess('test', false);
+        $entity->setAccess('test', true);
+        $entity->fill(['test' => 1]);
+
+        $this->assertTrue(
+            $entity->isAccessible('test')
+        );
+        $this->assertSame(
+            1,
+            $entity->get('test')
+        );
+        $this->assertArraysAreIdentical(
+            ['*' => true],
+            $entity->getAccessible()
+        );
+    }
+
+    public function testSetAccessRevoke(): void
+    {
+        $entity = new Entity();
+
+        $entity->setAccess('*', false);
+        $entity->setAccess('test', true);
+        $entity->setAccess('test', false);
+        $entity->fill(['test' => 1]);
+
+        $this->assertFalse(
+            $entity->isAccessible('test')
+        );
+        $this->assertNull(
+            $entity->get('test')
+        );
+        $this->assertArraysAreIdentical(
+            ['*' => false],
+            $entity->getAccessible()
+        );
+    }
+
     public function testSetWithoutAccess(): void
     {
         $entity = new Entity([

@@ -177,6 +177,38 @@ trait NewEntityTestTrait
         );
     }
 
+    public function testNewEntityAssociatedInaccessible(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $user = $Users->newEntity([
+            'name' => 'Test',
+            'posts' => [
+                [
+                    'title' => 'Test',
+                ],
+            ],
+            'address' => [
+                'suburb' => 'Test',
+            ],
+        ], accessible: [
+            'posts' => false,
+            'address' => false,
+        ]);
+
+        $this->assertNull(
+            $user->posts
+        );
+        $this->assertNull(
+            $user->address
+        );
+        $this->assertFalse(
+            $user->isDirty('posts')
+        );
+        $this->assertFalse(
+            $user->isDirty('address')
+        );
+    }
+
     public function testNewEntityBelongsTo(): void
     {
         $Addresses = $this->modelRegistry->use('Addresses');

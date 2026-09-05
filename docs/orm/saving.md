@@ -116,6 +116,7 @@ Important behaviors:
 - If the entity is not new and not dirty, `save()` returns `true` without issuing queries or checking errors.
 - If the entity is new or dirty and it or any nested entity has errors, `save()` returns `false`.
 - When enabled, existence checks run for “new” entities that already have primary key values.
+- Changing primary key values on an existing entity throws an `OrmException` when saved. Use an explicit update query when a primary key change is required.
 - When enabled, rule sets run as part of the save workflow. See [Rule Sets](rulesets.md).
 - The save runs inside a transaction; failures roll back and clear temporary field changes on the entity and its related entities.
 
