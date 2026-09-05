@@ -177,6 +177,8 @@ Cookie authentication is stateful. When `SessionAuthenticator` is also configure
 
 For remember-me cookies, configure `salt` with a stable application secret. Changing the configured identifier field, password hash, or salt invalidates existing cookies; invalid payloads are queued for deletion on the next response.
 
+Cookie token hashes must match `PASSWORD_DEFAULT` and its default options before verification. Hashes with a different algorithm or work factor are rejected and queued for deletion. A PHP upgrade that changes these defaults invalidates existing remember-me cookies.
+
 ### `TokenAuthenticator`
 
 Loads the user by a token read from a request header or query parameter.

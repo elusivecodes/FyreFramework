@@ -20,6 +20,7 @@ use function is_string;
 use function json_decode;
 use function json_encode;
 use function password_hash;
+use function password_needs_rehash;
 use function password_verify;
 use function rawurldecode;
 use function rawurlencode;
@@ -93,6 +94,12 @@ class CookieAuthenticator extends Authenticator
         }
 
         [$identifier, $tokenHash] = $data;
+
+        if (password_needs_rehash($tokenHash, PASSWORD_DEFAULT)) {
+            $this->logout();
+
+            return null;
+        }
 
         $user = $this->auth->identifier()->identify($identifier);
 

@@ -32,6 +32,10 @@ use function rawurldecode;
 use function rawurlencode;
 use function str_repeat;
 
+use const PASSWORD_ARGON2I;
+use const PASSWORD_ARGON2ID;
+use const PASSWORD_BCRYPT;
+use const PASSWORD_BCRYPT_DEFAULT_COST;
 use const PASSWORD_DEFAULT;
 
 final class AuthenticatorTest extends TestCase
@@ -65,6 +69,19 @@ final class AuthenticatorTest extends TestCase
         return [
             'changed salt' => ['changed-secret'],
             'removed salt' => [null],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, array<string, int>}>
+     */
+    public static function invalidCookieHashOptionsProvider(): array
+    {
+        return [
+            'lower bcrypt cost' => [PASSWORD_BCRYPT, ['cost' => 4]],
+            'higher bcrypt cost' => [PASSWORD_BCRYPT, ['cost' => PASSWORD_BCRYPT_DEFAULT_COST + 1]],
+            'argon2i' => [PASSWORD_ARGON2I, ['memory_cost' => 8192, 'time_cost' => 1, 'threads' => 1]],
+            'argon2id' => [PASSWORD_ARGON2ID, ['memory_cost' => 8192, 'time_cost' => 1, 'threads' => 1]],
         ];
     }
 
@@ -300,6 +317,37 @@ final class AuthenticatorTest extends TestCase
                 $cookie->isExpired()
             );
         }
+    }
+
+    /**
+     * @param array<string, int> $options
+     */
+    #[DataProvider('invalidCookieHashOptionsProvider')]
+    public function testCookieAuthenticatorInvalidHashOptions(string $algorithm, array $options): void
+    {
+        $authUser = $this->identifier->identify('test@test.com');
+
+        $this->assertInstanceOf(
+            User::class,
+            $authUser
+        );
+
+        $tokenHash = password_hash(hash('sha256', 'test@test.com'.$authUser->password), $algorithm, $options);
+        $auth = (string) json_encode(['test@test.com', $tokenHash]) |> rawurlencode(...);
+
+        $authenticator = $this->container->build(CookieAuthenticator::class);
+
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'cookies' => [
+                    'auth' => $auth,
+                ],
+            ],
+        ]);
+
+        $this->assertNull(
+            $authenticator->authenticate($request)
+        );
     }
 
     public function testCookieAuthenticatorLogin(): void
