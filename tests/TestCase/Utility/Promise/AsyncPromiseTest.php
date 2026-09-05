@@ -9,6 +9,7 @@ use Fyre\Utility\Promise\AsyncPromise;
 use Fyre\Utility\Promise\Exceptions\CancelledPromiseException;
 use Fyre\Utility\Promise\Promise;
 use Fyre\Utility\Promise\PromiseInterface;
+use Override;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
@@ -19,6 +20,7 @@ use function socket_close;
 use function socket_create_pair;
 use function socket_read;
 use function socket_write;
+use function str_repeat;
 use function time;
 use function unserialize;
 
@@ -311,6 +313,42 @@ final class AsyncPromiseTest extends TestCase
 
         $this->assertSame(
             'test',
+            Promise::await($promise)
+        );
+    }
+
+    public function testAwaitLargeRejection(): void
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessageIs(str_repeat('test', 524288));
+
+        $promise = new class (static function(Closure $resolve, Closure $reject): void {
+            $reject(new Exception(str_repeat('test', 524288)));
+        }) extends AsyncPromise
+        {
+
+            #[Override]
+            protected static int $maxRunTime = 5;
+        };
+
+        Promise::await($promise);
+    }
+
+    public function testAwaitLargeResult(): void
+    {
+        $value = str_repeat('test', 524288);
+
+        $promise = new class (static function(Closure $resolve) use ($value): void {
+            $resolve($value);
+        }) extends AsyncPromise
+        {
+
+            #[Override]
+            protected static int $maxRunTime = 5;
+        };
+
+        $this->assertSame(
+            $value,
             Promise::await($promise)
         );
     }

@@ -119,6 +119,7 @@ class UsersModel extends Model
 
 - `delete()` and `deleteMany()` always run inside a transaction, so cascade failures roll back the whole delete.
 - Entity deletes return `false` when no rows are affected (they call `deleteAll()` for the entity’s primary key conditions under the hood).
+- Changing primary key values on an existing entity throws an `OrmException` when deleted.
 - `ORM.afterDeleteCommit` is dispatched after the transaction commits (and `deleteMany()` dispatches it once per entity when enabled).
 
 ## Related

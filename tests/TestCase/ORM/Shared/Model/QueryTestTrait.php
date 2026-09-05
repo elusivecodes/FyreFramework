@@ -39,6 +39,74 @@ trait QueryTestTrait
         );
     }
 
+    public function testDeleteChangedPrimaryKey(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $items = $Items->newEntities([
+            [
+                'name' => 'Test 1',
+            ],
+            [
+                'name' => 'Test 2',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+
+        $items[0]->set('id', $items[1]->id);
+
+        $caught = null;
+
+        try {
+            $Items->delete($items[0]);
+        } catch (OrmException $e) {
+            $caught = $e;
+        }
+
+        $this->assertInstanceOf(
+            OrmException::class,
+            $caught
+        );
+        $this->assertSame(
+            'Primary key values for model `Items` must not be changed.',
+            $caught->getMessage()
+        );
+        $this->assertArraysAreIdentical(
+            ['Test 1', 'Test 2'],
+            $Items->find(orderBy: ['id' => 'ASC'])
+                ->all()
+                ->map(static fn(Entity $item): string => $item->name)
+                ->toArray()
+        );
+        $this->assertSame(
+            0,
+            $this->db->getSavePointLevel()
+        );
+    }
+
+    public function testDeleteChangedPrimaryKeyInCallback(): void
+    {
+        $this->expectException(OrmException::class);
+        $this->expectExceptionMessageIs('Primary key values for model `Items` must not be changed.');
+
+        $Items = $this->modelRegistry->use('Items');
+        $item = $Items->newEntity([
+            'name' => 'Test',
+        ]);
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+
+        $Items->getEventManager()->on('ORM.beforeDelete', static function(Event $event, Entity $entity): void {
+            $entity->set('id', 10);
+        });
+
+        $Items->delete($item);
+    }
+
     public function testDeleteIncompleteCompositePrimaryKey(): void
     {
         $this->expectException(OrmException::class);
@@ -79,6 +147,58 @@ trait QueryTestTrait
         );
     }
 
+    public function testDeleteManyChangedCompositePrimaryKey(): void
+    {
+        $CompositeItems = $this->modelRegistry->use('CompositeItems');
+        $items = $CompositeItems->newEntities([
+            [
+                'tenant_id' => 1,
+                'id' => 1,
+                'name' => 'Test 1',
+            ],
+            [
+                'tenant_id' => 2,
+                'id' => 1,
+                'name' => 'Test 2',
+            ],
+            [
+                'tenant_id' => 3,
+                'id' => 1,
+                'name' => 'Test 3',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $CompositeItems->saveMany($items)
+        );
+
+        $items[1]->set('tenant_id', 3);
+
+        $caught = null;
+
+        try {
+            $CompositeItems->deleteMany([$items[0], $items[1]]);
+        } catch (OrmException $e) {
+            $caught = $e;
+        }
+
+        $this->assertInstanceOf(
+            OrmException::class,
+            $caught
+        );
+        $this->assertArraysAreIdentical(
+            ['Test 1', 'Test 2', 'Test 3'],
+            $CompositeItems->find(orderBy: ['tenant_id' => 'ASC'])
+                ->all()
+                ->map(static fn(Entity $item): string => $item->name)
+                ->toArray()
+        );
+        $this->assertSame(
+            0,
+            $this->db->getSavePointLevel()
+        );
+    }
+
     public function testDeleteManyEmpty(): void
     {
         $this->assertTrue(
@@ -108,6 +228,41 @@ trait QueryTestTrait
                 $Items->find()->count()
             );
         }
+    }
+
+    public function testDeleteRestoredPrimaryKeyInCallback(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $items = $Items->newEntities([
+            [
+                'name' => 'Test 1',
+            ],
+            [
+                'name' => 'Test 2',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+
+        $id = $items[0]->id;
+        $items[0]->set('id', $items[1]->id);
+
+        $Items->getEventManager()->on('ORM.beforeDelete', static function(Event $event, Entity $entity) use ($id): void {
+            $entity->set('id', $id);
+        });
+
+        $this->assertTrue(
+            $Items->delete($items[0])
+        );
+        $this->assertArraysAreIdentical(
+            ['Test 2'],
+            $Items->find()
+                ->all()
+                ->map(static fn(Entity $item): string => $item->name)
+                ->toArray()
+        );
     }
 
     public function testExists(): void

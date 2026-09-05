@@ -1952,10 +1952,6 @@ class Model implements EventListenerInterface
      */
     protected function performDelete(Entity $entity, array $options): bool
     {
-        $conditions = $this->getPrimaryKey()
-            |> $entity->extract(...)
-            |> $this->primaryConditions(...);
-
         if ($options['events']) {
             $event = $this->dispatchEvent('ORM.beforeDelete', ['entity' => $entity, 'options' => $options]);
 
@@ -1963,6 +1959,18 @@ class Model implements EventListenerInterface
                 return (bool) $event->getResult();
             }
         }
+
+        $primaryKeys = $this->getPrimaryKey();
+
+        if (!$entity->isNew() && $entity->extractOriginalChanged($primaryKeys) !== []) {
+            throw new OrmException(sprintf(
+                'Primary key values for model `%s` must not be changed.',
+                $this->getAlias()
+            ));
+        }
+
+        $conditions = $entity->extract($primaryKeys)
+            |> $this->primaryConditions(...);
 
         if (!$this->deleteAll($conditions)) {
             return false;

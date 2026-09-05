@@ -24,6 +24,7 @@ use function serialize;
 use function socket_close;
 use function socket_create_pair;
 use function socket_read;
+use function socket_select;
 use function socket_write;
 use function sprintf;
 use function strlen;
@@ -51,6 +52,8 @@ class AsyncPromise extends Promise
     protected static int $maxRunTime = 300;
 
     protected static int $waitTime = 100000;
+
+    protected string $buffer = '';
 
     protected int $pid;
 
@@ -91,6 +94,7 @@ class AsyncPromise extends Promise
         }
 
         socket_close($this->socket);
+        $this->buffer = '';
 
         $result = Promise::reject(new CancelledPromiseException($message));
 
@@ -172,6 +176,37 @@ class AsyncPromise extends Promise
 
         $processStatus = pcntl_waitpid($this->pid, $status, WNOHANG | WUNTRACED);
 
+        if ($processStatus !== 0 && $processStatus !== $this->pid) {
+            throw new RuntimeException(sprintf(
+                'Process `%d` could not be polled.',
+                $this->pid
+            ));
+        }
+
+        // Drain available data while the child is running so its writes cannot block on a full socket.
+        do {
+            $read = [$this->socket];
+            $write = $except = [];
+            $available = socket_select($read, $write, $except, 0);
+
+            if ($available === false) {
+                throw new RuntimeException('Unable to poll response from child process.');
+            }
+
+            if ($available === 0) {
+                break;
+            }
+
+            $data = socket_read($this->socket, 4096);
+
+            if ($data === false) {
+                socket_close($this->socket);
+                throw new RuntimeException('Unable to read response from child process.');
+            }
+
+            $this->buffer .= $data;
+        } while ($data !== '');
+
         if ($processStatus === 0) {
             if ($this->startTime + static::$maxRunTime < time() || pcntl_wifstopped($status)) {
                 $this->cancel();
@@ -180,26 +215,8 @@ class AsyncPromise extends Promise
             return false;
         }
 
-        if ($processStatus !== $this->pid) {
-            throw new RuntimeException(sprintf(
-                'Process `%d` could not be polled.',
-                $this->pid
-            ));
-        }
-
-        $result = '';
-        do {
-            $data = socket_read($this->socket, 4096);
-
-            if ($data === false) {
-                socket_close($this->socket);
-                throw new RuntimeException('Unable to read response from child process.');
-            }
-
-            $result .= $data;
-        } while ($data !== '');
-
-        $output = unserialize($result);
+        $output = unserialize($this->buffer);
+        $this->buffer = '';
 
         if (!is_array($output) || count($output) !== 2) {
             throw new RuntimeException('Unable to read response from child process.');
