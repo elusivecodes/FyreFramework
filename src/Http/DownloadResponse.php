@@ -4,11 +4,15 @@ declare(strict_types=1);
 namespace Fyre\Http;
 
 use finfo;
+use Fyre\Utility\Str;
 use InvalidArgumentException;
 
+use function addcslashes;
 use function basename;
 use function file_exists;
 use function filesize;
+use function mb_check_encoding;
+use function rawurlencode;
 use function sprintf;
 use function strlen;
 use function strtok;
@@ -31,6 +35,8 @@ class DownloadResponse extends ClientResponse
      * @param string|null $mimeType The MIME type.
      * @param array<string, mixed> $options The response options.
      * @return static The new DownloadResponse instance.
+     *
+     * @throws InvalidArgumentException If the file does not exist or the filename is not valid UTF-8.
      */
     public static function createFromFile(string $path, string|null $filename = null, string|null $mimeType = null, array $options = []): static
     {
@@ -69,6 +75,8 @@ class DownloadResponse extends ClientResponse
      * @param string|null $mimeType The MIME type.
      * @param array<string, mixed> $options The response options.
      * @return static The new DownloadResponse instance.
+     *
+     * @throws InvalidArgumentException If the filename is not valid UTF-8.
      */
     public static function createFromString(string $content, string $filename, string|null $mimeType = null, array $options = []): static
     {
@@ -99,7 +107,23 @@ class DownloadResponse extends ClientResponse
     {
         $options['headers'] ??= [];
         $options['headers']['Content-Type'] ??= $mimeType.'; charset=UTF-8';
-        $options['headers']['Content-Disposition'] ??= 'attachment; filename="'.$filename.'"';
+
+        if (!isset($options['headers']['Content-Disposition'])) {
+            if (!mb_check_encoding($filename, 'UTF-8')) {
+                throw new InvalidArgumentException('Download filename must be valid UTF-8.');
+            }
+
+            $fallback = Str::transliterate($filename);
+            $disposition = 'attachment; filename="'.addcslashes($fallback, '\\"').'"';
+
+            if ($fallback !== $filename) {
+                // Preserve the UTF-8 filename alongside the ASCII fallback.
+                $disposition .= '; filename*=UTF-8\'\''.rawurlencode($filename);
+            }
+
+            $options['headers']['Content-Disposition'] = $disposition;
+        }
+
         $options['headers']['Expires'] ??= '0';
         $options['headers']['Content-Transfer-Encoding'] ??= 'binary';
         $options['headers']['Content-Length'] ??= (string) $size;

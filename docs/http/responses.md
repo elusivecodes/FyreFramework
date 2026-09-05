@@ -172,6 +172,8 @@ Both builders preserve explicitly supplied headers and otherwise set these defau
 | `Expires` | `0` |
 | `Cache-Control` | `private, no-transform, no-store, must-revalidate` |
 
+Unicode download filenames use UTF-8 `filename*` encoding with an ASCII `filename` fallback. Quotes and backslashes in the quoted filename are escaped. Filenames must be valid UTF-8 when generating this header.
+
 `createFromFile()` rejects missing files and detects the MIME type when it is omitted. `createFromString()` stores the generated content in a `php://temp` stream.
 
 ## Emitting responses
