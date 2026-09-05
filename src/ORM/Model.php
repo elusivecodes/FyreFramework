@@ -418,7 +418,7 @@ class Model implements EventListenerInterface
         $connection = $this->getConnection();
 
         $connection->begin();
-        $committed = false;
+        $rollback = true;
 
         try {
             if (!$this->performDelete($entity, $options)) {
@@ -436,9 +436,9 @@ class Model implements EventListenerInterface
             }, 200);
 
             $connection->commit();
-            $committed = true;
+            $rollback = false;
         } finally {
-            if (!$committed) {
+            if ($rollback) {
                 $connection->rollback();
 
                 static::resetParents([$entity], $this);
@@ -502,7 +502,7 @@ class Model implements EventListenerInterface
         $connection = $this->getConnection();
 
         $connection->begin();
-        $committed = false;
+        $rollback = true;
 
         try {
             foreach ($entities as $entity) {
@@ -524,9 +524,9 @@ class Model implements EventListenerInterface
             }, 200);
 
             $connection->commit();
-            $committed = true;
+            $rollback = false;
         } finally {
-            if (!$committed) {
+            if ($rollback) {
                 $connection->rollback();
 
                 static::resetParents($entities, $this);
@@ -1311,7 +1311,7 @@ class Model implements EventListenerInterface
         $connection = $this->getConnection();
 
         $connection->begin();
-        $committed = false;
+        $rollback = true;
 
         try {
             if (!$this->performSave($entity, $options)) {
@@ -1331,9 +1331,9 @@ class Model implements EventListenerInterface
             }
 
             $connection->commit();
-            $committed = true;
+            $rollback = false;
         } finally {
-            if (!$committed) {
+            if ($rollback) {
                 $connection->rollback();
 
                 static::resetParents([$entity], $this);
@@ -1409,7 +1409,7 @@ class Model implements EventListenerInterface
         $connection = $this->getConnection();
 
         $connection->begin();
-        $committed = false;
+        $rollback = true;
 
         try {
             foreach ($entities as $entity) {
@@ -1433,9 +1433,9 @@ class Model implements EventListenerInterface
             }
 
             $connection->commit();
-            $committed = true;
+            $rollback = false;
         } finally {
-            if (!$committed) {
+            if ($rollback) {
                 $connection->rollback();
 
                 static::resetParents($entities, $this);

@@ -734,27 +734,25 @@ abstract class Connection
      * @param Closure(Connection): mixed $callback The callback.
      * @return bool Whether the transaction was successful.
      *
-     * @throws Throwable If the callback throws an exception.
+     * @throws Throwable If the callback or a transaction operation throws an exception.
      */
     public function transactional(Closure $callback): bool
     {
+        $this->begin();
+        $rollback = true;
+
         try {
-            $this->begin();
+            if ($callback($this) === false) {
+                return false;
+            }
 
-            $result = $callback($this);
-        } catch (Throwable $e) {
-            $this->rollback();
-
-            throw $e;
+            $this->commit();
+            $rollback = false;
+        } finally {
+            if ($rollback) {
+                $this->rollback();
+            }
         }
-
-        if ($result === false) {
-            $this->rollback();
-
-            return false;
-        }
-
-        $this->commit();
 
         return true;
     }

@@ -3,8 +3,13 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Shared\Query;
 
+use Error;
 use Exception;
 use Fyre\DB\Connection;
+use Fyre\DB\Exceptions\DbException;
+use Fyre\Event\EventManager;
+use Fyre\Log\LogManager;
+use Throwable;
 
 trait TransactionTestTrait
 {
@@ -190,6 +195,101 @@ trait TransactionTestTrait
         $this->db->rollback();
     }
 
+    public function testTransactionalBeginExceptionPreservesOuterTransaction(): void
+    {
+        $container = static::buildContainer();
+        $connection = $this->getStubBuilder($this->db::class)
+            ->setConstructorArgs([
+                $container,
+                $container->use(EventManager::class),
+                $container->use(LogManager::class),
+                $this->db->getConfig(),
+            ])
+            ->onlyMethods(['transSavepoint'])
+            ->getStub();
+
+        $exception = new DbException('Savepoint failed.');
+
+        $connection->method('transSavepoint')
+            ->willThrowException($exception);
+
+        try {
+            $connection->begin();
+            $connection->insert()
+                ->into('test')
+                ->values([
+                    [
+                        'name' => 'Test 1',
+                    ],
+                ])
+                ->execute();
+
+            $commits = 0;
+            $connection->afterCommit(static function() use (&$commits): void {
+                $commits++;
+            });
+
+            $called = false;
+            $caught = null;
+
+            try {
+                $connection->transactional(static function(Connection $db) use (&$called): void {
+                    $called = true;
+                });
+            } catch (Throwable $e) {
+                $caught = $e;
+            }
+
+            $this->assertSame(
+                $exception,
+                $caught
+            );
+
+            $this->assertFalse(
+                $called
+            );
+
+            $this->assertSame(
+                1,
+                $connection->getSavePointLevel()
+            );
+
+            $this->assertTrue(
+                $connection->inTransaction()
+            );
+
+            $this->assertSame(
+                0,
+                $commits
+            );
+
+            $connection->commit();
+
+            $this->assertSame(
+                1,
+                $commits
+            );
+
+            $this->assertFalse(
+                $connection->inTransaction()
+            );
+
+            $this->assertSame(
+                ['name' => 'Test 1'],
+                $connection->select(['name'])
+                    ->from('test')
+                    ->execute()
+                    ->first()
+            );
+        } finally {
+            while ($connection->getSavePointLevel() > 0) {
+                $connection->rollback();
+            }
+
+            $connection->disconnect();
+        }
+    }
+
     public function testTransactionalCommit(): void
     {
         $this->assertTrue(
@@ -224,6 +324,186 @@ trait TransactionTestTrait
                 ->execute()
                 ->all()
         );
+    }
+
+    public function testTransactionalCommitExceptionRollsBack(): void
+    {
+        $container = static::buildContainer();
+        $connection = $this->getStubBuilder($this->db::class)
+            ->setConstructorArgs([
+                $container,
+                $container->use(EventManager::class),
+                $container->use(LogManager::class),
+                $this->db->getConfig(),
+            ])
+            ->onlyMethods(['transCommit'])
+            ->getStub();
+
+        $exception = new DbException('Commit failed.');
+
+        $connection->method('transCommit')
+            ->willThrowException($exception);
+
+        try {
+            $commits = 0;
+            $caught = null;
+
+            try {
+                $connection->transactional(static function(Connection $db) use (&$commits): void {
+                    $db->insert()
+                        ->into('test')
+                        ->values([
+                            [
+                                'name' => 'Test 1',
+                            ],
+                        ])
+                        ->execute();
+
+                    $db->afterCommit(static function() use (&$commits): void {
+                        $commits++;
+                    });
+                });
+            } catch (Throwable $e) {
+                $caught = $e;
+            }
+
+            $this->assertSame(
+                $exception,
+                $caught
+            );
+
+            $this->assertSame(
+                0,
+                $connection->getSavePointLevel()
+            );
+
+            $this->assertFalse(
+                $connection->inTransaction()
+            );
+
+            $this->assertSame(
+                0,
+                $connection->select()
+                    ->from('test')
+                    ->count()
+            );
+
+            $this->assertSame(
+                0,
+                $commits
+            );
+        } finally {
+            while ($connection->getSavePointLevel() > 0) {
+                $connection->rollback();
+            }
+
+            $connection->disconnect();
+        }
+    }
+
+    public function testTransactionalCommitExceptionRollsBackNestedTransaction(): void
+    {
+        $container = static::buildContainer();
+        $connection = $this->getStubBuilder($this->db::class)
+            ->setConstructorArgs([
+                $container,
+                $container->use(EventManager::class),
+                $container->use(LogManager::class),
+                $this->db->getConfig(),
+            ])
+            ->onlyMethods(['transRelease'])
+            ->getStub();
+
+        $exception = new Error('Savepoint release failed.');
+
+        $connection->method('transRelease')
+            ->willThrowException($exception);
+
+        try {
+            $connection->begin();
+            $connection->insert()
+                ->into('test')
+                ->values([
+                    [
+                        'name' => 'Test 1',
+                    ],
+                ])
+                ->execute();
+
+            $commits = [];
+            $connection->afterCommit(static function() use (&$commits): void {
+                $commits[] = 'outer';
+            });
+
+            $caught = null;
+
+            try {
+                $connection->transactional(static function(Connection $db) use (&$commits): void {
+                    $db->insert()
+                        ->into('test')
+                        ->values([
+                            [
+                                'name' => 'Test 2',
+                            ],
+                        ])
+                        ->execute();
+
+                    $db->afterCommit(static function() use (&$commits): void {
+                        $commits[] = 'inner';
+                    });
+                });
+            } catch (Throwable $e) {
+                $caught = $e;
+            }
+
+            $this->assertSame(
+                $exception,
+                $caught
+            );
+
+            $this->assertSame(
+                1,
+                $connection->getSavePointLevel()
+            );
+
+            $this->assertTrue(
+                $connection->inTransaction()
+            );
+
+            $this->assertSame(
+                [],
+                $commits
+            );
+
+            $connection->commit();
+
+            $this->assertSame(
+                ['outer'],
+                $commits
+            );
+
+            $this->assertFalse(
+                $connection->inTransaction()
+            );
+
+            $this->assertSame(
+                [
+                    [
+                        'name' => 'Test 1',
+                    ],
+                ],
+                $connection->select(['name'])
+                    ->from('test')
+                    ->execute()
+                    ->all()
+            );
+        } finally {
+            while ($connection->getSavePointLevel() > 0) {
+                $connection->rollback();
+            }
+
+            $connection->disconnect();
+        }
     }
 
     public function testTransactionalRollback(): void
