@@ -78,7 +78,7 @@ $cookie = Cookie::createFromHeaderString(
 );
 ```
 
-The supplied options act as defaults. A missing `Domain` attribute produces a host-only cookie, while an explicit `Domain` attribute allows matching subdomains. A missing or invalid `Path` attribute uses the supplied default path.
+The supplied options act as defaults. Empty `Domain` attributes, including `Domain=.`, are ignored. Without a `Domain` attribute, the cookie retains the supplied default domain and is host-only; a valid explicit domain allows matching subdomains. A missing or invalid `Path` attribute uses the supplied default path.
 
 `Max-Age` takes precedence over `Expires` when it contains a valid integer. Invalid expiration attributes are ignored.
 

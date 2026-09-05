@@ -8,6 +8,7 @@ use Fyre\Http\Client\Response;
 use Fyre\Http\Cookie\Cookie;
 use Fyre\Http\Cookie\CookieJar;
 use Fyre\Http\Uri;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Http\TestCookieJar;
 
@@ -17,6 +18,23 @@ use function time;
 
 final class CookieJarTest extends TestCase
 {
+    /**
+     * @return array<string, array{string, string, string}>
+     */
+    public static function emptyDomainProvider(): array
+    {
+        return [
+            'empty domain origin' => ['', 'source.example', 'test=value'],
+            'empty domain subdomain' => ['', 'sub.source.example', ''],
+            'empty domain unrelated host' => ['', 'unrelated.example', ''],
+            'dot domain origin' => ['.', 'source.example', 'test=value'],
+            'dot domain subdomain' => ['.', 'sub.source.example', ''],
+            'dot domain unrelated host' => ['.', 'unrelated.example', ''],
+            'whitespace domain unrelated host' => ['   ', 'unrelated.example', ''],
+            'multiple dots unrelated host' => ['..', 'unrelated.example', ''],
+        ];
+    }
+
     public function testAddExpired(): void
     {
         $cookie = new Cookie('test', 'value', [
@@ -423,6 +441,27 @@ final class CookieJarTest extends TestCase
         $this->assertSame(
             '',
             $cookieJar->getHeader($otherUri)
+        );
+    }
+
+    #[DataProvider('emptyDomainProvider')]
+    public function testStoreResponseEmptyDomain(string $domain, string $host, string $expected): void
+    {
+        $uri = new Uri('https://source.example');
+        $response = new Response([
+            'headers' => [
+                'Set-Cookie' => 'test=value; Domain='.$domain.'; Path=/',
+            ],
+        ]);
+
+        $cookieJar = new CookieJar();
+        $cookieJar->storeResponse($uri, $response);
+
+        $requestUri = new Uri('https://'.$host);
+
+        $this->assertSame(
+            $expected,
+            $cookieJar->getHeader($requestUri)
         );
     }
 

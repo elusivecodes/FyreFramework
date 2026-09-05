@@ -149,6 +149,10 @@ class Cookie
             }
 
             if ($key === 'domain') {
+                if (ltrim($attributeValue, '.') === '') {
+                    continue;
+                }
+
                 $hasDomainAttribute = true;
             }
 
