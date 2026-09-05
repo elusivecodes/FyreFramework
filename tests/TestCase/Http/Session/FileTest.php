@@ -8,10 +8,12 @@ use Fyre\Core\Container;
 use Fyre\Http\Session\Handlers\FileSessionHandler;
 use Fyre\Http\Session\Session;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use function clearstatcache;
 use function fclose;
+use function file_put_contents;
 use function filemtime;
 use function flock;
 use function fopen;
@@ -23,6 +25,7 @@ use function session_start;
 use function session_write_close;
 use function time;
 use function touch;
+use function unlink;
 
 use const LOCK_EX;
 use const LOCK_NB;
@@ -33,6 +36,17 @@ final class FileTest extends TestCase
     protected FileSessionHandler $handler;
 
     protected Session $session;
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function invalidSessionFileProvider(): array
+    {
+        return [
+            'invalid session id' => ['first-notes.txt'],
+            'empty session id' => ['first-'],
+        ];
+    }
 
     public function testGc(): void
     {
@@ -58,6 +72,87 @@ final class FileTest extends TestCase
         );
     }
 
+    public function testGcDeletesExpiredPrefixedSession(): void
+    {
+        file_put_contents('sessions/first-old-session,1', 'expired');
+        touch('sessions/first-old-session,1', time() - 120);
+
+        $this->assertSame(
+            1,
+            $this->handler->gc(60)
+        );
+
+        $this->assertFileDoesNotExist('sessions/first-old-session,1');
+    }
+
+    public function testGcPreservesDirectories(): void
+    {
+        mkdir('sessions/first-directory');
+        touch('sessions/first-directory', time() - 120);
+
+        $this->assertSame(
+            0,
+            $this->handler->gc(60)
+        );
+
+        $this->assertDirectoryExists('sessions/first-directory');
+    }
+
+    #[DataProvider('invalidSessionFileProvider')]
+    public function testGcPreservesInvalidSessionFiles(string $file): void
+    {
+        file_put_contents('sessions/'.$file, 'unrelated');
+        touch('sessions/'.$file, time() - 120);
+
+        $this->assertSame(
+            0,
+            $this->handler->gc(60)
+        );
+
+        $this->assertFileExists('sessions/'.$file);
+    }
+
+    public function testGcPreservesOtherPrefixes(): void
+    {
+        file_put_contents('sessions/second-old', 'other session');
+        touch('sessions/second-old', time() - 120);
+
+        $this->assertSame(
+            0,
+            $this->handler->gc(60)
+        );
+
+        $this->assertFileExists('sessions/second-old');
+    }
+
+    public function testGcPreservesUnexpiredSession(): void
+    {
+        file_put_contents('sessions/first-fresh', 'current');
+
+        $this->assertSame(
+            0,
+            $this->handler->gc(60)
+        );
+
+        $this->assertFileExists('sessions/first-fresh');
+    }
+
+    public function testGcPreservesUnrelatedFilesWithoutPrefix(): void
+    {
+        $handler = new FileSessionHandler($this->session);
+        $handler->open('sessions', '');
+
+        file_put_contents('sessions/notes.txt', 'unrelated');
+        touch('sessions/notes.txt', time() - 120);
+
+        $this->assertSame(
+            0,
+            $handler->gc(60)
+        );
+
+        $this->assertFileExists('sessions/notes.txt');
+    }
+
     public function testOperationLocksAreReleased(): void
     {
         $id = $this->session->id();
@@ -71,7 +166,7 @@ final class FileTest extends TestCase
             $this->handler->read($id)
         );
 
-        $handle = fopen('sessions/'.$id, 'c+b');
+        $handle = fopen('sessions/first-'.$id, 'c+b');
 
         $this->assertIsResource($handle);
 
@@ -170,18 +265,18 @@ final class FileTest extends TestCase
         $oldTime = time() - 10;
 
         $this->assertTrue(
-            touch('sessions/'.$id, $oldTime)
+            touch('sessions/first-'.$id, $oldTime)
         );
 
         $this->assertTrue(
             $this->handler->updateTimestamp($id, 'ignored')
         );
 
-        clearstatcache(true, 'sessions/'.$id);
+        clearstatcache(true, 'sessions/first-'.$id);
 
         $this->assertGreaterThan(
             $oldTime,
-            filemtime('sessions/'.$id)
+            filemtime('sessions/first-'.$id)
         );
 
         $this->assertSame(
@@ -211,10 +306,10 @@ final class FileTest extends TestCase
         );
 
         $this->assertTrue(
-            touch('sessions/'.$id, time() - 86400)
+            touch('sessions/first-'.$id, time() - 86400)
         );
 
-        clearstatcache(true, 'sessions/'.$id);
+        clearstatcache(true, 'sessions/first-'.$id);
 
         $this->assertFalse(
             $this->handler->validateId($id)
@@ -238,6 +333,7 @@ final class FileTest extends TestCase
         $container->use(Config::class)->set('Session', [
             'handler' => [
                 'className' => FileSessionHandler::class,
+                'prefix' => 'first-',
             ],
         ]);
 
@@ -270,6 +366,13 @@ final class FileTest extends TestCase
             $this->handler->close()
         );
 
+        @unlink('sessions/first-old-session,1');
+        @unlink('sessions/first-fresh');
+        @unlink('sessions/second-old');
+        @unlink('sessions/first-notes.txt');
+        @unlink('sessions/first-');
+        @unlink('sessions/notes.txt');
+        @rmdir('sessions/first-directory');
         @rmdir('sessions');
     }
 }

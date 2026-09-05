@@ -15,6 +15,7 @@ use Fyre\Security\CsrfProtection;
 use Fyre\Security\Exceptions\CsrfTokenException;
 use Fyre\Security\Middleware\CsrfProtectionMiddleware;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -23,6 +24,44 @@ use function class_uses;
 final class CsrfProtectionMiddlewareTest extends TestCase
 {
     protected Container $container;
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function invalidCookieProvider(): array
+    {
+        return [
+            'empty' => [''],
+            'whitespace' => [" \t\r\n"],
+            'invalid base64' => ['%'],
+        ];
+    }
+
+    public function testCookieEmpty(): void
+    {
+        $this->expectException(CsrfTokenException::class);
+        $this->expectExceptionMessageIs('CSRF Token Mismatch');
+
+        $middleware = $this->container->build(CsrfProtectionMiddleware::class);
+
+        $queue = new MiddlewareQueue();
+        $queue->add($middleware);
+
+        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'method' => 'POST',
+                'cookies' => [
+                    'CsrfToken' => '',
+                ],
+                'data' => [
+                    'csrf_token' => '',
+                ],
+            ],
+        ]);
+
+        $handler->handle($request);
+    }
 
     public function testCookieInvalid(): void
     {
@@ -336,6 +375,36 @@ final class CsrfProtectionMiddlewareTest extends TestCase
         $this->assertSame(
             $csrfProtection->getCookieToken(),
             $cookie->getValue()
+        );
+    }
+
+    #[DataProvider('invalidCookieProvider')]
+    public function testGetInvalidCookie(string $cookie): void
+    {
+        $csrfProtection = $this->container->use(CsrfProtection::class);
+        $middleware = $this->container->build(CsrfProtectionMiddleware::class);
+
+        $queue = new MiddlewareQueue();
+        $queue->add($middleware);
+
+        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'cookies' => [
+                    'CsrfToken' => $cookie,
+                ],
+            ],
+        ]);
+
+        $response = $handler->handle($request);
+
+        $this->assertInstanceOf(
+            ClientResponse::class,
+            $response
+        );
+
+        $this->assertNull(
+            $csrfProtection->getFormToken()
         );
     }
 

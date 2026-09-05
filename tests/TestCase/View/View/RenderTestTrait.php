@@ -74,6 +74,33 @@ trait RenderTestTrait
         );
     }
 
+    public function testRenderDataCannotOverrideFilePath(): void
+    {
+        $this->view->setData([
+            'a' => 1,
+            '__fyreFilePath' => realpath('tests/templates/test/deep/test.php'),
+        ]);
+        $this->view->setLayout(null);
+
+        $this->assertSame(
+            'Template: 1',
+            $this->view->render('test/template')
+        );
+    }
+
+    public function testRenderDataCannotOverrideView(): void
+    {
+        $this->view->setData([
+            'a' => 1,
+            'this' => null,
+        ]);
+
+        $this->assertSame(
+            'Content: Template: 1',
+            $this->view->render('test/template')
+        );
+    }
+
     public function testRenderDeep(): void
     {
         $this->view->setLayout(null);

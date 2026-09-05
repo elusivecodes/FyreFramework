@@ -13,6 +13,7 @@ use Psr\Http\Message\ServerRequestInterface;
 
 use function array_is_list;
 use function count;
+use function hash;
 use function hash_hmac;
 use function is_array;
 use function is_string;
@@ -183,7 +184,8 @@ class CookieAuthenticator extends Authenticator
      * Creates a token for a user.
      *
      * Note: The token is derived from the configured identifier and password fields so it is invalidated
-     * automatically when the stored password changes. When a salt is configured, an HMAC is appended.
+     * automatically when the stored password changes. A fixed-length SHA-256 digest (HMAC when a salt
+     * is configured) keeps the token within bcrypt's 72-byte limit.
      *
      * @param Entity $user The Entity.
      * @return string The token.
@@ -196,11 +198,9 @@ class CookieAuthenticator extends Authenticator
         $value = $identifier.$password;
 
         if (!$this->config['salt']) {
-            return $value;
+            return hash('sha256', $value);
         }
 
-        $hash = hash_hmac('sha1', $value, $this->config['salt']);
-
-        return $value.$hash;
+        return hash_hmac('sha256', $value, $this->config['salt']);
     }
 }

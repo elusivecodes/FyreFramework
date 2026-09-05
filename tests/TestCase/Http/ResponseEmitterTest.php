@@ -10,8 +10,10 @@ use Fyre\Http\ResponseEmitter;
 use Fyre\Http\Stream;
 use Fyre\Http\Stream\IterableStream;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
+use Tests\Mock\Http\Stream\ShortReadStream;
 
 use function class_uses;
 use function fclose;
@@ -37,6 +39,18 @@ final class ResponseEmitterTest extends TestCase
     protected static array $headers = [];
 
     protected ResponseEmitter $emitter;
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function shortReadRangeProvider(): array
+    {
+        return [
+            'full body' => ['bytes 0-5/6', 'abcdef'],
+            'partial body' => ['bytes 1-3/6', 'bcd'],
+            'past end of body' => ['bytes 0-10/6', 'abcdef'],
+        ];
+    }
 
     public function testDebug(): void
     {
@@ -244,6 +258,22 @@ final class ResponseEmitterTest extends TestCase
             'is a t',
             $output
         );
+    }
+
+    #[DataProvider('shortReadRangeProvider')]
+    public function testEmitRangeShortReads(string $range, string $expected): void
+    {
+        $response = new ClientResponse([
+            'body' => ShortReadStream::createFromString('abcdef'),
+        ])
+            ->withStatus(206)
+            ->withHeader('Content-Range', $range);
+
+        ob_start();
+        $this->emitter->emit($response);
+        $output = ob_get_clean();
+
+        $this->assertSame($expected, $output);
     }
 
     public function testEmitSetCookieHeader(): void

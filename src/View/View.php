@@ -21,12 +21,13 @@ use function array_pop;
 use function count;
 use function explode;
 use function extract;
-use function func_get_arg;
 use function ob_end_clean;
 use function ob_get_contents;
 use function ob_get_level;
 use function ob_start;
 use function sprintf;
+
+use const EXTR_SKIP;
 
 /**
  * Renders templates and layouts with helper and cell support.
@@ -452,21 +453,21 @@ class View
     /**
      * Renders and injects data into a file.
      *
-     * Note: This uses {@see extract()} to create local variables from `$data`. Variable
-     * names may collide with local scope.
+     * Note: This uses {@see extract()} with `EXTR_SKIP` to create local variables without overwriting
+     * `$__fyreFilePath`, `$__fyreData`, or `$this`. Colliding values remain in `$__fyreData`.
      *
-     * @param string $filePath The file path.
-     * @param array<string, mixed> $data The data to inject.
+     * @param string $__fyreFilePath The file path.
+     * @param array<string, mixed> $__fyreData The data to inject.
      * @return string The rendered file.
      */
-    protected function evaluate(string $filePath, array $data): string
+    protected function evaluate(string $__fyreFilePath, array $__fyreData): string
     {
-        extract($data);
+        extract($__fyreData, EXTR_SKIP);
 
         try {
             ob_start();
 
-            include func_get_arg(0);
+            include $__fyreFilePath;
 
             return (string) ob_get_contents();
         } finally {

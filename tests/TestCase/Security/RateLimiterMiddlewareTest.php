@@ -27,6 +27,7 @@ use function class_uses;
 use function glob;
 use function mkdir;
 use function rmdir;
+use function sleep;
 use function time;
 use function unlink;
 use function usleep;
@@ -233,6 +234,65 @@ final class RateLimiterMiddlewareTest extends TestCase
                 $e->getHeaders()['Retry-After'] ?? 0
             );
         }
+    }
+
+    public function testFixedWindowLimitAcrossSeconds(): void
+    {
+        $limiter = $this->container->build(FixedWindowRateLimiter::class, [
+            'options' => [
+                'limit' => 1,
+                'window' => 60,
+            ],
+        ]);
+        $request = $this->container->build(ServerRequest::class);
+
+        $first = $limiter->checkLimit($request);
+
+        $this->assertTrue($first['allowed']);
+
+        sleep(1);
+
+        $second = $limiter->checkLimit($request);
+
+        // If the first request landed in the final second, check the new window instead.
+        if ($second['reset'] !== $first['reset']) {
+            $first = $second;
+
+            $this->assertTrue($first['allowed']);
+
+            sleep(1);
+
+            $second = $limiter->checkLimit($request);
+        }
+
+        $this->assertFalse($second['allowed']);
+        $this->assertSame(0, $second['remaining']);
+        $this->assertSame($first['reset'], $second['reset']);
+        $this->assertSame(0, $second['reset'] % 60);
+    }
+
+    public function testFixedWindowLimitResets(): void
+    {
+        $limiter = $this->container->build(FixedWindowRateLimiter::class, [
+            'options' => [
+                'limit' => 1,
+                'window' => 1,
+            ],
+        ]);
+        $request = $this->container->build(ServerRequest::class);
+
+        $first = $limiter->checkLimit($request);
+
+        $this->assertTrue($first['allowed']);
+        $this->assertSame(0, $first['remaining']);
+
+        sleep(1);
+
+        $second = $limiter->checkLimit($request);
+
+        $this->assertTrue($second['allowed']);
+        $this->assertSame(0, $second['remaining']);
+        $this->assertGreaterThan($first['reset'], $second['reset']);
     }
 
     public function testFixedWindowStrategy(): void

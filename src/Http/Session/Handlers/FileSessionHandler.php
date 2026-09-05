@@ -19,7 +19,10 @@ use function is_dir;
 use function is_resource;
 use function mkdir;
 use function rewind;
+use function str_starts_with;
 use function stream_get_contents;
+use function strlen;
+use function substr;
 use function time;
 use function touch;
 use function unlink;
@@ -56,26 +59,39 @@ class FileSessionHandler extends SessionHandler
 
     /**
      * {@inheritDoc}
+     *
+     * Only expired regular files matching the configured prefix and a valid session ID are removed.
      */
     #[Override]
     public function gc(int $expires): false|int
     {
         $maxLife = time() - $expires;
+        $prefix = $this->config['prefix'];
+        $prefixLength = strlen($prefix);
 
         $iterator = new DirectoryIterator($this->path);
 
         $deleted = 0;
         foreach ($iterator as $item) {
+            if (!$item->isFile() || $item->isLink()) {
+                continue;
+            }
+
+            $filename = $item->getFilename();
+
             if (
-                $item->isDir() ||
+                !str_starts_with($filename, $prefix) ||
+                !static::isValidSessionId(substr($filename, $prefixLength)) ||
                 $item->getMTime() >= $maxLife
             ) {
                 continue;
             }
 
             $filePath = $item->getPathname();
-            @unlink($filePath);
-            $deleted++;
+
+            if (@unlink($filePath)) {
+                $deleted++;
+            }
         }
 
         return $deleted;

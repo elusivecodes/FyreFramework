@@ -88,4 +88,21 @@ trait LayoutTestTrait
             str_replace(["\r\n", "\r"], PHP_EOL, $content)
         );
     }
+
+    public function testRenderLayoutDataCannotOverrideFilePath(): void
+    {
+        $this->view->set('a', 1);
+        $this->view->setLayout('test');
+        $this->view->getEventManager()->on('View.beforeLayout', function(): void {
+            $this->view->set('__fyreFilePath', realpath('tests/templates/test/deep/test.php'));
+        });
+
+        $content = $this->view->render('test/template');
+
+        $this->assertSame(
+            'Layout: 1'.PHP_EOL.
+            'Content: Template: 1',
+            str_replace(["\r\n", "\r"], PHP_EOL, $content)
+        );
+    }
 }

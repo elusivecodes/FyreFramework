@@ -17,23 +17,56 @@ use Fyre\Http\MiddlewareQueue;
 use Fyre\Http\RequestHandler;
 use Fyre\Http\ServerRequest;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Authenticators\MockAuthenticator;
 use Tests\Mock\Entities\User;
 
 use function class_uses;
+use function hash;
 use function json_decode;
 use function json_encode;
 use function password_hash;
 use function password_verify;
 use function rawurldecode;
 use function rawurlencode;
+use function str_repeat;
 
 use const PASSWORD_DEFAULT;
 
 final class AuthenticatorTest extends TestCase
 {
     use ConnectionTrait;
+
+    /**
+     * @return array<string, array{string|null, string, string, string}>
+     */
+    public static function cookieFieldChangeProvider(): array
+    {
+        $cases = [];
+        $longIdentifier = str_repeat('a', 80).'@test.com';
+
+        foreach ([null, 'secret'] as $salt) {
+            $prefix = $salt === null ? 'unsalted' : 'salted';
+
+            $cases[$prefix.' password with long identifier'] = [$salt, $longIdentifier, 'password', 'changed-password-hash'];
+            $cases[$prefix.' password suffix'] = [$salt, 'test@test.com', 'password', str_repeat('a', 80).'changed'];
+            $cases[$prefix.' identifier suffix'] = [$salt, $longIdentifier, 'email', str_repeat('a', 80).'@changed.com'];
+        }
+
+        return $cases;
+    }
+
+    /**
+     * @return array<string, array{string|null}>
+     */
+    public static function cookieSaltChangeProvider(): array
+    {
+        return [
+            'changed salt' => ['changed-secret'],
+            'removed salt' => [null],
+        ];
+    }
 
     public function testConstructAuthenticatorClassKey(): void
     {
@@ -99,7 +132,7 @@ final class AuthenticatorTest extends TestCase
             $authUser
         );
 
-        $tokenHash = password_hash('test@test.com'.$authUser->password, PASSWORD_DEFAULT);
+        $tokenHash = password_hash(hash('sha256', 'test@test.com'.$authUser->password), PASSWORD_DEFAULT);
         $auth = (string) json_encode(['test@test.com', $tokenHash]) |> rawurlencode(...);
 
         $request = $this->container->build(ServerRequest::class, [
@@ -118,6 +151,126 @@ final class AuthenticatorTest extends TestCase
         );
 
         $this->assertTrue($this->auth->isLoggedIn());
+    }
+
+    #[DataProvider('cookieFieldChangeProvider')]
+    public function testCookieAuthenticatorInvalidatedByFieldChange(string|null $salt, string $email, string $field, string $value): void
+    {
+        $authUser = $this->identifier->identify('test@test.com');
+
+        $this->assertInstanceOf(
+            User::class,
+            $authUser
+        );
+
+        $authUser->email = $email;
+        $authUser->password = str_repeat('a', 80).'original';
+
+        $this->identifier->getModel()->save($authUser);
+
+        $authenticator = $this->container->build(CookieAuthenticator::class, [
+            'options' => [
+                'salt' => $salt,
+            ],
+        ]);
+        $authenticator->login($authUser, true);
+
+        $response = $authenticator->beforeResponse(new ClientResponse());
+
+        [$cookieString] = $response->getHeader('Set-Cookie');
+
+        $cookie = Cookie::createFromHeaderString($cookieString);
+
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'cookies' => [
+                    'auth' => $cookie->getValue(),
+                ],
+            ],
+        ]);
+
+        $this->assertInstanceOf(
+            User::class,
+            $authenticator->authenticate($request)
+        );
+
+        $authUser->set($field, $value);
+
+        $this->identifier->getModel()->save($authUser);
+
+        if ($field === 'email') {
+            $data = $cookie->getValue() |> rawurldecode(...);
+            [, $tokenHash] = json_decode($data, true);
+
+            // Keep the old token hash while allowing the changed identifier to resolve.
+            $auth = (string) json_encode([$value, $tokenHash]) |> rawurlencode(...);
+            $request = $request->withCookieParams(['auth' => $auth]);
+        }
+
+        $this->assertNull(
+            $authenticator->authenticate($request)
+        );
+
+        $response = $authenticator->beforeResponse(new ClientResponse());
+
+        [$cookieString] = $response->getHeader('Set-Cookie');
+
+        $cookie = Cookie::createFromHeaderString($cookieString);
+
+        $this->assertTrue(
+            $cookie->isExpired()
+        );
+    }
+
+    #[DataProvider('cookieSaltChangeProvider')]
+    public function testCookieAuthenticatorInvalidatedBySaltChange(string|null $salt): void
+    {
+        $authUser = $this->identifier->identify('test@test.com');
+
+        $this->assertInstanceOf(
+            User::class,
+            $authUser
+        );
+
+        $authUser->password = str_repeat('a', 80).'original';
+
+        $this->identifier->getModel()->save($authUser);
+
+        $authenticator = $this->container->build(CookieAuthenticator::class, [
+            'options' => [
+                'salt' => 'original-secret',
+            ],
+        ]);
+        $authenticator->login($authUser, true);
+
+        $response = $authenticator->beforeResponse(new ClientResponse());
+
+        [$cookieString] = $response->getHeader('Set-Cookie');
+
+        $cookie = Cookie::createFromHeaderString($cookieString);
+
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'cookies' => [
+                    'auth' => $cookie->getValue(),
+                ],
+            ],
+        ]);
+
+        $this->assertInstanceOf(
+            User::class,
+            $authenticator->authenticate($request)
+        );
+
+        $authenticator = $this->container->build(CookieAuthenticator::class, [
+            'options' => [
+                'salt' => $salt,
+            ],
+        ]);
+
+        $this->assertNull(
+            $authenticator->authenticate($request)
+        );
     }
 
     public function testCookieAuthenticatorInvalidData(): void
@@ -226,7 +379,7 @@ final class AuthenticatorTest extends TestCase
 
         [$identifier, $tokenHash] = $data;
 
-        $token = 'test@test.com'.$authUser->password;
+        $token = hash('sha256', 'test@test.com'.$authUser->password);
 
         $this->assertTrue(
             password_verify($token, $tokenHash)
@@ -308,7 +461,7 @@ final class AuthenticatorTest extends TestCase
 
         $this->assertInstanceOf(User::class, $authUser);
 
-        $tokenHash = password_hash('test@test.com'.$authUser->password, PASSWORD_DEFAULT);
+        $tokenHash = password_hash(hash('sha256', 'test@test.com'.$authUser->password), PASSWORD_DEFAULT);
         $auth = (string) json_encode(['test@test.com', $tokenHash]) |> rawurlencode(...);
 
         $request = $this->container->build(ServerRequest::class, [

@@ -20,6 +20,17 @@ trait ElementTestTrait
         );
     }
 
+    public function testElementDataCannotOverrideFilePath(): void
+    {
+        $this->assertSame(
+            'Element: 2',
+            $this->view->element('element', [
+                'b' => 2,
+                '__fyreFilePath' => realpath('tests/templates/test/deep/test.php'),
+            ])
+        );
+    }
+
     public function testElementDeep(): void
     {
         $this->view->setLayout(null);

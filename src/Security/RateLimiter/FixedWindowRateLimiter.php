@@ -7,7 +7,6 @@ use Fyre\Security\RateLimiter;
 use Override;
 use Psr\Http\Message\ServerRequestInterface;
 
-use function floor;
 use function max;
 use function time;
 
@@ -29,7 +28,7 @@ class FixedWindowRateLimiter extends RateLimiter
 
         [$limit, $window, $cost] = $this->resolveParameters($request, $limit, $window, $cost);
 
-        $windowStart = (int) floor(($now / $window) * $window);
+        $windowStart = $now - ($now % $window);
 
         $identifier = $this->getIdentifier($request);
         $key = $this->generateKey($identifier).'_'.$windowStart;

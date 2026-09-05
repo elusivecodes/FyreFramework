@@ -171,6 +171,8 @@ Notes:
 - The session directory is created automatically when missing.
 - Writes use `LOCK_EX` to reduce race conditions.
 - Missing session files read as an empty string (errors are suppressed).
+- Garbage collection removes only expired regular files whose names match the configured prefix followed by a valid session ID. Symbolic links are skipped.
+- Use a dedicated session directory when no prefix is configured. Shared directories require nonempty prefixes that do not overlap.
 
 Common options:
 

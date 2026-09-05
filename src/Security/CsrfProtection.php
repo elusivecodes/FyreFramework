@@ -15,7 +15,6 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 use function array_replace_recursive;
-use function assert;
 use function base64_decode;
 use function base64_encode;
 use function hash_equals;
@@ -255,13 +254,11 @@ class CsrfProtection
     {
         $decoded = base64_decode($token, true);
 
-        if ($decoded === false) {
+        if ($decoded === false || $decoded === '') {
             return null;
         }
 
         $length = strlen($decoded);
-
-        assert($length > 0);
 
         $salt = random_bytes($length);
         $salted = $decoded ^ $salt;

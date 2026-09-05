@@ -16,6 +16,7 @@ use function http_response_code;
 use function min;
 use function preg_match;
 use function setcookie;
+use function strlen;
 use function strtolower;
 use function substr;
 
@@ -116,9 +117,9 @@ class ResponseEmitter
                 $remaining = $length;
 
                 while (!$body->eof() && $remaining > 0) {
-                    $readLength = min($remaining, static::MAX_BUFFER_SIZE);
-                    echo $body->read($readLength);
-                    $remaining -= $readLength;
+                    $chunk = min($remaining, static::MAX_BUFFER_SIZE) |> $body->read(...);
+                    echo $chunk;
+                    $remaining -= strlen($chunk);
                 }
             } else {
                 $contents = $body->getContents();
