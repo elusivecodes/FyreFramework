@@ -4,12 +4,25 @@ declare(strict_types=1);
 namespace Tests\TestCase\Cache\Cacher;
 
 use Fyre\Cache\Cacher;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * @property Cacher $cacher
  */
 trait TagsTestTrait
 {
+    /**
+     * @return array<string, array{string[], string[]}>
+     */
+    public static function distinctTagSetsProvider(): array
+    {
+        return [
+            'delimiter in tag' => [['a|b'], ['a', 'b']],
+            'different tag boundaries' => [['a|b', 'c'], ['a', 'b|c']],
+            'empty tag' => [[], ['']],
+        ];
+    }
+
     public function testTaggedDelete(): void
     {
         $usersCache = $this->cacher->tags('users');
@@ -38,6 +51,30 @@ trait TagsTestTrait
 
         $this->assertNull(
             $this->cacher->get('user.1')
+        );
+    }
+
+    /**
+     * @param string[] $firstTags
+     * @param string[] $secondTags
+     */
+    #[DataProvider('distinctTagSetsProvider')]
+    public function testTaggedGetSetDistinctTags(array $firstTags, array $secondTags): void
+    {
+        $firstCache = $this->cacher->tags($firstTags);
+        $secondCache = $this->cacher->tags($secondTags);
+
+        $firstCache->set('user.1', 'first');
+        $secondCache->set('user.1', 'second');
+
+        $this->assertSame(
+            'first',
+            $firstCache->get('user.1')
+        );
+
+        $this->assertSame(
+            'second',
+            $secondCache->get('user.1')
         );
     }
 

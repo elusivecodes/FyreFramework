@@ -12,9 +12,9 @@ use function array_key_exists;
 use function array_unique;
 use function array_values;
 use function bin2hex;
-use function implode;
 use function is_array;
 use function random_bytes;
+use function serialize;
 use function sha1;
 use function sort;
 
@@ -194,7 +194,7 @@ class TaggedCacher
      */
     protected function taggedKey(string $key): string
     {
-        $namespace = implode('|', $this->tags) |> sha1(...);
+        $namespace = serialize($this->tags) |> sha1(...);
 
         return '__tagged__.'.$namespace.'.'.$key;
     }
