@@ -31,6 +31,7 @@ trait ModelTestTrait
     use QueryTestTrait;
     use RelationshipTestTrait;
     use SchemaTestTrait;
+    use TransactionTestTrait;
 
     public function testConnection(): void
     {

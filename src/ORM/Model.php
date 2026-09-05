@@ -418,29 +418,35 @@ class Model implements EventListenerInterface
         $connection = $this->getConnection();
 
         $connection->begin();
+        $committed = false;
 
-        if (!$this->performDelete($entity, $options)) {
-            $connection->rollback();
+        try {
+            if (!$this->performDelete($entity, $options)) {
+                return false;
+            }
 
-            static::resetParents([$entity], $this);
-            static::resetChildren([$entity], $this);
+            if ($events) {
+                $connection->afterCommit(function() use ($entity, $options): void {
+                    $this->dispatchEvent('ORM.afterDeleteCommit', ['entity' => $entity, 'options' => $options]);
+                }, 100);
+            }
 
-            $entity->clearTemporaryFields();
+            $connection->afterCommit(function() use ($entity): void {
+                static::cleanEntities([$entity], $this);
+            }, 200);
 
-            return false;
+            $connection->commit();
+            $committed = true;
+        } finally {
+            if (!$committed) {
+                $connection->rollback();
+
+                static::resetParents([$entity], $this);
+                static::resetChildren([$entity], $this);
+
+                $entity->clearTemporaryFields();
+            }
         }
-
-        if ($events) {
-            $connection->afterCommit(function() use ($entity, $options): void {
-                $this->dispatchEvent('ORM.afterDeleteCommit', ['entity' => $entity, 'options' => $options]);
-            }, 100);
-        }
-
-        $connection->afterCommit(function() use ($entity): void {
-            static::cleanEntities([$entity], $this);
-        }, 200);
-
-        $connection->commit();
 
         return true;
     }
@@ -496,41 +502,41 @@ class Model implements EventListenerInterface
         $connection = $this->getConnection();
 
         $connection->begin();
+        $committed = false;
 
-        $result = true;
-        foreach ($entities as $entity) {
-            if (!$this->performDelete($entity, $options)) {
-                $result = false;
-                break;
-            }
-        }
-
-        if (!$result) {
-            $connection->rollback();
-
-            static::resetParents($entities, $this);
-            static::resetChildren($entities, $this);
-
+        try {
             foreach ($entities as $entity) {
-                $entity->clearTemporaryFields();
+                if (!$this->performDelete($entity, $options)) {
+                    return false;
+                }
             }
 
-            return false;
-        }
+            if ($events) {
+                $connection->afterCommit(function() use ($entities, $options): void {
+                    foreach ($entities as $entity) {
+                        $this->dispatchEvent('ORM.afterDeleteCommit', ['entity' => $entity, 'options' => $options]);
+                    }
+                }, 100);
+            }
 
-        if ($events) {
-            $connection->afterCommit(function() use ($entities, $options): void {
+            $connection->afterCommit(function() use ($entities): void {
+                static::cleanEntities($entities, $this);
+            }, 200);
+
+            $connection->commit();
+            $committed = true;
+        } finally {
+            if (!$committed) {
+                $connection->rollback();
+
+                static::resetParents($entities, $this);
+                static::resetChildren($entities, $this);
+
                 foreach ($entities as $entity) {
-                    $this->dispatchEvent('ORM.afterDeleteCommit', ['entity' => $entity, 'options' => $options]);
+                    $entity->clearTemporaryFields();
                 }
-            }, 100);
+            }
         }
-
-        $connection->afterCommit(function() use ($entities): void {
-            static::cleanEntities($entities, $this);
-        }, 200);
-
-        $connection->commit();
 
         return true;
     }
@@ -1305,31 +1311,37 @@ class Model implements EventListenerInterface
         $connection = $this->getConnection();
 
         $connection->begin();
+        $committed = false;
 
-        if (!$this->performSave($entity, $options)) {
-            $connection->rollback();
+        try {
+            if (!$this->performSave($entity, $options)) {
+                return false;
+            }
 
-            static::resetParents([$entity], $this);
-            static::resetChildren([$entity], $this);
+            if ($events) {
+                $connection->afterCommit(function() use ($entity, $options): void {
+                    $this->dispatchEvent('ORM.afterSaveCommit', ['entity' => $entity, 'options' => $options]);
+                }, 100);
+            }
 
-            $entity->clearTemporaryFields();
+            if ($clean) {
+                $connection->afterCommit(function() use ($entity): void {
+                    static::cleanEntities([$entity], $this);
+                }, 200);
+            }
 
-            return false;
+            $connection->commit();
+            $committed = true;
+        } finally {
+            if (!$committed) {
+                $connection->rollback();
+
+                static::resetParents([$entity], $this);
+                static::resetChildren([$entity], $this);
+
+                $entity->clearTemporaryFields();
+            }
         }
-
-        if ($events) {
-            $connection->afterCommit(function() use ($entity, $options): void {
-                $this->dispatchEvent('ORM.afterSaveCommit', ['entity' => $entity, 'options' => $options]);
-            }, 100);
-        }
-
-        if ($clean) {
-            $connection->afterCommit(function() use ($entity): void {
-                static::cleanEntities([$entity], $this);
-            }, 200);
-        }
-
-        $connection->commit();
 
         return true;
     }
@@ -1397,43 +1409,43 @@ class Model implements EventListenerInterface
         $connection = $this->getConnection();
 
         $connection->begin();
+        $committed = false;
 
-        $result = true;
-        foreach ($entities as $entity) {
-            if (!$this->performSave($entity, $options)) {
-                $result = false;
-                break;
-            }
-        }
-
-        if (!$result) {
-            $connection->rollback();
-
-            static::resetParents($entities, $this);
-            static::resetChildren($entities, $this);
-
+        try {
             foreach ($entities as $entity) {
-                $entity->clearTemporaryFields();
+                if (!$this->performSave($entity, $options)) {
+                    return false;
+                }
             }
 
-            return false;
-        }
+            if ($events) {
+                $connection->afterCommit(function() use ($entities, $options): void {
+                    foreach ($entities as $entity) {
+                        $this->dispatchEvent('ORM.afterSaveCommit', ['entity' => $entity, 'options' => $options]);
+                    }
+                }, 100);
+            }
 
-        if ($events) {
-            $connection->afterCommit(function() use ($entities, $options): void {
+            if ($clean) {
+                $connection->afterCommit(function() use ($entities): void {
+                    static::cleanEntities($entities, $this);
+                }, 200);
+            }
+
+            $connection->commit();
+            $committed = true;
+        } finally {
+            if (!$committed) {
+                $connection->rollback();
+
+                static::resetParents($entities, $this);
+                static::resetChildren($entities, $this);
+
                 foreach ($entities as $entity) {
-                    $this->dispatchEvent('ORM.afterSaveCommit', ['entity' => $entity, 'options' => $options]);
+                    $entity->clearTemporaryFields();
                 }
-            }, 100);
+            }
         }
-
-        if ($clean) {
-            $connection->afterCommit(function() use ($entities): void {
-                static::cleanEntities($entities, $this);
-            }, 200);
-        }
-
-        $connection->commit();
 
         return true;
     }
