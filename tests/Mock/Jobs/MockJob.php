@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\Mock\Jobs;
 
+use PDO;
 use RuntimeException;
 
 use function file_put_contents;
@@ -19,6 +20,11 @@ class MockJob
     public function fail(): false
     {
         return false;
+    }
+
+    public function pdoError(): void
+    {
+        new PDO('sqlite::memory:')->exec('SELECT * FROM missing_table');
     }
 
     public function run(int $test): void

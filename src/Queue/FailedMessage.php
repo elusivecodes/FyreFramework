@@ -20,7 +20,7 @@ final class FailedMessage
      */
     protected string|null $exceptionClass = null;
 
-    protected int|null $exceptionCode = null;
+    protected int|string|null $exceptionCode = null;
 
     protected string|null $exceptionFile = null;
 
@@ -123,9 +123,9 @@ final class FailedMessage
     /**
      * Returns the exception code.
      *
-     * @return int|null The exception code.
+     * @return int|string|null The exception code.
      */
-    public function getExceptionCode(): int|null
+    public function getExceptionCode(): int|string|null
     {
         return $this->exceptionCode;
     }

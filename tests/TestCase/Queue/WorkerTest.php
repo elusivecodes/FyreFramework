@@ -14,12 +14,15 @@ use Fyre\Queue\QueueManager;
 use Fyre\Queue\Worker;
 use InvalidArgumentException;
 use Override;
+use PDOException;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Redis;
 use Tests\Mock\Jobs\MockJob;
 use Tests\Mock\Listeners\MockListener;
 
+use function array_key_first;
+use function array_keys;
 use function class_uses;
 use function getenv;
 use function mkdir;
@@ -136,6 +139,68 @@ final class WorkerTest extends TestCase
         $this->assertStringEqualsFile(
             'tmp/job',
             '1'
+        );
+    }
+
+    #[RequiresPhpExtension('pdo_sqlite')]
+    public function testWorkerJobPdoException(): void
+    {
+        $this->queueManager->push(MockJob::class, [], [
+            'method' => 'pdoError',
+            'retry' => false,
+        ]);
+
+        $worker = $this->container->build(Worker::class);
+
+        $this->assertTrue(
+            $worker->runOnce()
+        );
+
+        $failures = $this->queue->getFailed();
+
+        $this->assertCount(
+            1,
+            $failures
+        );
+
+        $id = array_key_first($failures);
+
+        $this->assertIsString(
+            $id
+        );
+
+        $failure = $failures[$id];
+
+        $this->assertSame(
+            PDOException::class,
+            $failure->getExceptionClass()
+        );
+        $this->assertSame(
+            'HY000',
+            $failure->getExceptionCode()
+        );
+        $this->assertArraysAreIdentical(
+            [
+                'queued' => 0,
+                'delayed' => 0,
+                'completed' => 0,
+                'failed' => 1,
+                'total' => 1,
+            ],
+            $this->queue->stats()
+        );
+
+        $connection = Closure::bind(function(): Redis {
+            /** @var RedisQueue $this */
+            return $this->connection;
+        }, $this->queue, RedisQueue::class)();
+
+        $this->assertSame(
+            0,
+            $connection->zCard('queue:default:processing')
+        );
+        $this->assertFalse(
+            $worker->runOnce()
         );
     }
 
@@ -406,6 +471,10 @@ final class WorkerTest extends TestCase
     #[Override]
     protected function tearDown(): void
     {
+        foreach (array_keys($this->queue->getFailed()) as $id) {
+            $this->queue->forgetFailed($id);
+        }
+
         $this->queue->clear();
         $this->queue->clear('test');
 
@@ -413,6 +482,7 @@ final class WorkerTest extends TestCase
         $this->queue->reset('test');
 
         @unlink('tmp/job');
+        @unlink('tmp/exception');
         @rmdir('tmp');
     }
 }
