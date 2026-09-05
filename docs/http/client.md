@@ -125,6 +125,8 @@ $client = new Client([
 
 Relative `Location` values are resolved against the current request URI. Empty, malformed, non-HTTP(S), credential-bearing, and hostless redirect locations throw a `RequestException`. Redirect loops also throw a `RequestException`.
 
+Fragment-only locations retain the current query. Locations with a new path or an explicit query do not inherit the old query. Fragments are removed before sending the redirected request.
+
 Redirect methods and bodies follow these rules:
 
 - `303` changes every method except `HEAD` to `GET` and removes the request body

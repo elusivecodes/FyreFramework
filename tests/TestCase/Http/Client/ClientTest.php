@@ -14,6 +14,7 @@ use Fyre\Http\Cookie\Cookie;
 use Fyre\Http\Stream;
 use InvalidArgumentException;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use stdClass;
@@ -32,6 +33,25 @@ final class ClientTest extends TestCase
     protected Client $client;
 
     protected MockHandler $handler;
+
+    /**
+     * @return array<string, array{string, string, string}>
+     */
+    public static function redirectLocationProvider(): array
+    {
+        return [
+            'fragment' => ['#section', 'https://example.com/page?token=abc', '/page?token=abc'],
+            'empty fragment' => ['#', 'https://example.com/page?token=abc', '/page?token=abc'],
+            'query' => ['?next=1', 'https://example.com/page?next=1', '/page?next=1'],
+            'query and fragment' => ['?next=1#section', 'https://example.com/page?next=1', '/page?next=1'],
+            'empty query' => ['?', 'https://example.com/page?', '/page'],
+            'empty query and fragment' => ['?#section', 'https://example.com/page?', '/page'],
+            'relative path' => ['next', 'https://example.com/next', '/next'],
+            'absolute path' => ['/other', 'https://example.com/other', '/other'],
+            'absolute URL' => ['https://other.example.com/page', 'https://other.example.com/page', '/page'],
+            'network path' => ['//other.example.com/page', 'https://other.example.com/page', '/page'],
+        ];
+    }
 
     public function testAgent(): void
     {
@@ -939,6 +959,29 @@ final class ClientTest extends TestCase
         ]);
     }
 
+    public function testRedirectFragmentLoop(): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessageIs('Redirect loop detected.');
+
+        $redirectResponse = new Response([
+            'statusCode' => 302,
+            'headers' => [
+                'Location' => '#section',
+            ],
+        ]);
+
+        $this->handler->addResponse(
+            'GET',
+            'https://example.com/page?token=abc',
+            $redirectResponse
+        );
+
+        $this->client->get('https://example.com/page?token=abc', options: [
+            'maxRedirects' => 1,
+        ]);
+    }
+
     public function testRedirectInvalidLocation(): void
     {
         $this->expectException(RequestException::class);
@@ -960,6 +1003,48 @@ final class ClientTest extends TestCase
         $this->client->get('https://example.com/redirect-invalid', options: [
             'maxRedirects' => 1,
         ]);
+    }
+
+    #[DataProvider('redirectLocationProvider')]
+    public function testRedirectLocation(string $location, string $expectedUrl, string $expectedTarget): void
+    {
+        $redirectResponse = new Response([
+            'statusCode' => 303,
+            'headers' => [
+                'Location' => $location,
+            ],
+        ]);
+
+        $this->handler->addResponse(
+            'POST',
+            'https://example.com/page?token=abc',
+            $redirectResponse
+        );
+
+        $mockResponse = new Response();
+
+        $this->handler->addResponse(
+            'GET',
+            $expectedUrl,
+            $mockResponse,
+            function(RequestInterface $request) use ($expectedTarget): bool {
+                $this->assertSame(
+                    $expectedTarget,
+                    $request->getRequestTarget()
+                );
+
+                return true;
+            }
+        );
+
+        $response = $this->client->post('https://example.com/page?token=abc', options: [
+            'maxRedirects' => 1,
+        ]);
+
+        $this->assertSame(
+            $mockResponse,
+            $response
+        );
     }
 
     public function testRedirectLoop(): void

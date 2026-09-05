@@ -665,7 +665,6 @@ class Client implements ClientInterface
         try {
             $uri = new Uri((string) $baseUri);
             $uri = $uri
-                ->withQuery('')
                 ->resolveRelativeUri($location)
                 ->withFragment('');
         } catch (Throwable $e) {
