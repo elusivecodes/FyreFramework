@@ -182,6 +182,46 @@ trait SoftDeleteTestTrait
         );
     }
 
+    public function testDeletePreservesLaterChanges(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $user = $Users->newEntity([
+            'name' => 'Original',
+        ]);
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+
+        $this->db->begin();
+
+        $this->assertTrue(
+            $Users->delete($user)
+        );
+
+        $user->name = 'Later';
+        $this->db->commit();
+
+        $this->assertInstanceOf(
+            DateTime::class,
+            $user->deleted
+        );
+        $this->assertFalse(
+            $user->isDirty('deleted')
+        );
+        $this->assertTrue(
+            $user->isDirty('name')
+        );
+        $this->assertSame(
+            'Original',
+            $user->getOriginal('name')
+        );
+        $this->assertSame(
+            1,
+            $Users->find(deleted: true, conditions: ['name' => 'Original'])->count()
+        );
+    }
+
     public function testFindOnlyDeleted(): void
     {
         $Users = $this->modelRegistry->use('Users');

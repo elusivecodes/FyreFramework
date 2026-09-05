@@ -960,7 +960,7 @@ abstract class Relationship
 
         $preserveValues = [];
         foreach ($entities as $entity) {
-            if ($entity->isNew() || !array_all($primaryKeys, $entity->hasValue(...))) {
+            if (!array_all($primaryKeys, $entity->hasValue(...))) {
                 continue;
             }
 

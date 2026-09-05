@@ -431,10 +431,6 @@ class Model implements EventListenerInterface
                 }, 100);
             }
 
-            $connection->afterCommit(function() use ($entity): void {
-                static::cleanEntities([$entity], $this);
-            }, 200);
-
             $connection->commit();
             $rollback = false;
         } finally {
@@ -513,10 +509,6 @@ class Model implements EventListenerInterface
                     }
                 }, 100);
             }
-
-            $connection->afterCommit(function() use ($entities): void {
-                static::cleanEntities($entities, $this);
-            }, 200);
 
             $connection->commit();
             $rollback = false;
@@ -1312,12 +1304,6 @@ class Model implements EventListenerInterface
                 }, 100);
             }
 
-            if ($clean) {
-                $connection->afterCommit(function() use ($entity): void {
-                    static::cleanEntities([$entity], $this);
-                }, 200);
-            }
-
             $connection->commit();
             $rollback = false;
         } finally {
@@ -1407,12 +1393,6 @@ class Model implements EventListenerInterface
                         $this->dispatchEvent('ORM.afterSaveCommit', ['entity' => $entity, 'options' => $options]);
                     }
                 }, 100);
-            }
-
-            if ($clean) {
-                $connection->afterCommit(function() use ($entities): void {
-                    static::cleanEntities($entities, $this);
-                }, 200);
             }
 
             $connection->commit();
@@ -2111,6 +2091,20 @@ class Model implements EventListenerInterface
             $this->updateAll($data, $conditions);
         }
 
+        if ($options['clean']) {
+            $fields = Closure::bind(function(): array {
+                /** @var Entity $this */
+                return $this->fields;
+            }, $entity, Entity::class)();
+
+            $this->getConnection()->afterCommit(function() use ($entity, $fields): void {
+                $entity
+                    ->cleanFields($fields)
+                    ->setNew(false)
+                    ->setModelAlias($this->getAlias());
+            }, 200);
+        }
+
         if ($options['saveRelated'] && !$this->saveChildren($entity, $options)) {
             return false;
         }
@@ -2206,24 +2200,6 @@ class Model implements EventListenerInterface
         }
 
         return true;
-    }
-
-    /**
-     * Cleans persisted entities.
-     *
-     * @param Entity[] $entities The entities.
-     * @param Model $model The Model.
-     */
-    protected static function cleanEntities(array $entities, Model $model): void
-    {
-        $modelAlias = $model->getAlias();
-
-        foreach ($entities as $entity) {
-            $entity
-                ->clean()
-                ->setNew(false)
-                ->setModelAlias($modelAlias);
-        }
     }
 
     /**

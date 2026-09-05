@@ -1173,6 +1173,55 @@ trait ManyToManyTestTrait
         );
     }
 
+    public function testManyToManyReplacePreservesUnloadedLinks(): void
+    {
+        $Posts = $this->modelRegistry->use('Posts');
+        $PostsTags = $this->modelRegistry->use('PostsTags');
+
+        $post = $Posts->newEntity([
+            'user_id' => 1,
+            'title' => 'Test',
+            'tags' => [
+                ['tag' => 'test1', '_joinData' => ['value' => 11]],
+                ['tag' => 'test2', '_joinData' => ['value' => 22]],
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Posts->save($post)
+        );
+
+        $tagId = $post->tags[0]->id;
+        $joinId = $post->tags[0]->_joinData->id;
+        $post = $Posts->get($post->id);
+
+        $this->assertInstanceOf(
+            Post::class,
+            $post
+        );
+
+        $Posts->patchEntity($post, [
+            'tags' => [
+                ['id' => $tagId, 'tag' => 'test1', '_joinData' => ['id' => $joinId]],
+            ],
+        ]);
+
+        $this->assertTrue(
+            $post->tags[0]->_joinData->isNew()
+        );
+        $this->assertTrue(
+            $Posts->save($post)
+        );
+        $this->assertSame(
+            1,
+            $PostsTags->find()->count()
+        );
+        $this->assertSame(
+            11,
+            $PostsTags->get($joinId)->value
+        );
+    }
+
     public function testManyToManySaveStrategyOption(): void
     {
         $relationship = $this->modelRegistry->use('Items')->manyToMany('Alias', [

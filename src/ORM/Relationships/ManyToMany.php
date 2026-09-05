@@ -515,6 +515,10 @@ class ManyToMany extends Relationship
             $junction->setTemporaryField($joinEntity, $foreignKey, $bindingValue);
             $junction->setTemporaryField($joinEntity, $targetForeignKey, $targetBindingValue);
             $target->setTemporaryField($relation, '_joinData', $joinEntity);
+
+            if ($clean) {
+                $target->getConnection()->afterCommit(static fn(): Entity => $relation->cleanFields(['_joinData' => $joinEntity]), 200);
+            }
         }
 
         if (!$junction->saveMany(

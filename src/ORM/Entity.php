@@ -240,6 +240,32 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
     }
 
     /**
+     * Cleans saved fields without discarding later changes.
+     *
+     * @param array<string, mixed> $fields The saved field values.
+     * @return static The Entity instance.
+     */
+    public function cleanFields(array $fields): static
+    {
+        foreach ($fields as $field => $value) {
+            if (!array_key_exists($field, $this->fields)) {
+                continue;
+            }
+
+            $this->originalFields[$field] = true;
+
+            if ($this->fields[$field] === $value || static::compareValues($this->fields[$field], $value)) {
+                unset($this->dirty[$field], $this->original[$field], $this->errors[$field], $this->invalid[$field]);
+            } else {
+                $this->original[$field] = $value;
+                $this->dirty[$field] = true;
+            }
+        }
+
+        return $this;
+    }
+
+    /**
      * Clears values from the Entity.
      *
      * @param string[] $fields The fields to clear.

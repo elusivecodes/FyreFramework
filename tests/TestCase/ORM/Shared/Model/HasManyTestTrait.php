@@ -1076,6 +1076,73 @@ trait HasManyTestTrait
         );
     }
 
+    public function testHasManyReplacePreservesExistingRows(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $Posts = $this->modelRegistry->use('Posts');
+        $Comments = $this->modelRegistry->use('Comments');
+
+        $Posts->Comments->setDependent(true);
+
+        $user = $Users->newEntity([
+            'name' => 'Test',
+            'posts' => [
+                ['title' => 'Original', 'content' => 'Keep this content.'],
+                ['title' => 'Remove'],
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+
+        $postId = $user->posts[0]->id;
+        $comment = $Comments->newEntity([
+            'post_id' => $postId,
+            'user_id' => $user->id,
+            'content' => 'Keep this comment.',
+        ]);
+
+        $this->assertTrue(
+            $Comments->save($comment)
+        );
+
+        $user = $Users->get($user->id);
+
+        $this->assertInstanceOf(
+            User::class,
+            $user
+        );
+
+        $Users->patchEntity($user, [
+            'posts' => [
+                ['id' => $postId, 'title' => 'Updated'],
+            ],
+        ]);
+
+        $this->assertTrue(
+            $user->posts[0]->isNew()
+        );
+        $this->assertTrue(
+            $Users->save($user)
+        );
+        $this->assertSame(
+            1,
+            $Posts->find()->count()
+        );
+        $this->assertSame(
+            'Updated',
+            $Posts->get($postId)->title
+        );
+        $this->assertSame(
+            'Keep this content.',
+            $Posts->get($postId)->content
+        );
+        $this->assertTrue(
+            $Comments->exists(['id' => $comment->id])
+        );
+    }
+
     public function testHasManyReplaceUnlink(): void
     {
         $Users = $this->modelRegistry->use('Users');

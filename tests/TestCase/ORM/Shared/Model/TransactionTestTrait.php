@@ -376,6 +376,70 @@ trait TransactionTestTrait
         );
     }
 
+    public function testDeleteManyPreservesUnsavedChanges(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $items = $Items->newEntities([
+            ['name' => 'First'],
+            ['name' => 'Second'],
+        ]);
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+
+        foreach ($items as $item) {
+            $item->name = 'Unsaved';
+        }
+
+        $this->assertTrue(
+            $Items->deleteMany($items)
+        );
+        $this->assertSame(
+            0,
+            $Items->find()->count()
+        );
+
+        foreach ($items as $i => $item) {
+            $this->assertTrue(
+                $item->isDirty('name')
+            );
+            $this->assertSame(
+                ['First', 'Second'][$i],
+                $item->getOriginal('name')
+            );
+        }
+    }
+
+    public function testDeletePreservesUnsavedChanges(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $item = $Items->newEntity([
+            'name' => 'Original',
+        ]);
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+
+        $item->name = 'Unsaved';
+
+        $this->assertTrue(
+            $Items->delete($item)
+        );
+        $this->assertSame(
+            0,
+            $Items->find()->count()
+        );
+        $this->assertTrue(
+            $item->isDirty('name')
+        );
+        $this->assertSame(
+            'Original',
+            $item->getOriginal('name')
+        );
+    }
+
     public function testDeleteUnlinkOuterRollback(): void
     {
         $Users = $this->modelRegistry->use('Users');
@@ -423,6 +487,72 @@ trait TransactionTestTrait
         );
         $this->assertTrue(
             $Users->exists(['id' => $user->id])
+        );
+    }
+
+    public function testSaveAfterSaveChangesRemainDirty(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $item = $Items->newEntity([
+            'name' => 'Saved',
+        ]);
+        $item->setHidden(['name']);
+
+        $Items->getEventManager()->on('ORM.afterSave', static function(Event $event, Entity $entity): void {
+            $entity->name = 'Later';
+        });
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+        $this->assertSame(
+            'Saved',
+            $Items->get($item->id)->name
+        );
+        $this->assertSame(
+            'Later',
+            $item->name
+        );
+        $this->assertSame(
+            'Saved',
+            $item->getOriginal('name')
+        );
+        $this->assertTrue(
+            $item->isDirty('name')
+        );
+        $this->assertFalse(
+            $item->isNew()
+        );
+    }
+
+    public function testSaveAfterSaveCommitChangesRemainDirty(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $item = $Items->newEntity([
+            'name' => 'Saved',
+        ]);
+
+        $Items->getEventManager()->on('ORM.afterSaveCommit', static function(Event $event, Entity $entity): void {
+            $entity->name = 'Later';
+        });
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+        $this->assertSame(
+            'Saved',
+            $Items->get($item->id)->name
+        );
+        $this->assertSame(
+            'Later',
+            $item->name
+        );
+        $this->assertSame(
+            'Saved',
+            $item->getOriginal('name')
+        );
+        $this->assertTrue(
+            $item->isDirty('name')
         );
     }
 
@@ -739,6 +869,64 @@ trait TransactionTestTrait
         );
     }
 
+    public function testSaveInnerRollbackKeepsChangesDirty(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $item = $Items->newEntity([
+            'name' => 'Original',
+        ]);
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+
+        $this->db->begin();
+
+        foreach (['First', 'Outer'] as $name) {
+            $item->name = $name;
+
+            $this->assertTrue(
+                $Items->save($item)
+            );
+        }
+
+        $this->db->begin();
+        $item->name = 'Inner';
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+
+        $this->db->rollback();
+        $this->db->commit();
+
+        $this->assertSame(
+            'Outer',
+            $Items->get($item->id)->name
+        );
+        $this->assertSame(
+            'Inner',
+            $item->name
+        );
+        $this->assertSame(
+            'Outer',
+            $item->getOriginal('name')
+        );
+        $this->assertTrue(
+            $item->isDirty('name')
+        );
+        $this->assertTrue(
+            $Items->save($item)
+        );
+        $this->assertSame(
+            'Inner',
+            $Items->get($item->id)->name
+        );
+        $this->assertFalse(
+            $item->isDirty()
+        );
+    }
+
     public function testSaveInnerRollbackPreservesOuterInsert(): void
     {
         $Items = $this->modelRegistry->use('Items');
@@ -850,6 +1038,43 @@ trait TransactionTestTrait
         $this->assertSame(
             1,
             $Tags->find()->count()
+        );
+    }
+
+    public function testSaveManyAfterSaveChangesRemainDirty(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $items = $Items->newEntities([
+            ['name' => 'First'],
+            ['name' => 'Second'],
+        ]);
+
+        $Items->getEventManager()->on('ORM.afterSave', static function(Event $event, Entity $entity) use ($items): void {
+            if ($entity === $items[1]) {
+                $items[0]->name = 'Later';
+            }
+        });
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+        $this->assertSame(
+            'First',
+            $Items->get($items[0]->id)->name
+        );
+        $this->assertSame(
+            'Later',
+            $items[0]->name
+        );
+        $this->assertSame(
+            'First',
+            $items[0]->getOriginal('name')
+        );
+        $this->assertTrue(
+            $items[0]->isDirty('name')
+        );
+        $this->assertFalse(
+            $items[1]->isDirty()
         );
     }
 
@@ -1097,6 +1322,74 @@ trait TransactionTestTrait
         $this->assertTrue(
             $Items->exists(['name' => 'Existing'])
         );
+    }
+
+    public function testSaveManyInnerRollbackKeepsChangesDirty(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $items = $Items->newEntities([
+            ['name' => 'First'],
+            ['name' => 'Second'],
+        ]);
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+
+        $this->db->begin();
+
+        foreach ($items as $item) {
+            $item->name = 'Outer';
+        }
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+
+        $this->db->begin();
+
+        foreach ($items as $item) {
+            $item->name = 'Inner';
+        }
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+
+        $this->db->rollback();
+        $this->db->commit();
+
+        foreach ($items as $item) {
+            $this->assertSame(
+                'Outer',
+                $Items->get($item->id)->name
+            );
+            $this->assertSame(
+                'Inner',
+                $item->name
+            );
+            $this->assertSame(
+                'Outer',
+                $item->getOriginal('name')
+            );
+            $this->assertTrue(
+                $item->isDirty('name')
+            );
+        }
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+
+        foreach ($items as $item) {
+            $this->assertSame(
+                'Inner',
+                $Items->get($item->id)->name
+            );
+            $this->assertFalse(
+                $item->isDirty()
+            );
+        }
     }
 
     public function testSaveManyOuterRollbackAfterRepeatedSave(): void

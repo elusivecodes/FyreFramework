@@ -149,7 +149,7 @@ All events below pass `Fyre\Event\Event` first, followed by the additional argum
 
 - Stopping `ORM.beforeRules`, `ORM.afterRules`, `ORM.beforeSave`, `ORM.afterSave`, `ORM.beforeDelete`, or `ORM.afterDelete` can stop the ORM operation. Stopping find, parse, or commit events does not stop the operation, although find and parse listeners can still modify the mutable query or data they receive.
 - Listener callbacks receive the values of the event data (`array_values()`), not the keys, so signatures must match the documented order for each event.
-- `ORM.afterSaveCommit` / `ORM.afterDeleteCommit` are dispatched before the model’s post-commit entity cleaning runs (when enabled), so entities may still be “new” until cleaning completes.
+- `ORM.afterSaveCommit` is dispatched before post-commit entity cleaning runs (when enabled), so entities may still be new until cleaning completes. Changes made by listeners remain dirty. Hard deletes do not clean entity fields.
 - `Model::save()` returns early (and does not dispatch save events) when the entity is not new and has no dirty fields.
 
 ## Related

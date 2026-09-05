@@ -94,6 +94,7 @@ Date and time values are equal for dirty tracking only when they have the same c
 Cleaning resets state for persisted entities:
 
 - `clean()` clears dirty state, errors/invalid values, and sets current fields as original.
+- `cleanFields($fields)` accepts a map of saved field values. Matching fields are cleaned; later changes remain dirty with the saved values as their originals.
 
 ## Errors and invalid values
 

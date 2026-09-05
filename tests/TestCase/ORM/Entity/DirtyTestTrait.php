@@ -23,6 +23,89 @@ trait DirtyTestTrait
         );
     }
 
+    public function testCleanFields(): void
+    {
+        $entity = new Entity([
+            'name' => 'Original',
+        ]);
+
+        $entity->set('name', 'Updated');
+        $entity->set('tags', ['test']);
+        $entity->setError('name', 'error');
+        $entity->setInvalid('name', 'invalid');
+
+        $this->assertSame(
+            $entity,
+            $entity->cleanFields(['name' => 'Updated', 'tags' => ['test']])
+        );
+        $this->assertFalse(
+            $entity->isDirty()
+        );
+        $this->assertSame(
+            'Updated',
+            $entity->getOriginal('name')
+        );
+        $this->assertSame(
+            [],
+            $entity->getErrors()
+        );
+        $this->assertSame(
+            [],
+            $entity->getInvalid()
+        );
+    }
+
+    public function testCleanFieldsPreservesLaterChanges(): void
+    {
+        $entity = new Entity([
+            'name' => 'Original',
+        ]);
+
+        $entity->set('name', 'Later');
+        $entity->set('other', null);
+        $entity->setError('name', 'error');
+        $entity->setInvalid('name', 'invalid');
+        $entity->cleanFields(['name' => 'Saved']);
+
+        $this->assertSame(
+            'Later',
+            $entity->name
+        );
+        $this->assertSame(
+            'Saved',
+            $entity->getOriginal('name')
+        );
+        $this->assertSame(
+            ['name', 'other'],
+            $entity->getDirty()
+        );
+        $this->assertSame(
+            ['error'],
+            $entity->getError('name')
+        );
+        $this->assertSame(
+            'invalid',
+            $entity->getInvalid('name')
+        );
+    }
+
+    public function testCleanFieldsSkipsUnsetFields(): void
+    {
+        $entity = new Entity([
+            'name' => 'Original',
+        ]);
+
+        $entity->unset('name');
+        $entity->cleanFields(['name' => 'Saved']);
+
+        $this->assertFalse(
+            $entity->has('name')
+        );
+        $this->assertFalse(
+            $entity->isDirty()
+        );
+    }
+
     public function testClearDirty(): void
     {
         $entity = new Entity();
