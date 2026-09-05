@@ -1972,11 +1972,11 @@ class Model implements EventListenerInterface
         $conditions = $entity->extract($primaryKeys)
             |> $this->primaryConditions(...);
 
-        if (!$this->deleteAll($conditions)) {
+        if ($options['cascade'] && !$this->deleteChildren([$entity], $options)) {
             return false;
         }
 
-        if ($options['cascade'] && !$this->deleteChildren([$entity], $options)) {
+        if (!$this->deleteAll($conditions)) {
             return false;
         }
 

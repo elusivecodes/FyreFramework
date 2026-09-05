@@ -36,6 +36,7 @@ final class ConnectionTest extends TestCase
                 '[class]' => PostgresConnection::class,
                 'affectedRows' => null,
                 'afterCommitCallbacks' => [],
+                'afterRollbackCallbacks' => [],
                 'config' => [
                     'log' => false,
                     'host' => '[*****]',

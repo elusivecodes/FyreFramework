@@ -62,6 +62,8 @@ $Users->deleteMany($entities);
 
 When cascading is enabled (`cascade: true`), `delete()` / `deleteMany()` attempt to unlink related records for each owning-side relationship defined on the model (see [ORM Relationships](relationships.md)).
 
+Related records are unlinked or deleted before the parent row, within the same transaction, so immediate foreign-key constraints remain satisfied.
+
 For each relationship, the ORM calls `Relationship::unlinkAll()`:
 
 - If the relationship is marked dependent, *or* the relationship foreign key is not nullable, the related records are deleted (via the target model’s `deleteMany()`).

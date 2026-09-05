@@ -39,6 +39,119 @@ trait QueryTestTrait
         );
     }
 
+    public function testDeleteCascadeForeignKeys(): void
+    {
+        $this->db->enableForeignKeys();
+        $this->db->query('CREATE TABLE cascade_parents (id INTEGER NOT NULL PRIMARY KEY)');
+        $this->db->query(<<<'SQL'
+            CREATE TABLE cascade_children (
+                id INTEGER NOT NULL PRIMARY KEY,
+                cascade_parent_id INTEGER NULL,
+                FOREIGN KEY (cascade_parent_id) REFERENCES cascade_parents (id) ON DELETE RESTRICT
+            )
+        SQL);
+
+        try {
+            $Parents = $this->modelRegistry->use('CascadeParents');
+            $Children = $this->modelRegistry->use('CascadeChildren');
+            $relationship = $Parents->hasMany('CascadeChildren', [
+                'dependent' => true,
+            ]);
+
+            $parents = $Parents->newEntities([
+                [
+                    'id' => 1,
+                ],
+                [
+                    'id' => 2,
+                ],
+                [
+                    'id' => 3,
+                ],
+                [
+                    'id' => 4,
+                ],
+            ]);
+            $children = $Children->newEntities([
+                [
+                    'id' => 1,
+                    'cascade_parent_id' => 1,
+                ],
+                [
+                    'id' => 2,
+                    'cascade_parent_id' => 2,
+                ],
+                [
+                    'id' => 3,
+                    'cascade_parent_id' => 3,
+                ],
+                [
+                    'id' => 4,
+                    'cascade_parent_id' => 4,
+                ],
+            ]);
+
+            $this->assertTrue(
+                $Parents->saveMany($parents)
+            );
+            $this->assertTrue(
+                $Children->saveMany($children)
+            );
+
+            $callback = static function(Event $event): void {
+                $event->setResult(false);
+                $event->stopPropagation();
+            };
+            $Parents->getEventManager()->on('ORM.afterDelete', $callback);
+
+            $this->assertFalse(
+                $Parents->delete($parents[0])
+            );
+            $this->assertSame(
+                4,
+                $Parents->find()->count()
+            );
+            $this->assertSame(
+                4,
+                $Children->find()->count()
+            );
+
+            $Parents->getEventManager()->off('ORM.afterDelete', $callback);
+
+            $this->assertTrue(
+                $Parents->delete($parents[0])
+            );
+            $this->assertSame(
+                3,
+                $Children->find()->count()
+            );
+
+            $this->assertTrue(
+                $Parents->deleteMany([$parents[1], $parents[2]])
+            );
+            $this->assertSame(
+                1,
+                $Children->find()->count()
+            );
+
+            $relationship->setDependent(false);
+
+            $this->assertTrue(
+                $Parents->delete($parents[3])
+            );
+            $this->assertSame(
+                0,
+                $Parents->find()->count()
+            );
+            $this->assertNull(
+                $Children->get(4)->cascade_parent_id
+            );
+        } finally {
+            $this->db->query('DROP TABLE cascade_children');
+            $this->db->query('DROP TABLE cascade_parents');
+        }
+    }
+
     public function testDeleteChangedPrimaryKey(): void
     {
         $Items = $this->modelRegistry->use('Items');

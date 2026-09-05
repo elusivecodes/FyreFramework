@@ -267,6 +267,8 @@ For manual control, use `begin()`, `commit()`, and `rollback()`. Nested transact
 
 `afterCommit($callback, $priority = 1, $key = null)` schedules work after the outermost commit. When no transaction is active, the callback runs immediately. A key can be used to replace an already queued callback.
 
+`afterRollback($callback)` schedules cleanup for the current transaction or savepoint. Callbacks run in reverse registration order when that work is rolled back. Releasing a savepoint carries its callbacks into the enclosing transaction; committing the outermost transaction discards them. Without an active transaction, registration is a no-op. Callback exceptions are ignored, as with queued `afterCommit()` callbacks.
+
 ## Connection retries
 
 Query execution recognizes a small set of driver-specific connection errors. Outside a transaction, the connection waits `100` milliseconds, reconnects, and retries the operation once. Queries are not retried while a transaction or savepoint is active because reconnecting would lose its state.

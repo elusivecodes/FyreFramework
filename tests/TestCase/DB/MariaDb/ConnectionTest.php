@@ -48,6 +48,7 @@ final class ConnectionTest extends TestCase
                 '[class]' => 'Fyre\DB\Handlers\Mysql\MysqlConnection',
                 'affectedRows' => null,
                 'afterCommitCallbacks' => [],
+                'afterRollbackCallbacks' => [],
                 'config' => [
                     'log' => false,
                     'host' => '[*****]',

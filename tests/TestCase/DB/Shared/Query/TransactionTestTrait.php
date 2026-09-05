@@ -184,6 +184,184 @@ trait TransactionTestTrait
         );
     }
 
+    public function testAfterRollback(): void
+    {
+        $this->db->begin();
+
+        $levels = [];
+        $this->db->afterRollback(function() use (&$levels): void {
+            $levels[] = $this->db->getSavePointLevel();
+        });
+
+        $this->assertSame(
+            [],
+            $levels
+        );
+
+        $this->db->rollback();
+
+        $this->assertSame(
+            [0],
+            $levels
+        );
+
+        $this->db->begin();
+        $this->db->rollback();
+
+        $this->assertSame(
+            [0],
+            $levels
+        );
+    }
+
+    public function testAfterRollbackCommit(): void
+    {
+        $this->db->begin();
+
+        $called = false;
+        $this->db->afterRollback(static function() use (&$called): void {
+            $called = true;
+        });
+
+        $this->db->commit();
+        $this->db->begin();
+        $this->db->rollback();
+
+        $this->assertFalse(
+            $called
+        );
+    }
+
+    public function testAfterRollbackDeep(): void
+    {
+        $calls = [];
+
+        $this->db->begin();
+        $this->db->afterRollback(static function() use (&$calls): void {
+            $calls[] = 'outer';
+        });
+
+        $this->db->begin();
+        $this->db->afterRollback(static function() use (&$calls): void {
+            $calls[] = 'inner';
+        });
+
+        $this->db->rollback();
+
+        $this->assertSame(
+            ['inner'],
+            $calls
+        );
+
+        $this->db->rollback();
+
+        $this->assertSame(
+            ['inner', 'outer'],
+            $calls
+        );
+    }
+
+    public function testAfterRollbackException(): void
+    {
+        $this->db->begin();
+
+        $called = false;
+        $this->db->afterRollback(static function() use (&$called): void {
+            $called = true;
+        });
+        $this->db->afterRollback(static function(): void {
+            throw new Exception('Rollback callback failed.');
+        });
+
+        $this->db->rollback();
+
+        $this->assertTrue(
+            $called
+        );
+        $this->assertSame(
+            0,
+            $this->db->getSavePointLevel()
+        );
+    }
+
+    public function testAfterRollbackReleasedSavepoint(): void
+    {
+        $calls = [];
+
+        $this->db->begin();
+        $this->db->afterRollback(static function() use (&$calls): void {
+            $calls[] = 'outer';
+        });
+
+        $this->db->begin();
+        $this->db->afterRollback(static function() use (&$calls): void {
+            $calls[] = 'inner';
+        });
+
+        $this->db->begin();
+        $this->db->afterRollback(static function() use (&$calls): void {
+            $calls[] = 'deep';
+        });
+
+        $this->db->commit();
+
+        $this->assertSame(
+            [],
+            $calls
+        );
+
+        $this->db->rollback();
+
+        $this->assertSame(
+            ['deep', 'inner'],
+            $calls
+        );
+
+        $this->db->commit();
+        $this->db->begin();
+        $this->db->rollback();
+
+        $this->assertSame(
+            ['deep', 'inner'],
+            $calls
+        );
+    }
+
+    public function testAfterRollbackReverseOrder(): void
+    {
+        $this->db->begin();
+
+        $calls = [];
+        $this->db->afterRollback(static function() use (&$calls): void {
+            $calls[] = 1;
+        });
+        $this->db->afterRollback(static function() use (&$calls): void {
+            $calls[] = 2;
+        });
+
+        $this->db->rollback();
+
+        $this->assertSame(
+            [2, 1],
+            $calls
+        );
+    }
+
+    public function testAfterRollbackWithoutTransaction(): void
+    {
+        $called = false;
+        $this->db->afterRollback(static function() use (&$called): void {
+            $called = true;
+        });
+
+        $this->db->begin();
+        $this->db->rollback();
+
+        $this->assertFalse(
+            $called
+        );
+    }
+
     public function testInTransaction(): void
     {
         $this->db->begin();
@@ -346,10 +524,11 @@ trait TransactionTestTrait
 
         try {
             $commits = 0;
+            $rollbacks = 0;
             $caught = null;
 
             try {
-                $connection->transactional(static function(Connection $db) use (&$commits): void {
+                $connection->transactional(static function(Connection $db) use (&$commits, &$rollbacks): void {
                     $db->insert()
                         ->into('test')
                         ->values([
@@ -361,6 +540,9 @@ trait TransactionTestTrait
 
                     $db->afterCommit(static function() use (&$commits): void {
                         $commits++;
+                    });
+                    $db->afterRollback(static function() use (&$rollbacks): void {
+                        $rollbacks++;
                     });
                 });
             } catch (Throwable $e) {
@@ -391,6 +573,10 @@ trait TransactionTestTrait
             $this->assertSame(
                 0,
                 $commits
+            );
+            $this->assertSame(
+                1,
+                $rollbacks
             );
         } finally {
             while ($connection->getSavePointLevel() > 0) {

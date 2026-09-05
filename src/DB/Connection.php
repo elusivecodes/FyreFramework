@@ -31,6 +31,7 @@ use function array_is_list;
 use function array_keys;
 use function array_map;
 use function array_replace_recursive;
+use function array_reverse;
 use function explode;
 use function filter_var;
 use function implode;
@@ -91,6 +92,11 @@ abstract class Connection
      * @var array<array<string, mixed>>
      */
     protected array $afterCommitCallbacks = [];
+
+    /**
+     * @var array<array{callback: Closure, savePointLevel: int}>
+     */
+    protected array $afterRollbackCallbacks = [];
 
     /**
      * @var array<string, mixed>
@@ -187,6 +193,28 @@ abstract class Connection
     }
 
     /**
+     * Queues a callback to execute after its transaction or savepoint is rolled back.
+     *
+     * Callbacks run in reverse registration order. Releasing a savepoint retains its
+     * callbacks for the enclosing transaction. Without an active transaction, this is a no-op.
+     * Callback exceptions are ignored.
+     *
+     * @param Closure $callback The callback.
+     * @return static The Connection instance.
+     */
+    public function afterRollback(Closure $callback): static
+    {
+        if ($this->savePointLevel) {
+            $this->afterRollbackCallbacks[] = [
+                'callback' => $callback,
+                'savePointLevel' => $this->savePointLevel,
+            ];
+        }
+
+        return $this;
+    }
+
+    /**
      * Begins a transaction.
      *
      * @return static The Connection instance.
@@ -230,6 +258,7 @@ abstract class Connection
             $callbacks = $this->afterCommitCallbacks;
 
             $this->afterCommitCallbacks = [];
+            $this->afterRollbackCallbacks = [];
 
             usort($callbacks, static fn(array $a, $b): int => $a['priority'] <=> $b['priority']);
 
@@ -247,6 +276,15 @@ abstract class Connection
                     return $afterCommitCallback;
                 },
                 $this->afterCommitCallbacks
+            );
+
+            $this->afterRollbackCallbacks = array_map(
+                function(array $afterRollbackCallback): array {
+                    $afterRollbackCallback['savePointLevel'] = min($afterRollbackCallback['savePointLevel'], $this->savePointLevel);
+
+                    return $afterRollbackCallback;
+                },
+                $this->afterRollbackCallbacks
             );
         }
 
@@ -688,6 +726,22 @@ abstract class Connection
                 $this->afterCommitCallbacks,
                 fn(array $callback): bool => $callback['savePointLevel'] <= $this->savePointLevel
             );
+        }
+
+        $callbacks = array_filter(
+            $this->afterRollbackCallbacks,
+            fn(array $callback): bool => $callback['savePointLevel'] > $this->savePointLevel
+        ) |> array_reverse(...);
+        $this->afterRollbackCallbacks = array_filter(
+            $this->afterRollbackCallbacks,
+            fn(array $callback): bool => $callback['savePointLevel'] <= $this->savePointLevel
+        );
+
+        foreach ($callbacks as $callback) {
+            try {
+                $callback['callback']();
+            } catch (Throwable $e) {
+            }
         }
 
         return $this;
