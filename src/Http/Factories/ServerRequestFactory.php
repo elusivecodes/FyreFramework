@@ -151,10 +151,12 @@ class ServerRequestFactory implements ServerRequestFactoryInterface
     {
         $headers = [];
 
-        $contentType = $serverParams['CONTENT_TYPE'] ?? null;
+        if (isset($serverParams['CONTENT_TYPE'])) {
+            $headers['Content-Type'] = $serverParams['CONTENT_TYPE'];
+        }
 
-        if ($contentType) {
-            $headers['Content-Type'] = $contentType;
+        if (isset($serverParams['CONTENT_LENGTH'])) {
+            $headers['Content-Length'] = $serverParams['CONTENT_LENGTH'];
         }
 
         foreach ($serverParams as $key => $value) {

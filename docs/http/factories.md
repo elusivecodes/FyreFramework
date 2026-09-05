@@ -74,7 +74,7 @@ Choose the server-request creation path according to where the input comes from:
 | `createFromGlobals()` | PHP superglobals and `php://input` | the current SAPI request |
 | `createFromOptions()` | explicit Fyre request options | tests and synthetic requests |
 
-`ServerRequestFactoryInterface::createServerRequest()` does not read PHP superglobals. SAPI-style header fields in the supplied server parameters become request headers, and the method is normalized to uppercase. Body, cookie, query, parsed-body, and uploaded-file state start empty.
+`ServerRequestFactoryInterface::createServerRequest()` does not read PHP superglobals. The `HTTP_*`, `CONTENT_TYPE`, and `CONTENT_LENGTH` fields in the supplied server parameters become request headers, and the method is normalized to uppercase. Body, cookie, query, parsed-body, and uploaded-file state start empty.
 
 Use the regular `ServerRequest` service when handling the current PHP request. The `Engine` creates that service through `ServerRequestFactory::createFromGlobals()`:
 

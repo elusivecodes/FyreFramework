@@ -13,6 +13,7 @@ use Fyre\Http\Factories\UriFactory;
 use Fyre\Http\ServerRequest;
 use Fyre\Http\Uri;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\UploadedFileInterface;
 
@@ -21,6 +22,19 @@ final class ServerRequestFactoryTest extends TestCase
     protected Config $config;
 
     protected ServerRequestFactory $serverRequestFactory;
+
+    /**
+     * @return array<string, array{int|string, string}>
+     */
+    public static function contentLengthProvider(): array
+    {
+        return [
+            'string' => ['4', '4'],
+            'integer' => [4, '4'],
+            'zero string' => ['0', '0'],
+            'zero integer' => [0, '0'],
+        ];
+    }
 
     public function testCreateFromGlobalsWithArguments(): void
     {
@@ -107,6 +121,38 @@ final class ServerRequestFactoryTest extends TestCase
         $this->assertArraysAreIdentical(
             ['page' => '2'],
             $request->getQueryParams()
+        );
+    }
+
+    #[DataProvider('contentLengthProvider')]
+    public function testCreateFromOptionsContentLength(int|string $contentLength, string $expected): void
+    {
+        $request = $this->serverRequestFactory->createFromOptions([
+            'server' => [
+                'CONTENT_LENGTH' => $contentLength,
+            ],
+        ]);
+
+        $this->assertSame(
+            $expected,
+            $request->getHeaderLine('Content-Length')
+        );
+    }
+
+    public function testCreateFromOptionsContentLengthOverride(): void
+    {
+        $request = $this->serverRequestFactory->createFromOptions([
+            'headers' => [
+                'Content-Length' => '8',
+            ],
+            'server' => [
+                'CONTENT_LENGTH' => '4',
+            ],
+        ]);
+
+        $this->assertSame(
+            '8',
+            $request->getHeaderLine('Content-Length')
         );
     }
 
