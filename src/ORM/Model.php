@@ -487,6 +487,8 @@ class Model implements EventListenerInterface
         $options['cascade'] = $cascade;
         $options['events'] = $events;
 
+        $entities = array_values($entities);
+
         if (count($entities) === 1) {
             return $this->delete($entities[0], ...$options);
         }
@@ -1366,7 +1368,7 @@ class Model implements EventListenerInterface
         $entities = array_filter(
             $entities,
             static fn(Entity $entity): bool => $entity->isNew() || $entity->isDirty()
-        );
+        ) |> array_values(...);
 
         if ($entities === []) {
             return true;

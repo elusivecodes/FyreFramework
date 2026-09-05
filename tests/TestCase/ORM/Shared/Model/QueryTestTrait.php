@@ -85,6 +85,30 @@ trait QueryTestTrait
         );
     }
 
+    public function testDeleteManyKeyedSingle(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        foreach ([1, 'item'] as $key) {
+            $item = $Items->newEntity([
+                'name' => 'Test',
+            ]);
+
+            $this->assertTrue(
+                $Items->save($item)
+            );
+
+            $this->assertTrue(
+                $Items->deleteMany([$key => $item])
+            );
+
+            $this->assertSame(
+                0,
+                $Items->find()->count()
+            );
+        }
+    }
+
     public function testExists(): void
     {
         $Items = $this->modelRegistry->use('Items');
@@ -466,6 +490,35 @@ trait QueryTestTrait
         $this->assertNull($item);
     }
 
+    public function testSaveManyAfterFilteringCleanEntity(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $cleanItem = $Items->newEntity([
+            'name' => 'Existing',
+        ]);
+
+        $this->assertTrue(
+            $Items->save($cleanItem)
+        );
+
+        $newItem = $Items->newEntity([
+            'name' => 'New',
+        ]);
+
+        $this->assertTrue(
+            $Items->saveMany([$cleanItem, $newItem])
+        );
+
+        $this->assertSame(
+            2,
+            $Items->find()->count()
+        );
+
+        $this->assertTrue(
+            $Items->exists(['name' => 'New'])
+        );
+    }
+
     public function testSaveManyErrors(): void
     {
         $Items = $this->modelRegistry->use('Items');
@@ -483,6 +536,25 @@ trait QueryTestTrait
         $this->assertFalse(
             $Items->saveMany($items)
         );
+    }
+
+    public function testSaveManyKeyedSingle(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        foreach ([1, 'item'] as $key) {
+            $item = $Items->newEntity([
+                'name' => 'Test '.$key,
+            ]);
+
+            $this->assertTrue(
+                $Items->saveMany([$key => $item])
+            );
+
+            $this->assertTrue(
+                $Items->exists(['name' => 'Test '.$key])
+            );
+        }
     }
 
     public function testUpdate(): void
