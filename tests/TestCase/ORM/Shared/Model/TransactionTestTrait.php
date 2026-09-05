@@ -1146,6 +1146,47 @@ trait TransactionTestTrait
         );
     }
 
+    public function testSaveManyWithoutRelatedKeepsChildrenDirty(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $Posts = $this->modelRegistry->use('Posts');
+
+        $users = $Users->newEntities([
+            ['name' => 'First', 'posts' => [['title' => 'First post']]],
+            ['name' => 'Second', 'posts' => [['title' => 'Second post']]],
+        ]);
+
+        $this->assertTrue(
+            $Users->saveMany($users, saveRelated: false)
+        );
+        $this->assertSame(
+            0,
+            $Posts->find()->count()
+        );
+
+        foreach ($users as $user) {
+            $post = $user->posts[0];
+
+            $this->assertFalse(
+                $user->isDirty()
+            );
+            $this->assertTrue(
+                $post->isNew()
+            );
+            $this->assertTrue(
+                $post->isDirty()
+            );
+            $this->assertTrue(
+                $Posts->save($post)
+            );
+        }
+
+        $this->assertSame(
+            2,
+            $Posts->find()->count()
+        );
+    }
+
     public function testSaveOuterCommitWithoutCleaning(): void
     {
         $Items = $this->modelRegistry->use('Items');
@@ -1310,6 +1351,55 @@ trait TransactionTestTrait
         }
     }
 
+    public function testSaveRelatedInnerRollbackKeepsChildNew(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $Posts = $this->modelRegistry->use('Posts');
+        $user = $Users->newEntity(['name' => 'Test']);
+
+        $this->db->begin();
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+
+        $this->db->begin();
+
+        $post = $Posts->newEntity([
+            'user_id' => $user->id,
+            'title' => 'Test',
+        ]);
+        $user->set('posts', [$post]);
+
+        $this->assertTrue(
+            $Posts->save($post)
+        );
+
+        $this->db->rollback();
+        $this->db->commit();
+
+        $this->assertTrue(
+            $post->isNew()
+        );
+        $this->assertTrue(
+            $post->isDirty()
+        );
+        $this->assertFalse(
+            $post->hasValue('id')
+        );
+        $this->assertSame(
+            0,
+            $Posts->find()->count()
+        );
+        $this->assertTrue(
+            $Posts->save($post)
+        );
+        $this->assertSame(
+            1,
+            $Posts->find()->count()
+        );
+    }
+
     public function testSaveRelatedInnerRollbackPreservesOuterForeignKey(): void
     {
         $Users = $this->modelRegistry->use('Users');
@@ -1427,6 +1517,76 @@ trait TransactionTestTrait
         $this->assertSame(
             $user->id,
             $this->modelRegistry->use('Posts')->get($post->id)->user_id
+        );
+    }
+
+    public function testSaveRelatedWithoutCleaning(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $user = $Users->newEntity([
+            'name' => 'Test',
+            'posts' => [['title' => 'Test']],
+        ]);
+
+        $this->assertTrue(
+            $Users->save($user, clean: false)
+        );
+        $this->assertTrue(
+            $user->isDirty()
+        );
+        $this->assertTrue(
+            $user->posts[0]->isDirty()
+        );
+    }
+
+    public function testSaveWithoutRelatedKeepsChildrenDirty(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $Posts = $this->modelRegistry->use('Posts');
+        $existing = $Posts->newEntity(['title' => 'Original']);
+
+        $this->assertTrue(
+            $Posts->save($existing)
+        );
+
+        $existing->set('title', 'Updated');
+        $post = $Posts->newEntity(['title' => 'New']);
+        $user = $Users->newEntity(['name' => 'Test']);
+        $user->set('posts', [$existing, $post]);
+
+        $this->assertTrue(
+            $Users->save($user, saveRelated: false)
+        );
+        $this->assertFalse(
+            $user->isDirty()
+        );
+        $this->assertTrue(
+            $existing->isDirty('title')
+        );
+        $this->assertSame(
+            'Original',
+            $Posts->get($existing->id)->title
+        );
+        $this->assertTrue(
+            $post->isNew()
+        );
+        $this->assertTrue(
+            $post->isDirty()
+        );
+        $this->assertSame(
+            1,
+            $Posts->find()->count()
+        );
+        $this->assertTrue(
+            $Posts->saveMany([$existing, $post])
+        );
+        $this->assertSame(
+            2,
+            $Posts->find()->count()
+        );
+        $this->assertSame(
+            'Updated',
+            $Posts->get($existing->id)->title
         );
     }
 

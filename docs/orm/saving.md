@@ -206,6 +206,8 @@ To persist only the primary entity and ignore related entities, pass `saveRelate
 $Articles->save($article, saveRelated: false);
 ```
 
+Only saved entities are cleaned after commit. Skipped related entities retain their dirty and new state.
+
 ### Primary key population
 
 When inserting a new entity, the ORM populates missing primary key values on the entity after the insert completes:

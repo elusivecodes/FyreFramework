@@ -185,6 +185,16 @@ abstract class Connection
             if ($key === null) {
                 $this->afterCommitCallbacks[] = $data;
             } else {
+                $previous = $this->afterCommitCallbacks[$key] ?? null;
+
+                if ($previous && $previous['savePointLevel'] < $this->savePointLevel) {
+                    $this->afterRollback(function() use ($key, $previous): void {
+                        if ($previous['savePointLevel'] <= $this->savePointLevel) {
+                            $this->afterCommitCallbacks[$key] = $previous;
+                        }
+                    });
+                }
+
                 $this->afterCommitCallbacks[$key] = $data;
             }
         }

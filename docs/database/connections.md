@@ -265,7 +265,7 @@ $saved = $db->transactional(static function(Connection $db): bool {
 
 For manual control, use `begin()`, `commit()`, and `rollback()`. Nested transactions use savepoints, and `getSavePointLevel()` returns the current nesting level.
 
-`afterCommit($callback, $priority = 1, $key = null)` schedules work after the outermost commit. When no transaction is active, the callback runs immediately. A key can be used to replace an already queued callback.
+`afterCommit($callback, $priority = 1, $key = null)` schedules work after the outermost commit. When no transaction is active, the callback runs immediately. A key can be used to replace an already queued callback. Rolling back a savepoint restores any callback it replaced from an enclosing transaction.
 
 `afterRollback($callback)` schedules cleanup for the current transaction or savepoint. Callbacks run in reverse registration order when that work is rolled back. Releasing a savepoint carries its callbacks into the enclosing transaction; committing the outermost transaction discards them. Without an active transaction, registration is a no-op. Callback exceptions are ignored, as with queued `afterCommit()` callbacks.
 

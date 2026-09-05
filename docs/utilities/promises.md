@@ -121,7 +121,7 @@ The maximum child runtime is 300 seconds. A child still running beyond that limi
 
 Synchronous promises settle during construction or callback execution. Chaining them does not defer work or schedule it on an event loop.
 
-An async child's result is not applied to the parent-side promise until it is polled. Drive it with `wait()`, `Promise::await()`, or one of the combination methods. `all()`, `any()`, and `race()` poll async children in a tight loop; use direct `wait()` or `await()` when busy polling is undesirable.
+An async child's result is not applied to the parent-side promise until it is polled. Drive it with `wait()`, `Promise::await()`, or one of the combination methods. `await()` and the combination methods also drive async promises behind `then()`, `catch()`, and `finally()` chains. `all()`, `any()`, and `race()` poll async children in a tight loop; use direct `wait()` or `await()` when busy polling is undesirable.
 
 Combination methods materialize their output arrays. `all()` retains the input keys; `any()` and `race()` return a single value.
 

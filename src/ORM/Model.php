@@ -2173,8 +2173,6 @@ class Model implements EventListenerInterface
      */
     protected function saveChildren(Entity $entity, array $options): bool
     {
-        $options['clean'] = false;
-
         foreach ($this->relationships as $relationship) {
             if (!$relationship->isOwningSide()) {
                 continue;
@@ -2197,8 +2195,6 @@ class Model implements EventListenerInterface
      */
     protected function saveParents(Entity $entity, array $options): bool
     {
-        $options['clean'] = false;
-
         foreach ($this->relationships as $relationship) {
             if ($relationship->isOwningSide()) {
                 continue;
@@ -2213,7 +2209,7 @@ class Model implements EventListenerInterface
     }
 
     /**
-     * Cleans entities recursively.
+     * Cleans persisted entities.
      *
      * @param Entity[] $entities The entities.
      * @param Model $model The Model.
@@ -2221,34 +2217,6 @@ class Model implements EventListenerInterface
     protected static function cleanEntities(array $entities, Model $model): void
     {
         $modelAlias = $model->getAlias();
-        $relationships = $model->getRelationships();
-
-        foreach ($relationships as $relationship) {
-            $property = $relationship->getProperty();
-
-            $allRelations = [];
-            foreach ($entities as $entity) {
-                $relation = $entity->get($property);
-
-                if (!$relation) {
-                    continue;
-                }
-
-                if ($relationship->hasMultiple()) {
-                    $allRelations = array_merge($allRelations, $relation);
-                } else {
-                    $allRelations[] = $relation;
-                }
-            }
-
-            if ($allRelations === []) {
-                continue;
-            }
-
-            $target = $relationship->getTarget();
-
-            static::cleanEntities($allRelations, $target);
-        }
 
         foreach ($entities as $entity) {
             $entity

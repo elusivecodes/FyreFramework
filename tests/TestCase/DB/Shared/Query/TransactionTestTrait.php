@@ -88,6 +88,121 @@ trait TransactionTestTrait
         );
     }
 
+    public function testAfterCommitKeyInnerCommit(): void
+    {
+        $callbacks = [];
+
+        $this->db->begin();
+        $this->db->afterCommit(static function() use (&$callbacks): void {
+            $callbacks[] = 'outer';
+        }, key: 'test');
+
+        $this->db->begin();
+        $this->db->afterCommit(static function() use (&$callbacks): void {
+            $callbacks[] = 'inner';
+        }, key: 'test');
+        $this->db->commit();
+
+        $this->assertSame(
+            [],
+            $callbacks
+        );
+
+        $this->db->commit();
+
+        $this->assertSame(
+            ['inner'],
+            $callbacks
+        );
+    }
+
+    public function testAfterCommitKeyInnerRollback(): void
+    {
+        $callbacks = [];
+
+        $this->db->begin();
+        $this->db->afterCommit(static function() use (&$callbacks): void {
+            $callbacks[] = 'outer';
+        }, 2, key: 'test');
+        $this->db->afterCommit(static function() use (&$callbacks): void {
+            $callbacks[] = 'first';
+        });
+
+        $this->db->begin();
+        $this->db->afterCommit(static function() use (&$callbacks): void {
+            $callbacks[] = 'inner';
+        }, key: 'test');
+        $this->db->afterCommit(static function() use (&$callbacks): void {
+            $callbacks[] = 'replacement';
+        }, key: 'test');
+        $this->db->rollback();
+
+        $this->assertSame(
+            [],
+            $callbacks
+        );
+
+        $this->db->commit();
+
+        $this->assertSame(
+            ['first', 'outer'],
+            $callbacks
+        );
+    }
+
+    public function testAfterCommitKeyInnerRollbackAfterRelease(): void
+    {
+        $callbacks = [];
+
+        $this->db->begin();
+        $this->db->afterCommit(static function() use (&$callbacks): void {
+            $callbacks[] = 'outer';
+        }, key: 'test');
+
+        $this->db->begin();
+        $this->db->afterCommit(static function() use (&$callbacks): void {
+            $callbacks[] = 'inner';
+        }, key: 'test');
+
+        $this->db->begin();
+        $this->db->afterCommit(static function() use (&$callbacks): void {
+            $callbacks[] = 'deep';
+        }, key: 'test');
+        $this->db->commit();
+        $this->db->rollback();
+        $this->db->commit();
+
+        $this->assertSame(
+            ['outer'],
+            $callbacks
+        );
+    }
+
+    public function testAfterCommitKeyOuterRollback(): void
+    {
+        $callbacks = [];
+
+        $this->db->begin();
+        $this->db->afterCommit(static function() use (&$callbacks): void {
+            $callbacks[] = 'outer';
+        }, key: 'test');
+
+        $this->db->begin();
+        $this->db->afterCommit(static function() use (&$callbacks): void {
+            $callbacks[] = 'inner';
+        }, key: 'test');
+        $this->db->commit();
+        $this->db->rollback();
+
+        $this->db->begin();
+        $this->db->commit();
+
+        $this->assertSame(
+            [],
+            $callbacks
+        );
+    }
+
     public function testAfterCommitPriority(): void
     {
         $this->db->begin();

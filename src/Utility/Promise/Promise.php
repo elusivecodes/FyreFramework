@@ -38,6 +38,8 @@ class Promise implements PromiseInterface
      */
     protected array $handlers = [];
 
+    protected Promise|null $parent = null;
+
     protected PromiseInterface|null $result = null;
 
     /**
@@ -47,9 +49,9 @@ class Promise implements PromiseInterface
      * If any promise is rejected, the returned promise is rejected with
      * the first rejection reason.
      *
-     * Note: AsyncPromise instances are polled until they settle. Once a rejection occurs,
-     * remaining promises are ignored (and AsyncPromise instances are handled with a no-op
-     * rejection handler to avoid unhandled rejection errors).
+     * Note: AsyncPromise instances and their chains are polled until they settle. Once a
+     * rejection occurs, remaining promises are ignored (and Promise instances are handled
+     * with a no-op rejection handler to avoid unhandled rejection errors).
      *
      * @param mixed[] $promisesOrValues The promises or values.
      * @return PromiseInterface The new Promise instance.
@@ -63,7 +65,7 @@ class Promise implements PromiseInterface
             while ($promisesOrValues !== []) {
                 foreach ($promisesOrValues as $i => $promiseOrValue) {
                     if ($rejected) {
-                        if ($promiseOrValue instanceof AsyncPromise) {
+                        if ($promiseOrValue instanceof self) {
                             $promiseOrValue->catch(static function(): void {});
                         }
 
@@ -72,7 +74,7 @@ class Promise implements PromiseInterface
                         continue;
                     }
 
-                    if ($promiseOrValue instanceof AsyncPromise && !$promiseOrValue->poll()) {
+                    if ($promiseOrValue instanceof self && !$promiseOrValue->poll()) {
                         continue;
                     }
 
@@ -102,9 +104,9 @@ class Promise implements PromiseInterface
      * Resolves with the first fulfilled value. If no promises resolve successfully,
      * the returned promise is rejected.
      *
-     * Note: AsyncPromise instances are polled until they settle. Once one promise resolves,
-     * remaining promises are ignored (and AsyncPromise instances are handled with a no-op
-     * rejection handler to avoid unhandled rejection errors).
+     * Note: AsyncPromise instances and their chains are polled until they settle. Once one
+     * promise resolves, remaining promises are ignored (and Promise instances are handled
+     * with a no-op rejection handler to avoid unhandled rejection errors).
      *
      * @param mixed[] $promisesOrValues The promises or values.
      * @return PromiseInterface The new Promise instance.
@@ -117,7 +119,7 @@ class Promise implements PromiseInterface
             while ($promisesOrValues !== []) {
                 foreach ($promisesOrValues as $i => $promiseOrValue) {
                     if ($resolved) {
-                        if ($promiseOrValue instanceof AsyncPromise) {
+                        if ($promiseOrValue instanceof self) {
                             $promiseOrValue->catch(static function(): void {});
                         }
 
@@ -126,7 +128,7 @@ class Promise implements PromiseInterface
                         continue;
                     }
 
-                    if ($promiseOrValue instanceof AsyncPromise && !$promiseOrValue->poll()) {
+                    if ($promiseOrValue instanceof self && !$promiseOrValue->poll()) {
                         continue;
                     }
 
@@ -153,9 +155,9 @@ class Promise implements PromiseInterface
      *
      * If the promise is rejected, the rejection reason is thrown.
      *
-     * Note: AsyncPromise instances are waited on before attaching handlers. For other promise
-     * implementations, this method assumes the promise has already settled or will settle
-     * synchronously when handlers are attached.
+     * Note: AsyncPromise instances and their chains are waited on before attaching handlers.
+     * For other promise implementations, this method assumes the promise has already settled
+     * or will settle synchronously when handlers are attached.
      *
      * @param PromiseInterface $promise The Promise.
      * @return mixed The resolved value.
@@ -164,7 +166,7 @@ class Promise implements PromiseInterface
      */
     public static function await(PromiseInterface $promise): mixed
     {
-        if ($promise instanceof AsyncPromise) {
+        if ($promise instanceof self) {
             $promise->wait();
         }
 
@@ -204,7 +206,7 @@ class Promise implements PromiseInterface
             while ($promisesOrValues !== []) {
                 foreach ($promisesOrValues as $i => $promiseOrValue) {
                     if ($settled) {
-                        if ($promiseOrValue instanceof AsyncPromise) {
+                        if ($promiseOrValue instanceof self) {
                             $promiseOrValue->catch(static function(): void {});
                         }
 
@@ -213,7 +215,7 @@ class Promise implements PromiseInterface
                         continue;
                     }
 
-                    if ($promiseOrValue instanceof AsyncPromise && !$promiseOrValue->poll()) {
+                    if ($promiseOrValue instanceof self && !$promiseOrValue->poll()) {
                         continue;
                     }
 
@@ -319,10 +321,12 @@ class Promise implements PromiseInterface
                         return;
                     }
 
-                    $promise->then($resolve, $reject);
+                    $resolve($promise);
                 };
             }
         );
+
+        $next->parent = $this;
 
         return $next;
     }
@@ -371,6 +375,20 @@ class Promise implements PromiseInterface
     }
 
     /**
+     * Polls the promises needed to settle this Promise.
+     *
+     * @return bool Whether its async dependencies have settled.
+     */
+    protected function poll(): bool
+    {
+        if ($this->parent && !$this->parent->poll()) {
+            return false;
+        }
+
+        return !($this->result instanceof self) || $this->result->poll();
+    }
+
+    /**
      * Settles the resulting Promise.
      *
      * @param PromiseInterface $result The Promise.
@@ -394,10 +412,23 @@ class Promise implements PromiseInterface
         $handlers = $this->handlers;
 
         $this->handlers = [];
+        $this->parent = null;
         $this->result = $result;
 
         foreach ($handlers as $handle) {
             $handle($result);
+        }
+    }
+
+    /**
+     * Waits for the promises needed to settle this Promise.
+     */
+    protected function wait(): void
+    {
+        $this->parent?->wait();
+
+        if ($this->result instanceof self) {
+            $this->result->wait();
         }
     }
 }

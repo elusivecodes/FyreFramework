@@ -88,6 +88,18 @@ final class AsyncPromiseTest extends TestCase
         ];
     }
 
+    /**
+     * @return array<string, array{method: string, expected: array<int>|int}>
+     */
+    public static function combinationProvider(): array
+    {
+        return [
+            'all' => ['method' => 'all', 'expected' => [42]],
+            'any' => ['method' => 'any', 'expected' => 42],
+            'race' => ['method' => 'race', 'expected' => 42],
+        ];
+    }
+
     public function testAllPreservesOrder(): void
     {
         $sockets = [];
@@ -315,6 +327,106 @@ final class AsyncPromiseTest extends TestCase
             'test',
             Promise::await($promise)
         );
+    }
+
+    public function testAwaitChain(): void
+    {
+        $promise = new AsyncPromise(static function(Closure $resolve): void {
+            $resolve(20);
+        });
+        $chain = $promise
+            ->then(static fn(int $value): int => $value + 1)
+            ->then(static fn(int $value): int => $value * 2);
+
+        try {
+            $this->assertSame(
+                42,
+                Promise::await($chain)
+            );
+        } finally {
+            $promise->wait();
+        }
+    }
+
+    public function testAwaitChainCatch(): void
+    {
+        $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
+            $reject(new Exception('test'));
+        });
+        $chain = $promise->catch(static fn(): int => 42);
+
+        try {
+            $this->assertSame(
+                42,
+                Promise::await($chain)
+            );
+        } finally {
+            $promise->wait();
+        }
+    }
+
+    public function testAwaitChainFinally(): void
+    {
+        $promise = new AsyncPromise(static function(Closure $resolve): void {
+            $resolve(42);
+        });
+        $called = false;
+        $chain = $promise->finally(static function() use (&$called): void {
+            $called = true;
+        });
+
+        try {
+            $this->assertSame(
+                42,
+                Promise::await($chain)
+            );
+            $this->assertTrue(
+                $called
+            );
+        } finally {
+            $promise->wait();
+        }
+    }
+
+    public function testAwaitChainRejection(): void
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessageIs('test');
+
+        $promise = new AsyncPromise(static function(Closure $resolve, Closure $reject): void {
+            $reject(new Exception('test'));
+        });
+
+        try {
+            Promise::await($promise->then(static fn(int $value): int => $value * 2));
+        } finally {
+            $promise->wait();
+        }
+    }
+
+    public function testAwaitChainReturnsAsyncPromise(): void
+    {
+        $promise = new AsyncPromise(static function(Closure $resolve): void {
+            $resolve(21);
+        });
+        $next = null;
+        $chain = $promise->then(static function(int $value) use (&$next): AsyncPromise {
+            $next = new AsyncPromise(static function(Closure $resolve) use ($value): void {
+                $resolve($value * 2);
+            });
+
+            return $next;
+        });
+
+        try {
+            $this->assertSame(
+                42,
+                Promise::await($chain)
+            );
+        } finally {
+            $promise->wait();
+            $next?->wait();
+        }
     }
 
     public function testAwaitLargeRejection(): void
@@ -581,6 +693,56 @@ final class AsyncPromiseTest extends TestCase
                 'value' => $value,
             ]
         );
+    }
+
+    /**
+     * @param array<int>|int $expected The expected result.
+     */
+    #[DataProvider('combinationProvider')]
+    public function testCombinationChain(string $method, array|int $expected): void
+    {
+        $promise = new AsyncPromise(static function(Closure $resolve): void {
+            $resolve(21);
+        });
+        $chain = $promise->then(static fn(int $value): int => $value * 2);
+
+        try {
+            $this->assertSame(
+                $expected,
+                Promise::$method([$chain]) |> Promise::await(...)
+            );
+        } finally {
+            $promise->wait();
+        }
+    }
+
+    /**
+     * @param array<int>|int $expected The expected result.
+     */
+    #[DataProvider('combinationProvider')]
+    public function testCombinationChainReturnsAsyncPromise(string $method, array|int $expected): void
+    {
+        $promise = new AsyncPromise(static function(Closure $resolve): void {
+            $resolve(21);
+        });
+        $next = null;
+        $chain = $promise->then(static function(int $value) use (&$next): AsyncPromise {
+            $next = new AsyncPromise(static function(Closure $resolve) use ($value): void {
+                $resolve($value * 2);
+            });
+
+            return $next;
+        });
+
+        try {
+            $this->assertSame(
+                $expected,
+                Promise::$method([$chain]) |> Promise::await(...)
+            );
+        } finally {
+            $promise->wait();
+            $next?->wait();
+        }
     }
 
     public function testMultipleThen(): void

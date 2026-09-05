@@ -106,6 +106,7 @@ class AsyncPromise extends Promise
      *
      * This blocks the current process until the child process settles or is cancelled.
      */
+    #[Override]
     public function wait(): void
     {
         while (!$this->poll()) {
@@ -168,6 +169,7 @@ class AsyncPromise extends Promise
      * @throws RuntimeException If the child process cannot be polled, or if the
      *                          child response cannot be read or decoded.
      */
+    #[Override]
     protected function poll(): bool
     {
         if ($this->result) {
