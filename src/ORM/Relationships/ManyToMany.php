@@ -461,6 +461,7 @@ class ManyToMany extends Relationship
             return true;
         }
 
+        $target = $this->getTarget();
         $junction = $this->getJunction();
         $joinEntities = [];
         foreach ($relations as $relation) {
@@ -489,7 +490,7 @@ class ManyToMany extends Relationship
             return false;
         }
 
-        if (!$this->getTarget()->saveMany(
+        if (!$target->saveMany(
             $relations,
             $saveRelated,
             $checkRules,
@@ -511,9 +512,9 @@ class ManyToMany extends Relationship
             $joinEntity = $joinEntities[$i];
             $targetBindingValue = $relation->get($targetBindingKey);
 
-            $joinEntity->set($foreignKey, $bindingValue, temporary: true);
-            $joinEntity->set($targetForeignKey, $targetBindingValue, temporary: true);
-            $relation->set('_joinData', $joinEntity, temporary: true);
+            $junction->setTemporaryField($joinEntity, $foreignKey, $bindingValue);
+            $junction->setTemporaryField($joinEntity, $targetForeignKey, $targetBindingValue);
+            $target->setTemporaryField($relation, '_joinData', $joinEntity);
         }
 
         if (!$junction->saveMany(

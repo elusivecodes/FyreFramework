@@ -60,14 +60,15 @@ class HasOne extends Relationship
             return true;
         }
 
+        $target = $this->getTarget();
         $foreignKey = $this->getForeignKey();
         $bindingValue = $this->getBindingKey() |> $entity->get(...);
 
         if ($child->get($foreignKey) !== $bindingValue) {
-            $child->set($foreignKey, $bindingValue, temporary: true);
+            $target->setTemporaryField($child, $foreignKey, $bindingValue);
         }
 
-        if (!$this->getTarget()->save(
+        if (!$target->save(
             $child,
             $saveRelated,
             $checkRules,

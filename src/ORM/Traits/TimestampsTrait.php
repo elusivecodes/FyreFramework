@@ -37,11 +37,11 @@ trait TimestampsTrait
         $schema = $this->getSchema();
 
         if ($entity->isNew() && $schema->hasColumn($this->createdField)) {
-            $entity->set($this->createdField, DateTime::now(), temporary: true);
+            $this->setTemporaryField($entity, $this->createdField, DateTime::now());
         }
 
         if ($schema->hasColumn($this->modifiedField)) {
-            $entity->set($this->modifiedField, DateTime::now(), temporary: true);
+            $this->setTemporaryField($entity, $this->modifiedField, DateTime::now());
         }
     }
 }

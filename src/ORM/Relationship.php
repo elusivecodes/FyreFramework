@@ -751,7 +751,7 @@ abstract class Relationship
         }
 
         foreach ($relations as $relation) {
-            $relation->set($foreignKey, null, temporary: true);
+            $target->setTemporaryField($relation, $foreignKey, null);
         }
 
         if (!$target->saveMany($relations, ...$options)) {

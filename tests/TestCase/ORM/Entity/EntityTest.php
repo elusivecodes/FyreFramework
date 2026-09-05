@@ -22,7 +22,6 @@ final class EntityTest extends TestCase
     use MagicTestTrait;
     use MutationTestTrait;
     use OriginalTestTrait;
-    use TemporaryTestTrait;
     use VirtualTestTrait;
 
     public function testClean(): void

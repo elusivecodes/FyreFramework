@@ -36,6 +36,46 @@ trait TimestampTestTrait
         );
     }
 
+    public function testTimestampsOuterRollback(): void
+    {
+        $Timestamps = $this->modelRegistry->use('Timestamps');
+        $timestamp = $Timestamps->newEntity([
+            'created' => DateTime::now()->subHours(2),
+            'modified' => DateTime::now()->subHours(1),
+        ]);
+
+        $this->assertTrue(
+            $Timestamps->save($timestamp, events: false)
+        );
+
+        $created = $timestamp->created;
+        $modified = $timestamp->modified;
+        $timestamp->setDirty('modified');
+        $this->db->begin();
+
+        $this->assertTrue(
+            $Timestamps->save($timestamp)
+        );
+        $this->assertNotSame(
+            $modified,
+            $timestamp->modified
+        );
+
+        $this->db->rollback();
+
+        $this->assertSame(
+            $created,
+            $timestamp->created
+        );
+        $this->assertSame(
+            $modified,
+            $timestamp->modified
+        );
+        $this->assertFalse(
+            $timestamp->isNew()
+        );
+    }
+
     public function testTimestampsUpdate(): void
     {
         $Timestamps = $this->modelRegistry->use('Timestamps');

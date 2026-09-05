@@ -95,11 +95,6 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
     protected array $originalFields = [];
 
     /**
-     * @var array<string, true>
-     */
-    protected array $temporaryFields = [];
-
-    /**
      * @var string[]
      */
     protected array $virtual = [];
@@ -237,7 +232,6 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
     {
         $this->original = [];
         $this->setOriginalFields(array_keys($this->fields), true);
-        $this->temporaryFields = [];
         $this->dirty = [];
         $this->errors = [];
         $this->invalid = [];
@@ -256,30 +250,6 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
         foreach ($fields as $field) {
             $this->unset($field);
         }
-
-        return $this;
-    }
-
-    /**
-     * Clears temporary fields from the Entity.
-     *
-     * @return static The Entity instance.
-     */
-    public function clearTemporaryFields(): static
-    {
-        foreach ($this->temporaryFields as $field => $_) {
-            if (array_key_exists($field, $this->original)) {
-                $this->fields[$field] = $this->original[$field];
-            } else {
-                unset($this->fields[$field]);
-                unset($this->dirty[$field]);
-            }
-
-            unset($this->original[$field]);
-            unset($this->invalid[$field]);
-        }
-
-        $this->temporaryFields = [];
 
         return $this;
     }
@@ -372,15 +342,13 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
      * @param bool $guard Whether to check field accessibility.
      * @param bool $mutate Whether to apply mutator methods.
      * @param bool $original Whether the value is the original.
-     * @param bool $temporary Whether the value is temporary.
      * @return static The Entity instance.
      */
     public function fill(
         array $data,
         bool $guard = true,
         bool $mutate = true,
-        bool $original = false,
-        bool $temporary = false
+        bool $original = false
     ): static {
         foreach ($data as $field => $value) {
             $this->set(
@@ -388,8 +356,7 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
                 $value,
                 $guard,
                 $mutate,
-                $original,
-                $temporary
+                $original
             );
         }
 
@@ -564,16 +531,6 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
         }
 
         return $original;
-    }
-
-    /**
-     * Returns the temporary fields from the entity.
-     *
-     * @return string[] The temporary fields.
-     */
-    public function getTemporaryFields(): array
-    {
-        return array_keys($this->temporaryFields);
     }
 
     /**
@@ -776,7 +733,6 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
      * @param bool $guard Whether to check field accessibility.
      * @param bool $mutate Whether to apply mutator methods.
      * @param bool $original Whether the value is original.
-     * @param bool $temporary Whether the value is temporary.
      * @return static The Entity instance.
      */
     public function set(
@@ -784,8 +740,7 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
         mixed $value,
         bool $guard = false,
         bool $mutate = true,
-        bool $original = false,
-        bool $temporary = false
+        bool $original = false
     ): static {
         if ($guard && !$this->isAccessible($field)) {
             return $this;
@@ -818,10 +773,6 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
 
         if ($original) {
             $this->originalFields[$field] = true;
-        }
-
-        if ($temporary) {
-            $this->temporaryFields[$field] = true;
         }
 
         $this->fields[$field] = $value;
@@ -987,24 +938,6 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
             $this->originalFields = array_fill_keys($fields, true);
         } else {
             $this->originalFields += array_fill_keys($fields, true);
-        }
-
-        return $this;
-    }
-
-    /**
-     * Sets temporary fields.
-     *
-     * @param string[] $fields The fields.
-     * @param bool $overwrite Whether to overwrite existing fields.
-     * @return static The Entity instance.
-     */
-    public function setTemporaryFields(array $fields, bool $overwrite = false): static
-    {
-        if ($overwrite) {
-            $this->temporaryFields = array_fill_keys($fields, true);
-        } else {
-            $this->temporaryFields += array_fill_keys($fields, true);
         }
 
         return $this;

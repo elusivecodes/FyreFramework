@@ -38,7 +38,7 @@ Soft deletes do not remove rows. Instead, the trait sets a configured deleted fi
 
 Normal `find()` queries exclude deleted rows unless you opt in to include them.
 
-The trait implements this through a `BeforeDelete` listener and sets the deleted field as a temporary entity value. Calling `delete(..., events: false)` bypasses the listener and permanently deletes the row.
+The trait implements this through a `BeforeDelete` listener and registers rollback cleanup when setting the deleted field. Calling `delete(..., events: false)` bypasses the listener and permanently deletes the row.
 
 ### Query helpers
 
@@ -144,7 +144,7 @@ When a save proceeds to persistence, the trait sets timestamps to `DateTime::now
 - If the entity is new and the schema has the `$createdField` column, it sets that field.
 - If the schema has the `$modifiedField` column, it sets that field.
 
-Both fields are set as temporary values on the entity (`temporary: true`) right before persistence.
+Both fields are set through `Model::setTemporaryField()` right before persistence, so rolling back the transaction or savepoint restores their previous values.
 
 Saving an existing entity with no dirty fields returns before the `BeforeSave` event, so its timestamps are not changed.
 

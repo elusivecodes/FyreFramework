@@ -252,7 +252,7 @@ trait SoftDeleteTrait
             }
         }
 
-        $entity->set($this->deletedField, DateTime::now(), temporary: true);
+        $this->setTemporaryField($entity, $this->deletedField, DateTime::now());
 
         if (!$this->save($entity)) {
             $event->setResult(false);
@@ -428,7 +428,7 @@ trait SoftDeleteTrait
             }
 
             foreach ($entities as $entity) {
-                $entity->set($this->deletedField, null, temporary: true);
+                $this->setTemporaryField($entity, $this->deletedField, null);
             }
 
             if (!$this->saveMany(
@@ -448,13 +448,6 @@ trait SoftDeleteTrait
         } finally {
             if ($rollback) {
                 $connection->rollback();
-
-                static::resetParents($entities, $this);
-                static::resetChildren($entities, $this);
-
-                foreach ($entities as $entity) {
-                    $entity->clearTemporaryFields();
-                }
             }
         }
 

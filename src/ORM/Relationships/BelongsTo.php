@@ -108,7 +108,7 @@ class BelongsTo extends Relationship
         $bindingValue = $this->getBindingKey() |> $parent->get(...);
 
         if ($entity->get($foreignKey) !== $bindingValue) {
-            $entity->set($foreignKey, $bindingValue, temporary: true);
+            $this->getSource()->setTemporaryField($entity, $foreignKey, $bindingValue);
         }
 
         return true;

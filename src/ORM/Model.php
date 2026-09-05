@@ -440,11 +440,6 @@ class Model implements EventListenerInterface
         } finally {
             if ($rollback) {
                 $connection->rollback();
-
-                static::resetParents([$entity], $this);
-                static::resetChildren([$entity], $this);
-
-                $entity->clearTemporaryFields();
             }
         }
 
@@ -528,13 +523,6 @@ class Model implements EventListenerInterface
         } finally {
             if ($rollback) {
                 $connection->rollback();
-
-                static::resetParents($entities, $this);
-                static::resetChildren($entities, $this);
-
-                foreach ($entities as $entity) {
-                    $entity->clearTemporaryFields();
-                }
             }
         }
 
@@ -1335,11 +1323,6 @@ class Model implements EventListenerInterface
         } finally {
             if ($rollback) {
                 $connection->rollback();
-
-                static::resetParents([$entity], $this);
-                static::resetChildren([$entity], $this);
-
-                $entity->clearTemporaryFields();
             }
         }
 
@@ -1437,13 +1420,6 @@ class Model implements EventListenerInterface
         } finally {
             if ($rollback) {
                 $connection->rollback();
-
-                static::resetParents($entities, $this);
-                static::resetChildren($entities, $this);
-
-                foreach ($entities as $entity) {
-                    $entity->clearTemporaryFields();
-                }
             }
         }
 
@@ -1539,6 +1515,53 @@ class Model implements EventListenerInterface
     public function setTable(string $table): static
     {
         $this->table = $table;
+
+        return $this;
+    }
+
+    /**
+     * Sets a temporary Entity field and restores it if the current transaction rolls back.
+     *
+     * @param TEntity $entity The Entity.
+     * @param string $field The field name.
+     * @param mixed $value The value.
+     * @return static The Model instance.
+     *
+     * @throws OrmException If no transaction is active.
+     */
+    public function setTemporaryField(Entity $entity, string $field, mixed $value): static
+    {
+        $connection = $this->getConnection();
+
+        if (!$connection->getSavePointLevel()) {
+            throw new OrmException('Cannot set a temporary field outside a transaction.');
+        }
+
+        Closure::bind(function() use ($connection, $field): void {
+            /** @var Entity $this */
+            $exists = array_key_exists($field, $this->fields);
+            $previous = $this->fields[$field] ?? null;
+            $dirty = isset($this->dirty[$field]);
+            $changed = array_key_exists($field, $this->original);
+
+            $connection->afterRollback(function() use ($field, $exists, $previous, $dirty, $changed): void {
+                if ($exists) {
+                    $this->fields[$field] = $previous;
+                } else {
+                    unset($this->fields[$field]);
+                }
+
+                if (!$dirty) {
+                    unset($this->dirty[$field]);
+                }
+
+                if (!$changed) {
+                    unset($this->original[$field]);
+                }
+            });
+        }, $entity, Entity::class)();
+
+        $entity->set($field, $value);
 
         return $this;
     }
@@ -2060,6 +2083,8 @@ class Model implements EventListenerInterface
                 ->execute()
                 ->fetch() ?? [];
 
+            $this->getConnection()->afterRollback(static fn(): Entity => $entity->setNew(true));
+
             foreach ($primaryKeys as $primaryKey) {
                 $primaryKey = (string) $primaryKey;
 
@@ -2079,7 +2104,7 @@ class Model implements EventListenerInterface
                     ->type()
                     ->parse($value);
 
-                $entity->set($primaryKey, $value, temporary: true);
+                $this->setTemporaryField($entity, $primaryKey, $value);
             }
         } else if ($data !== []) {
             assert($conditions !== null);
@@ -2368,91 +2393,5 @@ class Model implements EventListenerInterface
         }
 
         $entity->set($field, $relation);
-    }
-
-    /**
-     * Resets child entities.
-     *
-     * @param Entity[] $entities The entities.
-     * @param Model $model The Model.
-     */
-    protected static function resetChildren(array $entities, Model $model): void
-    {
-        $relationships = $model->getRelationships();
-
-        foreach ($relationships as $relationship) {
-            if (!$relationship->isOwningSide()) {
-                continue;
-            }
-
-            $target = $relationship->getTarget();
-            $property = $relationship->getProperty();
-
-            $allChildren = [];
-            foreach ($entities as $entity) {
-                $children = $entity->get($property);
-
-                if (!$children) {
-                    continue;
-                }
-
-                if ($relationship->hasMultiple()) {
-                    $allChildren = array_merge($allChildren, $children);
-                } else {
-                    $allChildren[] = $children;
-                }
-            }
-
-            if ($allChildren !== []) {
-                static::resetChildren($allChildren, $target);
-            }
-
-            foreach ($allChildren as $child) {
-                $child->clearTemporaryFields();
-
-                if ($relationship instanceof ManyToMany && $child->hasValue('_joinData')) {
-                    $child->get('_joinData')->clearTemporaryFields();
-                }
-            }
-        }
-    }
-
-    /**
-     * Resets parent entities.
-     *
-     * @param Entity[] $entities The entities.
-     * @param Model $model The Model.
-     */
-    protected static function resetParents(array $entities, Model $model): void
-    {
-        $relationships = $model->getRelationships();
-
-        foreach ($relationships as $relationship) {
-            if ($relationship->isOwningSide()) {
-                continue;
-            }
-
-            $target = $relationship->getTarget();
-            $property = $relationship->getProperty();
-
-            $allParents = [];
-            foreach ($entities as $entity) {
-                $parent = $entity->get($property);
-
-                if (!$parent) {
-                    continue;
-                }
-
-                $allParents[] = $parent;
-            }
-
-            if ($allParents !== []) {
-                static::resetParents($allParents, $target);
-            }
-
-            foreach ($allParents as $parent) {
-                $parent->clearTemporaryFields();
-            }
-        }
     }
 }

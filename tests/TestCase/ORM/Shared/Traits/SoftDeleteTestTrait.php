@@ -17,6 +17,8 @@ use PHPUnit\Framework\Attributes\Before;
 use Tests\Mock\Entities\Address;
 use Throwable;
 
+use function array_map;
+
 trait SoftDeleteTestTrait
 {
     public function testDelete(): void
@@ -116,6 +118,67 @@ trait SoftDeleteTestTrait
         $this->assertSame(
             2,
             $Comments->find(deleted: true)->count()
+        );
+    }
+
+    public function testDeleteManyOuterRollback(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $users = $Users->newEntities([
+            [
+                'name' => 'Test 1',
+            ],
+            [
+                'name' => 'Test 2',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Users->saveMany($users)
+        );
+
+        $this->db->begin();
+
+        $this->assertTrue(
+            $Users->deleteMany($users)
+        );
+
+        $deleted = array_map(static fn(Entity $entity): DateTime => $entity->deleted, $users);
+        $this->db->begin();
+
+        $this->assertTrue(
+            $Users->restoreMany($users)
+        );
+
+        foreach ($users as $user) {
+            $this->assertNull(
+                $user->deleted
+            );
+        }
+
+        $this->db->rollback();
+
+        foreach ($users as $i => $user) {
+            $this->assertSame(
+                $deleted[$i],
+                $user->deleted
+            );
+        }
+
+        $this->db->rollback();
+
+        foreach ($users as $user) {
+            $this->assertNull(
+                $user->deleted
+            );
+            $this->assertFalse(
+                $user->isNew()
+            );
+        }
+
+        $this->assertSame(
+            2,
+            $Users->find()->count()
         );
     }
 
@@ -471,10 +534,6 @@ trait SoftDeleteTestTrait
                 $deleted,
                 $user->deleted
             );
-            $this->assertSame(
-                [],
-                $user->getTemporaryFields()
-            );
         } finally {
             while ($connection->getSavePointLevel() > 0) {
                 $connection->rollback();
@@ -609,10 +668,6 @@ trait SoftDeleteTestTrait
         $this->assertSame(
             $deleted,
             $user->deleted
-        );
-        $this->assertSame(
-            [],
-            $user->getTemporaryFields()
         );
 
         $this->db->commit();
@@ -757,6 +812,43 @@ trait SoftDeleteTestTrait
         $this->assertSame(
             2,
             $Users->find()->count()
+        );
+    }
+
+    public function testRestoreOuterRollback(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $user = $Users->newEntity([
+            'name' => 'Test',
+        ]);
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+        $this->assertTrue(
+            $Users->delete($user)
+        );
+
+        $deleted = $user->deleted;
+        $this->db->begin();
+
+        $this->assertTrue(
+            $Users->restore($user)
+        );
+
+        $this->db->rollback();
+
+        $this->assertSame(
+            $deleted,
+            $user->deleted
+        );
+        $this->assertSame(
+            0,
+            $Users->find()->count()
+        );
+        $this->assertSame(
+            1,
+            $Users->find(deleted: true)->count()
         );
     }
 

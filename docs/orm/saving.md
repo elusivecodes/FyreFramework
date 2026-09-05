@@ -118,7 +118,7 @@ Important behaviors:
 - When enabled, existence checks run for “new” entities that already have primary key values.
 - Changing primary key values on an existing entity throws an `OrmException` when saved. Use an explicit update query when a primary key change is required.
 - When enabled, rule sets run as part of the save workflow. See [Rule Sets](rulesets.md).
-- The save runs inside a transaction; failures roll back and clear temporary field changes on the entity and its related entities.
+- The save runs inside a transaction; failures roll back ORM-generated field changes on the entity and its related entities. Rolling back an enclosing transaction also undoes those changes, while rolling back a savepoint preserves changes made in the outer transaction.
 
 ```php
 $user = $Users->newEntity(['email' => 'ada@example.com']);
@@ -155,7 +155,7 @@ When saving related entities is enabled (the default), a model saves relationshi
 1. **Parents first**: relationships where the current entity stores the foreign key (for example `BelongsTo`).
 2. **Children after**: relationships where the related entity (or a junction table) stores the link (for example `HasOne`, `HasMany`, `ManyToMany`).
 
-In both phases, the ORM sets relationship keys as *temporary* values during the transaction (for example foreign keys on children, or a belongs-to foreign key on the source entity). If the save fails, those temporary values are cleared as part of the rollback.
+In both phases, the ORM registers rollback callbacks when assigning relationship keys (for example foreign keys on children, or a belongs-to foreign key on the source entity). A rollback restores each field's previous value, or removes the field if it did not previously exist. Ordinary application edits are not reverted.
 
 To build an entity with related data from input, provide nested data using relationship **property names** (by default, the underscored relationship name; singular for single relations, plural for multiple).
 
@@ -213,7 +213,7 @@ When inserting a new entity, the ORM populates missing primary key values on the
 - if the insert returns a row containing primary key values, those values are applied
 - if the table has an auto-increment primary key and it was not provided, the ORM uses the connection insert id
 
-Primary keys populated during a save are set as temporary values during the transaction. After a successful commit, entity cleaning (when enabled) clears the temporary status and marks the entity as not new.
+Primary keys populated during a save are restored or removed if the insert is rolled back, and the entity is marked new again. After a successful commit, entity cleaning (when enabled) marks the entity as not new.
 
 ```php
 $user = $Users->newEntity(['email' => 'ada@example.com']);
@@ -222,6 +222,16 @@ $Users->save($user);
 // Assuming `id` is the auto-increment primary key:
 $id = $user->get('id');
 ```
+
+### Rollback-aware field changes
+
+Custom model hooks can use `setTemporaryField()` to register the same field-level cleanup as the ORM:
+
+```php
+$Users->setTemporaryField($user, 'modified', DateTime::now());
+```
+
+The helper registers undo work with the model's current transaction or savepoint. Calling it outside a transaction throws an `OrmException`. Validation errors remain available after rollback.
 
 ### Handling errors
 

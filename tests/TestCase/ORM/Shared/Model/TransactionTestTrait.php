@@ -9,7 +9,9 @@ use Fyre\Event\Event;
 use Fyre\Event\EventManager;
 use Fyre\Log\LogManager;
 use Fyre\ORM\Entity;
+use Fyre\ORM\Exceptions\OrmException;
 use RuntimeException;
+use Tests\Mock\Entities\MockEntity;
 use Throwable;
 
 trait TransactionTestTrait
@@ -29,12 +31,12 @@ trait TransactionTestTrait
         $commits = [];
         $exception = new RuntimeException('Operation failed.');
 
-        $Items->getEventManager()->on('ORM.afterDelete', function(Event $event, Entity $entity) use ($exception, &$commits): void {
+        $Items->getEventManager()->on('ORM.afterDelete', function(Event $event, Entity $entity) use ($Items, $exception, &$commits): void {
             $this->db->afterCommit(static function() use (&$commits): void {
                 $commits[] = 'failed';
             });
 
-            $entity->set('temporary', 'value', temporary: true);
+            $Items->setTemporaryField($entity, 'temporary', 'value');
 
             throw $exception;
         });
@@ -79,11 +81,6 @@ trait TransactionTestTrait
             $item->isNew()
         );
 
-        $this->assertSame(
-            [],
-            $item->getTemporaryFields()
-        );
-
         $this->assertFalse(
             $item->hasValue('temporary')
         );
@@ -118,12 +115,12 @@ trait TransactionTestTrait
 
         $exception = new Error('Operation failed.');
 
-        $Items->getEventManager()->on('ORM.afterDelete', function(Event $event, Entity $entity) use ($exception, &$commits): void {
+        $Items->getEventManager()->on('ORM.afterDelete', function(Event $event, Entity $entity) use ($Items, $exception, &$commits): void {
             $this->db->afterCommit(static function() use (&$commits): void {
                 $commits[] = 'failed';
             });
 
-            $entity->set('temporary', 'value', temporary: true);
+            $Items->setTemporaryField($entity, 'temporary', 'value');
 
             throw $exception;
         });
@@ -168,11 +165,6 @@ trait TransactionTestTrait
             $item->isNew()
         );
 
-        $this->assertSame(
-            [],
-            $item->getTemporaryFields()
-        );
-
         $this->assertFalse(
             $item->hasValue('temporary')
         );
@@ -213,7 +205,7 @@ trait TransactionTestTrait
         $commits = [];
         $exception = new RuntimeException('Operation failed.');
 
-        $Items->getEventManager()->on('ORM.afterDelete', function(Event $event, Entity $entity) use ($exception, &$commits): void {
+        $Items->getEventManager()->on('ORM.afterDelete', function(Event $event, Entity $entity) use ($Items, $exception, &$commits): void {
             $this->db->afterCommit(static function() use (&$commits): void {
                 $commits[] = 'failed';
             });
@@ -222,7 +214,7 @@ trait TransactionTestTrait
                 return;
             }
 
-            $entity->set('temporary', 'value', temporary: true);
+            $Items->setTemporaryField($entity, 'temporary', 'value');
 
             throw $exception;
         });
@@ -268,11 +260,6 @@ trait TransactionTestTrait
                 $item->isNew()
             );
 
-            $this->assertSame(
-                [],
-                $item->getTemporaryFields()
-            );
-
             $this->assertFalse(
                 $item->hasValue('temporary')
             );
@@ -313,7 +300,7 @@ trait TransactionTestTrait
 
         $exception = new Error('Operation failed.');
 
-        $Items->getEventManager()->on('ORM.afterDelete', function(Event $event, Entity $entity) use ($exception, &$commits): void {
+        $Items->getEventManager()->on('ORM.afterDelete', function(Event $event, Entity $entity) use ($Items, $exception, &$commits): void {
             $this->db->afterCommit(static function() use (&$commits): void {
                 $commits[] = 'failed';
             });
@@ -322,7 +309,7 @@ trait TransactionTestTrait
                 return;
             }
 
-            $entity->set('temporary', 'value', temporary: true);
+            $Items->setTemporaryField($entity, 'temporary', 'value');
 
             throw $exception;
         });
@@ -368,11 +355,6 @@ trait TransactionTestTrait
                 $item->isNew()
             );
 
-            $this->assertSame(
-                [],
-                $item->getTemporaryFields()
-            );
-
             $this->assertFalse(
                 $item->hasValue('temporary')
             );
@@ -391,6 +373,56 @@ trait TransactionTestTrait
 
         $this->assertTrue(
             $Items->exists(['name' => 'Existing'])
+        );
+    }
+
+    public function testDeleteUnlinkOuterRollback(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $Posts = $this->modelRegistry->use('Posts');
+        $Users->Posts->setDependent(false);
+        $user = $Users->newEntity([
+            'name' => 'Test',
+            'posts' => [
+                [
+                    'title' => 'Post',
+                ],
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+
+        $saved = [];
+        $Posts->getEventManager()->on('ORM.afterSave', static function(Event $event, Entity $entity) use (&$saved): void {
+            $saved[] = $entity;
+        });
+        $this->db->begin();
+
+        $this->assertTrue(
+            $Users->delete($user)
+        );
+        $this->assertCount(
+            1,
+            $saved
+        );
+        $this->assertNull(
+            $saved[0]->user_id
+        );
+
+        $this->db->rollback();
+
+        $this->assertSame(
+            $user->id,
+            $saved[0]->user_id
+        );
+        $this->assertSame(
+            $user->id,
+            $Posts->get($saved[0]->id)->user_id
+        );
+        $this->assertTrue(
+            $Users->exists(['id' => $user->id])
         );
     }
 
@@ -454,10 +486,6 @@ trait TransactionTestTrait
                 $item->isNew()
             );
 
-            $this->assertSame(
-                [],
-                $item->getTemporaryFields()
-            );
         } finally {
             while ($connection->getSavePointLevel() > 0) {
                 $connection->rollback();
@@ -478,12 +506,12 @@ trait TransactionTestTrait
         $commits = [];
         $exception = new RuntimeException('Operation failed.');
 
-        $Items->getEventManager()->on('ORM.afterSave', function(Event $event, Entity $entity) use ($exception, &$commits): void {
+        $Items->getEventManager()->on('ORM.afterSave', function(Event $event, Entity $entity) use ($Items, $exception, &$commits): void {
             $this->db->afterCommit(static function() use (&$commits): void {
                 $commits[] = 'failed';
             });
 
-            $entity->set('temporary', 'value', temporary: true);
+            $Items->setTemporaryField($entity, 'temporary', 'value');
 
             throw $exception;
         });
@@ -526,11 +554,6 @@ trait TransactionTestTrait
 
         $this->assertTrue(
             $item->isNew()
-        );
-
-        $this->assertSame(
-            [],
-            $item->getTemporaryFields()
         );
 
         $this->assertFalse(
@@ -563,12 +586,12 @@ trait TransactionTestTrait
 
         $exception = new Error('Operation failed.');
 
-        $Items->getEventManager()->on('ORM.afterSave', function(Event $event, Entity $entity) use ($exception, &$commits): void {
+        $Items->getEventManager()->on('ORM.afterSave', function(Event $event, Entity $entity) use ($Items, $exception, &$commits): void {
             $this->db->afterCommit(static function() use (&$commits): void {
                 $commits[] = 'failed';
             });
 
-            $entity->set('temporary', 'value', temporary: true);
+            $Items->setTemporaryField($entity, 'temporary', 'value');
 
             throw $exception;
         });
@@ -613,11 +636,6 @@ trait TransactionTestTrait
             $item->isNew()
         );
 
-        $this->assertSame(
-            [],
-            $item->getTemporaryFields()
-        );
-
         $this->assertFalse(
             $item->hasValue('temporary')
         );
@@ -635,6 +653,203 @@ trait TransactionTestTrait
 
         $this->assertTrue(
             $Items->exists(['name' => 'Existing'])
+        );
+    }
+
+    public function testSaveExistingChildrenOuterRollback(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $original = $Users->newEntity([
+            'name' => 'Original',
+            'posts' => [
+                [
+                    'title' => 'Post',
+                ],
+            ],
+            'address' => [
+                'suburb' => 'Test',
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Users->save($original)
+        );
+
+        $post = $original->posts[0];
+        $address = $original->address;
+        $postId = $post->id;
+        $addressId = $address->id;
+        $user = $Users->newEntity([
+            'name' => 'New',
+        ]);
+        $user->set('posts', [$post]);
+        $user->set('address', $address);
+        $this->db->begin();
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+        $this->assertSame(
+            $user->id,
+            $post->user_id
+        );
+        $this->assertSame(
+            $user->id,
+            $address->user_id
+        );
+
+        $this->db->rollback();
+
+        $this->assertFalse(
+            $user->has('id')
+        );
+        $this->assertSame(
+            $postId,
+            $post->id
+        );
+        $this->assertSame(
+            $addressId,
+            $address->id
+        );
+        $this->assertSame(
+            $original->id,
+            $post->user_id
+        );
+        $this->assertSame(
+            $original->id,
+            $address->user_id
+        );
+        $this->assertFalse(
+            $post->isNew()
+        );
+        $this->assertFalse(
+            $address->isNew()
+        );
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+        $this->assertSame(
+            $user->id,
+            $this->modelRegistry->use('Posts')->get($postId)->user_id
+        );
+        $this->assertSame(
+            $user->id,
+            $this->modelRegistry->use('Addresses')->get($addressId)->user_id
+        );
+    }
+
+    public function testSaveInnerRollbackPreservesOuterInsert(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $item = $Items->newEntity([
+            'name' => 'Test',
+        ]);
+
+        $this->db->begin();
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+
+        $id = $item->id;
+        $this->db->begin();
+        $item->set('name', 'Updated');
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+
+        $this->db->rollback();
+
+        $this->assertSame(
+            $id,
+            $item->id
+        );
+        $this->assertSame(
+            'Test',
+            $Items->get($id)->name
+        );
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+
+        $this->db->commit();
+
+        $this->assertSame(
+            'Updated',
+            $Items->get($id)->name
+        );
+        $this->assertFalse(
+            $item->isNew()
+        );
+    }
+
+    public function testSaveJunctionOuterRollback(): void
+    {
+        $Posts = $this->modelRegistry->use('Posts');
+        $Tags = $this->modelRegistry->use('Tags');
+        $PostsTags = $this->modelRegistry->use('PostsTags');
+        $tag = $Tags->newEntity([
+            'tag' => 'Test',
+        ]);
+
+        $this->assertTrue(
+            $Tags->save($tag)
+        );
+
+        $tagId = $tag->id;
+        $join = $PostsTags->newEntity([
+            'value' => 1,
+        ]);
+        $tag->set('_joinData', $join);
+        $post = $Posts->newEntity([
+            'title' => 'Post',
+        ]);
+        $post->set('tags', [$tag]);
+        $this->db->begin();
+
+        $this->assertTrue(
+            $Posts->save($post)
+        );
+
+        $this->db->rollback();
+
+        $this->assertSame(
+            $tagId,
+            $tag->id
+        );
+        $this->assertSame(
+            $join,
+            $tag->get('_joinData')
+        );
+        $this->assertFalse(
+            $join->has('id')
+        );
+        $this->assertFalse(
+            $join->has('post_id')
+        );
+        $this->assertFalse(
+            $join->has('tag_id')
+        );
+        $this->assertTrue(
+            $join->isNew()
+        );
+        $this->assertSame(
+            1,
+            $join->get('value')
+        );
+        $this->assertTrue(
+            $Posts->save($post)
+        );
+        $this->assertSame(
+            $post->id,
+            $PostsTags->get($join->id)->post_id
+        );
+        $this->assertSame(
+            1,
+            $Tags->find()->count()
         );
     }
 
@@ -717,7 +932,7 @@ trait TransactionTestTrait
         $commits = [];
         $exception = new RuntimeException('Operation failed.');
 
-        $Items->getEventManager()->on('ORM.afterSave', function(Event $event, Entity $entity) use ($exception, &$commits): void {
+        $Items->getEventManager()->on('ORM.afterSave', function(Event $event, Entity $entity) use ($Items, $exception, &$commits): void {
             $this->db->afterCommit(static function() use (&$commits): void {
                 $commits[] = 'failed';
             });
@@ -726,7 +941,7 @@ trait TransactionTestTrait
                 return;
             }
 
-            $entity->set('temporary', 'value', temporary: true);
+            $Items->setTemporaryField($entity, 'temporary', 'value');
 
             throw $exception;
         });
@@ -770,11 +985,6 @@ trait TransactionTestTrait
 
             $this->assertTrue(
                 $item->isNew()
-            );
-
-            $this->assertSame(
-                [],
-                $item->getTemporaryFields()
             );
 
             $this->assertFalse(
@@ -813,7 +1023,7 @@ trait TransactionTestTrait
 
         $exception = new Error('Operation failed.');
 
-        $Items->getEventManager()->on('ORM.afterSave', function(Event $event, Entity $entity) use ($exception, &$commits): void {
+        $Items->getEventManager()->on('ORM.afterSave', function(Event $event, Entity $entity) use ($Items, $exception, &$commits): void {
             $this->db->afterCommit(static function() use (&$commits): void {
                 $commits[] = 'failed';
             });
@@ -822,7 +1032,7 @@ trait TransactionTestTrait
                 return;
             }
 
-            $entity->set('temporary', 'value', temporary: true);
+            $Items->setTemporaryField($entity, 'temporary', 'value');
 
             throw $exception;
         });
@@ -868,11 +1078,6 @@ trait TransactionTestTrait
                 $item->isNew()
             );
 
-            $this->assertSame(
-                [],
-                $item->getTemporaryFields()
-            );
-
             $this->assertFalse(
                 $item->hasValue('temporary')
             );
@@ -891,6 +1096,136 @@ trait TransactionTestTrait
 
         $this->assertTrue(
             $Items->exists(['name' => 'Existing'])
+        );
+    }
+
+    public function testSaveManyOuterRollbackAfterRepeatedSave(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $items = $Items->newEntities([
+            [
+                'name' => 'Test 1',
+            ],
+            [
+                'name' => 'Test 2',
+            ],
+        ]);
+
+        $this->db->begin();
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+
+        foreach ($items as $item) {
+            $this->assertFalse(
+                $item->isNew()
+            );
+        }
+
+        $this->db->rollback();
+
+        foreach ($items as $item) {
+            $this->assertTrue(
+                $item->isNew()
+            );
+            $this->assertFalse(
+                $item->hasValue('id')
+            );
+        }
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+        $this->assertSame(
+            2,
+            $Items->find()->count()
+        );
+    }
+
+    public function testSaveOuterCommitWithoutCleaning(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $item = $Items->newEntity([
+            'name' => 'Test',
+        ]);
+
+        $this->db->begin();
+
+        $this->assertTrue(
+            $Items->save($item, clean: false)
+        );
+
+        $id = $item->id;
+        $this->db->commit();
+        $this->db->begin();
+        $this->db->rollback();
+
+        $this->assertSame(
+            $id,
+            $item->id
+        );
+
+        $item->set('name', 'Updated');
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+        $this->assertSame(
+            1,
+            $Items->find()->count()
+        );
+        $this->assertSame(
+            'Updated',
+            $Items->get($id)->name
+        );
+    }
+
+    public function testSaveOuterRollback(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $item = $Items->newEntity([
+            'name' => 'Test',
+        ]);
+
+        $this->db->begin();
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+
+        $id = $item->id;
+        $this->db->rollback();
+
+        $this->assertTrue(
+            $item->isNew()
+        );
+        $this->assertFalse(
+            $item->hasValue('id')
+        );
+
+        $this->db->insert()
+            ->into('items')
+            ->values([
+                [
+                    'id' => $id,
+                    'name' => 'Other',
+                ],
+            ])
+            ->execute();
+
+        $this->assertTrue(
+            $Items->save($item)
+        );
+        $this->assertSame(
+            ['Other', 'Test'],
+            $Items->find(orderBy: ['id' => 'ASC'])
+                ->all()
+                ->map(static fn(Entity $entity): string => $entity->name)
+                ->toArray()
         );
     }
 
@@ -959,11 +1294,6 @@ trait TransactionTestTrait
             $user->isNew()
         );
 
-        $this->assertSame(
-            [],
-            $user->getTemporaryFields()
-        );
-
         foreach ($user->posts as $post) {
             $this->assertNull(
                 $post->id
@@ -977,10 +1307,286 @@ trait TransactionTestTrait
                 $post->isNew()
             );
 
-            $this->assertSame(
-                [],
-                $post->getTemporaryFields()
-            );
         }
+    }
+
+    public function testSaveRelatedInnerRollbackPreservesOuterForeignKey(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $Posts = $this->modelRegistry->use('Posts');
+        $post = $Posts->newEntity([
+            'title' => 'Post',
+            'user_id' => null,
+        ]);
+
+        $this->assertTrue(
+            $Posts->save($post)
+        );
+
+        $postId = $post->id;
+        $user = $Users->newEntity([
+            'name' => 'Outer',
+        ]);
+        $user->set('posts', [$post]);
+        $this->db->begin();
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+
+        $userId = $user->id;
+        $innerUser = $Users->newEntity([
+            'name' => 'Inner',
+        ]);
+        $post->set('user', $innerUser);
+        $this->db->begin();
+
+        $this->assertTrue(
+            $Posts->save($post)
+        );
+        $this->assertSame(
+            $innerUser->id,
+            $post->user_id
+        );
+
+        $this->db->rollback();
+
+        $this->assertSame(
+            $userId,
+            $user->id
+        );
+        $this->assertSame(
+            $userId,
+            $post->user_id
+        );
+        $this->assertSame(
+            $userId,
+            $Posts->get($postId)->user_id
+        );
+        $this->assertFalse(
+            $innerUser->has('id')
+        );
+
+        $this->db->rollback();
+
+        $this->assertNull(
+            $post->user_id
+        );
+        $this->assertSame(
+            $postId,
+            $post->id
+        );
+        $this->assertNull(
+            $Posts->get($postId)->user_id
+        );
+        $this->assertFalse(
+            $user->has('id')
+        );
+    }
+
+    public function testSaveRelatedOuterRollback(): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+        $user = $Users->newEntity([
+            'name' => 'Test',
+            'posts' => [
+                [
+                    'title' => 'Post',
+                ],
+            ],
+        ]);
+        $post = $user->posts[0];
+
+        $this->db->begin();
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+
+        $this->db->rollback();
+
+        $this->assertTrue(
+            $user->isNew()
+        );
+        $this->assertTrue(
+            $post->isNew()
+        );
+        $this->assertFalse(
+            $user->hasValue('id')
+        );
+        $this->assertFalse(
+            $post->hasValue('id')
+        );
+        $this->assertFalse(
+            $post->hasValue('user_id')
+        );
+
+        $this->assertTrue(
+            $Users->save($user)
+        );
+        $this->assertSame(
+            $user->id,
+            $this->modelRegistry->use('Posts')->get($post->id)->user_id
+        );
+    }
+
+    public function testSetTemporaryFieldRollback(): void
+    {
+        $Model = $this->modelRegistry->use('Test');
+        $entity = new Entity([
+            'field' => 1,
+        ]);
+        $entity->set('field', 2);
+        $original = clone $entity;
+        $this->db->begin();
+
+        $this->assertSame(
+            $Model,
+            $Model->setTemporaryField($entity, 'field', 3)
+        );
+
+        $this->db->rollback();
+
+        $this->assertEquals(
+            $original,
+            $entity
+        );
+    }
+
+    public function testSetTemporaryFieldRollbackKeepsErrors(): void
+    {
+        $Model = $this->modelRegistry->use('Test');
+        $entity = new Entity([
+            'field' => 1,
+        ]);
+        $this->db->begin();
+        $Model->setTemporaryField($entity, 'field', 2);
+        $entity->setError('field', 'Invalid');
+        $this->db->rollback();
+
+        $this->assertSame(
+            1,
+            $entity->get('field')
+        );
+        $this->assertSame(
+            ['Invalid'],
+            $entity->getError('field')
+        );
+    }
+
+    public function testSetTemporaryFieldRollbackMarkedDirty(): void
+    {
+        $Model = $this->modelRegistry->use('Test');
+        $entity = new Entity([
+            'field' => 1,
+        ]);
+        $entity->setDirty('field');
+        $original = clone $entity;
+        $this->db->begin();
+        $Model->setTemporaryField($entity, 'field', 2);
+        $this->db->rollback();
+
+        $this->assertEquals(
+            $original,
+            $entity
+        );
+    }
+
+    public function testSetTemporaryFieldRollbackMutation(): void
+    {
+        $Model = $this->modelRegistry->use('Test');
+        $entity = new MockEntity([
+            'decimal' => 1.234,
+        ]);
+        $original = clone $entity;
+        $this->db->begin();
+        $Model->setTemporaryField($entity, 'decimal', 2.345);
+        $this->db->rollback();
+
+        $this->assertEquals(
+            $original,
+            $entity
+        );
+    }
+
+    public function testSetTemporaryFieldRollbackNested(): void
+    {
+        $Model = $this->modelRegistry->use('Test');
+        $entity = new Entity([
+            'field' => 1,
+        ]);
+        $original = clone $entity;
+        $this->db->begin();
+        $Model->setTemporaryField($entity, 'field', 2);
+        $outer = clone $entity;
+        $this->db->begin();
+        $Model->setTemporaryField($entity, 'field', 3);
+        $this->db->rollback();
+
+        $this->assertEquals(
+            $outer,
+            $entity
+        );
+
+        $this->db->rollback();
+
+        $this->assertEquals(
+            $original,
+            $entity
+        );
+    }
+
+    public function testSetTemporaryFieldRollbackNew(): void
+    {
+        $Model = $this->modelRegistry->use('Test');
+        $entity = new Entity();
+        $this->db->begin();
+        $Model->setTemporaryField($entity, 'field', 1);
+        $entity->set('other', 2);
+        $this->db->rollback();
+
+        $this->assertFalse(
+            $entity->has('field')
+        );
+        $this->assertFalse(
+            $entity->isDirty('field')
+        );
+        $this->assertSame(
+            2,
+            $entity->get('other')
+        );
+        $this->assertTrue(
+            $entity->isDirty('other')
+        );
+    }
+
+    public function testSetTemporaryFieldRollbackNull(): void
+    {
+        $Model = $this->modelRegistry->use('Test');
+        $entity = new Entity([
+            'field' => null,
+        ]);
+        $original = clone $entity;
+        $this->db->begin();
+        $Model->setTemporaryField($entity, 'field', 1);
+        $this->db->rollback();
+
+        $this->assertEquals(
+            $original,
+            $entity
+        );
+    }
+
+    public function testSetTemporaryFieldWithoutTransaction(): void
+    {
+        $this->expectException(OrmException::class);
+        $this->expectExceptionMessage('Cannot set a temporary field outside a transaction.');
+
+        $Items = $this->modelRegistry->use('Items');
+        $item = $Items->newEntity([
+            'name' => 'Test',
+        ]);
+
+        $Items->setTemporaryField($item, 'name', 'Updated');
     }
 }

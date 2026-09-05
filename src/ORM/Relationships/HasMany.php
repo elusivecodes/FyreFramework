@@ -102,12 +102,13 @@ class HasMany extends Relationship
             static fn(mixed $child): bool => $child && $child instanceof Entity
         );
 
+        $target = $this->getTarget();
         $foreignKey = $this->getForeignKey();
         $bindingValue = $this->getBindingKey() |> $entity->get(...);
 
         foreach ($children as $child) {
             if ($child->get($foreignKey) !== $bindingValue) {
-                $child->set($foreignKey, $bindingValue, temporary: true);
+                $target->setTemporaryField($child, $foreignKey, $bindingValue);
             }
         }
 
@@ -116,13 +117,13 @@ class HasMany extends Relationship
                 [$entity],
                 ...$options,
                 events: $events,
-                conditions: static::excludeConditions($this->getTarget(), $children)
+                conditions: static::excludeConditions($target, $children)
             )) {
                 return false;
             }
         }
 
-        if (!$this->getTarget()->saveMany(
+        if (!$target->saveMany(
             $children,
             $saveRelated,
             $checkRules,

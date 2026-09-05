@@ -732,6 +732,7 @@ abstract class Connection
             $this->afterRollbackCallbacks,
             fn(array $callback): bool => $callback['savePointLevel'] > $this->savePointLevel
         ) |> array_reverse(...);
+
         $this->afterRollbackCallbacks = array_filter(
             $this->afterRollbackCallbacks,
             fn(array $callback): bool => $callback['savePointLevel'] <= $this->savePointLevel
