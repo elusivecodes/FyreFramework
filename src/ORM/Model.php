@@ -472,7 +472,7 @@ class Model implements EventListenerInterface
         mixed ...$options
     ): bool {
         if (!is_array($entities)) {
-            $entities = iterator_to_array($entities);
+            $entities = iterator_to_array($entities, false);
         }
 
         if ($entities === []) {
@@ -1337,7 +1337,7 @@ class Model implements EventListenerInterface
         mixed ...$options
     ): bool {
         if (!is_array($entities)) {
-            $entities = iterator_to_array($entities);
+            $entities = iterator_to_array($entities, false);
         }
 
         if ($entities === []) {
@@ -1746,6 +1746,7 @@ class Model implements EventListenerInterface
         $matchedValues = $this->find(
             fields: $aliasedPrimaryKeys,
             conditions: QueryGenerator::normalizeConditions($aliasedPrimaryKeys, $values),
+            connectionType: static::WRITE,
             events: false,
         )
             ->getResult()

@@ -4,12 +4,14 @@ declare(strict_types=1);
 namespace Tests\TestCase\ORM\Shared\Model;
 
 use Error;
+use Fyre\DB\ConnectionManager;
 use Fyre\DB\Exceptions\DbException;
 use Fyre\Event\Event;
 use Fyre\Event\EventManager;
 use Fyre\Log\LogManager;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Exceptions\OrmException;
+use Fyre\ORM\Model;
 use RuntimeException;
 use Tests\Mock\Entities\MockEntity;
 use Throwable;
@@ -556,6 +558,48 @@ trait TransactionTestTrait
         );
     }
 
+    public function testSaveChecksExistenceOnWriteConnection(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $reader = $this->container->use(ConnectionManager::class)->build($this->db->getConfig());
+        $Items->setConnection($reader, Model::READ);
+
+        $item = $Items->newEntity([
+            'name' => 'Original',
+        ]);
+
+        try {
+            $this->db->begin();
+
+            $this->assertTrue(
+                $Items->save($item)
+            );
+
+            $item->name = 'Updated';
+
+            $this->assertTrue(
+                $Items->save($item)
+            );
+
+            $this->db->commit();
+
+            $this->assertSame(
+                1,
+                $Items->find()->count()
+            );
+            $this->assertSame(
+                'Updated',
+                $Items->get($item->id)->name
+            );
+        } finally {
+            while ($this->db->getSavePointLevel() > 0) {
+                $this->db->rollback();
+            }
+
+            $reader->disconnect();
+        }
+    }
+
     public function testSaveCommitExceptionRollsBack(): void
     {
         $connection = $this->getStubBuilder($this->db::class)
@@ -1076,6 +1120,50 @@ trait TransactionTestTrait
         $this->assertFalse(
             $items[1]->isDirty()
         );
+    }
+
+    public function testSaveManyChecksExistenceOnWriteConnection(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $reader = $this->container->use(ConnectionManager::class)->build($this->db->getConfig());
+        $Items->setConnection($reader, Model::READ);
+
+        $items = $Items->newEntities([
+            ['name' => 'First'],
+            ['name' => 'Second'],
+        ]);
+
+        try {
+            $this->db->begin();
+
+            $this->assertTrue(
+                $Items->saveMany($items)
+            );
+
+            foreach ($items as $item) {
+                $item->name = 'Updated';
+            }
+
+            $this->assertTrue(
+                $Items->saveMany($items)
+            );
+
+            $this->db->commit();
+
+            $this->assertSame(
+                ['Updated', 'Updated'],
+                $Items->find(orderBy: ['id' => 'ASC'])
+                    ->all()
+                    ->map(static fn(Entity $item): string => $item->name)
+                    ->toArray()
+            );
+        } finally {
+            while ($this->db->getSavePointLevel() > 0) {
+                $this->db->rollback();
+            }
+
+            $reader->disconnect();
+        }
     }
 
     public function testSaveManyDatabaseExceptionRollsBack(): void

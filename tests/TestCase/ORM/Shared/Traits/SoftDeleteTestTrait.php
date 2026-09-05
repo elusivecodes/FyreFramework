@@ -842,7 +842,8 @@ trait SoftDeleteTestTrait
         );
 
         $generator = static function() use ($users): Generator {
-            yield from $users;
+            yield from [$users[0]];
+            yield from [$users[1]];
         };
 
         $this->assertTrue(

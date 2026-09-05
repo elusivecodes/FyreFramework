@@ -8,6 +8,7 @@ use Fyre\DB\Query;
 use Fyre\Event\Event;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Exceptions\OrmException;
+use Generator;
 use Tests\Mock\Entities\Item;
 use Tests\Mock\Entities\Post;
 use Tests\Mock\Entities\User;
@@ -316,6 +317,32 @@ trait QueryTestTrait
     {
         $this->assertTrue(
             $this->modelRegistry->use('Items')->deleteMany([])
+        );
+    }
+
+    public function testDeleteManyGeneratorDuplicateKeys(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $items = $Items->newEntities([
+            ['name' => 'First'],
+            ['name' => 'Second'],
+        ]);
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+
+        $generator = static function() use ($items): Generator {
+            yield from [$items[0]];
+            yield from [$items[1]];
+        };
+
+        $this->assertTrue(
+            $Items->deleteMany($generator())
+        );
+        $this->assertSame(
+            0,
+            $Items->find()->count()
         );
     }
 
@@ -804,6 +831,31 @@ trait QueryTestTrait
 
         $this->assertFalse(
             $Items->saveMany($items)
+        );
+    }
+
+    public function testSaveManyGeneratorDuplicateKeys(): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+        $items = $Items->newEntities([
+            ['name' => 'First'],
+            ['name' => 'Second'],
+        ]);
+
+        $generator = static function() use ($items): Generator {
+            yield from [$items[0]];
+            yield from [$items[1]];
+        };
+
+        $this->assertTrue(
+            $Items->saveMany($generator())
+        );
+        $this->assertSame(
+            ['First', 'Second'],
+            $Items->find(orderBy: ['id' => 'ASC'])
+                ->all()
+                ->map(static fn(Entity $item): string => $item->name)
+                ->toArray()
         );
     }
 

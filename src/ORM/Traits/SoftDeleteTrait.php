@@ -383,7 +383,7 @@ trait SoftDeleteTrait
         mixed ...$options
     ): bool {
         if (!is_array($entities)) {
-            $entities = iterator_to_array($entities);
+            $entities = iterator_to_array($entities, false);
         }
 
         if ($entities === []) {
