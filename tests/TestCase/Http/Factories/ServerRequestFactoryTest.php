@@ -165,6 +165,22 @@ final class ServerRequestFactoryTest extends TestCase
         );
     }
 
+    public function testCreateFromOptionsServerRepeatedSlashes(): void
+    {
+        $request = $this->serverRequestFactory->createFromOptions([
+            'server' => [
+                'HTTP_HOST' => 'example.com',
+                'QUERY_STRING' => 'page=2',
+                'REQUEST_URI' => '//admin/report?page=2',
+            ],
+        ]);
+
+        $this->assertSame(
+            '//admin/report?page=2',
+            $request->getRequestTarget()
+        );
+    }
+
     public function testCreateFromOptionsTrustedProxy(): void
     {
         $this->config

@@ -12,6 +12,10 @@ use function is_numeric;
 use function is_string;
 use function parse_url;
 use function preg_match;
+use function preg_replace;
+use function str_starts_with;
+use function strcspn;
+use function substr;
 
 use const PHP_URL_PATH;
 
@@ -57,7 +61,17 @@ class UriFactory implements UriFactoryInterface
         $requestUri = $serverParams['REQUEST_URI'] ?? null;
 
         if (is_string($requestUri) && $requestUri !== '') {
-            $path = (string) parse_url($requestUri, PHP_URL_PATH);
+            if (str_starts_with($requestUri, '/')) {
+                $pathLength = strcspn($requestUri, '?#');
+                $path = substr($requestUri, 0, $pathLength);
+
+                // Replace control characters with underscores to match parse_url().
+                $path = (string) preg_replace('/[\x00-\x1F\x7F]/', '_', $path);
+            } else {
+                $path = (string) parse_url($requestUri, PHP_URL_PATH);
+            }
+
+            // withPath() validates the extracted path against RFC 3986.
             $uri = $uri->withPath($path);
         }
 
