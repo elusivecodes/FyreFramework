@@ -5,7 +5,9 @@ namespace Tests\TestCase\View\View;
 
 use Fyre\Event\Event;
 use InvalidArgumentException;
+use RuntimeException;
 
+use function ob_get_level;
 use function realpath;
 
 trait ElementTestTrait
@@ -39,6 +41,48 @@ trait ElementTestTrait
             'Test',
             $this->view->render('test/element_deep')
         );
+    }
+
+    public function testElementExceptionCleanup(): void
+    {
+        $bufferLevel = ob_get_level();
+        $this->view->assign('existing', 'Original');
+        $this->view->setLayout(null);
+
+        try {
+            $this->view->element('exception');
+            $this->fail('Expected element to throw an exception.');
+        } catch (RuntimeException $e) {
+            $this->assertSame('Element exception.', $e->getMessage());
+        }
+
+        $this->assertSame($bufferLevel, ob_get_level());
+        $this->assertSame('Original', $this->view->fetch('existing'));
+        $this->assertSame('', $this->view->fetch('added'));
+        $this->assertSame('Test', $this->view->render('test/deep/test'));
+    }
+
+    public function testElementExceptionPreservesParentBlock(): void
+    {
+        $bufferLevel = ob_get_level();
+        $this->view->start('parent');
+        echo 'Before';
+
+        try {
+            $this->view->element('exception');
+            $this->fail('Expected element to throw an exception.');
+        } catch (RuntimeException $e) {
+            $this->assertSame('Element exception.', $e->getMessage());
+        }
+
+        $this->assertSame($bufferLevel + 1, ob_get_level());
+
+        echo 'After';
+        $this->view->end();
+
+        $this->assertSame($bufferLevel, ob_get_level());
+        $this->assertSame('BeforeAfter', $this->view->fetch('parent'));
+        $this->assertSame('', $this->view->fetch('added'));
     }
 
     public function testElementInvalid(): void

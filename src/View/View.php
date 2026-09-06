@@ -15,6 +15,7 @@ use Fyre\View\Helpers\UrlHelper;
 use InvalidArgumentException;
 use LogicException;
 use Psr\Http\Message\ServerRequestInterface;
+use Throwable;
 
 use function array_merge;
 use function array_pop;
@@ -456,20 +457,35 @@ class View
      * Note: This uses {@see extract()} with `EXTR_SKIP` to create local variables without overwriting
      * `$__fyreFilePath`, `$__fyreData`, or `$this`. Colliding values remain in `$__fyreData`.
      *
-     * @param string $__fyreFilePath The file path.
-     * @param array<string, mixed> $__fyreData The data to inject.
+     * @param string $filePath The file path.
+     * @param array<string, mixed> $data The data to inject.
      * @return string The rendered file.
      */
-    protected function evaluate(string $__fyreFilePath, array $__fyreData): string
+    protected function evaluate(string $filePath, array $data): string
     {
-        extract($__fyreData, EXTR_SKIP);
+        $blocks = $this->blocks;
+        $blockStack = $this->blockStack;
+
+        ob_start();
+        $bufferLevel = ob_get_level();
 
         try {
-            ob_start();
+            (function(string $__fyreFilePath, array $__fyreData): void {
+                extract($__fyreData, EXTR_SKIP);
 
-            include $__fyreFilePath;
+                include $__fyreFilePath;
+            })($filePath, $data);
 
             return (string) ob_get_contents();
+        } catch (Throwable $e) {
+            while (ob_get_level() > $bufferLevel) {
+                ob_end_clean();
+            }
+
+            $this->blocks = $blocks;
+            $this->blockStack = $blockStack;
+
+            throw $e;
         } finally {
             ob_end_clean();
         }
