@@ -5,6 +5,7 @@ namespace Tests\TestCase\Log;
 
 use ArrayIterator;
 use ArrayObject;
+use Closure;
 use Fyre\Log\Handlers\ArrayLogger;
 use JsonSerializable;
 use Override;
@@ -30,20 +31,17 @@ final class LoggerTest extends TestCase
     protected mixed $session = null;
 
     /**
-     * @return array<string, array{mixed, string}>
+     * @return array<string, array{Closure(): mixed, string}>
      */
     public static function interpolateContextProvider(): array
     {
-        $serializable = new ArrayIterator(['test' => 3]);
-        $unhandled = new class () {};
-
         return [
             'array' => [
-                ['test' => 1],
+                static fn(): array => ['test' => 1],
                 '{"test":1}',
             ],
             'json serializable' => [
-                new class () implements JsonSerializable
+                static fn(): JsonSerializable => new class () implements JsonSerializable
                 {
                     /**
                      * @return array<string, int>
@@ -57,15 +55,11 @@ final class LoggerTest extends TestCase
                 '{"test":2}',
             ],
             'array object' => [
-                new ArrayObject(['test' => 3]),
+                static fn(): ArrayObject => new ArrayObject(['test' => 3]),
                 '{"test":3}',
             ],
-            'serializable' => [
-                $serializable,
-                serialize($serializable),
-            ],
             'stringable' => [
-                new class () implements Stringable
+                static fn(): Stringable => new class () implements Stringable
                 {
                     #[Override]
                     public function __toString(): string
@@ -76,7 +70,7 @@ final class LoggerTest extends TestCase
                 'stringable',
             ],
             'arrayable' => [
-                new class ()
+                static fn(): object => new class ()
                 {
                     /**
                      * @return array<string, int>
@@ -89,7 +83,7 @@ final class LoggerTest extends TestCase
                 '{"test":4}',
             ],
             'debuggable' => [
-                new class ()
+                static fn(): object => new class ()
                 {
                     /**
                      * @return array<string, int>
@@ -100,10 +94,6 @@ final class LoggerTest extends TestCase
                     }
                 },
                 '{"test":5}',
-            ],
-            'unhandled' => [
-                $unhandled,
-                '[unhandled type '.get_debug_type($unhandled).']',
             ],
         ];
     }
@@ -148,11 +138,14 @@ final class LoggerTest extends TestCase
         );
     }
 
+    /**
+     * @param Closure(): mixed $value
+     */
     #[DataProvider('interpolateContextProvider')]
-    public function testInterpolateContextValue(mixed $value, string $expected): void
+    public function testInterpolateContextValue(Closure $value, string $expected): void
     {
         $this->logger->log('debug', '{value}', [
-            'value' => $value,
+            'value' => $value(),
         ]);
 
         $this->assertSame(
@@ -226,6 +219,21 @@ final class LoggerTest extends TestCase
         );
     }
 
+    public function testInterpolateSerializable(): void
+    {
+        $value = new ArrayIterator(['test' => 3]);
+        $expected = serialize($value);
+
+        $this->logger->log('debug', '{value}', [
+            'value' => $value,
+        ]);
+
+        $this->assertSame(
+            '[DEBUG] '.$expected,
+            $this->logger->read()[0] ?? ''
+        );
+    }
+
     public function testInterpolateSessionAndEscapedPlaceholders(): void
     {
         $_SESSION = ['user' => 1];
@@ -235,6 +243,20 @@ final class LoggerTest extends TestCase
         $this->assertSame(
             '[DEBUG] '.
             json_encode($_SESSION, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE).' {session_vars} {missing}',
+            $this->logger->read()[0] ?? ''
+        );
+    }
+
+    public function testInterpolateUnhandled(): void
+    {
+        $value = new class () {};
+
+        $this->logger->log('debug', '{value}', [
+            'value' => $value,
+        ]);
+
+        $this->assertSame(
+            '[DEBUG] [unhandled type '.get_debug_type($value).']',
             $this->logger->read()[0] ?? ''
         );
     }
