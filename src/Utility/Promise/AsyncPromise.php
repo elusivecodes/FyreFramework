@@ -15,6 +15,7 @@ use function count;
 use function is_array;
 use function pcntl_async_signals;
 use function pcntl_fork;
+use function pcntl_get_last_error;
 use function pcntl_waitpid;
 use function pcntl_wifstopped;
 use function posix_get_last_error;
@@ -34,6 +35,7 @@ use function unserialize;
 use function usleep;
 
 use const AF_UNIX;
+use const PCNTL_EINTR;
 use const SIGKILL;
 use const SOCK_STREAM;
 use const WNOHANG;
@@ -55,11 +57,29 @@ class AsyncPromise extends Promise
 
     protected string $buffer = '';
 
-    protected int $pid;
+    protected int|null $pid = null;
 
     protected Socket $socket;
 
     protected int $startTime;
+
+    /**
+     * Reaps the child process, terminating unfinished work without settling the Promise.
+     */
+    public function __destruct()
+    {
+        if ($this->pid === null) {
+            return;
+        }
+
+        // Only waitable children belong to this process; forked copies must not signal them.
+        if (pcntl_waitpid($this->pid, $status, WNOHANG) === 0 && posix_kill($this->pid, SIGKILL)) {
+            while (pcntl_waitpid($this->pid, $status) === -1 && pcntl_get_last_error() === PCNTL_EINTR) {
+            }
+        }
+
+        $this->pid = null;
+    }
 
     /**
      * Cancels the pending Promise.
@@ -72,7 +92,7 @@ class AsyncPromise extends Promise
      */
     public function cancel(string|null $message = null): void
     {
-        if ($this->result) {
+        if ($this->result || $this->pid === null) {
             return;
         }
 
@@ -92,6 +112,8 @@ class AsyncPromise extends Promise
                 $this->pid
             ));
         }
+
+        $this->pid = null;
 
         socket_close($this->socket);
         $this->buffer = '';
@@ -176,6 +198,10 @@ class AsyncPromise extends Promise
             return true;
         }
 
+        if ($this->pid === null) {
+            throw new RuntimeException('The child process has already been reaped.');
+        }
+
         $processStatus = pcntl_waitpid($this->pid, $status, WNOHANG | WUNTRACED);
 
         if ($processStatus !== 0 && $processStatus !== $this->pid) {
@@ -183,6 +209,10 @@ class AsyncPromise extends Promise
                 'Process `%d` could not be polled.',
                 $this->pid
             ));
+        }
+
+        if ($processStatus === $this->pid && !pcntl_wifstopped($status)) {
+            $this->pid = null;
         }
 
         // Drain available data while the child is running so its writes cannot block on a full socket.

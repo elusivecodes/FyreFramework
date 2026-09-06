@@ -117,6 +117,8 @@ The callback must accept the resolve and reject closures and must call one of th
 
 The maximum child runtime is 300 seconds. A child still running beyond that limit, or reported as stopped, is cancelled during polling.
 
+An `AsyncPromise` owns its child process. When the promise is destroyed, completed work is reaped and unfinished work is terminated and reaped, without invoking promise handlers. Retain the promise or a chain that references it while its work should continue. Reference cycles can delay destruction until garbage collection runs.
+
 ## Settlement and materialization
 
 Synchronous promises settle during construction or callback execution. Chaining them does not defer work or schedule it on an event loop.
@@ -130,7 +132,7 @@ Combination methods materialize their output arrays. `all()` retains the input k
 - Rejection reasons are always `Throwable` instances. Calling `reject()` without one creates a `RuntimeException`.
 - Unhandled rejections are not silent: a rejected promise may throw its reason during destruction when no rejection handler was attached.
 - Attaching an `onRejected` callback through `then()`, `catch()`, or `finally()` marks that rejection as handled.
-- After `all()`, `any()`, or `race()` has its result, remaining async promises are ignored rather than cancelled. Rejection handlers are attached to prevent abandoned rejection errors.
+- After `all()`, `any()`, or `race()` has its result, remaining async promises are no longer polled. Retained promises remain usable; destroyed promises clean up their child processes. Rejection handlers are attached to prevent abandoned rejection errors.
 - If a child exits without sending a valid serialized result, the parent throws `RuntimeException` when it polls the socket.
 - `cancel()` does nothing after settlement and may throw if the child cannot be killed or reaped.
 - `Promise` supports instance and static macros; see [Macros](../core/macros.md).

@@ -16,6 +16,13 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Throwable;
 
+use function gc_collect_cycles;
+use function pcntl_fork;
+use function pcntl_waitid;
+use function pcntl_waitpid;
+use function pcntl_wexitstatus;
+use function posix_kill;
+use function sleep;
 use function socket_close;
 use function socket_create_pair;
 use function socket_read;
@@ -25,7 +32,12 @@ use function time;
 use function unserialize;
 
 use const AF_UNIX;
+use const P_PID;
+use const SIGKILL;
 use const SOCK_STREAM;
+use const WEXITED;
+use const WNOHANG;
+use const WNOWAIT;
 
 #[RequiresPhpExtension('pcntl')]
 #[RequiresPhpExtension('posix')]
@@ -97,6 +109,19 @@ final class AsyncPromiseTest extends TestCase
             'all' => ['method' => 'all', 'expected' => [42]],
             'any' => ['method' => 'any', 'expected' => 42],
             'race' => ['method' => 'race', 'expected' => 42],
+        ];
+    }
+
+    /**
+     * @return array<string, array{bool, bool}>
+     */
+    public static function destructProvider(): array
+    {
+        return [
+            'running' => [false, false],
+            'completed' => [true, false],
+            'running race participant' => [false, true],
+            'completed race participant' => [true, true],
         ];
     }
 
@@ -503,6 +528,13 @@ final class AsyncPromiseTest extends TestCase
         try {
             $promise->cancel('test');
 
+            $pid = Closure::bind(function(): int|null {
+                /** @var AsyncPromise $this */
+                return $this->pid;
+            }, $promise, AsyncPromise::class)();
+
+            $this->assertNull($pid);
+
             Promise::await($promise);
         } finally {
             socket_close($reader);
@@ -517,6 +549,14 @@ final class AsyncPromiseTest extends TestCase
         });
 
         $promise->wait();
+
+        $pid = Closure::bind(function(): int|null {
+            /** @var AsyncPromise $this */
+            return $this->pid;
+        }, $promise, AsyncPromise::class)();
+
+        $this->assertNull($pid);
+
         $promise->cancel();
 
         $this->assertSame(
@@ -745,6 +785,113 @@ final class AsyncPromiseTest extends TestCase
         }
     }
 
+    #[DataProvider('destructProvider')]
+    public function testDestruct(bool $completed, bool $race): void
+    {
+        $promise = new AsyncPromise(static function(Closure $resolve) use ($completed): void {
+            if (!$completed) {
+                sleep(30);
+            }
+
+            $resolve(1);
+        });
+
+        $pid = Closure::bind(function(): int|null {
+            /** @var AsyncPromise $this */
+            return $this->pid;
+        }, $promise, AsyncPromise::class)();
+
+        $this->assertNotNull($pid);
+
+        try {
+            if ($completed) {
+                $this->assertTrue(
+                    pcntl_waitid(P_PID, $pid, $info, WEXITED | WNOWAIT)
+                );
+            }
+
+            if ($race) {
+                $this->assertSame(
+                    'winner',
+                    Promise::race(['winner', $promise]) |> Promise::await(...)
+                );
+            }
+
+            $called = false;
+            $promise->finally(static function() use (&$called): void {
+                $called = true;
+            });
+
+            unset($promise);
+            gc_collect_cycles();
+
+            $this->assertFalse($called);
+
+            $this->assertSame(
+                -1,
+                pcntl_waitpid($pid, $status, WNOHANG)
+            );
+        } finally {
+            if (pcntl_waitpid($pid, $status, WNOHANG) === 0) {
+                posix_kill($pid, SIGKILL);
+                pcntl_waitpid($pid, $status);
+            }
+        }
+    }
+
+    public function testDestructForkedCopy(): void
+    {
+        $sockets = [];
+
+        $result = socket_create_pair(
+            AF_UNIX,
+            SOCK_STREAM,
+            0,
+            $sockets
+        );
+
+        $this->assertTrue($result);
+
+        [$reader, $writer] = $sockets;
+
+        $promise = new AsyncPromise(static function(Closure $resolve) use ($reader): void {
+            socket_read($reader, 1);
+            $resolve(1);
+        });
+
+        $pid = pcntl_fork();
+
+        if ($pid === 0) {
+            unset($promise);
+            gc_collect_cycles();
+            exit(0);
+        }
+
+        try {
+            $this->assertGreaterThan(0, $pid);
+
+            $this->assertSame(
+                $pid,
+                pcntl_waitpid($pid, $status)
+            );
+
+            $this->assertSame(
+                0,
+                pcntl_wexitstatus($status)
+            );
+
+            socket_write($writer, '1');
+
+            $this->assertSame(
+                1,
+                Promise::await($promise)
+            );
+        } finally {
+            socket_close($reader);
+            socket_close($writer);
+        }
+    }
+
     public function testMultipleThen(): void
     {
         $promise = new AsyncPromise(static function(Closure $resolve): void {
@@ -767,6 +914,25 @@ final class AsyncPromiseTest extends TestCase
             [1, 2],
             $results
         );
+    }
+
+    public function testPollInvalidResult(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageIs('Unable to read response from child process.');
+
+        $promise = new AsyncPromise(static function(Closure $resolve): void {});
+
+        try {
+            $promise->wait();
+        } finally {
+            $pid = Closure::bind(function(): int|null {
+                /** @var AsyncPromise $this */
+                return $this->pid;
+            }, $promise, AsyncPromise::class)();
+
+            $this->assertNull($pid);
+        }
     }
 
     public function testRace(): void
