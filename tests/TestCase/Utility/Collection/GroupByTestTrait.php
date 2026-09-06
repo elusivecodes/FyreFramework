@@ -3,269 +3,104 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\Collection;
 
+use Closure;
 use Fyre\Utility\Collection;
+use PHPUnit\Framework\Attributes\DataProvider;
+
+use function array_map;
 
 trait GroupByTestTrait
 {
-    public function testGroupBy(): void
+    /**
+     * @return array<string, array{array<array<string, mixed>>, Closure|string, array<mixed>}>
+     */
+    public static function groupByPathProvider(): array
     {
-        $collection = new Collection([
-            [
-                'id' => 1,
-                'value' => 2,
-            ],
-            [
-                'id' => 2,
-                'value' => 4,
-            ],
-            [
-                'id' => 3,
-                'value' => 3,
-            ],
-            [
-                'id' => 4,
-                'value' => 4,
-            ],
-            [
-                'id' => 5,
-                'value' => 1,
-            ],
-            [
-                'id' => 6,
-                'value' => 5,
-            ],
-            [
-                'id' => 7,
-                'value' => 3,
-            ],
-        ]);
+        $items = [
+            ['id' => 1, 'value' => 2],
+            ['id' => 2, 'value' => 4],
+            ['id' => 3, 'value' => 3],
+            ['id' => 4, 'value' => 4],
+            ['id' => 5, 'value' => 1],
+            ['id' => 6, 'value' => 5],
+            ['id' => 7, 'value' => 3],
+        ];
 
-        $this->assertArraysAreIdentical(
-            [
-                2 => [
-                    [
-                        'id' => 1,
-                        'value' => 2,
+        $expected = [
+            2 => [
+                ['id' => 1, 'value' => 2],
+            ],
+            4 => [
+                ['id' => 2, 'value' => 4],
+                ['id' => 4, 'value' => 4],
+            ],
+            3 => [
+                ['id' => 3, 'value' => 3],
+                ['id' => 7, 'value' => 3],
+            ],
+            1 => [
+                ['id' => 5, 'value' => 1],
+            ],
+            5 => [
+                ['id' => 6, 'value' => 5],
+            ],
+        ];
+
+        return [
+            'field path' => [$items, 'value', $expected],
+            'callback' => [$items, static fn(array $item, int $key): int => $item['value'], $expected],
+            'nested path' => [
+                array_map(static fn(array $item): array => ['data' => $item], $items),
+                'data.value',
+                [
+                    2 => [
+                        [
+                            'data' => ['id' => 1, 'value' => 2],
+                        ],
                     ],
-                ],
-                4 => [
-                    [
-                        'id' => 2,
-                        'value' => 4,
+                    4 => [
+                        [
+                            'data' => ['id' => 2, 'value' => 4],
+                        ],
+                        [
+                            'data' => ['id' => 4, 'value' => 4],
+                        ],
                     ],
-                    [
-                        'id' => 4,
-                        'value' => 4,
+                    3 => [
+                        [
+                            'data' => ['id' => 3, 'value' => 3],
+                        ],
+                        [
+                            'data' => ['id' => 7, 'value' => 3],
+                        ],
                     ],
-                ],
-                3 => [
-                    [
-                        'id' => 3,
-                        'value' => 3,
+                    1 => [
+                        [
+                            'data' => ['id' => 5, 'value' => 1],
+                        ],
                     ],
-                    [
-                        'id' => 7,
-                        'value' => 3,
-                    ],
-                ],
-                1 => [
-                    [
-                        'id' => 5,
-                        'value' => 1,
-                    ],
-                ],
-                5 => [
-                    [
-                        'id' => 6,
-                        'value' => 5,
+                    5 => [
+                        [
+                            'data' => ['id' => 6, 'value' => 5],
+                        ],
                     ],
                 ],
             ],
-            $collection->groupBy('value')->toArray()
-        );
+        ];
     }
 
-    public function testGroupByCallback(): void
+    /**
+     * @param array<array<string, mixed>> $values
+     * @param array<mixed> $expected
+     */
+    #[DataProvider('groupByPathProvider')]
+    public function testGroupBy(array $values, Closure|string $valuePath, array $expected): void
     {
-        $collection = new Collection([
-            [
-                'id' => 1,
-                'value' => 2,
-            ],
-            [
-                'id' => 2,
-                'value' => 4,
-            ],
-            [
-                'id' => 3,
-                'value' => 3,
-            ],
-            [
-                'id' => 4,
-                'value' => 4,
-            ],
-            [
-                'id' => 5,
-                'value' => 1,
-            ],
-            [
-                'id' => 6,
-                'value' => 5,
-            ],
-            [
-                'id' => 7,
-                'value' => 3,
-            ],
-        ]);
+        $collection = new Collection($values);
 
         $this->assertArraysAreIdentical(
-            [
-                2 => [
-                    [
-                        'id' => 1,
-                        'value' => 2,
-                    ],
-                ],
-                4 => [
-                    [
-                        'id' => 2,
-                        'value' => 4,
-                    ],
-                    [
-                        'id' => 4,
-                        'value' => 4,
-                    ],
-                ],
-                3 => [
-                    [
-                        'id' => 3,
-                        'value' => 3,
-                    ],
-                    [
-                        'id' => 7,
-                        'value' => 3,
-                    ],
-                ],
-                1 => [
-                    [
-                        'id' => 5,
-                        'value' => 1,
-                    ],
-                ],
-                5 => [
-                    [
-                        'id' => 6,
-                        'value' => 5,
-                    ],
-                ],
-            ],
-            $collection->groupBy(static fn(array $item, int $key): int => $item['value'])->toArray()
-        );
-    }
-
-    public function testGroupByDeep(): void
-    {
-        $collection = new Collection([
-            [
-                'data' => [
-                    'id' => 1,
-                    'value' => 2,
-                ],
-            ],
-            [
-                'data' => [
-                    'id' => 2,
-                    'value' => 4,
-                ],
-            ],
-            [
-                'data' => [
-                    'id' => 3,
-                    'value' => 3,
-                ],
-            ],
-            [
-                'data' => [
-                    'id' => 4,
-                    'value' => 4,
-                ],
-            ],
-            [
-                'data' => [
-                    'id' => 5,
-                    'value' => 1,
-                ],
-            ],
-            [
-                'data' => [
-                    'id' => 6,
-                    'value' => 5,
-                ],
-            ],
-            [
-                'data' => [
-                    'id' => 7,
-                    'value' => 3,
-                ],
-            ],
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [
-                2 => [
-                    [
-                        'data' => [
-                            'id' => 1,
-                            'value' => 2,
-                        ],
-                    ],
-                ],
-                4 => [
-                    [
-                        'data' => [
-                            'id' => 2,
-                            'value' => 4,
-                        ],
-                    ],
-                    [
-                        'data' => [
-                            'id' => 4,
-                            'value' => 4,
-                        ],
-                    ],
-                ],
-                3 => [
-                    [
-                        'data' => [
-                            'id' => 3,
-                            'value' => 3,
-                        ],
-                    ],
-                    [
-                        'data' => [
-                            'id' => 7,
-                            'value' => 3,
-                        ],
-                    ],
-                ],
-                1 => [
-                    [
-                        'data' => [
-                            'id' => 5,
-                            'value' => 1,
-                        ],
-                    ],
-                ],
-                5 => [
-                    [
-                        'data' => [
-                            'id' => 6,
-                            'value' => 5,
-                        ],
-                    ],
-                ],
-            ],
-            $collection->groupBy('data.value')->toArray()
+            $expected,
+            $collection->groupBy($valuePath)->toArray()
         );
     }
 }

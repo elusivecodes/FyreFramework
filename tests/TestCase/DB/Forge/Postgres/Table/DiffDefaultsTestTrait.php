@@ -13,37 +13,40 @@ use Fyre\DB\Types\IntegerType;
 use Fyre\DB\Types\StringType;
 use Fyre\DB\Types\TextType;
 use Fyre\DB\Types\TimeType;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait DiffDefaultsTestTrait
 {
-    public function testTableDiffDefaultsBigInt(): void
+    /**
+     * @return array<string, array{array<string, mixed>}>
+     */
+    public static function tableDiffDefaultsProvider(): array
     {
-        $this->forge->createTable('test', [
-            'value' => [
-                'type' => IntegerType::class,
-                'precision' => 20,
-            ],
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->forge
-                ->build('test')
-                ->clear()
-                ->addColumn('value', [
-                    'type' => IntegerType::class,
-                    'precision' => 20,
-                ])
-                ->sql()
-        );
+        return [
+            'big int' => [['type' => IntegerType::class, 'precision' => 20]],
+            'boolean' => [['type' => BooleanType::class]],
+            'bytea' => [['type' => BinaryType::class]],
+            'character' => [['type' => StringType::class, 'length' => 1]],
+            'character varying' => [['type' => StringType::class]],
+            'date' => [['type' => DateType::class]],
+            'integer' => [['type' => IntegerType::class]],
+            'numeric' => [['type' => DecimalType::class]],
+            'real' => [['type' => FloatType::class]],
+            'small int' => [['type' => IntegerType::class, 'precision' => 6]],
+            'text' => [['type' => TextType::class]],
+            'time' => [['type' => TimeType::class]],
+            'timestamp' => [['type' => DateTimeFractionalType::class]],
+        ];
     }
 
-    public function testTableDiffDefaultsBoolean(): void
+    /**
+     * @param array<string, mixed> $options
+     */
+    #[DataProvider('tableDiffDefaultsProvider')]
+    public function testTableDiffDefaults(array $options): void
     {
         $this->forge->createTable('test', [
-            'value' => [
-                'type' => BooleanType::class,
-            ],
+            'value' => $options,
         ]);
 
         $this->assertArraysAreIdentical(
@@ -51,233 +54,7 @@ trait DiffDefaultsTestTrait
             $this->forge
                 ->build('test')
                 ->clear()
-                ->addColumn('value', [
-                    'type' => BooleanType::class,
-                ])
-                ->sql()
-        );
-    }
-
-    public function testTableDiffDefaultsBytea(): void
-    {
-        $this->forge->createTable('test', [
-            'value' => [
-                'type' => BinaryType::class,
-            ],
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->forge
-                ->build('test')
-                ->clear()
-                ->addColumn('value', [
-                    'type' => BinaryType::class,
-                ])
-                ->sql()
-        );
-    }
-
-    public function testTableDiffDefaultsCharacter(): void
-    {
-        $this->forge->createTable('test', [
-            'value' => [
-                'type' => StringType::class,
-                'length' => 1,
-            ],
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->forge
-                ->build('test')
-                ->clear()
-                ->addColumn('value', [
-                    'type' => StringType::class,
-                    'length' => 1,
-                ])
-                ->sql()
-        );
-    }
-
-    public function testTableDiffDefaultsCharacterVarying(): void
-    {
-        $this->forge->createTable('test', [
-            'value' => [
-                'type' => StringType::class,
-            ],
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->forge
-                ->build('test')
-                ->clear()
-                ->addColumn('value', [
-                    'type' => StringType::class,
-                ])
-                ->sql()
-        );
-    }
-
-    public function testTableDiffDefaultsDate(): void
-    {
-        $this->forge->createTable('test', [
-            'value' => [
-                'type' => DateType::class,
-            ],
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->forge
-                ->build('test')
-                ->clear()
-                ->addColumn('value', [
-                    'type' => DateType::class,
-                ])
-                ->sql()
-        );
-    }
-
-    public function testTableDiffDefaultsInteger(): void
-    {
-        $this->forge->createTable('test', [
-            'value' => [
-                'type' => IntegerType::class,
-            ],
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->forge
-                ->build('test')
-                ->clear()
-                ->addColumn('value', [
-                    'type' => IntegerType::class,
-                ])
-                ->sql()
-        );
-    }
-
-    public function testTableDiffDefaultsNumeric(): void
-    {
-        $this->forge->createTable('test', [
-            'value' => [
-                'type' => DecimalType::class,
-            ],
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->forge
-                ->build('test')
-                ->clear()
-                ->addColumn('value', [
-                    'type' => DecimalType::class,
-                ])
-                ->sql()
-        );
-    }
-
-    public function testTableDiffDefaultsReal(): void
-    {
-        $this->forge->createTable('test', [
-            'value' => [
-                'type' => FloatType::class,
-            ],
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->forge
-                ->build('test')
-                ->clear()
-                ->addColumn('value', [
-                    'type' => FloatType::class,
-                ])
-                ->sql()
-        );
-    }
-
-    public function testTableDiffDefaultsSmallInt(): void
-    {
-        $this->forge->createTable('test', [
-            'value' => [
-                'type' => IntegerType::class,
-                'precision' => 6,
-            ],
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->forge
-                ->build('test')
-                ->clear()
-                ->addColumn('value', [
-                    'type' => IntegerType::class,
-                    'precision' => 6,
-                ])
-                ->sql()
-        );
-    }
-
-    public function testTableDiffDefaultsText(): void
-    {
-        $this->forge->createTable('test', [
-            'value' => [
-                'type' => TextType::class,
-            ],
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->forge
-                ->build('test')
-                ->clear()
-                ->addColumn('value', [
-                    'type' => TextType::class,
-                ])
-                ->sql()
-        );
-    }
-
-    public function testTableDiffDefaultsTime(): void
-    {
-        $this->forge->createTable('test', [
-            'value' => [
-                'type' => TimeType::class,
-            ],
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->forge
-                ->build('test')
-                ->clear()
-                ->addColumn('value', [
-                    'type' => TimeType::class,
-                ])
-                ->sql()
-        );
-    }
-
-    public function testTableDiffDefaultsTimestamp(): void
-    {
-        $this->forge->createTable('test', [
-            'value' => [
-                'type' => DateTimeFractionalType::class,
-            ],
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->forge
-                ->build('test')
-                ->clear()
-                ->addColumn('value', [
-                    'type' => DateTimeFractionalType::class,
-                ])
+                ->addColumn('value', $options)
                 ->sql()
         );
     }

@@ -4,10 +4,36 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Color;
 
 use Fyre\Utility\Color\Colors\OkLab;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class OkLabTest extends TestCase
 {
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function conversionProvider(): array
+    {
+        return [
+            'A98Rgb' => ['toA98Rgb', 'color(a98-rgb 0.9 0.9 0.98)'],
+            'DisplayP3' => ['toDisplayP3', 'color(display-p3 0.9 0.9 0.97)'],
+            'DisplayP3Linear' => ['toDisplayP3Linear', 'color(display-p3-linear 0.79 0.79 0.94)'],
+            'Hex' => ['toHex', '#e6e6fa'],
+            'Hsl' => ['toHsl', 'hsl(240deg 66.67% 94.12%)'],
+            'Hwb' => ['toHwb', 'hwb(240deg 90.2% 1.96%)'],
+            'Lab' => ['toLab', 'lab(91.74% 2.78 -9.72)'],
+            'Lch' => ['toLch', 'lch(91.74% 10.11 285.93deg)'],
+            'OkLch' => ['toOkLch', 'oklch(0.93 0.03 285.86deg)'],
+            'ProPhotoRgb' => ['toProPhotoRgb', 'color(prophoto-rgb 0.89 0.88 0.96)'],
+            'Rec2020' => ['toRec2020', 'color(rec2020 0.91 0.91 0.97)'],
+            'Rgb' => ['toRgb', 'rgb(230 230 250)'],
+            'Srgb' => ['toSrgb', 'color(srgb 0.9 0.9 0.98)'],
+            'SrgbLinear' => ['toSrgbLinear', 'color(srgb-linear 0.79 0.79 0.96)'],
+            'XyzD50' => ['toXyzD50', 'color(xyz-d50 0.79 0.8 0.77)'],
+            'XyzD65' => ['toXyzD65', 'color(xyz-d65 0.78 0.8 1.02)'],
+        ];
+    }
+
     public function testConstructorClamping(): void
     {
         $color = new OkLab(3, -1, 1, 1.5);
@@ -25,6 +51,20 @@ final class OkLabTest extends TestCase
 
         $this->assertSame(17.063750102904255, $color1->contrast($color2));
         $this->assertSame(17.063750102904255, $color2->contrast($color1));
+    }
+
+    #[DataProvider('conversionProvider')]
+    public function testConversion(string $method, string $expected): void
+    {
+        $color = OkLab::createFromString('lavender');
+        $converted = $color->$method();
+
+        $this->assertNotSame($color, $converted);
+
+        $this->assertSame(
+            $expected,
+            $converted->toString()
+        );
     }
 
     public function testGetA(): void
@@ -69,22 +109,6 @@ final class OkLabTest extends TestCase
         $this->assertSame('oklab', $color->space());
     }
 
-    public function testToA98Rgb(): void
-    {
-        $color1 = OkLab::createFromString('lavender');
-        $color2 = $color1->toA98Rgb();
-
-        $this->assertNotSame(
-            $color1,
-            $color2
-        );
-
-        $this->assertSame(
-            'color(a98-rgb 0.9 0.9 0.98)',
-            $color2->toString()
-        );
-    }
-
     public function testToArray(): void
     {
         $color = OkLab::createFromString('lavender');
@@ -100,118 +124,6 @@ final class OkLabTest extends TestCase
         );
     }
 
-    public function testToDisplayP3(): void
-    {
-        $color1 = OkLab::createFromString('lavender');
-        $color2 = $color1->toDisplayP3();
-
-        $this->assertNotSame(
-            $color1,
-            $color2
-        );
-
-        $this->assertSame(
-            'color(display-p3 0.9 0.9 0.97)',
-            $color2->toString()
-        );
-    }
-
-    public function testToDisplayP3Linear(): void
-    {
-        $color1 = OkLab::createFromString('lavender');
-        $color2 = $color1->toDisplayP3Linear();
-
-        $this->assertNotSame(
-            $color1,
-            $color2
-        );
-
-        $this->assertSame(
-            'color(display-p3-linear 0.79 0.79 0.94)',
-            $color2->toString()
-        );
-    }
-
-    public function testToHex(): void
-    {
-        $color1 = OkLab::createFromString('lavender');
-        $color2 = $color1->toHex();
-
-        $this->assertNotSame(
-            $color1,
-            $color2
-        );
-
-        $this->assertSame(
-            '#e6e6fa',
-            $color2->toString()
-        );
-    }
-
-    public function testToHsl(): void
-    {
-        $color1 = OkLab::createFromString('lavender');
-        $color2 = $color1->toHsl();
-
-        $this->assertNotSame(
-            $color1,
-            $color2
-        );
-
-        $this->assertSame(
-            'hsl(240deg 66.67% 94.12%)',
-            $color2->toString()
-        );
-    }
-
-    public function testToHwb(): void
-    {
-        $color1 = OkLab::createFromString('lavender');
-        $color2 = $color1->toHwb();
-
-        $this->assertNotSame(
-            $color1,
-            $color2
-        );
-
-        $this->assertSame(
-            'hwb(240deg 90.2% 1.96%)',
-            $color2->toString()
-        );
-    }
-
-    public function testToLab(): void
-    {
-        $color1 = OkLab::createFromString('lavender');
-        $color2 = $color1->toLab();
-
-        $this->assertNotSame(
-            $color1,
-            $color2
-        );
-
-        $this->assertSame(
-            'lab(91.74% 2.78 -9.72)',
-            $color2->toString()
-        );
-    }
-
-    public function testToLch(): void
-    {
-        $color1 = OkLab::createFromString('lavender');
-        $color2 = $color1->toLch();
-
-        $this->assertNotSame(
-            $color1,
-            $color2
-        );
-
-        $this->assertSame(
-            'lch(91.74% 10.11 285.93deg)',
-            $color2->toString()
-        );
-    }
-
     public function testToOkLab(): void
     {
         $color1 = OkLab::createFromString('lavender');
@@ -220,102 +132,6 @@ final class OkLabTest extends TestCase
         $this->assertSame(
             $color1,
             $color2
-        );
-    }
-
-    public function testToOkLch(): void
-    {
-        $color1 = OkLab::createFromString('lavender');
-        $color2 = $color1->toOkLch();
-
-        $this->assertNotSame(
-            $color1,
-            $color2
-        );
-
-        $this->assertSame(
-            'oklch(0.93 0.03 285.86deg)',
-            $color2->toString()
-        );
-    }
-
-    public function testToProPhotoRgb(): void
-    {
-        $color1 = OkLab::createFromString('lavender');
-        $color2 = $color1->toProPhotoRgb();
-
-        $this->assertNotSame(
-            $color1,
-            $color2
-        );
-
-        $this->assertSame(
-            'color(prophoto-rgb 0.89 0.88 0.96)',
-            $color2->toString()
-        );
-    }
-
-    public function testToRec2020(): void
-    {
-        $color1 = OkLab::createFromString('lavender');
-        $color2 = $color1->toRec2020();
-
-        $this->assertNotSame(
-            $color1,
-            $color2
-        );
-
-        $this->assertSame(
-            'color(rec2020 0.91 0.91 0.97)',
-            $color2->toString()
-        );
-    }
-
-    public function testToRgb(): void
-    {
-        $color1 = OkLab::createFromString('lavender');
-        $color2 = $color1->toRgb();
-
-        $this->assertNotSame(
-            $color1,
-            $color2
-        );
-
-        $this->assertSame(
-            'rgb(230 230 250)',
-            $color2->toString()
-        );
-    }
-
-    public function testToSrgb(): void
-    {
-        $color1 = OkLab::createFromString('lavender');
-        $color2 = $color1->toSrgb();
-
-        $this->assertNotSame(
-            $color1,
-            $color2
-        );
-
-        $this->assertSame(
-            'color(srgb 0.9 0.9 0.98)',
-            $color2->toString()
-        );
-    }
-
-    public function testToSrgbLinear(): void
-    {
-        $color1 = OkLab::createFromString('lavender');
-        $color2 = $color1->toSrgbLinear();
-
-        $this->assertNotSame(
-            $color1,
-            $color2
-        );
-
-        $this->assertSame(
-            'color(srgb-linear 0.79 0.79 0.96)',
-            $color2->toString()
         );
     }
 
@@ -341,38 +157,6 @@ final class OkLabTest extends TestCase
         $this->assertSame(
             'oklab(0.93 0.01 -0.03 / 0.5)',
             $color->toString()
-        );
-    }
-
-    public function testToXyzD50(): void
-    {
-        $color1 = OkLab::createFromString('lavender');
-        $color2 = $color1->toXyzD50();
-
-        $this->assertNotSame(
-            $color1,
-            $color2
-        );
-
-        $this->assertSame(
-            'color(xyz-d50 0.79 0.8 0.77)',
-            $color2->toString()
-        );
-    }
-
-    public function testToXyzD65(): void
-    {
-        $color1 = OkLab::createFromString('lavender');
-        $color2 = $color1->toXyzD65();
-
-        $this->assertNotSame(
-            $color1,
-            $color2
-        );
-
-        $this->assertSame(
-            'color(xyz-d65 0.78 0.8 1.02)',
-            $color2->toString()
         );
     }
 

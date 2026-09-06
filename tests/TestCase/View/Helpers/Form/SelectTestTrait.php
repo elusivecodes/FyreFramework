@@ -35,15 +35,106 @@ trait SelectTestTrait
                 ['id' => 'other', 'class' => 'test'],
                 '<select class="test" id="other" name="select"></select>',
             ],
+            'id' => [
+                ['id' => 'other'],
+                '<select id="other" name="select"></select>',
+            ],
+            'id false' => [
+                ['id' => false],
+                '<select name="select"></select>',
+            ],
+            'name' => [
+                ['name' => 'other'],
+                '<select id="select" name="other"></select>',
+            ],
+            'name false' => [
+                ['name' => false],
+                '<select id="select"></select>',
+            ],
         ];
     }
 
-    public function testSelect(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function selectFieldNameProvider(): array
     {
-        $this->assertSame(
-            '<select id="select-value" name="select_value"></select>',
-            $this->view->Form->select('select_value')
-        );
+        return [
+            'flat' => ['select_value', '<select id="select-value" name="select_value"></select>'],
+            'dotted' => ['key.select_value', '<select id="key-select-value" name="key[select_value]"></select>'],
+            'deeply dotted' => [
+                'deep.key.select_value',
+                '<select id="deep-key-select-value" name="deep[key][select_value]"></select>',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{array<mixed>, string}>
+     */
+    public static function selectOptionsProvider(): array
+    {
+        return [
+            'indexed' => [
+                [
+                    'A',
+                    'B',
+                ],
+                '<select id="select" name="select"><option value="0">A</option><option value="1">B</option></select>',
+            ],
+            'associative' => [
+                [
+                    'a' => 'A',
+                ],
+                '<select id="select" name="select"><option value="a">A</option></select>',
+            ],
+            'attribute arrays' => [
+                [
+                    [
+                        'value' => 'a',
+                        'label' => 'A',
+                    ],
+                ],
+                '<select id="select" name="select"><option value="a">A</option></select>',
+            ],
+            'grouped' => [
+                [
+                    [
+                        'label' => 'test',
+                        'children' => [
+                            'A',
+                            'B',
+                        ],
+                    ],
+                ],
+                '<select id="select" name="select"><optgroup label="test"><option value="0">A</option><option value="1">B</option></optgroup></select>',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, string, string}>
+     */
+    public static function selectSelectedPostProvider(): array
+    {
+        return [
+            'flat' => [
+                [
+                    'select' => '1',
+                ],
+                'select',
+                '<select id="select" name="select"><option value="0">A</option><option value="1" selected>B</option></select>',
+            ],
+            'dotted' => [
+                [
+                    'key' => [
+                        'select' => '1',
+                    ],
+                ],
+                'key.select',
+                '<select id="key-select" name="key[select]"><option value="0">A</option><option value="1" selected>B</option></select>',
+            ],
+        ];
     }
 
     /**
@@ -58,39 +149,12 @@ trait SelectTestTrait
         );
     }
 
-    public function testSelectDot(): void
+    #[DataProvider('selectFieldNameProvider')]
+    public function testSelectFieldName(string $field, string $expected): void
     {
         $this->assertSame(
-            '<select id="key-select-value" name="key[select_value]"></select>',
-            $this->view->Form->select('key.select_value')
-        );
-    }
-
-    public function testSelectDotDeep(): void
-    {
-        $this->assertSame(
-            '<select id="deep-key-select-value" name="deep[key][select_value]"></select>',
-            $this->view->Form->select('deep.key.select_value')
-        );
-    }
-
-    public function testSelectId(): void
-    {
-        $this->assertSame(
-            '<select id="other" name="select"></select>',
-            $this->view->Form->select('select', [
-                'id' => 'other',
-            ])
-        );
-    }
-
-    public function testSelectIdFalse(): void
-    {
-        $this->assertSame(
-            '<select name="select"></select>',
-            $this->view->Form->select('select', [
-                'id' => false,
-            ])
+            $expected,
+            $this->view->Form->select($field)
         );
     }
 
@@ -104,73 +168,15 @@ trait SelectTestTrait
         );
     }
 
-    public function testSelectName(): void
+    /**
+     * @param array<mixed> $options
+     */
+    #[DataProvider('selectOptionsProvider')]
+    public function testSelectOptions(array $options, string $expected): void
     {
         $this->assertSame(
-            '<select id="select" name="other"></select>',
-            $this->view->Form->select('select', [
-                'name' => 'other',
-            ])
-        );
-    }
-
-    public function testSelectNameFalse(): void
-    {
-        $this->assertSame(
-            '<select id="select"></select>',
-            $this->view->Form->select('select', [
-                'name' => false,
-            ])
-        );
-    }
-
-    public function testSelectOptionGroup(): void
-    {
-        $this->assertSame(
-            '<select id="select" name="select"><optgroup label="test"><option value="0">A</option><option value="1">B</option></optgroup></select>',
-            $this->view->Form->select('select', options: [
-                [
-                    'label' => 'test',
-                    'children' => [
-                        'A',
-                        'B',
-                    ],
-                ],
-            ])
-        );
-    }
-
-    public function testSelectOptions(): void
-    {
-        $this->assertSame(
-            '<select id="select" name="select"><option value="0">A</option><option value="1">B</option></select>',
-            $this->view->Form->select('select', options: [
-                'A',
-                'B',
-            ])
-        );
-    }
-
-    public function testSelectOptionsAssoc(): void
-    {
-        $this->assertSame(
-            '<select id="select" name="select"><option value="a">A</option></select>',
-            $this->view->Form->select('select', options: [
-                'a' => 'A',
-            ])
-        );
-    }
-
-    public function testSelectOptionsAttributes(): void
-    {
-        $this->assertSame(
-            '<select id="select" name="select"><option value="a">A</option></select>',
-            $this->view->Form->select('select', options: [
-                [
-                    'value' => 'a',
-                    'label' => 'A',
-                ],
-            ])
+            $expected,
+            $this->view->Form->select('select', options: $options)
         );
     }
 
@@ -238,38 +244,20 @@ trait SelectTestTrait
         );
     }
 
-    public function testSelectSelectedPost(): void
+    /**
+     * @param array<string, mixed> $data
+     */
+    #[DataProvider('selectSelectedPostProvider')]
+    public function testSelectSelectedPost(array $data, string $field, string $expected): void
     {
-        Closure::bind(function(): void {
+        Closure::bind(function() use ($data): void {
             /** @var View $this */
-            $this->request = $this->request->withParsedBody([
-                'select' => '1',
-            ]);
+            $this->request = $this->request->withParsedBody($data);
         }, $this->view, View::class)();
 
         $this->assertSame(
-            '<select id="select" name="select"><option value="0">A</option><option value="1" selected>B</option></select>',
-            $this->view->Form->select('select', options: [
-                'A',
-                'B',
-            ])
-        );
-    }
-
-    public function testSelectSelectedPostDot(): void
-    {
-        Closure::bind(function(): void {
-            /** @var View $this */
-            $this->request = $this->request->withParsedBody([
-                'key' => [
-                    'select' => '1',
-                ],
-            ]);
-        }, $this->view, View::class)();
-
-        $this->assertSame(
-            '<select id="key-select" name="key[select]"><option value="0">A</option><option value="1" selected>B</option></select>',
-            $this->view->Form->select('key.select', options: [
+            $expected,
+            $this->view->Form->select($field, options: [
                 'A',
                 'B',
             ])

@@ -4,9 +4,44 @@ declare(strict_types=1);
 namespace Tests\TestCase\View\Helpers\Form\Context\Form;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait FloatTestTrait
 {
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function floatLowerValidationBoundProvider(): array
+    {
+        return [
+            'inclusive' => [
+                'greaterThanOrEquals',
+                '<input id="value" name="value" type="number" placeholder="Value" min="100" step="any" />',
+            ],
+            'exclusive' => [
+                'greaterThan',
+                '<input id="value" name="value" type="number" placeholder="Value" min="101" step="any" />',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function floatUpperValidationBoundProvider(): array
+    {
+        return [
+            'inclusive' => [
+                'lessThanOrEquals',
+                '<input id="value" name="value" type="number" placeholder="Value" max="1000" step="any" />',
+            ],
+            'exclusive' => [
+                'lessThan',
+                '<input id="value" name="value" type="number" placeholder="Value" max="999" step="any" />',
+            ],
+        ];
+    }
+
     public function testFloatBetweenValidation(): void
     {
         $this->schema->addField('value', [
@@ -39,66 +74,19 @@ trait FloatTestTrait
         );
     }
 
-    public function testFloatGreaterThanOrEqualsValidation(): void
+    #[DataProvider('floatLowerValidationBoundProvider')]
+    public function testFloatLowerValidationBound(string $rule, string $expected): void
     {
         $this->schema->addField('value', [
             'type' => 'float',
         ]);
 
-        $this->validator->add('value', Rule::greaterThanOrEquals(100));
+        $this->validator->add('value', Rule::$rule(100));
 
         $this->view->Form->open($this->form);
 
         $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="100" step="any" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testFloatGreaterThanValidation(): void
-    {
-        $this->schema->addField('value', [
-            'type' => 'float',
-        ]);
-
-        $this->validator->add('value', Rule::greaterThan(100));
-
-        $this->view->Form->open($this->form);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="101" step="any" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testFloatLessThanOrEqualsValidation(): void
-    {
-        $this->schema->addField('value', [
-            'type' => 'float',
-        ]);
-
-        $this->validator->add('value', Rule::lessThanOrEquals(1000));
-
-        $this->view->Form->open($this->form);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" max="1000" step="any" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testFloatLessThanValidation(): void
-    {
-        $this->schema->addField('value', [
-            'type' => 'float',
-        ]);
-
-        $this->validator->add('value', Rule::lessThan(1000));
-
-        $this->view->Form->open($this->form);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" max="999" step="any" />',
+            $expected,
             $this->view->Form->input('value')
         );
     }
@@ -144,6 +132,23 @@ trait FloatTestTrait
 
         $this->assertSame(
             '<input id="value" name="value" type="number" value="100.123" placeholder="Value" step="any" />',
+            $this->view->Form->input('value')
+        );
+    }
+
+    #[DataProvider('floatUpperValidationBoundProvider')]
+    public function testFloatUpperValidationBound(string $rule, string $expected): void
+    {
+        $this->schema->addField('value', [
+            'type' => 'float',
+        ]);
+
+        $this->validator->add('value', Rule::$rule(1000));
+
+        $this->view->Form->open($this->form);
+
+        $this->assertSame(
+            $expected,
             $this->view->Form->input('value')
         );
     }

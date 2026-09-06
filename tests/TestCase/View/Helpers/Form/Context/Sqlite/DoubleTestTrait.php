@@ -4,9 +4,44 @@ declare(strict_types=1);
 namespace Tests\TestCase\View\Helpers\Form\Context\Sqlite;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait DoubleTestTrait
 {
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function doubleLowerValidationBoundProvider(): array
+    {
+        return [
+            'inclusive' => [
+                'greaterThanOrEquals',
+                '<input id="value" name="value" type="number" placeholder="Value" min="100" step="any" />',
+            ],
+            'exclusive' => [
+                'greaterThan',
+                '<input id="value" name="value" type="number" placeholder="Value" min="101" step="any" />',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function doubleUpperValidationBoundProvider(): array
+    {
+        return [
+            'inclusive' => [
+                'lessThanOrEquals',
+                '<input id="value" name="value" type="number" placeholder="Value" max="1000" step="any" />',
+            ],
+            'exclusive' => [
+                'lessThan',
+                '<input id="value" name="value" type="number" placeholder="Value" max="999" step="any" />',
+            ],
+        ];
+    }
+
     public function testDoubleBetweenValidation(): void
     {
         $this->db->query(<<<'SQL'
@@ -51,7 +86,8 @@ trait DoubleTestTrait
         );
     }
 
-    public function testDoubleGreaterThanOrEqualsValidation(): void
+    #[DataProvider('doubleLowerValidationBoundProvider')]
+    public function testDoubleLowerValidationBound(string $rule, string $expected): void
     {
         $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
@@ -61,80 +97,14 @@ trait DoubleTestTrait
             )
         SQL);
 
-        $this->validator->add('value', Rule::greaterThanOrEquals(100));
+        $this->validator->add('value', Rule::$rule(100));
 
         $entity = $this->model->newEmptyEntity();
 
         $this->view->Form->open($entity);
 
         $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="100" step="any" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testDoubleGreaterThanValidation(): void
-    {
-        $this->db->query(<<<'SQL'
-            CREATE TABLE contexts (
-                id INTEGER NOT NULL,
-                value DOUBLE NULL DEFAULT NULL,
-                PRIMARY KEY (id)
-            )
-        SQL);
-
-        $this->validator->add('value', Rule::greaterThan(100));
-
-        $entity = $this->model->newEmptyEntity();
-
-        $this->view->Form->open($entity);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="101" step="any" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testDoubleLessThanOrEqualsValidation(): void
-    {
-        $this->db->query(<<<'SQL'
-            CREATE TABLE contexts (
-                id INTEGER NOT NULL,
-                value DOUBLE NULL DEFAULT NULL,
-                PRIMARY KEY (id)
-            )
-        SQL);
-
-        $this->validator->add('value', Rule::lessThanOrEquals(1000));
-
-        $entity = $this->model->newEmptyEntity();
-
-        $this->view->Form->open($entity);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" max="1000" step="any" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testDoubleLessThanValidation(): void
-    {
-        $this->db->query(<<<'SQL'
-            CREATE TABLE contexts (
-                id INTEGER NOT NULL,
-                value DOUBLE NULL DEFAULT NULL,
-                PRIMARY KEY (id)
-            )
-        SQL);
-
-        $this->validator->add('value', Rule::lessThan(1000));
-
-        $entity = $this->model->newEmptyEntity();
-
-        $this->view->Form->open($entity);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" max="999" step="any" />',
+            $expected,
             $this->view->Form->input('value')
         );
     }
@@ -217,6 +187,29 @@ trait DoubleTestTrait
 
         $this->assertSame(
             '<input id="value" name="value" type="number" placeholder="Value" min="0" step="any" />',
+            $this->view->Form->input('value')
+        );
+    }
+
+    #[DataProvider('doubleUpperValidationBoundProvider')]
+    public function testDoubleUpperValidationBound(string $rule, string $expected): void
+    {
+        $this->db->query(<<<'SQL'
+            CREATE TABLE contexts (
+                id INTEGER NOT NULL,
+                value DOUBLE NULL DEFAULT NULL,
+                PRIMARY KEY (id)
+            )
+        SQL);
+
+        $this->validator->add('value', Rule::$rule(1000));
+
+        $entity = $this->model->newEmptyEntity();
+
+        $this->view->Form->open($entity);
+
+        $this->assertSame(
+            $expected,
             $this->view->Form->input('value')
         );
     }

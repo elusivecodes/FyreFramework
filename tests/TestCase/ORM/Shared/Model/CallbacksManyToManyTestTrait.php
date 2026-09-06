@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\Shared\Model;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Mock\Entities\Post;
 use Tests\Mock\Entities\Tag;
 
@@ -10,6 +11,34 @@ use function array_map;
 
 trait CallbacksManyToManyTestTrait
 {
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function saveCallbackFailureManyManyToManyProvider(): array
+    {
+        return [
+            'after rules many many to many' => ['failAfterRules'],
+            'after save many many to many' => ['failAfterSave'],
+            'before rules many many to many' => ['failBeforeRules'],
+            'before save many many to many' => ['failBeforeSave'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function saveCallbackFailureManyToManyProvider(): array
+    {
+        return [
+            'after rules many to many' => ['failAfterRules'],
+            'after save many to many' => ['failAfterSave'],
+            'before rules many to many' => ['failBeforeRules'],
+            'before save many to many' => ['failBeforeSave'],
+            'rules many to many' => ['failRules'],
+            'validation many to many' => [''],
+        ];
+    }
+
     public function testAfterParseManyToMany(): void
     {
         $Posts = $this->modelRegistry->use('Posts');
@@ -70,256 +99,6 @@ trait CallbacksManyToManyTestTrait
         $this->assertSame(
             1,
             $posts[1]->tags[1]->get('test')
-        );
-    }
-
-    public function testAfterRulesManyManyToMany(): void
-    {
-        $Posts = $this->modelRegistry->use('Posts');
-
-        $posts = $Posts->newEntities([
-            [
-                'user_id' => 1,
-                'title' => 'Test 1',
-                'content' => 'This is the content.',
-                'tags' => [
-                    [
-                        'tag' => 'test1',
-                    ],
-                    [
-                        'tag' => 'test2',
-                    ],
-                ],
-            ],
-            [
-                'user_id' => 1,
-                'title' => 'Test 2',
-                'content' => 'This is the content.',
-                'tags' => [
-                    [
-                        'tag' => 'test3',
-                    ],
-                    [
-                        'tag' => 'failAfterRules',
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Posts->saveMany($posts)
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Post $post): int|null => $post->id,
-                $posts
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                [null, null],
-                [null, null],
-            ],
-            array_map(
-                static fn(Post $post): array => array_map(
-                    static fn(Tag $tag): int|null => $tag->id,
-                    $post->tags
-                ),
-                $posts
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Posts->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Tags')->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('PostsTags')->find()->count()
-        );
-    }
-
-    public function testAfterRulesManyToMany(): void
-    {
-        $Posts = $this->modelRegistry->use('Posts');
-
-        $post = $Posts->newEntity([
-            'user_id' => 1,
-            'title' => 'Test',
-            'content' => 'This is the content.',
-            'tags' => [
-                [
-                    'tag' => 'test1',
-                ],
-                [
-                    'tag' => 'failAfterRules',
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Posts->save($post)
-        );
-
-        $this->assertNull(
-            $post->id
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Tag $tag): int|null => $tag->id,
-                $post->tags
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Posts->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Tags')->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('PostsTags')->find()->count()
-        );
-    }
-
-    public function testAfterSaveManyManyToMany(): void
-    {
-        $Posts = $this->modelRegistry->use('Posts');
-
-        $posts = $Posts->newEntities([
-            [
-                'user_id' => 1,
-                'title' => 'Test 1',
-                'content' => 'This is the content.',
-                'tags' => [
-                    [
-                        'tag' => 'test1',
-                    ],
-                    [
-                        'tag' => 'test2',
-                    ],
-                ],
-            ],
-            [
-                'user_id' => 1,
-                'title' => 'Test 2',
-                'content' => 'This is the content.',
-                'tags' => [
-                    [
-                        'tag' => 'test3',
-                    ],
-                    [
-                        'tag' => 'failAfterSave',
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Posts->saveMany($posts)
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Post $post): int|null => $post->id,
-                $posts
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                [null, null],
-                [null, null],
-            ],
-            array_map(
-                static fn(Post $post): array => array_map(
-                    static fn(Tag $tag): int|null => $tag->id,
-                    $post->tags
-                ),
-                $posts
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Posts->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Tags')->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('PostsTags')->find()->count()
-        );
-    }
-
-    public function testAfterSaveManyToMany(): void
-    {
-        $Posts = $this->modelRegistry->use('Posts');
-
-        $post = $Posts->newEntity([
-            'user_id' => 1,
-            'title' => 'Test',
-            'content' => 'This is the content.',
-            'tags' => [
-                [
-                    'tag' => 'test1',
-                ],
-                [
-                    'tag' => 'failAfterSave',
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Posts->save($post)
-        );
-
-        $this->assertNull(
-            $post->id
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Tag $tag): int|null => $tag->id,
-                $post->tags
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Posts->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Tags')->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('PostsTags')->find()->count()
         );
     }
 
@@ -406,306 +185,6 @@ trait CallbacksManyToManyTestTrait
         );
     }
 
-    public function testBeforeRulesManyManyToMany(): void
-    {
-        $Posts = $this->modelRegistry->use('Posts');
-
-        $posts = $Posts->newEntities([
-            [
-                'user_id' => 1,
-                'title' => 'Test 1',
-                'content' => 'This is the content.',
-                'tags' => [
-                    [
-                        'tag' => 'test1',
-                    ],
-                    [
-                        'tag' => 'test2',
-                    ],
-                ],
-            ],
-            [
-                'user_id' => 1,
-                'title' => 'Test 2',
-                'content' => 'This is the content.',
-                'tags' => [
-                    [
-                        'tag' => 'test3',
-                    ],
-                    [
-                        'tag' => 'failBeforeRules',
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Posts->saveMany($posts)
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Post $post): int|null => $post->id,
-                $posts
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                [null, null],
-                [null, null],
-            ],
-            array_map(
-                static fn(Post $post): array => array_map(
-                    static fn(Tag $tag): int|null => $tag->id,
-                    $post->tags
-                ),
-                $posts
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Posts->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Tags')->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('PostsTags')->find()->count()
-        );
-    }
-
-    public function testBeforeRulesManyToMany(): void
-    {
-        $Posts = $this->modelRegistry->use('Posts');
-
-        $post = $Posts->newEntity([
-            'user_id' => 1,
-            'title' => 'Test',
-            'content' => 'This is the content.',
-            'tags' => [
-                [
-                    'tag' => 'test1',
-                ],
-                [
-                    'tag' => 'failBeforeRules',
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Posts->save($post)
-        );
-
-        $this->assertNull(
-            $post->id
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Tag $tag): int|null => $tag->id,
-                $post->tags
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Posts->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Tags')->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('PostsTags')->find()->count()
-        );
-    }
-
-    public function testBeforeSaveManyManyToMany(): void
-    {
-        $Posts = $this->modelRegistry->use('Posts');
-
-        $posts = $Posts->newEntities([
-            [
-                'user_id' => 1,
-                'title' => 'Test 1',
-                'content' => 'This is the content.',
-                'tags' => [
-                    [
-                        'tag' => 'test1',
-                    ],
-                    [
-                        'tag' => 'test2',
-                    ],
-                ],
-            ],
-            [
-                'user_id' => 1,
-                'title' => 'Test 2',
-                'content' => 'This is the content.',
-                'tags' => [
-                    [
-                        'tag' => 'test3',
-                    ],
-                    [
-                        'tag' => 'failBeforeSave',
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Posts->saveMany($posts)
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Post $post): int|null => $post->id,
-                $posts
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                [null, null],
-                [null, null],
-            ],
-            array_map(
-                static fn(Post $post): array => array_map(
-                    static fn(Tag $tag): int|null => $tag->id,
-                    $post->tags
-                ),
-                $posts
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Posts->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Tags')->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('PostsTags')->find()->count()
-        );
-    }
-
-    public function testBeforeSaveManyToMany(): void
-    {
-        $Posts = $this->modelRegistry->use('Posts');
-
-        $post = $Posts->newEntity([
-            'user_id' => 1,
-            'title' => 'Test',
-            'content' => 'This is the content.',
-            'tags' => [
-                [
-                    'tag' => 'test1',
-                ],
-                [
-                    'tag' => 'failBeforeSave',
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Posts->save($post)
-        );
-
-        $this->assertNull(
-            $post->id
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Tag $tag): int|null => $tag->id,
-                $post->tags
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Posts->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Tags')->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('PostsTags')->find()->count()
-        );
-    }
-
-    public function testRulesManyToMany(): void
-    {
-        $Posts = $this->modelRegistry->use('Posts');
-
-        $post = $Posts->newEntity([
-            'user_id' => 1,
-            'title' => 'Test',
-            'content' => 'This is the content.',
-            'tags' => [
-                [
-                    'tag' => 'test1',
-                ],
-                [
-                    'tag' => 'failRules',
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Posts->save($post)
-        );
-
-        $this->assertNull(
-            $post->id
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Tag $tag): int|null => $tag->id,
-                $post->tags
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Posts->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Tags')->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('PostsTags')->find()->count()
-        );
-    }
-
     public function testRulesNoCheckRulesManyToMany(): void
     {
         $Posts = $this->modelRegistry->use('Posts');
@@ -744,7 +223,84 @@ trait CallbacksManyToManyTestTrait
         );
     }
 
-    public function testValidationManyToMany(): void
+    #[DataProvider('saveCallbackFailureManyManyToManyProvider')]
+    public function testSaveCallbackFailureManyManyToMany(string $failure): void
+    {
+        $Posts = $this->modelRegistry->use('Posts');
+
+        $posts = $Posts->newEntities([
+            [
+                'user_id' => 1,
+                'title' => 'Test 1',
+                'content' => 'This is the content.',
+                'tags' => [
+                    [
+                        'tag' => 'test1',
+                    ],
+                    [
+                        'tag' => 'test2',
+                    ],
+                ],
+            ],
+            [
+                'user_id' => 1,
+                'title' => 'Test 2',
+                'content' => 'This is the content.',
+                'tags' => [
+                    [
+                        'tag' => 'test3',
+                    ],
+                    [
+                        'tag' => $failure,
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse(
+            $Posts->saveMany($posts)
+        );
+
+        $this->assertArraysAreIdentical(
+            [null, null],
+            array_map(
+                static fn(Post $post): int|null => $post->id,
+                $posts
+            )
+        );
+
+        $this->assertArraysAreIdentical(
+            [
+                [null, null],
+                [null, null],
+            ],
+            array_map(
+                static fn(Post $post): array => array_map(
+                    static fn(Tag $tag): int|null => $tag->id,
+                    $post->tags
+                ),
+                $posts
+            )
+        );
+
+        $this->assertSame(
+            0,
+            $Posts->find()->count()
+        );
+
+        $this->assertSame(
+            0,
+            $this->modelRegistry->use('Tags')->find()->count()
+        );
+
+        $this->assertSame(
+            0,
+            $this->modelRegistry->use('PostsTags')->find()->count()
+        );
+    }
+
+    #[DataProvider('saveCallbackFailureManyToManyProvider')]
+    public function testSaveCallbackFailureManyToMany(string $failure): void
     {
         $Posts = $this->modelRegistry->use('Posts');
 
@@ -757,7 +313,7 @@ trait CallbacksManyToManyTestTrait
                     'tag' => 'test1',
                 ],
                 [
-                    'tag' => '',
+                    'tag' => $failure,
                 ],
             ],
         ]);

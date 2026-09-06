@@ -8,6 +8,7 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Utility\Path;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use TestClass;
 
@@ -16,6 +17,32 @@ use function class_uses;
 final class LoaderTest extends TestCase
 {
     protected Loader $loader;
+
+    /**
+     * @return array<string, array{array<string, list<string>|string>}>
+     */
+    public static function namespacePathProvider(): array
+    {
+        return [
+            'namespace' => [
+                [
+                    'Demo' => 'tests/Mock/Core/Loader/Demo',
+                ],
+            ],
+            'array' => [
+                [
+                    'Demo' => [
+                        'tests/Mock/Core/Loader/Demo',
+                    ],
+                ],
+            ],
+            'trailing slash' => [
+                [
+                    'Demo' => 'tests/Mock/Core/Loader/Demo/',
+                ],
+            ],
+        ];
+    }
 
     public function testClassMap(): void
     {
@@ -158,24 +185,13 @@ final class LoaderTest extends TestCase
         );
     }
 
-    public function testNamespace(): void
+    /**
+     * @param array<string, list<string>|string> $namespaces
+     */
+    #[DataProvider('namespacePathProvider')]
+    public function testNamespace(array $namespaces): void
     {
-        $this->loader->addNamespaces([
-            'Demo' => 'tests/Mock/Core/Loader/Demo',
-        ]);
-
-        $this->assertTrue(
-            \Demo\TestClass::test()
-        );
-    }
-
-    public function testNamespaceArray(): void
-    {
-        $this->loader->addNamespaces([
-            'Demo' => [
-                'tests/Mock/Core/Loader/Demo',
-            ],
-        ]);
+        $this->loader->addNamespaces($namespaces);
 
         $this->assertTrue(
             \Demo\TestClass::test()
@@ -190,17 +206,6 @@ final class LoaderTest extends TestCase
 
         $this->assertTrue(
             \Demo\Deep\TestClass::test()
-        );
-    }
-
-    public function testNamespaceTrailingSlash(): void
-    {
-        $this->loader->addNamespaces([
-            'Demo' => 'tests/Mock/Core/Loader/Demo/',
-        ]);
-
-        $this->assertTrue(
-            \Demo\TestClass::test()
         );
     }
 

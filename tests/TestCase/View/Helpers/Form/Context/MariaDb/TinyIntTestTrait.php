@@ -4,9 +4,44 @@ declare(strict_types=1);
 namespace Tests\TestCase\View\Helpers\Form\Context\MariaDb;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait TinyIntTestTrait
 {
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function tinyIntLowerValidationBoundProvider(): array
+    {
+        return [
+            'inclusive' => [
+                'greaterThanOrEquals',
+                '<input id="value" name="value" type="number" placeholder="Value" min="100" max="127" step="1" />',
+            ],
+            'exclusive' => [
+                'greaterThan',
+                '<input id="value" name="value" type="number" placeholder="Value" min="101" max="127" step="1" />',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function tinyIntUpperValidationBoundProvider(): array
+    {
+        return [
+            'inclusive' => [
+                'lessThanOrEquals',
+                '<input id="value" name="value" type="number" placeholder="Value" min="-128" max="100" step="1" />',
+            ],
+            'exclusive' => [
+                'lessThan',
+                '<input id="value" name="value" type="number" placeholder="Value" min="-128" max="99" step="1" />',
+            ],
+        ];
+    }
+
     public function testTinyInt1EntityValue(): void
     {
         $this->db->query(<<<'SQL'
@@ -135,7 +170,8 @@ trait TinyIntTestTrait
         );
     }
 
-    public function testTinyIntGreaterThanOrEqualsValidation(): void
+    #[DataProvider('tinyIntLowerValidationBoundProvider')]
+    public function testTinyIntLowerValidationBound(string $rule, string $expected): void
     {
         $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
@@ -145,80 +181,14 @@ trait TinyIntTestTrait
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
         SQL);
 
-        $this->validator->add('value', Rule::greaterThanOrEquals(100));
+        $this->validator->add('value', Rule::$rule(100));
 
         $entity = $this->model->newEmptyEntity();
 
         $this->view->Form->open($entity);
 
         $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="100" max="127" step="1" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testTinyIntGreaterThanValidation(): void
-    {
-        $this->db->query(<<<'SQL'
-            CREATE TABLE contexts (
-                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-                value TINYINT NULL DEFAULT NULL,
-                PRIMARY KEY (id)
-            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        SQL);
-
-        $this->validator->add('value', Rule::greaterThan(100));
-
-        $entity = $this->model->newEmptyEntity();
-
-        $this->view->Form->open($entity);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="101" max="127" step="1" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testTinyIntLessThanOrEqualsValidation(): void
-    {
-        $this->db->query(<<<'SQL'
-            CREATE TABLE contexts (
-                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-                value TINYINT NULL DEFAULT NULL,
-                PRIMARY KEY (id)
-            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        SQL);
-
-        $this->validator->add('value', Rule::lessThanOrEquals(100));
-
-        $entity = $this->model->newEmptyEntity();
-
-        $this->view->Form->open($entity);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="-128" max="100" step="1" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testTinyIntLessThanValidation(): void
-    {
-        $this->db->query(<<<'SQL'
-            CREATE TABLE contexts (
-                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-                value TINYINT NULL DEFAULT NULL,
-                PRIMARY KEY (id)
-            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        SQL);
-
-        $this->validator->add('value', Rule::lessThan(100));
-
-        $entity = $this->model->newEmptyEntity();
-
-        $this->view->Form->open($entity);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="-128" max="99" step="1" />',
+            $expected,
             $this->view->Form->input('value')
         );
     }
@@ -301,6 +271,29 @@ trait TinyIntTestTrait
 
         $this->assertSame(
             '<input id="value" name="value" type="number" placeholder="Value" min="0" max="255" step="1" />',
+            $this->view->Form->input('value')
+        );
+    }
+
+    #[DataProvider('tinyIntUpperValidationBoundProvider')]
+    public function testTinyIntUpperValidationBound(string $rule, string $expected): void
+    {
+        $this->db->query(<<<'SQL'
+            CREATE TABLE contexts (
+                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                value TINYINT NULL DEFAULT NULL,
+                PRIMARY KEY (id)
+            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
+        SQL);
+
+        $this->validator->add('value', Rule::$rule(100));
+
+        $entity = $this->model->newEmptyEntity();
+
+        $this->view->Form->open($entity);
+
+        $this->assertSame(
+            $expected,
             $this->view->Form->input('value')
         );
     }

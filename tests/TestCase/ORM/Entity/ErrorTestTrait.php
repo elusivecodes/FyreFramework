@@ -3,10 +3,41 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\Entity;
 
+use Closure;
 use Fyre\ORM\Entity;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait ErrorTestTrait
 {
+    /**
+     * @return array<string, array{Closure(Entity): array<string, Entity|Entity[]>, string, array<array-key, mixed>}>
+     */
+    public static function getErrorPathProvider(): array
+    {
+        return [
+            'child errors' => [
+                static fn(Entity $child): array => ['child' => $child],
+                'child',
+                ['test' => ['error']],
+            ],
+            'child field errors' => [
+                static fn(Entity $child): array => ['child' => $child],
+                'child.test',
+                ['error'],
+            ],
+            'nested field errors' => [
+                static fn(Entity $child): array => ['children' => [$child]],
+                'children.0.test',
+                ['error'],
+            ],
+            'nested child errors' => [
+                static fn(Entity $child): array => ['children' => [$child]],
+                'children',
+                [['test' => ['error']]],
+            ],
+        ];
+    }
+
     public function testCleanErrors(): void
     {
         $entity = new Entity();
@@ -17,25 +48,6 @@ trait ErrorTestTrait
         $this->assertArraysAreIdentical(
             [],
             $entity->getError('test')
-        );
-    }
-
-    public function testGetErrorChild(): void
-    {
-        $child = new Entity();
-        $parent = new Entity([
-            'child' => $child,
-        ]);
-
-        $child->setError('test', 'error');
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => [
-                    'error',
-                ],
-            ],
-            $parent->getError('child')
         );
     }
 
@@ -54,23 +66,6 @@ trait ErrorTestTrait
         );
     }
 
-    public function testGetErrorDeep(): void
-    {
-        $child = new Entity();
-        $parent = new Entity([
-            'child' => $child,
-        ]);
-
-        $child->setError('test', 'error');
-
-        $this->assertArraysAreIdentical(
-            [
-                'error',
-            ],
-            $parent->getError('child.test')
-        );
-    }
-
     public function testGetErrorDirty(): void
     {
         $entity = new Entity();
@@ -81,44 +76,6 @@ trait ErrorTestTrait
         $this->assertArraysAreIdentical(
             [],
             $entity->getError('test')
-        );
-    }
-
-    public function testGetErrorNested(): void
-    {
-        $child = new Entity();
-        $parent = new Entity([
-            'children' => [$child],
-        ]);
-
-        $child->setError('test', 'error');
-
-        $this->assertArraysAreIdentical(
-            [
-                'error',
-            ],
-            $parent->getError('children.0.test')
-        );
-    }
-
-    public function testGetErrorNestedChild(): void
-    {
-        $child = new Entity();
-        $parent = new Entity([
-            'children' => [$child],
-        ]);
-
-        $child->setError('test', 'error');
-
-        $this->assertArraysAreIdentical(
-            [
-                [
-                    'test' => [
-                        'error',
-                    ],
-                ],
-            ],
-            $parent->getError('children')
         );
     }
 
@@ -148,6 +105,24 @@ trait ErrorTestTrait
         $this->assertArraysAreIdentical(
             [],
             $entity->getError('child.test')
+        );
+    }
+
+    /**
+     * @param Closure(Entity): array<string, Entity|Entity[]> $data
+     * @param array<array-key, mixed> $expected
+     */
+    #[DataProvider('getErrorPathProvider')]
+    public function testGetErrorPath(Closure $data, string $path, array $expected): void
+    {
+        $child = new Entity();
+        $parent = new Entity($data($child));
+
+        $child->setError('test', 'error');
+
+        $this->assertArraysAreIdentical(
+            $expected,
+            $parent->getError($path)
         );
     }
 

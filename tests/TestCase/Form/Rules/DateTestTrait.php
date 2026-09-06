@@ -12,6 +12,27 @@ use PHPUnit\Framework\Attributes\DataProvider;
 trait DateTestTrait
 {
     /**
+     * @return array<string, array{class-string<Date|DateTime|Time>, array<string, list<string>>}>
+     */
+    public static function dateObjectsProvider(): array
+    {
+        return [
+            'date' => [
+                Date::class,
+                [],
+            ],
+            'date time' => [
+                DateTime::class,
+                ['test' => ['invalid']],
+            ],
+            'time' => [
+                Time::class,
+                ['test' => ['invalid']],
+            ],
+        ];
+    }
+
+    /**
      * @return array<string, array{array<string, mixed>, array<string, string[]>}>
      */
     public static function dateValuesProvider(): array
@@ -24,42 +45,19 @@ trait DateTestTrait
         ];
     }
 
-    public function testDate(): void
+    /**
+     * @param class-string<Date|DateTime|Time> $class
+     * @param array<string, list<string>> $expected
+     */
+    #[DataProvider('dateObjectsProvider')]
+    public function testDateObjects(string $class, array $expected): void
     {
         $this->validator->add('test', Rule::date());
 
         $this->assertArraysAreIdentical(
-            [],
+            $expected,
             $this->validator->validate([
-                'test' => Date::now(),
-            ])
-        );
-    }
-
-    public function testDateRejectsDateTime(): void
-    {
-        $this->validator->add('test', Rule::date());
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['invalid'],
-            ],
-            $this->validator->validate([
-                'test' => DateTime::now(),
-            ])
-        );
-    }
-
-    public function testDateRejectsTime(): void
-    {
-        $this->validator->add('test', Rule::date());
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['invalid'],
-            ],
-            $this->validator->validate([
-                'test' => Time::now(),
+                'test' => $class::now(),
             ])
         );
     }

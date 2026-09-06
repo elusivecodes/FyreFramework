@@ -36,6 +36,59 @@ trait SelectTestTrait
         ];
     }
 
+    /**
+     * @return array<string, array{array<int|string, mixed>, string}>
+     */
+    public static function selectOptionAttributesProvider(): array
+    {
+        return [
+            'options attributes' => [
+                [
+                    ['value' => 'a', 'label' => 'A'],
+                ],
+                '<select><option value="a">A</option></select>',
+            ],
+            'options attributes escape' => [
+                [
+                    ['value' => 'a', 'label' => 'A', 'data-test' => '<test>'],
+                ],
+                '<select><option data-test="&lt;test&gt;" value="a">A</option></select>',
+            ],
+            'options attributes invalid' => [
+                [
+                    ['value' => 'a', 'label' => 'A', '*class*' => 'test'],
+                ],
+                '<select><option class="test" value="a">A</option></select>',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{array<int|string, mixed>, string}>
+     */
+    public static function selectOptionsProvider(): array
+    {
+        return [
+            'option group' => [
+                [
+                    [
+                        'label' => 'test',
+                        'children' => ['A', 'B'],
+                    ],
+                ],
+                '<select><optgroup label="test"><option value="0">A</option><option value="1">B</option></optgroup></select>',
+            ],
+            'options' => [
+                ['A', 'B'],
+                '<select><option value="0">A</option><option value="1">B</option></select>',
+            ],
+            'options assoc' => [
+                ['a' => 'A'],
+                '<select><option value="a">A</option></select>',
+            ],
+        ];
+    }
+
     public function testSelect(): void
     {
         $this->assertSame(
@@ -64,81 +117,27 @@ trait SelectTestTrait
         );
     }
 
-    public function testSelectOptionGroup(): void
+    /**
+     * @param array<int|string, mixed> $options
+     */
+    #[DataProvider('selectOptionAttributesProvider')]
+    public function testSelectOptionAttributes(array $options, string $expected): void
     {
         $this->assertSame(
-            '<select><optgroup label="test"><option value="0">A</option><option value="1">B</option></optgroup></select>',
-            $this->form->select(options: [
-                [
-                    'label' => 'test',
-                    'children' => [
-                        'A',
-                        'B',
-                    ],
-                ],
-            ])
+            $expected,
+            $this->form->select(options: $options)
         );
     }
 
-    public function testSelectOptions(): void
+    /**
+     * @param array<int|string, mixed> $options
+     */
+    #[DataProvider('selectOptionsProvider')]
+    public function testSelectOptions(array $options, string $expected): void
     {
         $this->assertSame(
-            '<select><option value="0">A</option><option value="1">B</option></select>',
-            $this->form->select(options: [
-                'A',
-                'B',
-            ])
-        );
-    }
-
-    public function testSelectOptionsAssoc(): void
-    {
-        $this->assertSame(
-            '<select><option value="a">A</option></select>',
-            $this->form->select(options: [
-                'a' => 'A',
-            ])
-        );
-    }
-
-    public function testSelectOptionsAttributes(): void
-    {
-        $this->assertSame(
-            '<select><option value="a">A</option></select>',
-            $this->form->select(options: [
-                [
-                    'value' => 'a',
-                    'label' => 'A',
-                ],
-            ])
-        );
-    }
-
-    public function testSelectOptionsAttributesEscape(): void
-    {
-        $this->assertSame(
-            '<select><option data-test="&lt;test&gt;" value="a">A</option></select>',
-            $this->form->select(options: [
-                [
-                    'value' => 'a',
-                    'label' => 'A',
-                    'data-test' => '<test>',
-                ],
-            ])
-        );
-    }
-
-    public function testSelectOptionsAttributesInvalid(): void
-    {
-        $this->assertSame(
-            '<select><option class="test" value="a">A</option></select>',
-            $this->form->select(options: [
-                [
-                    'value' => 'a',
-                    'label' => 'A',
-                    '*class*' => 'test',
-                ],
-            ])
+            $expected,
+            $this->form->select(options: $options)
         );
     }
 

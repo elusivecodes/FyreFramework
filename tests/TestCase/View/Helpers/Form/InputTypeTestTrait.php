@@ -3,8 +3,46 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\View\Helpers\Form;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+
 trait InputTypeTestTrait
 {
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function inputTypeShortcutProvider(): array
+    {
+        return [
+            'color' => ['color', '<input id="color" name="color" type="color" />'],
+            'email' => ['email', '<input id="email" name="email" type="email" placeholder="Email" />'],
+            'file' => ['file', '<input id="file" name="file" type="file" />'],
+            'hidden' => ['hidden', '<input id="hidden" name="hidden" type="hidden" />'],
+            'image' => ['image', '<input id="image" name="image" type="image" />'],
+            'month' => ['month', '<input id="month" name="month" type="month" />'],
+            'password' => ['password', '<input id="password" name="password" type="password" placeholder="Password" />'],
+            'range' => ['range', '<input id="range" name="range" type="range" />'],
+            'reset' => ['reset', '<input id="reset" name="reset" type="reset" />'],
+            'search' => ['search', '<input id="search" name="search" type="search" placeholder="Search" />'],
+            'submit' => ['submit', '<input id="submit" name="submit" type="submit" />'],
+            'tel' => ['tel', '<input id="tel" name="tel" type="tel" placeholder="Tel" />'],
+            'text' => ['text', '<input id="text" name="text" type="text" placeholder="Text" />'],
+            'url' => ['url', '<input id="url" name="url" type="url" placeholder="Url" />'],
+            'week' => ['week', '<input id="week" name="week" type="week" />'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function inputTypeSuppressesValueProvider(): array
+    {
+        return [
+            'file' => ['file', '<input id="file" name="file" type="file" />'],
+            'image' => ['image', '<input id="image" name="image" type="image" />'],
+            'password' => ['password', '<input id="password" name="password" type="password" placeholder="Password" />'],
+        ];
+    }
+
     public function testInputTypeAttributes(): void
     {
         $this->assertSame(
@@ -16,74 +54,6 @@ trait InputTypeTestTrait
         );
     }
 
-    public function testInputTypeColor(): void
-    {
-        $this->assertSame(
-            '<input id="color" name="color" type="color" />',
-            $this->view->Form->color('color')
-        );
-    }
-
-    public function testInputTypeEmail(): void
-    {
-        $this->assertSame(
-            '<input id="email" name="email" type="email" placeholder="Email" />',
-            $this->view->Form->email('email')
-        );
-    }
-
-    public function testInputTypeFile(): void
-    {
-        $this->assertSame(
-            '<input id="file" name="file" type="file" />',
-            $this->view->Form->file('file')
-        );
-    }
-
-    public function testInputTypeFileValue(): void
-    {
-        $this->assertSame(
-            '<input id="file" name="file" type="file" />',
-            $this->view->Form->file('file', [
-                'value' => 'test',
-            ])
-        );
-    }
-
-    public function testInputTypeHidden(): void
-    {
-        $this->assertSame(
-            '<input id="hidden" name="hidden" type="hidden" />',
-            $this->view->Form->hidden('hidden')
-        );
-    }
-
-    public function testInputTypeImage(): void
-    {
-        $this->assertSame(
-            '<input id="image" name="image" type="image" />',
-            $this->view->Form->image('image')
-        );
-    }
-
-    public function testInputTypeImageValue(): void
-    {
-        $this->assertSame(
-            '<input id="image" name="image" type="image" />',
-            $this->view->Form->image('image', [
-                'value' => 'test',
-            ])
-        );
-    }
-
-    public function testInputTypeMonth(): void
-    {
-        $this->assertSame(
-            '<input id="month" name="month" type="month" />',
-            $this->view->Form->month('month')
-        );
-    }
-
     public function testInputTypeName(): void
     {
         $this->assertSame(
@@ -92,85 +62,23 @@ trait InputTypeTestTrait
         );
     }
 
-    public function testInputTypePassword(): void
+    #[DataProvider('inputTypeShortcutProvider')]
+    public function testInputTypeShortcut(string $type, string $expected): void
     {
         $this->assertSame(
-            '<input id="password" name="password" type="password" placeholder="Password" />',
-            $this->view->Form->password('password')
+            $expected,
+            $this->view->Form->$type($type)
         );
     }
 
-    public function testInputTypePasswordValue(): void
+    #[DataProvider('inputTypeSuppressesValueProvider')]
+    public function testInputTypeSuppressesValue(string $type, string $expected): void
     {
         $this->assertSame(
-            '<input id="password" name="password" type="password" placeholder="Password" />',
-            $this->view->Form->password('password', [
+            $expected,
+            $this->view->Form->$type($type, [
                 'value' => 'test',
             ])
-        );
-    }
-
-    public function testInputTypeRange(): void
-    {
-        $this->assertSame(
-            '<input id="range" name="range" type="range" />',
-            $this->view->Form->range('range')
-        );
-    }
-
-    public function testInputTypeReset(): void
-    {
-        $this->assertSame(
-            '<input id="reset" name="reset" type="reset" />',
-            $this->view->Form->reset('reset')
-        );
-    }
-
-    public function testInputTypeSearch(): void
-    {
-        $this->assertSame(
-            '<input id="search" name="search" type="search" placeholder="Search" />',
-            $this->view->Form->search('search')
-        );
-    }
-
-    public function testInputTypeSubmit(): void
-    {
-        $this->assertSame(
-            '<input id="submit" name="submit" type="submit" />',
-            $this->view->Form->submit('submit')
-        );
-    }
-
-    public function testInputTypeTel(): void
-    {
-        $this->assertSame(
-            '<input id="tel" name="tel" type="tel" placeholder="Tel" />',
-            $this->view->Form->tel('tel')
-        );
-    }
-
-    public function testInputTypeText(): void
-    {
-        $this->assertSame(
-            '<input id="text" name="text" type="text" placeholder="Text" />',
-            $this->view->Form->text('text')
-        );
-    }
-
-    public function testInputTypeUrl(): void
-    {
-        $this->assertSame(
-            '<input id="url" name="url" type="url" placeholder="Url" />',
-            $this->view->Form->url('url')
-        );
-    }
-
-    public function testInputTypeWeek(): void
-    {
-        $this->assertSame(
-            '<input id="week" name="week" type="week" />',
-            $this->view->Form->week('week')
         );
     }
 }

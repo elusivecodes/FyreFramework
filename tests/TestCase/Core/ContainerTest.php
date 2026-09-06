@@ -10,6 +10,7 @@ use Fyre\Core\Exceptions\ContainerNotFoundException;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Core\Container\ArgumentService;
 use Tests\Mock\Core\Container\ContainerService;
@@ -26,6 +27,24 @@ use function class_uses;
 final class ContainerTest extends TestCase
 {
     protected Container $container;
+
+    /**
+     * @return array<string, array{Closure(): (array{0: class-string|object, 1?: string}|object|string)}>
+     */
+    public static function callRepresentationProvider(): array
+    {
+        return [
+            'object method array' => [static fn(): array => [new Service(), 'value']],
+            'static method array' => [static fn(): array => [Service::class, 'staticValue']],
+            'class method array' => [static fn(): array => [Service::class, 'value']],
+            'invokable object array' => [static fn(): array => [new InvokableClass()]],
+            'invokable class array' => [static fn(): array => [InvokableClass::class]],
+            'invokable class' => [static fn(): string => InvokableClass::class],
+            'invokable object' => [static fn(): InvokableClass => new InvokableClass()],
+            'class method string' => [static fn(): string => Service::class.'::value'],
+            'static method string' => [static fn(): string => Service::class.'::staticValue'],
+        ];
+    }
 
     public function testBuild(): void
     {
@@ -231,36 +250,6 @@ final class ContainerTest extends TestCase
         );
     }
 
-    public function testCallArrayObject(): void
-    {
-        $result = $this->container->call([new Service(), 'value'], ['a' => 1]);
-
-        $this->assertSame(
-            1,
-            $result
-        );
-    }
-
-    public function testCallArrayStatic(): void
-    {
-        $result = $this->container->call([Service::class, 'staticValue'], ['a' => 1]);
-
-        $this->assertSame(
-            1,
-            $result
-        );
-    }
-
-    public function testCallArrayString(): void
-    {
-        $result = $this->container->call([Service::class, 'value'], ['a' => 1]);
-
-        $this->assertSame(
-            1,
-            $result
-        );
-    }
-
     public function testCallInvalidMethod(): void
     {
         $this->expectException(ContainerException::class);
@@ -279,46 +268,6 @@ final class ContainerTest extends TestCase
         $this->container->call([1, 'value']);
     }
 
-    public function testCallInvokableArrayObject(): void
-    {
-        $result = $this->container->call([new InvokableClass()], ['a' => 1]);
-
-        $this->assertSame(
-            1,
-            $result
-        );
-    }
-
-    public function testCallInvokableArrayString(): void
-    {
-        $result = $this->container->call([InvokableClass::class], ['a' => 1]);
-
-        $this->assertSame(
-            1,
-            $result
-        );
-    }
-
-    public function testCallInvokableClass(): void
-    {
-        $result = $this->container->call(InvokableClass::class, ['a' => 1]);
-
-        $this->assertSame(
-            1,
-            $result
-        );
-    }
-
-    public function testCallInvokableObject(): void
-    {
-        $result = $this->container->call(new InvokableClass(), ['a' => 1]);
-
-        $this->assertSame(
-            1,
-            $result
-        );
-    }
-
     public function testCallPositionalArgumentsBeforeAutowiringAndDefaults(): void
     {
         $providedContainer = new Container(false);
@@ -334,19 +283,13 @@ final class ContainerTest extends TestCase
         );
     }
 
-    public function testCallString(): void
+    /**
+     * @param Closure(): (array{0: class-string|object, 1?: string}|object|string) $factory
+     */
+    #[DataProvider('callRepresentationProvider')]
+    public function testCallRepresentation(Closure $factory): void
     {
-        $result = $this->container->call(Service::class.'::value', ['a' => 1]);
-
-        $this->assertSame(
-            1,
-            $result
-        );
-    }
-
-    public function testCallStringStatic(): void
-    {
-        $result = $this->container->call(Service::class.'::staticValue', ['a' => 1]);
+        $result = $this->container->call($factory(), ['a' => 1]);
 
         $this->assertSame(
             1,

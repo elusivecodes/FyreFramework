@@ -3,26 +3,31 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Schema\Postgres\Table;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+
 trait DefaultValueTestTrait
 {
-    public function testDefaultValue(): void
+    /**
+     * @return array<string, array{int|string, string, string}>
+     */
+    public static function defaultValueProvider(): array
     {
-        $this->assertSame(
-            'default',
-            $this->schema
-                ->table('test')
-                ->column('text')
-                ->defaultValue()
-        );
+        return [
+            'default' => ['default', 'test', 'text'],
+            'decimal' => ['2.5', 'test', 'price'],
+            'int' => [5, 'test', 'value'],
+            'none' => ['', 'test_values', 'value'],
+        ];
     }
 
-    public function testDefaultValueDecimal(): void
+    #[DataProvider('defaultValueProvider')]
+    public function testDefaultValue(int|string $expected, string $table, string $column): void
     {
         $this->assertSame(
-            '2.5',
+            $expected,
             $this->schema
-                ->table('test')
-                ->column('price')
+                ->table($table)
+                ->column($column)
                 ->defaultValue()
         );
     }
@@ -34,28 +39,6 @@ trait DefaultValueTestTrait
             $this->schema
                 ->table('test')
                 ->column('created')
-                ->defaultValue()
-        );
-    }
-
-    public function testDefaultValueInt(): void
-    {
-        $this->assertSame(
-            5,
-            $this->schema
-                ->table('test')
-                ->column('value')
-                ->defaultValue()
-        );
-    }
-
-    public function testDefaultValueNone(): void
-    {
-        $this->assertSame(
-            '',
-            $this->schema
-                ->table('test_values')
-                ->column('value')
                 ->defaultValue()
         );
     }

@@ -8,6 +8,7 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Core\Traits\StaticMacroTrait;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use function array_diff;
@@ -34,6 +35,33 @@ final class ConsoleTest extends TestCase
      * @var resource
      */
     protected $output;
+
+    /**
+     * @return array<string, array{int, string}>
+     */
+    public static function styleColorProvider(): array
+    {
+        return [
+            'blue' => [Console::BLUE, "\033[0;34mTest\033[0m"],
+            'dark gray' => [Console::DARKGRAY, "\033[0;90mTest\033[0m"],
+            'gray' => [Console::GRAY, "\033[0;37mTest\033[0m"],
+            'white' => [Console::WHITE, "\033[0;97mTest\033[0m"],
+        ];
+    }
+
+    /**
+     * @return array<string, array{int, string}>
+     */
+    public static function styleFlagsProvider(): array
+    {
+        return [
+            'bold' => [Console::BOLD, "\033[1;97mTest\033[0m"],
+            'dim' => [Console::DIM, "\033[2;97mTest\033[0m"],
+            'flash' => [Console::FLASH, "\033[5;97mTest\033[0m"],
+            'italic' => [Console::ITALIC, "\033[3;97mTest\033[0m"],
+            'underline' => [Console::UNDERLINE, "\033[4;97mTest\033[0m"],
+        ];
+    }
 
     public function testChoice(): void
     {
@@ -304,75 +332,21 @@ final class ConsoleTest extends TestCase
         );
     }
 
-    public function testStyleBold(): void
+    #[DataProvider('styleColorProvider')]
+    public function testStyleColor(int $color, string $expected): void
     {
         $this->assertSame(
-            "\033[1;97mTest\033[0m",
-            Console::style('Test', style: Console::BOLD)
+            $expected,
+            Console::style('Test', $color)
         );
     }
 
-    public function testStyleColor(): void
+    #[DataProvider('styleFlagsProvider')]
+    public function testStyleFlags(int $style, string $expected): void
     {
         $this->assertSame(
-            "\033[0;34mTest\033[0m",
-            Console::style('Test', Console::BLUE)
-        );
-    }
-
-    public function testStyleDarkGray(): void
-    {
-        $this->assertSame(
-            "\033[0;90mTest\033[0m",
-            Console::style('Test', Console::DARKGRAY)
-        );
-    }
-
-    public function testStyleDim(): void
-    {
-        $this->assertSame(
-            "\033[2;97mTest\033[0m",
-            Console::style('Test', style: Console::DIM)
-        );
-    }
-
-    public function testStyleFlash(): void
-    {
-        $this->assertSame(
-            "\033[5;97mTest\033[0m",
-            Console::style('Test', style: Console::FLASH)
-        );
-    }
-
-    public function testStyleGray(): void
-    {
-        $this->assertSame(
-            "\033[0;37mTest\033[0m",
-            Console::style('Test', Console::GRAY)
-        );
-    }
-
-    public function testStyleItalic(): void
-    {
-        $this->assertSame(
-            "\033[3;97mTest\033[0m",
-            Console::style('Test', style: Console::ITALIC)
-        );
-    }
-
-    public function testStyleUnderline(): void
-    {
-        $this->assertSame(
-            "\033[4;97mTest\033[0m",
-            Console::style('Test', style: Console::UNDERLINE)
-        );
-    }
-
-    public function testStyleWhite(): void
-    {
-        $this->assertSame(
-            "\033[0;97mTest\033[0m",
-            Console::style('Test', Console::WHITE)
+            $expected,
+            Console::style('Test', style: $style)
         );
     }
 

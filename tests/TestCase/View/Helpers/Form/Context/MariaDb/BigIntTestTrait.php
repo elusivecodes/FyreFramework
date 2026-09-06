@@ -4,9 +4,41 @@ declare(strict_types=1);
 namespace Tests\TestCase\View\Helpers\Form\Context\MariaDb;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait BigIntTestTrait
 {
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function bigIntLowerValidationBoundProvider(): array
+    {
+        return [
+            'inclusive' => [
+                'greaterThanOrEquals',
+                '<input id="value" name="value" type="number" placeholder="Value" min="100" step="1" />',
+            ],
+            'exclusive' => [
+                'greaterThan',
+                '<input id="value" name="value" type="number" placeholder="Value" min="101" step="1" />',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function bigIntUpperValidationBoundProvider(): array
+    {
+        return [
+            'inclusive' => [
+                'lessThanOrEquals',
+                '<input id="value" name="value" type="number" placeholder="Value" max="1000" step="1" />',
+            ],
+            'exclusive' => ['lessThan', '<input id="value" name="value" type="number" placeholder="Value" max="999" step="1" />'],
+        ];
+    }
+
     public function testBigIntBetweenValidation(): void
     {
         $this->db->query(<<<'SQL'
@@ -51,7 +83,8 @@ trait BigIntTestTrait
         );
     }
 
-    public function testBigIntGreaterThanOrEqualsValidation(): void
+    #[DataProvider('bigIntLowerValidationBoundProvider')]
+    public function testBigIntLowerValidationBound(string $rule, string $expected): void
     {
         $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
@@ -61,80 +94,14 @@ trait BigIntTestTrait
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
         SQL);
 
-        $this->validator->add('value', Rule::greaterThanOrEquals(100));
+        $this->validator->add('value', Rule::$rule(100));
 
         $entity = $this->model->newEmptyEntity();
 
         $this->view->Form->open($entity);
 
         $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="100" step="1" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testBigIntGreaterThanValidation(): void
-    {
-        $this->db->query(<<<'SQL'
-            CREATE TABLE contexts (
-                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-                value BIGINT NULL DEFAULT NULL,
-                PRIMARY KEY (id)
-            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        SQL);
-
-        $this->validator->add('value', Rule::greaterThan(100));
-
-        $entity = $this->model->newEmptyEntity();
-
-        $this->view->Form->open($entity);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="101" step="1" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testBigIntLessThanOrEqualsValidation(): void
-    {
-        $this->db->query(<<<'SQL'
-            CREATE TABLE contexts (
-                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-                value BIGINT NULL DEFAULT NULL,
-                PRIMARY KEY (id)
-            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        SQL);
-
-        $this->validator->add('value', Rule::lessThanOrEquals(1000));
-
-        $entity = $this->model->newEmptyEntity();
-
-        $this->view->Form->open($entity);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" max="1000" step="1" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testBigIntLessThanValidation(): void
-    {
-        $this->db->query(<<<'SQL'
-            CREATE TABLE contexts (
-                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-                value BIGINT NULL DEFAULT NULL,
-                PRIMARY KEY (id)
-            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        SQL);
-
-        $this->validator->add('value', Rule::lessThan(1000));
-
-        $entity = $this->model->newEmptyEntity();
-
-        $this->view->Form->open($entity);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" max="999" step="1" />',
+            $expected,
             $this->view->Form->input('value')
         );
     }
@@ -217,6 +184,29 @@ trait BigIntTestTrait
 
         $this->assertSame(
             '<input id="value" name="value" type="number" placeholder="Value" min="0" step="1" />',
+            $this->view->Form->input('value')
+        );
+    }
+
+    #[DataProvider('bigIntUpperValidationBoundProvider')]
+    public function testBigIntUpperValidationBound(string $rule, string $expected): void
+    {
+        $this->db->query(<<<'SQL'
+            CREATE TABLE contexts (
+                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                value BIGINT NULL DEFAULT NULL,
+                PRIMARY KEY (id)
+            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
+        SQL);
+
+        $this->validator->add('value', Rule::$rule(1000));
+
+        $entity = $this->model->newEmptyEntity();
+
+        $this->view->Form->open($entity);
+
+        $this->assertSame(
+            $expected,
             $this->view->Form->input('value')
         );
     }

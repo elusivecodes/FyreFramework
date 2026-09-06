@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\Shared\Model;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Mock\Entities\Post;
 use Tests\Mock\Entities\User;
 
@@ -10,12 +11,63 @@ use function array_map;
 
 trait HasManyCallbacksTestTrait
 {
-    public function testHasManyAfterDelete(): void
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function hasManyDeleteCallbackFailureManyProvider(): array
+    {
+        return [
+            'after delete many' => ['failAfterDelete'],
+            'before delete many' => ['failBeforeDelete'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function hasManyDeleteCallbackFailureProvider(): array
+    {
+        return [
+            'after delete' => ['failAfterDelete'],
+            'before delete' => ['failBeforeDelete'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function hasManySaveCallbackFailureManyProvider(): array
+    {
+        return [
+            'after rules many' => ['failAfterRules'],
+            'after save many' => ['failAfterSave'],
+            'before rules many' => ['failBeforeRules'],
+            'before save many' => ['failBeforeSave'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function hasManySaveCallbackFailureProvider(): array
+    {
+        return [
+            'after rules' => ['failAfterRules'],
+            'after save' => ['failAfterSave'],
+            'before rules' => ['failBeforeRules'],
+            'before save' => ['failBeforeSave'],
+            'rules' => ['failRules'],
+            'validation' => [''],
+        ];
+    }
+
+    #[DataProvider('hasManyDeleteCallbackFailureProvider')]
+    public function testHasManyDeleteCallbackFailure(string $failure): void
     {
         $Users = $this->modelRegistry->use('Users');
 
         $user = $Users->newEntity([
-            'name' => 'failAfterDelete',
+            'name' => $failure,
             'posts' => [
                 [
                     'title' => 'Test 1',
@@ -47,7 +99,8 @@ trait HasManyCallbacksTestTrait
         );
     }
 
-    public function testHasManyAfterDeleteMany(): void
+    #[DataProvider('hasManyDeleteCallbackFailureManyProvider')]
+    public function testHasManyDeleteCallbackFailureMany(string $failure): void
     {
         $Users = $this->modelRegistry->use('Users');
 
@@ -66,7 +119,7 @@ trait HasManyCallbacksTestTrait
                 ],
             ],
             [
-                'name' => 'failAfterDelete',
+                'name' => $failure,
                 'posts' => [
                     [
                         'title' => 'Test 3',
@@ -95,696 +148,6 @@ trait HasManyCallbacksTestTrait
 
         $this->assertSame(
             4,
-            $this->modelRegistry->use('Posts')->find()->count()
-        );
-    }
-
-    public function testHasManyAfterRules(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $user = $Users->newEntity([
-            'name' => 'failAfterRules',
-            'posts' => [
-                [
-                    'title' => 'Test 1',
-                    'content' => 'This is the content.',
-                ],
-                [
-                    'title' => 'Test 2',
-                    'content' => 'This is the content.',
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Users->save($user)
-        );
-
-        $this->assertNull(
-            $user->id
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Post $post): int|null => $post->id,
-                $user->posts
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Post $post): int|null => $post->user_id,
-                $user->posts
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Posts')->find()->count()
-        );
-    }
-
-    public function testHasManyAfterRulesMany(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $users = $Users->newEntities([
-            [
-                'name' => 'Test 1',
-                'posts' => [
-                    [
-                        'title' => 'Test 1',
-                        'content' => 'This is the content.',
-                    ],
-                    [
-                        'title' => 'Test 2',
-                        'content' => 'This is the content.',
-                    ],
-                ],
-            ],
-            [
-                'name' => 'failAfterRules',
-                'posts' => [
-                    [
-                        'title' => 'Test 3',
-                        'content' => 'This is the content.',
-                    ],
-                    [
-                        'title' => 'Test 4',
-                        'content' => 'This is the content.',
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Users->saveMany($users)
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(User $user): int|null => $user->id,
-                $users
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                [null, null],
-                [null, null],
-            ],
-            array_map(
-                static fn(User $user): array => array_map(
-                    static fn(Post $post): int|null => $post->id,
-                    $user->posts
-                ),
-                $users
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                [null, null],
-                [null, null],
-            ],
-            array_map(
-                static fn(User $user): array => array_map(
-                    static fn(Post $post): int|null => $post->user_id,
-                    $user->posts
-                ),
-                $users
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Posts')->find()->count()
-        );
-    }
-
-    public function testHasManyAfterSave(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $user = $Users->newEntity([
-            'name' => 'failAfterSave',
-            'posts' => [
-                [
-                    'title' => 'Test 1',
-                    'content' => 'This is the content.',
-                ],
-                [
-                    'title' => 'Test 2',
-                    'content' => 'This is the content.',
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Users->save($user)
-        );
-
-        $this->assertNull(
-            $user->id
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Post $post): int|null => $post->id,
-                $user->posts
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Post $post): int|null => $post->user_id,
-                $user->posts
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Posts')->find()->count()
-        );
-    }
-
-    public function testHasManyAfterSaveMany(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $users = $Users->newEntities([
-            [
-                'name' => 'Test 1',
-                'posts' => [
-                    [
-                        'title' => 'Test 1',
-                        'content' => 'This is the content.',
-                    ],
-                    [
-                        'title' => 'Test 2',
-                        'content' => 'This is the content.',
-                    ],
-                ],
-            ],
-            [
-                'name' => 'failAfterSave',
-                'posts' => [
-                    [
-                        'title' => 'Test 3',
-                        'content' => 'This is the content.',
-                    ],
-                    [
-                        'title' => 'Test 4',
-                        'content' => 'This is the content.',
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Users->saveMany($users)
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(User $user): int|null => $user->id,
-                $users
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                [null, null],
-                [null, null],
-            ],
-            array_map(
-                static fn(User $user): array => array_map(
-                    static fn(Post $post): int|null => $post->id,
-                    $user->posts
-                ),
-                $users
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                [null, null],
-                [null, null],
-            ],
-            array_map(
-                static fn(User $user): array => array_map(
-                    static fn(Post $post): int|null => $post->user_id,
-                    $user->posts
-                ),
-                $users
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Posts')->find()->count()
-        );
-    }
-
-    public function testHasManyBeforeDelete(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $user = $Users->newEntity([
-            'name' => 'failBeforeDelete',
-            'posts' => [
-                [
-                    'title' => 'Test 1',
-                    'content' => 'This is the content.',
-                ],
-                [
-                    'title' => 'Test 2',
-                    'content' => 'This is the content.',
-                ],
-            ],
-        ]);
-
-        $this->assertTrue(
-            $Users->save($user)
-        );
-
-        $this->assertFalse(
-            $Users->delete($user)
-        );
-
-        $this->assertSame(
-            1,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            2,
-            $this->modelRegistry->use('Posts')->find()->count()
-        );
-    }
-
-    public function testHasManyBeforeDeleteMany(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $users = $Users->newEntities([
-            [
-                'name' => 'Test 1',
-                'posts' => [
-                    [
-                        'title' => 'Test 1',
-                        'content' => 'This is the content.',
-                    ],
-                    [
-                        'title' => 'Test 2',
-                        'content' => 'This is the content.',
-                    ],
-                ],
-            ],
-            [
-                'name' => 'failBeforeDelete',
-                'posts' => [
-                    [
-                        'title' => 'Test 3',
-                        'content' => 'This is the content.',
-                    ],
-                    [
-                        'title' => 'Test 4',
-                        'content' => 'This is the content.',
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertTrue(
-            $Users->saveMany($users)
-        );
-
-        $this->assertFalse(
-            $Users->deleteMany($users)
-        );
-
-        $this->assertSame(
-            2,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            4,
-            $this->modelRegistry->use('Posts')->find()->count()
-        );
-    }
-
-    public function testHasManyBeforeRules(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $user = $Users->newEntity([
-            'name' => 'failBeforeRules',
-            'posts' => [
-                [
-                    'title' => 'Test 1',
-                    'content' => 'This is the content.',
-                ],
-                [
-                    'title' => 'Test 2',
-                    'content' => 'This is the content.',
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Users->save($user)
-        );
-
-        $this->assertNull(
-            $user->id
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Post $post): int|null => $post->id,
-                $user->posts
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Post $post): int|null => $post->user_id,
-                $user->posts
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Posts')->find()->count()
-        );
-    }
-
-    public function testHasManyBeforeRulesMany(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $users = $Users->newEntities([
-            [
-                'name' => 'Test 1',
-                'posts' => [
-                    [
-                        'title' => 'Test 1',
-                        'content' => 'This is the content.',
-                    ],
-                    [
-                        'title' => 'Test 2',
-                        'content' => 'This is the content.',
-                    ],
-                ],
-            ],
-            [
-                'name' => 'failBeforeRules',
-                'posts' => [
-                    [
-                        'title' => 'Test 3',
-                        'content' => 'This is the content.',
-                    ],
-                    [
-                        'title' => 'Test 4',
-                        'content' => 'This is the content.',
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Users->saveMany($users)
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(User $user): int|null => $user->id,
-                $users
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                [null, null],
-                [null, null],
-            ],
-            array_map(
-                static fn(User $user): array => array_map(
-                    static fn(Post $post): int|null => $post->id,
-                    $user->posts
-                ),
-                $users
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                [null, null],
-                [null, null],
-            ],
-            array_map(
-                static fn(User $user): array => array_map(
-                    static fn(Post $post): int|null => $post->user_id,
-                    $user->posts
-                ),
-                $users
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Posts')->find()->count()
-        );
-    }
-
-    public function testHasManyBeforeSave(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $user = $Users->newEntity([
-            'name' => 'failBeforeSave',
-            'posts' => [
-                [
-                    'title' => 'Test 1',
-                    'content' => 'This is the content.',
-                ],
-                [
-                    'title' => 'Test 2',
-                    'content' => 'This is the content.',
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Users->save($user)
-        );
-
-        $this->assertNull(
-            $user->id
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Post $post): int|null => $post->id,
-                $user->posts
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Post $post): int|null => $post->user_id,
-                $user->posts
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Posts')->find()->count()
-        );
-    }
-
-    public function testHasManyBeforeSaveMany(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $users = $Users->newEntities([
-            [
-                'name' => 'Test 1',
-                'posts' => [
-                    [
-                        'title' => 'Test 1',
-                        'content' => 'This is the content.',
-                    ],
-                    [
-                        'title' => 'Test 2',
-                        'content' => 'This is the content.',
-                    ],
-                ],
-            ],
-            [
-                'name' => 'failBeforeSave',
-                'posts' => [
-                    [
-                        'title' => 'Test 3',
-                        'content' => 'This is the content.',
-                    ],
-                    [
-                        'title' => 'Test 4',
-                        'content' => 'This is the content.',
-                    ],
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Users->saveMany($users)
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(User $user): int|null => $user->id,
-                $users
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                [null, null],
-                [null, null],
-            ],
-            array_map(
-                static fn(User $user): array => array_map(
-                    static fn(Post $post): int|null => $post->id,
-                    $user->posts
-                ),
-                $users
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                [null, null],
-                [null, null],
-            ],
-            array_map(
-                static fn(User $user): array => array_map(
-                    static fn(Post $post): int|null => $post->user_id,
-                    $user->posts
-                ),
-                $users
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Posts')->find()->count()
-        );
-    }
-
-    public function testHasManyRules(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $user = $Users->newEntity([
-            'name' => 'failRules',
-            'posts' => [
-                [
-                    'title' => 'Test 1',
-                    'content' => 'This is the content.',
-                ],
-                [
-                    'title' => 'Test 2',
-                    'content' => 'This is the content.',
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Users->save($user)
-        );
-
-        $this->assertNull(
-            $user->id
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Post $post): int|null => $post->id,
-                $user->posts
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(Post $post): int|null => $post->user_id,
-                $user->posts
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            0,
             $this->modelRegistry->use('Posts')->find()->count()
         );
     }
@@ -822,12 +185,13 @@ trait HasManyCallbacksTestTrait
         );
     }
 
-    public function testHasManyValidation(): void
+    #[DataProvider('hasManySaveCallbackFailureProvider')]
+    public function testHasManySaveCallbackFailure(string $failure): void
     {
         $Users = $this->modelRegistry->use('Users');
 
         $user = $Users->newEntity([
-            'name' => '',
+            'name' => $failure,
             'posts' => [
                 [
                     'title' => 'Test 1',
@@ -861,6 +225,91 @@ trait HasManyCallbacksTestTrait
             array_map(
                 static fn(Post $post): int|null => $post->user_id,
                 $user->posts
+            )
+        );
+
+        $this->assertSame(
+            0,
+            $Users->find()->count()
+        );
+
+        $this->assertSame(
+            0,
+            $this->modelRegistry->use('Posts')->find()->count()
+        );
+    }
+
+    #[DataProvider('hasManySaveCallbackFailureManyProvider')]
+    public function testHasManySaveCallbackFailureMany(string $failure): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+
+        $users = $Users->newEntities([
+            [
+                'name' => 'Test 1',
+                'posts' => [
+                    [
+                        'title' => 'Test 1',
+                        'content' => 'This is the content.',
+                    ],
+                    [
+                        'title' => 'Test 2',
+                        'content' => 'This is the content.',
+                    ],
+                ],
+            ],
+            [
+                'name' => $failure,
+                'posts' => [
+                    [
+                        'title' => 'Test 3',
+                        'content' => 'This is the content.',
+                    ],
+                    [
+                        'title' => 'Test 4',
+                        'content' => 'This is the content.',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse(
+            $Users->saveMany($users)
+        );
+
+        $this->assertArraysAreIdentical(
+            [null, null],
+            array_map(
+                static fn(User $user): int|null => $user->id,
+                $users
+            )
+        );
+
+        $this->assertArraysAreIdentical(
+            [
+                [null, null],
+                [null, null],
+            ],
+            array_map(
+                static fn(User $user): array => array_map(
+                    static fn(Post $post): int|null => $post->id,
+                    $user->posts
+                ),
+                $users
+            )
+        );
+
+        $this->assertArraysAreIdentical(
+            [
+                [null, null],
+                [null, null],
+            ],
+            array_map(
+                static fn(User $user): array => array_map(
+                    static fn(Post $post): int|null => $post->user_id,
+                    $user->posts
+                ),
+                $users
             )
         );
 

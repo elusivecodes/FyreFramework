@@ -7,45 +7,33 @@ use Fyre\DB\Types\BooleanType;
 use Fyre\DB\Types\DateTimeType;
 use Fyre\DB\Types\DecimalType;
 use Fyre\DB\Types\StringType;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait TypeTestTrait
 {
-    public function testGetType(): void
+    /**
+     * @return array<string, array{class-string<BooleanType>|class-string<DateTimeType>|class-string<DecimalType>|class-string<StringType>, string}>
+     */
+    public static function getTypeProvider(): array
     {
-        $this->assertInstanceOf(
-            StringType::class,
-            $this->schema->table('test')
-                ->column('name')
-                ->type()
-        );
+        return [
+            'default' => [StringType::class, 'name'],
+            'boolean' => [BooleanType::class, 'bool'],
+            'date time' => [DateTimeType::class, 'created'],
+            'decimal' => [DecimalType::class, 'price'],
+        ];
     }
 
-    public function testGetTypeBoolean(): void
+    /**
+     * @param class-string<BooleanType>|class-string<DateTimeType>|class-string<DecimalType>|class-string<StringType> $expected
+     */
+    #[DataProvider('getTypeProvider')]
+    public function testGetType(string $expected, string $column): void
     {
         $this->assertInstanceOf(
-            BooleanType::class,
+            $expected,
             $this->schema->table('test')
-                ->column('bool')
-                ->type()
-        );
-    }
-
-    public function testGetTypeDateTime(): void
-    {
-        $this->assertInstanceOf(
-            DateTimeType::class,
-            $this->schema->table('test')
-                ->column('created')
-                ->type()
-        );
-    }
-
-    public function testGetTypeDecimal(): void
-    {
-        $this->assertInstanceOf(
-            DecimalType::class,
-            $this->schema->table('test')
-                ->column('price')
+                ->column($column)
                 ->type()
         );
     }

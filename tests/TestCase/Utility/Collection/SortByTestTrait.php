@@ -3,192 +3,74 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\Collection;
 
+use Closure;
 use Fyre\Utility\Collection;
+use PHPUnit\Framework\Attributes\DataProvider;
+
+use function array_map;
 
 trait SortByTestTrait
 {
-    public function testSortBy(): void
+    /**
+     * @return array<string, array{array<array<string, mixed>>, Closure|string, array<mixed>}>
+     */
+    public static function sortByPathProvider(): array
     {
-        $collection = new Collection([
-            [
-                'id' => 1,
-                'value' => 'Item 101',
-            ],
-            [
-                'id' => 2,
-                'value' => 'Item 10',
-            ],
-            [
-                'id' => 3,
-                'value' => 'Item 1',
-            ],
-            [
-                'id' => 4,
-                'value' => 'Item 11',
-            ],
-            [
-                'id' => 5,
-                'value' => 'Item 100',
-            ],
-        ]);
+        $items = [
+            ['id' => 1, 'value' => 'Item 101'],
+            ['id' => 2, 'value' => 'Item 10'],
+            ['id' => 3, 'value' => 'Item 1'],
+            ['id' => 4, 'value' => 'Item 11'],
+            ['id' => 5, 'value' => 'Item 100'],
+        ];
 
-        $this->assertArraysAreIdentical(
-            [
+        $expected = [
+            ['id' => 3, 'value' => 'Item 1'],
+            ['id' => 2, 'value' => 'Item 10'],
+            ['id' => 4, 'value' => 'Item 11'],
+            ['id' => 5, 'value' => 'Item 100'],
+            ['id' => 1, 'value' => 'Item 101'],
+        ];
+
+        return [
+            'field path' => [$items, 'value', $expected],
+            'callback' => [$items, static fn(array $item): string => $item['value'], $expected],
+            'nested path' => [
+                array_map(static fn(array $item): array => ['data' => $item], $items),
+                'data.value',
                 [
-                    'id' => 3,
-                    'value' => 'Item 1',
-                ],
-                [
-                    'id' => 2,
-                    'value' => 'Item 10',
-                ],
-                [
-                    'id' => 4,
-                    'value' => 'Item 11',
-                ],
-                [
-                    'id' => 5,
-                    'value' => 'Item 100',
-                ],
-                [
-                    'id' => 1,
-                    'value' => 'Item 101',
+                    [
+                        'data' => ['id' => 3, 'value' => 'Item 1'],
+                    ],
+                    [
+                        'data' => ['id' => 2, 'value' => 'Item 10'],
+                    ],
+                    [
+                        'data' => ['id' => 4, 'value' => 'Item 11'],
+                    ],
+                    [
+                        'data' => ['id' => 5, 'value' => 'Item 100'],
+                    ],
+                    [
+                        'data' => ['id' => 1, 'value' => 'Item 101'],
+                    ],
                 ],
             ],
-            $collection
-                ->sortBy('value')
-                ->values()
-                ->toArray()
-        );
+        ];
     }
 
-    public function testSortByCallback(): void
+    /**
+     * @param array<array<string, mixed>> $values
+     * @param array<mixed> $expected
+     */
+    #[DataProvider('sortByPathProvider')]
+    public function testSortBy(array $values, Closure|string $valuePath, array $expected): void
     {
-        $collection = new Collection([
-            [
-                'id' => 1,
-                'value' => 'Item 101',
-            ],
-            [
-                'id' => 2,
-                'value' => 'Item 10',
-            ],
-            [
-                'id' => 3,
-                'value' => 'Item 1',
-            ],
-            [
-                'id' => 4,
-                'value' => 'Item 11',
-            ],
-            [
-                'id' => 5,
-                'value' => 'Item 100',
-            ],
-        ]);
+        $collection = new Collection($values);
 
         $this->assertArraysAreIdentical(
-            [
-                [
-                    'id' => 3,
-                    'value' => 'Item 1',
-                ],
-                [
-                    'id' => 2,
-                    'value' => 'Item 10',
-                ],
-                [
-                    'id' => 4,
-                    'value' => 'Item 11',
-                ],
-                [
-                    'id' => 5,
-                    'value' => 'Item 100',
-                ],
-                [
-                    'id' => 1,
-                    'value' => 'Item 101',
-                ],
-            ],
-            $collection
-                ->sortBy(static fn(array $item): string => $item['value'])
-                ->values()
-                ->toArray()
-        );
-    }
-
-    public function testSortByDeep(): void
-    {
-        $collection = new Collection([
-            [
-                'data' => [
-                    'id' => 1,
-                    'value' => 'Item 101',
-                ],
-            ],
-            [
-                'data' => [
-                    'id' => 2,
-                    'value' => 'Item 10',
-                ],
-            ],
-            [
-                'data' => [
-                    'id' => 3,
-                    'value' => 'Item 1',
-                ],
-            ],
-            [
-                'data' => [
-                    'id' => 4,
-                    'value' => 'Item 11',
-                ],
-            ],
-            [
-                'data' => [
-                    'id' => 5,
-                    'value' => 'Item 100',
-                ],
-            ],
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [
-                [
-                    'data' => [
-                        'id' => 3,
-                        'value' => 'Item 1',
-                    ],
-                ],
-                [
-                    'data' => [
-                        'id' => 2,
-                        'value' => 'Item 10',
-                    ],
-                ],
-                [
-                    'data' => [
-                        'id' => 4,
-                        'value' => 'Item 11',
-                    ],
-                ],
-                [
-                    'data' => [
-                        'id' => 5,
-                        'value' => 'Item 100',
-                    ],
-                ],
-                [
-                    'data' => [
-                        'id' => 1,
-                        'value' => 'Item 101',
-                    ],
-                ],
-            ],
-            $collection
-                ->sortBy('data.value')
-                ->values()
-                ->toArray()
+            $expected,
+            $collection->sortBy($valuePath)->values()->toArray()
         );
     }
 

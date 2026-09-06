@@ -4,9 +4,23 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\DateTime\Date;
 
 use Fyre\Utility\DateTime\Date;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait UtilityTestTrait
 {
+    /**
+     * @return array<string, array{int, 'narrow'|'short', string}>
+     */
+    public static function eraWidthProvider(): array
+    {
+        return [
+            'narrow' => [2019, 'narrow', 'A'],
+            'narrow bc' => [-5, 'narrow', 'B'],
+            'short' => [2019, 'short', 'AD'],
+            'short bc' => [-5, 'short', 'BC'],
+        ];
+    }
+
     public function testDayName(): void
     {
         $this->assertSame(
@@ -79,35 +93,15 @@ trait UtilityTestTrait
         );
     }
 
-    public function testEraNarrow(): void
+    /**
+     * @param 'narrow'|'short' $width
+     */
+    #[DataProvider('eraWidthProvider')]
+    public function testEraWidth(int $year, string $width, string $expected): void
     {
         $this->assertSame(
-            'A',
-            Date::createFromArray([2019])->era('narrow')
-        );
-    }
-
-    public function testEraNarrowBc(): void
-    {
-        $this->assertSame(
-            'B',
-            Date::createFromArray([-5])->era('narrow')
-        );
-    }
-
-    public function testEraShort(): void
-    {
-        $this->assertSame(
-            'AD',
-            Date::createFromArray([2019])->era('short')
-        );
-    }
-
-    public function testEraShortBc(): void
-    {
-        $this->assertSame(
-            'BC',
-            Date::createFromArray([-5])->era('short')
+            $expected,
+            Date::createFromArray([$year])->era($width)
         );
     }
 

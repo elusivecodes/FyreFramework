@@ -3,8 +3,34 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\TypeParser;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+
 trait DecimalTestTrait
 {
+    /**
+     * @return array<string, array{string|null, string|null}>
+     */
+    public static function decimalParseProvider(): array
+    {
+        return [
+            'default' => ['33.3', '33.3'],
+            'invalid' => [null, 'invalid'],
+            'null' => [null, null],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string|null, string|null}>
+     */
+    public static function decimalToDatabaseProvider(): array
+    {
+        return [
+            'default' => ['33.3', '33.3'],
+            'invalid' => [null, 'invalid'],
+            'null' => [null, null],
+        ];
+    }
+
     public function testDecimalFromDatabase(): void
     {
         $this->assertSame(
@@ -20,47 +46,21 @@ trait DecimalTestTrait
         );
     }
 
-    public function testDecimalParse(): void
+    #[DataProvider('decimalParseProvider')]
+    public function testDecimalParse(string|null $expected, string|null $value): void
     {
         $this->assertSame(
-            '33.3',
-            $this->type->use('decimal')->parse('33.3')
+            $expected,
+            $this->type->use('decimal')->parse($value)
         );
     }
 
-    public function testDecimalParseInvalid(): void
-    {
-        $this->assertNull(
-            $this->type->use('decimal')->parse('invalid')
-        );
-    }
-
-    public function testDecimalParseNull(): void
-    {
-        $this->assertNull(
-            $this->type->use('decimal')->parse(null)
-        );
-    }
-
-    public function testDecimalToDatabase(): void
+    #[DataProvider('decimalToDatabaseProvider')]
+    public function testDecimalToDatabase(string|null $expected, string|null $value): void
     {
         $this->assertSame(
-            '33.3',
-            $this->type->use('decimal')->toDatabase('33.3')
-        );
-    }
-
-    public function testDecimalToDatabaseInvalid(): void
-    {
-        $this->assertNull(
-            $this->type->use('decimal')->toDatabase('invalid')
-        );
-    }
-
-    public function testDecimalToDatabaseNull(): void
-    {
-        $this->assertNull(
-            $this->type->use('decimal')->toDatabase(null)
+            $expected,
+            $this->type->use('decimal')->toDatabase($value)
         );
     }
 }

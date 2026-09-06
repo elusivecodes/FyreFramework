@@ -26,10 +26,59 @@ trait UriAttributesWithTestTrait
         ];
     }
 
-    public function testWithAuthority(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function withAuthorityProvider(): array
+    {
+        return [
+            'with authority' => ['test.com', 'test.com'],
+            'port' => ['test.com:3000', 'test.com:3000'],
+            'user info' => ['user:password@test.com', 'user:password@test.com'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function withFragmentProvider(): array
+    {
+        return [
+            'with fragment' => ['test', 'test'],
+            'hash' => ['#test', 'test'],
+            'zero' => ['0', '0'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function withPathProvider(): array
+    {
+        return [
+            'with path' => ['test/deep', 'test/deep'],
+            'with dots' => ['test/../deep', 'deep'],
+            'with leading slash' => ['/test/deep', '/test/deep'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function withQueryProvider(): array
+    {
+        return [
+            'with query' => ['test=a', 'test=a'],
+            'with question mark' => ['?test=a', 'test=a'],
+            'zero' => ['0', '0'],
+        ];
+    }
+
+    #[DataProvider('withAuthorityProvider')]
+    public function testWithAuthority(string $value, string $expected): void
     {
         $uri1 = new Uri();
-        $uri2 = $uri1->withAuthority('test.com');
+        $uri2 = $uri1->withAuthority($value);
 
         $this->assertNotSame(
             $uri1,
@@ -37,15 +86,16 @@ trait UriAttributesWithTestTrait
         );
 
         $this->assertSame(
-            'test.com',
+            $expected,
             $uri2->getAuthority()
         );
     }
 
-    public function testWithAuthorityPort(): void
+    #[DataProvider('withFragmentProvider')]
+    public function testWithFragment(string $value, string $expected): void
     {
         $uri1 = new Uri();
-        $uri2 = $uri1->withAuthority('test.com:3000');
+        $uri2 = $uri1->withFragment($value);
 
         $this->assertNotSame(
             $uri1,
@@ -53,39 +103,7 @@ trait UriAttributesWithTestTrait
         );
 
         $this->assertSame(
-            'test.com:3000',
-            $uri2->getAuthority()
-        );
-    }
-
-    public function testWithAuthorityUserInfo(): void
-    {
-        $uri1 = new Uri();
-        $uri2 = $uri1->withAuthority('user:password@test.com');
-
-        $this->assertNotSame(
-            $uri1,
-            $uri2
-        );
-
-        $this->assertSame(
-            'user:password@test.com',
-            $uri2->getAuthority()
-        );
-    }
-
-    public function testWithFragment(): void
-    {
-        $uri1 = new Uri();
-        $uri2 = $uri1->withFragment('test');
-
-        $this->assertNotSame(
-            $uri1,
-            $uri2
-        );
-
-        $this->assertSame(
-            'test',
+            $expected,
             $uri2->getFragment()
         );
     }
@@ -107,38 +125,6 @@ trait UriAttributesWithTestTrait
         $this->assertNotSame($uri, $result);
         $this->assertSame('/old?old#old', $uri->getUri());
         $this->assertSame($expected, $result->getFragment());
-    }
-
-    public function testWithFragmentHash(): void
-    {
-        $uri1 = new Uri();
-        $uri2 = $uri1->withFragment('#test');
-
-        $this->assertNotSame(
-            $uri1,
-            $uri2
-        );
-
-        $this->assertSame(
-            'test',
-            $uri2->getFragment()
-        );
-    }
-
-    public function testWithFragmentZero(): void
-    {
-        $uri1 = new Uri();
-        $uri2 = $uri1->withFragment('0');
-
-        $this->assertNotSame(
-            $uri1,
-            $uri2
-        );
-
-        $this->assertSame(
-            '0',
-            $uri2->getFragment()
-        );
     }
 
     public function testWithHost(): void
@@ -173,10 +159,11 @@ trait UriAttributesWithTestTrait
         );
     }
 
-    public function testWithPath(): void
+    #[DataProvider('withPathProvider')]
+    public function testWithPath(string $value, string $expected): void
     {
         $uri1 = new Uri();
-        $uri2 = $uri1->withPath('test/deep');
+        $uri2 = $uri1->withPath($value);
 
         $this->assertNotSame(
             $uri1,
@@ -184,7 +171,7 @@ trait UriAttributesWithTestTrait
         );
 
         $this->assertSame(
-            'test/deep',
+            $expected,
             $uri2->getPath()
         );
     }
@@ -206,38 +193,6 @@ trait UriAttributesWithTestTrait
         $this->assertNotSame($uri, $result);
         $this->assertSame('/old?old#old', $uri->getUri());
         $this->assertSame($expected, $result->getPath());
-    }
-
-    public function testWithPathWithDots(): void
-    {
-        $uri1 = new Uri();
-        $uri2 = $uri1->withPath('test/../deep');
-
-        $this->assertNotSame(
-            $uri1,
-            $uri2
-        );
-
-        $this->assertSame(
-            'deep',
-            $uri2->getPath()
-        );
-    }
-
-    public function testWithPathWithLeadingSlash(): void
-    {
-        $uri1 = new Uri();
-        $uri2 = $uri1->withPath('/test/deep');
-
-        $this->assertNotSame(
-            $uri1,
-            $uri2
-        );
-
-        $this->assertSame(
-            '/test/deep',
-            $uri2->getPath()
-        );
     }
 
     public function testWithPort(): void
@@ -272,10 +227,11 @@ trait UriAttributesWithTestTrait
         );
     }
 
-    public function testWithQuery(): void
+    #[DataProvider('withQueryProvider')]
+    public function testWithQuery(string $value, string $expected): void
     {
         $uri1 = new Uri();
-        $uri2 = $uri1->withQuery('test=a');
+        $uri2 = $uri1->withQuery($value);
 
         $this->assertNotSame(
             $uri1,
@@ -283,7 +239,7 @@ trait UriAttributesWithTestTrait
         );
 
         $this->assertSame(
-            'test=a',
+            $expected,
             $uri2->getQuery()
         );
     }
@@ -324,38 +280,6 @@ trait UriAttributesWithTestTrait
                 'test' => 'a',
             ],
             $uri2->getQueryParams()
-        );
-    }
-
-    public function testWithQueryWithQuestionMark(): void
-    {
-        $uri1 = new Uri();
-        $uri2 = $uri1->withQuery('?test=a');
-
-        $this->assertNotSame(
-            $uri1,
-            $uri2
-        );
-
-        $this->assertSame(
-            'test=a',
-            $uri2->getQuery()
-        );
-    }
-
-    public function testWithQueryZero(): void
-    {
-        $uri1 = new Uri();
-        $uri2 = $uri1->withQuery('0');
-
-        $this->assertNotSame(
-            $uri1,
-            $uri2
-        );
-
-        $this->assertSame(
-            '0',
-            $uri2->getQuery()
         );
     }
 

@@ -41,6 +41,19 @@ final class ResponseEmitterTest extends TestCase
     protected ResponseEmitter $emitter;
 
     /**
+     * @return array<string, array{int}>
+     */
+    public static function bodylessStatusProvider(): array
+    {
+        return [
+            'continue' => [100],
+            'last informational status' => [199],
+            'no content' => [204],
+            'not modified' => [304],
+        ];
+    }
+
+    /**
      * @return array<string, array{string, string}>
      */
     public static function shortReadRangeProvider(): array
@@ -316,20 +329,19 @@ final class ResponseEmitterTest extends TestCase
         );
     }
 
-    public function testEmitWithoutBodyStatus(): void
+    #[DataProvider('bodylessStatusProvider')]
+    public function testEmitWithoutBodyStatus(int $statusCode): void
     {
-        foreach ([100, 199, 204, 304] as $statusCode) {
-            $response = new ClientResponse([
-                'body' => 'This is a test.',
-                'statusCode' => $statusCode,
-            ]);
+        $response = new ClientResponse([
+            'body' => 'This is a test.',
+            'statusCode' => $statusCode,
+        ]);
 
-            ob_start();
-            $this->emitter->emit($response);
-            $output = ob_get_clean();
+        ob_start();
+        $this->emitter->emit($response);
+        $output = ob_get_clean();
 
-            $this->assertSame('', $output);
-        }
+        $this->assertSame('', $output);
     }
 
     #[Override]

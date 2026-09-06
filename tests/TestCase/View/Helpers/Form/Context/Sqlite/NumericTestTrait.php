@@ -4,9 +4,65 @@ declare(strict_types=1);
 namespace Tests\TestCase\View\Helpers\Form\Context\Sqlite;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait NumericTestTrait
 {
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function numericLowerValidationBoundProvider(): array
+    {
+        return [
+            'inclusive' => [
+                'greaterThanOrEquals',
+                '<input id="value" name="value" type="number" placeholder="Value" min="100" max="99999999.99" step="0.01" />',
+            ],
+            'exclusive' => [
+                'greaterThan',
+                '<input id="value" name="value" type="number" placeholder="Value" min="101" max="99999999.99" step="0.01" />',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function numericPrecisionScaleProvider(): array
+    {
+        return [
+            'precision equals scale' => [
+                'NUMERIC(2,2) NULL DEFAULT NULL',
+                '<input id="value" name="value" type="number" placeholder="Value" min="-0.99" max="0.99" step="0.01" />',
+            ],
+            'precision overflow' => [
+                'NUMERIC(30,0) NULL DEFAULT NULL',
+                '<input id="value" name="value" type="number" placeholder="Value" step="1" />',
+            ],
+            'zero scale' => [
+                'NUMERIC(10,0) NULL DEFAULT NULL',
+                '<input id="value" name="value" type="number" placeholder="Value" min="-9999999999" max="9999999999" step="1" />',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function numericUpperValidationBoundProvider(): array
+    {
+        return [
+            'inclusive' => [
+                'lessThanOrEquals',
+                '<input id="value" name="value" type="number" placeholder="Value" min="-99999999.99" max="1000" step="0.01" />',
+            ],
+            'exclusive' => [
+                'lessThan',
+                '<input id="value" name="value" type="number" placeholder="Value" min="-99999999.99" max="999" step="0.01" />',
+            ],
+        ];
+    }
+
     public function testNumericBetweenValidation(): void
     {
         $this->db->query(<<<'SQL'
@@ -51,7 +107,8 @@ trait NumericTestTrait
         );
     }
 
-    public function testNumericGreaterThanOrEqualsValidation(): void
+    #[DataProvider('numericLowerValidationBoundProvider')]
+    public function testNumericLowerValidationBound(string $rule, string $expected): void
     {
         $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
@@ -61,80 +118,14 @@ trait NumericTestTrait
             )
         SQL);
 
-        $this->validator->add('value', Rule::greaterThanOrEquals(100));
+        $this->validator->add('value', Rule::$rule(100));
 
         $entity = $this->model->newEmptyEntity();
 
         $this->view->Form->open($entity);
 
         $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="100" max="99999999.99" step="0.01" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testNumericGreaterThanValidation(): void
-    {
-        $this->db->query(<<<'SQL'
-            CREATE TABLE contexts (
-                id INTEGER NOT NULL,
-                value NUMERIC(10,2) NULL DEFAULT NULL,
-                PRIMARY KEY (id)
-            )
-        SQL);
-
-        $this->validator->add('value', Rule::greaterThan(100));
-
-        $entity = $this->model->newEmptyEntity();
-
-        $this->view->Form->open($entity);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="101" max="99999999.99" step="0.01" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testNumericLessThanOrEqualsValidation(): void
-    {
-        $this->db->query(<<<'SQL'
-            CREATE TABLE contexts (
-                id INTEGER NOT NULL,
-                value NUMERIC(10,2) NULL DEFAULT NULL,
-                PRIMARY KEY (id)
-            )
-        SQL);
-
-        $this->validator->add('value', Rule::lessThanOrEquals(1000));
-
-        $entity = $this->model->newEmptyEntity();
-
-        $this->view->Form->open($entity);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="-99999999.99" max="1000" step="0.01" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testNumericLessThanValidation(): void
-    {
-        $this->db->query(<<<'SQL'
-            CREATE TABLE contexts (
-                id INTEGER NOT NULL,
-                value NUMERIC(10,2) NULL DEFAULT NULL,
-                PRIMARY KEY (id)
-            )
-        SQL);
-
-        $this->validator->add('value', Rule::lessThan(1000));
-
-        $entity = $this->model->newEmptyEntity();
-
-        $this->view->Form->open($entity);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="-99999999.99" max="999" step="0.01" />',
+            $expected,
             $this->view->Form->input('value')
         );
     }
@@ -159,12 +150,13 @@ trait NumericTestTrait
         );
     }
 
-    public function testNumericPrecisionEqualScale(): void
+    #[DataProvider('numericPrecisionScaleProvider')]
+    public function testNumericPrecisionScale(string $definition, string $expected): void
     {
-        $this->db->query(<<<'SQL'
+        $this->db->query(<<<SQL
             CREATE TABLE contexts (
                 id INTEGER NOT NULL,
-                value NUMERIC(2,2) NULL DEFAULT NULL,
+                value $definition,
                 PRIMARY KEY (id)
             )
         SQL);
@@ -174,27 +166,7 @@ trait NumericTestTrait
         $this->view->Form->open($entity);
 
         $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="-0.99" max="0.99" step="0.01" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testNumericPrecisionOverflow(): void
-    {
-        $this->db->query(<<<'SQL'
-            CREATE TABLE contexts (
-                id INTEGER NOT NULL,
-                value NUMERIC(30,0) NULL DEFAULT NULL,
-                PRIMARY KEY (id)
-            )
-        SQL);
-
-        $entity = $this->model->newEmptyEntity();
-
-        $this->view->Form->open($entity);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" step="1" />',
+            $expected,
             $this->view->Form->input('value')
         );
     }
@@ -217,26 +189,6 @@ trait NumericTestTrait
 
         $this->assertSame(
             '<input id="value" name="value" type="number" placeholder="Value" min="-99999999.99" max="99999999.99" step="0.01" required />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testNumericScaleZero(): void
-    {
-        $this->db->query(<<<'SQL'
-            CREATE TABLE contexts (
-                id INTEGER NOT NULL,
-                value NUMERIC(10,0) NULL DEFAULT NULL,
-                PRIMARY KEY (id)
-            )
-        SQL);
-
-        $entity = $this->model->newEmptyEntity();
-
-        $this->view->Form->open($entity);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="-9999999999" max="9999999999" step="1" />',
             $this->view->Form->input('value')
         );
     }
@@ -277,6 +229,29 @@ trait NumericTestTrait
 
         $this->assertSame(
             '<input id="value" name="value" type="number" placeholder="Value" min="0" max="99999999.99" step="0.01" />',
+            $this->view->Form->input('value')
+        );
+    }
+
+    #[DataProvider('numericUpperValidationBoundProvider')]
+    public function testNumericUpperValidationBound(string $rule, string $expected): void
+    {
+        $this->db->query(<<<'SQL'
+            CREATE TABLE contexts (
+                id INTEGER NOT NULL,
+                value NUMERIC(10,2) NULL DEFAULT NULL,
+                PRIMARY KEY (id)
+            )
+        SQL);
+
+        $this->validator->add('value', Rule::$rule(1000));
+
+        $entity = $this->model->newEmptyEntity();
+
+        $this->view->Form->open($entity);
+
+        $this->assertSame(
+            $expected,
             $this->view->Form->input('value')
         );
     }

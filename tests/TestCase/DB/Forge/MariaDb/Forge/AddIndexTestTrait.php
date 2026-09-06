@@ -5,73 +5,85 @@ namespace Tests\TestCase\DB\Forge\MariaDb\Forge;
 
 use Fyre\DB\Types\IntegerType;
 use Fyre\DB\Types\StringType;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait AddIndexTestTrait
 {
-    public function testAddIndex(): void
+    /**
+     * @return array<string, array{class-string<IntegerType>|class-string<StringType>, string, array<string, mixed>, array<string, mixed>}>
+     */
+    public static function addIndexProvider(): array
     {
-        $this->forge->createTable('test', [
-            'id' => [
-                'type' => IntegerType::class,
+        return [
+            'default' => [
+                IntegerType::class,
+                'id_value',
+                [
+                    'columns' => ['id', 'value'],
+                ],
+                [
+                    'name' => 'id_value',
+                    'columns' => ['id', 'value'],
+                    'unique' => false,
+                    'primary' => false,
+                    'type' => 'btree',
+                ],
             ],
-            'value' => [
-                'type' => IntegerType::class,
+            'fulltext' => [
+                StringType::class,
+                'value',
+                ['type' => 'FULLTEXT'],
+                [
+                    'name' => 'value',
+                    'columns' => ['value'],
+                    'unique' => false,
+                    'primary' => false,
+                    'type' => 'fulltext',
+                ],
             ],
-        ]);
-
-        $this->forge->addIndex('test', 'id_value', [
-            'columns' => ['id', 'value'],
-        ]);
-
-        $this->assertTrue(
-            $this->schema->table('test')
-                ->hasIndex('id_value')
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                'name' => 'id_value',
-                'columns' => ['id', 'value'],
-                'unique' => false,
-                'primary' => false,
-                'type' => 'btree',
+            'unique' => [
+                IntegerType::class,
+                'value',
+                ['unique' => true],
+                [
+                    'name' => 'value',
+                    'columns' => ['value'],
+                    'unique' => true,
+                    'primary' => false,
+                    'type' => 'btree',
+                ],
             ],
-            $this->schema->table('test')
-                ->index('id_value')
-                ->toArray()
-        );
+        ];
     }
 
-    public function testAddIndexFulltext(): void
+    /**
+     * @param class-string<IntegerType>|class-string<StringType> $columnType
+     * @param array<string, mixed> $options
+     * @param array<string, mixed> $expected
+     */
+    #[DataProvider('addIndexProvider')]
+    public function testAddIndex(string $columnType, string $index, array $options, array $expected): void
     {
         $this->forge->createTable('test', [
             'id' => [
                 'type' => IntegerType::class,
             ],
             'value' => [
-                'type' => StringType::class,
+                'type' => $columnType,
             ],
         ]);
 
-        $this->forge->addIndex('test', 'value', [
-            'type' => 'FULLTEXT',
-        ]);
+        $this->forge->addIndex('test', $index, $options);
 
         $this->assertTrue(
             $this->schema->table('test')
-                ->hasIndex('value')
+                ->hasIndex($index)
         );
 
         $this->assertArraysAreIdentical(
-            [
-                'name' => 'value',
-                'columns' => ['value'],
-                'unique' => false,
-                'primary' => false,
-                'type' => 'fulltext',
-            ],
+            $expected,
             $this->schema->table('test')
-                ->index('value')
+                ->index($index)
                 ->toArray()
         );
     }
@@ -100,40 +112,6 @@ trait AddIndexTestTrait
                 'id',
             ],
             $primaryKey
-        );
-    }
-
-    public function testAddIndexUnique(): void
-    {
-        $this->forge->createTable('test', [
-            'id' => [
-                'type' => IntegerType::class,
-            ],
-            'value' => [
-                'type' => IntegerType::class,
-            ],
-        ]);
-
-        $this->forge->addIndex('test', 'value', [
-            'unique' => true,
-        ]);
-
-        $this->assertTrue(
-            $this->schema->table('test')
-                ->hasIndex('value')
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                'name' => 'value',
-                'columns' => ['value'],
-                'unique' => true,
-                'primary' => false,
-                'type' => 'btree',
-            ],
-            $this->schema->table('test')
-                ->index('value')
-                ->toArray()
         );
     }
 }

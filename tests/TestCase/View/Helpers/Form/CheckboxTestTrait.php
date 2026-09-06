@@ -35,15 +35,69 @@ trait CheckboxTestTrait
                 ['id' => 'other', 'class' => 'test'],
                 '<input name="checkbox" type="hidden" value="0" /><input class="test" id="other" name="checkbox" type="checkbox" value="1" />',
             ],
+            'id' => [
+                ['id' => 'other'],
+                '<input name="checkbox" type="hidden" value="0" /><input id="other" name="checkbox" type="checkbox" value="1" />',
+            ],
+            'id false' => [
+                ['id' => false],
+                '<input name="checkbox" type="hidden" value="0" /><input name="checkbox" type="checkbox" value="1" />',
+            ],
+            'name' => [
+                ['name' => 'other'],
+                '<input name="other" type="hidden" value="0" /><input id="checkbox" name="other" type="checkbox" value="1" />',
+            ],
+            'name false' => [
+                ['name' => false],
+                '<input id="checkbox" type="checkbox" value="1" />',
+            ],
         ];
     }
 
-    public function testCheckbox(): void
+    /**
+     * @return array<string, array{array<string, mixed>, string, string}>
+     */
+    public static function checkboxCheckedPostProvider(): array
     {
-        $this->assertSame(
-            '<input name="checkbox_value" type="hidden" value="0" /><input id="checkbox-value" name="checkbox_value" type="checkbox" value="1" />',
-            $this->view->Form->checkbox('checkbox_value')
-        );
+        return [
+            'flat' => [
+                [
+                    'checkbox' => '1',
+                ],
+                'checkbox',
+                '<input name="checkbox" type="hidden" value="0" /><input id="checkbox" name="checkbox" type="checkbox" value="1" checked />',
+            ],
+            'dotted' => [
+                [
+                    'key' => [
+                        'checkbox' => '1',
+                    ],
+                ],
+                'key.checkbox',
+                '<input name="key[checkbox]" type="hidden" value="0" /><input id="key-checkbox" name="key[checkbox]" type="checkbox" value="1" checked />',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function checkboxFieldNameProvider(): array
+    {
+        return [
+            'flat' => [
+                'checkbox_value',
+                '<input name="checkbox_value" type="hidden" value="0" /><input id="checkbox-value" name="checkbox_value" type="checkbox" value="1" />',
+            ],
+            'dotted' => [
+                'key.checkbox_value',
+                '<input name="key[checkbox_value]" type="hidden" value="0" /><input id="key-checkbox-value" name="key[checkbox_value]" type="checkbox" value="1" />',
+            ],
+            'deeply dotted' => [
+                'deep.key.checkbox_value',
+                '<input name="deep[key][checkbox_value]" type="hidden" value="0" /><input id="deep-key-checkbox-value" name="deep[key][checkbox_value]" type="checkbox" value="1" />',
+            ],
+        ];
     }
 
     /**
@@ -78,51 +132,29 @@ trait CheckboxTestTrait
         );
     }
 
-    public function testCheckboxCheckedPost(): void
+    /**
+     * @param array<string, mixed> $data
+     */
+    #[DataProvider('checkboxCheckedPostProvider')]
+    public function testCheckboxCheckedPost(array $data, string $field, string $expected): void
     {
-        Closure::bind(function(): void {
+        Closure::bind(function() use ($data): void {
             /** @var View $this */
-            $this->request = $this->request->withParsedBody([
-                'checkbox' => '1',
-            ]);
+            $this->request = $this->request->withParsedBody($data);
         }, $this->view, View::class)();
 
         $this->assertSame(
-            '<input name="checkbox" type="hidden" value="0" /><input id="checkbox" name="checkbox" type="checkbox" value="1" checked />',
-            $this->view->Form->checkbox('checkbox')
+            $expected,
+            $this->view->Form->checkbox($field)
         );
     }
 
-    public function testCheckboxCheckedPostDot(): void
-    {
-        Closure::bind(function(): void {
-            /** @var View $this */
-            $this->request = $this->request->withParsedBody([
-                'key' => [
-                    'checkbox' => '1',
-                ],
-            ]);
-        }, $this->view, View::class)();
-
-        $this->assertSame(
-            '<input name="key[checkbox]" type="hidden" value="0" /><input id="key-checkbox" name="key[checkbox]" type="checkbox" value="1" checked />',
-            $this->view->Form->checkbox('key.checkbox')
-        );
-    }
-
-    public function testCheckboxDot(): void
+    #[DataProvider('checkboxFieldNameProvider')]
+    public function testCheckboxFieldName(string $field, string $expected): void
     {
         $this->assertSame(
-            '<input name="key[checkbox_value]" type="hidden" value="0" /><input id="key-checkbox-value" name="key[checkbox_value]" type="checkbox" value="1" />',
-            $this->view->Form->checkbox('key.checkbox_value')
-        );
-    }
-
-    public function testCheckboxDotDeep(): void
-    {
-        $this->assertSame(
-            '<input name="deep[key][checkbox_value]" type="hidden" value="0" /><input id="deep-key-checkbox-value" name="deep[key][checkbox_value]" type="checkbox" value="1" />',
-            $this->view->Form->checkbox('deep.key.checkbox_value')
+            $expected,
+            $this->view->Form->checkbox($field)
         );
     }
 
@@ -134,26 +166,6 @@ trait CheckboxTestTrait
         );
     }
 
-    public function testCheckboxId(): void
-    {
-        $this->assertSame(
-            '<input name="checkbox" type="hidden" value="0" /><input id="other" name="checkbox" type="checkbox" value="1" />',
-            $this->view->Form->checkbox('checkbox', [
-                'id' => 'other',
-            ])
-        );
-    }
-
-    public function testCheckboxIdFalse(): void
-    {
-        $this->assertSame(
-            '<input name="checkbox" type="hidden" value="0" /><input name="checkbox" type="checkbox" value="1" />',
-            $this->view->Form->checkbox('checkbox', [
-                'id' => false,
-            ])
-        );
-    }
-
     public function testCheckboxIdPrefix(): void
     {
         $this->view->Form->open(idPrefix: 'test');
@@ -161,26 +173,6 @@ trait CheckboxTestTrait
         $this->assertSame(
             '<input name="checkbox" type="hidden" value="0" /><input id="test-checkbox" name="checkbox" type="checkbox" value="1" />',
             $this->view->Form->checkbox('checkbox')
-        );
-    }
-
-    public function testCheckboxName(): void
-    {
-        $this->assertSame(
-            '<input name="other" type="hidden" value="0" /><input id="checkbox" name="other" type="checkbox" value="1" />',
-            $this->view->Form->checkbox('checkbox', [
-                'name' => 'other',
-            ])
-        );
-    }
-
-    public function testCheckboxNameFalse(): void
-    {
-        $this->assertSame(
-            '<input id="checkbox" type="checkbox" value="1" />',
-            $this->view->Form->checkbox('checkbox', [
-                'name' => false,
-            ])
         );
     }
 

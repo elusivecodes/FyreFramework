@@ -31,6 +31,18 @@ final class RequestTest extends TestCase
         ];
     }
 
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function invalidDigestProvider(): array
+    {
+        return [
+            'with auth digest invalid' => ['Digest realm="test"', 'WWW-Authenticate header is not valid.'],
+            'algorithm' => ['Digest realm="test", nonce="nonce", algorithm=invalid', 'Algorithm `invalid` is not supported'],
+            'qop' => ['Digest realm="test", nonce="nonce", qop="invalid"', 'QOP `invalid` is not supported.'],
+        ];
+    }
+
     #[DataProvider('digestAlgorithmProvider')]
     public function testWithAuthDigest(string $algorithm, string $hashAlgorithm, bool $session): void
     {
@@ -94,42 +106,15 @@ final class RequestTest extends TestCase
         );
     }
 
-    public function testWithAuthDigestInvalid(): void
+    #[DataProvider('invalidDigestProvider')]
+    public function testWithAuthDigestInvalid(string $header, string $message): void
     {
         $this->expectException(RequestException::class);
-        $this->expectExceptionMessageIs('WWW-Authenticate header is not valid.');
+        $this->expectExceptionMessageIs($message);
 
         $request = new Request('https://example.com');
 
-        $request->withAuthDigest('Digest realm="test"', 'username', 'password');
-    }
-
-    public function testWithAuthDigestInvalidAlgorithm(): void
-    {
-        $this->expectException(RequestException::class);
-        $this->expectExceptionMessageIs('Algorithm `invalid` is not supported');
-
-        $request = new Request('https://example.com');
-
-        $request->withAuthDigest(
-            'Digest realm="test", nonce="nonce", algorithm=invalid',
-            'username',
-            'password'
-        );
-    }
-
-    public function testWithAuthDigestInvalidQop(): void
-    {
-        $this->expectException(RequestException::class);
-        $this->expectExceptionMessageIs('QOP `invalid` is not supported.');
-
-        $request = new Request('https://example.com');
-
-        $request->withAuthDigest(
-            'Digest realm="test", nonce="nonce", qop="invalid"',
-            'username',
-            'password'
-        );
+        $request->withAuthDigest($header, 'username', 'password');
     }
 
     public function testWithDataUploadedFile(): void

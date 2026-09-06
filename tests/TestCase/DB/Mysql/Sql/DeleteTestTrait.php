@@ -4,15 +4,35 @@ declare(strict_types=1);
 namespace Tests\TestCase\DB\Mysql\Sql;
 
 use BadMethodCallException;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait DeleteTestTrait
 {
-    public function testDelete(): void
+    /**
+     * @return array<string, array{string, array<array-key, mixed>|string}>
+     */
+    public static function deleteProvider(): array
+    {
+        return [
+            'default' => ['DELETE FROM `test`', 'test'],
+            'multiple tables' => [
+                'DELETE `alt`, `alt2` FROM `test` AS `alt`, `test2` AS `alt2`',
+                ['alt' => 'test', 'alt2' => 'test2'],
+            ],
+            'tables' => ['DELETE FROM `test` AS `alt`', ['alt' => 'test']],
+        ];
+    }
+
+    /**
+     * @param array<array-key, mixed>|string $table
+     */
+    #[DataProvider('deleteProvider')]
+    public function testDelete(string $expected, array|string $table): void
     {
         $this->assertSame(
-            'DELETE FROM `test`',
+            $expected,
             $this->db->delete()
-                ->from('test')
+                ->from($table)
                 ->sql()
         );
     }
@@ -154,19 +174,6 @@ trait DeleteTestTrait
         );
     }
 
-    public function testDeleteMultipleTables(): void
-    {
-        $this->assertSame(
-            'DELETE `alt`, `alt2` FROM `test` AS `alt`, `test2` AS `alt2`',
-            $this->db->delete()
-                ->from([
-                    'alt' => 'test',
-                    'alt2' => 'test2',
-                ])
-                ->sql()
-        );
-    }
-
     public function testDeleteOrderBy(): void
     {
         $this->assertSame(
@@ -187,18 +194,6 @@ trait DeleteTestTrait
                 ->orderBy([
                     'id' => 'ASC',
                     'value' => 'DESC',
-                ])
-                ->sql()
-        );
-    }
-
-    public function testDeleteTables(): void
-    {
-        $this->assertSame(
-            'DELETE FROM `test` AS `alt`',
-            $this->db->delete()
-                ->from([
-                    'alt' => 'test',
                 ])
                 ->sql()
         );

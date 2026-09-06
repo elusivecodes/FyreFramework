@@ -15,6 +15,7 @@ use Fyre\Event\EventManager;
 use Fyre\Utility\DateTime\Date;
 use Fyre\Utility\Inflector;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Commands\ArgumentsCommand;
 use Tests\Mock\Commands\BoolOptionsCommand;
@@ -49,6 +50,18 @@ final class CommandRunnerTest extends TestCase
     protected $output;
 
     protected CommandRunner $runner;
+
+    /**
+     * @return array<string, array{list<string>}>
+     */
+    public static function commandArgumentsProvider(): array
+    {
+        return [
+            'handle command arguments' => [['', 'arguments', 'value']],
+            'named' => [['', 'arguments', '--value', 'value']],
+            'named equals' => [['', 'arguments', '--value=value']],
+        ];
+    }
 
     public function testAll(): void
     {
@@ -272,27 +285,15 @@ final class CommandRunnerTest extends TestCase
         );
     }
 
-    public function testHandleCommandArguments(): void
+    /**
+     * @param list<string> $arguments
+     */
+    #[DataProvider('commandArgumentsProvider')]
+    public function testHandleCommandArguments(array $arguments): void
     {
         $this->assertSame(
             0,
-            $this->runner->handle(['', 'arguments', 'value'])
-        );
-    }
-
-    public function testHandleCommandArgumentsNamed(): void
-    {
-        $this->assertSame(
-            0,
-            $this->runner->handle(['', 'arguments', '--value', 'value'])
-        );
-    }
-
-    public function testHandleCommandArgumentsNamedEquals(): void
-    {
-        $this->assertSame(
-            0,
-            $this->runner->handle(['', 'arguments', '--value=value'])
+            $this->runner->handle($arguments)
         );
     }
 

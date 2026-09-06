@@ -73,6 +73,18 @@ final class AuthenticatorTest extends TestCase
     }
 
     /**
+     * @return array<string, array{array{}|string}>
+     */
+    public static function invalidCookieDataProvider(): array
+    {
+        return [
+            'JSON string' => [rawurlencode('"invalid"')],
+            'nested arrays' => [rawurlencode('[[],[]]')],
+            'array cookie' => [[]],
+        ];
+    }
+
+    /**
      * @return array<string, array{string, array<string, int>}>
      */
     public static function invalidCookieHashOptionsProvider(): array
@@ -290,33 +302,53 @@ final class AuthenticatorTest extends TestCase
         );
     }
 
-    public function testCookieAuthenticatorInvalidData(): void
+    /**
+     * @param array{}|string $value
+     */
+    #[DataProvider('invalidCookieDataProvider')]
+    public function testCookieAuthenticatorInvalidData(array|string $value): void
     {
-        foreach ([rawurlencode('"invalid"'), rawurlencode('[[],[]]'), []] as $value) {
-            $authenticator = $this->container->build(CookieAuthenticator::class);
+        $authenticator = $this->container->build(CookieAuthenticator::class);
 
-            $request = $this->container->build(ServerRequest::class, [
-                'options' => [
-                    'cookies' => [
-                        'auth' => $value,
-                    ],
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'cookies' => [
+                    'auth' => $value,
                 ],
-            ]);
+            ],
+        ]);
 
-            $this->assertNull(
-                $authenticator->authenticate($request)
-            );
+        $this->assertNull(
+            $authenticator->authenticate($request)
+        );
+    }
 
-            $response = $authenticator->beforeResponse(new ClientResponse());
+    /**
+     * @param array{}|string $value
+     */
+    #[DataProvider('invalidCookieDataProvider')]
+    public function testCookieAuthenticatorInvalidDataExpiresCookie(array|string $value): void
+    {
+        $authenticator = $this->container->build(CookieAuthenticator::class);
 
-            [$cookieString] = $response->getHeader('Set-Cookie');
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'cookies' => [
+                    'auth' => $value,
+                ],
+            ],
+        ]);
 
-            $cookie = Cookie::createFromHeaderString($cookieString);
+        $authenticator->authenticate($request);
+        $response = $authenticator->beforeResponse(new ClientResponse());
 
-            $this->assertTrue(
-                $cookie->isExpired()
-            );
-        }
+        [$cookieString] = $response->getHeader('Set-Cookie');
+
+        $cookie = Cookie::createFromHeaderString($cookieString);
+
+        $this->assertTrue(
+            $cookie->isExpired()
+        );
     }
 
     /**

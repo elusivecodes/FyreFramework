@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\ORM\Shared\Model;
 
 use Fyre\ORM\Queries\SelectQuery;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Mock\Entities\Post;
 use Tests\Mock\Entities\User;
 
@@ -11,6 +12,26 @@ use function array_map;
 
 trait HasManyTestTrait
 {
+    /**
+     * @return array<string, array{array<array-key, mixed>}>
+     */
+    public static function hasManyFindProvider(): array
+    {
+        return [
+            'find' => [['Posts']],
+            'strategy cte' => [
+                [
+                    'Posts' => ['strategy' => 'cte'],
+                ],
+            ],
+            'strategy subquery' => [
+                [
+                    'Posts' => ['strategy' => 'subquery'],
+                ],
+            ],
+        ];
+    }
+
     public function testHasManyAppend(): void
     {
         $Users = $this->modelRegistry->use('Users');
@@ -308,7 +329,11 @@ trait HasManyTestTrait
         );
     }
 
-    public function testHasManyFind(): void
+    /**
+     * @param array<array-key, mixed> $contain
+     */
+    #[DataProvider('hasManyFindProvider')]
+    public function testHasManyFind(array $contain): void
     {
         $Users = $this->modelRegistry->use('Users');
 
@@ -330,9 +355,7 @@ trait HasManyTestTrait
             $Users->save($user)
         );
 
-        $user = $Users->get(1, contain: [
-            'Posts',
-        ]);
+        $user = $Users->get(1, contain: $contain);
 
         $this->assertInstanceOf(
             User::class,
@@ -1243,144 +1266,6 @@ trait HasManyTestTrait
 
         $this->assertArraysAreIdentical(
             [2, 1],
-            array_map(
-                static fn(Post $post): int|null => $post->id,
-                $user->posts
-            )
-        );
-
-        $this->assertFalse(
-            $user->isNew()
-        );
-
-        $this->assertFalse(
-            $user->posts[0]->isNew()
-        );
-
-        $this->assertFalse(
-            $user->posts[1]->isNew()
-        );
-    }
-
-    public function testHasManyStrategyCte(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $user = $Users->newEntity([
-            'name' => 'Test',
-            'posts' => [
-                [
-                    'title' => 'Test 1',
-                    'content' => 'This is the content.',
-                ],
-                [
-                    'title' => 'Test 2',
-                    'content' => 'This is the content.',
-                ],
-            ],
-        ]);
-
-        $this->assertTrue(
-            $Users->save($user)
-        );
-
-        $user = $Users->get(1, contain: [
-            'Posts' => [
-                'strategy' => 'cte',
-            ],
-        ]);
-
-        $this->assertInstanceOf(
-            User::class,
-            $user
-        );
-
-        $this->assertInstanceOf(
-            Post::class,
-            $user->posts[0]
-        );
-
-        $this->assertInstanceOf(
-            Post::class,
-            $user->posts[1]
-        );
-
-        $this->assertSame(
-            1,
-            $user->id
-        );
-
-        $this->assertArraysAreIdentical(
-            [1, 2],
-            array_map(
-                static fn(Post $post): int|null => $post->id,
-                $user->posts
-            )
-        );
-
-        $this->assertFalse(
-            $user->isNew()
-        );
-
-        $this->assertFalse(
-            $user->posts[0]->isNew()
-        );
-
-        $this->assertFalse(
-            $user->posts[1]->isNew()
-        );
-    }
-
-    public function testHasManyStrategySubquery(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $user = $Users->newEntity([
-            'name' => 'Test',
-            'posts' => [
-                [
-                    'title' => 'Test 1',
-                    'content' => 'This is the content.',
-                ],
-                [
-                    'title' => 'Test 2',
-                    'content' => 'This is the content.',
-                ],
-            ],
-        ]);
-
-        $this->assertTrue(
-            $Users->save($user)
-        );
-
-        $user = $Users->get(1, contain: [
-            'Posts' => [
-                'strategy' => 'subquery',
-            ],
-        ]);
-
-        $this->assertInstanceOf(
-            User::class,
-            $user
-        );
-
-        $this->assertInstanceOf(
-            Post::class,
-            $user->posts[0]
-        );
-
-        $this->assertInstanceOf(
-            Post::class,
-            $user->posts[1]
-        );
-
-        $this->assertSame(
-            1,
-            $user->id
-        );
-
-        $this->assertArraysAreIdentical(
-            [1, 2],
             array_map(
                 static fn(Post $post): int|null => $post->id,
                 $user->posts

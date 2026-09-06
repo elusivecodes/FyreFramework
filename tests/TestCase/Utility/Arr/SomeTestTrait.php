@@ -3,40 +3,46 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\Arr;
 
+use Closure;
 use Fyre\Utility\Arr;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait SomeTestTrait
 {
-    public function testSome(): void
+    /**
+     * @return array<string, array{int[], Closure(int, int): bool, bool}>
+     */
+    public static function someProvider(): array
     {
-        $this->assertTrue(
-            Arr::some(
+        return [
+            'matching' => [
                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                static fn(int $value, int $key): bool => $value === 5
-            )
-        );
-    }
-
-    public function testSomeEmpty(): void
-    {
-        $this->assertFalse(
-            Arr::some(
+                static fn(int $value, int $key): bool => $value === 5,
+                true,
+            ],
+            'empty' => [
                 [],
-                static fn(int $value, int $key): bool => false
-            )
-        );
+                static fn(int $value, int $key): bool => false,
+                false,
+            ],
+            'nonmatching' => [
+                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                static fn(int $value, int $key): bool => $value === 11,
+                false,
+            ],
+        ];
     }
 
-    public function testSomeFalse(): void
+    /**
+     * @param int[] $values
+     * @param Closure(int, int): bool $callback
+     */
+    #[DataProvider('someProvider')]
+    public function testSome(array $values, Closure $callback, bool $expected): void
     {
-        /** @var int[] $values */
-        $values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-
-        $this->assertFalse(
-            Arr::some(
-                $values,
-                static fn(int $value, int $key): bool => $value === 11
-            )
+        $this->assertSame(
+            $expected,
+            Arr::some($values, $callback)
         );
     }
 }

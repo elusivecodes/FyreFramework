@@ -35,6 +35,33 @@ final class ClientTest extends TestCase
     protected MockHandler $handler;
 
     /**
+     * @return array<string, array{array<string, int>, string}>
+     */
+    public static function invalidOptionsProvider(): array
+    {
+        return [
+            'negative redirect body size' => [
+                [
+                    'maxRedirectBodySize' => -1,
+                ],
+                'Client option `maxRedirectBodySize` must not be negative.',
+            ],
+            'negative redirect limit' => [
+                [
+                    'maxRedirects' => -1,
+                ],
+                'Client option `maxRedirects` must not be negative.',
+            ],
+            'negative timeout' => [
+                [
+                    'timeout' => -1,
+                ],
+                'Client option `timeout` must not be negative.',
+            ],
+        ];
+    }
+
+    /**
      * @return array<string, array{string, string, string}>
      */
     public static function redirectLocationProvider(): array
@@ -50,6 +77,20 @@ final class ClientTest extends TestCase
             'absolute path' => ['/other', 'https://example.com/other', '/other'],
             'absolute URL' => ['https://other.example.com/page', 'https://other.example.com/page', '/page'],
             'network path' => ['//other.example.com/page', 'https://other.example.com/page', '/page'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{int, string, string, string}>
+     */
+    public static function redirectMethodProvider(): array
+    {
+        return [
+            '301 POST' => [301, 'POST', 'GET', ''],
+            '302 POST' => [302, 'POST', 'GET', ''],
+            '303 PUT' => [303, 'PUT', 'GET', ''],
+            '307 POST' => [307, 'POST', 'POST', 'value'],
+            '308 POST' => [308, 'POST', 'POST', 'value'],
         ];
     }
 
@@ -449,70 +490,30 @@ final class ClientTest extends TestCase
         ]);
     }
 
-    public function testInvalidMaxRedirectBodySize(): void
+    /**
+     * @param array<string, int> $options
+     */
+    #[DataProvider('invalidOptionsProvider')]
+    public function testInvalidOptions(array $options, string $message): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageIs('Client option `maxRedirectBodySize` must not be negative.');
+        $this->expectExceptionMessageIs($message);
 
-        new Client([
-            'maxRedirectBodySize' => -1,
-        ]);
+        new Client($options);
     }
 
-    public function testInvalidMaxRedirects(): void
+    /**
+     * @param array<string, int> $options
+     */
+    #[DataProvider('invalidOptionsProvider')]
+    public function testInvalidRequestOptions(array $options, string $message): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageIs('Client option `maxRedirects` must not be negative.');
-
-        new Client([
-            'maxRedirects' => -1,
-        ]);
-    }
-
-    public function testInvalidRequestMaxRedirectBodySize(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageIs('Client option `maxRedirectBodySize` must not be negative.');
+        $this->expectExceptionMessageIs($message);
 
         $request = new Request('https://example.com');
 
-        $this->client->send($request, [
-            'maxRedirectBodySize' => -1,
-        ]);
-    }
-
-    public function testInvalidRequestMaxRedirects(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageIs('Client option `maxRedirects` must not be negative.');
-
-        $request = new Request('https://example.com');
-
-        $this->client->send($request, [
-            'maxRedirects' => -1,
-        ]);
-    }
-
-    public function testInvalidRequestTimeout(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageIs('Client option `timeout` must not be negative.');
-
-        $request = new Request('https://example.com');
-
-        $this->client->send($request, [
-            'timeout' => -1,
-        ]);
-    }
-
-    public function testInvalidTimeout(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageIs('Client option `timeout` must not be negative.');
-
-        new Client([
-            'timeout' => -1,
-        ]);
+        $this->client->send($request, $options);
     }
 
     public function testJsonData(): void
@@ -906,6 +907,14 @@ final class ClientTest extends TestCase
         );
     }
 
+    #[DataProvider('redirectMethodProvider')]
+    public function testRedirectBody(int $statusCode, string $method, string $expectedMethod, string $expectedBody): void
+    {
+        $request = $this->getRedirectedRequest($statusCode, $method, $expectedMethod);
+
+        $this->assertSame($expectedBody, (string) $request->getBody());
+    }
+
     public function testRedirectBodySizeLimit(): void
     {
         $this->expectException(RequestException::class);
@@ -937,6 +946,17 @@ final class ClientTest extends TestCase
             'maxRedirects' => 1,
             'maxRedirectBodySize' => 4,
         ]);
+    }
+
+    #[DataProvider('redirectMethodProvider')]
+    public function testRedirectContentType(int $statusCode, string $method, string $expectedMethod, string $expectedBody): void
+    {
+        $request = $this->getRedirectedRequest($statusCode, $method, $expectedMethod);
+
+        $this->assertSame(
+            $expectedBody === '' ? '' : 'text/plain',
+            $request->getHeaderLine('Content-Type')
+        );
     }
 
     public function testRedirectEmptyLocation(): void
@@ -1104,77 +1124,6 @@ final class ClientTest extends TestCase
         $this->client->get('https://example.com/redirect-invalid', options: [
             'maxRedirects' => 1,
         ]);
-    }
-
-    public function testRedirectMethodSemantics(): void
-    {
-        $cases = [
-            [301, 'POST', 'GET', ''],
-            [302, 'POST', 'GET', ''],
-            [303, 'PUT', 'GET', ''],
-            [307, 'POST', 'POST', 'value'],
-            [308, 'POST', 'POST', 'value'],
-        ];
-
-        foreach ($cases as [$statusCode, $method, $expectedMethod, $expectedBody]) {
-            $handler = new MockHandler();
-
-            $redirectResponse = new Response([
-                'statusCode' => $statusCode,
-                'headers' => [
-                    'Location' => '/redirect-target?value=1',
-                ],
-            ]);
-
-            $handler->addResponse(
-                $method,
-                'https://example.com/redirect-method?status='.$statusCode,
-                $redirectResponse
-            );
-
-            $mockResponse = new Response();
-
-            $handler->addResponse(
-                $expectedMethod,
-                'https://example.com/redirect-target?value=1',
-                $mockResponse,
-                function(RequestInterface $request) use ($expectedBody): bool {
-                    $this->assertSame(
-                        $expectedBody,
-                        (string) $request->getBody()
-                    );
-
-                    $this->assertSame(
-                        $expectedBody === '' ? '' : 'text/plain',
-                        $request->getHeaderLine('Content-Type')
-                    );
-
-                    return true;
-                }
-            );
-
-            $client = new Client([
-                'handler' => $handler,
-            ]);
-
-            $request = new Request(
-                'https://example.com/redirect-method?status='.$statusCode,
-                [
-                    'method' => $method,
-                    'body' => 'value',
-                    'headers' => [
-                        'Content-Length' => '5',
-                        'Content-Type' => 'text/plain',
-                    ],
-                ]
-            );
-
-            $response = $client->send($request, [
-                'maxRedirects' => 1,
-            ]);
-
-            $this->assertSame($mockResponse, $response);
-        }
     }
 
     public function testRedirectNonSeekableBody(): void
@@ -1465,6 +1414,57 @@ final class ClientTest extends TestCase
             $mockResponse,
             $this->client->trace('https://example.com/trace')
         );
+    }
+
+    protected function getRedirectedRequest(int $statusCode, string $method, string $expectedMethod): RequestInterface
+    {
+        $redirectResponse = new Response([
+            'statusCode' => $statusCode,
+            'headers' => [
+                'Location' => '/redirect-target?value=1',
+            ],
+        ]);
+
+        $this->handler->addResponse(
+            $method,
+            'https://example.com/redirect-method?status='.$statusCode,
+            $redirectResponse
+        );
+
+        $mockResponse = new Response();
+        $redirectedRequest = null;
+
+        $this->handler->addResponse(
+            $expectedMethod,
+            'https://example.com/redirect-target?value=1',
+            $mockResponse,
+            static function(RequestInterface $request) use (&$redirectedRequest): bool {
+                $redirectedRequest = $request;
+
+                return true;
+            }
+        );
+
+        $request = new Request(
+            'https://example.com/redirect-method?status='.$statusCode,
+            [
+                'method' => $method,
+                'body' => 'value',
+                'headers' => [
+                    'Content-Length' => '5',
+                    'Content-Type' => 'text/plain',
+                ],
+            ]
+        );
+
+        $response = $this->client->send($request, [
+            'maxRedirects' => 1,
+        ]);
+
+        $this->assertSame($mockResponse, $response);
+        $this->assertInstanceOf(RequestInterface::class, $redirectedRequest);
+
+        return $redirectedRequest;
     }
 
     #[Override]

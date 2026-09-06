@@ -36,15 +36,60 @@ trait TimeTestTrait
                 ['id' => 'other', 'class' => 'test'],
                 '<input class="test" id="other" name="time" type="time" />',
             ],
+            'id' => [
+                ['id' => 'other'],
+                '<input id="other" name="time" type="time" />',
+            ],
+            'id false' => [
+                ['id' => false],
+                '<input name="time" type="time" />',
+            ],
+            'name' => [
+                ['name' => 'other'],
+                '<input id="time" name="other" type="time" />',
+            ],
+            'name false' => [
+                ['name' => false],
+                '<input id="time" type="time" />',
+            ],
         ];
     }
 
-    public function testTime(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function timeFieldNameProvider(): array
     {
-        $this->assertSame(
-            '<input id="time-value" name="time_value" type="time" />',
-            $this->view->Form->time('time_value')
-        );
+        return [
+            'flat' => ['time_value', '<input id="time-value" name="time_value" type="time" />'],
+            'dotted' => ['key.time_value', '<input id="key-time-value" name="key[time_value]" type="time" />'],
+            'deeply dotted' => ['deep.key.time_value', '<input id="deep-key-time-value" name="deep[key][time_value]" type="time" />'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, string, string}>
+     */
+    public static function timeValuePostProvider(): array
+    {
+        return [
+            'flat' => [
+                [
+                    'time' => '00:00',
+                ],
+                'time',
+                '<input id="time" name="time" type="time" value="00:00" />',
+            ],
+            'dotted' => [
+                [
+                    'key' => [
+                        'time' => '00:00',
+                    ],
+                ],
+                'key.time',
+                '<input id="key-time" name="key[time]" type="time" value="00:00" />',
+            ],
+        ];
     }
 
     /**
@@ -59,39 +104,12 @@ trait TimeTestTrait
         );
     }
 
-    public function testTimeDot(): void
+    #[DataProvider('timeFieldNameProvider')]
+    public function testTimeFieldName(string $field, string $expected): void
     {
         $this->assertSame(
-            '<input id="key-time-value" name="key[time_value]" type="time" />',
-            $this->view->Form->time('key.time_value')
-        );
-    }
-
-    public function testTimeDotDeep(): void
-    {
-        $this->assertSame(
-            '<input id="deep-key-time-value" name="deep[key][time_value]" type="time" />',
-            $this->view->Form->time('deep.key.time_value')
-        );
-    }
-
-    public function testTimeId(): void
-    {
-        $this->assertSame(
-            '<input id="other" name="time" type="time" />',
-            $this->view->Form->time('time', [
-                'id' => 'other',
-            ])
-        );
-    }
-
-    public function testTimeIdFalse(): void
-    {
-        $this->assertSame(
-            '<input name="time" type="time" />',
-            $this->view->Form->time('time', [
-                'id' => false,
-            ])
+            $expected,
+            $this->view->Form->time($field)
         );
     }
 
@@ -102,26 +120,6 @@ trait TimeTestTrait
         $this->assertSame(
             '<input id="test-time" name="time" type="time" />',
             $this->view->Form->time('time')
-        );
-    }
-
-    public function testTimeName(): void
-    {
-        $this->assertSame(
-            '<input id="time" name="other" type="time" />',
-            $this->view->Form->time('time', [
-                'name' => 'other',
-            ])
-        );
-    }
-
-    public function testTimeNameFalse(): void
-    {
-        $this->assertSame(
-            '<input id="time" type="time" />',
-            $this->view->Form->time('time', [
-                'name' => false,
-            ])
         );
     }
 
@@ -137,35 +135,20 @@ trait TimeTestTrait
         );
     }
 
-    public function testTimeValuePost(): void
+    /**
+     * @param array<string, mixed> $data
+     */
+    #[DataProvider('timeValuePostProvider')]
+    public function testTimeValuePost(array $data, string $field, string $expected): void
     {
-        Closure::bind(function(): void {
+        Closure::bind(function() use ($data): void {
             /** @var View $this */
-            $this->request = $this->request->withParsedBody([
-                'time' => '00:00',
-            ]);
+            $this->request = $this->request->withParsedBody($data);
         }, $this->view, View::class)();
 
         $this->assertSame(
-            '<input id="time" name="time" type="time" value="00:00" />',
-            $this->view->Form->time('time')
-        );
-    }
-
-    public function testTimeValuePostDot(): void
-    {
-        Closure::bind(function(): void {
-            /** @var View $this */
-            $this->request = $this->request->withParsedBody([
-                'key' => [
-                    'time' => '00:00',
-                ],
-            ]);
-        }, $this->view, View::class)();
-
-        $this->assertSame(
-            '<input id="key-time" name="key[time]" type="time" value="00:00" />',
-            $this->view->Form->time('key.time')
+            $expected,
+            $this->view->Form->time($field)
         );
     }
 }

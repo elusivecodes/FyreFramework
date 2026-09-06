@@ -50,6 +50,17 @@ final class SmtpMailerTest extends TestCase
         ];
     }
 
+    /**
+     * @return array<string, array{string|null, string}>
+     */
+    public static function sendDataFailureProvider(): array
+    {
+        return [
+            'connection closed' => [null, 'SMTP connection closed unexpectedly.'],
+            'message rejected' => ['554 Message rejected', 'SMTP invalid reply: 554 Message rejected'],
+        ];
+    }
+
     public function testAuthenticate(): void
     {
         $this->replies = [
@@ -557,44 +568,17 @@ final class SmtpMailerTest extends TestCase
         }, $mailer, SmtpMailer::class)();
     }
 
-    public function testSendDataConnectionClosed(): void
+    #[DataProvider('sendDataFailureProvider')]
+    public function testSendDataFailure(string|null $reply, string $message): void
     {
         $this->expectException(MailException::class);
-        $this->expectExceptionMessageIs('SMTP connection closed unexpectedly.');
+        $this->expectExceptionMessageIs($message);
 
         $this->replies = [
             '250 From',
             '250 To',
             '354 Data',
-            new MailException('SMTP connection closed unexpectedly.'),
-        ];
-
-        Closure::bind(function(): void {
-            $socket = fopen('php://temp', 'r+');
-            TestCase::assertIsResource($socket);
-
-            /** @var SmtpMailer $this */
-            $this->socket = $socket;
-        }, $this->mailer, SmtpMailer::class)();
-
-        $email = $this->mailer->email()
-            ->setFrom('from@example.com')
-            ->setTo('to@example.com')
-            ->setBodyText('Test');
-
-        $this->mailer->send($email);
-    }
-
-    public function testSendDataRejected(): void
-    {
-        $this->expectException(MailException::class);
-        $this->expectExceptionMessageIs('SMTP invalid reply: 554 Message rejected');
-
-        $this->replies = [
-            '250 From',
-            '250 To',
-            '354 Data',
-            '554 Message rejected',
+            $reply ?? new MailException('SMTP connection closed unexpectedly.'),
         ];
 
         Closure::bind(function(): void {

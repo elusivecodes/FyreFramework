@@ -36,15 +36,66 @@ trait DateTimeTestTrait
                 ['id' => 'other', 'class' => 'test'],
                 '<input class="test" id="other" name="datetime" type="datetime-local" />',
             ],
+            'id' => [
+                ['id' => 'other'],
+                '<input id="other" name="datetime" type="datetime-local" />',
+            ],
+            'id false' => [
+                ['id' => false],
+                '<input name="datetime" type="datetime-local" />',
+            ],
+            'name' => [
+                ['name' => 'other'],
+                '<input id="datetime" name="other" type="datetime-local" />',
+            ],
+            'name false' => [
+                ['name' => false],
+                '<input id="datetime" type="datetime-local" />',
+            ],
         ];
     }
 
-    public function testDateTime(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function dateTimeFieldNameProvider(): array
     {
-        $this->assertSame(
-            '<input id="datetime-value" name="datetime_value" type="datetime-local" />',
-            $this->view->Form->datetime('datetime_value')
-        );
+        return [
+            'flat' => ['datetime_value', '<input id="datetime-value" name="datetime_value" type="datetime-local" />'],
+            'dotted' => [
+                'key.datetime_value',
+                '<input id="key-datetime-value" name="key[datetime_value]" type="datetime-local" />',
+            ],
+            'deeply dotted' => [
+                'deep.key.datetime_value',
+                '<input id="deep-key-datetime-value" name="deep[key][datetime_value]" type="datetime-local" />',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, string, string}>
+     */
+    public static function dateTimeValuePostProvider(): array
+    {
+        return [
+            'flat' => [
+                [
+                    'datetime' => '2022-01-01T00:00',
+                ],
+                'datetime',
+                '<input id="datetime" name="datetime" type="datetime-local" value="2022-01-01T00:00" />',
+            ],
+            'dotted' => [
+                [
+                    'key' => [
+                        'datetime' => '2022-01-01T00:00',
+                    ],
+                ],
+                'key.datetime',
+                '<input id="key-datetime" name="key[datetime]" type="datetime-local" value="2022-01-01T00:00" />',
+            ],
+        ];
     }
 
     /**
@@ -59,39 +110,12 @@ trait DateTimeTestTrait
         );
     }
 
-    public function testDateTimeDot(): void
+    #[DataProvider('dateTimeFieldNameProvider')]
+    public function testDateTimeFieldName(string $field, string $expected): void
     {
         $this->assertSame(
-            '<input id="key-datetime-value" name="key[datetime_value]" type="datetime-local" />',
-            $this->view->Form->datetime('key.datetime_value')
-        );
-    }
-
-    public function testDateTimeDotDeep(): void
-    {
-        $this->assertSame(
-            '<input id="deep-key-datetime-value" name="deep[key][datetime_value]" type="datetime-local" />',
-            $this->view->Form->datetime('deep.key.datetime_value')
-        );
-    }
-
-    public function testDateTimeId(): void
-    {
-        $this->assertSame(
-            '<input id="other" name="datetime" type="datetime-local" />',
-            $this->view->Form->datetime('datetime', [
-                'id' => 'other',
-            ])
-        );
-    }
-
-    public function testDateTimeIdFalse(): void
-    {
-        $this->assertSame(
-            '<input name="datetime" type="datetime-local" />',
-            $this->view->Form->datetime('datetime', [
-                'id' => false,
-            ])
+            $expected,
+            $this->view->Form->datetime($field)
         );
     }
 
@@ -102,26 +126,6 @@ trait DateTimeTestTrait
         $this->assertSame(
             '<input id="test-datetime" name="datetime" type="datetime-local" />',
             $this->view->Form->datetime('datetime')
-        );
-    }
-
-    public function testDateTimeName(): void
-    {
-        $this->assertSame(
-            '<input id="datetime" name="other" type="datetime-local" />',
-            $this->view->Form->datetime('datetime', [
-                'name' => 'other',
-            ])
-        );
-    }
-
-    public function testDateTimeNameFalse(): void
-    {
-        $this->assertSame(
-            '<input id="datetime" type="datetime-local" />',
-            $this->view->Form->datetime('datetime', [
-                'name' => false,
-            ])
         );
     }
 
@@ -137,35 +141,20 @@ trait DateTimeTestTrait
         );
     }
 
-    public function testDateTimeValuePost(): void
+    /**
+     * @param array<string, mixed> $data
+     */
+    #[DataProvider('dateTimeValuePostProvider')]
+    public function testDateTimeValuePost(array $data, string $field, string $expected): void
     {
-        Closure::bind(function(): void {
+        Closure::bind(function() use ($data): void {
             /** @var View $this */
-            $this->request = $this->request->withParsedBody([
-                'datetime' => '2022-01-01T00:00',
-            ]);
+            $this->request = $this->request->withParsedBody($data);
         }, $this->view, View::class)();
 
         $this->assertSame(
-            '<input id="datetime" name="datetime" type="datetime-local" value="2022-01-01T00:00" />',
-            $this->view->Form->datetime('datetime')
-        );
-    }
-
-    public function testDateTimeValuePostDot(): void
-    {
-        Closure::bind(function(): void {
-            /** @var View $this */
-            $this->request = $this->request->withParsedBody([
-                'key' => [
-                    'datetime' => '2022-01-01T00:00',
-                ],
-            ]);
-        }, $this->view, View::class)();
-
-        $this->assertSame(
-            '<input id="key-datetime" name="key[datetime]" type="datetime-local" value="2022-01-01T00:00" />',
-            $this->view->Form->datetime('key.datetime')
+            $expected,
+            $this->view->Form->datetime($field)
         );
     }
 }

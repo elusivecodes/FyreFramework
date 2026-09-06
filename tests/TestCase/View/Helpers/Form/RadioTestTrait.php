@@ -35,17 +35,63 @@ trait RadioTestTrait
                 ['id' => 'other', 'class' => 'test', 'value' => '1'],
                 '<input class="test" id="other" name="radio" type="radio" value="1" />',
             ],
+            'id' => [
+                ['id' => 'other', 'value' => '1'],
+                '<input id="other" name="radio" type="radio" value="1" />',
+            ],
+            'id false' => [
+                ['id' => false, 'value' => '1'],
+                '<input name="radio" type="radio" value="1" />',
+            ],
+            'name' => [
+                ['name' => 'other', 'value' => '1'],
+                '<input id="radio" name="other" type="radio" value="1" />',
+            ],
+            'name false' => [
+                ['name' => false, 'value' => '1'],
+                '<input id="radio" type="radio" value="1" />',
+            ],
         ];
     }
 
-    public function testRadio(): void
+    /**
+     * @return array<string, array{array<string, mixed>, string, string}>
+     */
+    public static function radioCheckedPostProvider(): array
     {
-        $this->assertSame(
-            '<input id="radio-value" name="radio_value" type="radio" value="1" />',
-            $this->view->Form->radio('radio_value', [
-                'value' => '1',
-            ])
-        );
+        return [
+            'flat' => [
+                [
+                    'radio' => '1',
+                ],
+                'radio',
+                '<input id="radio" name="radio" type="radio" value="1" checked />',
+            ],
+            'dotted' => [
+                [
+                    'key' => [
+                        'radio' => '1',
+                    ],
+                ],
+                'key.radio',
+                '<input id="key-radio" name="key[radio]" type="radio" value="1" checked />',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function radioFieldNameProvider(): array
+    {
+        return [
+            'flat' => ['radio_value', '<input id="radio-value" name="radio_value" type="radio" value="1" />'],
+            'dotted' => ['key.radio_value', '<input id="key-radio-value" name="key[radio_value]" type="radio" value="1" />'],
+            'deeply dotted' => [
+                'deep.key.radio_value',
+                '<input id="deep-key-radio-value" name="deep[key][radio_value]" type="radio" value="1" />',
+            ],
+        ];
     }
 
     /**
@@ -82,79 +128,31 @@ trait RadioTestTrait
         );
     }
 
-    public function testRadioCheckedPost(): void
+    /**
+     * @param array<string, mixed> $data
+     */
+    #[DataProvider('radioCheckedPostProvider')]
+    public function testRadioCheckedPost(array $data, string $field, string $expected): void
     {
-        Closure::bind(function(): void {
+        Closure::bind(function() use ($data): void {
             /** @var View $this */
-            $this->request = $this->request->withParsedBody([
-                'radio' => '1',
-            ]);
+            $this->request = $this->request->withParsedBody($data);
         }, $this->view, View::class)();
 
         $this->assertSame(
-            '<input id="radio" name="radio" type="radio" value="1" checked />',
-            $this->view->Form->radio('radio', [
+            $expected,
+            $this->view->Form->radio($field, [
                 'value' => '1',
             ])
         );
     }
 
-    public function testRadioCheckedPostDot(): void
-    {
-        Closure::bind(function(): void {
-            /** @var View $this */
-            $this->request = $this->request->withParsedBody([
-                'key' => [
-                    'radio' => '1',
-                ],
-            ]);
-        }, $this->view, View::class)();
-
-        $this->assertSame(
-            '<input id="key-radio" name="key[radio]" type="radio" value="1" checked />',
-            $this->view->Form->radio('key.radio', [
-                'value' => '1',
-            ])
-        );
-    }
-
-    public function testRadioDot(): void
+    #[DataProvider('radioFieldNameProvider')]
+    public function testRadioFieldName(string $field, string $expected): void
     {
         $this->assertSame(
-            '<input id="key-radio-value" name="key[radio_value]" type="radio" value="1" />',
-            $this->view->Form->radio('key.radio_value', [
-                'value' => '1',
-            ])
-        );
-    }
-
-    public function testRadioDotDeep(): void
-    {
-        $this->assertSame(
-            '<input id="deep-key-radio-value" name="deep[key][radio_value]" type="radio" value="1" />',
-            $this->view->Form->radio('deep.key.radio_value', [
-                'value' => '1',
-            ])
-        );
-    }
-
-    public function testRadioId(): void
-    {
-        $this->assertSame(
-            '<input id="other" name="radio" type="radio" value="1" />',
-            $this->view->Form->radio('radio', [
-                'id' => 'other',
-                'value' => '1',
-            ])
-        );
-    }
-
-    public function testRadioIdFalse(): void
-    {
-        $this->assertSame(
-            '<input name="radio" type="radio" value="1" />',
-            $this->view->Form->radio('radio', [
-                'id' => false,
+            $expected,
+            $this->view->Form->radio($field, [
                 'value' => '1',
             ])
         );
@@ -167,28 +165,6 @@ trait RadioTestTrait
         $this->assertSame(
             '<input id="test-radio" name="radio" type="radio" value="1" />',
             $this->view->Form->radio('radio', [
-                'value' => '1',
-            ])
-        );
-    }
-
-    public function testRadioName(): void
-    {
-        $this->assertSame(
-            '<input id="radio" name="other" type="radio" value="1" />',
-            $this->view->Form->radio('radio', [
-                'name' => 'other',
-                'value' => '1',
-            ])
-        );
-    }
-
-    public function testRadioNameFalse(): void
-    {
-        $this->assertSame(
-            '<input id="radio" type="radio" value="1" />',
-            $this->view->Form->radio('radio', [
-                'name' => false,
                 'value' => '1',
             ])
         );

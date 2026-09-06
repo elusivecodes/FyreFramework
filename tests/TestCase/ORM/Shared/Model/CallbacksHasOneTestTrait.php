@@ -3,12 +3,41 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\Shared\Model;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Mock\Entities\User;
 
 use function array_map;
 
 trait CallbacksHasOneTestTrait
 {
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function saveCallbackFailureHasOneProvider(): array
+    {
+        return [
+            'after rules has one' => ['failAfterRules'],
+            'after save has one' => ['failAfterSave'],
+            'before rules has one' => ['failBeforeRules'],
+            'before save has one' => ['failBeforeSave'],
+            'rules has one' => ['failRules'],
+            'validation has one' => [''],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function saveCallbackFailureManyHasOneProvider(): array
+    {
+        return [
+            'after rules many has one' => ['failAfterRules'],
+            'after save many has one' => ['failAfterSave'],
+            'before rules many has one' => ['failBeforeRules'],
+            'before save many has one' => ['failBeforeSave'],
+        ];
+    }
+
     public function testAfterParseHasOne(): void
     {
         $Users = $this->modelRegistry->use('Users');
@@ -48,198 +77,6 @@ trait CallbacksHasOneTestTrait
         $this->assertSame(
             1,
             $users[1]->address->get('test')
-        );
-    }
-
-    public function testAfterRulesHasOne(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $user = $Users->newEntity([
-            'name' => 'Test',
-            'address' => [
-                'suburb' => 'failAfterRules',
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Users->save($user)
-        );
-
-        $this->assertNull(
-            $user->id
-        );
-
-        $this->assertNull(
-            $user->address->id
-        );
-
-        $this->assertNull(
-            $user->address->user_id
-        );
-
-        $this->assertSame(
-            0,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Addresses')->find()->count()
-        );
-    }
-
-    public function testAfterRulesManyHasOne(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $users = $Users->newEntities([
-            [
-                'name' => 'Test 1',
-                'address' => [
-                    'suburb' => 'Test 1',
-                ],
-            ],
-            [
-                'name' => 'Test 2',
-                'address' => [
-                    'suburb' => 'failAfterRules',
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Users->saveMany($users)
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(User $user): int|null => $user->id,
-                $users
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(User $user): int|null => $user->address->id,
-                $users
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(User $user): int|null => $user->address->user_id,
-                $users
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Addresses')->find()->count()
-        );
-    }
-
-    public function testAfterSaveHasOne(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $user = $Users->newEntity([
-            'name' => 'Test',
-            'address' => [
-                'suburb' => 'failAfterSave',
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Users->save($user)
-        );
-
-        $this->assertNull(
-            $user->id
-        );
-
-        $this->assertNull(
-            $user->address->id
-        );
-
-        $this->assertNull(
-            $user->address->user_id
-        );
-
-        $this->assertSame(
-            0,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Addresses')->find()->count()
-        );
-    }
-
-    public function testAfterSaveManyHasOne(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $users = $Users->newEntities([
-            [
-                'name' => 'Test 1',
-                'address' => [
-                    'suburb' => 'Test 1',
-                ],
-            ],
-            [
-                'name' => 'Test 2',
-                'address' => [
-                    'suburb' => 'failAfterSave',
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Users->saveMany($users)
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(User $user): int|null => $user->id,
-                $users
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(User $user): int|null => $user->address->id,
-                $users
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(User $user): int|null => $user->address->user_id,
-                $users
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Addresses')->find()->count()
         );
     }
 
@@ -290,236 +127,6 @@ trait CallbacksHasOneTestTrait
         );
     }
 
-    public function testBeforeRulesHasOne(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $user = $Users->newEntity([
-            'name' => 'Test',
-            'address' => [
-                'suburb' => 'failBeforeRules',
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Users->save($user)
-        );
-
-        $this->assertNull(
-            $user->id
-        );
-
-        $this->assertNull(
-            $user->address->id
-        );
-
-        $this->assertNull(
-            $user->address->user_id
-        );
-
-        $this->assertSame(
-            0,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Addresses')->find()->count()
-        );
-    }
-
-    public function testBeforeRulesManyHasOne(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $users = $Users->newEntities([
-            [
-                'name' => 'Test 1',
-                'address' => [
-                    'suburb' => 'Test 1',
-                ],
-            ],
-            [
-                'name' => 'Test 2',
-                'address' => [
-                    'suburb' => 'failBeforeRules',
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Users->saveMany($users)
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(User $user): int|null => $user->id,
-                $users
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(User $user): int|null => $user->address->id,
-                $users
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(User $user): int|null => $user->address->user_id,
-                $users
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Addresses')->find()->count()
-        );
-    }
-
-    public function testBeforeSaveHasOne(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $user = $Users->newEntity([
-            'name' => 'Test',
-            'address' => [
-                'suburb' => 'failBeforeSave',
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Users->save($user)
-        );
-
-        $this->assertNull(
-            $user->id
-        );
-
-        $this->assertNull(
-            $user->address->id
-        );
-
-        $this->assertNull(
-            $user->address->user_id
-        );
-
-        $this->assertSame(
-            0,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Addresses')->find()->count()
-        );
-    }
-
-    public function testBeforeSaveManyHasOne(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $users = $Users->newEntities([
-            [
-                'name' => 'Test 1',
-                'address' => [
-                    'suburb' => 'Test 1',
-                ],
-            ],
-            [
-                'name' => 'Test 2',
-                'address' => [
-                    'suburb' => 'failBeforeSave',
-                ],
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Users->saveMany($users)
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(User $user): int|null => $user->id,
-                $users
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(User $user): int|null => $user->address->id,
-                $users
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [null, null],
-            array_map(
-                static fn(User $user): int|null => $user->address->user_id,
-                $users
-            )
-        );
-
-        $this->assertSame(
-            0,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Addresses')->find()->count()
-        );
-    }
-
-    public function testRulesHasOne(): void
-    {
-        $Users = $this->modelRegistry->use('Users');
-
-        $user = $Users->newEntity([
-            'name' => 'Test',
-            'address' => [
-                'suburb' => 'failRules',
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Users->save($user)
-        );
-
-        $this->assertNull(
-            $user->id
-        );
-
-        $this->assertNull(
-            $user->address->id
-        );
-
-        $this->assertNull(
-            $user->address->user_id
-        );
-
-        $this->assertSame(
-            0,
-            $Users->find()->count()
-        );
-
-        $this->assertSame(
-            0,
-            $this->modelRegistry->use('Addresses')->find()->count()
-        );
-    }
-
     public function testRulesNoCheckRulesHasOne(): void
     {
         $Users = $this->modelRegistry->use('Users');
@@ -546,14 +153,15 @@ trait CallbacksHasOneTestTrait
         );
     }
 
-    public function testValidationHasOne(): void
+    #[DataProvider('saveCallbackFailureHasOneProvider')]
+    public function testSaveCallbackFailureHasOne(string $failure): void
     {
         $Users = $this->modelRegistry->use('Users');
 
         $user = $Users->newEntity([
             'name' => 'Test',
             'address' => [
-                'suburb' => '',
+                'suburb' => $failure,
             ],
         ]);
 
@@ -571,6 +179,65 @@ trait CallbacksHasOneTestTrait
 
         $this->assertNull(
             $user->address->user_id
+        );
+
+        $this->assertSame(
+            0,
+            $Users->find()->count()
+        );
+
+        $this->assertSame(
+            0,
+            $this->modelRegistry->use('Addresses')->find()->count()
+        );
+    }
+
+    #[DataProvider('saveCallbackFailureManyHasOneProvider')]
+    public function testSaveCallbackFailureManyHasOne(string $failure): void
+    {
+        $Users = $this->modelRegistry->use('Users');
+
+        $users = $Users->newEntities([
+            [
+                'name' => 'Test 1',
+                'address' => [
+                    'suburb' => 'Test 1',
+                ],
+            ],
+            [
+                'name' => 'Test 2',
+                'address' => [
+                    'suburb' => $failure,
+                ],
+            ],
+        ]);
+
+        $this->assertFalse(
+            $Users->saveMany($users)
+        );
+
+        $this->assertArraysAreIdentical(
+            [null, null],
+            array_map(
+                static fn(User $user): int|null => $user->id,
+                $users
+            )
+        );
+
+        $this->assertArraysAreIdentical(
+            [null, null],
+            array_map(
+                static fn(User $user): int|null => $user->address->id,
+                $users
+            )
+        );
+
+        $this->assertArraysAreIdentical(
+            [null, null],
+            array_map(
+                static fn(User $user): int|null => $user->address->user_id,
+                $users
+            )
         );
 
         $this->assertSame(

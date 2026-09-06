@@ -4,9 +4,44 @@ declare(strict_types=1);
 namespace Tests\TestCase\View\Helpers\Form\Context\MariaDb;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait IntTestTrait
 {
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function intLowerValidationBoundProvider(): array
+    {
+        return [
+            'inclusive' => [
+                'greaterThanOrEquals',
+                '<input id="value" name="value" type="number" placeholder="Value" min="100" max="2147483647" step="1" />',
+            ],
+            'exclusive' => [
+                'greaterThan',
+                '<input id="value" name="value" type="number" placeholder="Value" min="101" max="2147483647" step="1" />',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function intUpperValidationBoundProvider(): array
+    {
+        return [
+            'inclusive' => [
+                'lessThanOrEquals',
+                '<input id="value" name="value" type="number" placeholder="Value" min="-2147483648" max="1000" step="1" />',
+            ],
+            'exclusive' => [
+                'lessThan',
+                '<input id="value" name="value" type="number" placeholder="Value" min="-2147483648" max="999" step="1" />',
+            ],
+        ];
+    }
+
     public function testIntBetweenValidation(): void
     {
         $this->db->query(<<<'SQL'
@@ -72,7 +107,8 @@ trait IntTestTrait
         );
     }
 
-    public function testIntGreaterThanOrEqualsValidation(): void
+    #[DataProvider('intLowerValidationBoundProvider')]
+    public function testIntLowerValidationBound(string $rule, string $expected): void
     {
         $this->db->query(<<<'SQL'
             CREATE TABLE contexts (
@@ -82,80 +118,14 @@ trait IntTestTrait
             ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
         SQL);
 
-        $this->validator->add('value', Rule::greaterThanOrEquals(100));
+        $this->validator->add('value', Rule::$rule(100));
 
         $entity = $this->model->newEmptyEntity();
 
         $this->view->Form->open($entity);
 
         $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="100" max="2147483647" step="1" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testIntGreaterThanValidation(): void
-    {
-        $this->db->query(<<<'SQL'
-            CREATE TABLE contexts (
-                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-                value INT NULL DEFAULT NULL,
-                PRIMARY KEY (id)
-            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        SQL);
-
-        $this->validator->add('value', Rule::greaterThan(100));
-
-        $entity = $this->model->newEmptyEntity();
-
-        $this->view->Form->open($entity);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="101" max="2147483647" step="1" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testIntLessThanOrEqualsValidation(): void
-    {
-        $this->db->query(<<<'SQL'
-            CREATE TABLE contexts (
-                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-                value INT NULL DEFAULT NULL,
-                PRIMARY KEY (id)
-            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        SQL);
-
-        $this->validator->add('value', Rule::lessThanOrEquals(1000));
-
-        $entity = $this->model->newEmptyEntity();
-
-        $this->view->Form->open($entity);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="-2147483648" max="1000" step="1" />',
-            $this->view->Form->input('value')
-        );
-    }
-
-    public function testIntLessThanValidation(): void
-    {
-        $this->db->query(<<<'SQL'
-            CREATE TABLE contexts (
-                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-                value INT NULL DEFAULT NULL,
-                PRIMARY KEY (id)
-            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
-        SQL);
-
-        $this->validator->add('value', Rule::lessThan(1000));
-
-        $entity = $this->model->newEmptyEntity();
-
-        $this->view->Form->open($entity);
-
-        $this->assertSame(
-            '<input id="value" name="value" type="number" placeholder="Value" min="-2147483648" max="999" step="1" />',
+            $expected,
             $this->view->Form->input('value')
         );
     }
@@ -238,6 +208,29 @@ trait IntTestTrait
 
         $this->assertSame(
             '<input id="value" name="value" type="number" placeholder="Value" min="0" max="4294967295" step="1" />',
+            $this->view->Form->input('value')
+        );
+    }
+
+    #[DataProvider('intUpperValidationBoundProvider')]
+    public function testIntUpperValidationBound(string $rule, string $expected): void
+    {
+        $this->db->query(<<<'SQL'
+            CREATE TABLE contexts (
+                id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                value INT NULL DEFAULT NULL,
+                PRIMARY KEY (id)
+            ) COLLATE='utf8mb4_unicode_ci' ENGINE=InnoDB
+        SQL);
+
+        $this->validator->add('value', Rule::$rule(1000));
+
+        $entity = $this->model->newEmptyEntity();
+
+        $this->view->Form->open($entity);
+
+        $this->assertSame(
+            $expected,
             $this->view->Form->input('value')
         );
     }

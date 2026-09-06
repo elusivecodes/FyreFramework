@@ -5,11 +5,74 @@ namespace Tests\TestCase\Utility\DateTime\DateTime;
 
 use DateMalformedStringException;
 use Fyre\Utility\DateTime\DateTime;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 use function time;
 
 trait CreateTestTrait
 {
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function constructorStringProvider(): array
+    {
+        return [
+            'date' => ['January 1, 2019', '2019-01-01T00:00:00.000+00:00'],
+            'date time' => ['January 1, 2019 00:00:00', '2019-01-01T00:00:00.000+00:00'],
+            'iso' => ['2019-01-01T00:00:00', '2019-01-01T00:00:00.000+00:00'],
+            'milliseconds' => ['2019-01-01 00:00:00.123', '2019-01-01T00:00:00.123+00:00'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function constructorTimeZoneProvider(): array
+    {
+        return [
+            'name' => ['Australia/Brisbane'],
+            'offset' => ['+10:00'],
+            'offset without colon' => ['+1000'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{int[], string}>
+     */
+    public static function createFromArrayProvider(): array
+    {
+        return [
+            'year' => [
+                [2019],
+                '2019-01-01T00:00:00.000+00:00',
+            ],
+            'date' => [
+                [2019, 1, 2],
+                '2019-01-02T00:00:00.000+00:00',
+            ],
+            'hour' => [
+                [2019, 1, 1, 1],
+                '2019-01-01T01:00:00.000+00:00',
+            ],
+            'millisecond' => [
+                [2019, 1, 1, 0, 0, 0, 1],
+                '2019-01-01T00:00:00.001+00:00',
+            ],
+            'minute' => [
+                [2019, 1, 1, 0, 1],
+                '2019-01-01T00:01:00.000+00:00',
+            ],
+            'month' => [
+                [2019, 2],
+                '2019-02-01T00:00:00.000+00:00',
+            ],
+            'second' => [
+                [2019, 1, 1, 0, 0, 1],
+                '2019-01-01T00:00:01.000+00:00',
+            ],
+        ];
+    }
+
     public function testConstructor(): void
     {
         $start = time();
@@ -27,35 +90,12 @@ trait CreateTestTrait
         );
     }
 
-    public function testConstructorDate(): void
+    #[DataProvider('constructorStringProvider')]
+    public function testConstructorString(string $value, string $expected): void
     {
         $this->assertSame(
-            '2019-01-01T00:00:00.000+00:00',
-            new DateTime('January 1, 2019')->toIsoString()
-        );
-    }
-
-    public function testConstructorDateTime(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:00:00.000+00:00',
-            new DateTime('January 1, 2019 00:00:00')->toIsoString()
-        );
-    }
-
-    public function testConstructorIso(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:00:00.000+00:00',
-            new DateTime('2019-01-01T00:00:00')->toIsoString()
-        );
-    }
-
-    public function testConstructorMilliseconds(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:00:00.123+00:00',
-            new DateTime('2019-01-01 00:00:00.123')->toIsoString()
+            $expected,
+            new DateTime($value)->toIsoString()
         );
     }
 
@@ -67,51 +107,24 @@ trait CreateTestTrait
         );
     }
 
-    public function testConstructorWithTimeZone(): void
+    #[DataProvider('constructorTimeZoneProvider')]
+    public function testConstructorWithTimeZone(string $timeZone): void
     {
         $this->assertSame(
             '2018-12-31T14:00:00.000+00:00',
-            new DateTime('January 1, 2019 00:00:00', 'Australia/Brisbane')->toIsoString()
+            new DateTime('January 1, 2019 00:00:00', $timeZone)->toIsoString()
         );
     }
 
-    public function testConstructorWithTimeZoneFromOffset(): void
+    /**
+     * @param int[] $parts
+     */
+    #[DataProvider('createFromArrayProvider')]
+    public function testCreateFromArray(array $parts, string $expected): void
     {
         $this->assertSame(
-            '2018-12-31T14:00:00.000+00:00',
-            new DateTime('January 1, 2019 00:00:00', '+10:00')->toIsoString()
-        );
-    }
-
-    public function testConstructorWithTimeZoneFromOffsetWithoutColon(): void
-    {
-        $this->assertSame(
-            '2018-12-31T14:00:00.000+00:00',
-            new DateTime('January 1, 2019 00:00:00', '+1000')->toIsoString()
-        );
-    }
-
-    public function testCreateFromArray(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:00:00.000+00:00',
-            DateTime::createFromArray([2019])->toIsoString()
-        );
-    }
-
-    public function testCreateFromArrayDate(): void
-    {
-        $this->assertSame(
-            '2019-01-02T00:00:00.000+00:00',
-            DateTime::createFromArray([2019, 1, 2])->toIsoString()
-        );
-    }
-
-    public function testCreateFromArrayHour(): void
-    {
-        $this->assertSame(
-            '2019-01-01T01:00:00.000+00:00',
-            DateTime::createFromArray([2019, 1, 1, 1])->toIsoString()
+            $expected,
+            DateTime::createFromArray($parts)->toIsoString()
         );
     }
 
@@ -120,38 +133,6 @@ trait CreateTestTrait
         $this->assertInstanceOf(
             DateTime::class,
             DateTime::createFromArray([2018])
-        );
-    }
-
-    public function testCreateFromArrayMillisecond(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:00:00.001+00:00',
-            DateTime::createFromArray([2019, 1, 1, 0, 0, 0, 1])->toIsoString()
-        );
-    }
-
-    public function testCreateFromArrayMinute(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:01:00.000+00:00',
-            DateTime::createFromArray([2019, 1, 1, 0, 1])->toIsoString()
-        );
-    }
-
-    public function testCreateFromArrayMonth(): void
-    {
-        $this->assertSame(
-            '2019-02-01T00:00:00.000+00:00',
-            DateTime::createFromArray([2019, 2])->toIsoString()
-        );
-    }
-
-    public function testCreateFromArraySecond(): void
-    {
-        $this->assertSame(
-            '2019-01-01T00:00:01.000+00:00',
-            DateTime::createFromArray([2019, 1, 1, 0, 0, 1])->toIsoString()
         );
     }
 

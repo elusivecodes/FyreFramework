@@ -35,15 +35,77 @@ trait TextareaTestTrait
                 ['id' => 'other', 'class' => 'test'],
                 '<textarea class="test" id="other" name="textarea" placeholder="Textarea"></textarea>',
             ],
+            'id' => [
+                ['id' => 'other'],
+                '<textarea id="other" name="textarea" placeholder="Textarea"></textarea>',
+            ],
+            'id false' => [
+                ['id' => false],
+                '<textarea name="textarea" placeholder="Textarea"></textarea>',
+            ],
+            'name' => [
+                ['name' => 'other'],
+                '<textarea id="textarea" name="other" placeholder="Textarea"></textarea>',
+            ],
+            'name false' => [
+                ['name' => false],
+                '<textarea id="textarea" placeholder="Textarea"></textarea>',
+            ],
+            'placeholder' => [
+                ['placeholder' => 'Other'],
+                '<textarea id="textarea" name="textarea" placeholder="Other"></textarea>',
+            ],
+            'placeholder false' => [
+                ['placeholder' => false],
+                '<textarea id="textarea" name="textarea"></textarea>',
+            ],
         ];
     }
 
-    public function testTextarea(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function textareaFieldNameProvider(): array
     {
-        $this->assertSame(
-            '<textarea id="textarea-value" name="textarea_value" placeholder="Textarea Value"></textarea>',
-            $this->view->Form->textarea('textarea_value')
-        );
+        return [
+            'flat' => [
+                'textarea_value',
+                '<textarea id="textarea-value" name="textarea_value" placeholder="Textarea Value"></textarea>',
+            ],
+            'dotted' => [
+                'key.textarea_value',
+                '<textarea id="key-textarea-value" name="key[textarea_value]" placeholder="Textarea Value"></textarea>',
+            ],
+            'deeply dotted' => [
+                'deep.key.textarea_value',
+                '<textarea id="deep-key-textarea-value" name="deep[key][textarea_value]" placeholder="Textarea Value"></textarea>',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, string, string}>
+     */
+    public static function textareaValuePostProvider(): array
+    {
+        return [
+            'flat' => [
+                [
+                    'textarea' => 'test',
+                ],
+                'textarea',
+                '<textarea id="textarea" name="textarea" placeholder="Textarea">test</textarea>',
+            ],
+            'dotted' => [
+                [
+                    'key' => [
+                        'textarea' => 'test',
+                    ],
+                ],
+                'key.textarea',
+                '<textarea id="key-textarea" name="key[textarea]" placeholder="Textarea">test</textarea>',
+            ],
+        ];
     }
 
     /**
@@ -58,39 +120,12 @@ trait TextareaTestTrait
         );
     }
 
-    public function testTextareaDot(): void
+    #[DataProvider('textareaFieldNameProvider')]
+    public function testTextareaFieldName(string $field, string $expected): void
     {
         $this->assertSame(
-            '<textarea id="key-textarea-value" name="key[textarea_value]" placeholder="Textarea Value"></textarea>',
-            $this->view->Form->textarea('key.textarea_value')
-        );
-    }
-
-    public function testTextareaDotDeep(): void
-    {
-        $this->assertSame(
-            '<textarea id="deep-key-textarea-value" name="deep[key][textarea_value]" placeholder="Textarea Value"></textarea>',
-            $this->view->Form->textarea('deep.key.textarea_value')
-        );
-    }
-
-    public function testTextareaId(): void
-    {
-        $this->assertSame(
-            '<textarea id="other" name="textarea" placeholder="Textarea"></textarea>',
-            $this->view->Form->textarea('textarea', [
-                'id' => 'other',
-            ])
-        );
-    }
-
-    public function testTextareaIdFalse(): void
-    {
-        $this->assertSame(
-            '<textarea name="textarea" placeholder="Textarea"></textarea>',
-            $this->view->Form->textarea('textarea', [
-                'id' => false,
-            ])
+            $expected,
+            $this->view->Form->textarea($field)
         );
     }
 
@@ -101,46 +136,6 @@ trait TextareaTestTrait
         $this->assertSame(
             '<textarea id="test-textarea" name="textarea" placeholder="Textarea"></textarea>',
             $this->view->Form->textarea('textarea')
-        );
-    }
-
-    public function testTextareaName(): void
-    {
-        $this->assertSame(
-            '<textarea id="textarea" name="other" placeholder="Textarea"></textarea>',
-            $this->view->Form->textarea('textarea', [
-                'name' => 'other',
-            ])
-        );
-    }
-
-    public function testTextareaNameFalse(): void
-    {
-        $this->assertSame(
-            '<textarea id="textarea" placeholder="Textarea"></textarea>',
-            $this->view->Form->textarea('textarea', [
-                'name' => false,
-            ])
-        );
-    }
-
-    public function testTextareaPlaceholder(): void
-    {
-        $this->assertSame(
-            '<textarea id="textarea" name="textarea" placeholder="Other"></textarea>',
-            $this->view->Form->textarea('textarea', [
-                'placeholder' => 'Other',
-            ])
-        );
-    }
-
-    public function testTextareaPlaceholderFalse(): void
-    {
-        $this->assertSame(
-            '<textarea id="textarea" name="textarea"></textarea>',
-            $this->view->Form->textarea('textarea', [
-                'placeholder' => false,
-            ])
         );
     }
 
@@ -174,35 +169,20 @@ trait TextareaTestTrait
         );
     }
 
-    public function testTextareaValuePost(): void
+    /**
+     * @param array<string, mixed> $data
+     */
+    #[DataProvider('textareaValuePostProvider')]
+    public function testTextareaValuePost(array $data, string $field, string $expected): void
     {
-        Closure::bind(function(): void {
+        Closure::bind(function() use ($data): void {
             /** @var View $this */
-            $this->request = $this->request->withParsedBody([
-                'textarea' => 'test',
-            ]);
+            $this->request = $this->request->withParsedBody($data);
         }, $this->view, View::class)();
 
         $this->assertSame(
-            '<textarea id="textarea" name="textarea" placeholder="Textarea">test</textarea>',
-            $this->view->Form->textarea('textarea')
-        );
-    }
-
-    public function testTextareaValuePostDot(): void
-    {
-        Closure::bind(function(): void {
-            /** @var View $this */
-            $this->request = $this->request->withParsedBody([
-                'key' => [
-                    'textarea' => 'test',
-                ],
-            ]);
-        }, $this->view, View::class)();
-
-        $this->assertSame(
-            '<textarea id="key-textarea" name="key[textarea]" placeholder="Textarea">test</textarea>',
-            $this->view->Form->textarea('key.textarea')
+            $expected,
+            $this->view->Form->textarea($field)
         );
     }
 }

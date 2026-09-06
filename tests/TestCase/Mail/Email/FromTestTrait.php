@@ -3,16 +3,72 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Mail\Email;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+
 trait FromTestTrait
 {
-    public function testHeaderFrom(): void
+    /**
+     * @return array<string, array{array{0: string, 1?: string}, array<string, string>}>
+     */
+    public static function fromAddressesProvider(): array
     {
-        $this->email->setFrom('test1@test.com');
+        return [
+            'address only' => [
+                ['test1@test.com'],
+                [
+                    'test1@test.com' => 'test1@test.com',
+                ],
+            ],
+            'invalid address' => [
+                ['test1'],
+                [],
+            ],
+            'named address' => [
+                ['test1@test.com', 'Test 1'],
+                [
+                    'test1@test.com' => 'Test 1',
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{array{0: string, 1?: string}, string}>
+     */
+    public static function fromHeaderProvider(): array
+    {
+        return [
+            'address only' => [
+                ['test1@test.com'],
+                'test1@test.com',
+            ],
+            'encoded name' => [
+                ['test1@test.com', 'Тестовое задание'],
+                '=?UTF-8?B?0KLQtdGB0YLQvtCy0L7QtSDQt9Cw0LTQsNC90LjQtQ==?= <test1@test.com>',
+            ],
+            'plain name' => [
+                ['test1@test.com', 'Test'],
+                'Test <test1@test.com>',
+            ],
+            'quoted name' => [
+                ['test1@test.com', 'Test, User'],
+                '"Test, User" <test1@test.com>',
+            ],
+        ];
+    }
+
+    /**
+     * @param array{0: string, 1?: string} $arguments
+     */
+    #[DataProvider('fromHeaderProvider')]
+    public function testHeaderFrom(array $arguments, string $expected): void
+    {
+        $this->email->setFrom(...$arguments);
 
         $headers = $this->email->getFullHeaders();
 
         $this->assertSame(
-            'test1@test.com',
+            $expected,
             $headers['From']
         );
     }
@@ -30,76 +86,26 @@ trait FromTestTrait
         );
     }
 
-    public function testHeaderFromEncoding(): void
+    /**
+     * @param array{0: string, 1?: string} $arguments
+     * @param array<string, string> $expected
+     */
+    #[DataProvider('fromAddressesProvider')]
+    public function testSetFrom(array $arguments, array $expected): void
     {
-        $this->email->setFrom('test1@test.com', 'Тестовое задание');
+        $this->email->setFrom(...$arguments);
 
-        $headers = $this->email->getFullHeaders();
-
-        $this->assertSame(
-            '=?UTF-8?B?0KLQtdGB0YLQvtCy0L7QtSDQt9Cw0LTQsNC90LjQtQ==?= <test1@test.com>',
-            $headers['From']
+        $this->assertArraysAreIdentical(
+            $expected,
+            $this->email->getFrom()
         );
     }
 
-    public function testHeaderFromName(): void
-    {
-        $this->email->setFrom('test1@test.com', 'Test');
-
-        $headers = $this->email->getFullHeaders();
-
-        $this->assertSame(
-            'Test <test1@test.com>',
-            $headers['From']
-        );
-    }
-
-    public function testHeaderFromSpecialName(): void
-    {
-        $this->email->setFrom('test1@test.com', 'Test, User');
-
-        $headers = $this->email->getFullHeaders();
-
-        $this->assertSame(
-            '"Test, User" <test1@test.com>',
-            $headers['From']
-        );
-    }
-
-    public function testSetFrom(): void
+    public function testSetFromReturnsSelf(): void
     {
         $this->assertSame(
             $this->email,
             $this->email->setFrom('test1@test.com')
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                'test1@test.com' => 'test1@test.com',
-            ],
-            $this->email->getFrom()
-        );
-    }
-
-    public function testSetFromInvalid(): void
-    {
-        $this->email->setFrom('test1');
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->email->getFrom()
-        );
-    }
-
-    public function testSetFromName(): void
-    {
-        $this->email->setFrom('test1@test.com', 'Test 1');
-
-        $this->assertArraysAreIdentical(
-            [
-                'test1@test.com' => 'Test 1',
-            ],
-            $this->email->getFrom()
         );
     }
 }

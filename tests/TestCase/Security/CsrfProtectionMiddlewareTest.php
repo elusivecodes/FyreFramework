@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Security;
 
+use Closure;
 use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
@@ -37,109 +38,93 @@ final class CsrfProtectionMiddlewareTest extends TestCase
         ];
     }
 
-    public function testCookieEmpty(): void
+    /**
+     * @return array<string, array{Closure(CsrfProtection): array<string, mixed>}>
+     */
+    public static function invalidCookieRequestProvider(): array
     {
-        $this->expectException(CsrfTokenException::class);
-        $this->expectExceptionMessageIs('CSRF Token Mismatch');
-
-        $csrfProtection = $this->container->use(CsrfProtection::class);
-        $middleware = $this->container->build(CsrfProtectionMiddleware::class);
-
-        $queue = new MiddlewareQueue();
-        $queue->add($middleware);
-
-        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
-        $request = $this->container->build(ServerRequest::class, [
-            'options' => [
-                'method' => 'POST',
-                'cookies' => [
-                    'CsrfToken' => '',
-                ],
-                'data' => [
-                    'csrf_token' => $csrfProtection->getFormToken(),
+        return [
+            'empty cookie with form token' => [
+                static fn(CsrfProtection $csrfProtection): array => [
+                    'method' => 'POST',
+                    'cookies' => [
+                        'CsrfToken' => '',
+                    ],
+                    'data' => [
+                        'csrf_token' => $csrfProtection->getFormToken(),
+                    ],
                 ],
             ],
-        ]);
-
-        $handler->handle($request);
+            'tampered cookie with header token' => [
+                static fn(CsrfProtection $csrfProtection): array => [
+                    'method' => 'POST',
+                    'headers' => [
+                        'Csrf-Token' => $csrfProtection->getFormToken(),
+                    ],
+                    'cookies' => [
+                        'CsrfToken' => $csrfProtection->getCookieToken().'1',
+                    ],
+                ],
+            ],
+            'array cookie with header token' => [
+                static fn(CsrfProtection $csrfProtection): array => [
+                    'method' => 'POST',
+                    'headers' => [
+                        'Csrf-Token' => $csrfProtection->getFormToken(),
+                    ],
+                    'cookies' => [
+                        'CsrfToken' => [],
+                    ],
+                ],
+            ],
+            'missing cookie with header token' => [
+                static fn(CsrfProtection $csrfProtection): array => [
+                    'method' => 'POST',
+                    'headers' => [
+                        'Csrf-Token' => $csrfProtection->getFormToken(),
+                    ],
+                ],
+            ],
+        ];
     }
 
-    public function testCookieInvalid(): void
+    /**
+     * @return array<string, array{Closure(CsrfProtection): array<string, mixed>}>
+     */
+    public static function invalidSubmittedTokenProvider(): array
     {
-        $this->expectException(CsrfTokenException::class);
-        $this->expectExceptionMessageIs('CSRF Token Mismatch');
-
-        $csrfProtection = $this->container->use(CsrfProtection::class);
-        $middleware = $this->container->build(CsrfProtectionMiddleware::class);
-
-        $queue = new MiddlewareQueue();
-        $queue->add($middleware);
-
-        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
-        $request = $this->container->build(ServerRequest::class, [
-            'options' => [
-                'method' => 'POST',
-                'headers' => [
-                    'Csrf-Token' => $csrfProtection->getFormToken(),
-                ],
-                'cookies' => [
-                    'CsrfToken' => $csrfProtection->getCookieToken().'1',
+        return [
+            'array form token' => [
+                static fn(CsrfProtection $csrfProtection): array => [
+                    'method' => 'POST',
+                    'cookies' => [
+                        'CsrfToken' => $csrfProtection->getCookieToken(),
+                    ],
+                    'data' => [
+                        'csrf_token' => [],
+                    ],
                 ],
             ],
-        ]);
-
-        $handler->handle($request);
-    }
-
-    public function testCookieInvalidType(): void
-    {
-        $this->expectException(CsrfTokenException::class);
-        $this->expectExceptionMessageIs('CSRF Token Mismatch');
-
-        $csrfProtection = $this->container->use(CsrfProtection::class);
-        $middleware = $this->container->build(CsrfProtectionMiddleware::class);
-
-        $queue = new MiddlewareQueue();
-        $queue->add($middleware);
-
-        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
-        $request = $this->container->build(ServerRequest::class, [
-            'options' => [
-                'method' => 'POST',
-                'headers' => [
-                    'Csrf-Token' => $csrfProtection->getFormToken(),
-                ],
-                'cookies' => [
-                    'CsrfToken' => [],
+            'malformed header token' => [
+                static fn(CsrfProtection $csrfProtection): array => [
+                    'method' => 'POST',
+                    'headers' => [
+                        'Csrf-Token' => 'YQ==',
+                    ],
+                    'cookies' => [
+                        'CsrfToken' => $csrfProtection->getCookieToken(),
+                    ],
                 ],
             ],
-        ]);
-
-        $handler->handle($request);
-    }
-
-    public function testCookieMissing(): void
-    {
-        $this->expectException(CsrfTokenException::class);
-        $this->expectExceptionMessageIs('CSRF Token Mismatch');
-
-        $csrfProtection = $this->container->use(CsrfProtection::class);
-        $middleware = $this->container->build(CsrfProtectionMiddleware::class);
-
-        $queue = new MiddlewareQueue();
-        $queue->add($middleware);
-
-        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
-        $request = $this->container->build(ServerRequest::class, [
-            'options' => [
-                'method' => 'POST',
-                'headers' => [
-                    'Csrf-Token' => $csrfProtection->getFormToken(),
+            'missing token' => [
+                static fn(CsrfProtection $csrfProtection): array => [
+                    'method' => 'POST',
+                    'cookies' => [
+                        'CsrfToken' => $csrfProtection->getCookieToken(),
+                    ],
                 ],
             ],
-        ]);
-
-        $handler->handle($request);
+        ];
     }
 
     public function testDebug(): void
@@ -200,84 +185,6 @@ final class CsrfProtectionMiddlewareTest extends TestCase
                 ],
                 'data' => [
                     'csrf_token' => $otherCsrfProtection->getFormToken(),
-                ],
-            ],
-        ]);
-
-        $handler->handle($request);
-    }
-
-    public function testFormTokenInvalidType(): void
-    {
-        $this->expectException(CsrfTokenException::class);
-        $this->expectExceptionMessageIs('CSRF Token Mismatch');
-
-        $csrfProtection = $this->container->use(CsrfProtection::class);
-        $middleware = $this->container->build(CsrfProtectionMiddleware::class);
-
-        $queue = new MiddlewareQueue();
-        $queue->add($middleware);
-
-        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
-        $request = $this->container->build(ServerRequest::class, [
-            'options' => [
-                'method' => 'POST',
-                'cookies' => [
-                    'CsrfToken' => $csrfProtection->getCookieToken(),
-                ],
-                'data' => [
-                    'csrf_token' => [],
-                ],
-            ],
-        ]);
-
-        $handler->handle($request);
-    }
-
-    public function testFormTokenMalformed(): void
-    {
-        $this->expectException(CsrfTokenException::class);
-        $this->expectExceptionMessageIs('CSRF Token Mismatch');
-
-        $csrfProtection = $this->container->use(CsrfProtection::class);
-        $middleware = $this->container->build(CsrfProtectionMiddleware::class);
-
-        $queue = new MiddlewareQueue();
-        $queue->add($middleware);
-
-        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
-        $request = $this->container->build(ServerRequest::class, [
-            'options' => [
-                'method' => 'POST',
-                'headers' => [
-                    'Csrf-Token' => 'YQ==',
-                ],
-                'cookies' => [
-                    'CsrfToken' => $csrfProtection->getCookieToken(),
-                ],
-            ],
-        ]);
-
-        $handler->handle($request);
-    }
-
-    public function testFormTokenMissing(): void
-    {
-        $this->expectException(CsrfTokenException::class);
-        $this->expectExceptionMessageIs('CSRF Token Mismatch');
-
-        $csrfProtection = $this->container->use(CsrfProtection::class);
-        $middleware = $this->container->build(CsrfProtectionMiddleware::class);
-
-        $queue = new MiddlewareQueue();
-        $queue->add($middleware);
-
-        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
-        $request = $this->container->build(ServerRequest::class, [
-            'options' => [
-                'method' => 'POST',
-                'cookies' => [
-                    'CsrfToken' => $csrfProtection->getCookieToken(),
                 ],
             ],
         ]);
@@ -441,6 +348,52 @@ final class CsrfProtectionMiddlewareTest extends TestCase
         $this->assertNull(
             $csrfProtection->getFormToken()
         );
+    }
+
+    /**
+     * @param Closure(CsrfProtection): array<string, mixed> $factory
+     */
+    #[DataProvider('invalidCookieRequestProvider')]
+    public function testRejectInvalidCookie(Closure $factory): void
+    {
+        $this->expectException(CsrfTokenException::class);
+        $this->expectExceptionMessageIs('CSRF Token Mismatch');
+
+        $csrfProtection = $this->container->use(CsrfProtection::class);
+        $middleware = $this->container->build(CsrfProtectionMiddleware::class);
+
+        $queue = new MiddlewareQueue();
+        $queue->add($middleware);
+
+        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => $factory($csrfProtection),
+        ]);
+
+        $handler->handle($request);
+    }
+
+    /**
+     * @param Closure(CsrfProtection): array<string, mixed> $factory
+     */
+    #[DataProvider('invalidSubmittedTokenProvider')]
+    public function testRejectInvalidSubmittedToken(Closure $factory): void
+    {
+        $this->expectException(CsrfTokenException::class);
+        $this->expectExceptionMessageIs('CSRF Token Mismatch');
+
+        $csrfProtection = $this->container->use(CsrfProtection::class);
+        $middleware = $this->container->build(CsrfProtectionMiddleware::class);
+
+        $queue = new MiddlewareQueue();
+        $queue->add($middleware);
+
+        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => $factory($csrfProtection),
+        ]);
+
+        $handler->handle($request);
     }
 
     public function testSkipCheck(): void

@@ -4,46 +4,157 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\DateTime\DateTime;
 
 use Fyre\Utility\DateTime\DateTime;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait UtilityTestTrait
 {
-    public function testDayName(): void
+    /**
+     * @return array<string, array{int, string}>
+     */
+    public static function dayNameProvider(): array
     {
-        $dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        foreach ($dayNames as $i => $dayName) {
-            $this->assertSame(
-                $dayName,
-                DateTime::createFromArray([2019, 1, 1])
-                    ->withDay($i)
-                    ->dayName(),
-            );
-        }
+        return [
+            'sunday' => [0, 'Sunday'],
+            'monday' => [1, 'Monday'],
+            'tuesday' => [2, 'Tuesday'],
+            'wednesday' => [3, 'Wednesday'],
+            'thursday' => [4, 'Thursday'],
+            'friday' => [5, 'Friday'],
+            'saturday' => [6, 'Saturday'],
+        ];
     }
 
-    public function testDayNameNarrow(): void
+    /**
+     * @return array<string, array{int, 'narrow'|'short', string}>
+     */
+    public static function dayNameWidthProvider(): array
     {
-        $dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-        foreach ($dayNames as $i => $dayName) {
-            $this->assertSame(
-                $dayName,
-                DateTime::createFromArray([2019, 1, 1])
-                    ->withDay($i)
-                    ->dayName('narrow'),
-            );
-        }
+        return [
+            'sunday narrow' => [0, 'narrow', 'S'],
+            'monday narrow' => [1, 'narrow', 'M'],
+            'tuesday narrow' => [2, 'narrow', 'T'],
+            'wednesday narrow' => [3, 'narrow', 'W'],
+            'thursday narrow' => [4, 'narrow', 'T'],
+            'friday narrow' => [5, 'narrow', 'F'],
+            'saturday narrow' => [6, 'narrow', 'S'],
+            'sunday short' => [0, 'short', 'Sun'],
+            'monday short' => [1, 'short', 'Mon'],
+            'tuesday short' => [2, 'short', 'Tue'],
+            'wednesday short' => [3, 'short', 'Wed'],
+            'thursday short' => [4, 'short', 'Thu'],
+            'friday short' => [5, 'short', 'Fri'],
+            'saturday short' => [6, 'short', 'Sat'],
+        ];
     }
 
-    public function testDayNameShort(): void
+    /**
+     * @return array<string, array{int, int, int}>
+     */
+    public static function daysInMonthProvider(): array
     {
-        $dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        foreach ($dayNames as $i => $dayName) {
-            $this->assertSame(
-                $dayName,
-                DateTime::createFromArray([2019, 1, 1])
-                    ->withDay($i)
-                    ->dayName('short'),
-            );
-        }
+        return [
+            '2018-01' => [2018, 1, 31],
+            '2018-02' => [2018, 2, 28],
+            '2018-03' => [2018, 3, 31],
+            '2018-04' => [2018, 4, 30],
+            '2018-05' => [2018, 5, 31],
+            '2018-06' => [2018, 6, 30],
+            '2018-07' => [2018, 7, 31],
+            '2018-08' => [2018, 8, 31],
+            '2018-09' => [2018, 9, 30],
+            '2018-10' => [2018, 10, 31],
+            '2018-11' => [2018, 11, 30],
+            '2018-12' => [2018, 12, 31],
+            'leap February' => [2020, 2, 29],
+        ];
+    }
+
+    /**
+     * @return array<string, array{int, 'narrow'|'short', string}>
+     */
+    public static function eraWidthProvider(): array
+    {
+        return [
+            'narrow' => [2018, 'narrow', 'A'],
+            'narrow bc' => [-5, 'narrow', 'B'],
+            'short' => [2018, 'short', 'AD'],
+            'short bc' => [-5, 'short', 'BC'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{int, string}>
+     */
+    public static function monthNameProvider(): array
+    {
+        return [
+            'january' => [1, 'January'],
+            'february' => [2, 'February'],
+            'march' => [3, 'March'],
+            'april' => [4, 'April'],
+            'may' => [5, 'May'],
+            'june' => [6, 'June'],
+            'july' => [7, 'July'],
+            'august' => [8, 'August'],
+            'september' => [9, 'September'],
+            'october' => [10, 'October'],
+            'november' => [11, 'November'],
+            'december' => [12, 'December'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{int, 'narrow'|'short', string}>
+     */
+    public static function monthNameWidthProvider(): array
+    {
+        return [
+            'january narrow' => [1, 'narrow', 'J'],
+            'february narrow' => [2, 'narrow', 'F'],
+            'march narrow' => [3, 'narrow', 'M'],
+            'april narrow' => [4, 'narrow', 'A'],
+            'may narrow' => [5, 'narrow', 'M'],
+            'june narrow' => [6, 'narrow', 'J'],
+            'july narrow' => [7, 'narrow', 'J'],
+            'august narrow' => [8, 'narrow', 'A'],
+            'september narrow' => [9, 'narrow', 'S'],
+            'october narrow' => [10, 'narrow', 'O'],
+            'november narrow' => [11, 'narrow', 'N'],
+            'december narrow' => [12, 'narrow', 'D'],
+            'january short' => [1, 'short', 'Jan'],
+            'february short' => [2, 'short', 'Feb'],
+            'march short' => [3, 'short', 'Mar'],
+            'april short' => [4, 'short', 'Apr'],
+            'may short' => [5, 'short', 'May'],
+            'june short' => [6, 'short', 'Jun'],
+            'july short' => [7, 'short', 'Jul'],
+            'august short' => [8, 'short', 'Aug'],
+            'september short' => [9, 'short', 'Sep'],
+            'october short' => [10, 'short', 'Oct'],
+            'november short' => [11, 'short', 'Nov'],
+            'december short' => [12, 'short', 'Dec'],
+        ];
+    }
+
+    #[DataProvider('dayNameProvider')]
+    public function testDayName(int $day, string $expected): void
+    {
+        $this->assertSame(
+            $expected,
+            DateTime::createFromArray([2019, 1, 1])->withDay($day)->dayName()
+        );
+    }
+
+    /**
+     * @param 'narrow'|'short' $width
+     */
+    #[DataProvider('dayNameWidthProvider')]
+    public function testDayNameWidth(int $day, string $width, string $expected): void
+    {
+        $this->assertSame(
+            $expected,
+            DateTime::createFromArray([2019, 1, 1])->withDay($day)->dayName($width)
+        );
     }
 
     public function testDayPeriod(): void
@@ -82,24 +193,12 @@ trait UtilityTestTrait
         );
     }
 
-    public function testDaysInMonth(): void
-    {
-        $monthDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-        foreach ($monthDays as $i => $daysInMonth) {
-            $this->assertSame(
-                $daysInMonth,
-                DateTime::createFromArray([2018, $i + 1, 1])
-                    ->daysInMonth(),
-            );
-        }
-    }
-
-    public function testDaysInMonthLeapYear(): void
+    #[DataProvider('daysInMonthProvider')]
+    public function testDaysInMonth(int $year, int $month, int $expected): void
     {
         $this->assertSame(
-            29,
-            DateTime::createFromArray([2020, 2, 1])
-                ->daysInMonth(),
+            $expected,
+            DateTime::createFromArray([$year, $month, 1])->daysInMonth()
         );
     }
 
@@ -139,39 +238,15 @@ trait UtilityTestTrait
         );
     }
 
-    public function testEraNarrow(): void
+    /**
+     * @param 'narrow'|'short' $width
+     */
+    #[DataProvider('eraWidthProvider')]
+    public function testEraWidth(int $year, string $width, string $expected): void
     {
         $this->assertSame(
-            'A',
-            DateTime::createFromArray([2018])
-                ->era('narrow'),
-        );
-    }
-
-    public function testEraNarrowBc(): void
-    {
-        $this->assertSame(
-            'B',
-            DateTime::createFromArray([-5])
-                ->era('narrow'),
-        );
-    }
-
-    public function testEraShort(): void
-    {
-        $this->assertSame(
-            'AD',
-            DateTime::createFromArray([2018])
-                ->era('short'),
-        );
-    }
-
-    public function testEraShortBc(): void
-    {
-        $this->assertSame(
-            'BC',
-            DateTime::createFromArray([-5])
-                ->era('short'),
+            $expected,
+            DateTime::createFromArray([$year])->era($width)
         );
     }
 
@@ -207,40 +282,25 @@ trait UtilityTestTrait
         );
     }
 
-    public function testMonthName(): void
+    #[DataProvider('monthNameProvider')]
+    public function testMonthName(int $month, string $expected): void
     {
-        $monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-        foreach ($monthNames as $i => $monthName) {
-            $this->assertSame(
-                $monthName,
-                DateTime::createFromArray([2019, $i + 1, 1])
-                    ->monthName(),
-            );
-        }
+        $this->assertSame(
+            $expected,
+            DateTime::createFromArray([2019, $month, 1])->monthName()
+        );
     }
 
-    public function testMonthNameNarrow(): void
+    /**
+     * @param 'narrow'|'short' $width
+     */
+    #[DataProvider('monthNameWidthProvider')]
+    public function testMonthNameWidth(int $month, string $width, string $expected): void
     {
-        $monthNames = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
-        foreach ($monthNames as $i => $monthName) {
-            $this->assertSame(
-                $monthName,
-                DateTime::createFromArray([2019, $i + 1, 1])
-                    ->monthName('narrow'),
-            );
-        }
-    }
-
-    public function testMonthNameShort(): void
-    {
-        $monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        foreach ($monthNames as $i => $monthName) {
-            $this->assertSame(
-                $monthName,
-                DateTime::createFromArray([2019, $i + 1, 1])
-                    ->monthName('short'),
-            );
-        }
+        $this->assertSame(
+            $expected,
+            DateTime::createFromArray([2019, $month, 1])->monthName($width)
+        );
     }
 
     public function testTimeZoneName(): void

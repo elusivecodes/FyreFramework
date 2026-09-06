@@ -4,46 +4,55 @@ declare(strict_types=1);
 namespace Tests\TestCase\Http\Uri;
 
 use Fyre\Http\Uri;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait UriAttributesGetTestTrait
 {
-    public function testGetAuthority(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function authorityProvider(): array
     {
-        $this->assertSame(
-            'domain.com',
-            Uri::createFromString('http://domain.com/')->getAuthority()
-        );
+        return [
+            'host only' => ['http://domain.com/', 'domain.com'],
+            'with password' => ['http://user:password@domain.com/', 'user:password@domain.com'],
+            'with port' => ['http://domain.com:3001/', 'domain.com:3001'],
+            'with username' => ['http://user@domain.com/', 'user@domain.com'],
+            'zero host' => ['http://0/', '0'],
+        ];
     }
 
-    public function testGetAuthorityWithPassword(): void
+    /**
+     * @return array<string, array{string, int, string}>
+     */
+    public static function segmentProvider(): array
     {
-        $this->assertSame(
-            'user:password@domain.com',
-            Uri::createFromString('http://user:password@domain.com/')->getAuthority()
-        );
+        return [
+            'second segment' => ['https://domain.com/path/deep', 2, 'deep'],
+            'encoded' => ['http://domain.com/test%20path', 1, 'test%20path'],
+            'missing segment' => ['https://domain.com/path/deep', 3, ''],
+        ];
     }
 
-    public function testGetAuthorityWithPort(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function userInfoProvider(): array
     {
-        $this->assertSame(
-            'domain.com:3001',
-            Uri::createFromString('http://domain.com:3001/')->getAuthority()
-        );
+        return [
+            'username only' => ['http://user@domain.com/', 'user'],
+            'encoded' => ['http://test%20user:test%20password@domain.com/', 'test%20user:test%20password'],
+            'with password' => ['http://user:password@domain.com/', 'user:password'],
+            'with zero password' => ['http://user:0@domain.com/', 'user:0'],
+        ];
     }
 
-    public function testGetAuthorityWithUsername(): void
+    #[DataProvider('authorityProvider')]
+    public function testGetAuthority(string $uri, string $expected): void
     {
         $this->assertSame(
-            'user@domain.com',
-            Uri::createFromString('http://user@domain.com/')->getAuthority()
-        );
-    }
-
-    public function testGetAuthorityZeroHost(): void
-    {
-        $this->assertSame(
-            '0',
-            Uri::createFromString('http://0/')->getAuthority()
+            $expected,
+            Uri::createFromString($uri)->getAuthority()
         );
     }
 
@@ -114,27 +123,12 @@ trait UriAttributesGetTestTrait
         );
     }
 
-    public function testGetSegment(): void
+    #[DataProvider('segmentProvider')]
+    public function testGetSegment(string $uri, int $index, string $expected): void
     {
         $this->assertSame(
-            'deep',
-            Uri::createFromString('https://domain.com/path/deep')->getSegment(2)
-        );
-    }
-
-    public function testGetSegmentDecoded(): void
-    {
-        $this->assertSame(
-            'test%20path',
-            Uri::createFromString('http://domain.com/test%20path')->getSegment(1)
-        );
-    }
-
-    public function testGetSegmentInvalid(): void
-    {
-        $this->assertSame(
-            '',
-            Uri::createFromString('https://domain.com/path/deep')->getSegment(3)
+            $expected,
+            Uri::createFromString($uri)->getSegment($index)
         );
     }
 
@@ -154,35 +148,12 @@ trait UriAttributesGetTestTrait
         );
     }
 
-    public function testGetUserInfo(): void
+    #[DataProvider('userInfoProvider')]
+    public function testGetUserInfo(string $uri, string $expected): void
     {
         $this->assertSame(
-            'user',
-            Uri::createFromString('http://user@domain.com/')->getUserInfo()
-        );
-    }
-
-    public function testGetUserInfoEncoded(): void
-    {
-        $this->assertSame(
-            'test%20user:test%20password',
-            Uri::createFromString('http://test%20user:test%20password@domain.com/')->getUserInfo()
-        );
-    }
-
-    public function testGetUserInfoWithPassword(): void
-    {
-        $this->assertSame(
-            'user:password',
-            Uri::createFromString('http://user:password@domain.com/')->getUserInfo()
-        );
-    }
-
-    public function testGetUserInfoWithZeroPassword(): void
-    {
-        $this->assertSame(
-            'user:0',
-            Uri::createFromString('http://user:0@domain.com/')->getUserInfo()
+            $expected,
+            Uri::createFromString($uri)->getUserInfo()
         );
     }
 }

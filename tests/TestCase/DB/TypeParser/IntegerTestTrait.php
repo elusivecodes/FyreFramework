@@ -3,8 +3,34 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\TypeParser;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+
 trait IntegerTestTrait
 {
+    /**
+     * @return array<string, array{int|null, string|null}>
+     */
+    public static function integerParseProvider(): array
+    {
+        return [
+            'default' => [33, '33'],
+            'invalid' => [null, 'invalid'],
+            'null' => [null, null],
+        ];
+    }
+
+    /**
+     * @return array<string, array{int|null, string|null}>
+     */
+    public static function integerToDatabaseProvider(): array
+    {
+        return [
+            'default' => [33, '33'],
+            'invalid' => [null, 'invalid'],
+            'null' => [null, null],
+        ];
+    }
+
     public function testIntegerFromDatabase(): void
     {
         $this->assertSame(
@@ -20,47 +46,21 @@ trait IntegerTestTrait
         );
     }
 
-    public function testIntegerParse(): void
+    #[DataProvider('integerParseProvider')]
+    public function testIntegerParse(int|null $expected, string|null $value): void
     {
         $this->assertSame(
-            33,
-            $this->type->use('integer')->parse('33')
+            $expected,
+            $this->type->use('integer')->parse($value)
         );
     }
 
-    public function testIntegerParseInvalid(): void
-    {
-        $this->assertNull(
-            $this->type->use('integer')->parse('invalid')
-        );
-    }
-
-    public function testIntegerParseNull(): void
-    {
-        $this->assertNull(
-            $this->type->use('integer')->parse(null)
-        );
-    }
-
-    public function testIntegerToDatabase(): void
+    #[DataProvider('integerToDatabaseProvider')]
+    public function testIntegerToDatabase(int|null $expected, string|null $value): void
     {
         $this->assertSame(
-            33,
-            $this->type->use('integer')->toDatabase('33')
-        );
-    }
-
-    public function testIntegerToDatabaseInvalid(): void
-    {
-        $this->assertNull(
-            $this->type->use('integer')->toDatabase('invalid')
-        );
-    }
-
-    public function testIntegerToDatabaseNull(): void
-    {
-        $this->assertNull(
-            $this->type->use('integer')->toDatabase(null)
+            $expected,
+            $this->type->use('integer')->toDatabase($value)
         );
     }
 }

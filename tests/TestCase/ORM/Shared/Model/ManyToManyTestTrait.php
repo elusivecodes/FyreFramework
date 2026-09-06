@@ -6,6 +6,7 @@ namespace Tests\TestCase\ORM\Shared\Model;
 use Fyre\ORM\Entity;
 use Fyre\ORM\Queries\SelectQuery;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Mock\Entities\Post;
 use Tests\Mock\Entities\Tag;
 
@@ -13,6 +14,26 @@ use function array_map;
 
 trait ManyToManyTestTrait
 {
+    /**
+     * @return array<string, array{array<array-key, mixed>}>
+     */
+    public static function manyToManyFindProvider(): array
+    {
+        return [
+            'find' => [['Tags']],
+            'strategy cte' => [
+                [
+                    'Tags' => ['strategy' => 'cte'],
+                ],
+            ],
+            'strategy subquery' => [
+                [
+                    'Tags' => ['strategy' => 'subquery'],
+                ],
+            ],
+        ];
+    }
+
     public function testManyToManyAppend(): void
     {
         $Posts = $this->modelRegistry->use('Posts');
@@ -219,7 +240,11 @@ trait ManyToManyTestTrait
         );
     }
 
-    public function testManyToManyFind(): void
+    /**
+     * @param array<array-key, mixed> $contain
+     */
+    #[DataProvider('manyToManyFindProvider')]
+    public function testManyToManyFind(array $contain): void
     {
         $Posts = $this->modelRegistry->use('Posts');
 
@@ -241,9 +266,7 @@ trait ManyToManyTestTrait
             $Posts->save($post)
         );
 
-        $post = $Posts->get(1, contain: [
-            'Tags',
-        ]);
+        $post = $Posts->get(1, contain: $contain);
 
         $this->assertInstanceOf(
             Post::class,
@@ -1355,206 +1378,6 @@ trait ManyToManyTestTrait
         $this->assertSame(
             'Alias.name',
             $relationship->getSort()
-        );
-    }
-
-    public function testManyToManyStrategyCte(): void
-    {
-        $Posts = $this->modelRegistry->use('Posts');
-
-        $post = $Posts->newEntity([
-            'user_id' => 1,
-            'title' => 'Test',
-            'content' => 'This is the content.',
-            'tags' => [
-                [
-                    'tag' => 'test1',
-                ],
-                [
-                    'tag' => 'test2',
-                ],
-            ],
-        ]);
-
-        $this->assertTrue(
-            $Posts->save($post)
-        );
-
-        $post = $Posts->get(1, contain: [
-            'Tags' => [
-                'strategy' => 'cte',
-            ],
-        ]);
-
-        $this->assertInstanceOf(
-            Post::class,
-            $post
-        );
-
-        $this->assertSame(
-            1,
-            $post->id
-        );
-
-        $this->assertArraysAreIdentical(
-            [1, 2],
-            array_map(
-                static fn(Tag $tag): int|null => $tag->id,
-                $post->tags
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [1, 2],
-            array_map(
-                static fn(Tag $tag): int|null => $tag->_joinData->id,
-                $post->tags
-            )
-        );
-
-        $this->assertInstanceOf(
-            Post::class,
-            $post
-        );
-
-        $this->assertInstanceOf(
-            Tag::class,
-            $post->tags[0]
-        );
-
-        $this->assertInstanceOf(
-            Tag::class,
-            $post->tags[1]
-        );
-
-        $this->assertInstanceOf(
-            Entity::class,
-            $post->tags[0]->_joinData
-        );
-
-        $this->assertInstanceOf(
-            Entity::class,
-            $post->tags[1]->_joinData
-        );
-
-        $this->assertFalse(
-            $post->isNew()
-        );
-
-        $this->assertFalse(
-            $post->tags[0]->isNew()
-        );
-
-        $this->assertFalse(
-            $post->tags[1]->isNew()
-        );
-
-        $this->assertFalse(
-            $post->tags[0]->_joinData->isNew()
-        );
-
-        $this->assertFalse(
-            $post->tags[1]->_joinData->isNew()
-        );
-    }
-
-    public function testManyToManyStrategySubquery(): void
-    {
-        $Posts = $this->modelRegistry->use('Posts');
-
-        $post = $Posts->newEntity([
-            'user_id' => 1,
-            'title' => 'Test',
-            'content' => 'This is the content.',
-            'tags' => [
-                [
-                    'tag' => 'test1',
-                ],
-                [
-                    'tag' => 'test2',
-                ],
-            ],
-        ]);
-
-        $this->assertTrue(
-            $Posts->save($post)
-        );
-
-        $post = $Posts->get(1, contain: [
-            'Tags' => [
-                'strategy' => 'subquery',
-            ],
-        ]);
-
-        $this->assertInstanceOf(
-            Post::class,
-            $post
-        );
-
-        $this->assertSame(
-            1,
-            $post->id
-        );
-
-        $this->assertArraysAreIdentical(
-            [1, 2],
-            array_map(
-                static fn(Tag $tag): int|null => $tag->id,
-                $post->tags
-            )
-        );
-
-        $this->assertArraysAreIdentical(
-            [1, 2],
-            array_map(
-                static fn(Tag $tag): int|null => $tag->_joinData->id,
-                $post->tags
-            )
-        );
-
-        $this->assertInstanceOf(
-            Post::class,
-            $post
-        );
-
-        $this->assertInstanceOf(
-            Tag::class,
-            $post->tags[0]
-        );
-
-        $this->assertInstanceOf(
-            Tag::class,
-            $post->tags[1]
-        );
-
-        $this->assertInstanceOf(
-            Entity::class,
-            $post->tags[0]->_joinData
-        );
-
-        $this->assertInstanceOf(
-            Entity::class,
-            $post->tags[1]->_joinData
-        );
-
-        $this->assertFalse(
-            $post->isNew()
-        );
-
-        $this->assertFalse(
-            $post->tags[0]->isNew()
-        );
-
-        $this->assertFalse(
-            $post->tags[1]->isNew()
-        );
-
-        $this->assertFalse(
-            $post->tags[0]->_joinData->isNew()
-        );
-
-        $this->assertFalse(
-            $post->tags[1]->_joinData->isNew()
         );
     }
 }

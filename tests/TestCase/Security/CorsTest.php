@@ -10,6 +10,7 @@ use Fyre\Http\ClientResponse;
 use Fyre\Http\ServerRequest;
 use Fyre\Security\Cors;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -20,6 +21,37 @@ final class CorsTest extends TestCase
     protected Config $config;
 
     protected Container $container;
+
+    /**
+     * @return array<string, array{array{method: string, headers?: array<string, string>}, bool}>
+     */
+    public static function preflightRequestProvider(): array
+    {
+        return [
+            'preflight' => [
+                [
+                    'method' => 'OPTIONS',
+                    'headers' => [
+                        'Access-Control-Request-Method' => 'POST',
+                    ],
+                ],
+                true,
+            ],
+            'invalid method' => [
+                [
+                    'method' => 'GET',
+                    'headers' => [
+                        'Access-Control-Request-Method' => 'POST',
+                    ],
+                ],
+                false,
+            ],
+            'missing request method' => [
+                ['method' => 'OPTIONS'],
+                false,
+            ],
+        ];
+    }
 
     public function testAddHeaders(): void
     {
@@ -360,46 +392,18 @@ final class CorsTest extends TestCase
         );
     }
 
-    public function testIsPreflightRequest(): void
+    /**
+     * @param array{method: string, headers?: array<string, string>} $options
+     */
+    #[DataProvider('preflightRequestProvider')]
+    public function testIsPreflightRequest(array $options, bool $expected): void
     {
         $cors = $this->container->build(Cors::class);
         $request = $this->container->build(ServerRequest::class, [
-            'options' => [
-                'method' => 'OPTIONS',
-                'headers' => [
-                    'Access-Control-Request-Method' => 'POST',
-                ],
-            ],
+            'options' => $options,
         ]);
 
-        $this->assertTrue($cors->isPreflightRequest($request));
-    }
-
-    public function testIsPreflightRequestInvalidMethod(): void
-    {
-        $cors = $this->container->build(Cors::class);
-        $request = $this->container->build(ServerRequest::class, [
-            'options' => [
-                'method' => 'GET',
-                'headers' => [
-                    'Access-Control-Request-Method' => 'POST',
-                ],
-            ],
-        ]);
-
-        $this->assertFalse($cors->isPreflightRequest($request));
-    }
-
-    public function testIsPreflightRequestMissingRequestMethod(): void
-    {
-        $cors = $this->container->build(Cors::class);
-        $request = $this->container->build(ServerRequest::class, [
-            'options' => [
-                'method' => 'OPTIONS',
-            ],
-        ]);
-
-        $this->assertFalse($cors->isPreflightRequest($request));
+        $this->assertSame($expected, $cors->isPreflightRequest($request));
     }
 
     public function testOptionsOverrideConfig(): void

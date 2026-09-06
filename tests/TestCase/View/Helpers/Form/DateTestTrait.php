@@ -36,15 +36,60 @@ trait DateTestTrait
                 ['id' => 'other', 'class' => 'test'],
                 '<input class="test" id="other" name="date" type="date" />',
             ],
+            'id' => [
+                ['id' => 'other'],
+                '<input id="other" name="date" type="date" />',
+            ],
+            'id false' => [
+                ['id' => false],
+                '<input name="date" type="date" />',
+            ],
+            'name' => [
+                ['name' => 'other'],
+                '<input id="date" name="other" type="date" />',
+            ],
+            'name false' => [
+                ['name' => false],
+                '<input id="date" type="date" />',
+            ],
         ];
     }
 
-    public function testDate(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function dateFieldNameProvider(): array
     {
-        $this->assertSame(
-            '<input id="date-value" name="date_value" type="date" />',
-            $this->view->Form->date('date_value')
-        );
+        return [
+            'flat' => ['date_value', '<input id="date-value" name="date_value" type="date" />'],
+            'dotted' => ['key.date_value', '<input id="key-date-value" name="key[date_value]" type="date" />'],
+            'deeply dotted' => ['deep.key.date_value', '<input id="deep-key-date-value" name="deep[key][date_value]" type="date" />'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, string, string}>
+     */
+    public static function dateValuePostProvider(): array
+    {
+        return [
+            'flat' => [
+                [
+                    'date' => '2022-01-01',
+                ],
+                'date',
+                '<input id="date" name="date" type="date" value="2022-01-01" />',
+            ],
+            'dotted' => [
+                [
+                    'key' => [
+                        'date' => '2022-01-01',
+                    ],
+                ],
+                'key.date',
+                '<input id="key-date" name="key[date]" type="date" value="2022-01-01" />',
+            ],
+        ];
     }
 
     /**
@@ -59,39 +104,12 @@ trait DateTestTrait
         );
     }
 
-    public function testDateDot(): void
+    #[DataProvider('dateFieldNameProvider')]
+    public function testDateFieldName(string $field, string $expected): void
     {
         $this->assertSame(
-            '<input id="key-date-value" name="key[date_value]" type="date" />',
-            $this->view->Form->date('key.date_value')
-        );
-    }
-
-    public function testDateDotDeep(): void
-    {
-        $this->assertSame(
-            '<input id="deep-key-date-value" name="deep[key][date_value]" type="date" />',
-            $this->view->Form->date('deep.key.date_value')
-        );
-    }
-
-    public function testDateId(): void
-    {
-        $this->assertSame(
-            '<input id="other" name="date" type="date" />',
-            $this->view->Form->date('date', [
-                'id' => 'other',
-            ])
-        );
-    }
-
-    public function testDateIdFalse(): void
-    {
-        $this->assertSame(
-            '<input name="date" type="date" />',
-            $this->view->Form->date('date', [
-                'id' => false,
-            ])
+            $expected,
+            $this->view->Form->date($field)
         );
     }
 
@@ -102,26 +120,6 @@ trait DateTestTrait
         $this->assertSame(
             '<input id="test-date" name="date" type="date" />',
             $this->view->Form->date('date')
-        );
-    }
-
-    public function testDateName(): void
-    {
-        $this->assertSame(
-            '<input id="date" name="other" type="date" />',
-            $this->view->Form->date('date', [
-                'name' => 'other',
-            ])
-        );
-    }
-
-    public function testDateNameFalse(): void
-    {
-        $this->assertSame(
-            '<input id="date" type="date" />',
-            $this->view->Form->date('date', [
-                'name' => false,
-            ])
         );
     }
 
@@ -137,35 +135,20 @@ trait DateTestTrait
         );
     }
 
-    public function testDateValuePost(): void
+    /**
+     * @param array<string, mixed> $data
+     */
+    #[DataProvider('dateValuePostProvider')]
+    public function testDateValuePost(array $data, string $field, string $expected): void
     {
-        Closure::bind(function(): void {
+        Closure::bind(function() use ($data): void {
             /** @var View $this */
-            $this->request = $this->request->withParsedBody([
-                'date' => '2022-01-01',
-            ]);
+            $this->request = $this->request->withParsedBody($data);
         }, $this->view, View::class)();
 
         $this->assertSame(
-            '<input id="date" name="date" type="date" value="2022-01-01" />',
-            $this->view->Form->date('date')
-        );
-    }
-
-    public function testDateValuePostDot(): void
-    {
-        Closure::bind(function(): void {
-            /** @var View $this */
-            $this->request = $this->request->withParsedBody([
-                'key' => [
-                    'date' => '2022-01-01',
-                ],
-            ]);
-        }, $this->view, View::class)();
-
-        $this->assertSame(
-            '<input id="key-date" name="key[date]" type="date" value="2022-01-01" />',
-            $this->view->Form->date('key.date')
+            $expected,
+            $this->view->Form->date($field)
         );
     }
 }

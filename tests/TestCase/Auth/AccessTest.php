@@ -8,6 +8,7 @@ use Fyre\Auth\Access;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Http\Exceptions\ForbiddenException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Entities\User;
 
@@ -16,6 +17,18 @@ use function class_uses;
 final class AccessTest extends TestCase
 {
     use ConnectionTrait;
+
+    /**
+     * @return array<string, array{bool, bool, bool, int}>
+     */
+    public static function anyProvider(): array
+    {
+        return [
+            'first rule allows' => [true, true, true, 1],
+            'both rules deny' => [false, false, false, 2],
+            'second rule allows' => [false, true, true, 2],
+        ];
+    }
 
     public function testAfter(): void
     {
@@ -220,31 +233,33 @@ final class AccessTest extends TestCase
         $this->assertTrue($ran);
     }
 
-    public function testAny(): void
+    #[DataProvider('anyProvider')]
+    public function testAny(bool $firstResult, bool $secondResult, bool $expected, int $expectedCalls): void
     {
         $this->login();
 
         $ran = 0;
-        $this->access->define('test', function(User|null $authUser) use (&$ran): bool {
+        $this->access->define('test', function(User|null $authUser) use (&$ran, $firstResult): bool {
             $ran++;
 
             $this->assertInstanceOf(User::class, $authUser);
 
-            return true;
+            return $firstResult;
         });
-        $this->access->define('test2', function(User|null $authUser) use (&$ran): bool {
+        $this->access->define('test2', function(User|null $authUser) use (&$ran, $secondResult): bool {
             $ran++;
 
             $this->assertInstanceOf(User::class, $authUser);
 
-            return true;
+            return $secondResult;
         });
 
-        $this->assertTrue(
+        $this->assertSame(
+            $expected,
             $this->access->any(['test', 'test2'])
         );
 
-        $this->assertSame(1, $ran);
+        $this->assertSame($expectedCalls, $ran);
     }
 
     public function testAnyArguments(): void
@@ -274,60 +289,6 @@ final class AccessTest extends TestCase
         );
 
         $this->assertSame(1, $ran);
-    }
-
-    public function testAnyFail(): void
-    {
-        $this->login();
-
-        $ran = 0;
-        $this->access->define('test', function(User|null $authUser) use (&$ran): bool {
-            $ran++;
-
-            $this->assertInstanceOf(User::class, $authUser);
-
-            return false;
-        });
-        $this->access->define('test2', function(User|null $authUser) use (&$ran): bool {
-            $ran++;
-
-            $this->assertInstanceOf(User::class, $authUser);
-
-            return false;
-        });
-
-        $this->assertFalse(
-            $this->access->any(['test', 'test2'])
-        );
-
-        $this->assertSame(2, $ran);
-    }
-
-    public function testAnyFirstFail(): void
-    {
-        $this->login();
-
-        $ran = 0;
-        $this->access->define('test', function(User|null $authUser) use (&$ran): bool {
-            $ran++;
-
-            $this->assertInstanceOf(User::class, $authUser);
-
-            return false;
-        });
-        $this->access->define('test2', function(User|null $authUser) use (&$ran): bool {
-            $ran++;
-
-            $this->assertInstanceOf(User::class, $authUser);
-
-            return true;
-        });
-
-        $this->assertTrue(
-            $this->access->any(['test', 'test2'])
-        );
-
-        $this->assertSame(2, $ran);
     }
 
     public function testAuthorize(): void

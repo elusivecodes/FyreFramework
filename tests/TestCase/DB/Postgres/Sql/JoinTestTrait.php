@@ -8,9 +8,89 @@ use Fyre\DB\Expressions\LiteralExpression;
 use Fyre\DB\Queries\SelectQuery;
 use Fyre\DB\Query;
 use Fyre\Utility\DateTime\DateTime;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait JoinTestTrait
 {
+    /**
+     * @return array<string, array{string, array<array-key, mixed>}>
+     */
+    public static function joinConditionsComparisonProvider(): array
+    {
+        return [
+            'equal' => ['SELECT * FROM "test" INNER JOIN "test2" ON "test2"."value" = 1', ['test2.value =' => 1]],
+            'not equal' => ['SELECT * FROM "test" INNER JOIN "test2" ON "test2"."value" != 1', ['test2.value !=' => 1]],
+            'greater than' => [
+                'SELECT * FROM "test" INNER JOIN "test2" ON "test2"."value" > 1',
+                ['test2.value >' => 1],
+            ],
+            'greater than or equal' => [
+                'SELECT * FROM "test" INNER JOIN "test2" ON "test2"."value" >= 1',
+                ['test2.value >=' => 1],
+            ],
+            'less than' => ['SELECT * FROM "test" INNER JOIN "test2" ON "test2"."value" < 1', ['test2.value <' => 1]],
+            'less than or equal' => [
+                'SELECT * FROM "test" INNER JOIN "test2" ON "test2"."value" <= 1',
+                ['test2.value <=' => 1],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, array<array-key, mixed>}>
+     */
+    public static function joinConditionsLogicalProvider(): array
+    {
+        return [
+            'and' => [
+                'SELECT * FROM "test" INNER JOIN "test2" ON test2.id = test.id AND "test2"."value" = 1',
+                [
+                    'and' => ['test2.id = test.id', 'test2.value' => 1],
+                ],
+            ],
+            'or' => [
+                'SELECT * FROM "test" INNER JOIN "test2" ON test2.id = test.id OR "test2"."value" = 1',
+                [
+                    'or' => ['test2.id = test.id', 'test2.value' => 1],
+                ],
+            ],
+            'not' => [
+                'SELECT * FROM "test" INNER JOIN "test2" ON NOT (test2.id = test.id AND "test2"."value" = 1)',
+                [
+                    'not' => ['test2.id = test.id', 'test2.value' => 1],
+                ],
+            ],
+            'groups' => [
+                'SELECT * FROM "test" INNER JOIN "test2" ON test2.id = test.id AND ("test2"."value" = 1 OR test2.value IS NULL)',
+                [
+                    [
+                        'test2.id = test.id',
+                        'or' => ['test2.value' => 1, 'test2.value IS NULL'],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, array<array-key, mixed>}>
+     */
+    public static function joinConditionsScalarProvider(): array
+    {
+        return [
+            'boolean false' => [
+                'SELECT * FROM "test" INNER JOIN "test2" ON "test2"."value" = 0',
+                ['test2.value' => false],
+            ],
+            'boolean true' => [
+                'SELECT * FROM "test" INNER JOIN "test2" ON "test2"."value" = 1',
+                ['test2.value' => true],
+            ],
+            'float' => ['SELECT * FROM "test" INNER JOIN "test2" ON "test2"."value" = 1.25', ['test2.value' => 1.25]],
+            'integer' => ['SELECT * FROM "test" INNER JOIN "test2" ON "test2"."id" = 1', ['test2.id' => 1]],
+        ];
+    }
+
     public function testJoinAlias(): void
     {
         $this->assertSame(
@@ -87,63 +167,6 @@ trait JoinTestTrait
         );
     }
 
-    public function testJoinConditionsAnd(): void
-    {
-        $this->assertSame(
-            'SELECT * FROM "test" INNER JOIN "test2" ON test2.id = test.id AND "test2"."value" = 1',
-            $this->db->select()
-                ->from('test')
-                ->join([
-                    [
-                        'table' => 'test2',
-                        'conditions' => [
-                            'and' => [
-                                'test2.id = test.id',
-                                'test2.value' => 1,
-                            ],
-                        ],
-                    ],
-                ])
-                ->sql()
-        );
-    }
-
-    public function testJoinConditionsBooleanFalse(): void
-    {
-        $this->assertSame(
-            'SELECT * FROM "test" INNER JOIN "test2" ON "test2"."value" = 0',
-            $this->db->select()
-                ->from('test')
-                ->join([
-                    [
-                        'table' => 'test2',
-                        'conditions' => [
-                            'test2.value' => false,
-                        ],
-                    ],
-                ])
-                ->sql()
-        );
-    }
-
-    public function testJoinConditionsBooleanTrue(): void
-    {
-        $this->assertSame(
-            'SELECT * FROM "test" INNER JOIN "test2" ON "test2"."value" = 1',
-            $this->db->select()
-                ->from('test')
-                ->join([
-                    [
-                        'table' => 'test2',
-                        'conditions' => [
-                            'test2.value' => true,
-                        ],
-                    ],
-                ])
-                ->sql()
-        );
-    }
-
     public function testJoinConditionsClosure(): void
     {
         $query = $this->db->select(['id'])
@@ -165,6 +188,26 @@ trait JoinTestTrait
         );
     }
 
+    /**
+     * @param array<array-key, mixed> $conditions
+     */
+    #[DataProvider('joinConditionsComparisonProvider')]
+    public function testJoinConditionsComparison(string $expected, array $conditions): void
+    {
+        $this->assertSame(
+            $expected,
+            $this->db->select()
+                ->from('test')
+                ->join([
+                    [
+                        'table' => 'test2',
+                        'conditions' => $conditions,
+                    ],
+                ])
+                ->sql()
+        );
+    }
+
     public function testJoinConditionsDateTime(): void
     {
         $this->assertSame(
@@ -176,24 +219,6 @@ trait JoinTestTrait
                         'table' => 'test2',
                         'conditions' => [
                             'test2.value' => DateTime::createFromArray([2020, 1, 1]),
-                        ],
-                    ],
-                ])
-                ->sql()
-        );
-    }
-
-    public function testJoinConditionsEqual(): void
-    {
-        $this->assertSame(
-            'SELECT * FROM "test" INNER JOIN "test2" ON "test2"."value" = 1',
-            $this->db->select()
-                ->from('test')
-                ->join([
-                    [
-                        'table' => 'test2',
-                        'conditions' => [
-                            'test2.value =' => 1,
                         ],
                     ],
                 ])
@@ -238,84 +263,6 @@ trait JoinTestTrait
         );
     }
 
-    public function testJoinConditionsFloat(): void
-    {
-        $this->assertSame(
-            'SELECT * FROM "test" INNER JOIN "test2" ON "test2"."value" = 1.25',
-            $this->db->select()
-                ->from('test')
-                ->join([
-                    [
-                        'table' => 'test2',
-                        'conditions' => [
-                            'test2.value' => 1.25,
-                        ],
-                    ],
-                ])
-                ->sql()
-        );
-    }
-
-    public function testJoinConditionsGreaterThan(): void
-    {
-        $this->assertSame(
-            'SELECT * FROM "test" INNER JOIN "test2" ON "test2"."value" > 1',
-            $this->db->select()
-                ->from('test')
-                ->join([
-                    [
-                        'table' => 'test2',
-                        'conditions' => [
-                            'test2.value >' => 1,
-                        ],
-                    ],
-                ])
-                ->sql()
-        );
-    }
-
-    public function testJoinConditionsGreaterThanOrEqual(): void
-    {
-        $this->assertSame(
-            'SELECT * FROM "test" INNER JOIN "test2" ON "test2"."value" >= 1',
-            $this->db->select()
-                ->from('test')
-                ->join([
-                    [
-                        'table' => 'test2',
-                        'conditions' => [
-                            'test2.value >=' => 1,
-                        ],
-                    ],
-                ])
-                ->sql()
-        );
-    }
-
-    public function testJoinConditionsGroups(): void
-    {
-        $this->assertSame(
-            'SELECT * FROM "test" INNER JOIN "test2" ON test2.id = test.id AND ("test2"."value" = 1 OR test2.value IS NULL)',
-            $this->db->select()
-                ->from('test')
-                ->join([
-                    [
-                        'table' => 'test2',
-                        'conditions' => [
-                            [
-                                'test2.id = test.id',
-                                'or' => [
-                                    'test2.value' => 1,
-                                    'test2.value IS NULL',
-                                ],
-                            ],
-                        ],
-                    ],
-                ])
-                ->sql()
-        );
-    }
-
     public function testJoinConditionsIn(): void
     {
         $this->assertSame(
@@ -327,24 +274,6 @@ trait JoinTestTrait
                         'table' => 'test2',
                         'conditions' => [
                             'test2.value IN' => [1, 2, 3],
-                        ],
-                    ],
-                ])
-                ->sql()
-        );
-    }
-
-    public function testJoinConditionsInteger(): void
-    {
-        $this->assertSame(
-            'SELECT * FROM "test" INNER JOIN "test2" ON "test2"."id" = 1',
-            $this->db->select()
-                ->from('test')
-                ->join([
-                    [
-                        'table' => 'test2',
-                        'conditions' => [
-                            'test2.id' => 1,
                         ],
                     ],
                 ])
@@ -388,42 +317,6 @@ trait JoinTestTrait
         );
     }
 
-    public function testJoinConditionsLessThan(): void
-    {
-        $this->assertSame(
-            'SELECT * FROM "test" INNER JOIN "test2" ON "test2"."value" < 1',
-            $this->db->select()
-                ->from('test')
-                ->join([
-                    [
-                        'table' => 'test2',
-                        'conditions' => [
-                            'test2.value <' => 1,
-                        ],
-                    ],
-                ])
-                ->sql()
-        );
-    }
-
-    public function testJoinConditionsLessThanOrEqual(): void
-    {
-        $this->assertSame(
-            'SELECT * FROM "test" INNER JOIN "test2" ON "test2"."value" <= 1',
-            $this->db->select()
-                ->from('test')
-                ->join([
-                    [
-                        'table' => 'test2',
-                        'conditions' => [
-                            'test2.value <=' => 1,
-                        ],
-                    ],
-                ])
-                ->sql()
-        );
-    }
-
     public function testJoinConditionsLike(): void
     {
         $this->assertSame(
@@ -456,6 +349,26 @@ trait JoinTestTrait
                                 return $query->literal('UPPER(test.test)');
                             },
                         ],
+                    ],
+                ])
+                ->sql()
+        );
+    }
+
+    /**
+     * @param array<array-key, mixed> $conditions
+     */
+    #[DataProvider('joinConditionsLogicalProvider')]
+    public function testJoinConditionsLogical(string $expected, array $conditions): void
+    {
+        $this->assertSame(
+            $expected,
+            $this->db->select()
+                ->from('test')
+                ->join([
+                    [
+                        'table' => 'test2',
+                        'conditions' => $conditions,
                     ],
                 ])
                 ->sql()
@@ -505,45 +418,6 @@ trait JoinTestTrait
         );
     }
 
-    public function testJoinConditionsNot(): void
-    {
-        $this->assertSame(
-            'SELECT * FROM "test" INNER JOIN "test2" ON NOT (test2.id = test.id AND "test2"."value" = 1)',
-            $this->db->select()
-                ->from('test')
-                ->join([
-                    [
-                        'table' => 'test2',
-                        'conditions' => [
-                            'not' => [
-                                'test2.id = test.id',
-                                'test2.value' => 1,
-                            ],
-                        ],
-                    ],
-                ])
-                ->sql()
-        );
-    }
-
-    public function testJoinConditionsNotEqual(): void
-    {
-        $this->assertSame(
-            'SELECT * FROM "test" INNER JOIN "test2" ON "test2"."value" != 1',
-            $this->db->select()
-                ->from('test')
-                ->join([
-                    [
-                        'table' => 'test2',
-                        'conditions' => [
-                            'test2.value !=' => 1,
-                        ],
-                    ],
-                ])
-                ->sql()
-        );
-    }
-
     public function testJoinConditionsNotIn(): void
     {
         $this->assertSame(
@@ -580,27 +454,6 @@ trait JoinTestTrait
         );
     }
 
-    public function testJoinConditionsOr(): void
-    {
-        $this->assertSame(
-            'SELECT * FROM "test" INNER JOIN "test2" ON test2.id = test.id OR "test2"."value" = 1',
-            $this->db->select()
-                ->from('test')
-                ->join([
-                    [
-                        'table' => 'test2',
-                        'conditions' => [
-                            'or' => [
-                                'test2.id = test.id',
-                                'test2.value' => 1,
-                            ],
-                        ],
-                    ],
-                ])
-                ->sql()
-        );
-    }
-
     public function testJoinConditionsOverwrite(): void
     {
         $this->assertSame(
@@ -621,6 +474,26 @@ trait JoinTestTrait
                         ],
                     ],
                 ], true)
+                ->sql()
+        );
+    }
+
+    /**
+     * @param array<array-key, mixed> $conditions
+     */
+    #[DataProvider('joinConditionsScalarProvider')]
+    public function testJoinConditionsScalar(string $expected, array $conditions): void
+    {
+        $this->assertSame(
+            $expected,
+            $this->db->select()
+                ->from('test')
+                ->join([
+                    [
+                        'table' => 'test2',
+                        'conditions' => $conditions,
+                    ],
+                ])
                 ->sql()
         );
     }

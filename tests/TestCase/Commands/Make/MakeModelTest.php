@@ -27,10 +27,12 @@ use Fyre\Utility\Inflector;
 use Fyre\Utility\Path;
 use InvalidArgumentException;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
 use function class_exists;
+use function dirname;
 use function fclose;
 use function file_put_contents;
 use function fopen;
@@ -68,6 +70,42 @@ final class MakeModelTest extends TestCase
     protected $output;
 
     protected Schema $schema;
+
+    /**
+     * @return array<string, array{string, string, string[]}>
+     */
+    public static function existingRelatedFileProvider(): array
+    {
+        return [
+            'entity' => [
+                'tmp/Entities/Example.php',
+                "\033[0;31mEntity file already exists.\033[0m".PHP_EOL,
+                [
+                    'tmp/Models/ExampleModel.php',
+                    'tmp/Fixtures/ExampleFixture.php',
+                    'tmp/TestCase/ExampleModelTest.php',
+                ],
+            ],
+            'fixture' => [
+                'tmp/Fixtures/ExampleFixture.php',
+                "\033[0;31mFixture file already exists.\033[0m".PHP_EOL,
+                [
+                    'tmp/Models/ExampleModel.php',
+                    'tmp/Entities/Example.php',
+                    'tmp/TestCase/ExampleModelTest.php',
+                ],
+            ],
+            'test' => [
+                'tmp/TestCase/ExampleModelTest.php',
+                "\033[0;31mTest file already exists.\033[0m".PHP_EOL,
+                [
+                    'tmp/Models/ExampleModel.php',
+                    'tmp/Entities/Example.php',
+                    'tmp/Fixtures/ExampleFixture.php',
+                ],
+            ],
+        ];
+    }
 
     public function testInferRelationshipsRequiresForeignKey(): void
     {
@@ -281,27 +319,6 @@ final class MakeModelTest extends TestCase
         );
     }
 
-    public function testMakeModelExistingEntityFile(): void
-    {
-        @mkdir('tmp/Entities', 0755, true);
-        file_put_contents('tmp/Entities/Example.php', 'changed');
-
-        $this->assertSame(
-            Command::CODE_ERROR,
-            $this->commandRunner->run('make:model', ['Example'])
-        );
-
-        rewind($this->error);
-        $this->assertSame(
-            "\033[0;31mEntity file already exists.\033[0m".PHP_EOL,
-            stream_get_contents($this->error)
-        );
-        $this->assertStringEqualsFile('tmp/Entities/Example.php', 'changed');
-        $this->assertFileDoesNotExist('tmp/Models/ExampleModel.php');
-        $this->assertFileDoesNotExist('tmp/Fixtures/ExampleFixture.php');
-        $this->assertFileDoesNotExist('tmp/TestCase/ExampleModelTest.php');
-    }
-
     public function testMakeModelExistingFile(): void
     {
         $filePath = 'tmp/Models/ExampleModel.php';
@@ -323,10 +340,14 @@ final class MakeModelTest extends TestCase
         $this->assertStringEqualsFile($filePath, 'changed');
     }
 
-    public function testMakeModelExistingFixtureFile(): void
+    /**
+     * @param string[] $absentPaths
+     */
+    #[DataProvider('existingRelatedFileProvider')]
+    public function testMakeModelExistingRelatedFile(string $filePath, string $expectedError, array $absentPaths): void
     {
-        @mkdir('tmp/Fixtures', 0755, true);
-        file_put_contents('tmp/Fixtures/ExampleFixture.php', 'changed');
+        @mkdir(dirname($filePath), 0755, true);
+        file_put_contents($filePath, 'changed');
 
         $this->assertSame(
             Command::CODE_ERROR,
@@ -335,34 +356,14 @@ final class MakeModelTest extends TestCase
 
         rewind($this->error);
         $this->assertSame(
-            "\033[0;31mFixture file already exists.\033[0m".PHP_EOL,
+            $expectedError,
             stream_get_contents($this->error)
         );
-        $this->assertStringEqualsFile('tmp/Fixtures/ExampleFixture.php', 'changed');
-        $this->assertFileDoesNotExist('tmp/Models/ExampleModel.php');
-        $this->assertFileDoesNotExist('tmp/Entities/Example.php');
-        $this->assertFileDoesNotExist('tmp/TestCase/ExampleModelTest.php');
-    }
+        $this->assertStringEqualsFile($filePath, 'changed');
 
-    public function testMakeModelExistingTestFile(): void
-    {
-        @mkdir('tmp/TestCase', 0755, true);
-        file_put_contents('tmp/TestCase/ExampleModelTest.php', 'changed');
-
-        $this->assertSame(
-            Command::CODE_ERROR,
-            $this->commandRunner->run('make:model', ['Example'])
-        );
-
-        rewind($this->error);
-        $this->assertSame(
-            "\033[0;31mTest file already exists.\033[0m".PHP_EOL,
-            stream_get_contents($this->error)
-        );
-        $this->assertStringEqualsFile('tmp/TestCase/ExampleModelTest.php', 'changed');
-        $this->assertFileDoesNotExist('tmp/Models/ExampleModel.php');
-        $this->assertFileDoesNotExist('tmp/Entities/Example.php');
-        $this->assertFileDoesNotExist('tmp/Fixtures/ExampleFixture.php');
+        foreach ($absentPaths as $absentPath) {
+            $this->assertFileDoesNotExist($absentPath);
+        }
     }
 
     public function testMakeModelForce(): void

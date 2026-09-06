@@ -45,6 +45,18 @@ trait AttributesGetTestTrait
     }
 
     /**
+     * @return array<string, array{string, string}>
+     */
+    public static function timeZoneProvider(): array
+    {
+        return [
+            'name' => ['Australia/Brisbane', 'Australia/Brisbane'],
+            'offset' => ['+10:00', '+10:00'],
+            'offset without colon' => ['+1000', '+10:00'],
+        ];
+    }
+
+    /**
      * @param int[] $parts
      */
     #[DataProvider('attributeProvider')]
@@ -58,27 +70,12 @@ trait AttributesGetTestTrait
         );
     }
 
-    public function testGetTimeZone(): void
+    #[DataProvider('timeZoneProvider')]
+    public function testGetTimeZone(string $timeZone, string $expected): void
     {
         $this->assertSame(
-            'Australia/Brisbane',
-            DateTime::now('Australia/Brisbane')->getTimeZone()
-        );
-    }
-
-    public function testGetTimeZoneFromOffset(): void
-    {
-        $this->assertSame(
-            '+10:00',
-            DateTime::now('+10:00')->getTimeZone()
-        );
-    }
-
-    public function testGetTimeZoneFromOffsetWithoutColon(): void
-    {
-        $this->assertSame(
-            '+10:00',
-            DateTime::now('+1000')->getTimeZone()
+            $expected,
+            DateTime::now($timeZone)->getTimeZone()
         );
     }
 

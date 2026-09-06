@@ -4,51 +4,50 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\DateTime\DateTime;
 
 use Fyre\Utility\DateTime\DateTime;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait TransitionTestTrait
 {
-    public function testDstPostTransition(): void
+    /**
+     * @return array<string, array{int[], string, string}>
+     */
+    public static function transitionArrayProvider(): array
     {
-        $date1 = DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZZZ', '07/04/2019 03:01:00 +11:00');
-        $date2 = $date1->withTimeZone('Australia/Sydney');
-
-        $this->assertSame(
-            'Sun Apr 07 2019 02:01:00 +1000 (Australia/Sydney)',
-            $date2->toString()
-        );
+        return [
+            'dst post transition' => [
+                [2019, 4, 7, 3, 1, 0, 0],
+                '+11:00',
+                'Sun Apr 07 2019 02:01:00 +1000 (Australia/Sydney)',
+            ],
+            'dst pre transition' => [
+                [2019, 4, 7, 2, 1, 0, 0],
+                '+11:00',
+                'Sun Apr 07 2019 02:01:00 +1100 (Australia/Sydney)',
+            ],
+            'non dst post transition' => [
+                [2019, 4, 7, 3, 1, 0, 0],
+                '+10:00',
+                'Sun Apr 07 2019 03:01:00 +1000 (Australia/Sydney)',
+            ],
+            'non dst pre transition' => [
+                [2019, 4, 7, 2, 1, 0, 0],
+                '+10:00',
+                'Sun Apr 07 2019 02:01:00 +1000 (Australia/Sydney)',
+            ],
+        ];
     }
 
-    public function testDstPostTransitionArray(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function transitionFormatProvider(): array
     {
-        $date1 = DateTime::createFromArray([2019, 4, 7, 3, 1, 0, 0], '+11:00');
-        $date2 = $date1->withTimeZone('Australia/Sydney');
-
-        $this->assertSame(
-            'Sun Apr 07 2019 02:01:00 +1000 (Australia/Sydney)',
-            $date2->toString()
-        );
-    }
-
-    public function testDstPreTransition(): void
-    {
-        $date1 = DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZZZ', '07/04/2019 02:01:00 +11:00');
-        $date2 = $date1->withTimeZone('Australia/Sydney');
-
-        $this->assertSame(
-            'Sun Apr 07 2019 02:01:00 +1100 (Australia/Sydney)',
-            $date2->toString()
-        );
-    }
-
-    public function testDstPreTransitionArray(): void
-    {
-        $date1 = DateTime::createFromArray([2019, 4, 7, 2, 1, 0, 0], '+11:00');
-        $date2 = $date1->withTimeZone('Australia/Sydney');
-
-        $this->assertSame(
-            'Sun Apr 07 2019 02:01:00 +1100 (Australia/Sydney)',
-            $date2->toString()
-        );
+        return [
+            'dst post transition' => ['07/04/2019 03:01:00 +11:00', 'Sun Apr 07 2019 02:01:00 +1000 (Australia/Sydney)'],
+            'dst pre transition' => ['07/04/2019 02:01:00 +11:00', 'Sun Apr 07 2019 02:01:00 +1100 (Australia/Sydney)'],
+            'non dst post transition' => ['07/04/2019 03:01:00 +10:00', 'Sun Apr 07 2019 03:01:00 +1000 (Australia/Sydney)'],
+            'non dst pre transition' => ['07/04/2019 02:01:00 +10:00', 'Sun Apr 07 2019 02:01:00 +1000 (Australia/Sydney)'],
+        ];
     }
 
     public function testDstTransitionAddDay(): void
@@ -371,46 +370,29 @@ trait TransitionTestTrait
         );
     }
 
-    public function testNonDstPostTransition(): void
+    /**
+     * @param int[] $parts
+     */
+    #[DataProvider('transitionArrayProvider')]
+    public function testTransitionFromArray(array $parts, string $timeZone, string $expected): void
     {
-        $date1 = DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZZZ', '07/04/2019 03:01:00 +10:00');
+        $date1 = DateTime::createFromArray($parts, $timeZone);
         $date2 = $date1->withTimeZone('Australia/Sydney');
 
         $this->assertSame(
-            'Sun Apr 07 2019 03:01:00 +1000 (Australia/Sydney)',
+            $expected,
             $date2->toString()
         );
     }
 
-    public function testNonDstPostTransitionArray(): void
+    #[DataProvider('transitionFormatProvider')]
+    public function testTransitionFromFormat(string $value, string $expected): void
     {
-        $date1 = DateTime::createFromArray([2019, 4, 7, 3, 1, 0, 0], '+10:00');
+        $date1 = DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZZZ', $value);
         $date2 = $date1->withTimeZone('Australia/Sydney');
 
         $this->assertSame(
-            'Sun Apr 07 2019 03:01:00 +1000 (Australia/Sydney)',
-            $date2->toString()
-        );
-    }
-
-    public function testNonDstPreTransition(): void
-    {
-        $date1 = DateTime::createFromFormat('dd/MM/yyyy HH:mm:ss ZZZZZ', '07/04/2019 02:01:00 +10:00');
-        $date2 = $date1->withTimeZone('Australia/Sydney');
-
-        $this->assertSame(
-            'Sun Apr 07 2019 02:01:00 +1000 (Australia/Sydney)',
-            $date2->toString()
-        );
-    }
-
-    public function testNonDstPreTransitionArray(): void
-    {
-        $date1 = DateTime::createFromArray([2019, 4, 7, 2, 1, 0, 0], '+10:00');
-        $date2 = $date1->withTimeZone('Australia/Sydney');
-
-        $this->assertSame(
-            'Sun Apr 07 2019 02:01:00 +1000 (Australia/Sydney)',
+            $expected,
             $date2->toString()
         );
     }

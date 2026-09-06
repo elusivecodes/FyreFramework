@@ -7,22 +7,28 @@ use Fyre\DB\Types\DateTimeType;
 use Fyre\Utility\DateTime\Date;
 use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Time;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait DateTimeTestTrait
 {
-    public function testDateTimeFromDatabase(): void
+    /**
+     * @return array<string, array{string, int|string}>
+     */
+    public static function dateTimeFromDatabaseProvider(): array
     {
-        $this->assertSame(
-            '2021-12-31T22:59:11.000+00:00',
-            $this->type->use('datetime')->fromDatabase('2021-12-31 22:59:11')->toIsoString()
-        );
+        return [
+            'default' => ['2021-12-31T22:59:11.000+00:00', '2021-12-31 22:59:11'],
+            'fractional' => ['2021-12-31T22:59:11.123+00:00', '2021-12-31 22:59:11.12345'],
+            'timestamp' => ['2021-12-31T22:59:11.000+00:00', 1640991551],
+        ];
     }
 
-    public function testDateTimeFromDatabaseFractional(): void
+    #[DataProvider('dateTimeFromDatabaseProvider')]
+    public function testDateTimeFromDatabase(string $expected, int|string $value): void
     {
         $this->assertSame(
-            '2021-12-31T22:59:11.123+00:00',
-            $this->type->use('datetime')->fromDatabase('2021-12-31 22:59:11.12345')->toIsoString()
+            $expected,
+            $this->type->use('datetime')->fromDatabase($value)->toIsoString()
         );
     }
 
@@ -50,14 +56,6 @@ trait DateTimeTestTrait
         $this->assertSame(
             '2021-12-31T12:59:11.000+00:00',
             $date->toIsoString()
-        );
-    }
-
-    public function testDateTimeFromDatabaseTimestamp(): void
-    {
-        $this->assertSame(
-            '2021-12-31T22:59:11.000+00:00',
-            $this->type->use('datetime')->fromDatabase(1640991551)->toIsoString()
         );
     }
 

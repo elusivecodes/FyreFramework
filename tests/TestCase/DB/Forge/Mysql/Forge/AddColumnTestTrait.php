@@ -12,11 +12,301 @@ use Fyre\DB\Types\IntegerType;
 use Fyre\DB\Types\SetType;
 use Fyre\DB\Types\StringType;
 use Fyre\DB\Types\TextType;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Mock\Enums\State;
 use Tests\Mock\Enums\Status;
 
 trait AddColumnTestTrait
 {
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, mixed>}>
+     */
+    public static function addColumnTypeProvider(): array
+    {
+        return [
+            'big int' => [
+                ['type' => IntegerType::class, 'precision' => 20],
+                [
+                    'name' => 'value',
+                    'type' => 'bigint',
+                    'length' => null,
+                    'precision' => 20,
+                    'scale' => null,
+                    'fractionalSeconds' => null,
+                    'values' => null,
+                    'nullable' => false,
+                    'unsigned' => false,
+                    'default' => null,
+                    'charset' => null,
+                    'collation' => null,
+                    'comment' => '',
+                    'autoIncrement' => false,
+                    'enumClass' => null,
+                ],
+            ],
+            'blob' => [
+                ['type' => BinaryType::class],
+                [
+                    'name' => 'value',
+                    'type' => 'blob',
+                    'length' => 65535,
+                    'precision' => null,
+                    'scale' => null,
+                    'fractionalSeconds' => null,
+                    'values' => null,
+                    'nullable' => false,
+                    'unsigned' => false,
+                    'default' => null,
+                    'charset' => null,
+                    'collation' => null,
+                    'comment' => '',
+                    'autoIncrement' => false,
+                    'enumClass' => null,
+                ],
+            ],
+            'char' => [
+                ['type' => StringType::class, 'length' => 1],
+                [
+                    'name' => 'value',
+                    'type' => 'char',
+                    'length' => 1,
+                    'precision' => null,
+                    'scale' => null,
+                    'fractionalSeconds' => null,
+                    'values' => null,
+                    'nullable' => false,
+                    'unsigned' => false,
+                    'default' => null,
+                    'charset' => 'utf8mb4',
+                    'collation' => 'utf8mb4_unicode_ci',
+                    'comment' => '',
+                    'autoIncrement' => false,
+                    'enumClass' => null,
+                ],
+            ],
+            'date time' => [
+                ['type' => DateTimeType::class],
+                [
+                    'name' => 'value',
+                    'type' => 'datetime',
+                    'length' => null,
+                    'precision' => null,
+                    'scale' => null,
+                    'fractionalSeconds' => null,
+                    'values' => null,
+                    'nullable' => false,
+                    'unsigned' => false,
+                    'default' => null,
+                    'charset' => null,
+                    'collation' => null,
+                    'comment' => '',
+                    'autoIncrement' => false,
+                    'enumClass' => null,
+                ],
+            ],
+            'decimal' => [
+                ['type' => DecimalType::class, 'precision' => 10, 'scale' => 2],
+                [
+                    'name' => 'value',
+                    'type' => 'decimal',
+                    'length' => null,
+                    'precision' => 10,
+                    'scale' => 2,
+                    'fractionalSeconds' => null,
+                    'values' => null,
+                    'nullable' => false,
+                    'unsigned' => false,
+                    'default' => null,
+                    'charset' => null,
+                    'collation' => null,
+                    'comment' => '',
+                    'autoIncrement' => false,
+                    'enumClass' => null,
+                ],
+            ],
+            'float' => [
+                ['type' => FloatType::class],
+                [
+                    'name' => 'value',
+                    'type' => 'float',
+                    'length' => null,
+                    'precision' => null,
+                    'scale' => null,
+                    'fractionalSeconds' => null,
+                    'values' => null,
+                    'nullable' => false,
+                    'unsigned' => false,
+                    'default' => null,
+                    'charset' => null,
+                    'collation' => null,
+                    'comment' => '',
+                    'autoIncrement' => false,
+                    'enumClass' => null,
+                ],
+            ],
+            'int' => [
+                ['type' => IntegerType::class],
+                [
+                    'name' => 'value',
+                    'type' => 'int',
+                    'length' => null,
+                    'precision' => 11,
+                    'scale' => null,
+                    'fractionalSeconds' => null,
+                    'values' => null,
+                    'nullable' => false,
+                    'unsigned' => false,
+                    'default' => null,
+                    'charset' => null,
+                    'collation' => null,
+                    'comment' => '',
+                    'autoIncrement' => false,
+                    'enumClass' => null,
+                ],
+            ],
+            'long text' => [
+                ['type' => TextType::class, 'length' => 4294967295],
+                [
+                    'name' => 'value',
+                    'type' => 'longtext',
+                    'length' => 4294967295,
+                    'precision' => null,
+                    'scale' => null,
+                    'fractionalSeconds' => null,
+                    'values' => null,
+                    'nullable' => false,
+                    'unsigned' => false,
+                    'default' => null,
+                    'charset' => 'utf8mb4',
+                    'collation' => 'utf8mb4_unicode_ci',
+                    'comment' => '',
+                    'autoIncrement' => false,
+                    'enumClass' => null,
+                ],
+            ],
+            'medium int' => [
+                ['type' => IntegerType::class, 'precision' => 8],
+                [
+                    'name' => 'value',
+                    'type' => 'mediumint',
+                    'length' => null,
+                    'precision' => 8,
+                    'scale' => null,
+                    'fractionalSeconds' => null,
+                    'values' => null,
+                    'nullable' => false,
+                    'unsigned' => false,
+                    'default' => null,
+                    'charset' => null,
+                    'collation' => null,
+                    'comment' => '',
+                    'autoIncrement' => false,
+                    'enumClass' => null,
+                ],
+            ],
+            'medium text' => [
+                ['type' => TextType::class, 'length' => 16777215],
+                [
+                    'name' => 'value',
+                    'type' => 'mediumtext',
+                    'length' => 16777215,
+                    'precision' => null,
+                    'scale' => null,
+                    'fractionalSeconds' => null,
+                    'values' => null,
+                    'nullable' => false,
+                    'unsigned' => false,
+                    'default' => null,
+                    'charset' => 'utf8mb4',
+                    'collation' => 'utf8mb4_unicode_ci',
+                    'comment' => '',
+                    'autoIncrement' => false,
+                    'enumClass' => null,
+                ],
+            ],
+            'small int' => [
+                ['type' => IntegerType::class, 'precision' => 6],
+                [
+                    'name' => 'value',
+                    'type' => 'smallint',
+                    'length' => null,
+                    'precision' => 6,
+                    'scale' => null,
+                    'fractionalSeconds' => null,
+                    'values' => null,
+                    'nullable' => false,
+                    'unsigned' => false,
+                    'default' => null,
+                    'charset' => null,
+                    'collation' => null,
+                    'comment' => '',
+                    'autoIncrement' => false,
+                    'enumClass' => null,
+                ],
+            ],
+            'text' => [
+                ['type' => TextType::class],
+                [
+                    'name' => 'value',
+                    'type' => 'text',
+                    'length' => 65535,
+                    'precision' => null,
+                    'scale' => null,
+                    'fractionalSeconds' => null,
+                    'values' => null,
+                    'nullable' => false,
+                    'unsigned' => false,
+                    'default' => null,
+                    'charset' => 'utf8mb4',
+                    'collation' => 'utf8mb4_unicode_ci',
+                    'comment' => '',
+                    'autoIncrement' => false,
+                    'enumClass' => null,
+                ],
+            ],
+            'tiny int' => [
+                ['type' => IntegerType::class, 'precision' => 4],
+                [
+                    'name' => 'value',
+                    'type' => 'tinyint',
+                    'length' => null,
+                    'precision' => 4,
+                    'scale' => null,
+                    'fractionalSeconds' => null,
+                    'values' => null,
+                    'nullable' => false,
+                    'unsigned' => false,
+                    'default' => null,
+                    'charset' => null,
+                    'collation' => null,
+                    'comment' => '',
+                    'autoIncrement' => false,
+                    'enumClass' => null,
+                ],
+            ],
+            'tiny text' => [
+                ['type' => TextType::class, 'length' => 255],
+                [
+                    'name' => 'value',
+                    'type' => 'tinytext',
+                    'length' => 255,
+                    'precision' => null,
+                    'scale' => null,
+                    'fractionalSeconds' => null,
+                    'values' => null,
+                    'nullable' => false,
+                    'unsigned' => false,
+                    'default' => null,
+                    'charset' => 'utf8mb4',
+                    'collation' => 'utf8mb4_unicode_ci',
+                    'comment' => '',
+                    'autoIncrement' => false,
+                    'enumClass' => null,
+                ],
+            ],
+        ];
+    }
+
     public function testAddColumnAfter(): void
     {
         $this->forge->createTable('test', [
@@ -321,7 +611,12 @@ trait AddColumnTestTrait
         );
     }
 
-    public function testAddColumnTypeBigInt(): void
+    /**
+     * @param array<string, mixed> $options
+     * @param array<string, mixed> $expected
+     */
+    #[DataProvider('addColumnTypeProvider')]
+    public function testAddColumnType(array $options, array $expected): void
     {
         $this->forge->createTable('test', [
             'id' => [
@@ -329,176 +624,10 @@ trait AddColumnTestTrait
             ],
         ]);
 
-        $this->forge->addColumn('test', 'value', [
-            'type' => IntegerType::class,
-            'precision' => 20,
-        ]);
+        $this->forge->addColumn('test', 'value', $options);
 
         $this->assertArraysAreIdentical(
-            [
-                'name' => 'value',
-                'type' => 'bigint',
-                'length' => null,
-                'precision' => 20,
-                'scale' => null,
-                'fractionalSeconds' => null,
-                'values' => null,
-                'nullable' => false,
-                'unsigned' => false,
-                'default' => null,
-                'charset' => null,
-                'collation' => null,
-                'comment' => '',
-                'autoIncrement' => false,
-                'enumClass' => null,
-            ],
-            $this->schema->table('test')
-                ->column('value')
-                ->toArray()
-        );
-    }
-
-    public function testAddColumnTypeBlob(): void
-    {
-        $this->forge->createTable('test', [
-            'id' => [
-                'type' => IntegerType::class,
-            ],
-        ]);
-
-        $this->forge->addColumn('test', 'value', [
-            'type' => BinaryType::class,
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [
-                'name' => 'value',
-                'type' => 'blob',
-                'length' => 65535,
-                'precision' => null,
-                'scale' => null,
-                'fractionalSeconds' => null,
-                'values' => null,
-                'nullable' => false,
-                'unsigned' => false,
-                'default' => null,
-                'charset' => null,
-                'collation' => null,
-                'comment' => '',
-                'autoIncrement' => false,
-                'enumClass' => null,
-            ],
-            $this->schema->table('test')
-                ->column('value')
-                ->toArray()
-        );
-    }
-
-    public function testAddColumnTypeChar(): void
-    {
-        $this->forge->createTable('test', [
-            'id' => [
-                'type' => IntegerType::class,
-            ],
-        ]);
-
-        $this->forge->addColumn('test', 'value', [
-            'type' => StringType::class,
-            'length' => 1,
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [
-                'name' => 'value',
-                'type' => 'char',
-                'length' => 1,
-                'precision' => null,
-                'scale' => null,
-                'fractionalSeconds' => null,
-                'values' => null,
-                'nullable' => false,
-                'unsigned' => false,
-                'default' => null,
-                'charset' => 'utf8mb4',
-                'collation' => 'utf8mb4_unicode_ci',
-                'comment' => '',
-                'autoIncrement' => false,
-                'enumClass' => null,
-            ],
-            $this->schema->table('test')
-                ->column('value')
-                ->toArray()
-        );
-    }
-
-    public function testAddColumnTypeDateTime(): void
-    {
-        $this->forge->createTable('test', [
-            'id' => [
-                'type' => IntegerType::class,
-            ],
-        ]);
-
-        $this->forge->addColumn('test', 'value', [
-            'type' => DateTimeType::class,
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [
-                'name' => 'value',
-                'type' => 'datetime',
-                'length' => null,
-                'precision' => null,
-                'scale' => null,
-                'fractionalSeconds' => null,
-                'values' => null,
-                'nullable' => false,
-                'unsigned' => false,
-                'default' => null,
-                'charset' => null,
-                'collation' => null,
-                'comment' => '',
-                'autoIncrement' => false,
-                'enumClass' => null,
-            ],
-            $this->schema->table('test')
-                ->column('value')
-                ->toArray()
-        );
-    }
-
-    public function testAddColumnTypeDecimal(): void
-    {
-        $this->forge->createTable('test', [
-            'id' => [
-                'type' => IntegerType::class,
-            ],
-        ]);
-
-        $this->forge->addColumn('test', 'value', [
-            'type' => DecimalType::class,
-            'precision' => 10,
-            'scale' => 2,
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [
-                'name' => 'value',
-                'type' => 'decimal',
-                'length' => null,
-                'precision' => 10,
-                'scale' => 2,
-                'fractionalSeconds' => null,
-                'values' => null,
-                'nullable' => false,
-                'unsigned' => false,
-                'default' => null,
-                'charset' => null,
-                'collation' => null,
-                'comment' => '',
-                'autoIncrement' => false,
-                'enumClass' => null,
-            ],
+            $expected,
             $this->schema->table('test')
                 ->column('value')
                 ->toArray()
@@ -619,189 +748,6 @@ trait AddColumnTestTrait
         );
     }
 
-    public function testAddColumnTypeFloat(): void
-    {
-        $this->forge->createTable('test', [
-            'id' => [
-                'type' => IntegerType::class,
-            ],
-        ]);
-
-        $this->forge->addColumn('test', 'value', [
-            'type' => FloatType::class,
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [
-                'name' => 'value',
-                'type' => 'float',
-                'length' => null,
-                'precision' => null,
-                'scale' => null,
-                'fractionalSeconds' => null,
-                'values' => null,
-                'nullable' => false,
-                'unsigned' => false,
-                'default' => null,
-                'charset' => null,
-                'collation' => null,
-                'comment' => '',
-                'autoIncrement' => false,
-                'enumClass' => null,
-            ],
-            $this->schema->table('test')
-                ->column('value')
-                ->toArray()
-        );
-    }
-
-    public function testAddColumnTypeInt(): void
-    {
-        $this->forge->createTable('test', [
-            'id' => [
-                'type' => IntegerType::class,
-            ],
-        ]);
-
-        $this->forge->addColumn('test', 'value', [
-            'type' => IntegerType::class,
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [
-                'name' => 'value',
-                'type' => 'int',
-                'length' => null,
-                'precision' => 11,
-                'scale' => null,
-                'fractionalSeconds' => null,
-                'values' => null,
-                'nullable' => false,
-                'unsigned' => false,
-                'default' => null,
-                'charset' => null,
-                'collation' => null,
-                'comment' => '',
-                'autoIncrement' => false,
-                'enumClass' => null,
-            ],
-            $this->schema->table('test')
-                ->column('value')
-                ->toArray()
-        );
-    }
-
-    public function testAddColumnTypeLongText(): void
-    {
-        $this->forge->createTable('test', [
-            'id' => [
-                'type' => IntegerType::class,
-            ],
-        ]);
-
-        $this->forge->addColumn('test', 'value', [
-            'type' => TextType::class,
-            'length' => 4_294_967_295,
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [
-                'name' => 'value',
-                'type' => 'longtext',
-                'length' => 4_294_967_295,
-                'precision' => null,
-                'scale' => null,
-                'fractionalSeconds' => null,
-                'values' => null,
-                'nullable' => false,
-                'unsigned' => false,
-                'default' => null,
-                'charset' => 'utf8mb4',
-                'collation' => 'utf8mb4_unicode_ci',
-                'comment' => '',
-                'autoIncrement' => false,
-                'enumClass' => null,
-            ],
-            $this->schema->table('test')
-                ->column('value')
-                ->toArray()
-        );
-    }
-
-    public function testAddColumnTypeMediumInt(): void
-    {
-        $this->forge->createTable('test', [
-            'id' => [
-                'type' => IntegerType::class,
-            ],
-        ]);
-
-        $this->forge->addColumn('test', 'value', [
-            'type' => IntegerType::class,
-            'precision' => 8,
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [
-                'name' => 'value',
-                'type' => 'mediumint',
-                'length' => null,
-                'precision' => 8,
-                'scale' => null,
-                'fractionalSeconds' => null,
-                'values' => null,
-                'nullable' => false,
-                'unsigned' => false,
-                'default' => null,
-                'charset' => null,
-                'collation' => null,
-                'comment' => '',
-                'autoIncrement' => false,
-                'enumClass' => null,
-            ],
-            $this->schema->table('test')
-                ->column('value')
-                ->toArray()
-        );
-    }
-
-    public function testAddColumnTypeMediumText(): void
-    {
-        $this->forge->createTable('test', [
-            'id' => [
-                'type' => IntegerType::class,
-            ],
-        ]);
-
-        $this->forge->addColumn('test', 'value', [
-            'type' => TextType::class,
-            'length' => 16_777_215,
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [
-                'name' => 'value',
-                'type' => 'mediumtext',
-                'length' => 16_777_215,
-                'precision' => null,
-                'scale' => null,
-                'fractionalSeconds' => null,
-                'values' => null,
-                'nullable' => false,
-                'unsigned' => false,
-                'default' => null,
-                'charset' => 'utf8mb4',
-                'collation' => 'utf8mb4_unicode_ci',
-                'comment' => '',
-                'autoIncrement' => false,
-                'enumClass' => null,
-            ],
-            $this->schema->table('test')
-                ->column('value')
-                ->toArray()
-        );
-    }
-
     public function testAddColumnTypeSetWithEnumClassValues(): void
     {
         $this->forge->createTable('test', [
@@ -824,153 +770,6 @@ trait AddColumnTestTrait
                 'scale' => null,
                 'fractionalSeconds' => null,
                 'values' => ['Draft', 'Published'],
-                'nullable' => false,
-                'unsigned' => false,
-                'default' => null,
-                'charset' => 'utf8mb4',
-                'collation' => 'utf8mb4_unicode_ci',
-                'comment' => '',
-                'autoIncrement' => false,
-                'enumClass' => null,
-            ],
-            $this->schema->table('test')
-                ->column('value')
-                ->toArray()
-        );
-    }
-
-    public function testAddColumnTypeSmallInt(): void
-    {
-        $this->forge->createTable('test', [
-            'id' => [
-                'type' => IntegerType::class,
-            ],
-        ]);
-
-        $this->forge->addColumn('test', 'value', [
-            'type' => IntegerType::class,
-            'precision' => 6,
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [
-                'name' => 'value',
-                'type' => 'smallint',
-                'length' => null,
-                'precision' => 6,
-                'scale' => null,
-                'fractionalSeconds' => null,
-                'values' => null,
-                'nullable' => false,
-                'unsigned' => false,
-                'default' => null,
-                'charset' => null,
-                'collation' => null,
-                'comment' => '',
-                'autoIncrement' => false,
-                'enumClass' => null,
-            ],
-            $this->schema->table('test')
-                ->column('value')
-                ->toArray()
-        );
-    }
-
-    public function testAddColumnTypeText(): void
-    {
-        $this->forge->createTable('test', [
-            'id' => [
-                'type' => IntegerType::class,
-            ],
-        ]);
-
-        $this->forge->addColumn('test', 'value', [
-            'type' => TextType::class,
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [
-                'name' => 'value',
-                'type' => 'text',
-                'length' => 65535,
-                'precision' => null,
-                'scale' => null,
-                'fractionalSeconds' => null,
-                'values' => null,
-                'nullable' => false,
-                'unsigned' => false,
-                'default' => null,
-                'charset' => 'utf8mb4',
-                'collation' => 'utf8mb4_unicode_ci',
-                'comment' => '',
-                'autoIncrement' => false,
-                'enumClass' => null,
-            ],
-            $this->schema->table('test')
-                ->column('value')
-                ->toArray()
-        );
-    }
-
-    public function testAddColumnTypeTinyInt(): void
-    {
-        $this->forge->createTable('test', [
-            'id' => [
-                'type' => IntegerType::class,
-            ],
-        ]);
-
-        $this->forge->addColumn('test', 'value', [
-            'type' => IntegerType::class,
-            'precision' => 4,
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [
-                'name' => 'value',
-                'type' => 'tinyint',
-                'length' => null,
-                'precision' => 4,
-                'scale' => null,
-                'fractionalSeconds' => null,
-                'values' => null,
-                'nullable' => false,
-                'unsigned' => false,
-                'default' => null,
-                'charset' => null,
-                'collation' => null,
-                'comment' => '',
-                'autoIncrement' => false,
-                'enumClass' => null,
-            ],
-            $this->schema->table('test')
-                ->column('value')
-                ->toArray()
-        );
-    }
-
-    public function testAddColumnTypeTinyText(): void
-    {
-        $this->forge->createTable('test', [
-            'id' => [
-                'type' => IntegerType::class,
-            ],
-        ]);
-
-        $this->forge->addColumn('test', 'value', [
-            'type' => TextType::class,
-            'length' => 255,
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [
-                'name' => 'value',
-                'type' => 'tinytext',
-                'length' => 255,
-                'precision' => null,
-                'scale' => null,
-                'fractionalSeconds' => null,
-                'values' => null,
                 'nullable' => false,
                 'unsigned' => false,
                 'default' => null,

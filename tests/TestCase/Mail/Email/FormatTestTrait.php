@@ -5,9 +5,22 @@ namespace Tests\TestCase\Mail\Email;
 
 use Fyre\Mail\Email;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait FormatTestTrait
 {
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function formatProvider(): array
+    {
+        return [
+            'text' => [Email::TEXT],
+            'html' => [Email::HTML],
+            'both' => [Email::BOTH],
+        ];
+    }
+
     public function testDefaultFormat(): void
     {
         $this->assertSame(
@@ -16,35 +29,13 @@ trait FormatTestTrait
         );
     }
 
-    public function testSetFormat(): void
+    #[DataProvider('formatProvider')]
+    public function testSetFormat(string $format): void
     {
-        $this->assertSame(
-            $this->email,
-            $this->email->setFormat(Email::TEXT)
-        );
+        $this->email->setFormat($format);
 
         $this->assertSame(
-            Email::TEXT,
-            $this->email->getFormat()
-        );
-    }
-
-    public function testSetFormatBoth(): void
-    {
-        $this->email->setFormat(Email::BOTH);
-
-        $this->assertSame(
-            Email::BOTH,
-            $this->email->getFormat()
-        );
-    }
-
-    public function testSetFormatHtml(): void
-    {
-        $this->email->setFormat(Email::HTML);
-
-        $this->assertSame(
-            Email::HTML,
+            $format,
             $this->email->getFormat()
         );
     }
@@ -55,5 +46,13 @@ trait FormatTestTrait
         $this->expectExceptionMessageIs('Email format `invalid` is not valid.');
 
         $this->email->setFormat('invalid');
+    }
+
+    public function testSetFormatReturnsSelf(): void
+    {
+        $this->assertSame(
+            $this->email,
+            $this->email->setFormat(Email::TEXT)
+        );
     }
 }

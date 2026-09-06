@@ -9,6 +9,7 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Utility\Path;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use function class_uses;
@@ -16,6 +17,18 @@ use function class_uses;
 final class LangTest extends TestCase
 {
     protected Lang $lang;
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function localeCountryProvider(): array
+    {
+        return [
+            'get locale country' => ['en_au'],
+            'case' => ['en_AU'],
+            'extended' => ['en_au_posix'],
+        ];
+    }
 
     public function testAddPath(): void
     {
@@ -162,31 +175,10 @@ final class LangTest extends TestCase
         );
     }
 
-    public function testGetLocaleCountry(): void
+    #[DataProvider('localeCountryProvider')]
+    public function testGetLocaleCountry(string $locale): void
     {
-        $this->lang->setLocale('en_au');
-        $this->lang->addPath('tests/lang/dir2');
-
-        $this->assertSame(
-            'Localized',
-            $this->lang->get('test.value')
-        );
-    }
-
-    public function testGetLocaleCountryCase(): void
-    {
-        $this->lang->setLocale('en_AU');
-        $this->lang->addPath('tests/lang/dir2');
-
-        $this->assertSame(
-            'Localized',
-            $this->lang->get('test.value')
-        );
-    }
-
-    public function testGetLocaleCountryExtended(): void
-    {
-        $this->lang->setLocale('en_au_posix');
+        $this->lang->setLocale($locale);
         $this->lang->addPath('tests/lang/dir2');
 
         $this->assertSame(

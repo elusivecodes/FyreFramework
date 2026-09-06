@@ -14,6 +14,7 @@ use Fyre\Utility\DateTime\Time;
 use Fyre\Utility\Formatter;
 use InvalidArgumentException;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use function class_uses;
@@ -23,19 +24,48 @@ final class FormatterTest extends TestCase
 {
     protected Formatter $formatter;
 
-    public function testCurrency(): void
+    /**
+     * @return array<string, array{float|int|string, string}>
+     */
+    public static function currencyProvider(): array
     {
-        $this->assertSame(
-            '$123.00',
-            $this->formatter->currency(123)
-        );
+        return [
+            'integer' => [123, '$123.00'],
+            'float' => [123.456, '$123.46'],
+            'string' => ['123.456', '$123.46'],
+        ];
     }
 
-    public function testCurrencyFloat(): void
+    /**
+     * @return array<string, array{float|int|string, string}>
+     */
+    public static function numberProvider(): array
+    {
+        return [
+            'integer' => [1234, '1,234'],
+            'float' => [1234.567, '1,234.567'],
+            'string' => ['1234.567', '1,234.567'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{float|int|string, string}>
+     */
+    public static function percentProvider(): array
+    {
+        return [
+            'integer' => [1, '100%'],
+            'float' => [0.123, '12%'],
+            'string' => ['0.123', '12%'],
+        ];
+    }
+
+    #[DataProvider('currencyProvider')]
+    public function testCurrency(float|int|string $value, string $expected): void
     {
         $this->assertSame(
-            '$123.46',
-            $this->formatter->currency(123.456)
+            $expected,
+            $this->formatter->currency($value)
         );
     }
 
@@ -44,14 +74,6 @@ final class FormatterTest extends TestCase
         $this->assertSame(
             '£123.00',
             $this->formatter->currency(123, 'gbp', 'en-GB')
-        );
-    }
-
-    public function testCurrencyString(): void
-    {
-        $this->assertSame(
-            '$123.46',
-            $this->formatter->currency('123.456')
         );
     }
 
@@ -167,51 +189,21 @@ final class FormatterTest extends TestCase
         );
     }
 
-    public function testNumber(): void
+    #[DataProvider('numberProvider')]
+    public function testNumber(float|int|string $value, string $expected): void
     {
         $this->assertSame(
-            '1,234',
-            $this->formatter->number(1234)
+            $expected,
+            $this->formatter->number($value)
         );
     }
 
-    public function testNumberFloat(): void
+    #[DataProvider('percentProvider')]
+    public function testPercent(float|int|string $value, string $expected): void
     {
         $this->assertSame(
-            '1,234.567',
-            $this->formatter->number(1234.567)
-        );
-    }
-
-    public function testNumberString(): void
-    {
-        $this->assertSame(
-            '1,234.567',
-            $this->formatter->number('1234.567')
-        );
-    }
-
-    public function testPercent(): void
-    {
-        $this->assertSame(
-            '100%',
-            $this->formatter->percent(1)
-        );
-    }
-
-    public function testPercentFloat(): void
-    {
-        $this->assertSame(
-            '12%',
-            $this->formatter->percent(0.123)
-        );
-    }
-
-    public function testPercentString(): void
-    {
-        $this->assertSame(
-            '12%',
-            $this->formatter->percent('0.123')
+            $expected,
+            $this->formatter->percent($value)
         );
     }
 

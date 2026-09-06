@@ -5,6 +5,7 @@ namespace Tests\TestCase\ORM\Shared;
 
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\ORM\Result;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Mock\Entities\Item;
 use Tests\Mock\Enums\State;
 use Tests\Mock\Enums\Status;
@@ -14,6 +15,18 @@ use function json_encode;
 
 trait ResultTestTrait
 {
+    /**
+     * @return array<string, array{class-string<State>|class-string<Status>, string}>
+     */
+    public static function resultHydratesInvalidEnumAsNullProvider(): array
+    {
+        return [
+            'enum null' => [Status::class, 'INSERT INTO items (name) VALUES (NULL)'],
+            'invalid enum as null' => [Status::class, "INSERT INTO items (name) VALUES ('invalid')"],
+            'invalid unit enum as null' => [State::class, "INSERT INTO items (name) VALUES ('Invalid')"],
+        ];
+    }
+
     public function testCollection(): void
     {
         $Items = $this->modelRegistry->use('Items');
@@ -274,54 +287,16 @@ trait ResultTestTrait
         );
     }
 
-    public function testResultHydratesEnumNull(): void
+    /**
+     * @param class-string<State>|class-string<Status> $enumClass
+     */
+    #[DataProvider('resultHydratesInvalidEnumAsNullProvider')]
+    public function testResultHydratesInvalidEnumAsNull(string $enumClass, string $sql): void
     {
         $Items = $this->modelRegistry->use('Items');
-        $Items->getSchema()->setEnumClass('name', Status::class);
+        $Items->getSchema()->setEnumClass('name', $enumClass);
 
-        $this->db->query('INSERT INTO items (name) VALUES (NULL)');
-
-        $item = $Items->find()
-            ->getResult()
-            ->first();
-
-        $this->assertInstanceOf(
-            Item::class,
-            $item
-        );
-
-        $this->assertNull(
-            $item->name
-        );
-    }
-
-    public function testResultHydratesInvalidEnumAsNull(): void
-    {
-        $Items = $this->modelRegistry->use('Items');
-        $Items->getSchema()->setEnumClass('name', Status::class);
-
-        $this->db->query("INSERT INTO items (name) VALUES ('invalid')");
-
-        $item = $Items->find()
-            ->getResult()
-            ->first();
-
-        $this->assertInstanceOf(
-            Item::class,
-            $item
-        );
-
-        $this->assertNull(
-            $item->name
-        );
-    }
-
-    public function testResultHydratesInvalidUnitEnumAsNull(): void
-    {
-        $Items = $this->modelRegistry->use('Items');
-        $Items->getSchema()->setEnumClass('name', State::class);
-
-        $this->db->query("INSERT INTO items (name) VALUES ('Invalid')");
+        $this->db->query($sql);
 
         $item = $Items->find()
             ->getResult()

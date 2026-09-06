@@ -33,6 +33,26 @@ trait LabelTestTrait
                 ['id' => 'label', 'class' => 'test'],
                 '<label class="test" id="label" for="input">Input</label>',
             ],
+            'for' => [
+                ['for' => 'other'],
+                '<label for="other">Input</label>',
+            ],
+            'for false' => [
+                ['for' => false],
+                '<label>Input</label>',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function labelTextProvider(): array
+    {
+        return [
+            'plain text' => ['Test', '<label for="input">Test</label>'],
+            'empty text' => ['', '<label for="input"></label>'],
+            'escaped text' => ['<i>Test</i>', '<label for="input">&lt;i&gt;Test&lt;/i&gt;</label>'],
         ];
     }
 
@@ -64,47 +84,12 @@ trait LabelTestTrait
         );
     }
 
-    public function testLabelFor(): void
+    #[DataProvider('labelTextProvider')]
+    public function testLabelText(string $text, string $expected): void
     {
         $this->assertSame(
-            '<label for="other">Input</label>',
-            $this->view->Form->label('input', [
-                'for' => 'other',
-            ])
-        );
-    }
-
-    public function testLabelForFalse(): void
-    {
-        $this->assertSame(
-            '<label>Input</label>',
-            $this->view->Form->label('input', [
-                'for' => false,
-            ])
-        );
-    }
-
-    public function testLabelText(): void
-    {
-        $this->assertSame(
-            '<label for="input">Test</label>',
-            $this->view->Form->label('input', text: 'Test')
-        );
-    }
-
-    public function testLabelTextEmpty(): void
-    {
-        $this->assertSame(
-            '<label for="input"></label>',
-            $this->view->Form->label('input', text: '')
-        );
-    }
-
-    public function testLabelTextEscape(): void
-    {
-        $this->assertSame(
-            '<label for="input">&lt;i&gt;Test&lt;/i&gt;</label>',
-            $this->view->Form->label('input', text: '<i>Test</i>')
+            $expected,
+            $this->view->Form->label('input', text: $text)
         );
     }
 

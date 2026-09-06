@@ -3,57 +3,59 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\ORM\Shared\Model;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Mock\Entities\Other;
 
 trait CallbacksTestTrait
 {
-    public function testAfterDelete(): void
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function deleteCallbackFailureManyProvider(): array
     {
-        $Items = $this->modelRegistry->use('Items');
-
-        $item = $Items->newEntity([
-            'name' => 'failAfterDelete',
-        ]);
-
-        $this->assertTrue(
-            $Items->save($item)
-        );
-
-        $this->assertFalse(
-            $Items->delete($item)
-        );
-
-        $this->assertSame(
-            1,
-            $Items->find()->count()
-        );
+        return [
+            'after delete many' => ['failAfterDelete'],
+            'before delete many' => ['failBeforeDelete'],
+        ];
     }
 
-    public function testAfterDeleteMany(): void
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function deleteCallbackFailureProvider(): array
     {
-        $Items = $this->modelRegistry->use('Items');
+        return [
+            'after delete' => ['failAfterDelete'],
+            'before delete' => ['failBeforeDelete'],
+        ];
+    }
 
-        $items = $Items->newEntities([
-            [
-                'name' => 'Test',
-            ],
-            [
-                'name' => 'failAfterDelete',
-            ],
-        ]);
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function saveCallbackFailureManyProvider(): array
+    {
+        return [
+            'after rules many' => ['failAfterRules'],
+            'after save many' => ['failAfterSave'],
+            'before rules many' => ['failBeforeRules'],
+            'before save many' => ['failBeforeSave'],
+        ];
+    }
 
-        $this->assertTrue(
-            $Items->saveMany($items)
-        );
-
-        $this->assertFalse(
-            $Items->deleteMany($items)
-        );
-
-        $this->assertSame(
-            2,
-            $Items->find()->count()
-        );
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function saveCallbackFailureProvider(): array
+    {
+        return [
+            'after rules' => ['failAfterRules'],
+            'after save' => ['failAfterSave'],
+            'before rules' => ['failBeforeRules'],
+            'before save' => ['failBeforeSave'],
+            'rules' => ['failRules'],
+            'validation' => [''],
+        ];
     }
 
     public function testAfterFind(): void
@@ -119,137 +121,6 @@ trait CallbacksTestTrait
         );
     }
 
-    public function testAfterRules(): void
-    {
-        $Items = $this->modelRegistry->use('Items');
-
-        $item = $Items->newEntity([
-            'name' => 'failAfterRules',
-        ]);
-
-        $this->assertFalse(
-            $Items->save($item)
-        );
-
-        $this->assertSame(
-            0,
-            $Items->find()->count()
-        );
-    }
-
-    public function testAfterRulesMany(): void
-    {
-        $Items = $this->modelRegistry->use('Items');
-
-        $items = $Items->newEntities([
-            [
-                'name' => 'Test',
-            ],
-            [
-                'name' => 'failAfterRules',
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Items->saveMany($items)
-        );
-
-        $this->assertSame(
-            0,
-            $Items->find()->count()
-        );
-    }
-
-    public function testAfterSave(): void
-    {
-        $Items = $this->modelRegistry->use('Items');
-
-        $item = $Items->newEntity([
-            'name' => 'failAfterSave',
-        ]);
-
-        $this->assertFalse(
-            $Items->save($item)
-        );
-
-        $this->assertSame(
-            0,
-            $Items->find()->count()
-        );
-    }
-
-    public function testAfterSaveMany(): void
-    {
-        $Items = $this->modelRegistry->use('Items');
-
-        $items = $Items->newEntities([
-            [
-                'name' => 'Test',
-            ],
-            [
-                'name' => 'failAfterSave',
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Items->saveMany($items)
-        );
-
-        $this->assertSame(
-            0,
-            $Items->find()->count()
-        );
-    }
-
-    public function testBeforeDelete(): void
-    {
-        $Items = $this->modelRegistry->use('Items');
-
-        $item = $Items->newEntity([
-            'name' => 'failBeforeDelete',
-        ]);
-
-        $this->assertTrue(
-            $Items->save($item)
-        );
-
-        $this->assertFalse(
-            $Items->delete($item)
-        );
-
-        $this->assertSame(
-            1,
-            $Items->find()->count()
-        );
-    }
-
-    public function testBeforeDeleteMany(): void
-    {
-        $Items = $this->modelRegistry->use('Items');
-
-        $items = $Items->newEntities([
-            [
-                'name' => 'Test',
-            ],
-            [
-                'name' => 'failBeforeDelete',
-            ],
-        ]);
-
-        $this->assertTrue(
-            $Items->saveMany($items)
-        );
-
-        $this->assertFalse(
-            $Items->deleteMany($items)
-        );
-
-        $this->assertSame(
-            2,
-            $Items->find()->count()
-        );
-    }
-
     public function testBeforeFind(): void
     {
         $Others = $this->modelRegistry->use('Others');
@@ -311,88 +182,6 @@ trait CallbacksTestTrait
         );
     }
 
-    public function testBeforeRules(): void
-    {
-        $Items = $this->modelRegistry->use('Items');
-
-        $item = $Items->newEntity([
-            'name' => 'failBeforeRules',
-        ]);
-
-        $this->assertFalse(
-            $Items->save($item)
-        );
-
-        $this->assertSame(
-            0,
-            $Items->find()->count()
-        );
-    }
-
-    public function testBeforeRulesMany(): void
-    {
-        $Items = $this->modelRegistry->use('Items');
-
-        $items = $Items->newEntities([
-            [
-                'name' => 'Test',
-            ],
-            [
-                'name' => 'failBeforeRules',
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Items->saveMany($items)
-        );
-
-        $this->assertSame(
-            0,
-            $Items->find()->count()
-        );
-    }
-
-    public function testBeforeSave(): void
-    {
-        $Items = $this->modelRegistry->use('Items');
-
-        $item = $Items->newEntity([
-            'name' => 'failBeforeSave',
-        ]);
-
-        $this->assertFalse(
-            $Items->save($item)
-        );
-
-        $this->assertSame(
-            0,
-            $Items->find()->count()
-        );
-    }
-
-    public function testBeforeSaveMany(): void
-    {
-        $Items = $this->modelRegistry->use('Items');
-
-        $items = $Items->newEntities([
-            [
-                'name' => 'Test',
-            ],
-            [
-                'name' => 'failBeforeSave',
-            ],
-        ]);
-
-        $this->assertFalse(
-            $Items->saveMany($items)
-        );
-
-        $this->assertSame(
-            0,
-            $Items->find()->count()
-        );
-    }
-
     public function testBuildValidator(): void
     {
         $Items = $this->modelRegistry->use('Items');
@@ -405,20 +194,53 @@ trait CallbacksTestTrait
         );
     }
 
-    public function testRules(): void
+    #[DataProvider('deleteCallbackFailureProvider')]
+    public function testDeleteCallbackFailure(string $failure): void
     {
         $Items = $this->modelRegistry->use('Items');
 
         $item = $Items->newEntity([
-            'name' => 'failRules',
+            'name' => $failure,
         ]);
 
-        $this->assertFalse(
+        $this->assertTrue(
             $Items->save($item)
         );
 
+        $this->assertFalse(
+            $Items->delete($item)
+        );
+
         $this->assertSame(
-            0,
+            1,
+            $Items->find()->count()
+        );
+    }
+
+    #[DataProvider('deleteCallbackFailureManyProvider')]
+    public function testDeleteCallbackFailureMany(string $failure): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $items = $Items->newEntities([
+            [
+                'name' => 'Test',
+            ],
+            [
+                'name' => $failure,
+            ],
+        ]);
+
+        $this->assertTrue(
+            $Items->saveMany($items)
+        );
+
+        $this->assertFalse(
+            $Items->deleteMany($items)
+        );
+
+        $this->assertSame(
+            2,
             $Items->find()->count()
         );
     }
@@ -441,16 +263,41 @@ trait CallbacksTestTrait
         );
     }
 
-    public function testValidation(): void
+    #[DataProvider('saveCallbackFailureProvider')]
+    public function testSaveCallbackFailure(string $failure): void
     {
         $Items = $this->modelRegistry->use('Items');
 
         $item = $Items->newEntity([
-            'name' => '',
+            'name' => $failure,
         ]);
 
         $this->assertFalse(
             $Items->save($item)
+        );
+
+        $this->assertSame(
+            0,
+            $Items->find()->count()
+        );
+    }
+
+    #[DataProvider('saveCallbackFailureManyProvider')]
+    public function testSaveCallbackFailureMany(string $failure): void
+    {
+        $Items = $this->modelRegistry->use('Items');
+
+        $items = $Items->newEntities([
+            [
+                'name' => 'Test',
+            ],
+            [
+                'name' => $failure,
+            ],
+        ]);
+
+        $this->assertFalse(
+            $Items->saveMany($items)
         );
 
         $this->assertSame(

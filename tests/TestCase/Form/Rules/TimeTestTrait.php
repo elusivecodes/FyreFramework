@@ -12,6 +12,27 @@ use PHPUnit\Framework\Attributes\DataProvider;
 trait TimeTestTrait
 {
     /**
+     * @return array<string, array{class-string<Date|DateTime|Time>, array<string, list<string>>}>
+     */
+    public static function timeObjectsProvider(): array
+    {
+        return [
+            'time' => [
+                Time::class,
+                [],
+            ],
+            'date' => [
+                Date::class,
+                ['test' => ['invalid']],
+            ],
+            'date time' => [
+                DateTime::class,
+                ['test' => ['invalid']],
+            ],
+        ];
+    }
+
+    /**
      * @return array<string, array{array<string, mixed>, array<string, string[]>}>
      */
     public static function timeValuesProvider(): array
@@ -24,42 +45,19 @@ trait TimeTestTrait
         ];
     }
 
-    public function testTime(): void
+    /**
+     * @param class-string<Date|DateTime|Time> $class
+     * @param array<string, list<string>> $expected
+     */
+    #[DataProvider('timeObjectsProvider')]
+    public function testTimeObjects(string $class, array $expected): void
     {
         $this->validator->add('test', Rule::time());
 
         $this->assertArraysAreIdentical(
-            [],
+            $expected,
             $this->validator->validate([
-                'test' => Time::now(),
-            ])
-        );
-    }
-
-    public function testTimeRejectsDate(): void
-    {
-        $this->validator->add('test', Rule::time());
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['invalid'],
-            ],
-            $this->validator->validate([
-                'test' => Date::now(),
-            ])
-        );
-    }
-
-    public function testTimeRejectsDateTime(): void
-    {
-        $this->validator->add('test', Rule::time());
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['invalid'],
-            ],
-            $this->validator->validate([
-                'test' => DateTime::now(),
+                'test' => $class::now(),
             ])
         );
     }

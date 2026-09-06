@@ -6,11 +6,24 @@ namespace Tests\TestCase\Router\Router;
 use Fyre\Http\ServerRequest;
 use Fyre\Router\Router;
 use Fyre\Router\Routes\ControllerRoute;
+use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 use Tests\Mock\Controllers\HomeController;
 
 trait PrefixTestTrait
 {
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function prefixProvider(): array
+    {
+        return [
+            'prefix' => ['prefix'],
+            'leading slash' => ['/prefix'],
+            'trailing slash' => ['prefix/'],
+        ];
+    }
+
     public function testGroupPrefixClearedAfterException(): void
     {
         $router = $this->container->use(Router::class);
@@ -35,13 +48,14 @@ trait PrefixTestTrait
         );
     }
 
-    public function testPrefix(): void
+    #[DataProvider('prefixProvider')]
+    public function testPrefix(string $prefix): void
     {
         $router = $this->container->use(Router::class);
 
         $router->group(static function(Router $router): void {
             $router->get('home', HomeController::class);
-        }, prefix: 'prefix');
+        }, prefix: $prefix);
 
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
@@ -102,60 +116,6 @@ trait PrefixTestTrait
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'uri' => '/prefix',
-            ],
-        ]);
-
-        $route = $router->parseRequest($request)->getAttribute('route');
-
-        $this->assertInstanceOf(
-            ControllerRoute::class,
-            $route
-        );
-
-        $this->assertSame(
-            HomeController::class,
-            $route->getController()
-        );
-    }
-
-    public function testPrefixLeadingSlash(): void
-    {
-        $router = $this->container->use(Router::class);
-
-        $router->group(static function(Router $router): void {
-            $router->get('home', HomeController::class);
-        }, prefix: '/prefix');
-
-        $request = $this->container->build(ServerRequest::class, [
-            'options' => [
-                'uri' => '/prefix/home',
-            ],
-        ]);
-
-        $route = $router->parseRequest($request)->getAttribute('route');
-
-        $this->assertInstanceOf(
-            ControllerRoute::class,
-            $route
-        );
-
-        $this->assertSame(
-            HomeController::class,
-            $route->getController()
-        );
-    }
-
-    public function testPrefixTrailingSlash(): void
-    {
-        $router = $this->container->use(Router::class);
-
-        $router->group(static function(Router $router): void {
-            $router->get('home', HomeController::class);
-        }, prefix: 'prefix/');
-
-        $request = $this->container->build(ServerRequest::class, [
-            'options' => [
-                'uri' => '/prefix/home',
             ],
         ]);
 

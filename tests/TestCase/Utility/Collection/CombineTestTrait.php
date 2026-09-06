@@ -3,71 +3,46 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\Collection;
 
+use Closure;
 use Fyre\Utility\Collection;
+use PHPUnit\Framework\Attributes\DataProvider;
+
+use function array_map;
 
 trait CombineTestTrait
 {
-    public function testCombine(): void
+    /**
+     * @return array<string, array{array<array<string, mixed>>, Closure|string, Closure|string}>
+     */
+    public static function combinePathProvider(): array
     {
-        $collection = new Collection([
-            [
-                'id' => 1,
-                'value' => 'a',
-            ],
-            [
-                'id' => 2,
-                'value' => 'b',
-            ],
-        ]);
+        $items = [
+            ['id' => 1, 'value' => 'a'],
+            ['id' => 2, 'value' => 'b'],
+        ];
 
-        $this->assertArraysAreIdentical(
-            [1 => 'a', 2 => 'b'],
-            $collection->combine('id', 'value')->toArray()
-        );
-    }
-
-    public function testCombineCallback(): void
-    {
-        $collection = new Collection([
-            [
-                'id' => 1,
-                'value' => 'a',
-            ],
-            [
-                'id' => 2,
-                'value' => 'b',
-            ],
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [1 => 'a', 2 => 'b'],
-            $collection->combine(
+        return [
+            'field path' => [$items, 'id', 'value'],
+            'callback' => [
+                $items,
                 static fn(array $item, int $key): int => $item['id'],
                 static fn(array $item, int $key): string => $item['value'],
-            )->toArray()
-        );
+            ],
+            'nested path' => [array_map(static fn(array $item): array => ['data' => $item], $items), 'data.id', 'data.value'],
+        ];
     }
 
-    public function testCombineDeep(): void
+    /**
+     * @param array<array<string, mixed>> $values
+     */
+    #[DataProvider('combinePathProvider')]
+    public function testCombine(array $values, Closure|string $keyPath, Closure|string $valuePath): void
     {
-        $collection = new Collection([
-            [
-                'data' => [
-                    'id' => 1,
-                    'value' => 'a',
-                ],
-            ],
-            [
-                'data' => [
-                    'id' => 2,
-                    'value' => 'b',
-                ],
-            ],
-        ]);
+        $collection = new Collection($values);
 
         $this->assertArraysAreIdentical(
             [1 => 'a', 2 => 'b'],
-            $collection->combine('data.id', 'data.value')->toArray()
+            $collection->combine($keyPath, $valuePath)->toArray()
         );
     }
 

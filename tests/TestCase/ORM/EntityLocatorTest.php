@@ -8,6 +8,7 @@ use Fyre\ORM\Entity;
 use Fyre\ORM\EntityLocator;
 use Fyre\Utility\Inflector;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Entities\MockEntity;
 
@@ -16,6 +17,18 @@ use function class_uses;
 final class EntityLocatorTest extends TestCase
 {
     protected EntityLocator $locator;
+
+    /**
+     * @return array<string, array{class-string<Entity>|class-string<MockEntity>, string}>
+     */
+    public static function findProvider(): array
+    {
+        return [
+            'default' => [MockEntity::class, 'MockEntity'],
+            'invalid' => [Entity::class, 'Invalid'],
+            'plural' => [MockEntity::class, 'MockEntities'],
+        ];
+    }
 
     public function testClear(): void
     {
@@ -42,11 +55,15 @@ final class EntityLocatorTest extends TestCase
         );
     }
 
-    public function testFind(): void
+    /**
+     * @param class-string<Entity>|class-string<MockEntity> $expected
+     */
+    #[DataProvider('findProvider')]
+    public function testFind(string $expected, string $alias): void
     {
         $this->assertSame(
-            MockEntity::class,
-            $this->locator->find('MockEntity')
+            $expected,
+            $this->locator->find($alias)
         );
     }
 
@@ -55,22 +72,6 @@ final class EntityLocatorTest extends TestCase
         $this->assertSame(
             'MockEntities',
             $this->locator->findAlias(MockEntity::class)
-        );
-    }
-
-    public function testFindInvalid(): void
-    {
-        $this->assertSame(
-            Entity::class,
-            $this->locator->find('Invalid')
-        );
-    }
-
-    public function testFindPlural(): void
-    {
-        $this->assertSame(
-            MockEntity::class,
-            $this->locator->find('MockEntities')
         );
     }
 

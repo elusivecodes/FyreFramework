@@ -35,15 +35,77 @@ trait NumberTestTrait
                 ['id' => 'other', 'class' => 'test'],
                 '<input class="test" id="other" name="number" type="number" placeholder="Number" />',
             ],
+            'id' => [
+                ['id' => 'other'],
+                '<input id="other" name="number" type="number" placeholder="Number" />',
+            ],
+            'id false' => [
+                ['id' => false],
+                '<input name="number" type="number" placeholder="Number" />',
+            ],
+            'name' => [
+                ['name' => 'other'],
+                '<input id="number" name="other" type="number" placeholder="Number" />',
+            ],
+            'name false' => [
+                ['name' => false],
+                '<input id="number" type="number" placeholder="Number" />',
+            ],
+            'placeholder' => [
+                ['placeholder' => 'Other'],
+                '<input id="number" name="number" type="number" placeholder="Other" />',
+            ],
+            'placeholder false' => [
+                ['placeholder' => false],
+                '<input id="number" name="number" type="number" />',
+            ],
         ];
     }
 
-    public function testNumber(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function numberFieldNameProvider(): array
     {
-        $this->assertSame(
-            '<input id="number-value" name="number_value" type="number" placeholder="Number Value" />',
-            $this->view->Form->number('number_value')
-        );
+        return [
+            'flat' => [
+                'number_value',
+                '<input id="number-value" name="number_value" type="number" placeholder="Number Value" />',
+            ],
+            'dotted' => [
+                'key.number_value',
+                '<input id="key-number-value" name="key[number_value]" type="number" placeholder="Number Value" />',
+            ],
+            'deeply dotted' => [
+                'deep.key.number_value',
+                '<input id="deep-key-number-value" name="deep[key][number_value]" type="number" placeholder="Number Value" />',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, string, string}>
+     */
+    public static function numberValuePostProvider(): array
+    {
+        return [
+            'flat' => [
+                [
+                    'number' => '123',
+                ],
+                'number',
+                '<input id="number" name="number" type="number" value="123" placeholder="Number" />',
+            ],
+            'dotted' => [
+                [
+                    'key' => [
+                        'number' => '123',
+                    ],
+                ],
+                'key.number',
+                '<input id="key-number" name="key[number]" type="number" value="123" placeholder="Number" />',
+            ],
+        ];
     }
 
     /**
@@ -58,39 +120,12 @@ trait NumberTestTrait
         );
     }
 
-    public function testNumberDot(): void
+    #[DataProvider('numberFieldNameProvider')]
+    public function testNumberFieldName(string $field, string $expected): void
     {
         $this->assertSame(
-            '<input id="key-number-value" name="key[number_value]" type="number" placeholder="Number Value" />',
-            $this->view->Form->number('key.number_value')
-        );
-    }
-
-    public function testNumberDotDeep(): void
-    {
-        $this->assertSame(
-            '<input id="deep-key-number-value" name="deep[key][number_value]" type="number" placeholder="Number Value" />',
-            $this->view->Form->number('deep.key.number_value')
-        );
-    }
-
-    public function testNumberId(): void
-    {
-        $this->assertSame(
-            '<input id="other" name="number" type="number" placeholder="Number" />',
-            $this->view->Form->number('number', [
-                'id' => 'other',
-            ])
-        );
-    }
-
-    public function testNumberIdFalse(): void
-    {
-        $this->assertSame(
-            '<input name="number" type="number" placeholder="Number" />',
-            $this->view->Form->number('number', [
-                'id' => false,
-            ])
+            $expected,
+            $this->view->Form->number($field)
         );
     }
 
@@ -104,46 +139,6 @@ trait NumberTestTrait
         );
     }
 
-    public function testNumberName(): void
-    {
-        $this->assertSame(
-            '<input id="number" name="other" type="number" placeholder="Number" />',
-            $this->view->Form->number('number', [
-                'name' => 'other',
-            ])
-        );
-    }
-
-    public function testNumberNameFalse(): void
-    {
-        $this->assertSame(
-            '<input id="number" type="number" placeholder="Number" />',
-            $this->view->Form->number('number', [
-                'name' => false,
-            ])
-        );
-    }
-
-    public function testNumberPlaceholder(): void
-    {
-        $this->assertSame(
-            '<input id="number" name="number" type="number" placeholder="Other" />',
-            $this->view->Form->number('number', [
-                'placeholder' => 'Other',
-            ])
-        );
-    }
-
-    public function testNumberPlaceholderFalse(): void
-    {
-        $this->assertSame(
-            '<input id="number" name="number" type="number" />',
-            $this->view->Form->number('number', [
-                'placeholder' => false,
-            ])
-        );
-    }
-
     public function testNumberValueDefault(): void
     {
         $this->assertSame(
@@ -154,35 +149,20 @@ trait NumberTestTrait
         );
     }
 
-    public function testNumberValuePost(): void
+    /**
+     * @param array<string, mixed> $data
+     */
+    #[DataProvider('numberValuePostProvider')]
+    public function testNumberValuePost(array $data, string $field, string $expected): void
     {
-        Closure::bind(function(): void {
+        Closure::bind(function() use ($data): void {
             /** @var View $this */
-            $this->request = $this->request->withParsedBody([
-                'number' => '123',
-            ]);
+            $this->request = $this->request->withParsedBody($data);
         }, $this->view, View::class)();
 
         $this->assertSame(
-            '<input id="number" name="number" type="number" value="123" placeholder="Number" />',
-            $this->view->Form->number('number')
-        );
-    }
-
-    public function testNumberValuePostDot(): void
-    {
-        Closure::bind(function(): void {
-            /** @var View $this */
-            $this->request = $this->request->withParsedBody([
-                'key' => [
-                    'number' => '123',
-                ],
-            ]);
-        }, $this->view, View::class)();
-
-        $this->assertSame(
-            '<input id="key-number" name="key[number]" type="number" value="123" placeholder="Number" />',
-            $this->view->Form->number('key.number')
+            $expected,
+            $this->view->Form->number($field)
         );
     }
 }

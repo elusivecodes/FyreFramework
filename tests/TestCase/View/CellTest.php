@@ -17,6 +17,7 @@ use Fyre\View\TemplateLocator;
 use Fyre\View\View;
 use InvalidArgumentException;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Tests\Mock\Cells\ExampleCell;
@@ -27,6 +28,18 @@ use function realpath;
 final class CellTest extends TestCase
 {
     protected View $view;
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function invalidCellActionProvider(): array
+    {
+        return [
+            'inherited method' => ['Cell method `Test::getView` is not a valid action.', 'Test::getView'],
+            'missing method' => ['Cell method `Test::invalid` does not exist.', 'Test::invalid'],
+            'non-public method' => ['Cell method `Example::hidden` is not a valid action.', 'Example::hidden'],
+        ];
+    }
 
     public function testCamelCase(): void
     {
@@ -48,14 +61,6 @@ final class CellTest extends TestCase
         );
     }
 
-    public function testCellInheritedMethod(): void
-    {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageIs('Cell method `Test::getView` is not a valid action.');
-
-        $this->view->cell('Test::getView')->render();
-    }
-
     public function testCellInvalid(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -64,20 +69,13 @@ final class CellTest extends TestCase
         $this->view->cell('Invalid')->render();
     }
 
-    public function testCellInvalidMethod(): void
+    #[DataProvider('invalidCellActionProvider')]
+    public function testCellInvalidAction(string $message, string $action): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageIs('Cell method `Test::invalid` does not exist.');
+        $this->expectExceptionMessageIs($message);
 
-        $this->view->cell('Test::invalid')->render();
-    }
-
-    public function testCellNonPublicMethod(): void
-    {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageIs('Cell method `Example::hidden` is not a valid action.');
-
-        $this->view->cell('Example::hidden')->render();
+        $this->view->cell($action)->render();
     }
 
     public function testData(): void

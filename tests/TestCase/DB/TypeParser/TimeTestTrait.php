@@ -7,22 +7,28 @@ use Fyre\DB\Types\TimeType;
 use Fyre\Utility\DateTime\Date;
 use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Time;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait TimeTestTrait
 {
-    public function testTimeFromDatabase(): void
+    /**
+     * @return array<string, array{string, int|string}>
+     */
+    public static function timeFromDatabaseProvider(): array
     {
-        $this->assertSame(
-            '22:59:11',
-            $this->type->use('time')->fromDatabase('22:59:11')->toIsoString()
-        );
+        return [
+            'default' => ['22:59:11', '22:59:11'],
+            'fractional' => ['22:59:11.123', '22:59:11.12345'],
+            'timestamp' => ['22:59:11', 1640991551],
+        ];
     }
 
-    public function testTimeFromDatabaseFractional(): void
+    #[DataProvider('timeFromDatabaseProvider')]
+    public function testTimeFromDatabase(string $expected, int|string $value): void
     {
         $this->assertSame(
-            '22:59:11.123',
-            $this->type->use('time')->fromDatabase('22:59:11.12345')->toIsoString()
+            $expected,
+            $this->type->use('time')->fromDatabase($value)->toIsoString()
         );
     }
 
@@ -50,14 +56,6 @@ trait TimeTestTrait
         $this->assertSame(
             'UTC',
             $time->getTimeZone()
-        );
-    }
-
-    public function testTimeFromDatabaseTimestamp(): void
-    {
-        $this->assertSame(
-            '22:59:11',
-            $this->type->use('time')->fromDatabase(1640991551)->toIsoString()
         );
     }
 
