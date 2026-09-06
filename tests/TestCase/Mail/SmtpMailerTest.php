@@ -12,6 +12,7 @@ use Override;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Throwable;
 
 use function array_shift;
@@ -613,6 +614,47 @@ final class SmtpMailerTest extends TestCase
     }
 
     #[DataProvider('keepAliveProvider')]
+    public function testSendInvalidAttachmentClosesConnection(bool $keepAlive): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageIs('Email attachment `missing.txt` is not valid.');
+
+        $this->replies = [
+            '250 From',
+            '250 To',
+            '354 Data',
+        ];
+
+        $socket = Closure::bind(function() use ($keepAlive): mixed {
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            /** @var SmtpMailer $this */
+            $this->config['keepAlive'] = $keepAlive;
+
+            return $this->socket = $socket;
+        }, $this->mailer, SmtpMailer::class)();
+
+        $this->assertIsResource($socket);
+
+        $email = $this->mailer->email()
+            ->setFrom('from@example.com')
+            ->setTo('to@example.com')
+            ->setBodyText('Test')
+            ->setAttachments(['missing.txt' => []]);
+
+        try {
+            $this->mailer->send($email);
+        } finally {
+            $this->assertFalse(is_resource($socket));
+            $this->assertArraysAreIdentical(
+                ['MAIL FROM:<from@example.com>', 'RCPT TO:<to@example.com>', 'DATA'],
+                $this->sent
+            );
+        }
+    }
+
+    #[DataProvider('keepAliveProvider')]
     public function testSendReconnectsAfterCleanupFailure(bool $keepAlive): void
     {
         $mailer = $this->getMockBuilder(SmtpMailer::class)
@@ -651,6 +693,54 @@ final class SmtpMailerTest extends TestCase
 
         try {
             $mailer->send($email);
+            $mailer->send($email);
+        } finally {
+            $mailer->__destruct();
+        }
+    }
+
+    #[DataProvider('keepAliveProvider')]
+    public function testSendReconnectsAfterFailure(bool $keepAlive): void
+    {
+        $mailer = $this->getMockBuilder(SmtpMailer::class)
+            ->setConstructorArgs([$this->container, ['keepAlive' => $keepAlive]])
+            ->onlyMethods(['connect', 'getData', 'sendData'])
+            ->getMock();
+
+        $mailer->expects($this->exactly(2))
+            ->method('connect')
+            ->willReturnCallback(Closure::bind(function(): void {
+                $socket = fopen('php://temp', 'r+');
+                TestCase::assertIsResource($socket);
+
+                /** @var SmtpMailer $this */
+                $this->socket = $socket;
+            }, $mailer, SmtpMailer::class));
+
+        $mailer->method('getData')->willReturn(
+            '250 From',
+            '421 Connection closing',
+            '250 From',
+            '250 To',
+            '354 Data',
+            '250 Queued',
+            $keepAlive ? '250 Reset' : '221 Bye',
+            '221 Bye'
+        );
+
+        $email = $mailer->email()
+            ->setFrom('from@example.com')
+            ->setTo('to@example.com')
+            ->setBodyText('Test');
+
+        try {
+            try {
+                $mailer->send($email);
+                $this->fail('Expected send to throw an exception.');
+            } catch (MailException $e) {
+                $this->assertSame('SMTP invalid reply: 421 Connection closing', $e->getMessage());
+            }
+
             $mailer->send($email);
         } finally {
             $mailer->__destruct();

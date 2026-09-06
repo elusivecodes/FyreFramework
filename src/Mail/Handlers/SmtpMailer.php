@@ -96,32 +96,42 @@ class SmtpMailer extends Mailer
             $this->connect();
         }
 
-        $from = $email->getReturnPath();
+        try {
+            $from = $email->getReturnPath();
 
-        if ($from === []) {
-            $from = $email->getFrom();
+            if ($from === []) {
+                $from = $email->getFrom();
+            }
+
+            $fromAddress = (string) array_key_first($from);
+            $this->sendCommand('from', $fromAddress);
+
+            $recipients = $email->getRecipients();
+
+            foreach ($recipients as $recipient => $name) {
+                $this->sendCommand('to', $recipient);
+            }
+
+            $this->sendCommand('data');
+
+            $headers = $email->getFullHeaderString();
+            $body = $email->getFullBodyString();
+            $body = (string) preg_replace('/^\./m', '..$1', $body);
+
+            $this->sendData(
+                $headers."\r\n\r\n".
+                $body."\r\n\r\n"
+            );
+            $this->sendCommand('dot');
+        } catch (Throwable $e) {
+            if (is_resource($this->socket)) {
+                fclose($this->socket);
+            }
+
+            $this->socket = null;
+
+            throw $e;
         }
-
-        $fromAddress = (string) array_key_first($from);
-        $this->sendCommand('from', $fromAddress);
-
-        $recipients = $email->getRecipients();
-
-        foreach ($recipients as $recipient => $name) {
-            $this->sendCommand('to', $recipient);
-        }
-
-        $this->sendCommand('data');
-
-        $headers = $email->getFullHeaderString();
-        $body = $email->getFullBodyString();
-        $body = (string) preg_replace('/^\./m', '..$1', $body);
-
-        $this->sendData(
-            $headers."\r\n\r\n".
-            $body."\r\n\r\n"
-        );
-        $this->sendCommand('dot');
 
         $this->end();
     }
