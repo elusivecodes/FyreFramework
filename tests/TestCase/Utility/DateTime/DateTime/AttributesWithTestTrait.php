@@ -91,7 +91,7 @@ trait AttributesWithTestTrait
             $date1 = DateTime::createFromArray($parts);
 
             /** @var DateTime $date2 */
-            $date2 = $date1->{$method}(...$arguments);
+            $date2 = $date1->$method(...$arguments);
         } finally {
             DateTime::withDateClamping(true);
         }
@@ -103,7 +103,7 @@ trait AttributesWithTestTrait
 
         $this->assertSame(
             $expected,
-            $date2->{$resultMethod}()
+            $date2->$resultMethod()
         );
     }
 }

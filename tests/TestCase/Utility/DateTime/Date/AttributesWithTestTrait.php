@@ -48,7 +48,7 @@ trait AttributesWithTestTrait
             $date1 = Date::createFromArray($parts);
 
             /** @var Date $date2 */
-            $date2 = $date1->{$method}(...$arguments);
+            $date2 = $date1->$method(...$arguments);
         } finally {
             Date::withDateClamping(true);
         }

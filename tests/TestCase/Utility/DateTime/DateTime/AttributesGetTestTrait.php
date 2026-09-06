@@ -54,7 +54,7 @@ trait AttributesGetTestTrait
 
         $this->assertSame(
             $expected,
-            $date->{$method}()
+            $date->$method()
         );
     }
 

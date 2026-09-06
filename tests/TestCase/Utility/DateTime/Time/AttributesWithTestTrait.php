@@ -31,7 +31,7 @@ trait AttributesWithTestTrait
         $time1 = Time::createFromArray($parts);
 
         /** @var Time $time2 */
-        $time2 = $time1->{$method}(...$arguments);
+        $time2 = $time1->$method(...$arguments);
 
         $this->assertNotSame(
             $time1,

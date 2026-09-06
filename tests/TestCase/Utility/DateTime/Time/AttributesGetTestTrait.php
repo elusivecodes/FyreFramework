@@ -34,7 +34,7 @@ trait AttributesGetTestTrait
 
         $this->assertSame(
             $expected,
-            $time->{$method}()
+            $time->$method()
         );
     }
 
