@@ -11,7 +11,6 @@ use Override;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\UploadedFileInterface;
 
-use function assert;
 use function sys_get_temp_dir;
 use function tempnam;
 use function unlink;
@@ -66,14 +65,14 @@ final class UploadedFileFactoryTest extends TestCase
 
     public function testCreateUploadedFileNotReadable(): void
     {
-        $filePath = tempnam(sys_get_temp_dir(), 'uploaded-file-factory');
-
-        assert($filePath !== false);
-
-        $stream = Stream::createFromFile($filePath, 'w');
-
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageIs('Uploaded file stream must be readable.');
+
+        $filePath = tempnam(sys_get_temp_dir(), 'uploaded-file-factory');
+
+        $this->assertIsString($filePath);
+
+        $stream = Stream::createFromFile($filePath, 'w');
 
         try {
             $this->uploadedFileFactory->createUploadedFile($stream);

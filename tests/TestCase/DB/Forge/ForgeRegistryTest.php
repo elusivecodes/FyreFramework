@@ -22,7 +22,6 @@ use PHPUnit\Framework\TestCase;
 use Tests\Mock\DB\TestForge;
 use Tests\Mock\DB\TestSqliteConnection;
 
-use function assert;
 use function class_uses;
 
 final class ForgeRegistryTest extends TestCase
@@ -174,8 +173,8 @@ final class ForgeRegistryTest extends TestCase
             ->disableOriginalConstructor()
             ->getStub();
 
-        assert($connection instanceof SqliteConnection);
-        assert($subclassConnection instanceof TestSqliteConnection);
+        $this->assertInstanceOf(SqliteConnection::class, $connection);
+        $this->assertInstanceOf(TestSqliteConnection::class, $subclassConnection);
 
         $this->connection = $connection;
         $this->missingConnection = $missingConnection;

@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\StreamInterface;
 use RuntimeException;
 
-use function assert;
 use function class_uses;
 use function file_get_contents;
 use function file_put_contents;
@@ -100,7 +99,7 @@ final class UploadedFileTest extends TestCase
     {
         $filePath = tempnam('/tmp', 'uploaded-file');
 
-        assert($filePath !== false);
+        $this->assertIsString($filePath);
 
         file_put_contents($filePath, 'This is a test.');
 
@@ -134,7 +133,7 @@ final class UploadedFileTest extends TestCase
 
         $filePath = tempnam(sys_get_temp_dir(), 'uploaded-file');
 
-        assert($filePath !== false);
+        $this->assertIsString($filePath);
 
         $targetPath = $filePath.'.moved';
         file_put_contents($filePath, 'This is a test.');
@@ -176,7 +175,7 @@ final class UploadedFileTest extends TestCase
     {
         $filePath = tempnam(sys_get_temp_dir(), 'uploaded-file');
 
-        assert($filePath !== false);
+        $this->assertIsString($filePath);
 
         $targetPath = $filePath.'.moved';
         file_put_contents($filePath, 'This is a test.');
@@ -245,7 +244,7 @@ final class UploadedFileTest extends TestCase
     {
         $targetPath = tempnam(sys_get_temp_dir(), 'uploaded-file');
 
-        assert($targetPath !== false);
+        $this->assertIsString($targetPath);
 
         @unlink($targetPath);
 
@@ -273,7 +272,7 @@ final class UploadedFileTest extends TestCase
     {
         $targetPath = tempnam(sys_get_temp_dir(), 'uploaded-file');
 
-        assert($targetPath !== false);
+        $this->assertIsString($targetPath);
 
         file_put_contents($targetPath, 'Original contents.');
 

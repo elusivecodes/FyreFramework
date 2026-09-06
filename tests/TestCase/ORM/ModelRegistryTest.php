@@ -295,10 +295,10 @@ final class ModelRegistryTest extends TestCase
 
     public function testUseInvalidClassAlias(): void
     {
-        $this->modelRegistry->use('Members', 'Users');
-
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageIs('Model alias `Members` is already used by another class.');
+
+        $this->modelRegistry->use('Members', 'Users');
 
         $this->modelRegistry->use('Members', 'Items');
     }

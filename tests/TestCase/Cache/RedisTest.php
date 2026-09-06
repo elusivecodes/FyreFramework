@@ -59,6 +59,9 @@ final class RedisTest extends TestCase
 
     public function testClearWithoutPrefixThrows(): void
     {
+        $this->expectException(CacheException::class);
+        $this->expectExceptionMessageIs('Redis cache clear requires a non-empty prefix or flushDatabase enabled.');
+
         $cache = $this->cacheManager->build([
             'className' => RedisCacher::class,
             'host' => getenv('REDIS_HOST'),
@@ -66,9 +69,6 @@ final class RedisTest extends TestCase
             'database' => getenv('REDIS_DATABASE'),
             'port' => getenv('REDIS_PORT'),
         ]);
-
-        $this->expectException(CacheException::class);
-        $this->expectExceptionMessageIs('Redis cache clear requires a non-empty prefix or flushDatabase enabled.');
 
         $cache->clear();
     }

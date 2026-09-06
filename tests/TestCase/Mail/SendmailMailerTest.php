@@ -95,6 +95,8 @@ final class SendmailMailerTest extends TestCase
 
     public function testSendFailure(): void
     {
+        $this->expectException(RuntimeException::class);
+
         $this->mailer->method('sendMail')
             ->willReturn(false);
 
@@ -103,8 +105,6 @@ final class SendmailMailerTest extends TestCase
             ->setFrom('from@example.com')
             ->setSubject('Test')
             ->setBodyText('This is a test');
-
-        $this->expectException(RuntimeException::class);
 
         $this->mailer->send($email);
     }

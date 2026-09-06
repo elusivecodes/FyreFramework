@@ -154,11 +154,11 @@ final class AuthMiddlewareTest extends TestCase
 
     public function testAuthorizedMiddlewareFail(): void
     {
-        $this->login();
-
         $this->expectException(ForbiddenException::class);
         $this->expectExceptionCode(403);
         $this->expectExceptionMessageIs('Forbidden');
+
+        $this->login();
 
         $this->access->define('test', function(User|null $authUser): bool {
             $this->assertInstanceOf(User::class, $authUser);

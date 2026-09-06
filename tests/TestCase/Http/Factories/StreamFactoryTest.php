@@ -9,7 +9,6 @@ use InvalidArgumentException;
 use Override;
 use PHPUnit\Framework\TestCase;
 
-use function assert;
 use function fclose;
 use function file_put_contents;
 use function fopen;
@@ -42,7 +41,7 @@ final class StreamFactoryTest extends TestCase
     {
         $filePath = tempnam(sys_get_temp_dir(), 'stream-factory');
 
-        assert($filePath !== false);
+        $this->assertIsString($filePath);
 
         file_put_contents($filePath, 'This is a test.');
 
@@ -77,15 +76,16 @@ final class StreamFactoryTest extends TestCase
 
     public function testCreateStreamFromResourceNotReadable(): void
     {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageIs('Stream resource must be readable.');
+
         $filePath = tempnam(sys_get_temp_dir(), 'stream-factory');
 
-        assert($filePath !== false);
+        $this->assertIsString($filePath);
 
         $resource = fopen($filePath, 'w');
 
         $this->assertIsResource($resource);
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageIs('Stream resource must be readable.');
 
         try {
             $this->streamFactory->createStreamFromResource($resource);

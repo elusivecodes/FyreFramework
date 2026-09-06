@@ -5,7 +5,6 @@ namespace Tests\TestCase\TestSuite\Integration;
 
 use InvalidArgumentException;
 
-use function assert;
 use function file_get_contents;
 use function file_put_contents;
 use function sys_get_temp_dir;
@@ -18,7 +17,7 @@ trait UploadedFileTrait
     {
         $filePath = tempnam(sys_get_temp_dir(), 'uploaded-file');
 
-        assert($filePath !== false);
+        $this->assertIsString($filePath);
 
         file_put_contents($filePath, 'This is a test.');
 
@@ -58,7 +57,7 @@ trait UploadedFileTrait
     {
         $filePath = tempnam(sys_get_temp_dir(), 'uploaded-file');
 
-        assert($filePath !== false);
+        $this->assertIsString($filePath);
 
         $targetPath = $filePath.'.moved';
         file_put_contents($filePath, 'This is a test.');

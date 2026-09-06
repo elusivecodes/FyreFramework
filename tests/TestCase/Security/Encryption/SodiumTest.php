@@ -27,11 +27,11 @@ final class SodiumTest extends TestCase
 
     public function testAuthentication(): void
     {
-        $encrypted = $this->encrypter->encrypt('test', 'key');
-        $encrypted[0] = $encrypted[0] === "\0" ? "\1" : "\0";
-
         $this->expectException(EncryptionException::class);
         $this->expectExceptionMessageIs('Decryption failed.');
+
+        $encrypted = $this->encrypter->encrypt('test', 'key');
+        $encrypted[0] = $encrypted[0] === "\0" ? "\1" : "\0";
 
         $this->encrypter->decrypt($encrypted, 'key');
     }

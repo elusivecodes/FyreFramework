@@ -181,12 +181,12 @@ final class ConnectionTest extends TestCase
 
     public function testHintUnsupported(): void
     {
+        $this->expectException(BadMethodCallException::class);
+        $this->expectExceptionMessageIs('Optimizer hints are not supported by this connection.');
+
         if ($this->db->supports(DbFeature::OptimizerHints)) {
             $this->markTestSkipped('Optimizer hints are supported by this connection.');
         }
-
-        $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessageIs('Optimizer hints are not supported by this connection.');
 
         $this->db->select()
             ->hint('TEST()');

@@ -15,7 +15,6 @@ use PHPUnit\Framework\TestCase;
 use Throwable;
 
 use function array_diff;
-use function assert;
 use function class_uses;
 
 final class PromiseTest extends TestCase
@@ -203,7 +202,7 @@ final class PromiseTest extends TestCase
                 $value = $result;
             });
 
-        assert($resolve instanceof Closure);
+        $this->assertInstanceOf(Closure::class, $resolve);
         $resolve();
 
         $this->assertSame(1, $value);
@@ -291,7 +290,7 @@ final class PromiseTest extends TestCase
             $reason = $error;
         });
 
-        assert($resolve instanceof Closure);
+        $this->assertInstanceOf(Closure::class, $resolve);
         $resolve();
 
         $this->assertInstanceOf(LogicException::class, $reason);
