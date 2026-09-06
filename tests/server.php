@@ -47,6 +47,25 @@ switch ($_SERVER['SCRIPT_NAME']) {
         header('Content-Type: application/json');
         echo json_encode($_GET);
         break;
+    case '/gzip':
+        $statusCode = (int) ($_GET['status'] ?? 200);
+        $body = (string) gzencode((string) ($_GET['body'] ?? 'test'));
+
+        http_response_code($statusCode);
+        header('Content-Encoding: gzip');
+
+        if ($statusCode >= 200 && $statusCode !== 204) {
+            header('Content-Length: '.strlen($body));
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'HEAD' && $statusCode >= 200 && !in_array($statusCode, [204, 304], true)) {
+            echo $body;
+        }
+        break;
+    case '/plain':
+        header('Content-Length: 4');
+        echo 'test';
+        break;
     case '/proxy':
         $proxyAuth = $_SERVER['HTTP_PROXY_AUTHORIZATION'] ?? '';
 

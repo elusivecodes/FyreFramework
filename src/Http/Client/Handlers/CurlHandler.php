@@ -105,7 +105,20 @@ class CurlHandler extends ClientHandler
 
         $headerSize = curl_getinfo($handle, CURLINFO_HEADER_SIZE);
 
-        return static::buildResponse((string) $output, $headerSize);
+        $response = static::buildResponse((string) $output, $headerSize);
+
+        if (
+            $request->getMethod() !== 'HEAD' &&
+            $response->getStatusCode() >= 200 &&
+            !in_array($response->getStatusCode(), [204, 304], true) &&
+            $response->hasHeader('Content-Encoding')
+        ) {
+            $response = $response
+                ->withoutHeader('Content-Encoding')
+                ->withoutHeader('Content-Length');
+        }
+
+        return $response;
     }
 
     /**

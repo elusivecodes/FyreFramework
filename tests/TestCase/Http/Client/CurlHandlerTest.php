@@ -10,6 +10,7 @@ use Fyre\Http\Client\Exceptions\RequestException;
 use Fyre\Http\Client\Handlers\CurlHandler;
 use Fyre\Http\Client\Request;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 
@@ -17,6 +18,7 @@ use function exec;
 use function fclose;
 use function fopen;
 use function fsockopen;
+use function http_build_query;
 use function strlen;
 use function usleep;
 
@@ -24,6 +26,20 @@ use function usleep;
 final class CurlHandlerTest extends TestCase
 {
     protected static int $pid;
+
+    /**
+     * @return array<string, array{string, int, string, string, string, string}>
+     */
+    public static function gzipResponseProvider(): array
+    {
+        return [
+            'body' => ['GET', 200, 'test', 'test', '', ''],
+            'empty body' => ['GET', 200, '', '', '', ''],
+            'head' => ['HEAD', 200, 'test', '', 'gzip', '24'],
+            'not modified' => ['GET', 304, 'test', '', 'gzip', '24'],
+            'no content' => ['GET', 204, 'test', '', 'gzip', ''],
+        ];
+    }
 
     public function testAuthBasic(): void
     {
@@ -208,6 +224,40 @@ final class CurlHandlerTest extends TestCase
         );
     }
 
+    #[DataProvider('gzipResponseProvider')]
+    #[RequiresPhpExtension('zlib')]
+    public function testGzipResponse(string $method, int $statusCode, string $body, string $expectedBody, string $expectedEncoding, string $expectedLength): void
+    {
+        $query = http_build_query([
+            'status' => $statusCode,
+            'body' => $body,
+        ]);
+
+        $response = new CurlHandler()->send(new Request('http://localhost:8888/gzip?'.$query, [
+            'method' => $method,
+        ]));
+
+        $this->assertSame(
+            $statusCode,
+            $response->getStatusCode()
+        );
+
+        $this->assertSame(
+            $expectedBody,
+            $response->getBody()->getContents()
+        );
+
+        $this->assertSame(
+            $expectedEncoding,
+            $response->getHeaderLine('Content-Encoding')
+        );
+
+        $this->assertSame(
+            $expectedLength,
+            $response->getHeaderLine('Content-Length')
+        );
+    }
+
     public function testProtocolVersion(): void
     {
         $response = new Client()->get('http://localhost:8888/version', options: [
@@ -262,6 +312,25 @@ final class CurlHandlerTest extends TestCase
         new Client()->get('foo://example.com', options: [
             'timeout' => 1,
         ]);
+    }
+
+    public function testUncompressedResponse(): void
+    {
+        $response = new Client()->get('http://localhost:8888/plain');
+
+        $this->assertSame(
+            'test',
+            $response->getBody()->getContents()
+        );
+
+        $this->assertFalse(
+            $response->hasHeader('Content-Encoding')
+        );
+
+        $this->assertSame(
+            '4',
+            $response->getHeaderLine('Content-Length')
+        );
     }
 
     public function testUpload(): void
