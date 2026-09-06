@@ -4,30 +4,28 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Math;
 
 use Fyre\Utility\Math;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait ClampPercentTestTrait
 {
-    public function testClampPercent(): void
+    /**
+     * @return array<string, array{int, int}>
+     */
+    public static function clampPercentProvider(): array
     {
-        $this->assertSame(
-            50,
-            Math::clampPercent(50)
-        );
+        return [
+            'within bounds' => [50, 50],
+            'above bounds' => [150, 100],
+            'below bounds' => [-50, 0],
+        ];
     }
 
-    public function testClampPercentAbove(): void
+    #[DataProvider('clampPercentProvider')]
+    public function testClampPercent(int $number, int $expected): void
     {
         $this->assertSame(
-            100,
-            Math::clampPercent(150)
-        );
-    }
-
-    public function testClampPercentBelow(): void
-    {
-        $this->assertSame(
-            0,
-            Math::clampPercent(-50)
+            $expected,
+            Math::clampPercent($number)
         );
     }
 }

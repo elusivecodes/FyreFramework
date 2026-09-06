@@ -4,55 +4,35 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Arr;
 
 use Fyre\Utility\Arr;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait IsListTestTrait
 {
-    public function testIsListAssociative(): void
+    /**
+     * @return array<string, array{array<array-key, int>, bool}>
+     */
+    public static function isListProvider(): array
     {
-        $this->assertFalse(
-            Arr::isList(['a' => 1, 'b' => 2, 'c' => 3])
-        );
+        return [
+            'associative keys' => [['a' => 1, 'b' => 2, 'c' => 3], false],
+            'empty array' => [[], true],
+            'gaps in keys' => [[0 => 1, 2 => 3], false],
+            'mixed keys' => [['a' => 1, 2, 'c' => 3], false],
+            'negative key' => [[-1 => 0, 0 => 1], false],
+            'sequential keys' => [[1, 2, 3], true],
+            'out of order keys' => [[1 => 0, 0 => 2], false],
+        ];
     }
 
-    public function testIsListEmpty(): void
+    /**
+     * @param array<array-key, int> $array
+     */
+    #[DataProvider('isListProvider')]
+    public function testIsList(array $array, bool $expected): void
     {
-        $this->assertTrue(
-            Arr::isList([])
-        );
-    }
-
-    public function testIsListGaps(): void
-    {
-        $this->assertFalse(
-            Arr::isList([0 => 1, 2 => 3])
-        );
-    }
-
-    public function testIsListMixed(): void
-    {
-        $this->assertFalse(
-            Arr::isList(['a' => 1, 2, 'c' => 3])
-        );
-    }
-
-    public function testIsListNegative(): void
-    {
-        $this->assertFalse(
-            Arr::isList([-1 => 0, 0 => 1])
-        );
-    }
-
-    public function testIsListNumeric(): void
-    {
-        $this->assertTrue(
-            Arr::isList([1, 2, 3])
-        );
-    }
-
-    public function testIsListOrder(): void
-    {
-        $this->assertFalse(
-            Arr::isList([1 => 0, 0 => 2])
+        $this->assertSame(
+            $expected,
+            Arr::isList($array)
         );
     }
 }

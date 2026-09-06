@@ -4,29 +4,31 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Arr;
 
 use Fyre\Utility\Arr;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait LastIndexOfTestTrait
 {
-    public function testLastIndexOf(): void
+    /**
+     * @return array<string, array{array<array-key, int|string>, string, false|int|string}>
+     */
+    public static function lastIndexOfProvider(): array
     {
-        $this->assertSame(
-            5,
-            Arr::lastIndexOf(['a', 'b', 'c', 'd', 'c', 'c', 'e'], 'c')
-        );
+        return [
+            'numeric keys' => [['a', 'b', 'c', 'd', 'c', 'c', 'e'], 'c', 5],
+            'associative keys' => [['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 3, 'f' => 3, 'g' => 5], '3', 'f'],
+            'without match' => [['a', 'b', 'c', 'd', 'c', 'c', 'e'], 'z', false],
+        ];
     }
 
-    public function testLastIndexOfAssoc(): void
+    /**
+     * @param array<array-key, int|string> $array
+     */
+    #[DataProvider('lastIndexOfProvider')]
+    public function testLastIndexOf(array $array, string $value, false|int|string $expected): void
     {
         $this->assertSame(
-            'f',
-            Arr::lastIndexOf(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 3, 'f' => 3, 'g' => 5], '3')
-        );
-    }
-
-    public function testLastIndexOfWithoutMatch(): void
-    {
-        $this->assertFalse(
-            Arr::lastIndexOf(['a', 'b', 'c', 'd', 'c', 'c', 'e'], 'z')
+            $expected,
+            Arr::lastIndexOf($array, $value)
         );
     }
 

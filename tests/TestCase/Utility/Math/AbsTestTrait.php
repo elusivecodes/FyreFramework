@@ -4,30 +4,28 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Math;
 
 use Fyre\Utility\Math;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait AbsTestTrait
 {
-    public function testAbs(): void
+    /**
+     * @return array<string, array{float|int, float|int}>
+     */
+    public static function absProvider(): array
     {
-        $this->assertSame(
-            1,
-            Math::abs(1)
-        );
+        return [
+            'positive integer' => [1, 1],
+            'negative float' => [-.5, .5],
+            'negative integer' => [-1, 1],
+        ];
     }
 
-    public function testAbsFloat(): void
+    #[DataProvider('absProvider')]
+    public function testAbs(float|int $number, float|int $expected): void
     {
         $this->assertSame(
-            .5,
-            Math::abs(-.5)
-        );
-    }
-
-    public function testAbsNegative(): void
-    {
-        $this->assertSame(
-            1,
-            Math::abs(-1)
+            $expected,
+            Math::abs($number)
         );
     }
 }

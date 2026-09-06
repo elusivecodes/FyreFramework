@@ -4,29 +4,31 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Arr;
 
 use Fyre\Utility\Arr;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait IndexOfTestTrait
 {
-    public function testIndexOf(): void
+    /**
+     * @return array<string, array{array<array-key, int|string>, string, false|int|string}>
+     */
+    public static function indexOfProvider(): array
     {
-        $this->assertSame(
-            2,
-            Arr::indexOf(['a', 'b', 'c', 'd', 'c', 'c', 'e'], 'c')
-        );
+        return [
+            'numeric keys' => [['a', 'b', 'c', 'd', 'c', 'c', 'e'], 'c', 2],
+            'associative keys' => [['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 3, 'f' => 3, 'g' => 5], '3', 'c'],
+            'without match' => [['a', 'b', 'c', 'd', 'c', 'c', 'e'], 'z', false],
+        ];
     }
 
-    public function testIndexOfAssoc(): void
+    /**
+     * @param array<array-key, int|string> $array
+     */
+    #[DataProvider('indexOfProvider')]
+    public function testIndexOf(array $array, string $value, false|int|string $expected): void
     {
         $this->assertSame(
-            'c',
-            Arr::indexOf(['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4, 'e' => 3, 'f' => 3, 'g' => 5], '3')
-        );
-    }
-
-    public function testIndexOfWithoutMatch(): void
-    {
-        $this->assertFalse(
-            Arr::indexOf(['a', 'b', 'c', 'd', 'c', 'c', 'e'], 'z')
+            $expected,
+            Arr::indexOf($array, $value)
         );
     }
 

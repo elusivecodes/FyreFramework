@@ -4,30 +4,32 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Arr;
 
 use Fyre\Utility\Arr;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait WrapTestTrait
 {
-    public function testWrap(): void
+    /**
+     * @return array<string, array{array<int, int>|int|null, array<int, int>}>
+     */
+    public static function wrapProvider(): array
     {
-        $this->assertArraysAreIdentical(
-            [1],
-            Arr::wrap(1)
-        );
+        return [
+            'scalar' => [1, [1]],
+            'array' => [[1], [1]],
+            'null' => [null, []],
+        ];
     }
 
-    public function testWrapArray(): void
+    /**
+     * @param array<int, int>|int|null $value
+     * @param array<int, int> $expected
+     */
+    #[DataProvider('wrapProvider')]
+    public function testWrap(array|int|null $value, array $expected): void
     {
         $this->assertArraysAreIdentical(
-            [1],
-            Arr::wrap([1])
-        );
-    }
-
-    public function testWrapNull(): void
-    {
-        $this->assertArraysAreIdentical(
-            [],
-            Arr::wrap(null)
+            $expected,
+            Arr::wrap($value)
         );
     }
 }

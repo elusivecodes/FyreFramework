@@ -4,55 +4,32 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Math;
 
 use Fyre\Utility\Math;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait IsNumericTestTrait
 {
-    public function testIsNumeric(): void
+    /**
+     * @return array<string, array{mixed, bool}>
+     */
+    public static function isNumericProvider(): array
     {
-        $this->assertTrue(
-            Math::isNumeric('100')
-        );
+        return [
+            'integer string' => ['100', true],
+            'array' => [[], false],
+            'boolean' => [false, false],
+            'decimal string' => ['1.5', true],
+            'float' => [1.5, true],
+            'integer' => [100, true],
+            'null' => [null, false],
+        ];
     }
 
-    public function testIsNumericArray(): void
+    #[DataProvider('isNumericProvider')]
+    public function testIsNumeric(mixed $value, bool $expected): void
     {
-        $this->assertFalse(
-            Math::isNumeric([])
-        );
-    }
-
-    public function testIsNumericBoolean(): void
-    {
-        $this->assertFalse(
-            Math::isNumeric(false)
-        );
-    }
-
-    public function testIsNumericDecimal(): void
-    {
-        $this->assertTrue(
-            Math::isNumeric('1.5')
-        );
-    }
-
-    public function testIsNumericFloat(): void
-    {
-        $this->assertTrue(
-            Math::isNumeric(1.5)
-        );
-    }
-
-    public function testIsNumericInt(): void
-    {
-        $this->assertTrue(
-            Math::isNumeric(100)
-        );
-    }
-
-    public function testIsNumericNull(): void
-    {
-        $this->assertFalse(
-            Math::isNumeric(null)
+        $this->assertSame(
+            $expected,
+            Math::isNumeric($value)
         );
     }
 }
