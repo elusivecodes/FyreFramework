@@ -284,7 +284,10 @@ abstract class Route
             return null;
         }
 
-        if ($this->port && $uri->getPort() !== $this->port && $this->port !== getservbyname($uri->getScheme(), 'tcp')) {
+        if (
+            $this->port !== null &&
+            $this->port !== ($uri->getPort() ?? getservbyname($uri->getScheme(), 'tcp'))
+        ) {
             return null;
         }
 

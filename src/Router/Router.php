@@ -741,8 +741,8 @@ class Router
                 $scheme !== $requestUri->getScheme() ||
                 $host !== $requestUri->getHost() ||
                 (
-                    $port !== $requestUri->getPort() &&
-                    $port !== getservbyname($requestUri->getScheme(), 'tcp')
+                    $port !== null &&
+                    $port !== ($requestUri->getPort() ?? getservbyname($requestUri->getScheme(), 'tcp'))
                 );
         } else {
             $full ??= true;

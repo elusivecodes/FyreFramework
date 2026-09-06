@@ -8,12 +8,34 @@ use Fyre\Http\ServerRequest;
 use Fyre\Router\Routes\ControllerRoute;
 use InvalidArgumentException;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Controllers\TestController;
 
 final class RouteTest extends TestCase
 {
     protected Container $container;
+
+    /**
+     * @return array<string, array{string, int|null, bool}>
+     */
+    public static function portProvider(): array
+    {
+        return [
+            'http implicit default' => ['http://example.com/test', 80, true],
+            'http explicit default' => ['http://example.com:80/test', 80, true],
+            'http different port' => ['http://example.com:8080/test', 80, false],
+            'http matching custom port' => ['http://example.com:8080/test', 8080, true],
+            'http missing custom port' => ['http://example.com/test', 8080, false],
+            'http unconstrained' => ['http://example.com:8080/test', null, true],
+            'https implicit default' => ['https://example.com/test', 443, true],
+            'https explicit default' => ['https://example.com:443/test', 443, true],
+            'https different port' => ['https://example.com:8443/test', 443, false],
+            'https matching custom port' => ['https://example.com:8443/test', 8443, true],
+            'https missing custom port' => ['https://example.com/test', 8443, false],
+            'https unconstrained' => ['https://example.com:8443/test', null, true],
+        ];
+    }
 
     public function testCheckMethodIgnored(): void
     {
@@ -230,6 +252,24 @@ final class RouteTest extends TestCase
             ],
             $request?->getAttribute('routeArguments')
         );
+    }
+
+    #[DataProvider('portProvider')]
+    public function testCheckPort(string $uri, int|null $port, bool $expected): void
+    {
+        $route = $this->container->build(ControllerRoute::class, [
+            'destination' => [TestController::class, 'test'],
+            'path' => 'test',
+            'port' => $port,
+        ]);
+
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'uri' => $uri,
+            ],
+        ]);
+
+        $this->assertSame($expected, $route->matchRequest($request) !== null);
     }
 
     public function testGetBindingCallbacks(): void
