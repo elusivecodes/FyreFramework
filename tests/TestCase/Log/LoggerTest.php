@@ -108,6 +108,18 @@ final class LoggerTest extends TestCase
         ];
     }
 
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function interpolateGlobalsProvider(): array
+    {
+        return [
+            'GET' => ['get_vars', '_GET'],
+            'POST' => ['post_vars', '_POST'],
+            'SERVER' => ['server_vars', '_SERVER'],
+        ];
+    }
+
     public function testGetConfig(): void
     {
         $logger = new ArrayLogger([
@@ -147,6 +159,25 @@ final class LoggerTest extends TestCase
             '[DEBUG] '.$expected,
             $this->logger->read()[0] ?? ''
         );
+    }
+
+    #[DataProvider('interpolateGlobalsProvider')]
+    public function testInterpolateGlobals(string $placeholder, string $global): void
+    {
+        $original = $GLOBALS[$global];
+
+        try {
+            $GLOBALS[$global] = [$placeholder => 'test'];
+
+            $this->logger->log('debug', '{'.$placeholder.'}');
+
+            $this->assertSame(
+                '[DEBUG] {"'.$placeholder.'":"test"}',
+                $this->logger->read()[0] ?? ''
+            );
+        } finally {
+            $GLOBALS[$global] = $original;
+        }
     }
 
     public function testInterpolateInvalidContextValue(): void

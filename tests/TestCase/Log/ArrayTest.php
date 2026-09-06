@@ -10,14 +10,11 @@ use Fyre\Log\Handlers\ArrayLogger;
 use Fyre\Log\LogManager;
 use InvalidArgumentException;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use function array_diff;
-use function json_encode;
 use function strtoupper;
-
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_UNICODE;
 
 final class ArrayTest extends TestCase
 {
@@ -37,6 +34,23 @@ final class ArrayTest extends TestCase
 
     protected LogManager $logManager;
 
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function levelProvider(): array
+    {
+        return [
+            'emergency' => ['emergency'],
+            'alert' => ['alert'],
+            'critical' => ['critical'],
+            'error' => ['error'],
+            'warning' => ['warning'],
+            'notice' => ['notice'],
+            'info' => ['info'],
+            'debug' => ['debug'],
+        ];
+    }
+
     public function testAppends(): void
     {
         $this->logManager->handle('debug', 'test1');
@@ -46,32 +60,12 @@ final class ArrayTest extends TestCase
 
         $this->assertInstanceOf(ArrayLogger::class, $logger);
 
-        $content = $logger->read();
-
         $this->assertArraysAreIdentical(
             [
                 '[DEBUG] test1',
                 '[DEBUG] test2',
             ],
-            $content
-        );
-
-        $scopedLogger = $this->logManager->use('scoped');
-
-        $this->assertInstanceOf(ArrayLogger::class, $scopedLogger);
-
-        $this->assertArraysAreIdentical(
-            [],
-            $scopedLogger->read()
-        );
-
-        $allLogger = $this->logManager->use('all');
-
-        $this->assertInstanceOf(ArrayLogger::class, $allLogger);
-
-        $this->assertArraysAreIdentical(
-            $content,
-            $allLogger->read()
+            $logger->read()
         );
     }
 
@@ -100,124 +94,19 @@ final class ArrayTest extends TestCase
         );
     }
 
-    public function testData(): void
+    public function testInterpolateContext(): void
     {
-        $logger1 = $this->logManager->use('default');
-        $logger2 = $this->logManager->use('scoped');
-        $logger3 = $this->logManager->use('all');
+        $this->logManager->handle('debug', '{0}', ['test']);
 
-        $this->assertInstanceOf(ArrayLogger::class, $logger1);
-        $this->assertInstanceOf(ArrayLogger::class, $logger2);
-        $this->assertInstanceOf(ArrayLogger::class, $logger3);
+        $logger = $this->logManager->use('default');
 
-        $expected = [];
-        foreach ($this->levels as $level) {
-            $this->logManager->handle($level, '{0}', ['test']);
-            $expected[] = '['.strtoupper($level).'] test';
-        }
+        $this->assertInstanceOf(ArrayLogger::class, $logger);
 
         $this->assertArraysAreIdentical(
-            $expected,
-            $logger1->read()
-        );
-        $this->assertArraysAreIdentical(
-            [],
-            $logger2->read()
-        );
-        $this->assertArraysAreIdentical(
-            $expected,
-            $logger3->read()
-        );
-    }
-
-    public function testInterpolateGet(): void
-    {
-        $logger1 = $this->logManager->use('default');
-        $logger2 = $this->logManager->use('scoped');
-        $logger3 = $this->logManager->use('all');
-
-        $this->assertInstanceOf(ArrayLogger::class, $logger1);
-        $this->assertInstanceOf(ArrayLogger::class, $logger2);
-        $this->assertInstanceOf(ArrayLogger::class, $logger3);
-
-        $expected = [];
-        foreach ($this->levels as $level) {
-            $this->logManager->handle($level, '{get_vars}');
-            $expected[] = '['.strtoupper($level).'] '.json_encode($_GET, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
-        }
-
-        $this->assertArraysAreIdentical(
-            $expected,
-            $logger1->read()
-        );
-        $this->assertArraysAreIdentical(
-            [],
-            $logger2->read()
-        );
-        $this->assertArraysAreIdentical(
-            $expected,
-            $logger3->read()
-        );
-    }
-
-    public function testInterpolatePost(): void
-    {
-        $logger1 = $this->logManager->use('default');
-        $logger2 = $this->logManager->use('scoped');
-        $logger3 = $this->logManager->use('all');
-
-        $this->assertInstanceOf(ArrayLogger::class, $logger1);
-        $this->assertInstanceOf(ArrayLogger::class, $logger2);
-        $this->assertInstanceOf(ArrayLogger::class, $logger3);
-
-        $expected = [];
-        foreach ($this->levels as $level) {
-            $this->logManager->handle($level, '{post_vars}');
-            $expected[] = '['.strtoupper($level).'] '.json_encode($_POST, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
-        }
-
-        $this->assertArraysAreIdentical(
-            $expected,
-            $logger1->read()
-        );
-        $this->assertArraysAreIdentical(
-            [],
-            $logger2->read()
-        );
-        $this->assertArraysAreIdentical(
-            $expected,
-            $logger3->read()
-        );
-    }
-
-    public function testInterpolateServer(): void
-    {
-        $logger1 = $this->logManager->use('default');
-        $logger2 = $this->logManager->use('scoped');
-        $logger3 = $this->logManager->use('all');
-
-        $this->assertInstanceOf(ArrayLogger::class, $logger1);
-        $this->assertInstanceOf(ArrayLogger::class, $logger2);
-        $this->assertInstanceOf(ArrayLogger::class, $logger3);
-
-        $expected = [];
-        foreach ($this->levels as $level) {
-            $this->logManager->handle($level, '{server_vars}');
-            $expected[] = '['.strtoupper($level).'] '.
-                json_encode($_SERVER, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
-        }
-
-        $this->assertArraysAreIdentical(
-            $expected,
-            $logger1->read()
-        );
-        $this->assertArraysAreIdentical(
-            [],
-            $logger2->read()
-        );
-        $this->assertArraysAreIdentical(
-            $expected,
-            $logger3->read()
+            [
+                '[DEBUG] test',
+            ],
+            $logger->read()
         );
     }
 
@@ -242,33 +131,36 @@ final class ArrayTest extends TestCase
         $this->logManager->handle('invalid', 'test');
     }
 
-    public function testLog(): void
+    #[DataProvider('levelProvider')]
+    public function testLog(string $level): void
     {
-        $logger1 = $this->logManager->use('default');
-        $logger2 = $this->logManager->use('scoped');
-        $logger3 = $this->logManager->use('all');
+        $this->logManager->handle($level, 'test');
 
-        $this->assertInstanceOf(ArrayLogger::class, $logger1);
-        $this->assertInstanceOf(ArrayLogger::class, $logger2);
-        $this->assertInstanceOf(ArrayLogger::class, $logger3);
+        $logger = $this->logManager->use('default');
 
-        $expected = [];
-        foreach ($this->levels as $level) {
-            $this->logManager->handle($level, 'test');
-            $expected[] = '['.strtoupper($level).'] test';
-        }
+        $this->assertInstanceOf(ArrayLogger::class, $logger);
 
         $this->assertArraysAreIdentical(
-            $expected,
-            $logger1->read()
+            [
+                '['.strtoupper($level).'] test',
+            ],
+            $logger->read()
         );
+    }
+
+    public function testLogAll(): void
+    {
+        $this->logManager->handle('debug', 'test');
+
+        $logger = $this->logManager->use('all');
+
+        $this->assertInstanceOf(ArrayLogger::class, $logger);
+
         $this->assertArraysAreIdentical(
-            [],
-            $logger2->read()
-        );
-        $this->assertArraysAreIdentical(
-            $expected,
-            $logger3->read()
+            [
+                '[DEBUG] test',
+            ],
+            $logger->read()
         );
     }
 
@@ -288,25 +180,38 @@ final class ArrayTest extends TestCase
         );
     }
 
-    public function testSkipped(): void
+    #[DataProvider('levelProvider')]
+    public function testSkipped(string $level): void
     {
-        foreach ($this->levels as $level) {
-            $this->logManager->clear();
-            $this->logManager->setConfig('array', [
-                'className' => ArrayLogger::class,
-                'levels' => array_diff($this->levels, [$level]),
-            ]);
-            $this->logManager->handle($level, 'test');
+        $this->logManager->clear();
+        $this->logManager->setConfig('array', [
+            'className' => ArrayLogger::class,
+            'levels' => array_diff($this->levels, [$level]),
+        ]);
+        $this->logManager->handle($level, 'test');
 
-            $logger = $this->logManager->use('array');
+        $logger = $this->logManager->use('array');
 
-            $this->assertInstanceOf(ArrayLogger::class, $logger);
+        $this->assertInstanceOf(ArrayLogger::class, $logger);
 
-            $this->assertArraysAreIdentical(
-                [],
-                $logger->read()
-            );
-        }
+        $this->assertArraysAreIdentical(
+            [],
+            $logger->read()
+        );
+    }
+
+    public function testSkipUnscoped(): void
+    {
+        $this->logManager->handle('debug', 'test');
+
+        $logger = $this->logManager->use('scoped');
+
+        $this->assertInstanceOf(ArrayLogger::class, $logger);
+
+        $this->assertArraysAreIdentical(
+            [],
+            $logger->read()
+        );
     }
 
     #[Override]

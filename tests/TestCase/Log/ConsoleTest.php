@@ -10,22 +10,15 @@ use Fyre\Log\Handlers\ConsoleLogger;
 use Fyre\Log\LogManager;
 use InvalidArgumentException;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use function array_diff;
 use function file_get_contents;
-use function implode;
-use function json_encode;
 use function mkdir;
-use function preg_quote;
-use function preg_replace;
 use function rmdir;
 use function strtoupper;
 use function unlink;
-
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_UNICODE;
-use const PHP_EOL;
 
 final class ConsoleTest extends TestCase
 {
@@ -45,6 +38,23 @@ final class ConsoleTest extends TestCase
 
     protected LogManager $logManager;
 
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function levelProvider(): array
+    {
+        return [
+            'emergency' => ['emergency'],
+            'alert' => ['alert'],
+            'critical' => ['critical'],
+            'error' => ['error'],
+            'warning' => ['warning'],
+            'notice' => ['notice'],
+            'info' => ['info'],
+            'debug' => ['debug'],
+        ];
+    }
+
     public function testAppends(): void
     {
         $this->logManager->handle('debug', 'test1');
@@ -63,40 +73,6 @@ final class ConsoleTest extends TestCase
             $pattern,
             file_get_contents('log/console-default.log') ?: ''
         );
-
-        $this->assertMatchesRegularExpression(
-            $pattern,
-            file_get_contents('log/console-all.log') ?: ''
-        );
-
-        $this->assertSame(
-            '',
-            file_get_contents('log/console-scoped.log')
-        );
-    }
-
-    public function testData(): void
-    {
-        $lines = [];
-        foreach ($this->levels as $level) {
-            $this->logManager->handle($level, '{0}', ['test']);
-            $lines[] = '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] test';
-        }
-
-        $pattern = '/\A'.implode('\R', $lines).'\R\z/';
-
-        $this->assertMatchesRegularExpression(
-            $pattern,
-            file_get_contents('log/console-default.log') ?: ''
-        );
-        $this->assertMatchesRegularExpression(
-            $pattern,
-            file_get_contents('log/console-all.log') ?: ''
-        );
-        $this->assertSame(
-            '',
-            file_get_contents('log/console-scoped.log')
-        );
     }
 
     public function testDefaultStream(): void
@@ -109,79 +85,13 @@ final class ConsoleTest extends TestCase
         );
     }
 
-    public function testInterpolateGet(): void
+    public function testInterpolateContext(): void
     {
-        $lines = [];
-        foreach ($this->levels as $level) {
-            $this->logManager->handle($level, '{get_vars}');
-            $lines[] = '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] '.
-                preg_quote(json_encode($_GET, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), '/');
-        }
-
-        $pattern = '/\A'.implode('\R', $lines).'\R\z/';
+        $this->logManager->handle('debug', '{0}', ['test']);
 
         $this->assertMatchesRegularExpression(
-            $pattern,
+            '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[DEBUG\] test\R\z/',
             file_get_contents('log/console-default.log') ?: ''
-        );
-        $this->assertMatchesRegularExpression(
-            $pattern,
-            file_get_contents('log/console-all.log') ?: ''
-        );
-        $this->assertSame(
-            '',
-            file_get_contents('log/console-scoped.log')
-        );
-    }
-
-    public function testInterpolatePost(): void
-    {
-        $lines = [];
-        foreach ($this->levels as $level) {
-            $this->logManager->handle($level, '{post_vars}');
-            $lines[] = '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] '.
-                preg_quote(json_encode($_POST, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), '/');
-        }
-
-        $pattern = '/\A'.implode('\R', $lines).'\R\z/';
-
-        $this->assertMatchesRegularExpression(
-            $pattern,
-            file_get_contents('log/console-default.log') ?: ''
-        );
-        $this->assertMatchesRegularExpression(
-            $pattern,
-            file_get_contents('log/console-all.log') ?: ''
-        );
-        $this->assertSame(
-            '',
-            file_get_contents('log/console-scoped.log')
-        );
-    }
-
-    public function testInterpolateServer(): void
-    {
-        $lines = [];
-        foreach ($this->levels as $level) {
-            $this->logManager->handle($level, '{server_vars}');
-            $lines[] = '['.strtoupper($level).'] '.
-                json_encode($_SERVER, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
-        }
-
-        $expected = implode(PHP_EOL, $lines).PHP_EOL;
-        $pattern = '/(?:\A|\R)\K\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} /';
-
-        $this->assertSame(
-            $expected,
-            preg_replace($pattern, '', file_get_contents('log/console-default.log') ?: '')
-        );
-        $this->assertSame(
-            $expected,
-            preg_replace($pattern, '', file_get_contents('log/console-all.log') ?: '')
-        );
-        $this->assertSame(
-            '',
-            file_get_contents('log/console-scoped.log')
         );
     }
 
@@ -216,27 +126,24 @@ final class ConsoleTest extends TestCase
         ]);
     }
 
-    public function testLog(): void
+    #[DataProvider('levelProvider')]
+    public function testLog(string $level): void
     {
-        $lines = [];
-        foreach ($this->levels as $level) {
-            $this->logManager->handle($level, 'test');
-            $lines[] = '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] test';
-        }
-
-        $pattern = '/\A'.implode('\R', $lines).'\R\z/';
+        $this->logManager->handle($level, 'test');
 
         $this->assertMatchesRegularExpression(
-            $pattern,
+            '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] test\R\z/',
             file_get_contents('log/console-default.log') ?: ''
         );
+    }
+
+    public function testLogAll(): void
+    {
+        $this->logManager->handle('debug', 'test');
+
         $this->assertMatchesRegularExpression(
-            $pattern,
+            '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[DEBUG\] test\R\z/',
             file_get_contents('log/console-all.log') ?: ''
-        );
-        $this->assertSame(
-            '',
-            file_get_contents('log/console-scoped.log')
         );
     }
 
@@ -250,22 +157,31 @@ final class ConsoleTest extends TestCase
         );
     }
 
-    public function testSkipped(): void
+    #[DataProvider('levelProvider')]
+    public function testSkipped(string $level): void
     {
-        foreach ($this->levels as $level) {
-            $this->logManager->clear();
-            $this->logManager->setConfig('console', [
-                'className' => ConsoleLogger::class,
-                'levels' => array_diff($this->levels, [$level]),
-                'stream' => 'log/console-skipped.log',
-            ]);
-            $this->logManager->handle($level, 'test');
+        $this->logManager->clear();
+        $this->logManager->setConfig('console', [
+            'className' => ConsoleLogger::class,
+            'levels' => array_diff($this->levels, [$level]),
+            'stream' => 'log/console-skipped.log',
+        ]);
+        $this->logManager->handle($level, 'test');
 
-            $this->assertSame(
-                '',
-                file_get_contents('log/console-skipped.log')
-            );
-        }
+        $this->assertSame(
+            '',
+            file_get_contents('log/console-skipped.log')
+        );
+    }
+
+    public function testSkipUnscoped(): void
+    {
+        $this->logManager->handle('debug', 'test');
+
+        $this->assertSame(
+            '',
+            file_get_contents('log/console-scoped.log')
+        );
     }
 
     public function testStdoutStream(): void

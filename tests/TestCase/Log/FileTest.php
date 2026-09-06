@@ -11,21 +11,17 @@ use Fyre\Log\LogManager;
 use Fyre\Utility\Path;
 use InvalidArgumentException;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use function array_diff;
 use function file_get_contents;
 use function glob;
-use function json_encode;
 use function mkdir;
-use function preg_quote;
 use function rmdir;
 use function strtoupper;
 use function sys_get_temp_dir;
 use function unlink;
-
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_UNICODE;
 
 final class FileTest extends TestCase
 {
@@ -45,6 +41,23 @@ final class FileTest extends TestCase
 
     protected LogManager $logger;
 
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function levelProvider(): array
+    {
+        return [
+            'emergency' => ['emergency'],
+            'alert' => ['alert'],
+            'critical' => ['critical'],
+            'error' => ['error'],
+            'warning' => ['warning'],
+            'notice' => ['notice'],
+            'info' => ['info'],
+            'debug' => ['debug'],
+        ];
+    }
+
     public function testAppends(): void
     {
         $this->logger->handle('debug', 'test1');
@@ -59,9 +72,6 @@ final class FileTest extends TestCase
             '\z/',
             $content
         );
-
-        $this->assertFileDoesNotExist('log/scoped.log');
-        $this->assertFileExists('log/all.log');
     }
 
     public function testBuild(): void
@@ -92,21 +102,6 @@ final class FileTest extends TestCase
         );
     }
 
-    public function testData(): void
-    {
-        foreach ($this->levels as $level) {
-            $this->logger->handle($level, '{0}', ['test']);
-
-            $this->assertMatchesRegularExpression(
-                '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] test\R\z/',
-                file_get_contents('log/'.$level.'.log') ?: ''
-            );
-        }
-
-        $this->assertFileDoesNotExist('log/scoped.log');
-        $this->assertFileExists('log/all.log');
-    }
-
     public function testDefaultCliSuffix(): void
     {
         $this->logger->setConfig('cli', [
@@ -132,52 +127,14 @@ final class FileTest extends TestCase
         );
     }
 
-    public function testInterpolateGet(): void
+    public function testInterpolateContext(): void
     {
-        foreach ($this->levels as $level) {
-            $this->logger->handle($level, '{get_vars}');
+        $this->logger->handle('debug', '{0}', ['test']);
 
-            $this->assertMatchesRegularExpression(
-                '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] '.
-                preg_quote(json_encode($_GET, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), '/').'\R\z/',
-                file_get_contents('log/'.$level.'.log') ?: ''
-            );
-        }
-
-        $this->assertFileDoesNotExist('log/scoped.log');
-        $this->assertFileExists('log/all.log');
-    }
-
-    public function testInterpolatePost(): void
-    {
-        foreach ($this->levels as $level) {
-            $this->logger->handle($level, '{post_vars}');
-
-            $this->assertMatchesRegularExpression(
-                '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] '.
-                preg_quote(json_encode($_POST, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), '/').'\R\z/',
-                file_get_contents('log/'.$level.'.log') ?: ''
-            );
-        }
-
-        $this->assertFileDoesNotExist('log/scoped.log');
-        $this->assertFileExists('log/all.log');
-    }
-
-    public function testInterpolateServer(): void
-    {
-        foreach ($this->levels as $level) {
-            $this->logger->handle($level, '{server_vars}');
-
-            $this->assertMatchesRegularExpression(
-                '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] '.
-                preg_quote(json_encode($_SERVER, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), '/').'\R\z/',
-                file_get_contents('log/'.$level.'.log') ?: ''
-            );
-        }
-
-        $this->assertFileDoesNotExist('log/scoped.log');
-        $this->assertFileExists('log/all.log');
+        $this->assertMatchesRegularExpression(
+            '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[DEBUG\] test\R\z/',
+            file_get_contents('log/debug.log') ?: ''
+        );
     }
 
     public function testInvalidHandler(): void
@@ -211,19 +168,25 @@ final class FileTest extends TestCase
         ]);
     }
 
-    public function testLog(): void
+    #[DataProvider('levelProvider')]
+    public function testLog(string $level): void
     {
-        foreach ($this->levels as $level) {
-            $this->logger->handle($level, 'test');
+        $this->logger->handle($level, 'test');
 
-            $this->assertMatchesRegularExpression(
-                '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] test\R\z/',
-                file_get_contents('log/'.$level.'.log') ?: ''
-            );
-        }
+        $this->assertMatchesRegularExpression(
+            '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \['.strtoupper($level).'\] test\R\z/',
+            file_get_contents('log/'.$level.'.log') ?: ''
+        );
+    }
 
-        $this->assertFileDoesNotExist('log/scoped.log');
-        $this->assertFileExists('log/all.log');
+    public function testLogAll(): void
+    {
+        $this->logger->handle('debug', 'test');
+
+        $this->assertMatchesRegularExpression(
+            '/\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[DEBUG\] test\R\z/',
+            file_get_contents('log/all.log') ?: ''
+        );
     }
 
     public function testNestedPathCreation(): void
@@ -283,22 +246,26 @@ final class FileTest extends TestCase
         );
     }
 
-    public function testSkipped(): void
+    #[DataProvider('levelProvider')]
+    public function testSkipped(string $level): void
     {
-        foreach ($this->levels as $level) {
-            $this->logger->clear();
-            $this->logger->setConfig('file', [
-                'className' => FileLogger::class,
-                'levels' => array_diff($this->levels, [$level]),
-                'path' => 'log',
-            ]);
-            $this->logger->handle($level, 'test');
+        $this->logger->clear();
+        $this->logger->setConfig('file', [
+            'className' => FileLogger::class,
+            'levels' => array_diff($this->levels, [$level]),
+            'path' => 'log',
+            'suffix' => '',
+        ]);
+        $this->logger->handle($level, 'test');
 
-            $this->assertFileDoesNotExist('log/'.$level.'.log');
-        }
+        $this->assertFileDoesNotExist('log/'.$level.'.log');
+    }
+
+    public function testSkipUnscoped(): void
+    {
+        $this->logger->handle('debug', 'test');
 
         $this->assertFileDoesNotExist('log/scoped.log');
-        $this->assertFileDoesNotExist('log/all.log');
     }
 
     public function testUse(): void
