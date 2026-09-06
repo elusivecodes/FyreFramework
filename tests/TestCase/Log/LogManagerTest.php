@@ -7,7 +7,7 @@ use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
-use Fyre\Log\Handlers\FileLogger;
+use Fyre\Log\Handlers\ArrayLogger;
 use Fyre\Log\Logger;
 use Fyre\Log\LogManager;
 use InvalidArgumentException;
@@ -15,8 +15,6 @@ use Override;
 use PHPUnit\Framework\TestCase;
 
 use function class_uses;
-use function mkdir;
-use function rmdir;
 
 final class LogManagerTest extends TestCase
 {
@@ -25,9 +23,9 @@ final class LogManagerTest extends TestCase
     public function testBuild(): void
     {
         $this->assertInstanceOf(
-            FileLogger::class,
+            ArrayLogger::class,
             $this->logManager->build([
-                'className' => FileLogger::class,
+                'className' => ArrayLogger::class,
             ])
         );
     }
@@ -63,16 +61,12 @@ final class LogManagerTest extends TestCase
         $this->assertArraysAreIdentical(
             [
                 'default' => [
-                    'className' => FileLogger::class,
+                    'className' => ArrayLogger::class,
                     'levels' => ['warning', 'notice', 'info', 'debug'],
-                    'path' => 'log',
-                    'suffix' => '',
                 ],
                 'error' => [
-                    'className' => FileLogger::class,
+                    'className' => ArrayLogger::class,
                     'levels' => ['emergency', 'alert', 'critical', 'error'],
-                    'path' => 'error',
-                    'suffix' => '',
                 ],
             ],
             $config
@@ -86,10 +80,8 @@ final class LogManagerTest extends TestCase
         $this->assertIsArray($config);
         $this->assertArraysAreIdentical(
             [
-                'className' => FileLogger::class,
+                'className' => ArrayLogger::class,
                 'levels' => ['emergency', 'alert', 'critical', 'error'],
-                'path' => 'error',
-                'suffix' => '',
             ],
             $config
         );
@@ -133,8 +125,8 @@ final class LogManagerTest extends TestCase
         $this->assertSame(
             $this->logManager,
             $this->logManager->setConfig('test', [
-                'className' => FileLogger::class,
-                'path' => 'log',
+                'className' => ArrayLogger::class,
+                'levels' => ['debug'],
             ])
         );
 
@@ -143,8 +135,8 @@ final class LogManagerTest extends TestCase
         $this->assertIsArray($config);
         $this->assertArraysAreIdentical(
             [
-                'className' => FileLogger::class,
-                'path' => 'log',
+                'className' => ArrayLogger::class,
+                'levels' => ['debug'],
             ],
             $config
         );
@@ -156,8 +148,8 @@ final class LogManagerTest extends TestCase
         $this->expectExceptionMessageIs('Log config `default` already exists.');
 
         $this->logManager->setConfig('default', [
-            'className' => FileLogger::class,
-            'path' => 'log',
+            'className' => ArrayLogger::class,
+            'levels' => ['debug'],
         ]);
     }
 
@@ -211,7 +203,7 @@ final class LogManagerTest extends TestCase
         $this->assertSame($handler1, $handler2);
 
         $this->assertInstanceOf(
-            FileLogger::class,
+            ArrayLogger::class,
             $handler1
         );
     }
@@ -223,28 +215,14 @@ final class LogManagerTest extends TestCase
         $container->singleton(Config::class);
         $container->use(Config::class)->set('Log', [
             'default' => [
-                'className' => FileLogger::class,
+                'className' => ArrayLogger::class,
                 'levels' => ['warning', 'notice', 'info', 'debug'],
-                'path' => 'log',
-                'suffix' => '',
             ],
             'error' => [
-                'className' => FileLogger::class,
+                'className' => ArrayLogger::class,
                 'levels' => ['emergency', 'alert', 'critical', 'error'],
-                'path' => 'error',
-                'suffix' => '',
             ],
         ]);
         $this->logManager = $container->use(LogManager::class);
-
-        @mkdir('log');
-        @mkdir('error');
-    }
-
-    #[Override]
-    protected function tearDown(): void
-    {
-        @rmdir('log');
-        @rmdir('error');
     }
 }

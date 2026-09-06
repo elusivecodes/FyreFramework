@@ -6,9 +6,39 @@ namespace Tests\TestCase\View\Helpers\Form;
 use Closure;
 use Fyre\Utility\DateTime\DateTime;
 use Fyre\View\View;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait DateTimeTestTrait
 {
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function dateTimeAttributesProvider(): array
+    {
+        return [
+            'array value' => [
+                ['data-test' => [1, 2]],
+                '<input id="datetime" name="datetime" data-test="[1,2]" type="datetime-local" />',
+            ],
+            'escaped value' => [
+                ['data-test' => '<test>'],
+                '<input id="datetime" name="datetime" data-test="&lt;test&gt;" type="datetime-local" />',
+            ],
+            'invalid name' => [
+                ['*class*' => 'test'],
+                '<input class="test" id="datetime" name="datetime" type="datetime-local" />',
+            ],
+            'multiple attributes' => [
+                ['class' => 'test', 'id' => 'other'],
+                '<input class="test" id="other" name="datetime" type="datetime-local" />',
+            ],
+            'attribute order' => [
+                ['id' => 'other', 'class' => 'test'],
+                '<input class="test" id="other" name="datetime" type="datetime-local" />',
+            ],
+        ];
+    }
+
     public function testDateTime(): void
     {
         $this->assertSame(
@@ -17,55 +47,15 @@ trait DateTimeTestTrait
         );
     }
 
-    public function testDateTimeAttributeArray(): void
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    #[DataProvider('dateTimeAttributesProvider')]
+    public function testDateTimeAttributes(array $attributes, string $expected): void
     {
         $this->assertSame(
-            '<input id="datetime" name="datetime" data-test="[1,2]" type="datetime-local" />',
-            $this->view->Form->datetime('datetime', [
-                'data-test' => [1, 2],
-            ])
-        );
-    }
-
-    public function testDateTimeAttributeEscape(): void
-    {
-        $this->assertSame(
-            '<input id="datetime" name="datetime" data-test="&lt;test&gt;" type="datetime-local" />',
-            $this->view->Form->datetime('datetime', [
-                'data-test' => '<test>',
-            ])
-        );
-    }
-
-    public function testDateTimeAttributeInvalid(): void
-    {
-        $this->assertSame(
-            '<input class="test" id="datetime" name="datetime" type="datetime-local" />',
-            $this->view->Form->datetime('datetime', [
-                '*class*' => 'test',
-            ])
-        );
-    }
-
-    public function testDateTimeAttributes(): void
-    {
-        $this->assertSame(
-            '<input class="test" id="other" name="datetime" type="datetime-local" />',
-            $this->view->Form->datetime('datetime', [
-                'class' => 'test',
-                'id' => 'other',
-            ])
-        );
-    }
-
-    public function testDateTimeAttributesOrder(): void
-    {
-        $this->assertSame(
-            '<input class="test" id="other" name="datetime" type="datetime-local" />',
-            $this->view->Form->datetime('datetime', [
-                'id' => 'other',
-                'class' => 'test',
-            ])
+            $expected,
+            $this->view->Form->datetime('datetime', $attributes)
         );
     }
 

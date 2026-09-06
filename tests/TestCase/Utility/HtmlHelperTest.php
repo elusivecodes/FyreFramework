@@ -8,6 +8,7 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
 use Fyre\Utility\HtmlHelper;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use function class_uses;
@@ -16,82 +17,56 @@ final class HtmlHelperTest extends TestCase
 {
     protected HtmlHelper $html;
 
-    public function testAttributes(): void
+    /**
+     * @return array<string, array{array<array-key, mixed>, string}>
+     */
+    public static function attributesProvider(): array
     {
-        $this->assertSame(
-            ' href="#"',
-            $this->html->attributes([
-                'href' => '#',
-            ])
-        );
+        return [
+            'string value' => [
+                ['href' => '#'],
+                ' href="#"',
+            ],
+            'array value' => [
+                ['data-test' => [1, 2, 3]],
+                ' data-test="[1,2,3]"',
+            ],
+            'empty attributes' => [
+                [],
+                '',
+            ],
+            'escaped value' => [
+                ['data-test' => '"value"'],
+                ' data-test="&quot;value&quot;"',
+            ],
+            'false value' => [
+                ['disabled' => false],
+                ' disabled="false"',
+            ],
+            'numeric key' => [
+                ['disabled'],
+                ' disabled',
+            ],
+            'attribute order' => [
+                ['href' => '#', 'class' => 'test'],
+                ' class="test" href="#"',
+            ],
+            'true value' => [
+                ['disabled' => true],
+                ' disabled',
+            ],
+        ];
     }
 
-    public function testAttributesArray(): void
+    /**
+     * @param array<array-key, mixed> $attributes
+     */
+    #[DataProvider('attributesProvider')]
+    public function testAttributes(array $attributes, string $expected): void
     {
         $this->assertSame(
-            ' data-test="[1,2,3]"',
-            $this->html->attributes([
-                'data-test' => [1, 2, 3],
-            ])
-        );
-    }
-
-    public function testAttributesEmpty(): void
-    {
-        $this->assertSame(
-            '',
-            $this->html->attributes([])
-        );
-    }
-
-    public function testAttributesEscape(): void
-    {
-        $this->assertSame(
-            ' data-test="&quot;value&quot;"',
-            $this->html->attributes([
-                'data-test' => '"value"',
-            ])
-        );
-    }
-
-    public function testAttributesFalse(): void
-    {
-        $this->assertSame(
-            ' disabled="false"',
-            $this->html->attributes([
-                'disabled' => false,
-            ])
-        );
-    }
-
-    public function testAttributesNumericKey(): void
-    {
-        $this->assertSame(
-            ' disabled',
-            $this->html->attributes([
-                'disabled',
-            ])
-        );
-    }
-
-    public function testAttributesOrder(): void
-    {
-        $this->assertSame(
-            ' class="test" href="#"',
-            $this->html->attributes([
-                'href' => '#',
-                'class' => 'test',
-            ])
-        );
-    }
-
-    public function testAttributesTrue(): void
-    {
-        $this->assertSame(
-            ' disabled',
-            $this->html->attributes([
-                'disabled' => true,
-            ])
+            $expected,
+            $this->html->attributes($attributes)
         );
     }
 

@@ -6,7 +6,7 @@ namespace Tests\TestCase\Cache;
 use Fyre\Cache\CacheManager;
 use Fyre\Cache\Cacher;
 use Fyre\Cache\Exceptions\InvalidArgumentException;
-use Fyre\Cache\Handlers\File\FileCacher;
+use Fyre\Cache\Handlers\Array\ArrayCacher;
 use Fyre\Cache\Handlers\Null\NullCacher;
 use Fyre\Cache\Lock;
 use Fyre\Cache\TaggedCacher;
@@ -18,8 +18,6 @@ use Override;
 use PHPUnit\Framework\TestCase;
 
 use function class_uses;
-use function mkdir;
-use function rmdir;
 
 final class CacheManagerTest extends TestCase
 {
@@ -28,9 +26,9 @@ final class CacheManagerTest extends TestCase
     public function testBuild(): void
     {
         $this->assertInstanceOf(
-            FileCacher::class,
+            ArrayCacher::class,
             $this->cacheManager->build([
-                'className' => FileCacher::class,
+                'className' => ArrayCacher::class,
             ])
         );
     }
@@ -40,10 +38,10 @@ final class CacheManagerTest extends TestCase
         $this->cacheManager->disable();
 
         $handler1 = $this->cacheManager->build([
-            'className' => FileCacher::class,
+            'className' => ArrayCacher::class,
         ]);
         $handler2 = $this->cacheManager->build([
-            'className' => FileCacher::class,
+            'className' => ArrayCacher::class,
         ]);
 
         $this->assertSame($handler1, $handler2);
@@ -113,7 +111,7 @@ final class CacheManagerTest extends TestCase
         );
 
         $this->assertInstanceOf(
-            FileCacher::class,
+            ArrayCacher::class,
             $this->cacheManager->use()
         );
     }
@@ -126,13 +124,11 @@ final class CacheManagerTest extends TestCase
         $this->assertArraysAreIdentical(
             [
                 'default' => [
-                    'className' => FileCacher::class,
-                    'path' => 'cache',
+                    'className' => ArrayCacher::class,
                     'prefix' => 'prefix.',
                 ],
                 'data' => [
-                    'className' => FileCacher::class,
-                    'path' => 'cache',
+                    'className' => ArrayCacher::class,
                     'prefix' => 'data.',
                 ],
             ],
@@ -147,8 +143,7 @@ final class CacheManagerTest extends TestCase
         $this->assertIsArray($config);
         $this->assertArraysAreIdentical(
             [
-                'className' => FileCacher::class,
-                'path' => 'cache',
+                'className' => ArrayCacher::class,
                 'prefix' => 'data.',
             ],
             $config
@@ -193,7 +188,7 @@ final class CacheManagerTest extends TestCase
         $this->assertSame(
             $this->cacheManager,
             $this->cacheManager->setConfig('test', [
-                'className' => FileCacher::class,
+                'className' => ArrayCacher::class,
             ])
         );
 
@@ -202,7 +197,7 @@ final class CacheManagerTest extends TestCase
         $this->assertIsArray($config);
         $this->assertArraysAreIdentical(
             [
-                'className' => FileCacher::class,
+                'className' => ArrayCacher::class,
             ],
             $config
         );
@@ -214,7 +209,7 @@ final class CacheManagerTest extends TestCase
         $this->expectExceptionMessageIs('Cache config `default` already exists.');
 
         $this->cacheManager->setConfig('default', [
-            'className' => FileCacher::class,
+            'className' => ArrayCacher::class,
         ]);
     }
 
@@ -268,17 +263,17 @@ final class CacheManagerTest extends TestCase
         $this->assertSame($handler1, $handler2);
 
         $this->assertInstanceOf(
-            FileCacher::class,
+            ArrayCacher::class,
             $handler1
         );
     }
 
     public function testUseDisabledInvalid(): void
     {
-        $this->cacheManager->disable();
-
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageIs('Cacher `` must extend `Fyre\Cache\Cacher`.');
+
+        $this->cacheManager->disable();
 
         $this->cacheManager->use('invalid');
     }
@@ -290,24 +285,14 @@ final class CacheManagerTest extends TestCase
         $container->singleton(Config::class);
         $container->use(Config::class)->set('Cache', [
             'default' => [
-                'className' => FileCacher::class,
-                'path' => 'cache',
+                'className' => ArrayCacher::class,
                 'prefix' => 'prefix.',
             ],
             'data' => [
-                'className' => FileCacher::class,
-                'path' => 'cache',
+                'className' => ArrayCacher::class,
                 'prefix' => 'data.',
             ],
         ]);
         $this->cacheManager = $container->use(CacheManager::class);
-
-        @mkdir('cache');
-    }
-
-    #[Override]
-    protected function tearDown(): void
-    {
-        @rmdir('cache');
     }
 }

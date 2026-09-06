@@ -3,8 +3,39 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\View\Helpers\Form;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+
 trait LabelTestTrait
 {
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function labelAttributesProvider(): array
+    {
+        return [
+            'array value' => [
+                ['data-test' => [1, 2]],
+                '<label data-test="[1,2]" for="input">Input</label>',
+            ],
+            'escaped value' => [
+                ['data-test' => '<test>'],
+                '<label data-test="&lt;test&gt;" for="input">Input</label>',
+            ],
+            'invalid name' => [
+                ['*class*' => 'test'],
+                '<label class="test" for="input">Input</label>',
+            ],
+            'multiple attributes' => [
+                ['class' => 'test', 'id' => 'label'],
+                '<label class="test" id="label" for="input">Input</label>',
+            ],
+            'attribute order' => [
+                ['id' => 'label', 'class' => 'test'],
+                '<label class="test" id="label" for="input">Input</label>',
+            ],
+        ];
+    }
+
     public function testLabel(): void
     {
         $this->assertSame(
@@ -13,55 +44,15 @@ trait LabelTestTrait
         );
     }
 
-    public function testLabelAttributeArray(): void
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    #[DataProvider('labelAttributesProvider')]
+    public function testLabelAttributes(array $attributes, string $expected): void
     {
         $this->assertSame(
-            '<label data-test="[1,2]" for="input">Input</label>',
-            $this->view->Form->label('input', [
-                'data-test' => [1, 2],
-            ])
-        );
-    }
-
-    public function testLabelAttributeEscape(): void
-    {
-        $this->assertSame(
-            '<label data-test="&lt;test&gt;" for="input">Input</label>',
-            $this->view->Form->label('input', [
-                'data-test' => '<test>',
-            ])
-        );
-    }
-
-    public function testLabelAttributeInvalid(): void
-    {
-        $this->assertSame(
-            '<label class="test" for="input">Input</label>',
-            $this->view->Form->label('input', [
-                '*class*' => 'test',
-            ])
-        );
-    }
-
-    public function testLabelAttributes(): void
-    {
-        $this->assertSame(
-            '<label class="test" id="label" for="input">Input</label>',
-            $this->view->Form->label('input', [
-                'class' => 'test',
-                'id' => 'label',
-            ])
-        );
-    }
-
-    public function testLabelAttributesOrder(): void
-    {
-        $this->assertSame(
-            '<label class="test" id="label" for="input">Input</label>',
-            $this->view->Form->label('input', [
-                'id' => 'label',
-                'class' => 'test',
-            ])
+            $expected,
+            $this->view->Form->label('input', $attributes)
         );
     }
 

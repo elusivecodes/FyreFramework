@@ -5,9 +5,39 @@ namespace Tests\TestCase\View\Helpers\Form;
 
 use Closure;
 use Fyre\View\View;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait SelectMultiTestTrait
 {
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function selectMultiAttributesProvider(): array
+    {
+        return [
+            'array value' => [
+                ['data-test' => [1, 2]],
+                '<input name="select" type="hidden" value="" /><select id="select" name="select[]" data-test="[1,2]" multiple></select>',
+            ],
+            'escaped value' => [
+                ['data-test' => '<test>'],
+                '<input name="select" type="hidden" value="" /><select id="select" name="select[]" data-test="&lt;test&gt;" multiple></select>',
+            ],
+            'invalid name' => [
+                ['*class*' => 'test'],
+                '<input name="select" type="hidden" value="" /><select class="test" id="select" name="select[]" multiple></select>',
+            ],
+            'multiple attributes' => [
+                ['class' => 'test', 'id' => 'other'],
+                '<input name="select" type="hidden" value="" /><select class="test" id="other" name="select[]" multiple></select>',
+            ],
+            'attribute order' => [
+                ['id' => 'other', 'class' => 'test'],
+                '<input name="select" type="hidden" value="" /><select class="test" id="other" name="select[]" multiple></select>',
+            ],
+        ];
+    }
+
     public function testSelectMulti(): void
     {
         $this->assertSame(
@@ -16,55 +46,15 @@ trait SelectMultiTestTrait
         );
     }
 
-    public function testSelectMultiAttributeArray(): void
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    #[DataProvider('selectMultiAttributesProvider')]
+    public function testSelectMultiAttributes(array $attributes, string $expected): void
     {
         $this->assertSame(
-            '<input name="select" type="hidden" value="" /><select id="select" name="select[]" data-test="[1,2]" multiple></select>',
-            $this->view->Form->selectMulti('select', [
-                'data-test' => [1, 2],
-            ])
-        );
-    }
-
-    public function testSelectMultiAttributeEscape(): void
-    {
-        $this->assertSame(
-            '<input name="select" type="hidden" value="" /><select id="select" name="select[]" data-test="&lt;test&gt;" multiple></select>',
-            $this->view->Form->selectMulti('select', [
-                'data-test' => '<test>',
-            ])
-        );
-    }
-
-    public function testSelectMultiAttributeInvalid(): void
-    {
-        $this->assertSame(
-            '<input name="select" type="hidden" value="" /><select class="test" id="select" name="select[]" multiple></select>',
-            $this->view->Form->selectMulti('select', [
-                '*class*' => 'test',
-            ])
-        );
-    }
-
-    public function testSelectMultiAttributes(): void
-    {
-        $this->assertSame(
-            '<input name="select" type="hidden" value="" /><select class="test" id="other" name="select[]" multiple></select>',
-            $this->view->Form->selectMulti('select', [
-                'class' => 'test',
-                'id' => 'other',
-            ])
-        );
-    }
-
-    public function testSelectMultiAttributesOrder(): void
-    {
-        $this->assertSame(
-            '<input name="select" type="hidden" value="" /><select class="test" id="other" name="select[]" multiple></select>',
-            $this->view->Form->selectMulti('select', [
-                'id' => 'other',
-                'class' => 'test',
-            ])
+            $expected,
+            $this->view->Form->selectMulti('select', $attributes)
         );
     }
 

@@ -64,6 +64,16 @@ final class FileTest extends TestCase
         $this->assertFileExists('log/all.log');
     }
 
+    public function testBuild(): void
+    {
+        $this->assertInstanceOf(
+            FileLogger::class,
+            $this->logger->build([
+                'className' => FileLogger::class,
+            ])
+        );
+    }
+
     public function testCustomFileAndExtension(): void
     {
         $this->logger->setConfig('custom', [
@@ -289,6 +299,19 @@ final class FileTest extends TestCase
 
         $this->assertFileDoesNotExist('log/scoped.log');
         $this->assertFileDoesNotExist('log/all.log');
+    }
+
+    public function testUse(): void
+    {
+        $handler1 = $this->logger->use();
+        $handler2 = $this->logger->use();
+
+        $this->assertSame($handler1, $handler2);
+
+        $this->assertInstanceOf(
+            FileLogger::class,
+            $handler1
+        );
     }
 
     #[Override]

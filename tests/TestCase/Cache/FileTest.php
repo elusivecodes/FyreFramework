@@ -42,7 +42,19 @@ final class FileTest extends TestCase
     use RememberTestTrait;
     use TagsTestTrait;
 
+    protected CacheManager $cacheManager;
+
     protected Cacher $cacher;
+
+    public function testBuild(): void
+    {
+        $this->assertInstanceOf(
+            FileCacher::class,
+            $this->cacheManager->build([
+                'className' => FileCacher::class,
+            ])
+        );
+    }
 
     #[RequiresPhpExtension('pcntl')]
     public function testConcurrentSynchronizedUpdates(): void
@@ -185,18 +197,38 @@ final class FileTest extends TestCase
         );
     }
 
+    public function testUse(): void
+    {
+        $this->cacheManager->setConfig('default', [
+            'className' => FileCacher::class,
+            'path' => 'cache',
+            'prefix' => 'prefix.',
+        ]);
+
+        $handler1 = $this->cacheManager->use();
+        $handler2 = $this->cacheManager->use();
+
+        $this->assertSame($handler1, $handler2);
+
+        $this->assertInstanceOf(
+            FileCacher::class,
+            $handler1
+        );
+    }
+
     #[Override]
     protected function setUp(): void
     {
         @mkdir('cache');
 
-        $this->cacher = new Container()
-            ->use(CacheManager::class)
-            ->build([
-                'className' => FileCacher::class,
-                'path' => 'cache',
-                'prefix' => 'prefix.',
-            ]);
+        $this->cacheManager = new Container()
+            ->use(CacheManager::class);
+
+        $this->cacher = $this->cacheManager->build([
+            'className' => FileCacher::class,
+            'path' => 'cache',
+            'prefix' => 'prefix.',
+        ]);
     }
 
     #[Override]
