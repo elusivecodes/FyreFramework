@@ -10,6 +10,7 @@ use Fyre\Router\Router;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Mock\Controllers\HomeController;
 use Tests\Mock\Entities\Item;
+use Tests\Mock\Enums\ReviewStatus;
 use Tests\Mock\Enums\State;
 use Tests\Mock\Enums\Status;
 
@@ -105,6 +106,20 @@ trait UrlTestTrait
             '/status/draft',
             $router->url('status', [
                 'status' => Status::Draft,
+            ])
+        );
+    }
+
+    public function testUrlBackedEnumArgumentEncoded(): void
+    {
+        $router = $this->container->use(Router::class);
+
+        $router->connect('test/{status}', HomeController::class, as: 'status');
+
+        $this->assertSame(
+            '/test/review%20pending',
+            $router->url('status', [
+                'status' => ReviewStatus::Pending,
             ])
         );
     }

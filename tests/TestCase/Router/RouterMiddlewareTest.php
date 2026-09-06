@@ -6,7 +6,6 @@ namespace Tests\TestCase\Router;
 use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
-use Fyre\Http\ClientResponse;
 use Fyre\Http\Exceptions\NotFoundException;
 use Fyre\Http\MiddlewareQueue;
 use Fyre\Http\RequestHandler;
@@ -20,7 +19,7 @@ use Fyre\Router\Router;
 use Override;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
-use Tests\Mock\Controllers\HomeController;
+use Tests\Mock\Controllers\TestController;
 use Tests\Mock\Enums\ReviewStatus;
 use Tests\Mock\Enums\State;
 use Tests\Mock\Enums\Status;
@@ -39,22 +38,11 @@ final class RouterMiddlewareTest extends TestCase
             DebugTrait::class,
             class_uses(RouterMiddleware::class)
         );
-
-        $this->assertContains(
-            DebugTrait::class,
-            class_uses(SubstituteBindingsMiddleware::class)
-        );
     }
 
     public function testProcessClosureRoute(): void
     {
-        $ran = false;
-
-        $destination = static function() use (&$ran): string {
-            $ran = true;
-
-            return '';
-        };
+        $destination = static fn(): string => 'This is a test response';
 
         $this->router->connect('test', $destination);
 
@@ -73,17 +61,17 @@ final class RouterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $this->assertInstanceOf(
-            ClientResponse::class,
-            $handler->handle($request)
-        );
+        $response = $handler->handle($request);
 
-        $this->assertTrue($ran);
+        $this->assertSame(
+            'This is a test response',
+            $response->getBody()->getContents()
+        );
     }
 
     public function testProcessControllerRoute(): void
     {
-        $this->router->connect('test', HomeController::class);
+        $this->router->connect('test', TestController::class);
 
         $queue = new MiddlewareQueue([
             RouterMiddleware::class,
@@ -100,9 +88,11 @@ final class RouterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $this->assertInstanceOf(
-            ClientResponse::class,
-            $handler->handle($request)
+        $response = $handler->handle($request);
+
+        $this->assertSame(
+            'This is a test response',
+            $response->getBody()->getContents()
         );
     }
 
@@ -127,15 +117,32 @@ final class RouterMiddlewareTest extends TestCase
 
         $response = $handler->handle($request);
 
-        $this->assertInstanceOf(
-            ClientResponse::class,
-            $response
-        );
-
         $this->assertSame(
             302,
             $response->getStatusCode()
         );
+    }
+
+    public function testProcessRedirectRouteLocation(): void
+    {
+        $this->router->redirect('test', 'https://test.com/');
+
+        $queue = new MiddlewareQueue([
+            RouterMiddleware::class,
+        ]);
+
+        $routeHandler = $this->container->build(RouteHandler::class);
+        $handler = $this->container->build(RequestHandler::class, [
+            'queue' => $queue,
+            'fallbackHandler' => $routeHandler,
+        ]);
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'uri' => '/test',
+            ],
+        ]);
+
+        $response = $handler->handle($request);
 
         $this->assertSame(
             'https://test.com/',
@@ -145,15 +152,9 @@ final class RouterMiddlewareTest extends TestCase
 
     public function testProcessRouteBackedEnumParam(): void
     {
-        $ran = false;
-
-        $destination = function(Status $status) use (&$ran): string {
-            $ran = true;
-
-            $this->assertSame(
-                Status::Draft,
-                $status
-            );
+        $arguments = [];
+        $destination = static function(Status $status) use (&$arguments): string {
+            $arguments = [$status];
 
             return '';
         };
@@ -176,25 +177,19 @@ final class RouterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $this->assertInstanceOf(
-            ClientResponse::class,
-            $handler->handle($request)
-        );
+        $handler->handle($request);
 
-        $this->assertTrue($ran);
+        $this->assertSame(
+            [Status::Draft],
+            $arguments
+        );
     }
 
     public function testProcessRouteBackedEnumParamEncoded(): void
     {
-        $ran = false;
-
-        $destination = function(ReviewStatus $status) use (&$ran): string {
-            $ran = true;
-
-            $this->assertSame(
-                ReviewStatus::Pending,
-                $status
-            );
+        $arguments = [];
+        $destination = static function(ReviewStatus $status) use (&$arguments): string {
+            $arguments = [$status];
 
             return '';
         };
@@ -204,11 +199,6 @@ final class RouterMiddlewareTest extends TestCase
         $url = $this->router->url('status', [
             'status' => ReviewStatus::Pending,
         ]);
-
-        $this->assertSame(
-            '/test/review%20pending',
-            $url
-        );
 
         $queue = new MiddlewareQueue([
             RouterMiddleware::class,
@@ -226,12 +216,12 @@ final class RouterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $this->assertInstanceOf(
-            ClientResponse::class,
-            $handler->handle($request)
-        );
+        $handler->handle($request);
 
-        $this->assertTrue($ran);
+        $this->assertSame(
+            [ReviewStatus::Pending],
+            $arguments
+        );
     }
 
     public function testProcessRouteBackedEnumParamInvalid(): void
@@ -298,35 +288,15 @@ final class RouterMiddlewareTest extends TestCase
         $handler->handle($request);
     }
 
-    public function testProcessRouteBindingCallbacks(): void
+    public function testProcessRouteBindingCallbackRequest(): void
     {
-        $ran = false;
-
-        $destination = function(int $a, int $b) use (&$ran): string {
-            $ran = true;
-
-            $this->assertSame(
-                1,
-                $a
-            );
-
-            $this->assertSame(
-                2,
-                $b
-            );
-
-            return '';
-        };
+        $previousValue = null;
+        $destination = static fn(int $a, int $b): string => '';
 
         $this->router->connect('test/{a}/{b}', $destination, bindingCallbacks: [
-            'a' => static function(string $value): int {
-                return (int) $value;
-            },
-            'b' => function(string $value, ServerRequestInterface $request): int {
-                $this->assertSame(
-                    1,
-                    $request->getAttribute('routeArguments')['a']
-                );
+            'a' => static fn(string $value): int => (int) $value,
+            'b' => static function(string $value, ServerRequestInterface $request) use (&$previousValue): int {
+                $previousValue = $request->getAttribute('routeArguments')['a'];
 
                 return (int) $value;
             },
@@ -348,33 +318,92 @@ final class RouterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $this->assertInstanceOf(
-            ClientResponse::class,
-            $handler->handle($request)
-        );
+        $handler->handle($request);
 
-        $this->assertTrue($ran);
+        $this->assertSame(1, $previousValue);
     }
 
-    public function testProcessRouteParamDefault(): void
+    public function testProcessRouteBindingCallbacks(): void
     {
-        $callbackRan = false;
-        $ran = false;
-
-        $destination = function(string $value = 'default') use (&$ran): string {
-            $ran = true;
-
-            $this->assertSame(
-                'default',
-                $value
-            );
+        $arguments = [];
+        $destination = static function(int $a, int $b) use (&$arguments): string {
+            $arguments = [$a, $b];
 
             return '';
         };
 
+        $this->router->connect('test/{a}/{b}', $destination, bindingCallbacks: [
+            'a' => static fn(string $value): int => (int) $value,
+            'b' => static fn(string $value): int => (int) $value,
+        ]);
+
+        $queue = new MiddlewareQueue([
+            RouterMiddleware::class,
+            SubstituteBindingsMiddleware::class,
+        ]);
+
+        $routeHandler = $this->container->build(RouteHandler::class);
+        $handler = $this->container->build(RequestHandler::class, [
+            'queue' => $queue,
+            'fallbackHandler' => $routeHandler,
+        ]);
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'uri' => '/test/1/2',
+            ],
+        ]);
+
+        $handler->handle($request);
+
+        $this->assertSame(
+            [1, 2],
+            $arguments
+        );
+    }
+
+    public function testProcessRouteParamDefault(): void
+    {
+        $arguments = [];
+        $destination = static function(string $value = 'default') use (&$arguments): string {
+            $arguments = [$value];
+
+            return '';
+        };
+
+        $this->router->connect('test/{value?}', $destination);
+
+        $queue = new MiddlewareQueue([
+            RouterMiddleware::class,
+            SubstituteBindingsMiddleware::class,
+        ]);
+
+        $routeHandler = $this->container->build(RouteHandler::class);
+        $handler = $this->container->build(RequestHandler::class, [
+            'queue' => $queue,
+            'fallbackHandler' => $routeHandler,
+        ]);
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'uri' => '/test',
+            ],
+        ]);
+
+        $handler->handle($request);
+
+        $this->assertSame(
+            ['default'],
+            $arguments
+        );
+    }
+
+    public function testProcessRouteParamDefaultSkipsBindingCallback(): void
+    {
+        $values = [];
+        $destination = static fn(string $value = 'default'): string => '';
+
         $this->router->connect('test/{value?}', $destination, bindingCallbacks: [
-            'value' => static function(string $value) use (&$callbackRan): string {
-                $callbackRan = true;
+            'value' => static function(string $value) use (&$values): string {
+                $values[] = $value;
 
                 return $value;
             },
@@ -396,13 +425,9 @@ final class RouterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $this->assertInstanceOf(
-            ClientResponse::class,
-            $handler->handle($request)
-        );
+        $handler->handle($request);
 
-        $this->assertFalse($callbackRan);
-        $this->assertTrue($ran);
+        $this->assertSame([], $values);
     }
 
     public function testProcessRouteParamMissing(): void
@@ -437,12 +462,9 @@ final class RouterMiddlewareTest extends TestCase
 
     public function testProcessRouteParamNullable(): void
     {
-        $ran = false;
-
-        $destination = function(string|null $value) use (&$ran): string {
-            $ran = true;
-
-            $this->assertNull($value);
+        $arguments = [];
+        $destination = static function(string|null $value) use (&$arguments): string {
+            $arguments = [$value];
 
             return '';
         };
@@ -465,25 +487,19 @@ final class RouterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $this->assertInstanceOf(
-            ClientResponse::class,
-            $handler->handle($request)
-        );
+        $handler->handle($request);
 
-        $this->assertTrue($ran);
+        $this->assertSame(
+            [null],
+            $arguments
+        );
     }
 
     public function testProcessRouteUnitEnumParam(): void
     {
-        $ran = false;
-
-        $destination = function(State $state) use (&$ran): string {
-            $ran = true;
-
-            $this->assertSame(
-                State::Draft,
-                $state
-            );
+        $arguments = [];
+        $destination = static function(State $state) use (&$arguments): string {
+            $arguments = [$state];
 
             return '';
         };
@@ -506,12 +522,20 @@ final class RouterMiddlewareTest extends TestCase
             ],
         ]);
 
-        $this->assertInstanceOf(
-            ClientResponse::class,
-            $handler->handle($request)
-        );
+        $handler->handle($request);
 
-        $this->assertTrue($ran);
+        $this->assertSame(
+            [State::Draft],
+            $arguments
+        );
+    }
+
+    public function testSubstituteBindingsDebug(): void
+    {
+        $this->assertContains(
+            DebugTrait::class,
+            class_uses(SubstituteBindingsMiddleware::class)
+        );
     }
 
     #[Override]

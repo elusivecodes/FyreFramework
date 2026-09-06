@@ -12,9 +12,12 @@ use Fyre\Http\RequestHandler;
 use Fyre\Http\ServerRequest;
 use Override;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+use RuntimeException;
 use Tests\Mock\Http\Middleware\ArgsMiddleware;
-use Tests\Mock\Http\Middleware\MockMiddleware;
 
 use function class_uses;
 
@@ -52,10 +55,60 @@ final class RequestHandlerTest extends TestCase
         );
     }
 
+    public function testFallbackException(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageIs('Fallback failed');
+
+        $fallbackHandler = $this->createStub(RequestHandlerInterface::class);
+        $fallbackHandler->method('handle')->willThrowException(new RuntimeException('Fallback failed'));
+
+        $handler = $this->container->build(RequestHandler::class, [
+            'queue' => new MiddlewareQueue(),
+            'fallbackHandler' => $fallbackHandler,
+        ]);
+        $request = $this->container->build(ServerRequest::class);
+
+        $handler->handle($request);
+    }
+
+    public function testFallbackResponse(): void
+    {
+        $request = $this->container->build(ServerRequest::class);
+        $response = new ClientResponse();
+
+        $fallbackHandler = $this->createMock(RequestHandlerInterface::class);
+        $fallbackHandler->expects($this->once())
+            ->method('handle')
+            ->with($this->identicalTo($request))
+            ->willReturn($response);
+
+        $handler = $this->container->build(RequestHandler::class, [
+            'queue' => new MiddlewareQueue(),
+            'fallbackHandler' => $fallbackHandler,
+        ]);
+
+        $this->assertSame(
+            $response,
+            $handler->handle($request)
+        );
+    }
+
     public function testRun(): void
     {
-        $middleware1 = new MockMiddleware();
-        $middleware2 = new MockMiddleware();
+        $request = $this->container->build(ServerRequest::class);
+
+        $middleware1 = $this->createMock(MiddlewareInterface::class);
+        $middleware1->expects($this->once())
+            ->method('process')
+            ->with($this->identicalTo($request), $this->isInstanceOf(RequestHandlerInterface::class))
+            ->willReturnCallback(static fn(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface => $handler->handle($request));
+
+        $middleware2 = $this->createMock(MiddlewareInterface::class);
+        $middleware2->expects($this->once())
+            ->method('process')
+            ->with($this->identicalTo($request), $this->isInstanceOf(RequestHandlerInterface::class))
+            ->willReturnCallback(static fn(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface => $handler->handle($request));
 
         $queue = new MiddlewareQueue([
             $middleware1,
@@ -63,31 +116,40 @@ final class RequestHandlerTest extends TestCase
         ]);
 
         $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+
+        $handler->handle($request);
+    }
+
+    public function testRunException(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageIs('Middleware failed');
+
+        $middleware = $this->createStub(MiddlewareInterface::class);
+        $middleware->method('process')->willThrowException(new RuntimeException('Middleware failed'));
+
+        $queue = new MiddlewareQueue([$middleware]);
+        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
         $request = $this->container->build(ServerRequest::class);
 
-        $this->assertInstanceOf(
-            ClientResponse::class,
-            $handler->handle($request)
-        );
-
-        $this->assertTrue(
-            $middleware1->isLoaded()
-        );
-
-        $this->assertTrue(
-            $middleware2->isLoaded()
-        );
-
-        $this->assertSame(
-            $request,
-            $this->container->use(ServerRequest::class)
-        );
+        $handler->handle($request);
     }
 
     public function testRunGroup(): void
     {
-        $middleware1 = new MockMiddleware();
-        $middleware2 = new MockMiddleware();
+        $request = $this->container->build(ServerRequest::class);
+
+        $middleware1 = $this->createMock(MiddlewareInterface::class);
+        $middleware1->expects($this->once())
+            ->method('process')
+            ->with($this->identicalTo($request), $this->isInstanceOf(RequestHandlerInterface::class))
+            ->willReturnCallback(static fn(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface => $handler->handle($request));
+
+        $middleware2 = $this->createMock(MiddlewareInterface::class);
+        $middleware2->expects($this->once())
+            ->method('process')
+            ->with($this->identicalTo($request), $this->isInstanceOf(RequestHandlerInterface::class))
+            ->willReturnCallback(static fn(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface => $handler->handle($request));
 
         $this->middlewareRegistry->group('test', [
             $middleware1,
@@ -97,24 +159,47 @@ final class RequestHandlerTest extends TestCase
         $queue = new MiddlewareQueue(['test']);
 
         $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+
+        $handler->handle($request);
+    }
+
+    public function testRunGroupOrder(): void
+    {
+        $calls = [];
+
+        $this->middlewareRegistry->group('test', [
+            static function(ServerRequestInterface $request, RequestHandlerInterface $handler) use (&$calls): ResponseInterface {
+                $calls[] = 'first before';
+                $response = $handler->handle($request);
+                $calls[] = 'first after';
+
+                return $response;
+            },
+            static function(ServerRequestInterface $request, RequestHandlerInterface $handler) use (&$calls): ResponseInterface {
+                $calls[] = 'second before';
+                $response = $handler->handle($request);
+                $calls[] = 'second after';
+
+                return $response;
+            },
+        ]);
+
+        $queue = new MiddlewareQueue([
+            'test',
+            static function(ServerRequestInterface $request, RequestHandlerInterface $handler) use (&$calls): ResponseInterface {
+                $calls[] = 'next';
+
+                return $handler->handle($request);
+            },
+        ]);
+        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
         $request = $this->container->build(ServerRequest::class);
 
-        $this->assertInstanceOf(
-            ClientResponse::class,
-            $handler->handle($request)
-        );
-
-        $this->assertTrue(
-            $middleware1->isLoaded()
-        );
-
-        $this->assertTrue(
-            $middleware2->isLoaded()
-        );
+        $handler->handle($request);
 
         $this->assertSame(
-            $request,
-            $this->container->use(ServerRequest::class)
+            ['first before', 'second before', 'next', 'second after', 'first after'],
+            $calls
         );
     }
 
@@ -164,6 +249,51 @@ final class RequestHandlerTest extends TestCase
         );
     }
 
+    public function testRunOrder(): void
+    {
+        $calls = [];
+
+        $queue = new MiddlewareQueue([
+            static function(ServerRequestInterface $request, RequestHandlerInterface $handler) use (&$calls): ResponseInterface {
+                $calls[] = 'first before';
+                $response = $handler->handle($request);
+                $calls[] = 'first after';
+
+                return $response;
+            },
+            static function(ServerRequestInterface $request, RequestHandlerInterface $handler) use (&$calls): ResponseInterface {
+                $calls[] = 'second before';
+                $response = $handler->handle($request);
+                $calls[] = 'second after';
+
+                return $response;
+            },
+        ]);
+        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+        $request = $this->container->build(ServerRequest::class);
+
+        $handler->handle($request);
+
+        $this->assertSame(
+            ['first before', 'second before', 'second after', 'first after'],
+            $calls
+        );
+    }
+
+    public function testRunRegistersRequest(): void
+    {
+        $queue = new MiddlewareQueue();
+        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+        $request = $this->container->build(ServerRequest::class);
+
+        $handler->handle($request);
+
+        $this->assertSame(
+            $request,
+            $this->container->use(ServerRequest::class)
+        );
+    }
+
     public function testRunScopedRequest(): void
     {
         $this->container->scoped(ServerRequest::class);
@@ -178,12 +308,48 @@ final class RequestHandlerTest extends TestCase
             $request,
             $this->container->use(ServerRequest::class)
         );
+    }
+
+    public function testRunScopedRequestCleared(): void
+    {
+        $this->container->scoped(ServerRequest::class);
+
+        $queue = new MiddlewareQueue();
+        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+        $request = $this->container->build(ServerRequest::class);
+
+        $handler->handle($request);
 
         $this->container->clearScoped();
 
         $this->assertNotSame(
             $request,
             $this->container->use(ServerRequest::class)
+        );
+    }
+
+    public function testRunShortCircuit(): void
+    {
+        $response = new ClientResponse();
+        $middleware1 = $this->createStub(MiddlewareInterface::class);
+        $middleware1->method('process')->willReturn($response);
+
+        $middleware2 = $this->createMock(MiddlewareInterface::class);
+        $middleware2->expects($this->never())->method('process');
+
+        $fallbackHandler = $this->createMock(RequestHandlerInterface::class);
+        $fallbackHandler->expects($this->never())->method('handle');
+
+        $queue = new MiddlewareQueue([$middleware1, $middleware2]);
+        $handler = $this->container->build(RequestHandler::class, [
+            'queue' => $queue,
+            'fallbackHandler' => $fallbackHandler,
+        ]);
+        $request = $this->container->build(ServerRequest::class);
+
+        $this->assertSame(
+            $response,
+            $handler->handle($request)
         );
     }
 
