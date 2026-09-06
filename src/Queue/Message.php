@@ -76,8 +76,7 @@ class Message
             $this->config['after'] ??= time() + $this->config['delay'];
         }
 
-        unset($this->config['expires']);
-        unset($this->config['delay']);
+        unset($this->config['expires'], $this->config['delay']);
     }
 
     /**

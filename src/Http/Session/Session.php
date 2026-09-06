@@ -228,8 +228,7 @@ class Session
             $_SESSION[$k] = $v;
         }
 
-        unset($_SESSION['_flash'][$key]);
-        unset($_SESSION['_temp'][$key]);
+        unset($_SESSION['_flash'][$key], $_SESSION['_temp'][$key]);
 
         return $this;
     }
@@ -368,8 +367,7 @@ class Session
             $_SESSION[$k] = $v;
         }
 
-        unset($_SESSION['_flash'][$key]);
-        unset($_SESSION['_temp'][$key]);
+        unset($_SESSION['_flash'][$key], $_SESSION['_temp'][$key]);
 
         return $this;
     }

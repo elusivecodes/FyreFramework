@@ -184,8 +184,7 @@ abstract class Table
         $newName = $options['name'] ?? $name;
         $oldOptions = $this->columns[$name]->toArray();
 
-        unset($options['name']);
-        unset($oldOptions['name']);
+        unset($options['name'], $oldOptions['name']);
 
         if (isset($options['type']) && $options['type'] !== $oldOptions['type']) {
             $options['length'] ??= null;
@@ -334,8 +333,7 @@ abstract class Table
             ));
         }
 
-        unset($this->foreignKeys[$foreignKey]);
-        unset($this->indexes[$foreignKey]);
+        unset($this->foreignKeys[$foreignKey], $this->indexes[$foreignKey]);
 
         return $this;
     }
@@ -358,8 +356,7 @@ abstract class Table
             ));
         }
 
-        unset($this->foreignKeys[$index]);
-        unset($this->indexes[$index]);
+        unset($this->foreignKeys[$index], $this->indexes[$index]);
 
         return $this;
     }

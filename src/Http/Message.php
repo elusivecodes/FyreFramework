@@ -252,8 +252,7 @@ class Message implements MessageInterface
 
         $name = strtolower($name);
 
-        unset($temp->headerNames[$name]);
-        unset($temp->headers[$name]);
+        unset($temp->headerNames[$name], $temp->headers[$name]);
 
         return $temp;
     }

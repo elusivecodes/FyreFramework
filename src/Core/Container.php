@@ -435,8 +435,7 @@ class Container implements ContainerInterface
             array_keys($this->dependencyMap[$alias] ?? []) :
             [];
 
-        unset($this->dependencyMap[$alias]);
-        unset($this->instances[$alias]);
+        unset($this->dependencyMap[$alias], $this->instances[$alias]);
 
         foreach ($dependents as $dependent) {
             $this->unset((string) $dependent);

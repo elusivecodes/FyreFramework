@@ -663,8 +663,7 @@ class Router
         $query = $arguments['?'] ?? null;
         $fragment = $arguments['#'] ?? null;
 
-        unset($arguments['?']);
-        unset($arguments['#']);
+        unset($arguments['?'], $arguments['#']);
 
         $route = $this->routeAliases[$name];
 

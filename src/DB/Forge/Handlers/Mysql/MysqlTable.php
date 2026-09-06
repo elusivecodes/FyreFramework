@@ -73,8 +73,7 @@ class MysqlTable extends Table
         $after = $options['after'] ?? null;
         $first = $options['first'] ?? false;
 
-        unset($options['after']);
-        unset($options['first']);
+        unset($options['after'], $options['first']);
 
         $options['charset'] ??= $this->charset;
         $options['collation'] ??= $this->collation;
@@ -97,8 +96,7 @@ class MysqlTable extends Table
         $first = $options['first'] ?? false;
         $after = $options['after'] ?? null;
 
-        unset($options['after']);
-        unset($options['first']);
+        unset($options['after'], $options['first']);
 
         parent::changeColumn($name, $options);
 

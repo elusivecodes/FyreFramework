@@ -842,13 +842,11 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
         if ($dirty === false) {
             $this->originalFields[$field] = true;
 
-            unset($this->dirty[$field]);
-            unset($this->original[$field]);
+            unset($this->dirty[$field], $this->original[$field]);
         } else {
             $this->dirty[$field] = true;
 
-            unset($this->errors[$field]);
-            unset($this->invalid[$field]);
+            unset($this->errors[$field], $this->invalid[$field]);
         }
 
         return $this;
@@ -1054,9 +1052,7 @@ class Entity implements ArrayAccess, JsonSerializable, Stringable
      */
     public function unset(string $field): static
     {
-        unset($this->fields[$field]);
-        unset($this->original[$field]);
-        unset($this->dirty[$field]);
+        unset($this->fields[$field], $this->original[$field], $this->dirty[$field]);
 
         return $this;
     }

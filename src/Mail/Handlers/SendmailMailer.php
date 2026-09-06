@@ -37,8 +37,7 @@ class SendmailMailer extends Mailer
         assert(is_string($to));
         assert(is_string($subject));
 
-        unset($headers['To']);
-        unset($headers['Subject']);
+        unset($headers['To'], $headers['Subject']);
 
         if (!$this->sendMail($to, $subject, $body, $headers)) {
             throw ErrorException::forLastError(__FILE__, __LINE__ - 1) ?? new RuntimeException();

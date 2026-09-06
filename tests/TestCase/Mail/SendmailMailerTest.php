@@ -68,8 +68,7 @@ final class SendmailMailerTest extends TestCase
         $expectedTo = $expectedHeaders['To'] ?? '';
         $expectedSubject = $expectedHeaders['Subject'] ?? '';
 
-        unset($expectedHeaders['To']);
-        unset($expectedHeaders['Subject']);
+        unset($expectedHeaders['To'], $expectedHeaders['Subject']);
 
         $this->mailer->send($email);
 

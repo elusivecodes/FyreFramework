@@ -148,8 +148,7 @@ class SelectQuery extends \Fyre\DB\Queries\SelectQuery
         $this->autoAlias = !$options['subquery'];
         $this->autoFields = $options['autoFields'];
 
-        unset($options['alias']);
-        unset($options['autoFields']);
+        unset($options['alias'], $options['autoFields']);
 
         parent::__construct($this->model->getConnection($options['connectionType']), []);
 

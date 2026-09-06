@@ -153,8 +153,7 @@ class ConnectionManager
      */
     public function unload(string $key = self::DEFAULT): static
     {
-        unset($this->instances[$key]);
-        unset($this->config[$key]);
+        unset($this->instances[$key], $this->config[$key]);
 
         return $this;
     }
