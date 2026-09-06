@@ -97,9 +97,7 @@ final class ClientTest extends TestCase
     public function testAgent(): void
     {
         $agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36';
-        $mockResponse = new Response([
-            'body' => $agent,
-        ]);
+        $mockResponse = new Response();
 
         $this->handler->addResponse(
             'GET',
@@ -115,31 +113,16 @@ final class ClientTest extends TestCase
             }
         );
 
-        $response = $this->client->get('https://example.com/agent', options: [
+        $this->client->get('https://example.com/agent', options: [
             'headers' => [
                 'User-Agent' => $agent,
             ],
         ]);
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
-        $this->assertSame(
-            $agent,
-            $response->getBody()->getContents()
-        );
     }
 
     public function testBaseUrl(): void
     {
-        $mockResponse = new Response([
-            'body' => '{"value":"1"}',
-        ]);
+        $mockResponse = new Response();
 
         $this->handler->addResponse(
             'GET',
@@ -152,31 +135,17 @@ final class ClientTest extends TestCase
             'baseUrl' => 'https://example.com/',
         ]);
 
-        $response = $client->get('get', [
-            'value' => 1,
-        ]);
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                'value' => '1',
-            ],
-            $response->getJson()
+        $this->assertSame(
+            $mockResponse,
+            $client->get('get', [
+                'value' => 1,
+            ])
         );
     }
 
     public function testCookies(): void
     {
-        $mockResponse = new Response([
-            'body' => '{"test":"value"}',
-        ]);
+        $mockResponse = new Response();
 
         $this->handler->addResponse(
             'GET',
@@ -197,22 +166,7 @@ final class ClientTest extends TestCase
             'path' => '/other',
         ]));
 
-        $response = $this->client->get('https://example.com/cookie');
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => 'value',
-            ],
-            $response->getJson()
-        );
+        $this->client->get('https://example.com/cookie');
     }
 
     public function testCookiesPersist(): void
@@ -229,9 +183,7 @@ final class ClientTest extends TestCase
             $cookieResponse
         );
 
-        $mockResponse = new Response([
-            'body' => '{"test":"value"}',
-        ]);
+        $mockResponse = new Response();
 
         $this->handler->addResponse(
             'GET',
@@ -247,41 +199,8 @@ final class ClientTest extends TestCase
             }
         );
 
-        $response1 = $this->client->get('https://example.com/set-cookie');
-
-        $this->assertTrue(
-            $response1->isOk()
-        );
-
-        $this->assertTrue(
-            $response1->isSuccess()
-        );
-
-        $cookie = $response1->getCookie('test');
-        $cookies = $response1->getCookies();
-
-        $this->assertInstanceOf(Cookie::class, $cookie);
-        $this->assertSame('value', $cookie->getValue());
-
-        $this->assertCount(1, $cookies);
-        $this->assertSame($cookie, $cookies[0]);
-
-        $response2 = $this->client->get('https://example.com/cookie');
-
-        $this->assertTrue(
-            $response2->isOk()
-        );
-
-        $this->assertTrue(
-            $response2->isSuccess()
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => 'value',
-            ],
-            $response2->getJson()
-        );
+        $this->client->get('https://example.com/set-cookie');
+        $this->client->get('https://example.com/cookie');
     }
 
     public function testDebug(): void
@@ -294,9 +213,7 @@ final class ClientTest extends TestCase
 
     public function testDeleteMethod(): void
     {
-        $mockResponse = new Response([
-            'body' => 'DELETE',
-        ]);
+        $mockResponse = new Response();
 
         $this->handler->addResponse(
             'DELETE',
@@ -304,19 +221,9 @@ final class ClientTest extends TestCase
             $mockResponse
         );
 
-        $response = $this->client->delete('https://example.com/method');
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
         $this->assertSame(
-            'DELETE',
-            $response->getBody()->getContents()
+            $mockResponse,
+            $this->client->delete('https://example.com/method')
         );
     }
 
@@ -328,53 +235,9 @@ final class ClientTest extends TestCase
         );
     }
 
-    public function testGetJsonWithNull(): void
-    {
-        $mockResponse = new Response([
-            'body' => 'null',
-        ]);
-
-        $this->handler->addResponse(
-            'GET',
-            'https://example.com/json-null',
-            $mockResponse
-        );
-
-        $response = $this->client->get('https://example.com/json-null');
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertNull($response->getJson());
-    }
-
-    public function testGetJsonWithScalar(): void
-    {
-        $mockResponse = new Response([
-            'body' => 'true',
-        ]);
-
-        $this->handler->addResponse(
-            'GET',
-            'https://example.com/json-true',
-            $mockResponse
-        );
-
-        $response = $this->client->get('https://example.com/json-true');
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue($response->getJson());
-    }
-
     public function testGetMethod(): void
     {
-        $mockResponse = new Response([
-            'body' => 'GET',
-        ]);
+        $mockResponse = new Response();
 
         $this->handler->addResponse(
             'GET',
@@ -382,19 +245,9 @@ final class ClientTest extends TestCase
             $mockResponse
         );
 
-        $response = $this->client->get('https://example.com/method');
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
         $this->assertSame(
-            'GET',
-            $response->getBody()->getContents()
+            $mockResponse,
+            $this->client->get('https://example.com/method')
         );
     }
 
@@ -416,9 +269,7 @@ final class ClientTest extends TestCase
 
     public function testHeader(): void
     {
-        $mockResponse = new Response([
-            'body' => 'text/html',
-        ]);
+        $mockResponse = new Response();
 
         $this->handler->addResponse(
             'GET',
@@ -434,24 +285,11 @@ final class ClientTest extends TestCase
             }
         );
 
-        $response = $this->client->get('https://example.com/header', options: [
+        $this->client->get('https://example.com/header', options: [
             'headers' => [
                 'Accept' => 'text/html',
             ],
         ]);
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
-        $this->assertSame(
-            'text/html',
-            $response->getBody()->getContents()
-        );
     }
 
     public function testHeadMethod(): void
@@ -464,19 +302,9 @@ final class ClientTest extends TestCase
             $mockResponse
         );
 
-        $response = $this->client->head('https://example.com/method');
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
         $this->assertSame(
-            '',
-            $response->getBody()->getContents()
+            $mockResponse,
+            $this->client->head('https://example.com/method')
         );
     }
 
@@ -518,9 +346,7 @@ final class ClientTest extends TestCase
 
     public function testJsonData(): void
     {
-        $mockResponse = new Response([
-            'body' => '{"value":1}',
-        ]);
+        $mockResponse = new Response();
 
         $this->handler->addResponse(
             'POST',
@@ -541,28 +367,13 @@ final class ClientTest extends TestCase
             }
         );
 
-        $response = $this->client->post('https://example.com/json', [
+        $this->client->post('https://example.com/json', [
             'value' => 1,
         ], [
             'headers' => [
                 'Content-Type' => 'application/json',
             ],
         ]);
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                'value' => 1,
-            ],
-            $response->getJson()
-        );
     }
 
     public function testMacro(): void
@@ -571,23 +382,11 @@ final class ClientTest extends TestCase
             MacroTrait::class,
             class_uses(Client::class)
         );
-
-        $this->assertContains(
-            MacroTrait::class,
-            class_uses(Request::class)
-        );
-
-        $this->assertContains(
-            MacroTrait::class,
-            class_uses(Response::class)
-        );
     }
 
     public function testOptionsMethod(): void
     {
-        $mockResponse = new Response([
-            'body' => 'OPTIONS',
-        ]);
+        $mockResponse = new Response();
 
         $this->handler->addResponse(
             'OPTIONS',
@@ -595,27 +394,15 @@ final class ClientTest extends TestCase
             $mockResponse
         );
 
-        $response = $this->client->options('https://example.com/method');
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
         $this->assertSame(
-            'OPTIONS',
-            $response->getBody()->getContents()
+            $mockResponse,
+            $this->client->options('https://example.com/method')
         );
     }
 
     public function testPatchData(): void
     {
-        $mockResponse = new Response([
-            'body' => '{"value":1}',
-        ]);
+        $mockResponse = new Response();
 
         $this->handler->addResponse(
             'PATCH',
@@ -636,35 +423,18 @@ final class ClientTest extends TestCase
             }
         );
 
-        $response = $this->client->patch('https://example.com/json', [
+        $this->client->patch('https://example.com/json', [
             'value' => 1,
         ], [
             'headers' => [
                 'Content-Type' => 'application/json',
             ],
         ]);
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                'value' => 1,
-            ],
-            $response->getJson()
-        );
     }
 
     public function testPatchMethod(): void
     {
-        $mockResponse = new Response([
-            'body' => 'PATCH',
-        ]);
+        $mockResponse = new Response();
 
         $this->handler->addResponse(
             'PATCH',
@@ -672,27 +442,15 @@ final class ClientTest extends TestCase
             $mockResponse
         );
 
-        $response = $this->client->patch('https://example.com/method');
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
         $this->assertSame(
-            'PATCH',
-            $response->getBody()->getContents()
+            $mockResponse,
+            $this->client->patch('https://example.com/method')
         );
     }
 
     public function testPostData(): void
     {
-        $mockResponse = new Response([
-            'body' => '{"value":"1"}',
-        ]);
+        $mockResponse = new Response();
 
         $this->handler->addResponse(
             'POST',
@@ -713,31 +471,14 @@ final class ClientTest extends TestCase
             }
         );
 
-        $response = $this->client->post('https://example.com/post', [
+        $this->client->post('https://example.com/post', [
             'value' => 1,
         ]);
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                'value' => '1',
-            ],
-            $response->getJson()
-        );
     }
 
     public function testPostMethod(): void
     {
-        $mockResponse = new Response([
-            'body' => 'POST',
-        ]);
+        $mockResponse = new Response();
 
         $this->handler->addResponse(
             'POST',
@@ -745,19 +486,9 @@ final class ClientTest extends TestCase
             $mockResponse
         );
 
-        $response = $this->client->post('https://example.com/method');
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
         $this->assertSame(
-            'POST',
-            $response->getBody()->getContents()
+            $mockResponse,
+            $this->client->post('https://example.com/method')
         );
     }
 
@@ -787,9 +518,7 @@ final class ClientTest extends TestCase
 
     public function testPutData(): void
     {
-        $mockResponse = new Response([
-            'body' => '{"value":1}',
-        ]);
+        $mockResponse = new Response();
 
         $this->handler->addResponse(
             'PUT',
@@ -810,35 +539,18 @@ final class ClientTest extends TestCase
             }
         );
 
-        $response = $this->client->put('https://example.com/json', [
+        $this->client->put('https://example.com/json', [
             'value' => 1,
         ], [
             'headers' => [
                 'Content-Type' => 'application/json',
             ],
         ]);
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                'value' => 1,
-            ],
-            $response->getJson()
-        );
     }
 
     public function testPutMethod(): void
     {
-        $mockResponse = new Response([
-            'body' => 'PUT',
-        ]);
+        $mockResponse = new Response();
 
         $this->handler->addResponse(
             'PUT',
@@ -846,19 +558,9 @@ final class ClientTest extends TestCase
             $mockResponse
         );
 
-        $response = $this->client->put('https://example.com/method');
-
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
         $this->assertSame(
-            'PUT',
-            $response->getBody()->getContents()
+            $mockResponse,
+            $this->client->put('https://example.com/method')
         );
     }
 
@@ -877,9 +579,7 @@ final class ClientTest extends TestCase
             $redirectResponse
         );
 
-        $mockResponse = new Response([
-            'body' => '{"value":"1"}',
-        ]);
+        $mockResponse = new Response();
 
         $this->handler->addResponse(
             'GET',
@@ -891,20 +591,7 @@ final class ClientTest extends TestCase
             'maxRedirects' => 1,
         ]);
 
-        $this->assertTrue(
-            $response->isOk()
-        );
-
-        $this->assertTrue(
-            $response->isSuccess()
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                'value' => '1',
-            ],
-            $response->getJson()
-        );
+        $this->assertSame($mockResponse, $response);
     }
 
     #[DataProvider('redirectMethodProvider')]
@@ -1337,9 +1024,7 @@ final class ClientTest extends TestCase
             $redirectResponse
         );
 
-        $mockResponse = new Response([
-            'body' => '{"value":"1"}',
-        ]);
+        $mockResponse = new Response();
 
         $this->handler->addResponse(
             'GET',
@@ -1353,21 +1038,15 @@ final class ClientTest extends TestCase
         ]);
         $request = new Request('https://example.com/redirect');
 
-        $response = $client->send($request);
-
-        $this->assertArraysAreIdentical(
-            [
-                'value' => '1',
-            ],
-            $response->getJson()
+        $this->assertSame(
+            $mockResponse,
+            $client->send($request)
         );
     }
 
     public function testSendCookies(): void
     {
-        $mockResponse = new Response([
-            'body' => '{"test":"value"}',
-        ]);
+        $mockResponse = new Response();
 
         $this->handler->addResponse(
             'GET',
@@ -1390,14 +1069,7 @@ final class ClientTest extends TestCase
 
         $request = new Request('https://example.com/cookie');
 
-        $response = $this->client->send($request);
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => 'value',
-            ],
-            $response->getJson()
-        );
+        $this->client->send($request);
     }
 
     public function testTraceMethod(): void

@@ -3,12 +3,14 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Http\Client;
 
+use Fyre\Core\Traits\MacroTrait;
 use Fyre\Http\Client\Exceptions\RequestException;
 use Fyre\Http\Client\Request;
 use Fyre\Http\UploadedFile;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
+use function class_uses;
 use function hash;
 use function implode;
 use function preg_match;
@@ -41,6 +43,14 @@ final class RequestTest extends TestCase
             'algorithm' => ['Digest realm="test", nonce="nonce", algorithm=invalid', 'Algorithm `invalid` is not supported'],
             'qop' => ['Digest realm="test", nonce="nonce", qop="invalid"', 'QOP `invalid` is not supported.'],
         ];
+    }
+
+    public function testMacro(): void
+    {
+        $this->assertContains(
+            MacroTrait::class,
+            class_uses(Request::class)
+        );
     }
 
     #[DataProvider('digestAlgorithmProvider')]
