@@ -3,71 +3,47 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\DB\Sqlite;
 
+use Fyre\DB\Type;
 use Fyre\DB\Types\FloatType;
 use Fyre\DB\Types\IntegerType;
 use Fyre\DB\Types\StringType;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait ResultSetTypeTestTrait
 {
-    public function testTypeVirtualField(): void
+    /**
+     * @return array<string, array{string, class-string<Type>}>
+     */
+    public static function typeVirtualFieldProvider(): array
+    {
+        return [
+            'bigint' => ['CAST(9223372036854775807 AS BIGINT)', IntegerType::class],
+            'boolean' => ['CAST(1 AS BOOLEAN)', IntegerType::class],
+            'date' => ['DATE()', StringType::class],
+            'double' => ['CAST(1 AS DOUBLE PRECISION)', FloatType::class],
+            'integer' => ['CAST(2147483647 AS INTEGER)', IntegerType::class],
+            'numeric' => ['CAST(1 AS NUMERIC)', IntegerType::class],
+            'real' => ['CAST(1 AS REAL)', FloatType::class],
+            'smallint' => ['CAST(32767 AS SMALLINT)', IntegerType::class],
+            'time' => ['TIME()', StringType::class],
+            'timestamp' => ['CURRENT_TIMESTAMP', StringType::class],
+        ];
+    }
+
+    /**
+     * @param class-string<Type> $expected
+     */
+    #[DataProvider('typeVirtualFieldProvider')]
+    public function testTypeVirtualField(string $expression, string $expected): void
     {
         $result = $this->db->select([
-            'v_bigint' => 'CAST(9223372036854775807 AS BIGINT)',
-            'v_boolean' => 'CAST(1 AS BOOLEAN)',
-            'v_date' => 'DATE()',
-            'v_double' => 'CAST(1 AS DOUBLE PRECISION)',
-            'v_integer' => 'CAST(2147483647 AS INTEGER)',
-            'v_numeric' => 'CAST(1 AS NUMERIC)',
-            'v_real' => 'CAST(1 AS REAL)',
-            'v_smallint' => 'CAST(32767 AS SMALLINT)',
-            'v_time' => 'TIME()',
-            'v_timestamp' => 'CURRENT_TIMESTAMP',
+            'value' => $expression,
         ])
             ->execute();
 
         $this->assertInstanceOf(
-            IntegerType::class,
-            $result->getType('v_bigint')
-        );
-
-        $this->assertInstanceOf(
-            IntegerType::class,
-            $result->getType('v_boolean')
-        );
-
-        $this->assertInstanceOf(
-            StringType::class,
-            $result->getType('v_date')
-        );
-
-        $this->assertInstanceOf(
-            FloatType::class,
-            $result->getType('v_double')
-        );
-
-        $this->assertInstanceOf(
-            IntegerType::class,
-            $result->getType('v_integer')
-        );
-
-        $this->assertInstanceOf(
-            FloatType::class,
-            $result->getType('v_real')
-        );
-
-        $this->assertInstanceOf(
-            IntegerType::class,
-            $result->getType('v_smallint')
-        );
-
-        $this->assertInstanceOf(
-            StringType::class,
-            $result->getType('v_time')
-        );
-
-        $this->assertInstanceOf(
-            StringType::class,
-            $result->getType('v_timestamp')
+            $expected,
+            $result->getType('value')
         );
     }
 }

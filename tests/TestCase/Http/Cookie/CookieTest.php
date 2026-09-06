@@ -6,6 +6,7 @@ namespace Tests\TestCase\Http\Cookie;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Http\Cookie\Cookie;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use function class_uses;
@@ -13,6 +14,18 @@ use function time;
 
 final class CookieTest extends TestCase
 {
+    /**
+     * @return array<string, array{int|null, bool}>
+     */
+    public static function isExpiredProvider(): array
+    {
+        return [
+            'future' => [3600, false],
+            'expired' => [0, true],
+            'null' => [null, false],
+        ];
+    }
+
     public function testCreateFromHeaderString(): void
     {
         $cookie = Cookie::createFromHeaderString('test=value; expires=Sat, 20 Nov 2286 17:46:39 GMT; path=/test; domain=test.com; secure; httponly; samesite=strict');
@@ -383,35 +396,15 @@ final class CookieTest extends TestCase
         );
     }
 
-    public function testIsExpired(): void
+    #[DataProvider('isExpiredProvider')]
+    public function testIsExpired(int|null $offset, bool $expected): void
     {
         $cookie = new Cookie('test', 'value', [
-            'expires' => time() + 3600,
+            'expires' => $offset === null ? null : time() + $offset,
         ]);
 
-        $this->assertFalse(
-            $cookie->isExpired()
-        );
-    }
-
-    public function testIsExpiredExpired(): void
-    {
-        $cookie = new Cookie('test', 'value', [
-            'expires' => time(),
-        ]);
-
-        $this->assertTrue(
-            $cookie->isExpired()
-        );
-    }
-
-    public function testIsExpiredNull(): void
-    {
-        $cookie = new Cookie('test', 'value', [
-            'expires' => null,
-        ]);
-
-        $this->assertFalse(
+        $this->assertSame(
+            $expected,
             $cookie->isExpired()
         );
     }

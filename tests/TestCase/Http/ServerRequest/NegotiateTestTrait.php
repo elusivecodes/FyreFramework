@@ -5,20 +5,58 @@ namespace Tests\TestCase\Http\ServerRequest;
 
 use Fyre\Http\ServerRequest;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait NegotiateTestTrait
 {
-    public function testNegotiateEncoding(): void
+    /**
+     * @return array<string, array{'content'|'encoding'|'language', array<string, string>, string[], string}>
+     */
+    public static function negotiateProvider(): array
+    {
+        return [
+            'encoding' => [
+                'encoding',
+                [
+                    'Accept-Encoding' => 'gzip,deflate',
+                ],
+                ['deflate', 'gzip'],
+                'gzip',
+            ],
+            'language' => [
+                'language',
+                [
+                    'Accept-Language' => 'en-gb,en;q=0.5',
+                ],
+                ['en-gb'],
+                'en-gb',
+            ],
+            'media' => [
+                'content',
+                [
+                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,/;q=0.8',
+                ],
+                ['application/xml', 'text/html'],
+                'text/html',
+            ],
+        ];
+    }
+
+    /**
+     * @param 'content'|'encoding'|'language' $type
+     * @param array<string, string> $headers
+     * @param string[] $supported
+     */
+    #[DataProvider('negotiateProvider')]
+    public function testNegotiate(string $type, array $headers, array $supported, string $expected): void
     {
         $request = new ServerRequest($this->config, $this->type, [
-            'headers' => [
-                'Accept-Encoding' => 'gzip,deflate',
-            ],
+            'headers' => $headers,
         ]);
 
         $this->assertSame(
-            'gzip',
-            $request->negotiate('encoding', ['deflate', 'gzip'])
+            $expected,
+            $request->negotiate($type, $supported)
         );
     }
 
@@ -31,34 +69,6 @@ trait NegotiateTestTrait
 
         // @phpstan-ignore argument.type
         $request->negotiate('invalid', []);
-    }
-
-    public function testNegotiateLanguage(): void
-    {
-        $request = new ServerRequest($this->config, $this->type, [
-            'headers' => [
-                'Accept-Language' => 'en-gb,en;q=0.5',
-            ],
-        ]);
-
-        $this->assertSame(
-            'en-gb',
-            $request->negotiate('language', ['en-gb'])
-        );
-    }
-
-    public function testNegotiateMedia(): void
-    {
-        $request = new ServerRequest($this->config, $this->type, [
-            'headers' => [
-                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,/;q=0.8',
-            ],
-        ]);
-
-        $this->assertSame(
-            'text/html',
-            $request->negotiate('content', ['application/xml', 'text/html'])
-        );
     }
 
     public function testPrefersJson(): void
