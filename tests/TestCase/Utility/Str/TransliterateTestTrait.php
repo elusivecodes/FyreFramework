@@ -4,22 +4,27 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait TransliterateTestTrait
 {
-    public function testTransliterateWithAccents(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function transliterateProvider(): array
     {
-        $this->assertSame(
-            'aeiou',
-            Str::transliterate('äëïöü')
-        );
+        return [
+            'accents' => ['äëïöü', 'aeiou'],
+            'string' => ['This is a test string', 'This is a test string'],
+        ];
     }
 
-    public function testTransliterateWithString(): void
+    #[DataProvider('transliterateProvider')]
+    public function testTransliterate(string $string, string $expected): void
     {
         $this->assertSame(
-            'This is a test string',
-            Str::transliterate('This is a test string')
+            $expected,
+            Str::transliterate($string)
         );
     }
 }

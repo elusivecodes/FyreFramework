@@ -4,22 +4,27 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait LimitTestTrait
 {
-    public function testLimitExceeded(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function limitProvider(): array
     {
-        $this->assertSame(
-            'This is a test string that is designed specifically to contain enough words to go above the default …',
-            Str::limit('This is a test string that is designed specifically to contain enough words to go above the default limit of 100 characters.')
-        );
+        return [
+            'exceeded' => ['This is a test string that is designed specifically to contain enough words to go above the default limit of 100 characters.', 'This is a test string that is designed specifically to contain enough words to go above the default …'],
+            'not reached' => ['This is a test string', 'This is a test string'],
+        ];
     }
 
-    public function testLimitNotReached(): void
+    #[DataProvider('limitProvider')]
+    public function testLimit(string $string, string $expected): void
     {
         $this->assertSame(
-            'This is a test string',
-            Str::limit('This is a test string')
+            $expected,
+            Str::limit($string)
         );
     }
 

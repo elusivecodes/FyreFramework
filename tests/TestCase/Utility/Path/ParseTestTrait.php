@@ -4,94 +4,35 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Path;
 
 use Fyre\Utility\Path;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait ParseTestTrait
 {
-    public function testParseWithDeepPath(): void
+    /**
+     * @return array<string, array{string, array<string, string>}>
+     */
+    public static function parseProvider(): array
     {
-        $this->assertArraysAreIdentical(
-            [
-                'dirname' => 'sub/dir',
-                'basename' => 'file.ext',
-                'extension' => 'ext',
-                'filename' => 'file',
-            ],
-            Path::parse('sub/dir/file.ext')
-        );
+        return [
+            'deep path' => ['sub/dir/file.ext', ['dirname' => 'sub/dir', 'basename' => 'file.ext', 'extension' => 'ext', 'filename' => 'file']],
+            'empty string' => ['', ['basename' => '', 'filename' => '']],
+            'file name' => ['file.ext', ['dirname' => '.', 'basename' => 'file.ext', 'extension' => 'ext', 'filename' => 'file']],
+            'full path' => ['/sub/dir/file.ext', ['dirname' => '/sub/dir', 'basename' => 'file.ext', 'extension' => 'ext', 'filename' => 'file']],
+            'multiple extensions' => ['dir/file.tst.ext', ['dirname' => 'dir', 'basename' => 'file.tst.ext', 'extension' => 'ext', 'filename' => 'file.tst']],
+            'no extension' => ['dir/file', ['dirname' => 'dir', 'basename' => 'file', 'filename' => 'file']],
+            'path' => ['dir/file.ext', ['dirname' => 'dir', 'basename' => 'file.ext', 'extension' => 'ext', 'filename' => 'file']],
+        ];
     }
 
-    public function testParseWithEmptyString(): void
+    /**
+     * @param array<string, string> $expected
+     */
+    #[DataProvider('parseProvider')]
+    public function testParse(string $path, array $expected): void
     {
         $this->assertArraysAreIdentical(
-            [
-                'basename' => '',
-                'filename' => '',
-            ],
-            Path::parse('')
-        );
-    }
-
-    public function testParseWithFileName(): void
-    {
-        $this->assertArraysAreIdentical(
-            [
-                'dirname' => '.',
-                'basename' => 'file.ext',
-                'extension' => 'ext',
-                'filename' => 'file',
-            ],
-            Path::parse('file.ext')
-        );
-    }
-
-    public function testParseWithFullPath(): void
-    {
-        $this->assertArraysAreIdentical(
-            [
-                'dirname' => '/sub/dir',
-                'basename' => 'file.ext',
-                'extension' => 'ext',
-                'filename' => 'file',
-            ],
-            Path::parse('/sub/dir/file.ext')
-        );
-    }
-
-    public function testParseWithMultipleExtensions(): void
-    {
-        $this->assertArraysAreIdentical(
-            [
-                'dirname' => 'dir',
-                'basename' => 'file.tst.ext',
-                'extension' => 'ext',
-                'filename' => 'file.tst',
-            ],
-            Path::parse('dir/file.tst.ext')
-        );
-    }
-
-    public function testParseWithNoExtension(): void
-    {
-        $this->assertArraysAreIdentical(
-            [
-                'dirname' => 'dir',
-                'basename' => 'file',
-                'filename' => 'file',
-            ],
-            Path::parse('dir/file')
-        );
-    }
-
-    public function testParseWithPath(): void
-    {
-        $this->assertArraysAreIdentical(
-            [
-                'dirname' => 'dir',
-                'basename' => 'file.ext',
-                'extension' => 'ext',
-                'filename' => 'file',
-            ],
-            Path::parse('dir/file.ext')
+            $expected,
+            Path::parse($path)
         );
     }
 }

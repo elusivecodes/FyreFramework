@@ -4,62 +4,32 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Path;
 
 use Fyre\Utility\Path;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait ExtensionTestTrait
 {
-    public function testExtensionWithDeepPath(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function extensionProvider(): array
     {
-        $this->assertSame(
-            'ext',
-            Path::extension('sub/dir/file.ext')
-        );
+        return [
+            'deep path' => ['sub/dir/file.ext', 'ext'],
+            'empty string' => ['', ''],
+            'file name' => ['file.ext', 'ext'],
+            'full path' => ['/sub/dir/file.ext', 'ext'],
+            'multiple extensions' => ['dir/file.tst.ext', 'ext'],
+            'no extension' => ['file', ''],
+            'path' => ['dir/file.ext', 'ext'],
+        ];
     }
 
-    public function testExtensionWithEmptyString(): void
+    #[DataProvider('extensionProvider')]
+    public function testExtension(string $path, string $expected): void
     {
         $this->assertSame(
-            '',
-            Path::extension('')
-        );
-    }
-
-    public function testExtensionWithFileName(): void
-    {
-        $this->assertSame(
-            'ext',
-            Path::extension('file.ext')
-        );
-    }
-
-    public function testExtensionWithFullPath(): void
-    {
-        $this->assertSame(
-            'ext',
-            Path::extension('/sub/dir/file.ext')
-        );
-    }
-
-    public function testExtensionWithMultipleExtensions(): void
-    {
-        $this->assertSame(
-            'ext',
-            Path::extension('dir/file.tst.ext')
-        );
-    }
-
-    public function testExtensionWithNoExtension(): void
-    {
-        $this->assertSame(
-            '',
-            Path::extension('file')
-        );
-    }
-
-    public function testExtensionWithPath(): void
-    {
-        $this->assertSame(
-            'ext',
-            Path::extension('dir/file.ext')
+            $expected,
+            Path::extension($path)
         );
     }
 }

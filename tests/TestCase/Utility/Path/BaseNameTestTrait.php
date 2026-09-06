@@ -4,62 +4,32 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Path;
 
 use Fyre\Utility\Path;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait BaseNameTestTrait
 {
-    public function testBaseNameWithDeepPath(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function baseNameProvider(): array
     {
-        $this->assertSame(
-            'file.ext',
-            Path::baseName('sub/dir/file.ext')
-        );
+        return [
+            'deep path' => ['sub/dir/file.ext', 'file.ext'],
+            'empty string' => ['', ''],
+            'file name' => ['file.ext', 'file.ext'],
+            'full path' => ['/sub/dir/file.ext', 'file.ext'],
+            'multiple extensions' => ['dir/file.tst.ext', 'file.tst.ext'],
+            'no extension' => ['dir/file', 'file'],
+            'path' => ['dir/file.ext', 'file.ext'],
+        ];
     }
 
-    public function testBaseNameWithEmptyString(): void
+    #[DataProvider('baseNameProvider')]
+    public function testBaseName(string $path, string $expected): void
     {
         $this->assertSame(
-            '',
-            Path::baseName('')
-        );
-    }
-
-    public function testBaseNameWithFileName(): void
-    {
-        $this->assertSame(
-            'file.ext',
-            Path::baseName('file.ext')
-        );
-    }
-
-    public function testBaseNameWithFullPath(): void
-    {
-        $this->assertSame(
-            'file.ext',
-            Path::baseName('/sub/dir/file.ext')
-        );
-    }
-
-    public function testBaseNameWithMultipleExtensions(): void
-    {
-        $this->assertSame(
-            'file.tst.ext',
-            Path::baseName('dir/file.tst.ext')
-        );
-    }
-
-    public function testBaseNameWithNoExtension(): void
-    {
-        $this->assertSame(
-            'file',
-            Path::baseName('dir/file')
-        );
-    }
-
-    public function testBaseNameWithPath(): void
-    {
-        $this->assertSame(
-            'file.ext',
-            Path::baseName('dir/file.ext')
+            $expected,
+            Path::baseName($path)
         );
     }
 }

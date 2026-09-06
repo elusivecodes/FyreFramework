@@ -7,9 +7,23 @@ use Fyre\Form\Rule;
 use Fyre\Utility\DateTime\Date;
 use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Time;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait TimeTestTrait
 {
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function timeValuesProvider(): array
+    {
+        return [
+            'empty' => [['test' => ''], []],
+            'invalid' => [['test' => 'invalid'], ['test' => ['invalid']]],
+            'missing' => [[], []],
+            'string' => [['test' => '00:00:00'], []],
+        ];
+    }
+
     public function testTime(): void
     {
         $this->validator->add('test', Rule::time());
@@ -19,42 +33,6 @@ trait TimeTestTrait
             $this->validator->validate([
                 'test' => Time::now(),
             ])
-        );
-    }
-
-    public function testTimeEmpty(): void
-    {
-        $this->validator->add('test', Rule::time());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-            ])
-        );
-    }
-
-    public function testTimeInvalid(): void
-    {
-        $this->validator->add('test', Rule::time());
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['invalid'],
-            ],
-            $this->validator->validate([
-                'test' => 'invalid',
-            ])
-        );
-    }
-
-    public function testTimeMissing(): void
-    {
-        $this->validator->add('test', Rule::time());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
         );
     }
 
@@ -86,15 +64,18 @@ trait TimeTestTrait
         );
     }
 
-    public function testTimeString(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('timeValuesProvider')]
+    public function testTimeValues(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::time());
 
         $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '00:00:00',
-            ])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

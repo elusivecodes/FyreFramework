@@ -4,54 +4,35 @@ declare(strict_types=1);
 namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait AsciiTestTrait
 {
-    public function testAscii(): void
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function asciiProvider(): array
     {
-        $this->validator->add('test', Rule::ascii());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => 'test123!',
-            ])
-        );
+        return [
+            'value' => [['test' => 'test123!'], []],
+            'empty' => [['test' => ''], []],
+            'invalid' => [['test' => 'invalid♫'], ['test' => ['The test must only contain ASCII characters.']]],
+            'missing' => [[], []],
+        ];
     }
 
-    public function testAsciiEmpty(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('asciiProvider')]
+    public function testAscii(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::ascii());
 
         $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-            ])
-        );
-    }
-
-    public function testAsciiInvalid(): void
-    {
-        $this->validator->add('test', Rule::ascii());
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must only contain ASCII characters.'],
-            ],
-            $this->validator->validate([
-                'test' => 'invalid♫',
-            ])
-        );
-    }
-
-    public function testAsciiMissing(): void
-    {
-        $this->validator->add('test', Rule::ascii());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

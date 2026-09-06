@@ -4,30 +4,28 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait PadEndTestTrait
 {
-    public function testPadEndAboveLength(): void
+    /**
+     * @return array<string, array{string, int, string}>
+     */
+    public static function padEndProvider(): array
     {
-        $this->assertSame(
-            'This is a test string',
-            Str::padEnd('This is a test string', 10)
-        );
+        return [
+            'above length' => ['This is a test string', 10, 'This is a test string'],
+            'below length' => ['This is a test string', 23, 'This is a test string  '],
+            'empty string' => ['', 1, ' '],
+        ];
     }
 
-    public function testPadEndBelowLength(): void
+    #[DataProvider('padEndProvider')]
+    public function testPadEnd(string $string, int $length, string $expected): void
     {
         $this->assertSame(
-            'This is a test string  ',
-            Str::padEnd('This is a test string', 23)
-        );
-    }
-
-    public function testPadEndWithEmptyString(): void
-    {
-        $this->assertSame(
-            ' ',
-            Str::padEnd('', 1)
+            $expected,
+            Str::padEnd($string, $length)
         );
     }
 

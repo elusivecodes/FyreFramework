@@ -4,54 +4,35 @@ declare(strict_types=1);
 namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait AlphaTestTrait
 {
-    public function testAlpha(): void
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function alphaProvider(): array
     {
-        $this->validator->add('test', Rule::alpha());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => 'test',
-            ])
-        );
+        return [
+            'value' => [['test' => 'test'], []],
+            'empty' => [['test' => ''], []],
+            'invalid' => [['test' => 'invalid123'], ['test' => ['The test must only contain alphabetical characters.']]],
+            'missing' => [[], []],
+        ];
     }
 
-    public function testAlphaEmpty(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('alphaProvider')]
+    public function testAlpha(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::alpha());
 
         $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-            ])
-        );
-    }
-
-    public function testAlphaInvalid(): void
-    {
-        $this->validator->add('test', Rule::alpha());
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must only contain alphabetical characters.'],
-            ],
-            $this->validator->validate([
-                'test' => 'invalid123',
-            ])
-        );
-    }
-
-    public function testAlphaMissing(): void
-    {
-        $this->validator->add('test', Rule::alpha());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

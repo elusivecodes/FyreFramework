@@ -4,34 +4,29 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Path;
 
 use Fyre\Utility\Path;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait IsAbsoluteTestTrait
 {
-    public function testIsAbsolute(): void
+    /**
+     * @return array<string, array{string, bool}>
+     */
+    public static function isAbsoluteProvider(): array
     {
-        $this->assertTrue(
-            Path::isAbsolute('/path/to/file')
-        );
+        return [
+            'value' => ['/path/to/file', true],
+            'relative' => ['path/to/file', false],
+            'windows drive letter' => ['C:\path\to\file', true],
+            'windows relative drive path' => ['C:path\to\file', false],
+        ];
     }
 
-    public function testIsAbsoluteWithRelative(): void
+    #[DataProvider('isAbsoluteProvider')]
+    public function testIsAbsolute(string $path, bool $expected): void
     {
-        $this->assertFalse(
-            Path::isAbsolute('path/to/file')
-        );
-    }
-
-    public function testIsAbsoluteWithWindowsDriveLetter(): void
-    {
-        $this->assertTrue(
-            Path::isAbsolute('C:\path\to\file')
-        );
-    }
-
-    public function testIsAbsoluteWithWindowsRelativeDrivePath(): void
-    {
-        $this->assertFalse(
-            Path::isAbsolute('C:path\to\file')
+        $this->assertSame(
+            $expected,
+            Path::isAbsolute($path)
         );
     }
 }

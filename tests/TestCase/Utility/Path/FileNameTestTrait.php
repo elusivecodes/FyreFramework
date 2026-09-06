@@ -4,62 +4,32 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Path;
 
 use Fyre\Utility\Path;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait FileNameTestTrait
 {
-    public function testFileNameWithDeepPath(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function fileNameProvider(): array
     {
-        $this->assertSame(
-            'file',
-            Path::fileName('sub/dir/file.ext')
-        );
+        return [
+            'deep path' => ['sub/dir/file.ext', 'file'],
+            'empty string' => ['', ''],
+            'file name' => ['file.ext', 'file'],
+            'full path' => ['/sub/dir/file.ext', 'file'],
+            'multiple extensions' => ['dir/file.tst.ext', 'file.tst'],
+            'no extension' => ['dir/file', 'file'],
+            'path' => ['dir/file.ext', 'file'],
+        ];
     }
 
-    public function testFileNameWithEmptyString(): void
+    #[DataProvider('fileNameProvider')]
+    public function testFileName(string $path, string $expected): void
     {
         $this->assertSame(
-            '',
-            Path::fileName('')
-        );
-    }
-
-    public function testFileNameWithFileName(): void
-    {
-        $this->assertSame(
-            'file',
-            Path::fileName('file.ext')
-        );
-    }
-
-    public function testFileNameWithFullPath(): void
-    {
-        $this->assertSame(
-            'file',
-            Path::fileName('/sub/dir/file.ext')
-        );
-    }
-
-    public function testFileNameWithMultipleExtensions(): void
-    {
-        $this->assertSame(
-            'file.tst',
-            Path::fileName('dir/file.tst.ext')
-        );
-    }
-
-    public function testFileNameWithNoExtension(): void
-    {
-        $this->assertSame(
-            'file',
-            Path::fileName('dir/file')
-        );
-    }
-
-    public function testFileNameWithPath(): void
-    {
-        $this->assertSame(
-            'file',
-            Path::fileName('dir/file.ext')
+            $expected,
+            Path::fileName($path)
         );
     }
 }

@@ -4,22 +4,27 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait LengthTestTrait
 {
-    public function testLengthWithEmptyString(): void
+    /**
+     * @return array<string, array{string, int}>
+     */
+    public static function lengthProvider(): array
     {
-        $this->assertSame(
-            0,
-            Str::length('')
-        );
+        return [
+            'empty string' => ['', 0],
+            'string' => ['This is a test string', 21],
+        ];
     }
 
-    public function testLengthWithString(): void
+    #[DataProvider('lengthProvider')]
+    public function testLength(string $string, int $expected): void
     {
         $this->assertSame(
-            21,
-            Str::length('This is a test string')
+            $expected,
+            Str::length($string)
         );
     }
 }

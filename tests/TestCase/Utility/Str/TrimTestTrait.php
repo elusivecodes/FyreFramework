@@ -4,14 +4,27 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait TrimTestTrait
 {
-    public function testTrimWhitespace(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function trimProvider(): array
+    {
+        return [
+            'whitespace' => ["\r\n This is a test string \r\n", 'This is a test string'],
+            'string' => ['This is a test string', 'This is a test string'],
+        ];
+    }
+
+    #[DataProvider('trimProvider')]
+    public function testTrim(string $string, string $expected): void
     {
         $this->assertSame(
-            'This is a test string',
-            Str::trim("\r\n This is a test string \r\n")
+            $expected,
+            Str::trim($string)
         );
     }
 
@@ -20,14 +33,6 @@ trait TrimTestTrait
         $this->assertSame(
             '123456',
             Str::trim('000123456000', '0')
-        );
-    }
-
-    public function testTrimWithString(): void
-    {
-        $this->assertSame(
-            'This is a test string',
-            Str::trim('This is a test string')
         );
     }
 }

@@ -5,14 +5,30 @@ namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait ChunkTestTrait
 {
-    public function testChunkWithEmptyString(): void
+    /**
+     * @return array<string, array{string, array<int, string>}>
+     */
+    public static function chunkProvider(): array
+    {
+        return [
+            'empty string' => ['', []],
+            'string' => ['This is a test string', ['T', 'h', 'i', 's', ' ', 'i', 's', ' ', 'a', ' ', 't', 'e', 's', 't', ' ', 's', 't', 'r', 'i', 'n', 'g']],
+        ];
+    }
+
+    /**
+     * @param array<int, string> $expected
+     */
+    #[DataProvider('chunkProvider')]
+    public function testChunk(string $string, array $expected): void
     {
         $this->assertArraysAreIdentical(
-            [],
-            Str::chunk('')
+            $expected,
+            Str::chunk($string)
         );
     }
 
@@ -35,36 +51,6 @@ trait ChunkTestTrait
                 'g',
             ],
             Str::chunk('This is a test string', 5)
-        );
-    }
-
-    public function testChunkWithString(): void
-    {
-        $this->assertArraysAreIdentical(
-            [
-                'T',
-                'h',
-                'i',
-                's',
-                ' ',
-                'i',
-                's',
-                ' ',
-                'a',
-                ' ',
-                't',
-                'e',
-                's',
-                't',
-                ' ',
-                's',
-                't',
-                'r',
-                'i',
-                'n',
-                'g',
-            ],
-            Str::chunk('This is a test string')
         );
     }
 }

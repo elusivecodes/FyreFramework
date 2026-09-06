@@ -4,39 +4,31 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait ReplaceEachTestTrait
 {
-    public function testReplaceEachWithMatches(): void
+    /**
+     * @return array<string, array{string, array<string, string>, string}>
+     */
+    public static function replaceEachProvider(): array
     {
-        $this->assertSame(
-            'This is a new phrase',
-            Str::replaceEach('This is a test string', [
-                'test' => 'new',
-                'string' => 'phrase',
-            ])
-        );
+        return [
+            'matches' => ['This is a test string', ['test' => 'new', 'string' => 'phrase'], 'This is a new phrase'],
+            'multiple matches' => ['This is a test test string', ['test' => 'new', 'string' => 'phrase'], 'This is a new new phrase'],
+            'without match' => ['This is a test string', ['invalid' => 'new', 'sentence' => 'phrase'], 'This is a test string'],
+        ];
     }
 
-    public function testReplaceEachWithMultipleMatches(): void
+    /**
+     * @param array<string, string> $replacements
+     */
+    #[DataProvider('replaceEachProvider')]
+    public function testReplaceEach(string $string, array $replacements, string $expected): void
     {
         $this->assertSame(
-            'This is a new new phrase',
-            Str::replaceEach('This is a test test string', [
-                'test' => 'new',
-                'string' => 'phrase',
-            ])
-        );
-    }
-
-    public function testReplaceEachWithoutMatch(): void
-    {
-        $this->assertSame(
-            'This is a test string',
-            Str::replaceEach('This is a test string', [
-                'invalid' => 'new',
-                'sentence' => 'phrase',
-            ])
+            $expected,
+            Str::replaceEach($string, $replacements)
         );
     }
 }

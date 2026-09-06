@@ -4,22 +4,27 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait ReverseTestTrait
 {
-    public function testReverseWithEmptyString(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function reverseProvider(): array
     {
-        $this->assertSame(
-            '',
-            Str::reverse('')
-        );
+        return [
+            'empty string' => ['', ''],
+            'string' => ['This is a test string', 'gnirts tset a si sihT'],
+        ];
     }
 
-    public function testReverseWithString(): void
+    #[DataProvider('reverseProvider')]
+    public function testReverse(string $string, string $expected): void
     {
         $this->assertSame(
-            'gnirts tset a si sihT',
-            Str::reverse('This is a test string')
+            $expected,
+            Str::reverse($string)
         );
     }
 }

@@ -4,83 +4,37 @@ declare(strict_types=1);
 namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait DiffersTestTrait
 {
-    public function testDiffers(): void
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function differsProvider(): array
     {
-        $this->validator->add('test', Rule::differs('other'));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => 'test',
-                'other' => 'different',
-            ])
-        );
+        return [
+            'value' => [['test' => 'test', 'other' => 'different'], []],
+            'both empty' => [['test' => '', 'other' => ''], []],
+            'empty' => [['test' => '', 'other' => 'test'], []],
+            'missing' => [[], []],
+            'other empty' => [['test' => 'test', 'other' => ''], []],
+            'same' => [['test' => 'test', 'other' => 'test'], ['test' => ['The test must have a different value than other.']]],
+        ];
     }
 
-    public function testDiffersBothEmpty(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('differsProvider')]
+    public function testDiffers(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::differs('other'));
 
         $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-                'other' => '',
-            ])
-        );
-    }
-
-    public function testDiffersEmpty(): void
-    {
-        $this->validator->add('test', Rule::differs('other'));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-                'other' => 'test',
-            ])
-        );
-    }
-
-    public function testDiffersMissing(): void
-    {
-        $this->validator->add('test', Rule::differs('other'));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
-        );
-    }
-
-    public function testDiffersOtherEmpty(): void
-    {
-        $this->validator->add('test', Rule::differs('other'));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => 'test',
-                'other' => '',
-            ])
-        );
-    }
-
-    public function testDiffersSame(): void
-    {
-        $this->validator->add('test', Rule::differs('other'));
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must have a different value than other.'],
-            ],
-            $this->validator->validate([
-                'test' => 'test',
-                'other' => 'test',
-            ])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

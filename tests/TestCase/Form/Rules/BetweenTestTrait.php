@@ -4,92 +4,38 @@ declare(strict_types=1);
 namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait BetweenTestTrait
 {
-    public function testBetween(): void
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function betweenProvider(): array
     {
-        $this->validator->add('test', Rule::between(5, 10));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '7',
-            ])
-        );
+        return [
+            'value' => [['test' => '7'], []],
+            'above' => [['test' => '12'], ['test' => ['The test must be between 5 and 10.']]],
+            'below' => [['test' => '1'], ['test' => ['The test must be between 5 and 10.']]],
+            'empty' => [['test' => ''], []],
+            'lower' => [['test' => '5'], []],
+            'missing' => [[], []],
+            'upper' => [['test' => '10'], []],
+        ];
     }
 
-    public function testBetweenAbove(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('betweenProvider')]
+    public function testBetween(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::between(5, 10));
 
         $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must be between 5 and 10.'],
-            ],
-            $this->validator->validate([
-                'test' => '12',
-            ])
-        );
-    }
-
-    public function testBetweenBelow(): void
-    {
-        $this->validator->add('test', Rule::between(5, 10));
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must be between 5 and 10.'],
-            ],
-            $this->validator->validate([
-                'test' => '1',
-            ])
-        );
-    }
-
-    public function testBetweenEmpty(): void
-    {
-        $this->validator->add('test', Rule::between(5, 10));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-            ])
-        );
-    }
-
-    public function testBetweenLower(): void
-    {
-        $this->validator->add('test', Rule::between(5, 10));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '5',
-            ])
-        );
-    }
-
-    public function testBetweenMissing(): void
-    {
-        $this->validator->add('test', Rule::between(5, 10));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
-        );
-    }
-
-    public function testBetweenUpper(): void
-    {
-        $this->validator->add('test', Rule::between(5, 10));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '10',
-            ])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

@@ -4,62 +4,37 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Path;
 
 use Fyre\Utility\Path;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait JoinTestTrait
 {
-    public function testJoinWithCurrentPath(): void
+    /**
+     * @return array<string, array{array<int, string>, string}>
+     */
+    public static function joinProvider(): array
     {
-        $this->assertSame(
-            'sub/dir/file.ext',
-            Path::join('.', 'sub', 'dir', 'file.ext')
-        );
+        return [
+            'current path' => [['.', 'sub', 'dir', 'file.ext'], 'sub/dir/file.ext'],
+            'deep dir' => [['sub/dir', 'file.ext'], 'sub/dir/file.ext'],
+            'dir' => [['dir', 'file.ext'], 'dir/file.ext'],
+            'dirs' => [['sub', 'dir', 'file.ext'], 'sub/dir/file.ext'],
+            'empty string' => [[''], '.'],
+            'file name' => [['file.ext'], 'file.ext'],
+            'full path' => [['/sub', 'dir', 'file.ext'], '/sub/dir/file.ext'],
+            'parent path' => [['test', '..', 'sub/dir', 'file.ext'], 'sub/dir/file.ext'],
+            'trailing slash' => [['/sub/', 'dir/'], '/sub/dir/'],
+        ];
     }
 
-    public function testJoinWithDeepDir(): void
+    /**
+     * @param array<int, string> $paths
+     */
+    #[DataProvider('joinProvider')]
+    public function testJoin(array $paths, string $expected): void
     {
         $this->assertSame(
-            'sub/dir/file.ext',
-            Path::join('sub/dir', 'file.ext')
-        );
-    }
-
-    public function testJoinWithDir(): void
-    {
-        $this->assertSame(
-            'dir/file.ext',
-            Path::join('dir', 'file.ext')
-        );
-    }
-
-    public function testJoinWithDirs(): void
-    {
-        $this->assertSame(
-            'sub/dir/file.ext',
-            Path::join('sub', 'dir', 'file.ext')
-        );
-    }
-
-    public function testJoinWithEmptyString(): void
-    {
-        $this->assertSame(
-            '.',
-            Path::join('')
-        );
-    }
-
-    public function testJoinWithFileName(): void
-    {
-        $this->assertSame(
-            'file.ext',
-            Path::join('file.ext')
-        );
-    }
-
-    public function testJoinWithFullPath(): void
-    {
-        $this->assertSame(
-            '/sub/dir/file.ext',
-            Path::join('/sub', 'dir', 'file.ext')
+            $expected,
+            Path::join(...$paths)
         );
     }
 
@@ -68,22 +43,6 @@ trait JoinTestTrait
         $this->assertSame(
             '.',
             Path::join()
-        );
-    }
-
-    public function testJoinWithParentPath(): void
-    {
-        $this->assertSame(
-            'sub/dir/file.ext',
-            Path::join('test', '..', 'sub/dir', 'file.ext')
-        );
-    }
-
-    public function testJoinWithTrailingSlash(): void
-    {
-        $this->assertSame(
-            '/sub/dir/',
-            Path::join('/sub/', 'dir/')
         );
     }
 }

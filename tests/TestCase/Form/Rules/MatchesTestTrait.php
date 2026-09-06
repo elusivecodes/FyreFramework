@@ -4,85 +4,37 @@ declare(strict_types=1);
 namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait MatchesTestTrait
 {
-    public function testMatches(): void
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function matchesProvider(): array
     {
-        $this->validator->add('test', Rule::matches('other'));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => 'test',
-                'other' => 'test',
-            ])
-        );
+        return [
+            'value' => [['test' => 'test', 'other' => 'test'], []],
+            'both empty' => [['test' => '', 'other' => ''], []],
+            'different' => [['test' => 'test', 'other' => 'different'], ['test' => ['The test must have the same value as other.']]],
+            'empty' => [['test' => '', 'other' => 'test'], []],
+            'missing' => [[], []],
+            'other empty' => [['test' => 'test', 'other' => ''], ['test' => ['The test must have the same value as other.']]],
+        ];
     }
 
-    public function testMatchesBothEmpty(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('matchesProvider')]
+    public function testMatches(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::matches('other'));
 
         $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-                'other' => '',
-            ])
-        );
-    }
-
-    public function testMatchesDifferent(): void
-    {
-        $this->validator->add('test', Rule::matches('other'));
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must have the same value as other.'],
-            ],
-            $this->validator->validate([
-                'test' => 'test',
-                'other' => 'different',
-            ])
-        );
-    }
-
-    public function testMatchesEmpty(): void
-    {
-        $this->validator->add('test', Rule::matches('other'));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-                'other' => 'test',
-            ])
-        );
-    }
-
-    public function testMatchesMissing(): void
-    {
-        $this->validator->add('test', Rule::matches('other'));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
-        );
-    }
-
-    public function testMatchesOtherEmpty(): void
-    {
-        $this->validator->add('test', Rule::matches('other'));
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must have the same value as other.'],
-            ],
-            $this->validator->validate([
-                'test' => 'test',
-                'other' => '',
-            ])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

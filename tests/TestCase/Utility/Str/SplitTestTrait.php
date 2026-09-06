@@ -4,74 +4,55 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait SplitTestTrait
 {
-    public function testSplitWithEmptyString(): void
+    /**
+     * @return array<string, array{string, string, array<int, string>}>
+     */
+    public static function splitProvider(): array
+    {
+        return [
+            'empty string' => ['', ' ', ['']],
+            'space' => ['This is a test string', ' ', ['This', 'is', 'a', 'test', 'string']],
+            'string' => ['This is a test string', ' test ', ['This is a', 'string']],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string, int, array<int, string>}>
+     */
+    public static function splitWithLimitProvider(): array
+    {
+        return [
+            'negative limit' => ['This is a test string', ' ', -1, ['This', 'is', 'a', 'test']],
+            'positive limit' => ['This is a test string', ' ', 3, ['This', 'is', 'a test string']],
+            'zero limit' => ['This is a test string', ' ', 0, ['This is a test string']],
+        ];
+    }
+
+    /**
+     * @param array<int, string> $expected
+     */
+    #[DataProvider('splitProvider')]
+    public function testSplit(string $string, string $delimiter, array $expected): void
     {
         $this->assertArraysAreIdentical(
-            [''],
-            Str::split('', ' ')
+            $expected,
+            Str::split($string, $delimiter)
         );
     }
 
-    public function testSplitWithNegativeLimit(): void
+    /**
+     * @param array<int, string> $expected
+     */
+    #[DataProvider('splitWithLimitProvider')]
+    public function testSplitWithLimit(string $string, string $delimiter, int $limit, array $expected): void
     {
         $this->assertArraysAreIdentical(
-            [
-                'This',
-                'is',
-                'a',
-                'test',
-            ],
-            Str::split('This is a test string', ' ', -1)
-        );
-    }
-
-    public function testSplitWithPositiveLimit(): void
-    {
-        $this->assertArraysAreIdentical(
-            [
-                'This',
-                'is',
-                'a test string',
-            ],
-            Str::split('This is a test string', ' ', 3)
-        );
-    }
-
-    public function testSplitWithSpace(): void
-    {
-        $this->assertArraysAreIdentical(
-            [
-                'This',
-                'is',
-                'a',
-                'test',
-                'string',
-            ],
-            Str::split('This is a test string', ' ')
-        );
-    }
-
-    public function testSplitWithString(): void
-    {
-        $this->assertArraysAreIdentical(
-            [
-                'This is a',
-                'string',
-            ],
-            Str::split('This is a test string', ' test ')
-        );
-    }
-
-    public function testSplitWithZeroLimit(): void
-    {
-        $this->assertArraysAreIdentical(
-            [
-                'This is a test string',
-            ],
-            Str::split('This is a test string', ' ', 0)
+            $expected,
+            Str::split($string, $delimiter, $limit)
         );
     }
 }

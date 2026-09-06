@@ -4,54 +4,35 @@ declare(strict_types=1);
 namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait InTestTrait
 {
-    public function testIn(): void
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function inProvider(): array
     {
-        $this->validator->add('test', Rule::in(['test', 'other']));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => 'test',
-            ])
-        );
+        return [
+            'value' => [['test' => 'test'], []],
+            'empty' => [['test' => ''], []],
+            'invalid' => [['test' => 'invalid'], ['test' => ['The test must be one of the values: test, other']]],
+            'missing' => [[], []],
+        ];
     }
 
-    public function testInEmpty(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('inProvider')]
+    public function testIn(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::in(['test', 'other']));
 
         $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-            ])
-        );
-    }
-
-    public function testInInvalid(): void
-    {
-        $this->validator->add('test', Rule::in(['test', 'other']));
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must be one of the values: test, other'],
-            ],
-            $this->validator->validate([
-                'test' => 'invalid',
-            ])
-        );
-    }
-
-    public function testInMissing(): void
-    {
-        $this->validator->add('test', Rule::in(['test', 'other']));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

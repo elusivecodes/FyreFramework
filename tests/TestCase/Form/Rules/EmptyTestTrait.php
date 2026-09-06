@@ -4,56 +4,35 @@ declare(strict_types=1);
 namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait EmptyTestTrait
 {
-    public function testEmpty(): void
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function emptyProvider(): array
     {
-        $this->validator->add('test', Rule::empty());
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['invalid'],
-            ],
-            $this->validator->validate([
-                'test' => 'test',
-            ])
-        );
+        return [
+            'value' => [['test' => 'test'], ['test' => ['invalid']]],
+            'empty' => [['test' => ''], []],
+            'falsey' => [['test' => '0'], ['test' => ['invalid']]],
+            'missing' => [[], []],
+        ];
     }
 
-    public function testEmptyEmpty(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('emptyProvider')]
+    public function testEmpty(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::empty());
 
         $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-            ])
-        );
-    }
-
-    public function testEmptyFalsey(): void
-    {
-        $this->validator->add('test', Rule::empty());
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['invalid'],
-            ],
-            $this->validator->validate([
-                'test' => '0',
-            ])
-        );
-    }
-
-    public function testEmptyMissing(): void
-    {
-        $this->validator->add('test', Rule::empty());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

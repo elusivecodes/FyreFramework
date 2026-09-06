@@ -4,30 +4,28 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait StartTestTrait
 {
-    public function testStartWithEmptyString(): void
+    /**
+     * @return array<string, array{string, string, string}>
+     */
+    public static function startProvider(): array
     {
-        $this->assertSame(
-            'This is a test string',
-            Str::start('This is a test string', '')
-        );
+        return [
+            'empty string' => ['This is a test string', '', 'This is a test string'],
+            'match' => ['This is a test string', 'This is a ', 'This is a test string'],
+            'without match' => ['test string', 'This is a ', 'This is a test string'],
+        ];
     }
 
-    public function testStartWithMatch(): void
+    #[DataProvider('startProvider')]
+    public function testStart(string $string, string $search, string $expected): void
     {
         $this->assertSame(
-            'This is a test string',
-            Str::start('This is a test string', 'This is a ')
-        );
-    }
-
-    public function testStartWithoutMatch(): void
-    {
-        $this->assertSame(
-            'This is a test string',
-            Str::start('test string', 'This is a ')
+            $expected,
+            Str::start($string, $search)
         );
     }
 }

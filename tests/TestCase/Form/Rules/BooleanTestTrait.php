@@ -4,90 +4,38 @@ declare(strict_types=1);
 namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait BooleanTestTrait
 {
-    public function testBoolean(): void
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function booleanProvider(): array
     {
-        $this->validator->add('test', Rule::boolean());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '1',
-            ])
-        );
+        return [
+            'value' => [['test' => '1'], []],
+            'empty' => [['test' => ''], []],
+            'false' => [['test' => 'false'], []],
+            'invalid' => [['test' => 'invalid'], ['test' => ['The test must be a boolean value.']]],
+            'missing' => [[], []],
+            'true' => [['test' => 'true'], []],
+            'zero' => [['test' => '0'], []],
+        ];
     }
 
-    public function testBooleanEmpty(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('booleanProvider')]
+    public function testBoolean(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::boolean());
 
         $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-            ])
-        );
-    }
-
-    public function testBooleanFalse(): void
-    {
-        $this->validator->add('test', Rule::boolean());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => 'false',
-            ])
-        );
-    }
-
-    public function testBooleanInvalid(): void
-    {
-        $this->validator->add('test', Rule::boolean());
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must be a boolean value.'],
-            ],
-            $this->validator->validate([
-                'test' => 'invalid',
-            ])
-        );
-    }
-
-    public function testBooleanMissing(): void
-    {
-        $this->validator->add('test', Rule::boolean());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
-        );
-    }
-
-    public function testBooleanTrue(): void
-    {
-        $this->validator->add('test', Rule::boolean());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => 'true',
-            ])
-        );
-    }
-
-    public function testBooleanZero(): void
-    {
-        $this->validator->add('test', Rule::boolean());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '0',
-            ])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

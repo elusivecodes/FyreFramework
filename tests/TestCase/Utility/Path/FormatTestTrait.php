@@ -4,30 +4,31 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Path;
 
 use Fyre\Utility\Path;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait FormatTestTrait
 {
-    public function testFormat(): void
+    /**
+     * @return array<string, array{array<string, string>, string}>
+     */
+    public static function formatProvider(): array
     {
-        $this->assertSame(
-            'sub/dir/file.ext',
-            Path::format(['dirname' => 'sub/dir', 'basename' => 'file.ext'])
-        );
+        return [
+            'value' => [['dirname' => 'sub/dir', 'basename' => 'file.ext'], 'sub/dir/file.ext'],
+            'empty dir name' => [['basename' => 'file.ext'], 'file.ext'],
+            'empty file name' => [['dirname' => 'sub/dir'], 'sub/dir'],
+        ];
     }
 
-    public function testFormatEmptyDirName(): void
+    /**
+     * @param array<string, string> $pathInfo
+     */
+    #[DataProvider('formatProvider')]
+    public function testFormat(array $pathInfo, string $expected): void
     {
         $this->assertSame(
-            'file.ext',
-            Path::format(['basename' => 'file.ext'])
-        );
-    }
-
-    public function testFormatEmptyFileName(): void
-    {
-        $this->assertSame(
-            'sub/dir',
-            Path::format(['dirname' => 'sub/dir'])
+            $expected,
+            Path::format($pathInfo)
         );
     }
 }

@@ -4,68 +4,36 @@ declare(strict_types=1);
 namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait LessThanTestTrait
 {
-    public function testLessThan(): void
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function lessThanProvider(): array
     {
-        $this->validator->add('test', Rule::lessThan(2));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => 1,
-            ])
-        );
+        return [
+            'value' => [['test' => 1], []],
+            'above' => [['test' => 3], ['test' => ['The test must be less than 2.']]],
+            'empty' => [['test' => ''], []],
+            'equals' => [['test' => 2], ['test' => ['The test must be less than 2.']]],
+            'missing' => [[], []],
+        ];
     }
 
-    public function testLessThanAbove(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('lessThanProvider')]
+    public function testLessThan(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::lessThan(2));
 
         $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must be less than 2.'],
-            ],
-            $this->validator->validate([
-                'test' => 3,
-            ])
-        );
-    }
-
-    public function testLessThanEmpty(): void
-    {
-        $this->validator->add('test', Rule::lessThan(2));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-            ])
-        );
-    }
-
-    public function testLessThanEquals(): void
-    {
-        $this->validator->add('test', Rule::lessThan(2));
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must be less than 2.'],
-            ],
-            $this->validator->validate([
-                'test' => 2,
-            ])
-        );
-    }
-
-    public function testLessThanMissing(): void
-    {
-        $this->validator->add('test', Rule::lessThan(2));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

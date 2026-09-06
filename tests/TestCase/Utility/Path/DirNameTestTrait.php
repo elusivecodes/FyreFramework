@@ -4,62 +4,32 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Path;
 
 use Fyre\Utility\Path;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait DirNameTestTrait
 {
-    public function testDirNameWithDeepPath(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function dirNameProvider(): array
     {
-        $this->assertSame(
-            'sub/dir',
-            Path::dirName('sub/dir/file.ext')
-        );
+        return [
+            'deep path' => ['sub/dir/file.ext', 'sub/dir'],
+            'empty string' => ['', ''],
+            'file name' => ['file.ext', '.'],
+            'full path' => ['/sub/dir/file.ext', '/sub/dir'],
+            'multiple extensions' => ['dir/file.tst.ext', 'dir'],
+            'no extension' => ['dir/file', 'dir'],
+            'path' => ['dir/file.ext', 'dir'],
+        ];
     }
 
-    public function testDirNameWithEmptyString(): void
+    #[DataProvider('dirNameProvider')]
+    public function testDirName(string $path, string $expected): void
     {
         $this->assertSame(
-            '',
-            Path::dirName('')
-        );
-    }
-
-    public function testDirNameWithFileName(): void
-    {
-        $this->assertSame(
-            '.',
-            Path::dirName('file.ext')
-        );
-    }
-
-    public function testDirNameWithFullPath(): void
-    {
-        $this->assertSame(
-            '/sub/dir',
-            Path::dirName('/sub/dir/file.ext')
-        );
-    }
-
-    public function testDirNameWithMultipleExtensions(): void
-    {
-        $this->assertSame(
-            'dir',
-            Path::dirName('dir/file.tst.ext')
-        );
-    }
-
-    public function testDirNameWithNoExtension(): void
-    {
-        $this->assertSame(
-            'dir',
-            Path::dirName('dir/file')
-        );
-    }
-
-    public function testDirNameWithPath(): void
-    {
-        $this->assertSame(
-            'dir',
-            Path::dirName('dir/file.ext')
+            $expected,
+            Path::dirName($path)
         );
     }
 }

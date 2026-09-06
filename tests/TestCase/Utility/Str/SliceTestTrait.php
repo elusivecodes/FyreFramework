@@ -4,54 +4,49 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait SliceTestTrait
 {
-    public function testSliceWithEmptyString(): void
+    /**
+     * @return array<string, array{string, int, string}>
+     */
+    public static function sliceProvider(): array
+    {
+        return [
+            'empty string' => ['', 10, ''],
+            'negative start' => ['This is a test string', -11, 'test string'],
+            'out of bounds start' => ['This is a test string', 21, ''],
+            'positive start' => ['This is a test string', 10, 'test string'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, int, int, string}>
+     */
+    public static function sliceWithLengthProvider(): array
+    {
+        return [
+            'negative length' => ['This is a test string', 10, -7, 'test'],
+            'positive length' => ['This is a test string', 10, 4, 'test'],
+        ];
+    }
+
+    #[DataProvider('sliceProvider')]
+    public function testSlice(string $string, int $start, string $expected): void
     {
         $this->assertSame(
-            '',
-            Str::slice('', 10)
+            $expected,
+            Str::slice($string, $start)
         );
     }
 
-    public function testSliceWithNegativeLength(): void
+    #[DataProvider('sliceWithLengthProvider')]
+    public function testSliceWithLength(string $string, int $start, int|null $length, string $expected): void
     {
         $this->assertSame(
-            'test',
-            Str::slice('This is a test string', 10, -7)
-        );
-    }
-
-    public function testSliceWithNegativeStart(): void
-    {
-        $this->assertSame(
-            'test string',
-            Str::slice('This is a test string', -11)
-        );
-    }
-
-    public function testSliceWithOutOfBoundsStart(): void
-    {
-        $this->assertSame(
-            '',
-            Str::slice('This is a test string', 21)
-        );
-    }
-
-    public function testSliceWithPositiveLength(): void
-    {
-        $this->assertSame(
-            'test',
-            Str::slice('This is a test string', 10, 4)
-        );
-    }
-
-    public function testSliceWithPositiveStart(): void
-    {
-        $this->assertSame(
-            'test string',
-            Str::slice('This is a test string', 10)
+            $expected,
+            Str::slice($string, $start, $length)
         );
     }
 }

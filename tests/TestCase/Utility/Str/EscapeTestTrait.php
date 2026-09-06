@@ -4,54 +4,31 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait EscapeTestTrait
 {
-    public function testEscapeAmpersand(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function escapeProvider(): array
     {
-        $this->assertSame(
-            '&amp;',
-            Str::escape('&')
-        );
+        return [
+            'ampersand' => ['&', '&amp;'],
+            'double quote' => ['"', '&quot;'],
+            'greater than' => ['>', '&gt;'],
+            'less than' => ['<', '&lt;'],
+            'single quote' => ['\'', '&apos;'],
+            'string' => ['This is a test string', 'This is a test string'],
+        ];
     }
 
-    public function testEscapeDoubleQuote(): void
+    #[DataProvider('escapeProvider')]
+    public function testEscape(string $string, string $expected): void
     {
         $this->assertSame(
-            '&quot;',
-            Str::escape('"')
-        );
-    }
-
-    public function testEscapeGreaterThan(): void
-    {
-        $this->assertSame(
-            '&gt;',
-            Str::escape('>')
-        );
-    }
-
-    public function testEscapeLessThan(): void
-    {
-        $this->assertSame(
-            '&lt;',
-            Str::escape('<')
-        );
-    }
-
-    public function testEscapeSingleQuote(): void
-    {
-        $this->assertSame(
-            '&apos;',
-            Str::escape('\'')
-        );
-    }
-
-    public function testEscapeWithString(): void
-    {
-        $this->assertSame(
-            'This is a test string',
-            Str::escape('This is a test string')
+            $expected,
+            Str::escape($string)
         );
     }
 }

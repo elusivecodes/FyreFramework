@@ -4,66 +4,36 @@ declare(strict_types=1);
 namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait MaxLengthTestTrait
 {
-    public function testMaxLength(): void
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function maxLengthProvider(): array
     {
-        $this->validator->add('test', Rule::maxLength(3));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => 'a',
-            ])
-        );
+        return [
+            'value' => [['test' => 'a'], []],
+            'empty' => [['test' => ''], []],
+            'exact' => [['test' => '123'], []],
+            'invalid' => [['test' => 'test'], ['test' => ['The test length must be at most 3.']]],
+            'missing' => [[], []],
+        ];
     }
 
-    public function testMaxLengthEmpty(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('maxLengthProvider')]
+    public function testMaxLength(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::maxLength(3));
 
         $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-            ])
-        );
-    }
-
-    public function testMaxLengthExact(): void
-    {
-        $this->validator->add('test', Rule::maxLength(3));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '123',
-            ])
-        );
-    }
-
-    public function testMaxLengthInvalid(): void
-    {
-        $this->validator->add('test', Rule::maxLength(3));
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test length must be at most 3.'],
-            ],
-            $this->validator->validate([
-                'test' => 'test',
-            ])
-        );
-    }
-
-    public function testMaxLengthMissing(): void
-    {
-        $this->validator->add('test', Rule::maxLength(3));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

@@ -4,22 +4,27 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait UpperTestTrait
 {
-    public function testUpperFromLowerCase(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function upperProvider(): array
     {
-        $this->assertSame(
-            'THIS IS A TEST STRING',
-            Str::upper('this is a test string')
-        );
+        return [
+            'lower case' => ['this is a test string', 'THIS IS A TEST STRING'],
+            'upper case' => ['THIS IS A TEST STRING', 'THIS IS A TEST STRING'],
+        ];
     }
 
-    public function testUpperFromUpperCase(): void
+    #[DataProvider('upperProvider')]
+    public function testUpper(string $string, string $expected): void
     {
         $this->assertSame(
-            'THIS IS A TEST STRING',
-            Str::upper('THIS IS A TEST STRING')
+            $expected,
+            Str::upper($string)
         );
     }
 }

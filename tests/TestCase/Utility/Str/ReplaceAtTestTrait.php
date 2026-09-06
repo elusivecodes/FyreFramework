@@ -4,38 +4,47 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait ReplaceAtTestTrait
 {
-    public function testReplaceAtWithNegativeLength(): void
+    /**
+     * @return array<string, array{string, string, int, string}>
+     */
+    public static function replaceAtProvider(): array
+    {
+        return [
+            'negative position' => ['This is a test string', 'new ', -11, 'This is a new test string'],
+            'positive position' => ['This is a test string', 'new ', 10, 'This is a new test string'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string, int, int, string}>
+     */
+    public static function replaceAtWithLengthProvider(): array
+    {
+        return [
+            'negative length' => ['This is a test string', 'new', 10, -7, 'This is a new string'],
+            'positive length' => ['This is a test string', 'new', 10, 4, 'This is a new string'],
+        ];
+    }
+
+    #[DataProvider('replaceAtProvider')]
+    public function testReplaceAt(string $string, string $replace, int $position, string $expected): void
     {
         $this->assertSame(
-            'This is a new string',
-            Str::replaceAt('This is a test string', 'new', 10, -7)
+            $expected,
+            Str::replaceAt($string, $replace, $position)
         );
     }
 
-    public function testReplaceAtWithNegativePosition(): void
+    #[DataProvider('replaceAtWithLengthProvider')]
+    public function testReplaceAtWithLength(string $string, string $replace, int $position, int $length, string $expected): void
     {
         $this->assertSame(
-            'This is a new test string',
-            Str::replaceAt('This is a test string', 'new ', -11)
-        );
-    }
-
-    public function testReplaceAtWithPositivePosition(): void
-    {
-        $this->assertSame(
-            'This is a new test string',
-            Str::replaceAt('This is a test string', 'new ', 10)
-        );
-    }
-
-    public function testReplaceWithAtWithPositiveLength(): void
-    {
-        $this->assertSame(
-            'This is a new string',
-            Str::replaceAt('This is a test string', 'new', 10, 4)
+            $expected,
+            Str::replaceAt($string, $replace, $position, $length)
         );
     }
 }

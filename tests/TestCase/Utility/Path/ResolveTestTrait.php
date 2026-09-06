@@ -4,72 +4,39 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Path;
 
 use Fyre\Utility\Path;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 use function getcwd;
 
 trait ResolveTestTrait
 {
-    public function testResolveWithCurrentPath(): void
+    /**
+     * @return array<string, array{array<int, string>, string}>
+     */
+    public static function resolveProvider(): array
     {
-        $this->assertSame(
-            'sub/dir/file.ext',
-            Path::resolve('.', 'sub', 'dir', 'file.ext')
-        );
+        return [
+            'current path' => [['.', 'sub', 'dir', 'file.ext'], 'sub/dir/file.ext'],
+            'deep dir' => [['sub/dir', 'file.ext'], 'sub/dir/file.ext'],
+            'dir' => [['dir', 'file.ext'], 'dir/file.ext'],
+            'dirs' => [['sub', 'dir', 'file.ext'], 'sub/dir/file.ext'],
+            'empty string' => [[''], '.'],
+            'file name' => [['file.ext'], 'file.ext'],
+            'full path' => [['/sub', 'dir', 'file.ext'], '/sub/dir/file.ext'],
+            'full paths' => [['/sub', '/dir', 'file.ext'], '/dir/file.ext'],
+            'parent path' => [['test', '..', 'sub/dir', 'file.ext'], 'sub/dir/file.ext'],
+        ];
     }
 
-    public function testResolveWithDeepDir(): void
+    /**
+     * @param array<int, string> $paths
+     */
+    #[DataProvider('resolveProvider')]
+    public function testResolve(array $paths, string $expected): void
     {
         $this->assertSame(
-            'sub/dir/file.ext',
-            Path::resolve('sub/dir', 'file.ext')
-        );
-    }
-
-    public function testResolveWithDir(): void
-    {
-        $this->assertSame(
-            'dir/file.ext',
-            Path::resolve('dir', 'file.ext')
-        );
-    }
-
-    public function testResolveWithDirs(): void
-    {
-        $this->assertSame(
-            'sub/dir/file.ext',
-            Path::resolve('sub', 'dir', 'file.ext')
-        );
-    }
-
-    public function testResolveWithEmptyString(): void
-    {
-        $this->assertSame(
-            '.',
-            Path::resolve('')
-        );
-    }
-
-    public function testResolveWithFileName(): void
-    {
-        $this->assertSame(
-            'file.ext',
-            Path::resolve('file.ext')
-        );
-    }
-
-    public function testResolveWithFullPath(): void
-    {
-        $this->assertSame(
-            '/sub/dir/file.ext',
-            Path::resolve('/sub', 'dir', 'file.ext')
-        );
-    }
-
-    public function testResolveWithFullPaths(): void
-    {
-        $this->assertSame(
-            '/dir/file.ext',
-            Path::resolve('/sub', '/dir', 'file.ext')
+            $expected,
+            Path::resolve(...$paths)
         );
     }
 
@@ -78,14 +45,6 @@ trait ResolveTestTrait
         $this->assertSame(
             getcwd(),
             Path::resolve()
-        );
-    }
-
-    public function testResolveWithParentPath(): void
-    {
-        $this->assertSame(
-            'sub/dir/file.ext',
-            Path::resolve('test', '..', 'sub/dir', 'file.ext')
         );
     }
 }

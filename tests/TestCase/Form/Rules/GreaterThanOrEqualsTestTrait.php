@@ -4,66 +4,36 @@ declare(strict_types=1);
 namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait GreaterThanOrEqualsTestTrait
 {
-    public function testGreaterThanOrEquals(): void
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function greaterThanOrEqualsProvider(): array
     {
-        $this->validator->add('test', Rule::greaterThanOrEquals(2));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => 3,
-            ])
-        );
+        return [
+            'value' => [['test' => 3], []],
+            'below' => [['test' => 1], ['test' => ['The test must be greater than or equal to 2.']]],
+            'empty' => [['test' => ''], []],
+            'equals' => [['test' => 2], []],
+            'missing' => [[], []],
+        ];
     }
 
-    public function testGreaterThanOrEqualsBelow(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('greaterThanOrEqualsProvider')]
+    public function testGreaterThanOrEquals(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::greaterThanOrEquals(2));
 
         $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must be greater than or equal to 2.'],
-            ],
-            $this->validator->validate([
-                'test' => 1,
-            ])
-        );
-    }
-
-    public function testGreaterThanOrEqualsEmpty(): void
-    {
-        $this->validator->add('test', Rule::greaterThanOrEquals(2));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-            ])
-        );
-    }
-
-    public function testGreaterThanOrEqualsEquals(): void
-    {
-        $this->validator->add('test', Rule::greaterThanOrEquals(2));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => 2,
-            ])
-        );
-    }
-
-    public function testGreaterThanOrEqualsMissing(): void
-    {
-        $this->validator->add('test', Rule::greaterThanOrEquals(2));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

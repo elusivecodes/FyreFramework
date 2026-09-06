@@ -4,54 +4,35 @@ declare(strict_types=1);
 namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait RegexTestTrait
 {
-    public function testRegex(): void
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function regexProvider(): array
     {
-        $this->validator->add('test', Rule::regex('/test/'));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => 'test',
-            ])
-        );
+        return [
+            'value' => [['test' => 'test'], []],
+            'empty' => [['test' => ''], []],
+            'invalid' => [['test' => 'invalid'], ['test' => ['The test must match the regular expression /test/.']]],
+            'missing' => [[], []],
+        ];
     }
 
-    public function testRegexEmpty(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('regexProvider')]
+    public function testRegex(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::regex('/test/'));
 
         $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-            ])
-        );
-    }
-
-    public function testRegexInvalid(): void
-    {
-        $this->validator->add('test', Rule::regex('/test/'));
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must match the regular expression /test/.'],
-            ],
-            $this->validator->validate([
-                'test' => 'invalid',
-            ])
-        );
-    }
-
-    public function testRegexMissing(): void
-    {
-        $this->validator->add('test', Rule::regex('/test/'));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

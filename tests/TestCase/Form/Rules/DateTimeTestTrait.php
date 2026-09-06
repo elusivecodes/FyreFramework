@@ -5,9 +5,23 @@ namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
 use Fyre\Utility\DateTime\DateTime;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait DateTimeTestTrait
 {
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function dateTimeValuesProvider(): array
+    {
+        return [
+            'empty' => [['test' => ''], []],
+            'invalid' => [['test' => 'invalid'], ['test' => ['invalid']]],
+            'missing' => [[], []],
+            'string' => [['test' => '2022-01-01 00:00:00'], []],
+        ];
+    }
+
     public function testDateTime(): void
     {
         $this->validator->add('test', Rule::dateTime());
@@ -20,51 +34,18 @@ trait DateTimeTestTrait
         );
     }
 
-    public function testDateTimeEmpty(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('dateTimeValuesProvider')]
+    public function testDateTimeValues(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::dateTime());
 
         $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-            ])
-        );
-    }
-
-    public function testDateTimeInvalid(): void
-    {
-        $this->validator->add('test', Rule::dateTime());
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['invalid'],
-            ],
-            $this->validator->validate([
-                'test' => 'invalid',
-            ])
-        );
-    }
-
-    public function testDateTimeMissing(): void
-    {
-        $this->validator->add('test', Rule::dateTime());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
-        );
-    }
-
-    public function testDateTimeString(): void
-    {
-        $this->validator->add('test', Rule::dateTime());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '2022-01-01 00:00:00',
-            ])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

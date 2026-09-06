@@ -4,22 +4,27 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait TitleTestTrait
 {
-    public function testTitleFromLowerCase(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function titleProvider(): array
     {
-        $this->assertSame(
-            'This Is A Test String',
-            Str::title('this is a test string')
-        );
+        return [
+            'lower case' => ['this is a test string', 'This Is A Test String'],
+            'upper case' => ['THIS IS A TEST STRING', 'This Is A Test String'],
+        ];
     }
 
-    public function testTitleFromUpperCase(): void
+    #[DataProvider('titleProvider')]
+    public function testTitle(string $string, string $expected): void
     {
         $this->assertSame(
-            'This Is A Test String',
-            Str::title('THIS IS A TEST STRING')
+            $expected,
+            Str::title($string)
         );
     }
 }

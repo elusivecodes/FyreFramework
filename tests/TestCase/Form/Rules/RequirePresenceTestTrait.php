@@ -4,54 +4,35 @@ declare(strict_types=1);
 namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait RequirePresenceTestTrait
 {
-    public function testRequirePresence(): void
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function requirePresenceProvider(): array
     {
-        $this->validator->add('test', Rule::requirePresence());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => 'test',
-            ])
-        );
+        return [
+            'value' => [['test' => 'test'], []],
+            'empty' => [['test' => ''], []],
+            'falsey' => [['test' => '0'], []],
+            'missing' => [[], ['test' => ['The test must be set.']]],
+        ];
     }
 
-    public function testRequirePresenceEmpty(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('requirePresenceProvider')]
+    public function testRequirePresence(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::requirePresence());
 
         $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-            ])
-        );
-    }
-
-    public function testRequirePresenceFalsey(): void
-    {
-        $this->validator->add('test', Rule::requirePresence());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '0',
-            ])
-        );
-    }
-
-    public function testRequirePresenceMissing(): void
-    {
-        $this->validator->add('test', Rule::requirePresence());
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must be set.'],
-            ],
-            $this->validator->validate([])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

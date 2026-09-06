@@ -4,54 +4,35 @@ declare(strict_types=1);
 namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait EmailTestTrait
 {
-    public function testEmail(): void
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function emailProvider(): array
     {
-        $this->validator->add('test', Rule::email());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => 'test@test.com',
-            ])
-        );
+        return [
+            'value' => [['test' => 'test@test.com'], []],
+            'empty' => [['test' => ''], []],
+            'invalid' => [['test' => 'invalid'], ['test' => ['The test must be a valid email address.']]],
+            'missing' => [[], []],
+        ];
     }
 
-    public function testEmailEmpty(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('emailProvider')]
+    public function testEmail(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::email());
 
         $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-            ])
-        );
-    }
-
-    public function testEmailInvalid(): void
-    {
-        $this->validator->add('test', Rule::email());
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must be a valid email address.'],
-            ],
-            $this->validator->validate([
-                'test' => 'invalid',
-            ])
-        );
-    }
-
-    public function testEmailMissing(): void
-    {
-        $this->validator->add('test', Rule::email());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

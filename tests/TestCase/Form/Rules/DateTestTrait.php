@@ -7,9 +7,23 @@ use Fyre\Form\Rule;
 use Fyre\Utility\DateTime\Date;
 use Fyre\Utility\DateTime\DateTime;
 use Fyre\Utility\DateTime\Time;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait DateTestTrait
 {
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function dateValuesProvider(): array
+    {
+        return [
+            'empty' => [['test' => ''], []],
+            'invalid' => [['test' => 'invalid'], ['test' => ['invalid']]],
+            'missing' => [[], []],
+            'string' => [['test' => '2022-01-01'], []],
+        ];
+    }
+
     public function testDate(): void
     {
         $this->validator->add('test', Rule::date());
@@ -19,42 +33,6 @@ trait DateTestTrait
             $this->validator->validate([
                 'test' => Date::now(),
             ])
-        );
-    }
-
-    public function testDateEmpty(): void
-    {
-        $this->validator->add('test', Rule::date());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-            ])
-        );
-    }
-
-    public function testDateInvalid(): void
-    {
-        $this->validator->add('test', Rule::date());
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['invalid'],
-            ],
-            $this->validator->validate([
-                'test' => 'invalid',
-            ])
-        );
-    }
-
-    public function testDateMissing(): void
-    {
-        $this->validator->add('test', Rule::date());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
         );
     }
 
@@ -86,15 +64,18 @@ trait DateTestTrait
         );
     }
 
-    public function testDateString(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('dateValuesProvider')]
+    public function testDateValues(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::date());
 
         $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '2022-01-01',
-            ])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

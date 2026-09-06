@@ -4,38 +4,29 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait SnakeTestTrait
 {
-    public function testSnakeFromCamel(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function snakeProvider(): array
     {
-        $this->assertSame(
-            'this_is_a_test_string',
-            Str::snake('thisIsATestString')
-        );
+        return [
+            'camel' => ['thisIsATestString', 'this_is_a_test_string'],
+            'pascal' => ['ThisIsATestString', 'this_is_a_test_string'],
+            'consecutive spaces' => ['This is a test   string', 'this_is_a_test_string'],
+            'string' => ['This is a test string', 'this_is_a_test_string'],
+        ];
     }
 
-    public function testSnakeFromPascal(): void
+    #[DataProvider('snakeProvider')]
+    public function testSnake(string $string, string $expected): void
     {
         $this->assertSame(
-            'this_is_a_test_string',
-            Str::snake('ThisIsATestString')
-        );
-    }
-
-    public function testSnakeWithConsecutiveSpaces(): void
-    {
-        $this->assertSame(
-            'this_is_a_test_string',
-            Str::snake('This is a test   string')
-        );
-    }
-
-    public function testSnakeWithString(): void
-    {
-        $this->assertSame(
-            'this_is_a_test_string',
-            Str::snake('This is a test string')
+            $expected,
+            Str::snake($string)
         );
     }
 }

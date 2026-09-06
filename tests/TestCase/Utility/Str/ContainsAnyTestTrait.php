@@ -4,34 +4,32 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait ContainsAnyTestTrait
 {
-    public function testContainsAnyWithEmptyString(): void
+    /**
+     * @return array<string, array{string, array<int, string>, bool}>
+     */
+    public static function containsAnyProvider(): array
     {
-        $this->assertTrue(
-            Str::containsAny('This is a test string', [''])
-        );
+        return [
+            'empty string' => ['This is a test string', [''], true],
+            'match' => ['This is a string', ['test', 'is'], true],
+            'match at start' => ['This is a test string', ['This'], true],
+            'without match' => ['This is a string', ['test', 'value'], false],
+        ];
     }
 
-    public function testContainsAnyWithMatch(): void
+    /**
+     * @param array<int, string> $searches
+     */
+    #[DataProvider('containsAnyProvider')]
+    public function testContainsAny(string $string, array $searches, bool $expected): void
     {
-        $this->assertTrue(
-            Str::containsAny('This is a string', ['test', 'is'])
-        );
-    }
-
-    public function testContainsAnyWithMatchAtStart(): void
-    {
-        $this->assertTrue(
-            Str::containsAny('This is a test string', ['This'])
-        );
-    }
-
-    public function testContainsAnyWithoutMatch(): void
-    {
-        $this->assertFalse(
-            Str::containsAny('This is a string', ['test', 'value'])
+        $this->assertSame(
+            $expected,
+            Str::containsAny($string, $searches)
         );
     }
 }

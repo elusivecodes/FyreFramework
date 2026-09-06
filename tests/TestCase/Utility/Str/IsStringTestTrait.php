@@ -4,48 +4,31 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait IsStringTestTrait
 {
-    public function testIsString(): void
+    /**
+     * @return array<string, array{array<int, int>|bool|float|int|string|null, bool}>
+     */
+    public static function isStringProvider(): array
     {
-        $this->assertTrue(
-            Str::isString('This is a test string')
-        );
+        return [
+            'value' => ['This is a test string', true],
+            'array' => [[1, 2, 3], false],
+            'boolean' => [true, false],
+            'float' => [123.456, false],
+            'int' => [123, false],
+            'null' => [null, false],
+        ];
     }
 
-    public function testIsStringArray(): void
+    #[DataProvider('isStringProvider')]
+    public function testIsString(mixed $value, bool $expected): void
     {
-        $this->assertFalse(
-            Str::isString([1, 2, 3])
-        );
-    }
-
-    public function testIsStringBoolean(): void
-    {
-        $this->assertFalse(
-            Str::isString(true)
-        );
-    }
-
-    public function testIsStringFloat(): void
-    {
-        $this->assertFalse(
-            Str::isString(123.456)
-        );
-    }
-
-    public function testIsStringInt(): void
-    {
-        $this->assertFalse(
-            Str::isString(123)
-        );
-    }
-
-    public function testIsStringNull(): void
-    {
-        $this->assertFalse(
-            Str::isString(null)
+        $this->assertSame(
+            $expected,
+            Str::isString($value)
         );
     }
 }

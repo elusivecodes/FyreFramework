@@ -4,54 +4,35 @@ declare(strict_types=1);
 namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait UrlTestTrait
 {
-    public function testUrl(): void
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function urlProvider(): array
     {
-        $this->validator->add('test', Rule::url());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => 'https://test.com/',
-            ])
-        );
+        return [
+            'value' => [['test' => 'https://test.com/'], []],
+            'empty' => [['test' => ''], []],
+            'invalid' => [['test' => 'invalid'], ['test' => ['The test must be a valid URL.']]],
+            'missing' => [[], []],
+        ];
     }
 
-    public function testUrlEmpty(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('urlProvider')]
+    public function testUrl(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::url());
 
         $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-            ])
-        );
-    }
-
-    public function testUrlInvalid(): void
-    {
-        $this->validator->add('test', Rule::url());
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must be a valid URL.'],
-            ],
-            $this->validator->validate([
-                'test' => 'invalid',
-            ])
-        );
-    }
-
-    public function testUrlMissing(): void
-    {
-        $this->validator->add('test', Rule::url());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

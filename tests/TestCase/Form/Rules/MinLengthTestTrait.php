@@ -4,66 +4,36 @@ declare(strict_types=1);
 namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait MinLengthTestTrait
 {
-    public function testMinLength(): void
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function minLengthProvider(): array
     {
-        $this->validator->add('test', Rule::minLength(3));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => 'test',
-            ])
-        );
+        return [
+            'value' => [['test' => 'test'], []],
+            'empty' => [['test' => ''], []],
+            'exact' => [['test' => '123'], []],
+            'invalid' => [['test' => 'a'], ['test' => ['The test length must be at least 3.']]],
+            'missing' => [[], []],
+        ];
     }
 
-    public function testMinLengthEmpty(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('minLengthProvider')]
+    public function testMinLength(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::minLength(3));
 
         $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-            ])
-        );
-    }
-
-    public function testMinLengthExact(): void
-    {
-        $this->validator->add('test', Rule::minLength(3));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '123',
-            ])
-        );
-    }
-
-    public function testMinLengthInvalid(): void
-    {
-        $this->validator->add('test', Rule::minLength(3));
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test length must be at least 3.'],
-            ],
-            $this->validator->validate([
-                'test' => 'a',
-            ])
-        );
-    }
-
-    public function testMinLengthMissing(): void
-    {
-        $this->validator->add('test', Rule::minLength(3));
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }

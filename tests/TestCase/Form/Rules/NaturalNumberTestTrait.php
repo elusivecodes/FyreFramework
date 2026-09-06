@@ -4,94 +4,38 @@ declare(strict_types=1);
 namespace Tests\TestCase\Form\Rules;
 
 use Fyre\Form\Rule;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait NaturalNumberTestTrait
 {
-    public function testNaturalNumber(): void
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, string[]>}>
+     */
+    public static function naturalNumberProvider(): array
     {
-        $this->validator->add('test', Rule::naturalNumber());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '123',
-            ])
-        );
+        return [
+            'value' => [['test' => '123'], []],
+            'decimal' => [['test' => '123.456'], ['test' => ['The test must be a natural number.']]],
+            'empty' => [['test' => ''], []],
+            'invalid' => [['test' => 'invalid'], ['test' => ['The test must be a natural number.']]],
+            'missing' => [[], []],
+            'negative' => [['test' => '-123'], ['test' => ['The test must be a natural number.']]],
+            'zero' => [['test' => '0'], []],
+        ];
     }
 
-    public function testNaturalNumberDecimal(): void
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, string[]> $expected
+     */
+    #[DataProvider('naturalNumberProvider')]
+    public function testNaturalNumber(array $data, array $expected): void
     {
         $this->validator->add('test', Rule::naturalNumber());
 
         $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must be a natural number.'],
-            ],
-            $this->validator->validate([
-                'test' => '123.456',
-            ])
-        );
-    }
-
-    public function testNaturalNumberEmpty(): void
-    {
-        $this->validator->add('test', Rule::naturalNumber());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '',
-            ])
-        );
-    }
-
-    public function testNaturalNumberInvalid(): void
-    {
-        $this->validator->add('test', Rule::naturalNumber());
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must be a natural number.'],
-            ],
-            $this->validator->validate([
-                'test' => 'invalid',
-            ])
-        );
-    }
-
-    public function testNaturalNumberMissing(): void
-    {
-        $this->validator->add('test', Rule::naturalNumber());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([])
-        );
-    }
-
-    public function testNaturalNumberNegative(): void
-    {
-        $this->validator->add('test', Rule::naturalNumber());
-
-        $this->assertArraysAreIdentical(
-            [
-                'test' => ['The test must be a natural number.'],
-            ],
-            $this->validator->validate([
-                'test' => '-123',
-            ])
-        );
-    }
-
-    public function testNaturalNumberZero(): void
-    {
-        $this->validator->add('test', Rule::naturalNumber());
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->validator->validate([
-                'test' => '0',
-            ])
+            $expected,
+            $this->validator->validate($data)
         );
     }
 }
