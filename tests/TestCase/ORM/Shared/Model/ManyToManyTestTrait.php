@@ -1193,6 +1193,14 @@ trait ManyToManyTestTrait
 
         $tagId = $post->tags[0]->id;
         $joinId = $post->tags[0]->_joinData->id;
+
+        $this->assertNotNull(
+            $post->id
+        );
+        $this->assertNotNull(
+            $joinId
+        );
+
         $post = $Posts->get($post->id);
 
         $this->assertInstanceOf(
@@ -1218,7 +1226,7 @@ trait ManyToManyTestTrait
         );
         $this->assertSame(
             11,
-            $PostsTags->get($joinId)->value
+            $PostsTags->get($joinId)?->value
         );
     }
 

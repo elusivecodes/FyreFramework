@@ -13,7 +13,9 @@ use Fyre\ORM\Entity;
 use Fyre\ORM\Exceptions\OrmException;
 use Fyre\ORM\Model;
 use RuntimeException;
+use Tests\Mock\Entities\Item;
 use Tests\Mock\Entities\MockEntity;
+use Tests\Mock\Entities\Post;
 use Throwable;
 
 trait TransactionTestTrait
@@ -33,7 +35,7 @@ trait TransactionTestTrait
         $commits = [];
         $exception = new RuntimeException('Operation failed.');
 
-        $Items->getEventManager()->on('ORM.afterDelete', function(Event $event, Entity $entity) use ($Items, $exception, &$commits): void {
+        $Items->getEventManager()->on('ORM.afterDelete', function(Event $event, Item $entity) use ($Items, $exception, &$commits): void {
             $this->db->afterCommit(static function() use (&$commits): void {
                 $commits[] = 'failed';
             });
@@ -117,7 +119,7 @@ trait TransactionTestTrait
 
         $exception = new Error('Operation failed.');
 
-        $Items->getEventManager()->on('ORM.afterDelete', function(Event $event, Entity $entity) use ($Items, $exception, &$commits): void {
+        $Items->getEventManager()->on('ORM.afterDelete', function(Event $event, Item $entity) use ($Items, $exception, &$commits): void {
             $this->db->afterCommit(static function() use (&$commits): void {
                 $commits[] = 'failed';
             });
@@ -207,7 +209,7 @@ trait TransactionTestTrait
         $commits = [];
         $exception = new RuntimeException('Operation failed.');
 
-        $Items->getEventManager()->on('ORM.afterDelete', function(Event $event, Entity $entity) use ($Items, $exception, &$commits): void {
+        $Items->getEventManager()->on('ORM.afterDelete', function(Event $event, Item $entity) use ($Items, $exception, &$commits): void {
             $this->db->afterCommit(static function() use (&$commits): void {
                 $commits[] = 'failed';
             });
@@ -302,7 +304,7 @@ trait TransactionTestTrait
 
         $exception = new Error('Operation failed.');
 
-        $Items->getEventManager()->on('ORM.afterDelete', function(Event $event, Entity $entity) use ($Items, $exception, &$commits): void {
+        $Items->getEventManager()->on('ORM.afterDelete', function(Event $event, Item $entity) use ($Items, $exception, &$commits): void {
             $this->db->afterCommit(static function() use (&$commits): void {
                 $commits[] = 'failed';
             });
@@ -461,7 +463,7 @@ trait TransactionTestTrait
         );
 
         $saved = [];
-        $Posts->getEventManager()->on('ORM.afterSave', static function(Event $event, Entity $entity) use (&$saved): void {
+        $Posts->getEventManager()->on('ORM.afterSave', static function(Event $event, Post $entity) use (&$saved): void {
             $saved[] = $entity;
         });
         $this->db->begin();
@@ -479,13 +481,19 @@ trait TransactionTestTrait
 
         $this->db->rollback();
 
+        $this->assertNotNull(
+            $user->id
+        );
+        $this->assertNotNull(
+            $saved[0]->id
+        );
         $this->assertSame(
             $user->id,
             $saved[0]->user_id
         );
         $this->assertSame(
             $user->id,
-            $Posts->get($saved[0]->id)->user_id
+            $Posts->get($saved[0]->id)?->user_id
         );
         $this->assertTrue(
             $Users->exists(['id' => $user->id])
@@ -500,16 +508,19 @@ trait TransactionTestTrait
         ]);
         $item->setHidden(['name']);
 
-        $Items->getEventManager()->on('ORM.afterSave', static function(Event $event, Entity $entity): void {
+        $Items->getEventManager()->on('ORM.afterSave', static function(Event $event, Item $entity): void {
             $entity->name = 'Later';
         });
 
         $this->assertTrue(
             $Items->save($item)
         );
+        $this->assertNotNull(
+            $item->id
+        );
         $this->assertSame(
             'Saved',
-            $Items->get($item->id)->name
+            $Items->get($item->id)?->name
         );
         $this->assertSame(
             'Later',
@@ -534,16 +545,19 @@ trait TransactionTestTrait
             'name' => 'Saved',
         ]);
 
-        $Items->getEventManager()->on('ORM.afterSaveCommit', static function(Event $event, Entity $entity): void {
+        $Items->getEventManager()->on('ORM.afterSaveCommit', static function(Event $event, Item $entity): void {
             $entity->name = 'Later';
         });
 
         $this->assertTrue(
             $Items->save($item)
         );
+        $this->assertNotNull(
+            $item->id
+        );
         $this->assertSame(
             'Saved',
-            $Items->get($item->id)->name
+            $Items->get($item->id)?->name
         );
         $this->assertSame(
             'Later',
@@ -587,9 +601,12 @@ trait TransactionTestTrait
                 1,
                 $Items->find()->count()
             );
+            $this->assertNotNull(
+                $item->id
+            );
             $this->assertSame(
                 'Updated',
-                $Items->get($item->id)->name
+                $Items->get($item->id)?->name
             );
         } finally {
             while ($this->db->getSavePointLevel() > 0) {
@@ -680,7 +697,7 @@ trait TransactionTestTrait
         $commits = [];
         $exception = new RuntimeException('Operation failed.');
 
-        $Items->getEventManager()->on('ORM.afterSave', function(Event $event, Entity $entity) use ($Items, $exception, &$commits): void {
+        $Items->getEventManager()->on('ORM.afterSave', function(Event $event, Item $entity) use ($Items, $exception, &$commits): void {
             $this->db->afterCommit(static function() use (&$commits): void {
                 $commits[] = 'failed';
             });
@@ -760,7 +777,7 @@ trait TransactionTestTrait
 
         $exception = new Error('Operation failed.');
 
-        $Items->getEventManager()->on('ORM.afterSave', function(Event $event, Entity $entity) use ($Items, $exception, &$commits): void {
+        $Items->getEventManager()->on('ORM.afterSave', function(Event $event, Item $entity) use ($Items, $exception, &$commits): void {
             $this->db->afterCommit(static function() use (&$commits): void {
                 $commits[] = 'failed';
             });
@@ -853,6 +870,14 @@ trait TransactionTestTrait
         $address = $original->address;
         $postId = $post->id;
         $addressId = $address->id;
+
+        $this->assertNotNull(
+            $postId
+        );
+        $this->assertNotNull(
+            $addressId
+        );
+
         $user = $Users->newEntity([
             'name' => 'New',
         ]);
@@ -903,13 +928,16 @@ trait TransactionTestTrait
         $this->assertTrue(
             $Users->save($user)
         );
-        $this->assertSame(
-            $user->id,
-            $this->modelRegistry->use('Posts')->get($postId)->user_id
+        $this->assertNotNull(
+            $user->id
         );
         $this->assertSame(
             $user->id,
-            $this->modelRegistry->use('Addresses')->get($addressId)->user_id
+            $this->modelRegistry->use('Posts')->get($postId)?->user_id
+        );
+        $this->assertSame(
+            $user->id,
+            $this->modelRegistry->use('Addresses')->get($addressId)?->user_id
         );
     }
 
@@ -944,9 +972,12 @@ trait TransactionTestTrait
         $this->db->rollback();
         $this->db->commit();
 
+        $this->assertNotNull(
+            $item->id
+        );
         $this->assertSame(
             'Outer',
-            $Items->get($item->id)->name
+            $Items->get($item->id)?->name
         );
         $this->assertSame(
             'Inner',
@@ -994,13 +1025,16 @@ trait TransactionTestTrait
 
         $this->db->rollback();
 
+        $this->assertNotNull(
+            $id
+        );
         $this->assertSame(
             $id,
             $item->id
         );
         $this->assertSame(
             'Test',
-            $Items->get($id)->name
+            $Items->get($id)?->name
         );
 
         $this->assertTrue(
@@ -1075,9 +1109,15 @@ trait TransactionTestTrait
         $this->assertTrue(
             $Posts->save($post)
         );
+        $this->assertNotNull(
+            $post->id
+        );
+        $this->assertNotNull(
+            $join->id
+        );
         $this->assertSame(
             $post->id,
-            $PostsTags->get($join->id)->post_id
+            $PostsTags->get($join->id)?->post_id
         );
         $this->assertSame(
             1,
@@ -1102,9 +1142,12 @@ trait TransactionTestTrait
         $this->assertTrue(
             $Items->saveMany($items)
         );
+        $this->assertNotNull(
+            $items[0]->id
+        );
         $this->assertSame(
             'First',
-            $Items->get($items[0]->id)->name
+            $Items->get($items[0]->id)?->name
         );
         $this->assertSame(
             'Later',
@@ -1245,7 +1288,7 @@ trait TransactionTestTrait
         $commits = [];
         $exception = new RuntimeException('Operation failed.');
 
-        $Items->getEventManager()->on('ORM.afterSave', function(Event $event, Entity $entity) use ($Items, $exception, &$commits): void {
+        $Items->getEventManager()->on('ORM.afterSave', function(Event $event, Item $entity) use ($Items, $exception, &$commits): void {
             $this->db->afterCommit(static function() use (&$commits): void {
                 $commits[] = 'failed';
             });
@@ -1336,7 +1379,7 @@ trait TransactionTestTrait
 
         $exception = new Error('Operation failed.');
 
-        $Items->getEventManager()->on('ORM.afterSave', function(Event $event, Entity $entity) use ($Items, $exception, &$commits): void {
+        $Items->getEventManager()->on('ORM.afterSave', function(Event $event, Item $entity) use ($Items, $exception, &$commits): void {
             $this->db->afterCommit(static function() use (&$commits): void {
                 $commits[] = 'failed';
             });
@@ -1448,9 +1491,12 @@ trait TransactionTestTrait
         $this->db->commit();
 
         foreach ($items as $item) {
+            $this->assertNotNull(
+                $item->id
+            );
             $this->assertSame(
                 'Outer',
-                $Items->get($item->id)->name
+                $Items->get($item->id)?->name
             );
             $this->assertSame(
                 'Inner',
@@ -1470,9 +1516,12 @@ trait TransactionTestTrait
         );
 
         foreach ($items as $item) {
+            $this->assertNotNull(
+                $item->id
+            );
             $this->assertSame(
                 'Inner',
-                $Items->get($item->id)->name
+                $Items->get($item->id)?->name
             );
             $this->assertFalse(
                 $item->isDirty()
@@ -1600,9 +1649,12 @@ trait TransactionTestTrait
             1,
             $Items->find()->count()
         );
+        $this->assertNotNull(
+            $id
+        );
         $this->assertSame(
             'Updated',
-            $Items->get($id)->name
+            $Items->get($id)?->name
         );
     }
 
@@ -1822,6 +1874,12 @@ trait TransactionTestTrait
 
         $this->db->rollback();
 
+        $this->assertNotNull(
+            $postId
+        );
+        $this->assertNotNull(
+            $userId
+        );
         $this->assertSame(
             $userId,
             $user->id
@@ -1832,7 +1890,7 @@ trait TransactionTestTrait
         );
         $this->assertSame(
             $userId,
-            $Posts->get($postId)->user_id
+            $Posts->get($postId)?->user_id
         );
         $this->assertFalse(
             $innerUser->has('id')
@@ -1847,8 +1905,15 @@ trait TransactionTestTrait
             $postId,
             $post->id
         );
+
+        $saved = $Posts->get($postId);
+
+        $this->assertInstanceOf(
+            Post::class,
+            $saved
+        );
         $this->assertNull(
-            $Posts->get($postId)->user_id
+            $saved->user_id
         );
         $this->assertFalse(
             $user->has('id')
@@ -1895,9 +1960,15 @@ trait TransactionTestTrait
         $this->assertTrue(
             $Users->save($user)
         );
+        $this->assertNotNull(
+            $user->id
+        );
+        $this->assertNotNull(
+            $post->id
+        );
         $this->assertSame(
             $user->id,
-            $this->modelRegistry->use('Posts')->get($post->id)->user_id
+            $this->modelRegistry->use('Posts')->get($post->id)?->user_id
         );
     }
 
@@ -1944,9 +2015,12 @@ trait TransactionTestTrait
         $this->assertTrue(
             $existing->isDirty('title')
         );
+        $this->assertNotNull(
+            $existing->id
+        );
         $this->assertSame(
             'Original',
-            $Posts->get($existing->id)->title
+            $Posts->get($existing->id)?->title
         );
         $this->assertTrue(
             $post->isNew()

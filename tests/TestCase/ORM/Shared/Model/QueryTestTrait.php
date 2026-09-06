@@ -144,8 +144,15 @@ trait QueryTestTrait
                 0,
                 $Parents->find()->count()
             );
+
+            $child = $Children->get(4);
+
+            $this->assertInstanceOf(
+                Entity::class,
+                $child
+            );
             $this->assertNull(
-                $Children->get(4)->cascade_parent_id
+                $child->get('cascade_parent_id')
             );
         } finally {
             $this->db->query('DROP TABLE cascade_children');
@@ -304,7 +311,7 @@ trait QueryTestTrait
             ['Test 1', 'Test 2', 'Test 3'],
             $CompositeItems->find(orderBy: ['tenant_id' => 'ASC'])
                 ->all()
-                ->map(static fn(Entity $item): string => $item->name)
+                ->map(static fn(Entity $item): string => $item->get('name'))
                 ->toArray()
         );
         $this->assertSame(
@@ -1147,7 +1154,7 @@ trait QueryTestTrait
             ['Test 1', 'Test 2'],
             $CompositeItems->find(orderBy: ['tenant_id' => 'ASC'])
                 ->all()
-                ->map(static fn(Entity $item): string => $item->name)
+                ->map(static fn(Entity $item): string => $item->get('name'))
                 ->toArray()
         );
         $this->assertSame(

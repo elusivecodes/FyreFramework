@@ -271,6 +271,9 @@ trait PatchEntityTestTrait
         $this->assertTrue(
             $Addresses->save($address)
         );
+        $this->assertNotNull(
+            $user->id
+        );
         $this->assertSame(
             'Test 1',
             $this->modelRegistry->use('Users')->get($user->id)?->name

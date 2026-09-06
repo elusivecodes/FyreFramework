@@ -17,8 +17,6 @@ use PHPUnit\Framework\Attributes\Before;
 use Tests\Mock\Entities\Address;
 use Throwable;
 
-use function array_map;
-
 trait SoftDeleteTestTrait
 {
     public function testDelete(): void
@@ -143,7 +141,17 @@ trait SoftDeleteTestTrait
             $Users->deleteMany($users)
         );
 
-        $deleted = array_map(static fn(Entity $entity): DateTime => $entity->deleted, $users);
+        $deleted = [];
+
+        foreach ($users as $user) {
+            $this->assertInstanceOf(
+                DateTime::class,
+                $user->deleted
+            );
+
+            $deleted[] = $user->deleted;
+        }
+
         $this->db->begin();
 
         $this->assertTrue(

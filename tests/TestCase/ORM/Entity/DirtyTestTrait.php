@@ -69,7 +69,7 @@ trait DirtyTestTrait
 
         $this->assertSame(
             'Later',
-            $entity->name
+            $entity->get('name')
         );
         $this->assertSame(
             'Saved',

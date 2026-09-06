@@ -1107,6 +1107,13 @@ trait HasManyTestTrait
             $Comments->save($comment)
         );
 
+        $this->assertNotNull(
+            $user->id
+        );
+        $this->assertNotNull(
+            $postId
+        );
+
         $user = $Users->get($user->id);
 
         $this->assertInstanceOf(
@@ -1132,7 +1139,7 @@ trait HasManyTestTrait
         );
         $this->assertSame(
             'Updated',
-            $Posts->get($postId)->title
+            $Posts->get($postId)?->title
         );
         $this->assertSame(
             'Keep this content.',
