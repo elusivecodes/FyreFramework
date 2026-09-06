@@ -185,10 +185,10 @@ Loads the user by a token read from a request header or query parameter.
 
 - `tokenHeader` (`string|null`): the request header to inspect (default: `'Authorization'`).
 - `tokenHeaderPrefix` (`string|null`): the prefix stripped from the header value (default: `'Bearer'`).
-- `tokenQuery` (`string|null`): a query parameter used when the header is absent (default: `null`).
+- `tokenQuery` (`string|null`): the fallback query parameter (default: `null`).
 - `tokenField` (`string`): the user field matched against the token (default: `'token'`).
 
-The configured header takes precedence. The query parameter is checked only when that header is absent.
+A non-empty header token takes precedence, even if it does not identify a user. The configured query parameter is used when header lookup is disabled, the header is absent, or its token is empty after optional prefix removal.
 
 `TokenAuthenticator` implements `StatelessAuthenticatorInterface`. Its resolved user is available through `Auth` and the request `user` attribute for the current request, but is not persisted by other authenticators and cannot start impersonation.
 

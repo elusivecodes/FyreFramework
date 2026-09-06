@@ -182,7 +182,7 @@ $removed = Arr::splice($values, 1, 2, ['a']);
 ## Behavior notes
 
 - Methods return copies unless their signature accepts `array &$array`; assigning the result is therefore required for `setDot()`, `forgetDot()`, sorting, filtering, and other transformations.
-- `sort()`, `shuffle()`, and `reverse()` with `$preserveKeys = false` reindex values, while `filter()`, `unique()`, `diff()`, and `intersect()` preserve surviving keys.
+- `sort()` and `shuffle()` reindex all values. `reverse()` with `$preserveKeys = false` reindexes only integer keys; string keys are always preserved. `filter()`, `unique()`, `diff()`, and `intersect()` preserve surviving keys.
 - `dot()` and `flatten()` recurse only into arrays. Objects, collections, and other traversables remain terminal values.
 - `combine()`, `fill()`, `range()`, `pad()`, and the other native wrappers retain PHP's native validation and error behavior unless this page states otherwise.
 - `Arr` supports static macros.

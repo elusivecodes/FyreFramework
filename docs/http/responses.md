@@ -128,9 +128,7 @@ When `$_SERVER['REQUEST_METHOD']` is available and the response protocol version
 - Non-`GET` requests force `303 See Other`.
 - `GET` requests convert the default `302` to `307 Temporary Redirect` (other codes are left as-is).
 
-For non-`GET` requests, the status code is always changed to `303` when the request method is available.
-
-To avoid this adjustment for `GET` requests, use a redirect code other than `302` or set `protocolVersion` to `1.0`.
+Set `protocolVersion` to `1.0` to preserve the supplied status for any method. The status is also preserved when `$_SERVER['REQUEST_METHOD']` is unavailable.
 
 ## Download responses
 

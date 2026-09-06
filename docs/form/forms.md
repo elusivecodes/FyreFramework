@@ -113,11 +113,11 @@ Use `validate($data)` when you only need a boolean result and an updated error m
 
 | Method | Validates | Parses | Calls `process()` | Updates stored data |
 | --- | --- | --- | --- | --- |
-| `execute($data)` | yes | on success | on success | raw input, then parsed input on success |
+| `execute($data)` | yes | after validation succeeds | after validation succeeds | raw input, then parsed input after validation succeeds |
 | `execute($data, false)` | no | yes | yes | parsed input |
 | `validate($data)` | yes | no | no | no |
 
-A failed `execute()` leaves the raw submitted input available for redisplay. Calling `execute(..., false)` does not clear or replace an existing error map.
+If validation fails, `execute()` leaves the raw submitted input available for redisplay. Once parsing completes, the form retains the parsed data even if `process()` returns `false`. Calling `execute(..., false)` does not clear or replace an existing error map.
 
 ## Read and update form state
 

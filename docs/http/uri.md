@@ -93,7 +93,7 @@ $params = $publicQuery->getQueryParams();
 
 ## Resolving relative URIs
 
-`resolveRelativeUri($uri)` resolves another URI string against the current URI. A value containing a host is treated as absolute and returned as-is. A value beginning with `/` replaces the current path from the root.
+`resolveRelativeUri($uri)` resolves another URI string against the current URI. An absolute URI supplies its own scheme. A scheme-relative URI beginning with `//` replaces the authority and inherits the current scheme. A path beginning with a single `/` replaces the current path from the root.
 
 Like the constructor, it requires a valid RFC 3986 URI reference; it does not apply the component setters' encoding behavior.
 
@@ -107,6 +107,9 @@ $relative = (string) $base->resolveRelativeUri('assets/app.css');
 
 $rooted = (string) $base->resolveRelativeUri('/assets/app.css');
 // https://example.com/assets/app.css
+
+$schemeRelative = (string) $base->resolveRelativeUri('//cdn.example.com/app.css');
+// https://cdn.example.com/app.css
 
 $absolute = (string) $base->resolveRelativeUri('https://cdn.example.com/app.css');
 // https://cdn.example.com/app.css
