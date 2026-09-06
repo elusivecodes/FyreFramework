@@ -9,14 +9,17 @@ use Fyre\Core\Container;
 use Fyre\Mail\Exceptions\MailException;
 use Fyre\Mail\Handlers\SmtpMailer;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Throwable;
 
 use function array_shift;
 use function base64_encode;
 use function fclose;
 use function fopen;
 use function fwrite;
+use function is_resource;
 use function rewind;
 
 final class SmtpMailerTest extends TestCase
@@ -26,7 +29,7 @@ final class SmtpMailerTest extends TestCase
     protected SmtpMailer $mailer;
 
     /**
-     * @var string[]
+     * @var array<string|Throwable>
      */
     protected array $replies = [];
 
@@ -34,6 +37,17 @@ final class SmtpMailerTest extends TestCase
      * @var string[]
      */
     protected array $sent = [];
+
+    /**
+     * @return array<string, array{bool}>
+     */
+    public static function keepAliveProvider(): array
+    {
+        return [
+            'close' => [false],
+            'keep alive' => [true],
+        ];
+    }
 
     public function testAuthenticate(): void
     {
@@ -108,19 +122,22 @@ final class SmtpMailerTest extends TestCase
         );
     }
 
-    public function testDestruct(): void
+    #[DataProvider('keepAliveProvider')]
+    public function testDestruct(bool $keepAlive): void
     {
         $this->replies = [
             '221 Bye',
         ];
 
-        Closure::bind(function(): void {
+        Closure::bind(function() use ($keepAlive): void {
             $socket = fopen('php://temp', 'r+');
             TestCase::assertIsResource($socket);
 
             /** @var SmtpMailer $this */
+            $this->config['keepAlive'] = $keepAlive;
             $this->socket = $socket;
             $this->__destruct();
+            TestCase::assertFalse(is_resource($socket));
         }, $this->mailer, SmtpMailer::class)();
 
         $this->assertArraysAreIdentical(
@@ -135,6 +152,32 @@ final class SmtpMailerTest extends TestCase
                 /** @var SmtpMailer $this */
                 return $this->socket;
             }, $this->mailer, SmtpMailer::class)()
+        );
+    }
+
+    #[DataProvider('keepAliveProvider')]
+    public function testDestructConnectionClosed(bool $keepAlive): void
+    {
+        $this->replies = [
+            new MailException('SMTP connection closed unexpectedly.'),
+        ];
+
+        Closure::bind(function() use ($keepAlive): void {
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            /** @var SmtpMailer $this */
+            $this->config['keepAlive'] = $keepAlive;
+            $this->socket = $socket;
+            $this->__destruct();
+
+            TestCase::assertFalse(is_resource($socket));
+            TestCase::assertNull($this->socket);
+        }, $this->mailer, SmtpMailer::class)();
+
+        $this->assertArraysAreIdentical(
+            ['QUIT'],
+            $this->sent
         );
     }
 
@@ -333,6 +376,51 @@ final class SmtpMailerTest extends TestCase
         }, $mailer, SmtpMailer::class)();
     }
 
+    #[DataProvider('keepAliveProvider')]
+    public function testSendCleanupConnectionClosed(bool $keepAlive): void
+    {
+        $this->replies = [
+            '250 From',
+            '250 To',
+            '354 Data',
+            '250 Queued',
+            new MailException('SMTP connection closed unexpectedly.'),
+        ];
+
+        $socket = Closure::bind(function() use ($keepAlive): mixed {
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            /** @var SmtpMailer $this */
+            $this->config['keepAlive'] = $keepAlive;
+
+            return $this->socket = $socket;
+        }, $this->mailer, SmtpMailer::class)();
+
+        $this->assertIsResource($socket);
+
+        $email = $this->mailer->email()
+            ->setFrom('from@example.com')
+            ->setTo('to@example.com')
+            ->setBodyText('Test');
+
+        $this->mailer->send($email);
+
+        $this->assertSame(
+            $keepAlive ? 'RSET' : 'QUIT',
+            $this->sent[5]
+        );
+
+        $this->assertFalse(is_resource($socket));
+
+        $this->assertNull(
+            Closure::bind(function(): mixed {
+                /** @var SmtpMailer $this */
+                return $this->socket;
+            }, $this->mailer, SmtpMailer::class)()
+        );
+    }
+
     public function testSendCommandHelloAuth(): void
     {
         /** @var SmtpMailer&Stub $mailer */
@@ -468,6 +556,107 @@ final class SmtpMailerTest extends TestCase
         }, $mailer, SmtpMailer::class)();
     }
 
+    public function testSendDataConnectionClosed(): void
+    {
+        $this->expectException(MailException::class);
+        $this->expectExceptionMessageIs('SMTP connection closed unexpectedly.');
+
+        $this->replies = [
+            '250 From',
+            '250 To',
+            '354 Data',
+            new MailException('SMTP connection closed unexpectedly.'),
+        ];
+
+        Closure::bind(function(): void {
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            /** @var SmtpMailer $this */
+            $this->socket = $socket;
+        }, $this->mailer, SmtpMailer::class)();
+
+        $email = $this->mailer->email()
+            ->setFrom('from@example.com')
+            ->setTo('to@example.com')
+            ->setBodyText('Test');
+
+        $this->mailer->send($email);
+    }
+
+    public function testSendDataRejected(): void
+    {
+        $this->expectException(MailException::class);
+        $this->expectExceptionMessageIs('SMTP invalid reply: 554 Message rejected');
+
+        $this->replies = [
+            '250 From',
+            '250 To',
+            '354 Data',
+            '554 Message rejected',
+        ];
+
+        Closure::bind(function(): void {
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            /** @var SmtpMailer $this */
+            $this->socket = $socket;
+        }, $this->mailer, SmtpMailer::class)();
+
+        $email = $this->mailer->email()
+            ->setFrom('from@example.com')
+            ->setTo('to@example.com')
+            ->setBodyText('Test');
+
+        $this->mailer->send($email);
+    }
+
+    #[DataProvider('keepAliveProvider')]
+    public function testSendReconnectsAfterCleanupFailure(bool $keepAlive): void
+    {
+        $mailer = $this->getMockBuilder(SmtpMailer::class)
+            ->setConstructorArgs([$this->container, ['keepAlive' => $keepAlive]])
+            ->onlyMethods(['connect', 'getData', 'sendData'])
+            ->getMock();
+
+        $mailer->expects($this->exactly(2))
+            ->method('connect')
+            ->willReturnCallback(Closure::bind(function(): void {
+                $socket = fopen('php://temp', 'r+');
+                TestCase::assertIsResource($socket);
+
+                /** @var SmtpMailer $this */
+                $this->socket = $socket;
+            }, $mailer, SmtpMailer::class));
+
+        $mailer->method('getData')->willReturn(
+            '250 From',
+            '250 To',
+            '354 Data',
+            '250 Queued',
+            '421 Connection closing',
+            '250 From',
+            '250 To',
+            '354 Data',
+            '250 Queued',
+            $keepAlive ? '250 Reset' : '221 Bye',
+            '221 Bye'
+        );
+
+        $email = $mailer->email()
+            ->setFrom('from@example.com')
+            ->setTo('to@example.com')
+            ->setBodyText('Test');
+
+        try {
+            $mailer->send($email);
+            $mailer->send($email);
+        } finally {
+            $mailer->__destruct();
+        }
+    }
+
     public function testWakeup(): void
     {
         Closure::bind(function(): void {
@@ -507,7 +696,13 @@ final class SmtpMailerTest extends TestCase
 
         $mailer->method('getData')
             ->willReturnCallback(function(): string {
-                return array_shift($this->replies) ?? '';
+                $reply = array_shift($this->replies) ?? '';
+
+                if ($reply instanceof Throwable) {
+                    throw $reply;
+                }
+
+                return $reply;
             });
 
         $mailer->method('sendData')

@@ -71,9 +71,7 @@ class SmtpMailer extends Mailer
      */
     public function __destruct()
     {
-        if ($this->socket) {
-            $this->sendCommand('quit');
-        }
+        $this->end(true);
     }
 
     /**
@@ -229,14 +227,24 @@ class SmtpMailer extends Mailer
     }
 
     /**
-     * Closes the connection.
+     * Resets or closes the connection without propagating cleanup failures.
+     *
+     * @param bool $forceClose Whether to close even when keep-alive is enabled.
      */
-    protected function end(): void
+    protected function end(bool $forceClose = false): void
     {
-        if ($this->config['keepAlive']) {
-            $this->sendCommand('reset');
-        } else {
-            $this->sendCommand('quit');
+        try {
+            if (!$forceClose && $this->config['keepAlive']) {
+                $this->sendCommand('reset');
+            } else {
+                $this->sendCommand('quit');
+            }
+        } catch (Throwable) {
+            if (is_resource($this->socket)) {
+                fclose($this->socket);
+            }
+
+            $this->socket = null;
         }
     }
 

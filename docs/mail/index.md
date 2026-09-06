@@ -103,6 +103,8 @@ Implemented by `SmtpMailer`. Sends mail via SMTP.
 - `dsn` (`bool`): default `false` (adds DSN hints to `RCPT TO`)
 - `keepAlive` (`bool`): default `false` (reuses the SMTP connection across sends)
 
+Once the SMTP server accepts the message, `QUIT` or `RSET` failures close the connection without failing the send. A subsequent send reconnects.
+
 When `auth` is enabled, `username` and `password` must be non-empty strings.
 
 `tls=true` enables `STARTTLS`. This mailer does not automatically secure the connection based on port; on most servers, use port `587` for `STARTTLS`.
