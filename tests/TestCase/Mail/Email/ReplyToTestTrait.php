@@ -3,9 +3,100 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Mail\Email;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+
 trait ReplyToTestTrait
 {
-    public function testAddReplyTo(): void
+    /**
+     * @return array<string, array{string, string|null, array<string, string>}>
+     */
+    public static function addReplyToProvider(): array
+    {
+        return [
+            'address' => [
+                'test2@test.com',
+                null,
+                ['test1@test.com' => 'test1@test.com', 'test2@test.com' => 'test2@test.com'],
+            ],
+            'invalid address' => [
+                'test2',
+                null,
+                ['test1@test.com' => 'test1@test.com'],
+            ],
+            'display name' => [
+                'test2@test.com',
+                'Test 2',
+                ['test1@test.com' => 'test1@test.com', 'test2@test.com' => 'Test 2'],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{array<string, string>|string, string}>
+     */
+    public static function headerReplyToProvider(): array
+    {
+        return [
+            'address' => [
+                'test1@test.com',
+                'test1@test.com',
+            ],
+            'encoded name' => [
+                ['test1@test.com' => 'Тестовое задание'],
+                '=?UTF-8?B?0KLQtdGB0YLQvtCy0L7QtSDQt9Cw0LTQsNC90LjQtQ==?= <test1@test.com>',
+            ],
+            'multiple addresses' => [
+                ['test1@test.com' => 'Test 1', 'test2@test.com' => 'Test 2'],
+                'Test 1 <test1@test.com>, Test 2 <test2@test.com>',
+            ],
+            'display name' => [
+                ['test1@test.com' => 'Test'],
+                'Test <test1@test.com>',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{array<string, string>|string, array<string, string>}>
+     */
+    public static function setReplyToProvider(): array
+    {
+        return [
+            'address' => [
+                'test1@test.com',
+                ['test1@test.com' => 'test1@test.com'],
+            ],
+            'named address' => [
+                ['test1@test.com' => 'Test 1'],
+                ['test1@test.com' => 'Test 1'],
+            ],
+            'invalid address' => [
+                'test1',
+                [],
+            ],
+            'multiple addresses' => [
+                ['test1@test.com' => 'Test 1', 'test2@test.com' => 'Test 2'],
+                ['test1@test.com' => 'Test 1', 'test2@test.com' => 'Test 2'],
+            ],
+        ];
+    }
+
+    /**
+     * @param array<string, string> $expected
+     */
+    #[DataProvider('addReplyToProvider')]
+    public function testAddReplyTo(string $email, string|null $name, array $expected): void
+    {
+        $this->email->setReplyTo('test1@test.com');
+        $this->email->addReplyTo($email, $name);
+
+        $this->assertArraysAreIdentical(
+            $expected,
+            $this->email->getReplyTo()
+        );
+    }
+
+    public function testAddReplyToReturnsEmail(): void
     {
         $this->email->setReplyTo('test1@test.com');
 
@@ -13,51 +104,20 @@ trait ReplyToTestTrait
             $this->email,
             $this->email->addReplyTo('test2@test.com')
         );
-
-        $this->assertArraysAreIdentical(
-            [
-                'test1@test.com' => 'test1@test.com',
-                'test2@test.com' => 'test2@test.com',
-            ],
-            $this->email->getReplyTo()
-        );
     }
 
-    public function testAddReplyToInvalid(): void
+    /**
+     * @param array<string, string>|string $emails
+     */
+    #[DataProvider('headerReplyToProvider')]
+    public function testHeaderReplyTo(array|string $emails, string $expected): void
     {
-        $this->email->setReplyTo('test1@test.com');
-        $this->email->addReplyTo('test2');
-
-        $this->assertArraysAreIdentical(
-            [
-                'test1@test.com' => 'test1@test.com',
-            ],
-            $this->email->getReplyTo()
-        );
-    }
-
-    public function testAddReplyToName(): void
-    {
-        $this->email->setReplyTo('test1@test.com');
-        $this->email->addReplyTo('test2@test.com', 'Test 2');
-
-        $this->assertArraysAreIdentical(
-            [
-                'test1@test.com' => 'test1@test.com',
-                'test2@test.com' => 'Test 2',
-            ],
-            $this->email->getReplyTo()
-        );
-    }
-
-    public function testHeaderReplyTo(): void
-    {
-        $this->email->setReplyTo('test1@test.com');
+        $this->email->setReplyTo($emails);
 
         $headers = $this->email->getFullHeaders();
 
         $this->assertSame(
-            'test1@test.com',
+            $expected,
             $headers['Reply-To']
         );
     }
@@ -77,101 +137,26 @@ trait ReplyToTestTrait
         );
     }
 
-    public function testHeaderReplyToEncoding(): void
+    /**
+     * @param array<string, string>|string $emails
+     * @param array<string, string> $expected
+     */
+    #[DataProvider('setReplyToProvider')]
+    public function testSetReplyTo(array|string $emails, array $expected): void
     {
-        $this->email->setReplyTo([
-            'test1@test.com' => 'Тестовое задание',
-        ]);
+        $this->email->setReplyTo($emails);
 
-        $headers = $this->email->getFullHeaders();
-
-        $this->assertSame(
-            '=?UTF-8?B?0KLQtdGB0YLQvtCy0L7QtSDQt9Cw0LTQsNC90LjQtQ==?= <test1@test.com>',
-            $headers['Reply-To']
+        $this->assertArraysAreIdentical(
+            $expected,
+            $this->email->getReplyTo()
         );
     }
 
-    public function testHeaderReplyToMultiple(): void
-    {
-        $this->email->setReplyTo([
-            'test1@test.com' => 'Test 1',
-            'test2@test.com' => 'Test 2',
-        ]);
-
-        $headers = $this->email->getFullHeaders();
-
-        $this->assertSame(
-            'Test 1 <test1@test.com>, Test 2 <test2@test.com>',
-            $headers['Reply-To']
-        );
-    }
-
-    public function testHeaderReplyToName(): void
-    {
-        $this->email->setReplyTo([
-            'test1@test.com' => 'Test',
-        ]);
-
-        $headers = $this->email->getFullHeaders();
-
-        $this->assertSame(
-            'Test <test1@test.com>',
-            $headers['Reply-To']
-        );
-    }
-
-    public function testSetReplyTo(): void
+    public function testSetReplyToReturnsEmail(): void
     {
         $this->assertSame(
             $this->email,
             $this->email->setReplyTo('test1@test.com')
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                'test1@test.com' => 'test1@test.com',
-            ],
-            $this->email->getReplyTo()
-        );
-    }
-
-    public function testSetReplyToArray(): void
-    {
-        $this->email->setReplyTo([
-            'test1@test.com' => 'Test 1',
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [
-                'test1@test.com' => 'Test 1',
-            ],
-            $this->email->getReplyTo()
-        );
-    }
-
-    public function testSetReplyToInvalid(): void
-    {
-        $this->email->setReplyTo('test1');
-
-        $this->assertArraysAreIdentical(
-            [],
-            $this->email->getReplyTo()
-        );
-    }
-
-    public function testSetReplyToMultiple(): void
-    {
-        $this->email->setReplyTo([
-            'test1@test.com' => 'Test 1',
-            'test2@test.com' => 'Test 2',
-        ]);
-
-        $this->assertArraysAreIdentical(
-            [
-                'test1@test.com' => 'Test 1',
-                'test2@test.com' => 'Test 2',
-            ],
-            $this->email->getReplyTo()
         );
     }
 }

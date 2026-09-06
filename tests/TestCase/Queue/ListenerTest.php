@@ -7,7 +7,6 @@ use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Event\EventManager;
 use Fyre\Queue\Handlers\RedisQueue;
-use Fyre\Queue\Message;
 use Fyre\Queue\Queue;
 use Fyre\Queue\QueueManager;
 use Fyre\Queue\Worker;
@@ -43,16 +42,30 @@ final class ListenerTest extends TestCase
             'retry' => false,
         ]);
 
-        $this->assertArraysAreIdentical(
-            [
-                'queued' => 1,
-                'delayed' => 0,
-                'completed' => 0,
-                'failed' => 0,
-                'total' => 1,
+        $worker = $this->container->build(Worker::class, [
+            'options' => [
+                'maxJobs' => 1,
+                'maxRuntime' => 5,
             ],
-            $this->queue->stats()
+        ]);
+
+        $worker->run();
+
+        $data = unserialize(file_get_contents('tmp/exception') ?: '');
+        $exception = $data['exception'];
+
+        $this->assertInstanceOf(
+            RuntimeException::class,
+            $exception
         );
+    }
+
+    public function testListenerExceptionMessage(): void
+    {
+        $this->queueManager->push(MockJob::class, ['test' => 1], [
+            'method' => 'error',
+            'retry' => false,
+        ]);
 
         $worker = $this->container->build(Worker::class, [
             'options' => [
@@ -63,25 +76,8 @@ final class ListenerTest extends TestCase
 
         $worker->run();
 
-        $this->assertArraysAreIdentical(
-            [
-                'queued' => 0,
-                'delayed' => 0,
-                'completed' => 0,
-                'failed' => 1,
-                'total' => 1,
-            ],
-            $this->queue->stats()
-        );
-
         $data = unserialize(file_get_contents('tmp/exception') ?: '');
         $message = $data['message'];
-        $exception = $data['exception'];
-
-        $this->assertInstanceOf(
-            Message::class,
-            $message
-        );
 
         $this->assertArraysAreIdentical(
             [
@@ -101,11 +97,6 @@ final class ListenerTest extends TestCase
             ],
             $message->getConfig()
         );
-
-        $this->assertInstanceOf(
-            RuntimeException::class,
-            $exception
-        );
     }
 
     public function testListenerExceptionRetry(): void
@@ -114,16 +105,67 @@ final class ListenerTest extends TestCase
             'method' => 'error',
         ]);
 
+        $worker = $this->container->build(Worker::class, [
+            'options' => [
+                'maxJobs' => 5,
+                'maxRuntime' => 5,
+            ],
+        ]);
+
+        $worker->run();
+
+        $data = unserialize(file_get_contents('tmp/exception') ?: '');
+        $exception = $data['exception'];
+
+        $this->assertInstanceOf(
+            RuntimeException::class,
+            $exception
+        );
+    }
+
+    public function testListenerExceptionRetryMessage(): void
+    {
+        $this->queueManager->push(MockJob::class, ['test' => 1], [
+            'method' => 'error',
+        ]);
+
+        $worker = $this->container->build(Worker::class, [
+            'options' => [
+                'maxJobs' => 5,
+                'maxRuntime' => 5,
+            ],
+        ]);
+
+        $worker->run();
+
+        $data = unserialize(file_get_contents('tmp/exception') ?: '');
+        $message = $data['message'];
+
         $this->assertArraysAreIdentical(
             [
-                'queued' => 1,
-                'delayed' => 0,
-                'completed' => 0,
-                'failed' => 0,
-                'total' => 1,
+                'className' => MockJob::class,
+                'method' => 'error',
+                'arguments' => [
+                    'test' => 1,
+                ],
+                'config' => 'default',
+                'queue' => 'default',
+                'after' => null,
+                'before' => null,
+                'retry' => true,
+                'maxRetries' => 5,
+                'backoff' => [0],
+                'unique' => false,
             ],
-            $this->queue->stats()
+            $message->getConfig()
         );
+    }
+
+    public function testListenerExceptionRetryStats(): void
+    {
+        $this->queueManager->push(MockJob::class, ['test' => 1], [
+            'method' => 'error',
+        ]);
 
         $worker = $this->container->build(Worker::class, [
             'options' => [
@@ -144,58 +186,14 @@ final class ListenerTest extends TestCase
             ],
             $this->queue->stats()
         );
-
-        $data = unserialize(file_get_contents('tmp/exception') ?: '');
-        $message = $data['message'];
-        $exception = $data['exception'];
-
-        $this->assertInstanceOf(
-            Message::class,
-            $message
-        );
-
-        $this->assertArraysAreIdentical(
-            [
-                'className' => MockJob::class,
-                'method' => 'error',
-                'arguments' => [
-                    'test' => 1,
-                ],
-                'config' => 'default',
-                'queue' => 'default',
-                'after' => null,
-                'before' => null,
-                'retry' => true,
-                'maxRetries' => 5,
-                'backoff' => [0],
-                'unique' => false,
-            ],
-            $message->getConfig()
-        );
-
-        $this->assertInstanceOf(
-            RuntimeException::class,
-            $exception
-        );
     }
 
-    public function testListenerFailure(): void
+    public function testListenerExceptionStats(): void
     {
         $this->queueManager->push(MockJob::class, ['test' => 1], [
-            'method' => 'fail',
+            'method' => 'error',
             'retry' => false,
         ]);
-
-        $this->assertArraysAreIdentical(
-            [
-                'queued' => 1,
-                'delayed' => 0,
-                'completed' => 0,
-                'failed' => 0,
-                'total' => 1,
-            ],
-            $this->queue->stats()
-        );
 
         $worker = $this->container->build(Worker::class, [
             'options' => [
@@ -216,13 +214,25 @@ final class ListenerTest extends TestCase
             ],
             $this->queue->stats()
         );
+    }
+
+    public function testListenerFailure(): void
+    {
+        $this->queueManager->push(MockJob::class, ['test' => 1], [
+            'method' => 'fail',
+            'retry' => false,
+        ]);
+
+        $worker = $this->container->build(Worker::class, [
+            'options' => [
+                'maxJobs' => 1,
+                'maxRuntime' => 5,
+            ],
+        ]);
+
+        $worker->run();
 
         $message = unserialize(file_get_contents('tmp/failure') ?: '');
-
-        $this->assertInstanceOf(
-            Message::class,
-            $message
-        );
 
         $this->assertArraysAreIdentical(
             [
@@ -250,17 +260,6 @@ final class ListenerTest extends TestCase
             'method' => 'fail',
         ]);
 
-        $this->assertArraysAreIdentical(
-            [
-                'queued' => 1,
-                'delayed' => 0,
-                'completed' => 0,
-                'failed' => 0,
-                'total' => 1,
-            ],
-            $this->queue->stats()
-        );
-
         $worker = $this->container->build(Worker::class, [
             'options' => [
                 'maxJobs' => 5,
@@ -270,23 +269,7 @@ final class ListenerTest extends TestCase
 
         $worker->run();
 
-        $this->assertArraysAreIdentical(
-            [
-                'queued' => 0,
-                'delayed' => 0,
-                'completed' => 0,
-                'failed' => 5,
-                'total' => 5,
-            ],
-            $this->queue->stats()
-        );
-
         $message = unserialize(file_get_contents('tmp/failure') ?: '');
-
-        $this->assertInstanceOf(
-            Message::class,
-            $message
-        );
 
         $this->assertArraysAreIdentical(
             [
@@ -308,45 +291,71 @@ final class ListenerTest extends TestCase
         );
     }
 
-    public function testListenerInvalid(): void
+    public function testListenerFailureRetryStats(): void
     {
-        // @phpstan-ignore argument.type
-        $this->queueManager->push('Invalid', ['test' => 1]);
+        $this->queueManager->push(MockJob::class, ['test' => 1], [
+            'method' => 'fail',
+        ]);
 
-        $this->assertArraysAreIdentical(
-            [
-                'queued' => 1,
-                'delayed' => 0,
-                'completed' => 0,
-                'failed' => 0,
-                'total' => 1,
+        $worker = $this->container->build(Worker::class, [
+            'options' => [
+                'maxJobs' => 5,
+                'maxRuntime' => 5,
             ],
-            $this->queue->stats()
-        );
+        ]);
 
-        $worker = $this->container->build(Worker::class);
-
-        $this->assertTrue(
-            $worker->runOnce()
-        );
+        $worker->run();
 
         $this->assertArraysAreIdentical(
             [
                 'queued' => 0,
                 'delayed' => 0,
                 'completed' => 0,
-                'failed' => 0,
+                'failed' => 5,
+                'total' => 5,
+            ],
+            $this->queue->stats()
+        );
+    }
+
+    public function testListenerFailureStats(): void
+    {
+        $this->queueManager->push(MockJob::class, ['test' => 1], [
+            'method' => 'fail',
+            'retry' => false,
+        ]);
+
+        $worker = $this->container->build(Worker::class, [
+            'options' => [
+                'maxJobs' => 1,
+                'maxRuntime' => 5,
+            ],
+        ]);
+
+        $worker->run();
+
+        $this->assertArraysAreIdentical(
+            [
+                'queued' => 0,
+                'delayed' => 0,
+                'completed' => 0,
+                'failed' => 1,
                 'total' => 1,
             ],
             $this->queue->stats()
         );
+    }
+
+    public function testListenerInvalid(): void
+    {
+        // @phpstan-ignore argument.type
+        $this->queueManager->push('Invalid', ['test' => 1]);
+
+        $worker = $this->container->build(Worker::class);
+
+        $worker->runOnce();
 
         $message = unserialize(file_get_contents('tmp/invalid') ?: '');
-
-        $this->assertInstanceOf(
-            Message::class,
-            $message
-        );
 
         $this->assertArraysAreIdentical(
             [
@@ -368,7 +377,40 @@ final class ListenerTest extends TestCase
         );
     }
 
-    public function testListenerSuccess(): void
+    public function testListenerInvalidRunOnce(): void
+    {
+        // @phpstan-ignore argument.type
+        $this->queueManager->push('Invalid', ['test' => 1]);
+
+        $worker = $this->container->build(Worker::class);
+
+        $this->assertTrue(
+            $worker->runOnce()
+        );
+    }
+
+    public function testListenerInvalidStats(): void
+    {
+        // @phpstan-ignore argument.type
+        $this->queueManager->push('Invalid', ['test' => 1]);
+
+        $worker = $this->container->build(Worker::class);
+
+        $worker->runOnce();
+
+        $this->assertArraysAreIdentical(
+            [
+                'queued' => 0,
+                'delayed' => 0,
+                'completed' => 0,
+                'failed' => 0,
+                'total' => 1,
+            ],
+            $this->queue->stats()
+        );
+    }
+
+    public function testListenerQueuedStats(): void
     {
         $this->queueManager->push(MockJob::class, ['test' => 1]);
 
@@ -382,6 +424,11 @@ final class ListenerTest extends TestCase
             ],
             $this->queue->stats()
         );
+    }
+
+    public function testListenerStart(): void
+    {
+        $this->queueManager->push(MockJob::class, ['test' => 1]);
 
         $worker = $this->container->build(Worker::class, [
             'options' => [
@@ -392,23 +439,7 @@ final class ListenerTest extends TestCase
 
         $worker->run();
 
-        $this->assertArraysAreIdentical(
-            [
-                'queued' => 0,
-                'delayed' => 0,
-                'completed' => 1,
-                'failed' => 0,
-                'total' => 1,
-            ],
-            $this->queue->stats()
-        );
-
         $message = unserialize(file_get_contents('tmp/start') ?: '');
-
-        $this->assertInstanceOf(
-            Message::class,
-            $message
-        );
 
         $this->assertArraysAreIdentical(
             [
@@ -428,13 +459,22 @@ final class ListenerTest extends TestCase
             ],
             $message->getConfig()
         );
+    }
+
+    public function testListenerSuccess(): void
+    {
+        $this->queueManager->push(MockJob::class, ['test' => 1]);
+
+        $worker = $this->container->build(Worker::class, [
+            'options' => [
+                'maxJobs' => 1,
+                'maxRuntime' => 5,
+            ],
+        ]);
+
+        $worker->run();
 
         $message = unserialize(file_get_contents('tmp/success') ?: '');
-
-        $this->assertInstanceOf(
-            Message::class,
-            $message
-        );
 
         $this->assertArraysAreIdentical(
             [
@@ -476,6 +516,31 @@ final class ListenerTest extends TestCase
         ]);
 
         $worker->run();
+    }
+
+    public function testListenerSuccessStats(): void
+    {
+        $this->queueManager->push(MockJob::class, ['test' => 1]);
+
+        $worker = $this->container->build(Worker::class, [
+            'options' => [
+                'maxJobs' => 1,
+                'maxRuntime' => 5,
+            ],
+        ]);
+
+        $worker->run();
+
+        $this->assertArraysAreIdentical(
+            [
+                'queued' => 0,
+                'delayed' => 0,
+                'completed' => 1,
+                'failed' => 0,
+                'total' => 1,
+            ],
+            $this->queue->stats()
+        );
     }
 
     #[Override]

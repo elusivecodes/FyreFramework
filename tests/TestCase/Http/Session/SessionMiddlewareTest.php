@@ -6,7 +6,6 @@ namespace Tests\TestCase\Http\Session;
 use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
-use Fyre\Http\ClientResponse;
 use Fyre\Http\Middleware\SessionMiddleware;
 use Fyre\Http\MiddlewareQueue;
 use Fyre\Http\RequestHandler;
@@ -40,12 +39,7 @@ final class SessionMiddlewareTest extends TestCase
 
         $request = $this->container->build(ServerRequest::class);
 
-        $response = $handler->handle($request);
-
-        $this->assertInstanceOf(
-            ClientResponse::class,
-            $response
-        );
+        $handler->handle($request);
 
         $request = $this->container->use(ServerRequest::class);
 

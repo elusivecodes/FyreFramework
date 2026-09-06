@@ -5,9 +5,39 @@ namespace Tests\TestCase\View\Helpers\Form;
 
 use Closure;
 use Fyre\View\View;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait TextareaTestTrait
 {
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function textareaAttributesProvider(): array
+    {
+        return [
+            'array value' => [
+                ['data-test' => [1, 2]],
+                '<textarea id="textarea" name="textarea" data-test="[1,2]" placeholder="Textarea"></textarea>',
+            ],
+            'escaped value' => [
+                ['data-test' => '<test>'],
+                '<textarea id="textarea" name="textarea" data-test="&lt;test&gt;" placeholder="Textarea"></textarea>',
+            ],
+            'invalid name' => [
+                ['*class*' => 'test'],
+                '<textarea class="test" id="textarea" name="textarea" placeholder="Textarea"></textarea>',
+            ],
+            'multiple attributes' => [
+                ['class' => 'test', 'id' => 'other'],
+                '<textarea class="test" id="other" name="textarea" placeholder="Textarea"></textarea>',
+            ],
+            'attribute order' => [
+                ['id' => 'other', 'class' => 'test'],
+                '<textarea class="test" id="other" name="textarea" placeholder="Textarea"></textarea>',
+            ],
+        ];
+    }
+
     public function testTextarea(): void
     {
         $this->assertSame(
@@ -16,55 +46,15 @@ trait TextareaTestTrait
         );
     }
 
-    public function testTextareaAttributeArray(): void
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    #[DataProvider('textareaAttributesProvider')]
+    public function testTextareaAttributes(array $attributes, string $expected): void
     {
         $this->assertSame(
-            '<textarea id="textarea" name="textarea" data-test="[1,2]" placeholder="Textarea"></textarea>',
-            $this->view->Form->textarea('textarea', [
-                'data-test' => [1, 2],
-            ])
-        );
-    }
-
-    public function testTextareaAttributeEscape(): void
-    {
-        $this->assertSame(
-            '<textarea id="textarea" name="textarea" data-test="&lt;test&gt;" placeholder="Textarea"></textarea>',
-            $this->view->Form->textarea('textarea', [
-                'data-test' => '<test>',
-            ])
-        );
-    }
-
-    public function testTextareaAttributeInvalid(): void
-    {
-        $this->assertSame(
-            '<textarea class="test" id="textarea" name="textarea" placeholder="Textarea"></textarea>',
-            $this->view->Form->textarea('textarea', [
-                '*class*' => 'test',
-            ])
-        );
-    }
-
-    public function testTextareaAttributes(): void
-    {
-        $this->assertSame(
-            '<textarea class="test" id="other" name="textarea" placeholder="Textarea"></textarea>',
-            $this->view->Form->textarea('textarea', [
-                'class' => 'test',
-                'id' => 'other',
-            ])
-        );
-    }
-
-    public function testTextareaAttributesOrder(): void
-    {
-        $this->assertSame(
-            '<textarea class="test" id="other" name="textarea" placeholder="Textarea"></textarea>',
-            $this->view->Form->textarea('textarea', [
-                'id' => 'other',
-                'class' => 'test',
-            ])
+            $expected,
+            $this->view->Form->textarea('textarea', $attributes)
         );
     }
 

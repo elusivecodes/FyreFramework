@@ -6,9 +6,39 @@ namespace Tests\TestCase\View\Helpers\Form;
 use Closure;
 use Fyre\Utility\DateTime\Time;
 use Fyre\View\View;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait TimeTestTrait
 {
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function timeAttributesProvider(): array
+    {
+        return [
+            'array value' => [
+                ['data-test' => [1, 2]],
+                '<input id="time" name="time" data-test="[1,2]" type="time" />',
+            ],
+            'escaped value' => [
+                ['data-test' => '<test>'],
+                '<input id="time" name="time" data-test="&lt;test&gt;" type="time" />',
+            ],
+            'invalid name' => [
+                ['*class*' => 'test'],
+                '<input class="test" id="time" name="time" type="time" />',
+            ],
+            'multiple attributes' => [
+                ['class' => 'test', 'id' => 'other'],
+                '<input class="test" id="other" name="time" type="time" />',
+            ],
+            'attribute order' => [
+                ['id' => 'other', 'class' => 'test'],
+                '<input class="test" id="other" name="time" type="time" />',
+            ],
+        ];
+    }
+
     public function testTime(): void
     {
         $this->assertSame(
@@ -17,55 +47,15 @@ trait TimeTestTrait
         );
     }
 
-    public function testTimeAttributeArray(): void
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    #[DataProvider('timeAttributesProvider')]
+    public function testTimeAttributes(array $attributes, string $expected): void
     {
         $this->assertSame(
-            '<input id="time" name="time" data-test="[1,2]" type="time" />',
-            $this->view->Form->time('time', [
-                'data-test' => [1, 2],
-            ])
-        );
-    }
-
-    public function testTimeAttributeEscape(): void
-    {
-        $this->assertSame(
-            '<input id="time" name="time" data-test="&lt;test&gt;" type="time" />',
-            $this->view->Form->time('time', [
-                'data-test' => '<test>',
-            ])
-        );
-    }
-
-    public function testTimeAttributeInvalid(): void
-    {
-        $this->assertSame(
-            '<input class="test" id="time" name="time" type="time" />',
-            $this->view->Form->time('time', [
-                '*class*' => 'test',
-            ])
-        );
-    }
-
-    public function testTimeAttributes(): void
-    {
-        $this->assertSame(
-            '<input class="test" id="other" name="time" type="time" />',
-            $this->view->Form->time('time', [
-                'class' => 'test',
-                'id' => 'other',
-            ])
-        );
-    }
-
-    public function testTimeAttributesOrder(): void
-    {
-        $this->assertSame(
-            '<input class="test" id="other" name="time" type="time" />',
-            $this->view->Form->time('time', [
-                'id' => 'other',
-                'class' => 'test',
-            ])
+            $expected,
+            $this->view->Form->time('time', $attributes)
         );
     }
 

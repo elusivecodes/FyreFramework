@@ -30,10 +30,7 @@ final class EventManagerTest extends TestCase
     {
         $listener = new MockListener();
 
-        $this->assertSame(
-            $this->eventManager,
-            $this->eventManager->addListener($listener)
-        );
+        $this->eventManager->addListener($listener);
 
         $this->eventManager->trigger('test', 1);
 
@@ -54,6 +51,14 @@ final class EventManagerTest extends TestCase
         $this->assertSame(1, $listener2->getResult());
     }
 
+    public function testAddListenerReturnsEventManager(): void
+    {
+        $this->assertSame(
+            $this->eventManager,
+            $this->eventManager->addListener(new MockListener())
+        );
+    }
+
     public function testAddProtectedListener(): void
     {
         $container = new Container();
@@ -63,14 +68,19 @@ final class EventManagerTest extends TestCase
         ]);
         $listener = new MockProtectedListener();
 
-        $this->assertSame(
-            $eventManager,
-            $eventManager->addListener($listener)
-        );
+        $eventManager->addListener($listener);
 
         $eventManager->trigger('test', 1);
 
         $this->assertSame(1, $listener->getResult());
+    }
+
+    public function testAddProtectedListenerReturnsEventManager(): void
+    {
+        $this->assertSame(
+            $this->eventManager,
+            $this->eventManager->addListener(new MockProtectedListener())
+        );
     }
 
     public function testCacheListener(): void
@@ -130,30 +140,40 @@ final class EventManagerTest extends TestCase
             DebugTrait::class,
             class_uses(EventManager::class)
         );
-
-        $this->assertContains(
-            DebugTrait::class,
-            class_uses(Event::class)
-        );
     }
 
     public function testDispatch(): void
     {
-        $event1 = new Event('test');
+        $event = new Event('test');
 
-        $i = 0;
+        $this->eventManager->on('test', static function(): void {});
 
-        $this->eventManager->on('test', static function() use (&$i): void {
-            $i++;
+        $this->assertSame(
+            $event,
+            $this->eventManager->dispatch($event)
+        );
+    }
+
+    public function testDispatchListeners(): void
+    {
+        $event = new Event('test');
+        $events = [];
+
+        $this->eventManager->on('test', static function(Event $event) use (&$events): void {
+            $events[] = $event;
         });
 
-        $event2 = $this->eventManager->dispatch($event1);
+        $this->eventManager->dispatch($event);
 
-        $this->assertInstanceOf(Event::class, $event2);
+        $this->assertSame([$event], $events);
+    }
 
-        $this->assertSame($event1, $event2);
-
-        $this->assertSame(1, $i);
+    public function testEventDebug(): void
+    {
+        $this->assertContains(
+            DebugTrait::class,
+            class_uses(Event::class)
+        );
     }
 
     public function testEventPropagation(): void
@@ -171,7 +191,7 @@ final class EventManagerTest extends TestCase
             $results[] = 2;
         });
 
-        $event = $eventManager->trigger('test');
+        $eventManager->trigger('test');
 
         $this->assertArraysAreIdentical([2, 1], $results);
     }
@@ -184,8 +204,6 @@ final class EventManagerTest extends TestCase
 
         $event = $this->eventManager->trigger('test');
 
-        $this->assertInstanceOf(Event::class, $event);
-
         $this->assertSame(
             1,
             $event->getResult()
@@ -194,37 +212,54 @@ final class EventManagerTest extends TestCase
 
     public function testEventStopPropagation(): void
     {
+        $this->eventManager->on('test', static function(Event $event): void {
+            $event->stopPropagation();
+        });
+
+        $event = $this->eventManager->trigger('test');
+
+        $this->assertTrue($event->isPropagationStopped());
+    }
+
+    public function testEventStopPropagationSkipsLocalListeners(): void
+    {
+        $events = [];
+
+        $this->eventManager->on('test', static function(Event $event) use (&$events): void {
+            $events[] = $event;
+        });
+        $this->eventManager->on('test', static function(Event $event): void {
+            $event->stopPropagation();
+        }, EventManager::PRIORITY_HIGH);
+
+        $this->eventManager->trigger('test');
+
+        $this->assertSame([], $events);
+    }
+
+    public function testEventStopPropagationSkipsParentListeners(): void
+    {
         $eventManager = $this->container->build(EventManager::class, [
             'parentEventManager' => $this->eventManager,
         ]);
 
-        $ran = false;
+        $events = [];
 
-        $this->eventManager->on('test', static function() use (&$ran): void {
-            $ran = true;
-        });
-        $eventManager->on('test', static function() use (&$ran): void {
-            $ran = true;
+        $this->eventManager->on('test', static function(Event $event) use (&$events): void {
+            $events[] = $event;
         });
         $eventManager->on('test', static function(Event $event): void {
             $event->stopPropagation();
         }, EventManager::PRIORITY_HIGH);
 
-        $event = $eventManager->trigger('test');
+        $eventManager->trigger('test');
 
-        $this->assertTrue(
-            $event->isPropagationStopped()
-        );
-
-        $this->assertFalse($ran);
+        $this->assertSame([], $events);
     }
 
     public function testHas(): void
     {
-        $this->assertSame(
-            $this->eventManager,
-            $this->eventManager->on('test', static function(): void {})
-        );
+        $this->eventManager->on('test', static function(): void {});
 
         $this->assertTrue(
             $this->eventManager->has('test')
@@ -249,10 +284,7 @@ final class EventManagerTest extends TestCase
             $i++;
         });
 
-        $this->assertSame(
-            $this->eventManager,
-            $this->eventManager->off('test')
-        );
+        $this->eventManager->off('test');
 
         $this->eventManager->trigger('test');
 
@@ -261,24 +293,21 @@ final class EventManagerTest extends TestCase
 
     public function testOffCallback(): void
     {
-        $i = 0;
-        $callback = static function() use (&$i): void {
-            $i++;
+        $calls = [];
+        $callback = static function() use (&$calls): void {
+            $calls[] = 'removed';
         };
 
         $this->eventManager->on('test', $callback);
-        $this->eventManager->on('test', static function() use (&$i): void {
-            $i++;
+        $this->eventManager->on('test', static function() use (&$calls): void {
+            $calls[] = 'remaining';
         });
 
-        $this->assertSame(
-            $this->eventManager,
-            $this->eventManager->off('test', $callback)
-        );
+        $this->eventManager->off('test', $callback);
 
         $this->eventManager->trigger('test');
 
-        $this->assertSame(1, $i);
+        $this->assertSame(['remaining'], $calls);
     }
 
     public function testOffCallbackInvalid(): void
@@ -288,14 +317,32 @@ final class EventManagerTest extends TestCase
             $i++;
         });
 
-        $this->assertSame(
-            $this->eventManager,
-            $this->eventManager->off('test', static function(): void {})
-        );
+        $this->eventManager->off('test', static function(): void {});
 
         $this->eventManager->trigger('test');
 
         $this->assertSame(1, $i);
+    }
+
+    public function testOffCallbackInvalidReturnsEventManager(): void
+    {
+        $this->eventManager->on('test', static function(): void {});
+
+        $this->assertSame(
+            $this->eventManager,
+            $this->eventManager->off('test', static function(): void {})
+        );
+    }
+
+    public function testOffCallbackReturnsEventManager(): void
+    {
+        $callback = static function(): void {};
+        $this->eventManager->on('test', $callback);
+
+        $this->assertSame(
+            $this->eventManager,
+            $this->eventManager->off('test', $callback)
+        );
     }
 
     public function testOffInvalid(): void
@@ -305,14 +352,39 @@ final class EventManagerTest extends TestCase
             $i++;
         });
 
-        $this->assertSame(
-            $this->eventManager,
-            $this->eventManager->off('test2')
-        );
+        $this->eventManager->off('test2');
 
         $this->eventManager->trigger('test1');
 
         $this->assertSame(1, $i);
+    }
+
+    public function testOffInvalidReturnsEventManager(): void
+    {
+        $this->eventManager->on('test1', static function(): void {});
+
+        $this->assertSame(
+            $this->eventManager,
+            $this->eventManager->off('test2')
+        );
+    }
+
+    public function testOffReturnsEventManager(): void
+    {
+        $this->eventManager->on('test', static function(): void {});
+
+        $this->assertSame(
+            $this->eventManager,
+            $this->eventManager->off('test')
+        );
+    }
+
+    public function testOnReturnsEventManager(): void
+    {
+        $this->assertSame(
+            $this->eventManager,
+            $this->eventManager->on('test', static function(): void {})
+        );
     }
 
     public function testRemoveListener(): void
@@ -321,14 +393,22 @@ final class EventManagerTest extends TestCase
 
         $this->eventManager->addListener($listener);
 
-        $this->assertSame(
-            $this->eventManager,
-            $this->eventManager->removeListener($listener)
-        );
+        $this->eventManager->removeListener($listener);
 
         $this->eventManager->trigger('test', 1);
 
         $this->assertNull($listener->getResult());
+    }
+
+    public function testRemoveListenerReturnsEventManager(): void
+    {
+        $listener = new MockListener();
+        $this->eventManager->addListener($listener);
+
+        $this->assertSame(
+            $this->eventManager,
+            $this->eventManager->removeListener($listener)
+        );
     }
 
     public function testRemoveProtectedListener(): void
@@ -342,28 +422,34 @@ final class EventManagerTest extends TestCase
 
         $eventManager->addListener($listener);
 
-        $this->assertSame(
-            $eventManager,
-            $eventManager->removeListener($listener)
-        );
+        $eventManager->removeListener($listener);
 
         $eventManager->trigger('test', 1);
 
         $this->assertNull($listener->getResult());
     }
 
+    public function testRemoveProtectedListenerReturnsEventManager(): void
+    {
+        $listener = new MockProtectedListener();
+        $this->eventManager->addListener($listener);
+
+        $this->assertSame(
+            $this->eventManager,
+            $this->eventManager->removeListener($listener)
+        );
+    }
+
     public function testTriggerArguments(): void
     {
-        $i = 0;
-        $this->eventManager->on('test', static function(Event $event, int $a, bool $b) use (&$i): void {
-            if ($b) {
-                $i += $a;
-            }
+        $arguments = [];
+        $this->eventManager->on('test', static function(Event $event, int $a, bool $b) use (&$arguments): void {
+            $arguments = [$a, $b];
         });
 
         $this->eventManager->trigger('test', 2, true);
 
-        $this->assertSame(2, $i);
+        $this->assertSame([2, true], $arguments);
     }
 
     public function testTriggerPriority(): void

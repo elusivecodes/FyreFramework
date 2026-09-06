@@ -5,6 +5,7 @@ namespace Tests\TestCase\Event;
 
 use Fyre\Cache\CacheManager;
 use Fyre\Core\Container;
+use Fyre\Event\Event;
 use Fyre\Event\EventManager;
 use Override;
 use PHPUnit\Framework\TestCase;
@@ -20,30 +21,40 @@ final class EventDispatcherTest extends TestCase
     {
         $eventManager = $this->dispatcher->getEventManager();
 
-        $ran = false;
-        $eventManager->on('test', static function() use (&$ran): void {
-            $ran = true;
+        $events = [];
+        $eventManager->on('test', static function(Event $event) use (&$events): void {
+            $events[] = $event;
         });
 
         $event = $this->dispatcher->dispatchEvent('test', ['a' => 1]);
 
-        $this->assertSame('test', $event->getName());
+        $this->assertSame([$event], $events);
+    }
 
-        $this->assertSame($this->dispatcher, $event->getSubject());
+    public function testDispatchEventData(): void
+    {
+        $event = $this->dispatcher->dispatchEvent('test', ['a' => 1]);
 
         $this->assertArraysAreIdentical(['a' => 1], $event->getData());
+    }
 
-        $this->assertTrue($ran);
+    public function testDispatchEventName(): void
+    {
+        $event = $this->dispatcher->dispatchEvent('test');
+
+        $this->assertSame('test', $event->getName());
+    }
+
+    public function testDispatchEventSubject(): void
+    {
+        $event = $this->dispatcher->dispatchEvent('test');
+
+        $this->assertSame($this->dispatcher, $event->getSubject());
     }
 
     public function testGetEventManager(): void
     {
         $eventManager = $this->dispatcher->getEventManager();
-
-        $this->assertInstanceOf(
-            EventManager::class,
-            $eventManager
-        );
 
         $this->assertSame(
             $eventManager,
@@ -57,14 +68,21 @@ final class EventDispatcherTest extends TestCase
             'parentEventManager' => null,
         ]);
 
-        $this->assertSame(
-            $this->dispatcher,
-            $this->dispatcher->setEventManager($eventManager)
-        );
+        $this->dispatcher->setEventManager($eventManager);
 
         $this->assertSame(
             $eventManager,
             $this->dispatcher->getEventManager()
+        );
+    }
+
+    public function testSetEventManagerReturnsDispatcher(): void
+    {
+        $eventManager = $this->createStub(EventManager::class);
+
+        $this->assertSame(
+            $this->dispatcher,
+            $this->dispatcher->setEventManager($eventManager)
         );
     }
 

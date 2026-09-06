@@ -5,9 +5,39 @@ namespace Tests\TestCase\View\Helpers\Form;
 
 use Closure;
 use Fyre\View\View;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait RadioTestTrait
 {
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function radioAttributesProvider(): array
+    {
+        return [
+            'array value' => [
+                ['value' => '1', 'data-test' => [1, 2]],
+                '<input id="radio" name="radio" data-test="[1,2]" type="radio" value="1" />',
+            ],
+            'escaped value' => [
+                ['value' => '1', 'data-test' => '<test>'],
+                '<input id="radio" name="radio" data-test="&lt;test&gt;" type="radio" value="1" />',
+            ],
+            'invalid name' => [
+                ['value' => '1', '*class*' => 'test'],
+                '<input class="test" id="radio" name="radio" type="radio" value="1" />',
+            ],
+            'multiple attributes' => [
+                ['class' => 'test', 'id' => 'other', 'value' => '1'],
+                '<input class="test" id="other" name="radio" type="radio" value="1" />',
+            ],
+            'attribute order' => [
+                ['id' => 'other', 'class' => 'test', 'value' => '1'],
+                '<input class="test" id="other" name="radio" type="radio" value="1" />',
+            ],
+        ];
+    }
+
     public function testRadio(): void
     {
         $this->assertSame(
@@ -18,60 +48,15 @@ trait RadioTestTrait
         );
     }
 
-    public function testRadioAttributeArray(): void
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    #[DataProvider('radioAttributesProvider')]
+    public function testRadioAttributes(array $attributes, string $expected): void
     {
         $this->assertSame(
-            '<input id="radio" name="radio" data-test="[1,2]" type="radio" value="1" />',
-            $this->view->Form->radio('radio', [
-                'value' => '1',
-                'data-test' => [1, 2],
-            ])
-        );
-    }
-
-    public function testRadioAttributeEscape(): void
-    {
-        $this->assertSame(
-            '<input id="radio" name="radio" data-test="&lt;test&gt;" type="radio" value="1" />',
-            $this->view->Form->radio('radio', [
-                'value' => '1',
-                'data-test' => '<test>',
-            ])
-        );
-    }
-
-    public function testRadioAttributeInvalid(): void
-    {
-        $this->assertSame(
-            '<input class="test" id="radio" name="radio" type="radio" value="1" />',
-            $this->view->Form->radio('radio', [
-                'value' => '1',
-                '*class*' => 'test',
-            ])
-        );
-    }
-
-    public function testRadioAttributes(): void
-    {
-        $this->assertSame(
-            '<input class="test" id="other" name="radio" type="radio" value="1" />',
-            $this->view->Form->radio('radio', [
-                'class' => 'test',
-                'id' => 'other',
-                'value' => '1',
-            ])
-        );
-    }
-
-    public function testRadioAttributesOrder(): void
-    {
-        $this->assertSame(
-            '<input class="test" id="other" name="radio" type="radio" value="1" />',
-            $this->view->Form->radio('radio', [
-                'id' => 'other',
-                'class' => 'test',
-                'value' => '1',
-            ])
+            $expected,
+            $this->view->Form->radio('radio', $attributes)
         );
     }
 

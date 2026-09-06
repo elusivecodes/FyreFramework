@@ -5,9 +5,39 @@ namespace Tests\TestCase\View\Helpers\Form;
 
 use Closure;
 use Fyre\View\View;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait NumberTestTrait
 {
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function numberAttributesProvider(): array
+    {
+        return [
+            'array value' => [
+                ['data-test' => [1, 2]],
+                '<input id="number" name="number" data-test="[1,2]" type="number" placeholder="Number" />',
+            ],
+            'escaped value' => [
+                ['data-test' => '<test>'],
+                '<input id="number" name="number" data-test="&lt;test&gt;" type="number" placeholder="Number" />',
+            ],
+            'invalid name' => [
+                ['*class*' => 'test'],
+                '<input class="test" id="number" name="number" type="number" placeholder="Number" />',
+            ],
+            'multiple attributes' => [
+                ['class' => 'test', 'id' => 'other'],
+                '<input class="test" id="other" name="number" type="number" placeholder="Number" />',
+            ],
+            'attribute order' => [
+                ['id' => 'other', 'class' => 'test'],
+                '<input class="test" id="other" name="number" type="number" placeholder="Number" />',
+            ],
+        ];
+    }
+
     public function testNumber(): void
     {
         $this->assertSame(
@@ -16,55 +46,15 @@ trait NumberTestTrait
         );
     }
 
-    public function testNumberAttributeArray(): void
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    #[DataProvider('numberAttributesProvider')]
+    public function testNumberAttributes(array $attributes, string $expected): void
     {
         $this->assertSame(
-            '<input id="number" name="number" data-test="[1,2]" type="number" placeholder="Number" />',
-            $this->view->Form->number('number', [
-                'data-test' => [1, 2],
-            ])
-        );
-    }
-
-    public function testNumberAttributeEscape(): void
-    {
-        $this->assertSame(
-            '<input id="number" name="number" data-test="&lt;test&gt;" type="number" placeholder="Number" />',
-            $this->view->Form->number('number', [
-                'data-test' => '<test>',
-            ])
-        );
-    }
-
-    public function testNumberAttributeInvalid(): void
-    {
-        $this->assertSame(
-            '<input class="test" id="number" name="number" type="number" placeholder="Number" />',
-            $this->view->Form->number('number', [
-                '*class*' => 'test',
-            ])
-        );
-    }
-
-    public function testNumberAttributes(): void
-    {
-        $this->assertSame(
-            '<input class="test" id="other" name="number" type="number" placeholder="Number" />',
-            $this->view->Form->number('number', [
-                'class' => 'test',
-                'id' => 'other',
-            ])
-        );
-    }
-
-    public function testNumberAttributesOrder(): void
-    {
-        $this->assertSame(
-            '<input class="test" id="other" name="number" type="number" placeholder="Number" />',
-            $this->view->Form->number('number', [
-                'id' => 'other',
-                'class' => 'test',
-            ])
+            $expected,
+            $this->view->Form->number('number', $attributes)
         );
     }
 

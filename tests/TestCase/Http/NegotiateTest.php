@@ -6,17 +6,119 @@ namespace Tests\TestCase\Http;
 use Fyre\Core\Traits\StaticMacroTrait;
 use Fyre\Http\Negotiate;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use function class_uses;
 
 final class NegotiateTest extends TestCase
 {
-    public function testContent(): void
+    /**
+     * @return array<string, array{string, string[], string}>
+     */
+    public static function contentProvider(): array
+    {
+        return [
+            'single match' => [
+                'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8,appliation/signed-exchange;v=b3;q=0.9',
+                ['text/html'],
+                'text/html',
+            ],
+            'multiple' => [
+                'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8,appliation/signed-exchange;v=b3;q=0.9',
+                ['application/xml', 'text/html'],
+                'text/html',
+            ],
+            'params' => [
+                'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8,appliation/signed-exchange;v=b3;q=0.9',
+                ['text/plain', 'appliation/signed-exchange;v=b3'],
+                'appliation/signed-exchange',
+            ],
+            'params default' => [
+                'text/html',
+                ['text/plain'],
+                'text/plain',
+            ],
+            'params not match' => [
+                'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8,appliation/signed-exchange;v=b3;q=0.9',
+                ['text/plain', 'appliation/signed-exchange;v=b2'],
+                'text/plain',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string[], string}>
+     */
+    public static function encodingProvider(): array
+    {
+        return [
+            'single match' => [
+                'deflate, gzip;q=0.9, *;q=0.5',
+                ['deflate'],
+                'deflate',
+            ],
+            'default' => [
+                'deflate, gzip;q=0.9, *;q=0.5',
+                ['any'],
+                'any',
+            ],
+            'empty' => [
+                'deflate, gzip;q=0.9, *;q=0.5',
+                [],
+                'identity',
+            ],
+            'multiple' => [
+                'deflate, gzip;q=0.9, *;q=0.5',
+                ['gzip', 'deflate'],
+                'deflate',
+            ],
+            'quality' => [
+                'deflate;q=0.9, gzip, *;q=0.5',
+                ['gzip', 'deflate'],
+                'gzip',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string[], string}>
+     */
+    public static function languageProvider(): array
+    {
+        return [
+            'single match' => [
+                'en-GB,en-US;q=0.9,en;q=0.8',
+                ['en-GB'],
+                'en-GB',
+            ],
+            'locales' => [
+                'ru-RU;q=0.9,en-US,en;q=0.8',
+                ['ru-RU', 'en-GB', 'en'],
+                'en-GB',
+            ],
+            'multiple' => [
+                'en-GB,en-US;q=0.9,en;q=0.8',
+                ['en-GB', 'en-US', 'en'],
+                'en-GB',
+            ],
+            'quality' => [
+                'ru-RU;q=0.9,en-US,en;q=0.8',
+                ['ru-RU', 'en-US', 'en'],
+                'en-US',
+            ],
+        ];
+    }
+
+    /**
+     * @param string[] $supported
+     */
+    #[DataProvider('contentProvider')]
+    public function testContent(string $header, array $supported, string $expected): void
     {
         $this->assertSame(
-            'text/html',
-            Negotiate::content('text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8,appliation/signed-exchange;v=b3;q=0.9', ['text/html'])
+            $expected,
+            Negotiate::content($header, $supported)
         );
     }
 
@@ -28,83 +130,27 @@ final class NegotiateTest extends TestCase
         Negotiate::content('text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8,appliation/signed-exchange;v=b3;q=0.9', []);
     }
 
-    public function testContentMultiple(): void
+    /**
+     * @param string[] $supported
+     */
+    #[DataProvider('encodingProvider')]
+    public function testEncoding(string $header, array $supported, string $expected): void
     {
         $this->assertSame(
-            'text/html',
-            Negotiate::content('text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8,appliation/signed-exchange;v=b3;q=0.9', ['application/xml', 'text/html'])
+            $expected,
+            Negotiate::encoding($header, $supported)
         );
     }
 
-    public function testContentParams(): void
+    /**
+     * @param string[] $supported
+     */
+    #[DataProvider('languageProvider')]
+    public function testLanguage(string $header, array $supported, string $expected): void
     {
         $this->assertSame(
-            'appliation/signed-exchange',
-            Negotiate::content('text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8,appliation/signed-exchange;v=b3;q=0.9', ['text/plain', 'appliation/signed-exchange;v=b3'])
-        );
-    }
-
-    public function testContentParamsDefault(): void
-    {
-        $this->assertSame(
-            'text/plain',
-            Negotiate::content('text/html', ['text/plain'])
-        );
-    }
-
-    public function testContentParamsNotMatch(): void
-    {
-        $this->assertSame(
-            'text/plain',
-            Negotiate::content('text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8,appliation/signed-exchange;v=b3;q=0.9', ['text/plain', 'appliation/signed-exchange;v=b2'])
-        );
-    }
-
-    public function testEncoding(): void
-    {
-        $this->assertSame(
-            'deflate',
-            Negotiate::encoding('deflate, gzip;q=0.9, *;q=0.5', ['deflate'])
-        );
-    }
-
-    public function testEncodingDefault(): void
-    {
-        $this->assertSame(
-            'any',
-            Negotiate::encoding('deflate, gzip;q=0.9, *;q=0.5', ['any'])
-        );
-    }
-
-    public function testEncodingEmpty(): void
-    {
-        $this->assertSame(
-            'identity',
-            Negotiate::encoding('deflate, gzip;q=0.9, *;q=0.5', [])
-        );
-    }
-
-    public function testEncodingMultiple(): void
-    {
-        $this->assertSame(
-            'deflate',
-            Negotiate::encoding('deflate, gzip;q=0.9, *;q=0.5', ['gzip', 'deflate'])
-        );
-    }
-
-    public function testEncodingQuality(): void
-    {
-        $this->assertSame(
-            'gzip',
-            Negotiate::encoding('deflate;q=0.9, gzip, *;q=0.5', ['gzip', 'deflate'])
-        );
-    }
-
-    public function testLanguage(): void
-    {
-        $this->assertSame(
-            'en-GB',
-            Negotiate::language('en-GB,en-US;q=0.9,en;q=0.8', ['en-GB'])
+            $expected,
+            Negotiate::language($header, $supported)
         );
     }
 
@@ -114,30 +160,6 @@ final class NegotiateTest extends TestCase
         $this->expectExceptionMessageIs('No supported values supplied.');
 
         Negotiate::language('en-GB,en-US;q=0.9,en;q=0.8', []);
-    }
-
-    public function testLanguageLocales(): void
-    {
-        $this->assertSame(
-            'en-GB',
-            Negotiate::language('ru-RU;q=0.9,en-US,en;q=0.8', ['ru-RU', 'en-GB', 'en'])
-        );
-    }
-
-    public function testLanguageMultiple(): void
-    {
-        $this->assertSame(
-            'en-GB',
-            Negotiate::language('en-GB,en-US;q=0.9,en;q=0.8', ['en-GB', 'en-US', 'en'])
-        );
-    }
-
-    public function testLanguageQuality(): void
-    {
-        $this->assertSame(
-            'en-US',
-            Negotiate::language('ru-RU;q=0.9,en-US,en;q=0.8', ['ru-RU', 'en-US', 'en'])
-        );
     }
 
     public function testMacro(): void
