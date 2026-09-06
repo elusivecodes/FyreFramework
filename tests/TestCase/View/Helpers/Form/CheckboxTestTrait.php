@@ -5,9 +5,39 @@ namespace Tests\TestCase\View\Helpers\Form;
 
 use Closure;
 use Fyre\View\View;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait CheckboxTestTrait
 {
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function checkboxAttributesProvider(): array
+    {
+        return [
+            'array value' => [
+                ['data-test' => [1, 2]],
+                '<input name="checkbox" type="hidden" value="0" /><input id="checkbox" name="checkbox" data-test="[1,2]" type="checkbox" value="1" />',
+            ],
+            'escaped value' => [
+                ['data-test' => '<test>'],
+                '<input name="checkbox" type="hidden" value="0" /><input id="checkbox" name="checkbox" data-test="&lt;test&gt;" type="checkbox" value="1" />',
+            ],
+            'invalid name' => [
+                ['*class*' => 'test'],
+                '<input name="checkbox" type="hidden" value="0" /><input class="test" id="checkbox" name="checkbox" type="checkbox" value="1" />',
+            ],
+            'multiple attributes' => [
+                ['class' => 'test', 'id' => 'other'],
+                '<input name="checkbox" type="hidden" value="0" /><input class="test" id="other" name="checkbox" type="checkbox" value="1" />',
+            ],
+            'attribute order' => [
+                ['id' => 'other', 'class' => 'test'],
+                '<input name="checkbox" type="hidden" value="0" /><input class="test" id="other" name="checkbox" type="checkbox" value="1" />',
+            ],
+        ];
+    }
+
     public function testCheckbox(): void
     {
         $this->assertSame(
@@ -16,55 +46,15 @@ trait CheckboxTestTrait
         );
     }
 
-    public function testCheckboxAttributeArray(): void
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    #[DataProvider('checkboxAttributesProvider')]
+    public function testCheckboxAttributes(array $attributes, string $expected): void
     {
         $this->assertSame(
-            '<input name="checkbox" type="hidden" value="0" /><input id="checkbox" name="checkbox" data-test="[1,2]" type="checkbox" value="1" />',
-            $this->view->Form->checkbox('checkbox', [
-                'data-test' => [1, 2],
-            ])
-        );
-    }
-
-    public function testCheckboxAttributeEscape(): void
-    {
-        $this->assertSame(
-            '<input name="checkbox" type="hidden" value="0" /><input id="checkbox" name="checkbox" data-test="&lt;test&gt;" type="checkbox" value="1" />',
-            $this->view->Form->checkbox('checkbox', [
-                'data-test' => '<test>',
-            ])
-        );
-    }
-
-    public function testCheckboxAttributeInvalid(): void
-    {
-        $this->assertSame(
-            '<input name="checkbox" type="hidden" value="0" /><input class="test" id="checkbox" name="checkbox" type="checkbox" value="1" />',
-            $this->view->Form->checkbox('checkbox', [
-                '*class*' => 'test',
-            ])
-        );
-    }
-
-    public function testCheckboxAttributes(): void
-    {
-        $this->assertSame(
-            '<input name="checkbox" type="hidden" value="0" /><input class="test" id="other" name="checkbox" type="checkbox" value="1" />',
-            $this->view->Form->checkbox('checkbox', [
-                'class' => 'test',
-                'id' => 'other',
-            ])
-        );
-    }
-
-    public function testCheckboxAttributesOrder(): void
-    {
-        $this->assertSame(
-            '<input name="checkbox" type="hidden" value="0" /><input class="test" id="other" name="checkbox" type="checkbox" value="1" />',
-            $this->view->Form->checkbox('checkbox', [
-                'id' => 'other',
-                'class' => 'test',
-            ])
+            $expected,
+            $this->view->Form->checkbox('checkbox', $attributes)
         );
     }
 

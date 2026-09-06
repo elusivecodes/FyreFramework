@@ -5,9 +5,39 @@ namespace Tests\TestCase\View\Helpers\Form;
 
 use Closure;
 use Fyre\View\View;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait InputTestTrait
 {
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function inputAttributesProvider(): array
+    {
+        return [
+            'array value' => [
+                ['data-test' => [1, 2]],
+                '<input id="input" name="input" data-test="[1,2]" type="text" placeholder="Input" />',
+            ],
+            'escaped value' => [
+                ['data-test' => '<test>'],
+                '<input id="input" name="input" data-test="&lt;test&gt;" type="text" placeholder="Input" />',
+            ],
+            'invalid name' => [
+                ['*class*' => 'test'],
+                '<input class="test" id="input" name="input" type="text" placeholder="Input" />',
+            ],
+            'multiple attributes' => [
+                ['class' => 'test', 'id' => 'other'],
+                '<input class="test" id="other" name="input" type="text" placeholder="Input" />',
+            ],
+            'attribute order' => [
+                ['id' => 'other', 'class' => 'test'],
+                '<input class="test" id="other" name="input" type="text" placeholder="Input" />',
+            ],
+        ];
+    }
+
     public function testInput(): void
     {
         $this->assertSame(
@@ -16,55 +46,15 @@ trait InputTestTrait
         );
     }
 
-    public function testInputAttributeArray(): void
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    #[DataProvider('inputAttributesProvider')]
+    public function testInputAttributes(array $attributes, string $expected): void
     {
         $this->assertSame(
-            '<input id="input" name="input" data-test="[1,2]" type="text" placeholder="Input" />',
-            $this->view->Form->input('input', [
-                'data-test' => [1, 2],
-            ])
-        );
-    }
-
-    public function testInputAttributeEscape(): void
-    {
-        $this->assertSame(
-            '<input id="input" name="input" data-test="&lt;test&gt;" type="text" placeholder="Input" />',
-            $this->view->Form->input('input', [
-                'data-test' => '<test>',
-            ])
-        );
-    }
-
-    public function testInputAttributeInvalid(): void
-    {
-        $this->assertSame(
-            '<input class="test" id="input" name="input" type="text" placeholder="Input" />',
-            $this->view->Form->input('input', [
-                '*class*' => 'test',
-            ])
-        );
-    }
-
-    public function testInputAttributes(): void
-    {
-        $this->assertSame(
-            '<input class="test" id="other" name="input" type="text" placeholder="Input" />',
-            $this->view->Form->input('input', [
-                'class' => 'test',
-                'id' => 'other',
-            ])
-        );
-    }
-
-    public function testInputAttributesOrder(): void
-    {
-        $this->assertSame(
-            '<input class="test" id="other" name="input" type="text" placeholder="Input" />',
-            $this->view->Form->input('input', [
-                'id' => 'other',
-                'class' => 'test',
-            ])
+            $expected,
+            $this->view->Form->input('input', $attributes)
         );
     }
 

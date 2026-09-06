@@ -3,8 +3,44 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\View\Helpers\Form;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+
 trait ButtonTestTrait
 {
+    /**
+     * @return array<string, array{string, array<string, mixed>, string}>
+     */
+    public static function buttonAttributesProvider(): array
+    {
+        return [
+            'array value' => [
+                '',
+                ['data-test' => [1, 2]],
+                '<button data-test="[1,2]" type="button"></button>',
+            ],
+            'escaped value' => [
+                '',
+                ['data-test' => '<test>'],
+                '<button data-test="&lt;test&gt;" type="button"></button>',
+            ],
+            'invalid name' => [
+                '',
+                ['*class*' => 'test'],
+                '<button class="test" type="button"></button>',
+            ],
+            'multiple attributes' => [
+                'Test',
+                ['class' => 'test', 'id' => 'button'],
+                '<button class="test" id="button" type="button">Test</button>',
+            ],
+            'attribute order' => [
+                '',
+                ['id' => 'button', 'class' => 'test'],
+                '<button class="test" id="button" type="button"></button>',
+            ],
+        ];
+    }
+
     public function testButton(): void
     {
         $this->assertSame(
@@ -13,55 +49,15 @@ trait ButtonTestTrait
         );
     }
 
-    public function testButtonAttributeArray(): void
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    #[DataProvider('buttonAttributesProvider')]
+    public function testButtonAttributes(string $content, array $attributes, string $expected): void
     {
         $this->assertSame(
-            '<button data-test="[1,2]" type="button"></button>',
-            $this->view->Form->button('', [
-                'data-test' => [1, 2],
-            ])
-        );
-    }
-
-    public function testButtonAttributeEscape(): void
-    {
-        $this->assertSame(
-            '<button data-test="&lt;test&gt;" type="button"></button>',
-            $this->view->Form->button('', [
-                'data-test' => '<test>',
-            ])
-        );
-    }
-
-    public function testButtonAttributeInvalid(): void
-    {
-        $this->assertSame(
-            '<button class="test" type="button"></button>',
-            $this->view->Form->button('', [
-                '*class*' => 'test',
-            ])
-        );
-    }
-
-    public function testButtonAttributes(): void
-    {
-        $this->assertSame(
-            '<button class="test" id="button" type="button">Test</button>',
-            $this->view->Form->button('Test', [
-                'class' => 'test',
-                'id' => 'button',
-            ])
-        );
-    }
-
-    public function testButtonAttributesOrder(): void
-    {
-        $this->assertSame(
-            '<button class="test" id="button" type="button"></button>',
-            $this->view->Form->button('', [
-                'id' => 'button',
-                'class' => 'test',
-            ])
+            $expected,
+            $this->view->Form->button($content, $attributes)
         );
     }
 

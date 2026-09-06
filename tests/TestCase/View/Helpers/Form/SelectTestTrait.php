@@ -5,9 +5,39 @@ namespace Tests\TestCase\View\Helpers\Form;
 
 use Closure;
 use Fyre\View\View;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait SelectTestTrait
 {
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function selectAttributesProvider(): array
+    {
+        return [
+            'array value' => [
+                ['data-test' => [1, 2]],
+                '<select id="select" name="select" data-test="[1,2]"></select>',
+            ],
+            'escaped value' => [
+                ['data-test' => '<test>'],
+                '<select id="select" name="select" data-test="&lt;test&gt;"></select>',
+            ],
+            'invalid name' => [
+                ['*class*' => 'test'],
+                '<select class="test" id="select" name="select"></select>',
+            ],
+            'multiple attributes' => [
+                ['class' => 'test', 'id' => 'other'],
+                '<select class="test" id="other" name="select"></select>',
+            ],
+            'attribute order' => [
+                ['id' => 'other', 'class' => 'test'],
+                '<select class="test" id="other" name="select"></select>',
+            ],
+        ];
+    }
+
     public function testSelect(): void
     {
         $this->assertSame(
@@ -16,55 +46,15 @@ trait SelectTestTrait
         );
     }
 
-    public function testSelectAttributeArray(): void
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    #[DataProvider('selectAttributesProvider')]
+    public function testSelectAttributes(array $attributes, string $expected): void
     {
         $this->assertSame(
-            '<select id="select" name="select" data-test="[1,2]"></select>',
-            $this->view->Form->select('select', [
-                'data-test' => [1, 2],
-            ])
-        );
-    }
-
-    public function testSelectAttributeEscape(): void
-    {
-        $this->assertSame(
-            '<select id="select" name="select" data-test="&lt;test&gt;"></select>',
-            $this->view->Form->select('select', [
-                'data-test' => '<test>',
-            ])
-        );
-    }
-
-    public function testSelectAttributeInvalid(): void
-    {
-        $this->assertSame(
-            '<select class="test" id="select" name="select"></select>',
-            $this->view->Form->select('select', [
-                '*class*' => 'test',
-            ])
-        );
-    }
-
-    public function testSelectAttributes(): void
-    {
-        $this->assertSame(
-            '<select class="test" id="other" name="select"></select>',
-            $this->view->Form->select('select', [
-                'class' => 'test',
-                'id' => 'other',
-            ])
-        );
-    }
-
-    public function testSelectAttributesOrder(): void
-    {
-        $this->assertSame(
-            '<select class="test" id="other" name="select"></select>',
-            $this->view->Form->select('select', [
-                'id' => 'other',
-                'class' => 'test',
-            ])
+            $expected,
+            $this->view->Form->select('select', $attributes)
         );
     }
 
