@@ -312,17 +312,42 @@ final class CsrfProtectionMiddlewareTest extends TestCase
             ClientResponse::class,
             $response
         );
+    }
+
+    public function testFormTokenPostRemovesToken(): void
+    {
+        $csrfProtection = $this->container->use(CsrfProtection::class);
+        $middleware = $this->container->build(CsrfProtectionMiddleware::class);
+
+        $queue = new MiddlewareQueue();
+        $queue->add($middleware);
+
+        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'method' => 'POST',
+                'cookies' => [
+                    'CsrfToken' => $csrfProtection->getCookieToken(),
+                ],
+                'data' => [
+                    'csrf_token' => $csrfProtection->getFormToken(),
+                    'title' => 'Test',
+                ],
+            ],
+        ]);
+
+        $handler->handle($request);
 
         $request = $this->container->use(ServerRequest::class);
 
-        $this->assertNull(
-            $request->getData('csrf_token')
+        $this->assertSame(
+            ['title' => 'Test'],
+            $request->getParsedBody()
         );
     }
 
     public function testGet(): void
     {
-        $csrfProtection = $this->container->use(CsrfProtection::class);
         $middleware = $this->container->build(CsrfProtectionMiddleware::class);
 
         $queue = new MiddlewareQueue();
@@ -337,6 +362,20 @@ final class CsrfProtectionMiddlewareTest extends TestCase
             ClientResponse::class,
             $response
         );
+    }
+
+    public function testGetAttachesCsrfProtection(): void
+    {
+        $csrfProtection = $this->container->use(CsrfProtection::class);
+        $middleware = $this->container->build(CsrfProtectionMiddleware::class);
+
+        $queue = new MiddlewareQueue();
+        $queue->add($middleware);
+
+        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+        $request = $this->container->build(ServerRequest::class);
+
+        $handler->handle($request);
 
         $request = $this->container->use(ServerRequest::class);
 
@@ -344,6 +383,20 @@ final class CsrfProtectionMiddlewareTest extends TestCase
             $csrfProtection,
             $request->getAttribute('csrf')
         );
+    }
+
+    public function testGetCreatesCookie(): void
+    {
+        $csrfProtection = $this->container->use(CsrfProtection::class);
+        $middleware = $this->container->build(CsrfProtectionMiddleware::class);
+
+        $queue = new MiddlewareQueue();
+        $queue->add($middleware);
+
+        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
+        $request = $this->container->build(ServerRequest::class);
+
+        $response = $handler->handle($request);
 
         [$cookieString] = $response->getHeader('Set-Cookie');
 
