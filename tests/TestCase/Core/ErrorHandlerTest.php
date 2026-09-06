@@ -32,12 +32,16 @@ use PHPUnit\Framework\TestCase;
 use Throwable;
 
 use function class_uses;
+use function escapeshellarg;
+use function exec;
 use function htmlspecialchars;
+use function implode;
 use function trigger_error;
 
 use const E_USER_WARNING;
 use const ENT_QUOTES;
 use const ENT_SUBSTITUTE;
+use const PHP_BINARY;
 
 final class ErrorHandlerTest extends TestCase
 {
@@ -169,6 +173,25 @@ final class ErrorHandlerTest extends TestCase
         $this->assertSame(
             'Internal Server Error',
             $response->getBody()->getContents()
+        );
+    }
+
+    public function testHandleCli(): void
+    {
+        exec(
+            escapeshellarg(PHP_BINARY).' '.escapeshellarg(__DIR__.'/../../Mock/Core/ErrorHandler/exception.php').' 2>&1',
+            $output,
+            $exitCode
+        );
+
+        $this->assertSame(
+            1,
+            $exitCode
+        );
+
+        $this->assertStringContainsString(
+            'RuntimeException: CLI failure',
+            implode("\n", $output)
         );
     }
 

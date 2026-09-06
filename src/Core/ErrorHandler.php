@@ -227,7 +227,7 @@ class ErrorHandler
 
         if ($this->cli && PHP_SAPI === 'cli') {
             $this->io->error((string) $exception);
-            exit;
+            exit(1);
         }
 
         $result = $this->container->call($this->renderer, [
