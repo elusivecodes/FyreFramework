@@ -4,38 +4,30 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Str;
 
 use Fyre\Utility\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait SlugTestTrait
 {
-    public function testSlugFromCamelCase(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function slugProvider(): array
     {
-        $this->assertSame(
-            'this_is_a_test_string',
-            Str::slug('thisIsATestString')
-        );
+        return [
+            'camel case' => ['thisIsATestString', 'this_is_a_test_string'],
+            'pascal case' => ['ThisIsATestString', 'this_is_a_test_string'],
+            'snake case' => ['this_is_a_test_string', 'this_is_a_test_string'],
+            'consecutive spaces' => ['This  is  a  test  string', 'this_is_a_test_string'],
+            'spaces' => ['This is a test string', 'this_is_a_test_string'],
+        ];
     }
 
-    public function testSlugFromPascalCase(): void
+    #[DataProvider('slugProvider')]
+    public function testSlug(string $string, string $expected): void
     {
         $this->assertSame(
-            'this_is_a_test_string',
-            Str::slug('ThisIsATestString')
-        );
-    }
-
-    public function testSlugFromSnakeCase(): void
-    {
-        $this->assertSame(
-            'this_is_a_test_string',
-            Str::slug('this_is_a_test_string')
-        );
-    }
-
-    public function testSlugWithConsecutiveSpaces(): void
-    {
-        $this->assertSame(
-            'this_is_a_test_string',
-            Str::slug('This is a test string')
+            $expected,
+            Str::slug($string)
         );
     }
 
@@ -44,14 +36,6 @@ trait SlugTestTrait
         $this->assertSame(
             'this+is+a+test+string',
             Str::slug('This is a test string', '+')
-        );
-    }
-
-    public function testSlugWithString(): void
-    {
-        $this->assertSame(
-            'this_is_a_test_string',
-            Str::slug('This is a test string')
         );
     }
 }

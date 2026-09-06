@@ -4,54 +4,36 @@ declare(strict_types=1);
 namespace Tests\TestCase\Utility\Path;
 
 use Fyre\Utility\Path;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait NormalizeTestTrait
 {
-    public function testNormalizeWithCurrentPath(): void
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function normalizeProvider(): array
     {
-        $this->assertSame(
-            'sub/dir/file.ext',
-            Path::normalize('./sub/dir/file.ext')
-        );
+        return [
+            'current path' => ['./sub/dir/file.ext', 'sub/dir/file.ext'],
+            'current path only' => ['./', '.'],
+            'deep path' => ['sub/dir/file.ext', 'sub/dir/file.ext'],
+            'empty string' => ['', '.'],
+            'file name' => ['file.ext', 'file.ext'],
+            'full path' => ['/sub/dir/file.ext', '/sub/dir/file.ext'],
+            'parent path' => ['test/../sub/dir/file.ext', 'sub/dir/file.ext'],
+            'parent path above root' => ['/test/../../sub/dir/file.ext', '/sub/dir/file.ext'],
+            'parent path before relative path' => ['test/../../sub/dir/file.ext', '../sub/dir/file.ext'],
+            'path' => ['dir/file.ext', 'dir/file.ext'],
+            'trailing slash' => ['/sub/dir/', '/sub/dir/'],
+        ];
     }
 
-    public function testNormalizeWithCurrentPathOnly(): void
+    #[DataProvider('normalizeProvider')]
+    public function testNormalize(string $path, string $expected): void
     {
         $this->assertSame(
-            '.',
-            Path::normalize('./')
-        );
-    }
-
-    public function testNormalizeWithDeepPath(): void
-    {
-        $this->assertSame(
-            'sub/dir/file.ext',
-            Path::normalize('sub/dir/file.ext')
-        );
-    }
-
-    public function testNormalizeWithEmptyString(): void
-    {
-        $this->assertSame(
-            '.',
-            Path::normalize('')
-        );
-    }
-
-    public function testNormalizeWithFileName(): void
-    {
-        $this->assertSame(
-            'file.ext',
-            Path::normalize('file.ext')
-        );
-    }
-
-    public function testNormalizeWithFullPath(): void
-    {
-        $this->assertSame(
-            '/sub/dir/file.ext',
-            Path::normalize('/sub/dir/file.ext')
+            $expected,
+            Path::normalize($path)
         );
     }
 
@@ -60,46 +42,6 @@ trait NormalizeTestTrait
         $this->assertSame(
             '.',
             Path::normalize()
-        );
-    }
-
-    public function testNormalizeWithParentPath(): void
-    {
-        $this->assertSame(
-            'sub/dir/file.ext',
-            Path::normalize('test/../sub/dir/file.ext')
-        );
-    }
-
-    public function testNormalizeWithParentPathAboveRoot(): void
-    {
-        $this->assertSame(
-            '/sub/dir/file.ext',
-            Path::normalize('/test/../../sub/dir/file.ext')
-        );
-    }
-
-    public function testNormalizeWithParentPathBeforeRelativePath(): void
-    {
-        $this->assertSame(
-            '../sub/dir/file.ext',
-            Path::normalize('test/../../sub/dir/file.ext')
-        );
-    }
-
-    public function testNormalizeWithPath(): void
-    {
-        $this->assertSame(
-            'dir/file.ext',
-            Path::normalize('dir/file.ext')
-        );
-    }
-
-    public function testNormalizeWithTrailingSlash(): void
-    {
-        $this->assertSame(
-            '/sub/dir/',
-            Path::normalize('/sub/dir/')
         );
     }
 }

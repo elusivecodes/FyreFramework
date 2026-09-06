@@ -42,6 +42,7 @@ final class CsrfProtectionMiddlewareTest extends TestCase
         $this->expectException(CsrfTokenException::class);
         $this->expectExceptionMessageIs('CSRF Token Mismatch');
 
+        $csrfProtection = $this->container->use(CsrfProtection::class);
         $middleware = $this->container->build(CsrfProtectionMiddleware::class);
 
         $queue = new MiddlewareQueue();
@@ -55,7 +56,7 @@ final class CsrfProtectionMiddlewareTest extends TestCase
                     'CsrfToken' => '',
                 ],
                 'data' => [
-                    'csrf_token' => '',
+                    'csrf_token' => $csrfProtection->getFormToken(),
                 ],
             ],
         ]);
@@ -87,12 +88,7 @@ final class CsrfProtectionMiddlewareTest extends TestCase
             ],
         ]);
 
-        $response = $handler->handle($request);
-
-        $this->assertInstanceOf(
-            ClientResponse::class,
-            $response
-        );
+        $handler->handle($request);
     }
 
     public function testCookieInvalidType(): void
@@ -143,12 +139,7 @@ final class CsrfProtectionMiddlewareTest extends TestCase
             ],
         ]);
 
-        $response = $handler->handle($request);
-
-        $this->assertInstanceOf(
-            ClientResponse::class,
-            $response
-        );
+        $handler->handle($request);
     }
 
     public function testDebug(): void
@@ -194,6 +185,7 @@ final class CsrfProtectionMiddlewareTest extends TestCase
         $this->expectExceptionMessageIs('CSRF Token Mismatch');
 
         $csrfProtection = $this->container->use(CsrfProtection::class);
+        $otherCsrfProtection = $this->container->build(CsrfProtection::class);
         $middleware = $this->container->build(CsrfProtectionMiddleware::class);
 
         $queue = new MiddlewareQueue();
@@ -204,20 +196,15 @@ final class CsrfProtectionMiddlewareTest extends TestCase
             'options' => [
                 'method' => 'POST',
                 'cookies' => [
-                    'CsrfToken' => $csrfProtection->getCookieToken().'1',
+                    'CsrfToken' => $csrfProtection->getCookieToken(),
                 ],
                 'data' => [
-                    'csrf_token' => $csrfProtection->getFormToken(),
+                    'csrf_token' => $otherCsrfProtection->getFormToken(),
                 ],
             ],
         ]);
 
-        $response = $handler->handle($request);
-
-        $this->assertInstanceOf(
-            ClientResponse::class,
-            $response
-        );
+        $handler->handle($request);
     }
 
     public function testFormTokenInvalidType(): void
@@ -290,17 +277,12 @@ final class CsrfProtectionMiddlewareTest extends TestCase
             'options' => [
                 'method' => 'POST',
                 'cookies' => [
-                    'CsrfToken' => $csrfProtection->getCookieToken().'1',
+                    'CsrfToken' => $csrfProtection->getCookieToken(),
                 ],
             ],
         ]);
 
-        $response = $handler->handle($request);
-
-        $this->assertInstanceOf(
-            ClientResponse::class,
-            $response
-        );
+        $handler->handle($request);
     }
 
     public function testFormTokenPost(): void
