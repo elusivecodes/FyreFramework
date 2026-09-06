@@ -7,13 +7,27 @@ use Fyre\Core\Traits\DebugTrait;
 use Fyre\TestSuite\Benchmark;
 use InvalidArgumentException;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
+use function array_keys;
 use function class_uses;
 
 final class BenchmarkTest extends TestCase
 {
     protected Benchmark $benchmark;
+
+    /**
+     * @return array<string, array{list<string>, string}>
+     */
+    public static function resultProvider(): array
+    {
+        return [
+            'single test' => [['test'], 'test'],
+            'first of multiple tests' => [['test1', 'test2'], 'test1'],
+            'second of multiple tests' => [['test1', 'test2'], 'test2'],
+        ];
+    }
 
     public function testAdd(): void
     {
@@ -113,17 +127,19 @@ final class BenchmarkTest extends TestCase
             $i++;
         });
 
-        $results = $this->benchmark->run();
+        $this->benchmark->run();
 
         $this->assertSame(1000, $i);
+    }
 
-        $this->assertArrayHasKey('test', $results);
-        $this->assertArrayHasKey('time', $results['test']);
-        $this->assertArrayHasKey('memory', $results['test']);
-        $this->assertArrayHasKey('n', $results['test']);
-        $this->assertIsFloat($results['test']['time']);
-        $this->assertIsInt($results['test']['memory']);
-        $this->assertSame(1000, $results['test']['n']);
+    public function testRunMultipleResults(): void
+    {
+        $this->benchmark->add('test1', static function(): void {});
+        $this->benchmark->add('test2', static function(): void {});
+
+        $results = $this->benchmark->run() |> array_keys(...);
+
+        $this->assertArraysAreIdentical(['test1', 'test2'], $results);
     }
 
     public function testRunMultipleTests(): void
@@ -137,25 +153,27 @@ final class BenchmarkTest extends TestCase
             $j++;
         });
 
-        $results = $this->benchmark->run();
+        $this->benchmark->run();
 
         $this->assertSame(1000, $i);
         $this->assertSame(1000, $j);
+    }
 
-        $this->assertArrayHasKey('test1', $results);
-        $this->assertArrayHasKey('test2', $results);
-        $this->assertArrayHasKey('time', $results['test1']);
-        $this->assertArrayHasKey('memory', $results['test1']);
-        $this->assertArrayHasKey('n', $results['test1']);
-        $this->assertArrayHasKey('time', $results['test2']);
-        $this->assertArrayHasKey('memory', $results['test2']);
-        $this->assertArrayHasKey('n', $results['test2']);
-        $this->assertIsFloat($results['test1']['time']);
-        $this->assertIsInt($results['test1']['memory']);
-        $this->assertSame(1000, $results['test1']['n']);
-        $this->assertIsFloat($results['test2']['time']);
-        $this->assertIsInt($results['test2']['memory']);
-        $this->assertSame(1000, $results['test2']['n']);
+    /**
+     * @param list<string> $names
+     */
+    #[DataProvider('resultProvider')]
+    public function testRunResultMetadata(array $names, string $name): void
+    {
+        foreach ($names as $testName) {
+            $this->benchmark->add($testName, static function(): void {});
+        }
+
+        $result = $this->benchmark->run()[$name];
+
+        $this->assertIsFloat($result['time']);
+        $this->assertIsInt($result['memory']);
+        $this->assertSame(1000, $result['n']);
     }
 
     public function testRunWithIterations(): void

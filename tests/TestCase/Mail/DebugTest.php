@@ -3,11 +3,13 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Mail;
 
+use Closure;
 use Fyre\Core\Container;
 use Fyre\Mail\Email;
 use Fyre\Mail\Handlers\DebugMailer;
 use Fyre\Mail\MailManager;
 use Override;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -16,6 +18,44 @@ use function file_get_contents;
 final class DebugTest extends TestCase
 {
     protected DebugMailer $mailer;
+
+    /**
+     * @return array<string, array{Closure(): array<string, mixed>, string}>
+     */
+    public static function attachmentProvider(): array
+    {
+        return [
+            'file' => [
+                static fn(): array => ['file' => 'tests/assets/test.jpg'],
+                '',
+            ],
+            'content' => [
+                static fn(): array => ['content' => file_get_contents('tests/assets/test.jpg')],
+                '',
+            ],
+            'inline' => [
+                static fn(): array => [
+                    'file' => 'tests/assets/test.jpg',
+                    'contentId' => '1234',
+                ],
+                '<img src="cid:1234">',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function headerProvider(): array
+    {
+        return [
+            'from' => ['From', 'test2@test.com'],
+            'to' => ['To', 'test1@test.com'],
+            'subject' => ['Subject', 'Test'],
+            'mime version' => ['MIME-Version', '1.0'],
+            'transfer encoding' => ['Content-Transfer-Encoding', '8bit'],
+        ];
+    }
 
     public function testDebug(): void
     {
@@ -36,99 +76,25 @@ final class DebugTest extends TestCase
         );
     }
 
-    public function testMailSend(): void
-    {
-        $this->mailer->email()
-            ->setTo('test1@test.com')
-            ->setFrom('test2@test.com')
-            ->setSubject('Test')
-            ->setBodyText('This is a test')
-            ->send();
-
-        $sentEmail = $this->mailer->getSentEmails()[0] ?? [];
-
-        $this->assertSame(
-            'test2@test.com',
-            $sentEmail['headers']['From'] ?? ''
-        );
-
-        $this->assertSame(
-            'test1@test.com',
-            $sentEmail['headers']['To'] ?? ''
-        );
-
-        $this->assertSame(
-            'Test',
-            $sentEmail['headers']['Subject'] ?? ''
-        );
-
-        $this->assertSame(
-            '1.0',
-            $sentEmail['headers']['MIME-Version'] ?? ''
-        );
-
-        $this->assertSame(
-            'text/plain; charset=utf-8',
-            $sentEmail['headers']['Content-Type'] ?? ''
-        );
-
-        $this->assertSame(
-            '8bit',
-            $sentEmail['headers']['Content-Transfer-Encoding'] ?? ''
-        );
-
-        $this->assertSame(
-            'This is a test'."\r\n\r\n",
-            $sentEmail['body'] ?? ''
-        );
-    }
-
-    public function testMailSendAttachment(): void
+    /**
+     * @param Closure(): array<string, mixed> $createAttachment
+     */
+    #[DataProvider('attachmentProvider')]
+    public function testMailSendAttachmentBoundary(Closure $createAttachment, string $bodyHtml): void
     {
         $email = $this->mailer->email()
             ->setTo('test1@test.com')
             ->setFrom('test2@test.com')
             ->setSubject('Test')
             ->addAttachments([
-                'test.jpg' => [
-                    'file' => 'tests/assets/test.jpg',
-                ],
+                'test.jpg' => $createAttachment(),
             ])
-            ->setFormat(Email::HTML);
+            ->setFormat(Email::HTML)
+            ->setBodyHtml($bodyHtml);
         $email->send();
 
         $boundary = $email->getBoundary();
         $sentEmail = $this->mailer->getSentEmails()[0] ?? [];
-
-        $this->assertSame(
-            'test2@test.com',
-            $sentEmail['headers']['From'] ?? ''
-        );
-
-        $this->assertSame(
-            'test1@test.com',
-            $sentEmail['headers']['To'] ?? ''
-        );
-
-        $this->assertSame(
-            'Test',
-            $sentEmail['headers']['Subject'] ?? ''
-        );
-
-        $this->assertSame(
-            '1.0',
-            $sentEmail['headers']['MIME-Version'] ?? ''
-        );
-
-        $this->assertSame(
-            'multipart/mixed; boundary="'.$boundary.'"',
-            $sentEmail['headers']['Content-Type'] ?? ''
-        );
-
-        $this->assertSame(
-            '8bit',
-            $sentEmail['headers']['Content-Transfer-Encoding'] ?? ''
-        );
 
         $this->assertStringStartsWith(
             '--'.$boundary."\r\n",
@@ -136,56 +102,29 @@ final class DebugTest extends TestCase
         );
     }
 
-    public function testMailSendAttachmentContent(): void
+    /**
+     * @param Closure(): array<string, mixed> $createAttachment
+     */
+    #[DataProvider('attachmentProvider')]
+    public function testMailSendAttachmentContentType(Closure $createAttachment, string $bodyHtml): void
     {
         $email = $this->mailer->email()
             ->setTo('test1@test.com')
             ->setFrom('test2@test.com')
             ->setSubject('Test')
             ->addAttachments([
-                'test.jpg' => [
-                    'content' => file_get_contents('tests/assets/test.jpg'),
-                ],
+                'test.jpg' => $createAttachment(),
             ])
-            ->setFormat(Email::HTML);
+            ->setFormat(Email::HTML)
+            ->setBodyHtml($bodyHtml);
         $email->send();
 
         $boundary = $email->getBoundary();
         $sentEmail = $this->mailer->getSentEmails()[0] ?? [];
 
         $this->assertSame(
-            'test2@test.com',
-            $sentEmail['headers']['From'] ?? ''
-        );
-
-        $this->assertSame(
-            'test1@test.com',
-            $sentEmail['headers']['To'] ?? ''
-        );
-
-        $this->assertSame(
-            'Test',
-            $sentEmail['headers']['Subject'] ?? ''
-        );
-
-        $this->assertSame(
-            '1.0',
-            $sentEmail['headers']['MIME-Version'] ?? ''
-        );
-
-        $this->assertSame(
             'multipart/mixed; boundary="'.$boundary.'"',
             $sentEmail['headers']['Content-Type'] ?? ''
-        );
-
-        $this->assertSame(
-            '8bit',
-            $sentEmail['headers']['Content-Transfer-Encoding'] ?? ''
-        );
-
-        $this->assertStringStartsWith(
-            '--'.$boundary."\r\n",
-            $sentEmail['body'] ?? ''
         );
     }
 
@@ -205,43 +144,7 @@ final class DebugTest extends TestCase
             ->setBodyHtml('<img src="cid:1234">');
         $email->send();
 
-        $boundary = $email->getBoundary();
         $sentEmail = $this->mailer->getSentEmails()[0] ?? [];
-
-        $this->assertSame(
-            'test2@test.com',
-            $sentEmail['headers']['From'] ?? ''
-        );
-
-        $this->assertSame(
-            'test1@test.com',
-            $sentEmail['headers']['To'] ?? ''
-        );
-
-        $this->assertSame(
-            'Test',
-            $sentEmail['headers']['Subject'] ?? ''
-        );
-
-        $this->assertSame(
-            '1.0',
-            $sentEmail['headers']['MIME-Version'] ?? ''
-        );
-
-        $this->assertSame(
-            'multipart/mixed; boundary="'.$boundary.'"',
-            $sentEmail['headers']['Content-Type'] ?? ''
-        );
-
-        $this->assertSame(
-            '8bit',
-            $sentEmail['headers']['Content-Transfer-Encoding'] ?? ''
-        );
-
-        $this->assertStringStartsWith(
-            '--'.$boundary."\r\n",
-            $sentEmail['body'] ?? ''
-        );
 
         $this->assertStringContainsString(
             '<img src="cid:1234">',
@@ -265,7 +168,7 @@ final class DebugTest extends TestCase
             ->send();
     }
 
-    public function testMailSendHtml(): void
+    public function testMailSendBodyHtml(): void
     {
         $this->mailer->email()
             ->setTo('test1@test.com')
@@ -278,39 +181,76 @@ final class DebugTest extends TestCase
         $sentEmail = $this->mailer->getSentEmails()[0] ?? [];
 
         $this->assertSame(
-            'test2@test.com',
-            $sentEmail['headers']['From'] ?? ''
+            '<b>This is a test</b>'."\r\n\r\n",
+            $sentEmail['body'] ?? ''
         );
+    }
+
+    public function testMailSendBodyText(): void
+    {
+        $this->mailer->email()
+            ->setTo('test1@test.com')
+            ->setFrom('test2@test.com')
+            ->setSubject('Test')
+            ->setBodyText('This is a test')
+            ->send();
+
+        $sentEmail = $this->mailer->getSentEmails()[0] ?? [];
 
         $this->assertSame(
-            'test1@test.com',
-            $sentEmail['headers']['To'] ?? ''
+            'This is a test'."\r\n\r\n",
+            $sentEmail['body'] ?? ''
         );
+    }
 
-        $this->assertSame(
-            'Test',
-            $sentEmail['headers']['Subject'] ?? ''
-        );
+    public function testMailSendContentTypeHtml(): void
+    {
+        $this->mailer->email()
+            ->setTo('test1@test.com')
+            ->setFrom('test2@test.com')
+            ->setSubject('Test')
+            ->setFormat(Email::HTML)
+            ->setBodyHtml('<b>This is a test</b>')
+            ->send();
 
-        $this->assertSame(
-            '1.0',
-            $sentEmail['headers']['MIME-Version'] ?? ''
-        );
+        $sentEmail = $this->mailer->getSentEmails()[0] ?? [];
 
         $this->assertSame(
             'text/html; charset=utf-8',
             $sentEmail['headers']['Content-Type'] ?? ''
         );
+    }
+
+    public function testMailSendContentTypeText(): void
+    {
+        $this->mailer->email()
+            ->setTo('test1@test.com')
+            ->setFrom('test2@test.com')
+            ->setSubject('Test')
+            ->setBodyText('This is a test')
+            ->send();
+
+        $sentEmail = $this->mailer->getSentEmails()[0] ?? [];
 
         $this->assertSame(
-            '8bit',
-            $sentEmail['headers']['Content-Transfer-Encoding'] ?? ''
+            'text/plain; charset=utf-8',
+            $sentEmail['headers']['Content-Type'] ?? ''
         );
+    }
 
-        $this->assertSame(
-            '<b>This is a test</b>'."\r\n\r\n",
-            $sentEmail['body'] ?? ''
-        );
+    #[DataProvider('headerProvider')]
+    public function testMailSendHeader(string $header, string $expected): void
+    {
+        $this->mailer->email()
+            ->setTo('test1@test.com')
+            ->setFrom('test2@test.com')
+            ->setSubject('Test')
+            ->setBodyText('This is a test')
+            ->send();
+
+        $sentEmail = $this->mailer->getSentEmails()[0] ?? [];
+
+        $this->assertSame($expected, $sentEmail['headers'][$header] ?? '');
     }
 
     #[Override]
