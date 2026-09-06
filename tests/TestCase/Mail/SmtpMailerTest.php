@@ -195,52 +195,26 @@ final class SmtpMailerTest extends TestCase
 
     public function testEndKeepAlive(): void
     {
-        /** @var SmtpMailer&Stub $mailer */
-        $mailer = $this->getStubBuilder(SmtpMailer::class)
-            ->setConstructorArgs([$this->container, [
-                'host' => 'smtp.example.com',
-                'username' => 'user',
-                'password' => 'pass',
-                'keepAlive' => true,
-            ]])
-            ->onlyMethods(['getData', 'sendData'])
-            ->getStub();
-
-        $sent = [];
-        $replies = [
+        $this->replies = [
             '250 Reset',
         ];
-
-        $mailer->method('getData')
-            ->willReturnCallback(static function() use (&$replies): string {
-                return array_shift($replies) ?? '';
-            });
-
-        $mailer->method('sendData')
-            ->willReturnCallback(static function(string $data) use (&$sent): void {
-                $sent[] = $data;
-            });
 
         Closure::bind(function(): void {
             $socket = fopen('php://temp', 'r+');
             TestCase::assertIsResource($socket);
 
             /** @var SmtpMailer $this */
+            $this->config['keepAlive'] = true;
             $this->socket = $socket;
             $this->end();
-        }, $mailer, SmtpMailer::class)();
+        }, $this->mailer, SmtpMailer::class)();
 
         $this->assertArraysAreIdentical(
             [
                 'RSET',
             ],
-            $sent
+            $this->sent
         );
-
-        Closure::bind(function(): void {
-            /** @var SmtpMailer $this */
-            $this->socket = null;
-        }, $mailer, SmtpMailer::class)();
     }
 
     public function testGetData(): void
@@ -292,102 +266,6 @@ final class SmtpMailerTest extends TestCase
         }, $mailer, SmtpMailer::class)();
     }
 
-    public function testSend(): void
-    {
-        /** @var SmtpMailer&Stub $mailer */
-        $mailer = $this->getStubBuilder(SmtpMailer::class)
-            ->setConstructorArgs([$this->container, [
-                'host' => 'smtp.example.com',
-                'username' => 'user',
-                'password' => 'pass',
-                'keepAlive' => true,
-            ]])
-            ->onlyMethods(['getData', 'sendData'])
-            ->getStub();
-
-        $sent = [];
-        $replies = [
-            '250 From',
-            '250 To',
-            '250 Bcc',
-            '354 Data',
-            '250 Queued',
-            '250 Reset',
-        ];
-
-        $mailer->method('getData')
-            ->willReturnCallback(static function() use (&$replies): string {
-                return array_shift($replies) ?? '';
-            });
-
-        $mailer->method('sendData')
-            ->willReturnCallback(static function(string $data) use (&$sent): void {
-                $sent[] = $data;
-            });
-
-        Closure::bind(function(): void {
-            $socket = fopen('php://temp', 'r+');
-            TestCase::assertIsResource($socket);
-
-            /** @var SmtpMailer $this */
-            $this->socket = $socket;
-        }, $mailer, SmtpMailer::class)();
-
-        $email = $mailer->email()
-            ->setFrom('from@example.com')
-            ->setTo('to@example.com')
-            ->setBcc('bcc@example.com')
-            ->setSubject('Test')
-            ->setBodyText('.Test');
-
-        $mailer->send($email);
-
-        $this->assertSame(
-            'MAIL FROM:<from@example.com>',
-            $sent[0]
-        );
-
-        $this->assertSame(
-            'RCPT TO:<to@example.com>',
-            $sent[1]
-        );
-
-        $this->assertSame(
-            'RCPT TO:<bcc@example.com>',
-            $sent[2]
-        );
-
-        $this->assertSame(
-            'DATA',
-            $sent[3]
-        );
-
-        $this->assertStringContainsString(
-            "\r\n\r\n..Test\r\n\r\n",
-            $sent[4]
-        );
-
-        $this->assertStringNotContainsString(
-            'Bcc:',
-            $sent[4]
-        );
-
-        $this->assertSame(
-            '.',
-            $sent[5]
-        );
-
-        $this->assertSame(
-            'RSET',
-            $sent[6]
-        );
-
-        Closure::bind(function(): void {
-            /** @var SmtpMailer $this */
-            $this->socket = null;
-        }, $mailer, SmtpMailer::class)();
-    }
-
     #[DataProvider('keepAliveProvider')]
     public function testSendCleanupConnectionClosed(bool $keepAlive): void
     {
@@ -435,53 +313,27 @@ final class SmtpMailerTest extends TestCase
 
     public function testSendCommandHelloAuth(): void
     {
-        /** @var SmtpMailer&Stub $mailer */
-        $mailer = $this->getStubBuilder(SmtpMailer::class)
-            ->setConstructorArgs([$this->container, [
-                'host' => 'smtp.example.com',
-                'username' => 'user',
-                'password' => 'pass',
-                'client' => 'test',
-                'auth' => true,
-            ]])
-            ->onlyMethods(['getData', 'sendData'])
-            ->getStub();
-
-        $sent = [];
-        $replies = [
+        $this->replies = [
             '250 Hello',
         ];
-
-        $mailer->method('getData')
-            ->willReturnCallback(static function() use (&$replies): string {
-                return array_shift($replies) ?? '';
-            });
-
-        $mailer->method('sendData')
-            ->willReturnCallback(static function(string $data) use (&$sent): void {
-                $sent[] = $data;
-            });
 
         Closure::bind(function(): void {
             $socket = fopen('php://temp', 'r+');
             TestCase::assertIsResource($socket);
 
             /** @var SmtpMailer $this */
+            $this->config['client'] = 'test';
+            $this->config['auth'] = true;
             $this->socket = $socket;
             $this->sendCommand('hello');
-        }, $mailer, SmtpMailer::class)();
+        }, $this->mailer, SmtpMailer::class)();
 
         $this->assertArraysAreIdentical(
             [
                 'EHLO test',
             ],
-            $sent
+            $this->sent
         );
-
-        Closure::bind(function(): void {
-            /** @var SmtpMailer $this */
-            $this->socket = null;
-        }, $mailer, SmtpMailer::class)();
     }
 
     public function testSendCommandInvalidCommand(): void
@@ -520,52 +372,81 @@ final class SmtpMailerTest extends TestCase
 
     public function testSendCommandRecipientWithDsn(): void
     {
-        /** @var SmtpMailer&Stub $mailer */
-        $mailer = $this->getStubBuilder(SmtpMailer::class)
-            ->setConstructorArgs([$this->container, [
-                'host' => 'smtp.example.com',
-                'username' => 'user',
-                'password' => 'pass',
-                'dsn' => true,
-            ]])
-            ->onlyMethods(['getData', 'sendData'])
-            ->getStub();
-
-        $sent = [];
-        $replies = [
+        $this->replies = [
             '250 Recipient',
         ];
-
-        $mailer->method('getData')
-            ->willReturnCallback(static function() use (&$replies): string {
-                return array_shift($replies) ?? '';
-            });
-
-        $mailer->method('sendData')
-            ->willReturnCallback(static function(string $data) use (&$sent): void {
-                $sent[] = $data;
-            });
 
         Closure::bind(function(): void {
             $socket = fopen('php://temp', 'r+');
             TestCase::assertIsResource($socket);
 
             /** @var SmtpMailer $this */
+            $this->config['dsn'] = true;
             $this->socket = $socket;
             $this->sendCommand('to', 'to@example.com');
-        }, $mailer, SmtpMailer::class)();
+        }, $this->mailer, SmtpMailer::class)();
 
         $this->assertArraysAreIdentical(
             [
                 'RCPT TO:<to@example.com> NOTIFY=SUCCESS,DELAY,FAILURE ORCPT=rfc822;to@example.com',
             ],
-            $sent
+            $this->sent
         );
+    }
+
+    public function testSendCommands(): void
+    {
+        $this->replies = [
+            '250 From',
+            '250 To',
+            '250 Bcc',
+            '354 Data',
+            '250 Queued',
+            '250 Reset',
+        ];
 
         Closure::bind(function(): void {
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
             /** @var SmtpMailer $this */
-            $this->socket = null;
-        }, $mailer, SmtpMailer::class)();
+            $this->config['keepAlive'] = true;
+            $this->socket = $socket;
+        }, $this->mailer, SmtpMailer::class)();
+
+        $email = $this->mailer->email()
+            ->setFrom('from@example.com')
+            ->setTo('to@example.com')
+            ->setBcc('bcc@example.com')
+            ->setSubject('Test')
+            ->setBodyText('.Test');
+
+        $this->mailer->send($email);
+
+        $this->assertSame(
+            'MAIL FROM:<from@example.com>',
+            $this->sent[0]
+        );
+
+        $this->assertSame(
+            'RCPT TO:<to@example.com>',
+            $this->sent[1]
+        );
+
+        $this->assertSame(
+            'RCPT TO:<bcc@example.com>',
+            $this->sent[2]
+        );
+
+        $this->assertSame(
+            'DATA',
+            $this->sent[3]
+        );
+
+        $this->assertSame(
+            '.',
+            $this->sent[5]
+        );
     }
 
     #[DataProvider('sendDataFailureProvider')]
@@ -595,6 +476,41 @@ final class SmtpMailerTest extends TestCase
             ->setBodyText('Test');
 
         $this->mailer->send($email);
+    }
+
+    public function testSendEscapesLeadingDots(): void
+    {
+        $this->replies = [
+            '250 From',
+            '250 To',
+            '250 Bcc',
+            '354 Data',
+            '250 Queued',
+            '250 Reset',
+        ];
+
+        Closure::bind(function(): void {
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            /** @var SmtpMailer $this */
+            $this->config['keepAlive'] = true;
+            $this->socket = $socket;
+        }, $this->mailer, SmtpMailer::class)();
+
+        $email = $this->mailer->email()
+            ->setFrom('from@example.com')
+            ->setTo('to@example.com')
+            ->setBcc('bcc@example.com')
+            ->setSubject('Test')
+            ->setBodyText('.Test');
+
+        $this->mailer->send($email);
+
+        $this->assertStringContainsString(
+            "\r\n\r\n..Test\r\n\r\n",
+            $this->sent[4]
+        );
     }
 
     #[DataProvider('keepAliveProvider')]
@@ -636,6 +552,38 @@ final class SmtpMailerTest extends TestCase
                 $this->sent
             );
         }
+    }
+
+    public function testSendOmitsBccHeader(): void
+    {
+        $this->replies = [
+            '250 From',
+            '250 To',
+            '250 Bcc',
+            '354 Data',
+            '250 Queued',
+            '250 Reset',
+        ];
+
+        Closure::bind(function(): void {
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            /** @var SmtpMailer $this */
+            $this->config['keepAlive'] = true;
+            $this->socket = $socket;
+        }, $this->mailer, SmtpMailer::class)();
+
+        $email = $this->mailer->email()
+            ->setFrom('from@example.com')
+            ->setTo('to@example.com')
+            ->setBcc('bcc@example.com')
+            ->setSubject('Test')
+            ->setBodyText('.Test');
+
+        $this->mailer->send($email);
+
+        $this->assertStringNotContainsString('Bcc:', $this->sent[4]);
     }
 
     #[DataProvider('keepAliveProvider')]
@@ -729,6 +677,38 @@ final class SmtpMailerTest extends TestCase
         } finally {
             $mailer->__destruct();
         }
+    }
+
+    public function testSendResetsConnection(): void
+    {
+        $this->replies = [
+            '250 From',
+            '250 To',
+            '250 Bcc',
+            '354 Data',
+            '250 Queued',
+            '250 Reset',
+        ];
+
+        Closure::bind(function(): void {
+            $socket = fopen('php://temp', 'r+');
+            TestCase::assertIsResource($socket);
+
+            /** @var SmtpMailer $this */
+            $this->config['keepAlive'] = true;
+            $this->socket = $socket;
+        }, $this->mailer, SmtpMailer::class)();
+
+        $email = $this->mailer->email()
+            ->setFrom('from@example.com')
+            ->setTo('to@example.com')
+            ->setBcc('bcc@example.com')
+            ->setSubject('Test')
+            ->setBodyText('.Test');
+
+        $this->mailer->send($email);
+
+        $this->assertSame('RSET', $this->sent[6]);
     }
 
     public function testWakeup(): void

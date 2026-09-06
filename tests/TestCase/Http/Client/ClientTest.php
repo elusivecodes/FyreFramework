@@ -62,6 +62,23 @@ final class ClientTest extends TestCase
     }
 
     /**
+     * @return array<string, array{string, string}>
+     */
+    public static function methodProvider(): array
+    {
+        return [
+            'delete' => ['delete', 'DELETE'],
+            'get' => ['get', 'GET'],
+            'head' => ['head', 'HEAD'],
+            'options' => ['options', 'OPTIONS'],
+            'patch' => ['patch', 'PATCH'],
+            'post' => ['post', 'POST'],
+            'put' => ['put', 'PUT'],
+            'trace' => ['trace', 'TRACE'],
+        ];
+    }
+
+    /**
      * @return array<string, array{string, string, string}>
      */
     public static function redirectLocationProvider(): array
@@ -211,43 +228,11 @@ final class ClientTest extends TestCase
         );
     }
 
-    public function testDeleteMethod(): void
-    {
-        $mockResponse = new Response();
-
-        $this->handler->addResponse(
-            'DELETE',
-            'https://example.com/method',
-            $mockResponse
-        );
-
-        $this->assertSame(
-            $mockResponse,
-            $this->client->delete('https://example.com/method')
-        );
-    }
-
     public function testGetHandler(): void
     {
         $this->assertSame(
             $this->handler,
             $this->client->getHandler()
-        );
-    }
-
-    public function testGetMethod(): void
-    {
-        $mockResponse = new Response();
-
-        $this->handler->addResponse(
-            'GET',
-            'https://example.com/method',
-            $mockResponse
-        );
-
-        $this->assertSame(
-            $mockResponse,
-            $this->client->get('https://example.com/method')
         );
     }
 
@@ -290,22 +275,6 @@ final class ClientTest extends TestCase
                 'Accept' => 'text/html',
             ],
         ]);
-    }
-
-    public function testHeadMethod(): void
-    {
-        $mockResponse = new Response();
-
-        $this->handler->addResponse(
-            'HEAD',
-            'https://example.com/method',
-            $mockResponse
-        );
-
-        $this->assertSame(
-            $mockResponse,
-            $this->client->head('https://example.com/method')
-        );
     }
 
     public function testInvalidHandler(): void
@@ -384,19 +353,20 @@ final class ClientTest extends TestCase
         );
     }
 
-    public function testOptionsMethod(): void
+    #[DataProvider('methodProvider')]
+    public function testMethod(string $method, string $expected): void
     {
         $mockResponse = new Response();
 
         $this->handler->addResponse(
-            'OPTIONS',
+            $expected,
             'https://example.com/method',
             $mockResponse
         );
 
         $this->assertSame(
             $mockResponse,
-            $this->client->options('https://example.com/method')
+            $this->client->$method('https://example.com/method')
         );
     }
 
@@ -432,22 +402,6 @@ final class ClientTest extends TestCase
         ]);
     }
 
-    public function testPatchMethod(): void
-    {
-        $mockResponse = new Response();
-
-        $this->handler->addResponse(
-            'PATCH',
-            'https://example.com/method',
-            $mockResponse
-        );
-
-        $this->assertSame(
-            $mockResponse,
-            $this->client->patch('https://example.com/method')
-        );
-    }
-
     public function testPostData(): void
     {
         $mockResponse = new Response();
@@ -474,22 +428,6 @@ final class ClientTest extends TestCase
         $this->client->post('https://example.com/post', [
             'value' => 1,
         ]);
-    }
-
-    public function testPostMethod(): void
-    {
-        $mockResponse = new Response();
-
-        $this->handler->addResponse(
-            'POST',
-            'https://example.com/method',
-            $mockResponse
-        );
-
-        $this->assertSame(
-            $mockResponse,
-            $this->client->post('https://example.com/method')
-        );
     }
 
     public function testPostRawData(): void
@@ -548,22 +486,6 @@ final class ClientTest extends TestCase
         ]);
     }
 
-    public function testPutMethod(): void
-    {
-        $mockResponse = new Response();
-
-        $this->handler->addResponse(
-            'PUT',
-            'https://example.com/method',
-            $mockResponse
-        );
-
-        $this->assertSame(
-            $mockResponse,
-            $this->client->put('https://example.com/method')
-        );
-    }
-
     public function testRedirect(): void
     {
         $redirectResponse = new Response([
@@ -597,9 +519,49 @@ final class ClientTest extends TestCase
     #[DataProvider('redirectMethodProvider')]
     public function testRedirectBody(int $statusCode, string $method, string $expectedMethod, string $expectedBody): void
     {
-        $request = $this->getRedirectedRequest($statusCode, $method, $expectedMethod);
+        $redirectResponse = new Response([
+            'statusCode' => $statusCode,
+            'headers' => [
+                'Location' => '/redirect-target?value=1',
+            ],
+        ]);
 
-        $this->assertSame($expectedBody, (string) $request->getBody());
+        $this->handler->addResponse(
+            $method,
+            'https://example.com/redirect-method?status='.$statusCode,
+            $redirectResponse
+        );
+
+        $mockResponse = new Response();
+
+        $this->handler->addResponse(
+            $expectedMethod,
+            'https://example.com/redirect-target?value=1',
+            $mockResponse,
+            function(RequestInterface $request) use ($expectedBody): bool {
+                $this->assertSame($expectedBody, (string) $request->getBody());
+
+                return true;
+            }
+        );
+
+        $request = new Request(
+            'https://example.com/redirect-method?status='.$statusCode,
+            [
+                'method' => $method,
+                'body' => 'value',
+                'headers' => [
+                    'Content-Length' => '5',
+                    'Content-Type' => 'text/plain',
+                ],
+            ]
+        );
+
+        $response = $this->client->send($request, [
+            'maxRedirects' => 1,
+        ]);
+
+        $this->assertSame($mockResponse, $response);
     }
 
     public function testRedirectBodySizeLimit(): void
@@ -638,12 +600,52 @@ final class ClientTest extends TestCase
     #[DataProvider('redirectMethodProvider')]
     public function testRedirectContentType(int $statusCode, string $method, string $expectedMethod, string $expectedBody): void
     {
-        $request = $this->getRedirectedRequest($statusCode, $method, $expectedMethod);
+        $redirectResponse = new Response([
+            'statusCode' => $statusCode,
+            'headers' => [
+                'Location' => '/redirect-target?value=1',
+            ],
+        ]);
 
-        $this->assertSame(
-            $expectedBody === '' ? '' : 'text/plain',
-            $request->getHeaderLine('Content-Type')
+        $this->handler->addResponse(
+            $method,
+            'https://example.com/redirect-method?status='.$statusCode,
+            $redirectResponse
         );
+
+        $mockResponse = new Response();
+
+        $this->handler->addResponse(
+            $expectedMethod,
+            'https://example.com/redirect-target?value=1',
+            $mockResponse,
+            function(RequestInterface $request) use ($expectedBody): bool {
+                $this->assertSame(
+                    $expectedBody === '' ? '' : 'text/plain',
+                    $request->getHeaderLine('Content-Type')
+                );
+
+                return true;
+            }
+        );
+
+        $request = new Request(
+            'https://example.com/redirect-method?status='.$statusCode,
+            [
+                'method' => $method,
+                'body' => 'value',
+                'headers' => [
+                    'Content-Length' => '5',
+                    'Content-Type' => 'text/plain',
+                ],
+            ]
+        );
+
+        $response = $this->client->send($request, [
+            'maxRedirects' => 1,
+        ]);
+
+        $this->assertSame($mockResponse, $response);
     }
 
     public function testRedirectEmptyLocation(): void
@@ -1070,73 +1072,6 @@ final class ClientTest extends TestCase
         $request = new Request('https://example.com/cookie');
 
         $this->client->send($request);
-    }
-
-    public function testTraceMethod(): void
-    {
-        $mockResponse = new Response();
-
-        $this->handler->addResponse(
-            'TRACE',
-            'https://example.com/trace',
-            $mockResponse
-        );
-
-        $this->assertSame(
-            $mockResponse,
-            $this->client->trace('https://example.com/trace')
-        );
-    }
-
-    protected function getRedirectedRequest(int $statusCode, string $method, string $expectedMethod): RequestInterface
-    {
-        $redirectResponse = new Response([
-            'statusCode' => $statusCode,
-            'headers' => [
-                'Location' => '/redirect-target?value=1',
-            ],
-        ]);
-
-        $this->handler->addResponse(
-            $method,
-            'https://example.com/redirect-method?status='.$statusCode,
-            $redirectResponse
-        );
-
-        $mockResponse = new Response();
-        $redirectedRequest = null;
-
-        $this->handler->addResponse(
-            $expectedMethod,
-            'https://example.com/redirect-target?value=1',
-            $mockResponse,
-            static function(RequestInterface $request) use (&$redirectedRequest): bool {
-                $redirectedRequest = $request;
-
-                return true;
-            }
-        );
-
-        $request = new Request(
-            'https://example.com/redirect-method?status='.$statusCode,
-            [
-                'method' => $method,
-                'body' => 'value',
-                'headers' => [
-                    'Content-Length' => '5',
-                    'Content-Type' => 'text/plain',
-                ],
-            ]
-        );
-
-        $response = $this->client->send($request, [
-            'maxRedirects' => 1,
-        ]);
-
-        $this->assertSame($mockResponse, $response);
-        $this->assertInstanceOf(RequestInterface::class, $redirectedRequest);
-
-        return $redirectedRequest;
     }
 
     #[Override]

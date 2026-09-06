@@ -8,14 +8,11 @@ use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Http\ClientResponse;
 use Fyre\Http\Factories\ResponseFactory;
-use Fyre\Http\MiddlewareQueue;
-use Fyre\Http\RequestHandler;
 use Fyre\Http\ServerRequest;
 use Fyre\Security\Middleware\CorsMiddleware;
 use Override;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseFactoryInterface;
-use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 use function class_uses;
@@ -25,6 +22,8 @@ final class CorsMiddlewareTest extends TestCase
     protected Config $config;
 
     protected Container $container;
+
+    protected RequestHandlerInterface $handler;
 
     public function testConfigFallback(): void
     {
@@ -38,7 +37,7 @@ final class CorsMiddlewareTest extends TestCase
             ],
         ]);
 
-        $response = $this->handle($middleware, $request);
+        $response = $middleware->process($request, $this->handler);
 
         $this->assertSame(
             'https://test.com',
@@ -65,7 +64,7 @@ final class CorsMiddlewareTest extends TestCase
             ],
         ]);
 
-        $response = $this->handle($middleware, $request);
+        $response = $middleware->process($request, $this->handler);
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame([], $response->getHeader('Access-Control-Allow-Origin'));
@@ -89,7 +88,7 @@ final class CorsMiddlewareTest extends TestCase
             ],
         ]);
 
-        $response = $this->handle($middleware, $request);
+        $response = $middleware->process($request, $this->handler);
 
         $this->assertSame(204, $response->getStatusCode());
         $this->assertSame(
@@ -114,7 +113,7 @@ final class CorsMiddlewareTest extends TestCase
             ],
         ]);
 
-        $response = $this->handle($middleware, $request);
+        $response = $middleware->process($request, $this->handler);
 
         $this->assertSame(204, $response->getStatusCode());
         $this->assertSame([], $response->getHeader('Access-Control-Allow-Origin'));
@@ -133,7 +132,7 @@ final class CorsMiddlewareTest extends TestCase
             ],
         ]);
 
-        $response = $this->handle($middleware, $request);
+        $response = $middleware->process($request, $this->handler);
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame(
@@ -156,26 +155,10 @@ final class CorsMiddlewareTest extends TestCase
             ],
         ]);
 
-        $response = $this->handle($middleware, $request);
+        $response = $middleware->process($request, $this->handler);
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame([], $response->getHeader('Access-Control-Allow-Origin'));
-    }
-
-    protected function handle(CorsMiddleware $middleware, ServerRequestInterface $request): ClientResponse
-    {
-        $queue = new MiddlewareQueue([
-            $middleware,
-            static fn(ServerRequestInterface $request, RequestHandlerInterface $handler): ClientResponse => new ClientResponse([
-                'statusCode' => 200,
-            ]),
-        ]);
-        $handler = $this->container->build(RequestHandler::class, ['queue' => $queue]);
-        $response = $handler->handle($request);
-
-        $this->assertInstanceOf(ClientResponse::class, $response);
-
-        return $response;
     }
 
     #[Override]
@@ -186,5 +169,12 @@ final class CorsMiddlewareTest extends TestCase
         $this->container->singleton(ResponseFactoryInterface::class, ResponseFactory::class);
 
         $this->config = $this->container->use(Config::class);
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new ClientResponse([
+            'statusCode' => 200,
+        ]));
+
+        $this->handler = $handler;
     }
 }

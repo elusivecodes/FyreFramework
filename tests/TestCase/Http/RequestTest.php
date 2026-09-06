@@ -8,68 +8,60 @@ use Fyre\Http\Request;
 use Fyre\Http\Stream;
 use Fyre\Http\Uri;
 use InvalidArgumentException;
+use Override;
 use PHPUnit\Framework\TestCase;
 
 final class RequestTest extends TestCase
 {
-    public function testConstructor(): void
+    protected Request $request;
+
+    protected Uri $uri;
+
+    public function testConstructorBody(): void
     {
-        $uri = new Uri('https://test.com/path?a=1&b=2');
+        $body = $this->request->getBody();
 
-        $request = new Request($uri, [
-            'method' => 'post',
-            'body' => 'test',
-            'headers' => [
-                'test' => 'value',
-            ],
-            'protocolVersion' => '2.0',
-        ]);
+        $this->assertInstanceOf(Stream::class, $body);
+        $this->assertSame('test', $body->getContents());
+    }
 
-        $this->assertSame(
-            $uri,
-            $request->getUri()
-        );
-
-        $this->assertSame(
-            'POST',
-            $request->getMethod()
-        );
-
-        $body = $request->getBody();
-
-        $this->assertInstanceOf(
-            Stream::class,
-            $body
-        );
-
-        $this->assertSame(
-            'test',
-            $body->getContents()
-        );
-
+    public function testConstructorHeaders(): void
+    {
         $this->assertArraysAreIdentical(
-            [
-                'value',
-            ],
-            $request->getHeader('test')
+            ['value'],
+            $this->request->getHeader('test')
         );
+    }
 
+    public function testConstructorHostHeader(): void
+    {
         $this->assertArraysAreIdentical(
-            [
-                'test.com',
-            ],
-            $request->getHeader('host')
+            ['test.com'],
+            $this->request->getHeader('host')
         );
+    }
 
+    public function testConstructorMethod(): void
+    {
+        $this->assertSame('POST', $this->request->getMethod());
+    }
+
+    public function testConstructorProtocolVersion(): void
+    {
+        $this->assertSame('2.0', $this->request->getProtocolVersion());
+    }
+
+    public function testConstructorRequestTarget(): void
+    {
         $this->assertSame(
             '/path?a=1&b=2',
-            $request->getRequestTarget()
+            $this->request->getRequestTarget()
         );
+    }
 
-        $this->assertSame(
-            '2.0',
-            $request->getProtocolVersion()
-        );
+    public function testConstructorUri(): void
+    {
+        $this->assertSame($this->uri, $this->request->getUri());
     }
 
     public function testGetMethod(): void
@@ -202,5 +194,19 @@ final class RequestTest extends TestCase
             ],
             $request2->getHeader('host')
         );
+    }
+
+    #[Override]
+    protected function setUp(): void
+    {
+        $this->uri = new Uri('https://test.com/path?a=1&b=2');
+        $this->request = new Request($this->uri, [
+            'method' => 'post',
+            'body' => 'test',
+            'headers' => [
+                'test' => 'value',
+            ],
+            'protocolVersion' => '2.0',
+        ]);
     }
 }
