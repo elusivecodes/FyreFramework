@@ -18,6 +18,24 @@ trait ConnectionTrait
 
     protected ConnectionManager $connectionManager;
 
+    protected function insert(): void
+    {
+        $this->db->insert()
+            ->into('test')
+            ->values([
+                [
+                    'name' => 'Test 1',
+                ],
+                [
+                    'name' => 'Test 2',
+                ],
+                [
+                    'name' => 'Test 3',
+                ],
+            ])
+            ->execute();
+    }
+
     protected static function clearSchema(Connection $db): void
     {
         $db->query('DROP TABLE IF EXISTS fyre__locks');

@@ -64,23 +64,6 @@ trait OrientTestTrait
     #[RequiresPhpExtension('exif')]
     public function testOrient(int $orientation, int $width, int $height, array $expected): void
     {
-        $image1 = $this->createOrientedImage($orientation);
-        $image2 = $image1->orient();
-
-        $this->assertSame($image1, $image2);
-        $this->assertSame($width, $image2->getWidth());
-        $this->assertSame($height, $image2->getHeight());
-
-        [$topLeft, $topRight, $bottomLeft, $bottomRight] = $expected;
-
-        $this->assertEqualsWithDelta($topLeft, $this->getPixel($image2, 0, 0), 2);
-        $this->assertEqualsWithDelta($topRight, $this->getPixel($image2, $width - 1, 0), 2);
-        $this->assertEqualsWithDelta($bottomLeft, $this->getPixel($image2, 0, $height - 1), 2);
-        $this->assertEqualsWithDelta($bottomRight, $this->getPixel($image2, $width - 1, $height - 1), 2);
-    }
-
-    protected function createOrientedImage(int $orientation): Image
-    {
         $gdImage = $this->createImageData(20, 10) |> imagecreatefromstring(...);
 
         $this->assertInstanceOf(GdImage::class, $gdImage);
@@ -103,6 +86,18 @@ trait OrientTestTrait
 
         file_put_contents('tmp/oriented.jpg', $data);
 
-        return Image::createFromFile('tmp/oriented.jpg');
+        $image1 = Image::createFromFile('tmp/oriented.jpg');
+        $image2 = $image1->orient();
+
+        $this->assertSame($image1, $image2);
+        $this->assertSame($width, $image2->getWidth());
+        $this->assertSame($height, $image2->getHeight());
+
+        [$topLeft, $topRight, $bottomLeft, $bottomRight] = $expected;
+
+        $this->assertEqualsWithDelta($topLeft, $this->getPixel($image2, 0, 0), 2);
+        $this->assertEqualsWithDelta($topRight, $this->getPixel($image2, $width - 1, 0), 2);
+        $this->assertEqualsWithDelta($bottomLeft, $this->getPixel($image2, 0, $height - 1), 2);
+        $this->assertEqualsWithDelta($bottomRight, $this->getPixel($image2, $width - 1, $height - 1), 2);
     }
 }

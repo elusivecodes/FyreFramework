@@ -19,24 +19,6 @@ trait SqliteConnectionTrait
 
     protected Connection $db;
 
-    protected function insert(): void
-    {
-        $this->db->insert()
-            ->into('test')
-            ->values([
-                [
-                    'name' => 'Test 1',
-                ],
-                [
-                    'name' => 'Test 2',
-                ],
-                [
-                    'name' => 'Test 3',
-                ],
-            ])
-            ->execute();
-    }
-
     protected static function buildContainer(): Container
     {
         $container = new Container();
