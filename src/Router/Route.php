@@ -22,6 +22,7 @@ use function preg_match;
 use function preg_match_all;
 use function preg_quote;
 use function preg_split;
+use function rawurldecode;
 use function str_contains;
 use function str_ends_with;
 use function str_replace;
@@ -306,7 +307,9 @@ abstract class Route
         $arguments = [];
 
         foreach ($captures as $name => $capture) {
-            $arguments[$name] = $matches[$capture] ?? null;
+            $arguments[$name] = isset($matches[$capture]) ?
+                rawurldecode($matches[$capture]) :
+                null;
         }
 
         return $request

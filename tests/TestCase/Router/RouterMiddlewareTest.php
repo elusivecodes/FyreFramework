@@ -21,6 +21,7 @@ use Override;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use Tests\Mock\Controllers\HomeController;
+use Tests\Mock\Enums\ReviewStatus;
 use Tests\Mock\Enums\State;
 use Tests\Mock\Enums\Status;
 
@@ -172,6 +173,56 @@ final class RouterMiddlewareTest extends TestCase
         $request = $this->container->build(ServerRequest::class, [
             'options' => [
                 'uri' => '/test/draft',
+            ],
+        ]);
+
+        $this->assertInstanceOf(
+            ClientResponse::class,
+            $handler->handle($request)
+        );
+
+        $this->assertTrue($ran);
+    }
+
+    public function testProcessRouteBackedEnumParamEncoded(): void
+    {
+        $ran = false;
+
+        $destination = function(ReviewStatus $status) use (&$ran): string {
+            $ran = true;
+
+            $this->assertSame(
+                ReviewStatus::Pending,
+                $status
+            );
+
+            return '';
+        };
+
+        $this->router->connect('test/{status}', $destination, as: 'status');
+
+        $url = $this->router->url('status', [
+            'status' => ReviewStatus::Pending,
+        ]);
+
+        $this->assertSame(
+            '/test/review%20pending',
+            $url
+        );
+
+        $queue = new MiddlewareQueue([
+            RouterMiddleware::class,
+            SubstituteBindingsMiddleware::class,
+        ]);
+
+        $routeHandler = $this->container->build(RouteHandler::class);
+        $handler = $this->container->build(RequestHandler::class, [
+            'queue' => $queue,
+            'fallbackHandler' => $routeHandler,
+        ]);
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'uri' => $url,
             ],
         ]);
 

@@ -17,6 +17,23 @@ final class RouteTest extends TestCase
     protected Container $container;
 
     /**
+     * @return array<string, array{string, string|null}>
+     */
+    public static function pathArgumentProvider(): array
+    {
+        return [
+            'plain' => ['/test/value', 'value'],
+            'space' => ['/test/review%20pending', 'review pending'],
+            'unicode' => ['/test/caf%C3%A9', "caf\u{00e9}"],
+            'literal plus' => ['/test/a+b', 'a+b'],
+            'encoded plus' => ['/test/a%2Bb', 'a+b'],
+            'encoded slash' => ['/test/a%2Fb', 'a/b'],
+            'decode once' => ['/test/a%2520b', 'a%20b'],
+            'omitted optional' => ['/test', null],
+        ];
+    }
+
+    /**
      * @return array<string, array{string, int|null, bool}>
      */
     public static function portProvider(): array
@@ -217,6 +234,30 @@ final class RouteTest extends TestCase
             [
                 'a' => 'foo',
                 'b' => 'tail',
+            ],
+            $request?->getAttribute('routeArguments')
+        );
+    }
+
+    #[DataProvider('pathArgumentProvider')]
+    public function testCheckPathPlaceholderDecoding(string $uri, string|null $expected): void
+    {
+        $route = $this->container->build(ControllerRoute::class, [
+            'destination' => [TestController::class, 'test'],
+            'path' => 'test/{value?}',
+        ]);
+
+        $request = $this->container->build(ServerRequest::class, [
+            'options' => [
+                'uri' => $uri,
+            ],
+        ]);
+
+        $request = $route->matchRequest($request);
+
+        $this->assertArraysAreIdentical(
+            [
+                'value' => $expected,
             ],
             $request?->getAttribute('routeArguments')
         );
