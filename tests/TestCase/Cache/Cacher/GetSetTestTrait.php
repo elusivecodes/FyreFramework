@@ -5,12 +5,28 @@ namespace Tests\TestCase\Cache\Cacher;
 
 use Fyre\Cache\Cacher;
 use Fyre\Cache\Exceptions\CacheException;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * @property Cacher $cacher
  */
 trait GetSetTestTrait
 {
+    /**
+     * @return array<string, array{mixed}>
+     */
+    public static function setGetProvider(): array
+    {
+        return [
+            'array' => [['key' => 'value']],
+            'false' => [false],
+            'true' => [true],
+            'float' => [.5],
+            'integer' => [5],
+            'string' => ['value'],
+        ];
+    }
+
     public function testGetDefault(): void
     {
         $this->assertSame(
@@ -27,50 +43,13 @@ trait GetSetTestTrait
         $this->cacher->get('test/');
     }
 
-    public function testSetGetArray(): void
+    #[DataProvider('setGetProvider')]
+    public function testSetGet(mixed $value): void
     {
-        $this->cacher->set('test', ['key' => 'value']);
-
-        $this->assertArraysAreIdentical(
-            ['key' => 'value'],
-            $this->cacher->get('test')
-        );
-    }
-
-    public function testSetGetBooleanFalse(): void
-    {
-        $this->cacher->set('test', false);
-
-        $this->assertFalse(
-            $this->cacher->get('test')
-        );
-    }
-
-    public function testSetGetBooleanTrue(): void
-    {
-        $this->cacher->set('test', true);
-
-        $this->assertTrue(
-            $this->cacher->get('test')
-        );
-    }
-
-    public function testSetGetFloat(): void
-    {
-        $this->cacher->set('test', .5);
+        $this->cacher->set('test', $value);
 
         $this->assertSame(
-            .5,
-            $this->cacher->get('test')
-        );
-    }
-
-    public function testSetGetInteger(): void
-    {
-        $this->cacher->set('test', 5);
-
-        $this->assertSame(
-            5,
+            $value,
             $this->cacher->get('test')
         );
     }
@@ -129,16 +108,6 @@ trait GetSetTestTrait
 
         $this->assertEquals(
             $object,
-            $this->cacher->get('test')
-        );
-    }
-
-    public function testSetGetString(): void
-    {
-        $this->cacher->set('test', 'value');
-
-        $this->assertSame(
-            'value',
             $this->cacher->get('test')
         );
     }
