@@ -7,11 +7,25 @@ use Fyre\DB\Schema\Handlers\Mysql\MysqlTable;
 use Fyre\DB\Schema\Table;
 use Fyre\Utility\Collection;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class SchemaTest extends TestCase
 {
     use MariaDbConnectionTrait;
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function uca1400CharsetProvider(): array
+    {
+        return [
+            'utf8mb3' => ['utf8mb3'],
+            'utf8mb4' => ['utf8mb4'],
+            'utf16' => ['utf16'],
+            'utf32' => ['utf32'],
+        ];
+    }
 
     public function testGetConnection(): void
     {
@@ -121,5 +135,23 @@ final class SchemaTest extends TestCase
                 static fn(Table $table): array => $table->toArray()
             )->toArray()
         );
+    }
+
+    #[DataProvider('uca1400CharsetProvider')]
+    public function testTableUca1400Charset(string $charset): void
+    {
+        $this->db->query('CREATE TABLE test_collation (id INTEGER PRIMARY KEY) COLLATE '.$charset.'_uca1400_ai_ci');
+
+        try {
+            $table = $this->schema->table('test_collation');
+
+            $this->assertInstanceOf(MysqlTable::class, $table);
+            $this->assertSame(
+                $charset,
+                $table->getCharset()
+            );
+        } finally {
+            $this->db->query('DROP TABLE test_collation');
+        }
     }
 }

@@ -49,9 +49,17 @@ class MysqlSchema extends Schema
                     'table' => 'INFORMATION_SCHEMA.COLLATION_CHARACTER_SET_APPLICABILITY',
                     'alias' => 'CollationCharacterSetApplicability',
                     'type' => 'INNER',
-                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr()
+                    'conditions' => static fn(Query $query): ConditionExpression => $query->expr('OR')
                         ->equalFields(
                             'CollationCharacterSetApplicability.COLLATION_NAME',
+                            'Tables.TABLE_COLLATION'
+                        )
+                        ->equalFields(
+                            $query->func()->concat([
+                                $query->identifier('CollationCharacterSetApplicability.CHARACTER_SET_NAME'),
+                                '_',
+                                $query->identifier('CollationCharacterSetApplicability.COLLATION_NAME'),
+                            ]),
                             'Tables.TABLE_COLLATION'
                         ),
                 ],

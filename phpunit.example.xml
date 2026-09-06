@@ -18,6 +18,8 @@
             <exclude>tests/TestCase/Cache/RedisTest.php</exclude>
             <exclude>tests/TestCase/Commands/DbLockCommandTest.php</exclude>
             <exclude>tests/TestCase/Commands/DbMigrationCommandTest.php</exclude>
+            <exclude>tests/TestCase/Commands/Make/MakeFixtureTest.php</exclude>
+            <exclude>tests/TestCase/Commands/Make/MakeModelTest.php</exclude>
             <exclude>tests/TestCase/Commands/QueueWorkerCommandTest.php</exclude>
             <exclude>tests/TestCase/DB/ConnectionManagerTest.php</exclude>
             <exclude>tests/TestCase/DB/Forge/MariaDb</exclude>
@@ -111,6 +113,8 @@
             <directory>tests/TestCase/DB/Schema/Sqlite</directory>
             <directory>tests/TestCase/ORM/Sqlite</directory>
             <directory>tests/TestCase/View/Helpers/Form/Context/Sqlite</directory>
+            <file>tests/TestCase/Commands/Make/MakeFixtureTest.php</file>
+            <file>tests/TestCase/Commands/Make/MakeModelTest.php</file>
             <file>tests/TestCase/Http/Session/SqliteTest.php</file>
         </testsuite>
         <testsuite name="redis">
