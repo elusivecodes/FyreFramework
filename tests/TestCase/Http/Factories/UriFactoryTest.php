@@ -22,6 +22,23 @@ final class UriFactoryTest extends TestCase
         return [
             'space' => ['//admin report'],
             'invalid percent encoding' => ['//admin%ZZreport'],
+            'incomplete percent encoding' => ['/admin%2'],
+            'unicode' => ["/caf\u{00e9}"],
+        ];
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function invalidRequestQueryProvider(): array
+    {
+        return [
+            'space' => ['q=hello world'],
+            'invalid percent encoding' => ['q=%ZZ'],
+            'incomplete percent encoding' => ['q=%2'],
+            'unicode' => ["q=caf\u{00e9}"],
+            'control character' => ["q=hello\nworld"],
+            'fragment delimiter' => ['q=hello#world'],
         ];
     }
 
@@ -53,6 +70,22 @@ final class UriFactoryTest extends TestCase
         ];
     }
 
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function requestQueryProvider(): array
+    {
+        return [
+            'empty' => ['', ''],
+            'zero' => ['0', '0'],
+            'leading question mark' => ['?page=2', 'page=2'],
+            'only question mark' => ['?', ''],
+            'two question marks' => ['??page=2', '?page=2'],
+            'encoded values' => ['q=caf%C3%A9%20report&next=/a?b&ratio=100%25', 'q=caf%C3%A9%20report&next=/a?b&ratio=100%25'],
+            'plus' => ['q=hello+world', 'q=hello+world'],
+        ];
+    }
+
     public function testCreateFromServer(): void
     {
         $uri = $this->uriFactory->createFromServer(
@@ -64,10 +97,30 @@ final class UriFactoryTest extends TestCase
             true
         );
 
+        $this->assertInstanceOf(Uri::class, $uri);
+
         $this->assertSame(
             'https://example.com:8443/documents?page=2',
             (string) $uri
         );
+    }
+
+    public function testCreateFromServerImmutable(): void
+    {
+        $uri = $this->uriFactory->createFromServer(
+            [
+                'REQUEST_URI' => '/documents',
+                'QUERY_STRING' => 'page=2',
+            ],
+            'example.com'
+        );
+
+        $updated = $uri
+            ->withPath('/other')
+            ->withQuery('page=3');
+
+        $this->assertSame('http://example.com/documents?page=2', (string) $uri);
+        $this->assertSame('http://example.com/other?page=3', (string) $updated);
     }
 
     #[DataProvider('invalidRequestPathProvider')]
@@ -79,6 +132,21 @@ final class UriFactoryTest extends TestCase
         $this->uriFactory->createFromServer(
             [
                 'REQUEST_URI' => $requestUri,
+            ],
+            'example.com'
+        );
+    }
+
+    #[DataProvider('invalidRequestQueryProvider')]
+    public function testCreateFromServerInvalidQuery(string $query): void
+    {
+        $this->expectException(InvalidUriException::class);
+        $this->expectExceptionMessageMatches('/\AThe specified query is malformed/');
+
+        $this->uriFactory->createFromServer(
+            [
+                'REQUEST_URI' => '/documents',
+                'QUERY_STRING' => $query,
             ],
             'example.com'
         );
@@ -111,6 +179,24 @@ final class UriFactoryTest extends TestCase
         $this->assertSame(
             $expected,
             $uri->getPath()
+        );
+    }
+
+    #[DataProvider('requestQueryProvider')]
+    public function testCreateFromServerQuery(string $query, string $expected): void
+    {
+        $uri = $this->uriFactory->createFromServer(
+            [
+                'REQUEST_URI' => '/documents',
+                'QUERY_STRING' => $query,
+            ],
+            'example.com'
+        );
+
+        $this->assertSame($expected, $uri->getQuery());
+        $this->assertSame(
+            'http://example.com/documents'.($expected !== '' ? '?'.$expected : ''),
+            (string) $uri
         );
     }
 

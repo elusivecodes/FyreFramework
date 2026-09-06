@@ -17,6 +17,9 @@ use function getservbyname;
 use function http_build_query;
 use function in_array;
 use function parse_str;
+use function preg_quote;
+use function preg_replace_callback;
+use function rawurlencode;
 use function str_starts_with;
 use function substr;
 use function trim;
@@ -308,6 +311,8 @@ class Uri implements Stringable, UriInterface
             $fragment = substr($fragment, 1);
         }
 
+        $fragment = static::encodeComponent($fragment, '?');
+
         $temp = clone $this;
 
         $temp->uri = $temp->uri->withFragment($fragment === '' ? null : $fragment);
@@ -364,6 +369,8 @@ class Uri implements Stringable, UriInterface
     #[Override]
     public function withPath(string $path): static
     {
+        $path = static::encodeComponent($path);
+
         $temp = clone $this;
 
         $temp->uri = $temp->uri->withPath($path);
@@ -394,6 +401,8 @@ class Uri implements Stringable, UriInterface
         if (str_starts_with($query, '?')) {
             $query = substr($query, 1);
         }
+
+        $query = static::encodeComponent($query, '?');
 
         $temp = clone $this;
 
@@ -444,5 +453,24 @@ class Uri implements Stringable, UriInterface
         $temp->uri = $temp->uri->withUserInfo($userInfo);
 
         return $temp;
+    }
+
+    /**
+     * Encodes characters outside the path character set, preserving valid percent escapes.
+     *
+     * @param string $value The component value.
+     * @param string $extraCharacters Additional allowed characters.
+     * @return string The encoded component.
+     */
+    protected static function encodeComponent(string $value, string $extraCharacters = ''): string
+    {
+        $extraCharacters = preg_quote($extraCharacters, '`');
+        $pattern = '`[^0-9a-z_\-.~!$&\'()*+,;=:@/%'.$extraCharacters.']+|%(?![0-9a-f]{2})`i';
+
+        return (string) preg_replace_callback(
+            $pattern,
+            static fn(array $match): string => rawurlencode($match[0]),
+            $value
+        );
     }
 }

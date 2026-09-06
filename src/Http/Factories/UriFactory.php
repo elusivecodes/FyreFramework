@@ -7,6 +7,7 @@ use Fyre\Http\Uri;
 use Override;
 use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Message\UriInterface;
+use Uri\Rfc3986\Uri as Rfc3986Uri;
 
 use function is_numeric;
 use function is_string;
@@ -49,10 +50,10 @@ class UriFactory implements UriFactoryInterface
             }
         }
 
-        $uri = $this->createUri();
+        $internalUri = new Rfc3986Uri('');
 
         if ($host !== '') {
-            $uri = $uri
+            $internalUri = $internalUri
                 ->withScheme($secure ? 'https' : 'http')
                 ->withHost($host)
                 ->withPort($port);
@@ -72,16 +73,22 @@ class UriFactory implements UriFactoryInterface
             }
 
             // withPath() validates the extracted path against RFC 3986.
-            $uri = $uri->withPath($path);
+            $internalUri = $internalUri->withPath($path);
         }
 
         $query = $serverParams['QUERY_STRING'] ?? null;
 
-        if (is_string($query) && $query !== '') {
-            $uri = $uri->withQuery($query);
+        if (is_string($query)) {
+            if (str_starts_with($query, '?')) {
+                $query = substr($query, 1);
+            }
+
+            if ($query !== '') {
+                $internalUri = $internalUri->withQuery($query);
+            }
         }
 
-        return $uri;
+        return $internalUri->toString() |> $this->createUri(...);
     }
 
     /**

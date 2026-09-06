@@ -102,7 +102,7 @@ $request = $factory->createFromOptions([
 
 The concrete URI and uploaded-file factories also provide marshalling helpers used by `ServerRequestFactory`:
 
-- `UriFactory::createFromServer()` derives the path from `REQUEST_URI` and the query from `QUERY_STRING`. It preserves repeated path slashes and replaces raw control characters with underscores.
+- `UriFactory::createFromServer()` derives the path from `REQUEST_URI` and the query from `QUERY_STRING`. It preserves repeated path slashes and replaces raw control characters with underscores. Paths and queries are validated against RFC 3986 rather than automatically percent-encoded.
 - `UploadedFileFactory::createUploadedFiles()` normalizes the nested `$_FILES` format into PSR-7 uploaded files.
 
 ## Related

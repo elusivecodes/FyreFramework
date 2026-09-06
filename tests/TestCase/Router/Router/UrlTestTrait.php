@@ -42,6 +42,20 @@ trait UrlTestTrait
         );
     }
 
+    public function testUrlArgumentsEncoding(): void
+    {
+        $router = $this->container->use(Router::class);
+
+        $router->connect('files/{name}', HomeController::class, as: 'files.view');
+
+        $this->assertSame(
+            '/files/caf%C3%A9%20report.txt',
+            $router->url('files.view', [
+                'name' => "caf\u{00e9} report.txt",
+            ])
+        );
+    }
+
     public function testUrlArgumentsWithinSegment(): void
     {
         $router = $this->container->use(Router::class);
@@ -97,6 +111,20 @@ trait UrlTestTrait
             $router->url('alternate', [
                 'a' => 1,
                 '#' => 'test',
+            ])
+        );
+    }
+
+    public function testUrlFragmentEncoding(): void
+    {
+        $router = $this->container->use(Router::class);
+
+        $router->connect('home', HomeController::class, as: 'home');
+
+        $this->assertSame(
+            '/home#section%20one%20?two%23three',
+            $router->url('home', [
+                '#' => 'section%20one ?two#three',
             ])
         );
     }

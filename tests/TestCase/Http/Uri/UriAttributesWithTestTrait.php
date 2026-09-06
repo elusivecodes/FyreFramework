@@ -4,9 +4,28 @@ declare(strict_types=1);
 namespace Tests\TestCase\Http\Uri;
 
 use Fyre\Http\Uri;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 trait UriAttributesWithTestTrait
 {
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function componentEncodingProvider(): array
+    {
+        return [
+            'empty' => ['', ''],
+            'zero' => ['0', '0'],
+            'spaces' => ['hello world', 'hello%20world'],
+            'unicode' => ["caf\u{00e9}", 'caf%C3%A9'],
+            'encoded' => ['hello%20world/caf%C3%A9%2F', 'hello%20world/caf%C3%A9%2F'],
+            'mixed' => ['hello%20world again', 'hello%20world%20again'],
+            'malformed percent' => ['100% %2 %GG %2G', '100%25%20%252%20%25GG%20%252G'],
+            'allowed characters' => ["/azAZ09_-.~!$&'()*+,;=:@", "/azAZ09_-.~!$&'()*+,;=:@"],
+            'control characters' => ["a\0\t\r\nb", 'a%00%09%0D%0Ab'],
+        ];
+    }
+
     public function testWithAuthority(): void
     {
         $uri1 = new Uri();
@@ -69,6 +88,25 @@ trait UriAttributesWithTestTrait
             'test',
             $uri2->getFragment()
         );
+    }
+
+    public function testWithFragmentDelimiters(): void
+    {
+        $this->assertSame(
+            'part%20one?/two%23three',
+            new Uri()->withFragment('#part one?/two#three')->getFragment()
+        );
+    }
+
+    #[DataProvider('componentEncodingProvider')]
+    public function testWithFragmentEncoding(string $value, string $expected): void
+    {
+        $uri = new Uri('/old?old#old');
+        $result = $uri->withFragment($value);
+
+        $this->assertNotSame($uri, $result);
+        $this->assertSame('/old?old#old', $uri->getUri());
+        $this->assertSame($expected, $result->getFragment());
     }
 
     public function testWithFragmentHash(): void
@@ -151,6 +189,25 @@ trait UriAttributesWithTestTrait
         );
     }
 
+    public function testWithPathDelimiters(): void
+    {
+        $this->assertSame(
+            '/a%3Fb%23c',
+            new Uri()->withPath('/a?b#c')->getPath()
+        );
+    }
+
+    #[DataProvider('componentEncodingProvider')]
+    public function testWithPathEncoding(string $value, string $expected): void
+    {
+        $uri = new Uri('/old?old#old');
+        $result = $uri->withPath($value);
+
+        $this->assertNotSame($uri, $result);
+        $this->assertSame('/old?old#old', $uri->getUri());
+        $this->assertSame($expected, $result->getPath());
+    }
+
     public function testWithPathWithDots(): void
     {
         $uri1 = new Uri();
@@ -229,6 +286,25 @@ trait UriAttributesWithTestTrait
             'test=a',
             $uri2->getQuery()
         );
+    }
+
+    public function testWithQueryDelimiters(): void
+    {
+        $this->assertSame(
+            'q=hello%20world&next=/a?b%23c',
+            new Uri()->withQuery('?q=hello world&next=/a?b#c')->getQuery()
+        );
+    }
+
+    #[DataProvider('componentEncodingProvider')]
+    public function testWithQueryEncoding(string $value, string $expected): void
+    {
+        $uri = new Uri('/old?old#old');
+        $result = $uri->withQuery($value);
+
+        $this->assertNotSame($uri, $result);
+        $this->assertSame('/old?old#old', $uri->getUri());
+        $this->assertSame($expected, $result->getQuery());
     }
 
     public function testWithQueryParams(): void

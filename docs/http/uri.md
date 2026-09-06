@@ -53,6 +53,8 @@ The concrete `Fyre\Http\Factories\UriFactory` also provides `createFromServer()`
 | raw query string | `getQuery()` | `withQuery($query)` |
 | fragment | `getFragment()` | `withFragment($fragment)` |
 
+`withPath()`, `withQuery()`, and `withFragment()` accept encoded or unencoded values. They percent-encode characters that are not allowed in the component, including spaces and Unicode, without double-encoding valid `%HH` escapes. Allowed delimiters are preserved.
+
 Related updates can be chained:
 
 ```php
