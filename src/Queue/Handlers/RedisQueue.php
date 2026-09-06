@@ -240,7 +240,7 @@ class RedisQueue extends Queue
     #[Override]
     public function getFailed(string $queue = self::DEFAULT): array
     {
-        $data = $this->connection->hGetAll(static::prepareKey($queue, 'failures'));
+        $data = static::prepareKey($queue, 'failures') |> $this->connection->hGetAll(...);
         $failures = [];
 
         foreach ($data as $id => $failure) {

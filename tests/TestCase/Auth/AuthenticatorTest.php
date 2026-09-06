@@ -454,7 +454,7 @@ final class AuthenticatorTest extends TestCase
         [$cookieString] = $response->getHeader('Set-Cookie');
 
         $cookie = Cookie::createFromHeaderString($cookieString);
-        $data = json_decode(rawurldecode($cookie->getValue()), true);
+        $data = json_decode($cookie->getValue() |> rawurldecode(...), true);
 
         $this->assertSame('test@test.com', $data[0]);
     }

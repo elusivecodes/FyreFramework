@@ -141,7 +141,7 @@ class PostgresQueryGenerator extends QueryGenerator
             $sql .= ' USING CAST(';
             $sql .= $column->getName() |> $this->connection->quoteIdentifierPart(...);
             $sql .= ' AS ';
-            $sql .= strtoupper($column->getType());
+            $sql .= $column->getType() |> strtoupper(...);
             $sql .= ')';
         }
 
