@@ -3,8 +3,39 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\FormBuilder;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+
 trait LabelTestTrait
 {
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function labelAttributesProvider(): array
+    {
+        return [
+            'array value' => [
+                ['data-test' => [1, 2]],
+                '<label data-test="[1,2]"></label>',
+            ],
+            'escaped value' => [
+                ['data-test' => '<test>'],
+                '<label data-test="&lt;test&gt;"></label>',
+            ],
+            'invalid name' => [
+                ['*class*' => 'test'],
+                '<label class="test"></label>',
+            ],
+            'multiple attributes' => [
+                ['class' => 'test', 'id' => 'label'],
+                '<label class="test" id="label"></label>',
+            ],
+            'attribute order' => [
+                ['id' => 'label', 'class' => 'test'],
+                '<label class="test" id="label"></label>',
+            ],
+        ];
+    }
+
     public function testLabel(): void
     {
         $this->assertSame(
@@ -13,55 +44,15 @@ trait LabelTestTrait
         );
     }
 
-    public function testLabelAttributeArray(): void
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    #[DataProvider('labelAttributesProvider')]
+    public function testLabelAttributes(array $attributes, string $expected): void
     {
         $this->assertSame(
-            '<label data-test="[1,2]"></label>',
-            $this->form->label('', [
-                'data-test' => [1, 2],
-            ])
-        );
-    }
-
-    public function testLabelAttributeEscape(): void
-    {
-        $this->assertSame(
-            '<label data-test="&lt;test&gt;"></label>',
-            $this->form->label('', [
-                'data-test' => '<test>',
-            ])
-        );
-    }
-
-    public function testLabelAttributeInvalid(): void
-    {
-        $this->assertSame(
-            '<label class="test"></label>',
-            $this->form->label('', [
-                '*class*' => 'test',
-            ])
-        );
-    }
-
-    public function testLabelAttributes(): void
-    {
-        $this->assertSame(
-            '<label class="test" id="label"></label>',
-            $this->form->label('', [
-                'class' => 'test',
-                'id' => 'label',
-            ])
-        );
-    }
-
-    public function testLabelAttributesOrder(): void
-    {
-        $this->assertSame(
-            '<label class="test" id="label"></label>',
-            $this->form->label('', [
-                'id' => 'label',
-                'class' => 'test',
-            ])
+            $expected,
+            $this->form->label('', $attributes)
         );
     }
 

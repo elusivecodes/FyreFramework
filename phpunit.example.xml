@@ -52,7 +52,7 @@
             <exclude>tests/TestCase/ORM/Postgres</exclude>
             <exclude>tests/TestCase/ORM/Sqlite</exclude>
             <exclude>tests/TestCase/Queue/ListenerTest.php</exclude>
-            <exclude>tests/TestCase/Queue/QueueManagerTest.php</exclude>
+            <exclude>tests/TestCase/Queue/RedisQueueManagerTest.php</exclude>
             <exclude>tests/TestCase/Queue/RedisQueueTest.php</exclude>
             <exclude>tests/TestCase/Queue/WorkerTest.php</exclude>
             <exclude>tests/TestCase/Router/RouteModelParamsTest.php</exclude>
@@ -118,7 +118,7 @@
             <file>tests/TestCase/Commands/QueueWorkerCommandTest.php</file>
             <file>tests/TestCase/Http/Session/RedisTest.php</file>
             <file>tests/TestCase/Queue/ListenerTest.php</file>
-            <file>tests/TestCase/Queue/QueueManagerTest.php</file>
+            <file>tests/TestCase/Queue/RedisQueueManagerTest.php</file>
             <file>tests/TestCase/Queue/RedisQueueTest.php</file>
             <file>tests/TestCase/Queue/WorkerTest.php</file>
         </testsuite>

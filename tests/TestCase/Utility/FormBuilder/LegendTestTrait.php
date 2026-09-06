@@ -3,8 +3,39 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\FormBuilder;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+
 trait LegendTestTrait
 {
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function legendAttributesProvider(): array
+    {
+        return [
+            'array value' => [
+                ['data-test' => [1, 2]],
+                '<legend data-test="[1,2]"></legend>',
+            ],
+            'escaped value' => [
+                ['data-test' => '<test>'],
+                '<legend data-test="&lt;test&gt;"></legend>',
+            ],
+            'invalid name' => [
+                ['*class*' => 'test'],
+                '<legend class="test"></legend>',
+            ],
+            'multiple attributes' => [
+                ['class' => 'test', 'id' => 'legend'],
+                '<legend class="test" id="legend"></legend>',
+            ],
+            'attribute order' => [
+                ['id' => 'legend', 'class' => 'test'],
+                '<legend class="test" id="legend"></legend>',
+            ],
+        ];
+    }
+
     public function testLegend(): void
     {
         $this->assertSame(
@@ -13,55 +44,15 @@ trait LegendTestTrait
         );
     }
 
-    public function testLegendAttributeArray(): void
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    #[DataProvider('legendAttributesProvider')]
+    public function testLegendAttributes(array $attributes, string $expected): void
     {
         $this->assertSame(
-            '<legend data-test="[1,2]"></legend>',
-            $this->form->legend('', [
-                'data-test' => [1, 2],
-            ])
-        );
-    }
-
-    public function testLegendAttributeEscape(): void
-    {
-        $this->assertSame(
-            '<legend data-test="&lt;test&gt;"></legend>',
-            $this->form->legend('', [
-                'data-test' => '<test>',
-            ])
-        );
-    }
-
-    public function testLegendAttributeInvalid(): void
-    {
-        $this->assertSame(
-            '<legend class="test"></legend>',
-            $this->form->legend('', [
-                '*class*' => 'test',
-            ])
-        );
-    }
-
-    public function testLegendAttributes(): void
-    {
-        $this->assertSame(
-            '<legend class="test" id="legend"></legend>',
-            $this->form->legend('', [
-                'class' => 'test',
-                'id' => 'legend',
-            ])
-        );
-    }
-
-    public function testLegendAttributesOrder(): void
-    {
-        $this->assertSame(
-            '<legend class="test" id="legend"></legend>',
-            $this->form->legend('', [
-                'id' => 'legend',
-                'class' => 'test',
-            ])
+            $expected,
+            $this->form->legend('', $attributes)
         );
     }
 

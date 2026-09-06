@@ -3,8 +3,39 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Utility\FormBuilder;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+
 trait SelectMultiTestTrait
 {
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function selectMultiAttributesProvider(): array
+    {
+        return [
+            'array value' => [
+                ['data-test' => [1, 2]],
+                '<select data-test="[1,2]" multiple></select>',
+            ],
+            'escaped value' => [
+                ['data-test' => '<test>'],
+                '<select data-test="&lt;test&gt;" multiple></select>',
+            ],
+            'invalid name' => [
+                ['*class*' => 'test'],
+                '<select class="test" multiple></select>',
+            ],
+            'multiple attributes' => [
+                ['class' => 'test', 'id' => 'select'],
+                '<select class="test" id="select" multiple></select>',
+            ],
+            'attribute order' => [
+                ['id' => 'select', 'class' => 'test'],
+                '<select class="test" id="select" multiple></select>',
+            ],
+        ];
+    }
+
     public function testSelectMulti(): void
     {
         $this->assertSame(
@@ -13,55 +44,15 @@ trait SelectMultiTestTrait
         );
     }
 
-    public function testSelectMultiAttributeArray(): void
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    #[DataProvider('selectMultiAttributesProvider')]
+    public function testSelectMultiAttributes(array $attributes, string $expected): void
     {
         $this->assertSame(
-            '<select data-test="[1,2]" multiple></select>',
-            $this->form->selectMulti(attributes: [
-                'data-test' => [1, 2],
-            ])
-        );
-    }
-
-    public function testSelectMultiAttributeEscape(): void
-    {
-        $this->assertSame(
-            '<select data-test="&lt;test&gt;" multiple></select>',
-            $this->form->selectMulti(attributes: [
-                'data-test' => '<test>',
-            ])
-        );
-    }
-
-    public function testSelectMultiAttributeInvalid(): void
-    {
-        $this->assertSame(
-            '<select class="test" multiple></select>',
-            $this->form->selectMulti(attributes: [
-                '*class*' => 'test',
-            ])
-        );
-    }
-
-    public function testSelectMultiAttributes(): void
-    {
-        $this->assertSame(
-            '<select class="test" id="select" multiple></select>',
-            $this->form->selectMulti(attributes: [
-                'class' => 'test',
-                'id' => 'select',
-            ])
-        );
-    }
-
-    public function testSelectMultiAttributesOrder(): void
-    {
-        $this->assertSame(
-            '<select class="test" id="select" multiple></select>',
-            $this->form->selectMulti(attributes: [
-                'id' => 'select',
-                'class' => 'test',
-            ])
+            $expected,
+            $this->form->selectMulti(attributes: $attributes)
         );
     }
 

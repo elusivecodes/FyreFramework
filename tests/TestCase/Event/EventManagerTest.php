@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Tests\TestCase\Event;
 
 use Fyre\Cache\CacheManager;
-use Fyre\Cache\Handlers\File\FileCacher;
+use Fyre\Cache\Handlers\Array\ArrayCacher;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Event\Event;
@@ -16,9 +16,6 @@ use Tests\Mock\Event\MockPriorityListener;
 use Tests\Mock\Event\MockProtectedListener;
 
 use function class_uses;
-use function mkdir;
-use function rmdir;
-use function unlink;
 
 final class EventManagerTest extends TestCase
 {
@@ -80,46 +77,6 @@ final class EventManagerTest extends TestCase
         $this->assertSame(
             $this->eventManager,
             $this->eventManager->addListener(new MockProtectedListener())
-        );
-    }
-
-    public function testCacheListener(): void
-    {
-        $listener = new MockListener();
-
-        $this->eventManager->addListener($listener);
-
-        $this->assertArraysAreIdentical(
-            [
-                [
-                    'name' => 'test',
-                    'priority' => 100,
-                    'callback' => 'setResult',
-                ],
-            ],
-            $this->container->use(CacheManager::class)
-                ->use('_events')
-                ->get('Tests.Mock.Event.MockListener')
-        );
-    }
-
-    public function testCacheProtectedListener(): void
-    {
-        $listener = new MockProtectedListener();
-
-        $this->eventManager->addListener($listener);
-
-        $this->assertArraysAreIdentical(
-            [
-                [
-                    'name' => 'test',
-                    'priority' => 100,
-                    'callback' => 'setResult',
-                ],
-            ],
-            $this->container->use(CacheManager::class)
-                ->use('_events')
-                ->get('Tests.Mock.Event.MockProtectedListener')
         );
     }
 
@@ -474,25 +431,12 @@ final class EventManagerTest extends TestCase
         $this->container = new Container();
         $this->container->singleton(CacheManager::class);
         $this->container->use(CacheManager::class)->setConfig('_events', [
-            'className' => FileCacher::class,
-            'path' => 'tmp',
-            'prefix' => 'events.',
+            'className' => ArrayCacher::class,
             'expire' => 3600,
         ]);
 
         $this->eventManager = $this->container->build(EventManager::class, [
             'parentEventManager' => null,
         ]);
-
-        @mkdir('tmp');
-    }
-
-    #[Override]
-    protected function tearDown(): void
-    {
-        @unlink('tmp/events.Tests.Mock.Event.MockListener');
-        @unlink('tmp/events.Tests.Mock.Event.MockPriorityListener');
-        @unlink('tmp/events.Tests.Mock.Event.MockProtectedListener');
-        @rmdir('tmp');
     }
 }

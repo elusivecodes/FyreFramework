@@ -7,19 +7,15 @@ use Fyre\Core\Config;
 use Fyre\Core\Container;
 use Fyre\Core\Traits\DebugTrait;
 use Fyre\Core\Traits\MacroTrait;
-use Fyre\Queue\Handlers\RedisQueue;
 use Fyre\Queue\Queue;
 use Fyre\Queue\QueueManager;
 use InvalidArgumentException;
 use Override;
-use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Tests\Mock\Queue\TestQueue;
 
 use function class_uses;
-use function getenv;
 
-#[RequiresPhpExtension('redis')]
 final class QueueManagerTest extends TestCase
 {
     protected QueueManager $queueManager;
@@ -27,13 +23,9 @@ final class QueueManagerTest extends TestCase
     public function testBuild(): void
     {
         $this->assertInstanceOf(
-            RedisQueue::class,
+            TestQueue::class,
             $this->queueManager->build([
-                'className' => RedisQueue::class,
-                'host' => getenv('REDIS_HOST'),
-                'password' => getenv('REDIS_PASSWORD'),
-                'database' => getenv('REDIS_DATABASE'),
-                'port' => getenv('REDIS_PORT'),
+                'className' => TestQueue::class,
             ])
         );
     }
@@ -50,10 +42,6 @@ final class QueueManagerTest extends TestCase
 
     public function testClear(): void
     {
-        $this->queueManager->clear();
-        $this->queueManager->setConfig('default', [
-            'className' => TestQueue::class,
-        ]);
         $this->queueManager->use();
 
         $this->queueManager->clear();
@@ -75,38 +63,6 @@ final class QueueManagerTest extends TestCase
         );
     }
 
-    public function testDebugRedisQueue(): void
-    {
-        $data = $this->queueManager->use()
-            ->__debugInfo();
-
-        $this->assertArraysAreIdentical(
-            [
-                '[class]' => RedisQueue::class,
-                'config' => [
-                    'host' => '[*****]',
-                    'password' => '',
-                    'port' => '[*****]',
-                    'database' => '',
-                    'timeout' => 0,
-                    'visibilityTimeout' => 300,
-                    'persist' => true,
-                    'tls' => false,
-                    'ssl' => [
-                        'key' => null,
-                        'cert' => null,
-                        'ca' => null,
-                    ],
-                    'className' => RedisQueue::class,
-                ],
-                'connection' => '[Redis]',
-                'container' => '[Fyre\Core\Container]',
-                'reservations' => '[WeakMap]',
-            ],
-            $data
-        );
-    }
-
     public function testGetConfig(): void
     {
         $config = $this->queueManager->getConfig();
@@ -115,18 +71,12 @@ final class QueueManagerTest extends TestCase
         $this->assertArraysAreIdentical(
             [
                 'default' => [
-                    'className' => RedisQueue::class,
-                    'host' => getenv('REDIS_HOST'),
-                    'password' => getenv('REDIS_PASSWORD'),
-                    'database' => getenv('REDIS_DATABASE'),
-                    'port' => getenv('REDIS_PORT'),
+                    'className' => TestQueue::class,
+                    'queues' => ['default'],
                 ],
                 'other' => [
-                    'className' => RedisQueue::class,
-                    'host' => getenv('REDIS_HOST'),
-                    'password' => getenv('REDIS_PASSWORD'),
-                    'database' => getenv('REDIS_DATABASE'),
-                    'port' => getenv('REDIS_PORT'),
+                    'className' => TestQueue::class,
+                    'queues' => ['other'],
                 ],
             ],
             $config
@@ -136,7 +86,7 @@ final class QueueManagerTest extends TestCase
     public function testGetConfigEmptyKey(): void
     {
         $config = [
-            'className' => RedisQueue::class,
+            'className' => TestQueue::class,
         ];
 
         $this->queueManager->setConfig('', $config);
@@ -154,11 +104,8 @@ final class QueueManagerTest extends TestCase
         $this->assertIsArray($config);
         $this->assertArraysAreIdentical(
             [
-                'className' => RedisQueue::class,
-                'host' => getenv('REDIS_HOST'),
-                'password' => getenv('REDIS_PASSWORD'),
-                'database' => getenv('REDIS_DATABASE'),
-                'port' => getenv('REDIS_PORT'),
+                'className' => TestQueue::class,
+                'queues' => ['other'],
             ],
             $config
         );
@@ -207,7 +154,7 @@ final class QueueManagerTest extends TestCase
         $this->assertSame(
             $this->queueManager,
             $this->queueManager->setConfig('test', [
-                'className' => RedisQueue::class,
+                'className' => TestQueue::class,
             ])
         );
 
@@ -216,7 +163,7 @@ final class QueueManagerTest extends TestCase
         $this->assertIsArray($config);
         $this->assertArraysAreIdentical(
             [
-                'className' => RedisQueue::class,
+                'className' => TestQueue::class,
             ],
             $config
         );
@@ -228,7 +175,7 @@ final class QueueManagerTest extends TestCase
         $this->expectExceptionMessageIs('Queue config `default` already exists.');
 
         $this->queueManager->setConfig('default', [
-            'className' => RedisQueue::class,
+            'className' => TestQueue::class,
         ]);
     }
 
@@ -282,7 +229,7 @@ final class QueueManagerTest extends TestCase
         $this->assertSame($handler1, $handler2);
 
         $this->assertInstanceOf(
-            RedisQueue::class,
+            TestQueue::class,
             $handler1
         );
     }
@@ -296,18 +243,12 @@ final class QueueManagerTest extends TestCase
 
         $container->use(Config::class)->set('Queue', [
             'default' => [
-                'className' => RedisQueue::class,
-                'host' => getenv('REDIS_HOST'),
-                'password' => getenv('REDIS_PASSWORD'),
-                'database' => getenv('REDIS_DATABASE'),
-                'port' => getenv('REDIS_PORT'),
+                'className' => TestQueue::class,
+                'queues' => ['default'],
             ],
             'other' => [
-                'className' => RedisQueue::class,
-                'host' => getenv('REDIS_HOST'),
-                'password' => getenv('REDIS_PASSWORD'),
-                'database' => getenv('REDIS_DATABASE'),
-                'port' => getenv('REDIS_PORT'),
+                'className' => TestQueue::class,
+                'queues' => ['other'],
             ],
         ]);
 
