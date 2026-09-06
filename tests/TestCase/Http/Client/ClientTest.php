@@ -62,6 +62,28 @@ final class ClientTest extends TestCase
     }
 
     /**
+     * @return array<string, array{string, array<string, string>}>
+     */
+    public static function invalidRedirectLocationProvider(): array
+    {
+        return [
+            'missing header' => ['https://example.com/redirect-empty', []],
+            'unsupported scheme' => [
+                'https://example.com/redirect-invalid',
+                [
+                    'Location' => 'mailto:test@example.com',
+                ],
+            ],
+            'malformed URI' => [
+                'https://example.com/redirect-invalid',
+                [
+                    'Location' => '%',
+                ],
+            ],
+        ];
+    }
+
+    /**
      * @return array<string, array{string, string}>
      */
     public static function methodProvider(): array
@@ -648,26 +670,6 @@ final class ClientTest extends TestCase
         $this->assertSame($mockResponse, $response);
     }
 
-    public function testRedirectEmptyLocation(): void
-    {
-        $this->expectException(RequestException::class);
-        $this->expectExceptionMessageIs('Redirect location is not valid.');
-
-        $mockResponse = new Response([
-            'statusCode' => 302,
-        ]);
-
-        $this->handler->addResponse(
-            'GET',
-            'https://example.com/redirect-empty',
-            $mockResponse
-        );
-
-        $this->client->get('https://example.com/redirect-empty', options: [
-            'maxRedirects' => 1,
-        ]);
-    }
-
     public function testRedirectFragmentLoop(): void
     {
         $this->expectException(RequestException::class);
@@ -691,25 +693,27 @@ final class ClientTest extends TestCase
         ]);
     }
 
-    public function testRedirectInvalidLocation(): void
+    /**
+     * @param array<string, string> $headers
+     */
+    #[DataProvider('invalidRedirectLocationProvider')]
+    public function testRedirectInvalidLocation(string $url, array $headers): void
     {
         $this->expectException(RequestException::class);
         $this->expectExceptionMessageIs('Redirect location is not valid.');
 
         $mockResponse = new Response([
             'statusCode' => 302,
-            'headers' => [
-                'Location' => 'mailto:test@example.com',
-            ],
+            'headers' => $headers,
         ]);
 
         $this->handler->addResponse(
             'GET',
-            'https://example.com/redirect-invalid',
+            $url,
             $mockResponse
         );
 
-        $this->client->get('https://example.com/redirect-invalid', options: [
+        $this->client->get($url, options: [
             'maxRedirects' => 1,
         ]);
     }
@@ -789,29 +793,6 @@ final class ClientTest extends TestCase
 
         $this->client->get('https://example.com/redirect-loop-a', options: [
             'maxRedirects' => 3,
-        ]);
-    }
-
-    public function testRedirectMalformedLocation(): void
-    {
-        $this->expectException(RequestException::class);
-        $this->expectExceptionMessageIs('Redirect location is not valid.');
-
-        $mockResponse = new Response([
-            'statusCode' => 302,
-            'headers' => [
-                'Location' => '%',
-            ],
-        ]);
-
-        $this->handler->addResponse(
-            'GET',
-            'https://example.com/redirect-invalid',
-            $mockResponse
-        );
-
-        $this->client->get('https://example.com/redirect-invalid', options: [
-            'maxRedirects' => 1,
         ]);
     }
 

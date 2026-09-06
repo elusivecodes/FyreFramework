@@ -3,138 +3,96 @@ declare(strict_types=1);
 
 namespace Tests\TestCase\Auth;
 
+use Closure;
 use Fyre\Http\Exceptions\ForbiddenException;
+use Fyre\ORM\ModelRegistry;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Tests\Mock\Entities\Post;
 use Tests\Mock\Models\PostsModel;
 
 final class PolicyTest extends TestCase
 {
     use ConnectionTrait;
 
-    public function testPolicyCreateAlias(): void
+    /**
+     * @return array<string, array{Closure(ModelRegistry): (PostsModel|string)}>
+     */
+    public static function policyCreateProvider(): array
+    {
+        return [
+            'alias' => [static fn(ModelRegistry $modelRegistry): string => 'Posts'],
+            'class name' => [static fn(ModelRegistry $modelRegistry): string => PostsModel::class],
+            'model' => [static fn(ModelRegistry $modelRegistry): PostsModel => $modelRegistry->use('Posts')],
+        ];
+    }
+
+    /**
+     * @return array<string, array{Closure(ModelRegistry): array{Post|PostsModel|string|null, 1?: int}}>
+     */
+    public static function policyUpdateProvider(): array
+    {
+        return [
+            'alias' => [static fn(ModelRegistry $modelRegistry): array => ['Posts', 1]],
+            'class name' => [static fn(ModelRegistry $modelRegistry): array => [PostsModel::class, 1]],
+            'entity' => [static fn(ModelRegistry $modelRegistry): array => [$modelRegistry->use('Posts')->get(1)]],
+            'model' => [static fn(ModelRegistry $modelRegistry): array => [$modelRegistry->use('Posts'), 1]],
+        ];
+    }
+
+    /**
+     * @param Closure(ModelRegistry): (PostsModel|string) $resourceFactory
+     */
+    #[DataProvider('policyCreateProvider')]
+    public function testPolicyCreate(Closure $resourceFactory): void
     {
         $this->login();
 
-        $this->access->authorize('create', 'Posts');
+        $resource = $resourceFactory($this->modelRegistry);
+
+        $this->access->authorize('create', $resource);
     }
 
-    public function testPolicyCreateAliasFail(): void
+    /**
+     * @param Closure(ModelRegistry): (PostsModel|string) $resourceFactory
+     */
+    #[DataProvider('policyCreateProvider')]
+    public function testPolicyCreateFail(Closure $resourceFactory): void
     {
         $this->expectException(ForbiddenException::class);
         $this->expectExceptionCode(403);
         $this->expectExceptionMessageIs('Forbidden');
 
-        $this->access->authorize('create', 'Posts');
+        $resource = $resourceFactory($this->modelRegistry);
+
+        $this->access->authorize('create', $resource);
     }
 
-    public function testPolicyCreateClassName(): void
+    /**
+     * @param Closure(ModelRegistry): array{Post|PostsModel|string|null, 1?: int} $argsFactory
+     */
+    #[DataProvider('policyUpdateProvider')]
+    public function testPolicyUpdate(Closure $argsFactory): void
     {
         $this->login();
 
-        $this->access->authorize('create', PostsModel::class);
+        $args = $argsFactory($this->modelRegistry);
+
+        $this->access->authorize('update', ...$args);
     }
 
-    public function testPolicyCreateClassNameFail(): void
+    /**
+     * @param Closure(ModelRegistry): array{Post|PostsModel|string|null, 1?: int} $argsFactory
+     */
+    #[DataProvider('policyUpdateProvider')]
+    public function testPolicyUpdateFail(Closure $argsFactory): void
     {
         $this->expectException(ForbiddenException::class);
         $this->expectExceptionCode(403);
         $this->expectExceptionMessageIs('Forbidden');
 
-        $this->access->authorize('create', PostsModel::class);
-    }
+        $args = $argsFactory($this->modelRegistry);
 
-    public function testPolicyCreateModel(): void
-    {
-        $this->login();
-
-        $Posts = $this->modelRegistry->use('Posts');
-
-        $this->access->authorize('create', $Posts);
-    }
-
-    public function testPolicyCreateModelFail(): void
-    {
-        $this->expectException(ForbiddenException::class);
-        $this->expectExceptionCode(403);
-        $this->expectExceptionMessageIs('Forbidden');
-
-        $Posts = $this->modelRegistry->use('Posts');
-
-        $this->access->authorize('create', $Posts);
-    }
-
-    public function testPolicyUpdateAlias(): void
-    {
-        $this->login();
-
-        $this->access->authorize('update', 'Posts', 1);
-    }
-
-    public function testPolicyUpdateAliasFail(): void
-    {
-        $this->expectException(ForbiddenException::class);
-        $this->expectExceptionCode(403);
-        $this->expectExceptionMessageIs('Forbidden');
-
-        $this->access->authorize('update', 'Posts', 1);
-    }
-
-    public function testPolicyUpdateClassName(): void
-    {
-        $this->login();
-
-        $this->access->authorize('update', PostsModel::class, 1);
-    }
-
-    public function testPolicyUpdateClassNameFail(): void
-    {
-        $this->expectException(ForbiddenException::class);
-        $this->expectExceptionMessageIs('Forbidden');
-
-        $this->access->authorize('update', PostsModel::class, 1);
-    }
-
-    public function testPolicyUpdateEntity(): void
-    {
-        $this->login();
-
-        $Posts = $this->modelRegistry->use('Posts');
-
-        $authPost = $Posts->get(1);
-
-        $this->access->authorize('update', $authPost);
-    }
-
-    public function testPolicyUpdateEntityFail(): void
-    {
-        $this->expectException(ForbiddenException::class);
-        $this->expectExceptionCode(403);
-        $this->expectExceptionMessageIs('Forbidden');
-
-        $Posts = $this->modelRegistry->use('Posts');
-
-        $authPost = $Posts->get(1);
-
-        $this->access->authorize('update', $authPost);
-    }
-
-    public function testPolicyUpdateModel(): void
-    {
-        $this->login();
-
-        $Posts = $this->modelRegistry->use('Posts');
-
-        $this->access->authorize('update', $Posts, 1);
-    }
-
-    public function testPolicyUpdateModelFail(): void
-    {
-        $this->expectException(ForbiddenException::class);
-        $this->expectExceptionCode(403);
-        $this->expectExceptionMessageIs('Forbidden');
-
-        $Posts = $this->modelRegistry->use('Posts');
-
-        $this->access->authorize('update', $Posts, 1);
+        $this->access->authorize('update', ...$args);
     }
 }
