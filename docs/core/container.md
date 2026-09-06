@@ -28,7 +28,7 @@ The container gives you three core capabilities:
 `Container` also implements PSR-11:
 
 - `get()` delegates to `use()`
-- `has()` checks whether an alias maps to a factory or instantiable class
+- `has()` checks whether an alias maps to an existing instance, factory, or instantiable class
 
 ## Core workflows
 

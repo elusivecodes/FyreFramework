@@ -412,6 +412,37 @@ final class ContainerTest extends TestCase
         );
     }
 
+    public function testHasAliasInstance(): void
+    {
+        $service = new Service();
+        $this->container->instance('service', $service);
+        $this->container->bind('alias', 'service');
+
+        $this->assertTrue(
+            $this->container->has('alias')
+        );
+
+        $this->assertSame(
+            $service,
+            $this->container->get('alias')
+        );
+    }
+
+    public function testHasAliasSingleton(): void
+    {
+        $this->container->singleton(Service::class);
+        $this->container->bind('service', Service::class);
+
+        $this->assertTrue(
+            $this->container->has('service')
+        );
+
+        $this->assertInstanceOf(
+            Service::class,
+            $this->container->get('service')
+        );
+    }
+
     public function testHasBoundFactory(): void
     {
         $this->container->bind('service', static fn(): Service => new Service());
@@ -431,10 +462,61 @@ final class ContainerTest extends TestCase
         );
     }
 
+    public function testHasInstance(): void
+    {
+        $service = new Service();
+        $this->container->instance('service', $service);
+
+        $this->assertTrue(
+            $this->container->has('service')
+        );
+
+        $this->assertSame(
+            $service,
+            $this->container->get('service')
+        );
+    }
+
     public function testHasInvalid(): void
     {
         $this->assertFalse(
             $this->container->has('Invalid')
+        );
+    }
+
+    public function testHasSelfBoundInvalid(): void
+    {
+        $this->container->bind('Invalid');
+
+        $this->assertFalse(
+            $this->container->has('Invalid')
+        );
+    }
+
+    public function testHasSelfBoundNotInstantiable(): void
+    {
+        $this->container->singleton(Closure::class);
+
+        $this->assertFalse(
+            $this->container->has(Closure::class)
+        );
+    }
+
+    public function testHasSingleton(): void
+    {
+        $this->container->singleton(Service::class);
+
+        $this->assertTrue(
+            $this->container->has(Service::class)
+        );
+
+        $this->assertInstanceOf(
+            Service::class,
+            $this->container->get(Service::class)
+        );
+
+        $this->assertTrue(
+            $this->container->has(Service::class)
         );
     }
 

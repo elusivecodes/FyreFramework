@@ -309,13 +309,20 @@ class Container implements ContainerInterface
         $current = $alias;
 
         while (true) {
+            if (isset($this->instances[$current])) {
+                return true;
+            }
+
             if (isset($seen[$current])) {
                 return false;
             }
 
             $seen[$current] = true;
 
-            if (!isset($this->bindings[$current])) {
+            if (
+                !isset($this->bindings[$current]) ||
+                $this->bindings[$current][0] === $current
+            ) {
                 return class_exists($current) && new ReflectionClass($current)->isInstantiable();
             }
 
