@@ -24,6 +24,8 @@ Commands normally run through the application's CLI entry point:
 app db:migrate --dry-run
 ```
 
+With the framework's CLI error handling enabled, an uncaught exception is printed and terminates the process with exit status `1`.
+
 To invoke commands from PHP, pass a CLI-style argument list to `CommandRunner::handle()`:
 
 ```php

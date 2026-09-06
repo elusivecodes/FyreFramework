@@ -232,6 +232,7 @@ Listeners for `View.afterRender`, `View.afterLayout`, and `View.afterElement` ca
 
 - View data is injected using `extract()` with `EXTR_SKIP`, so it cannot overwrite existing variables in the renderer. `$__fyreFilePath`, `$__fyreData`, and `$this` are reserved in template scope; colliding values remain accessible through `$__fyreData`. Common names such as `$filePath` and `$data` can be used normally for view data.
 - `View::element()` injects only the `$data` you pass to it; it does not automatically inject the view’s full data set as local variables.
+- If evaluating a template, layout, or element throws, its output buffers are discarded and the previous block state is restored before the exception propagates. A caught element exception therefore does not leave stale blocks or buffers that break later rendering.
 - `View::render()` will automatically end any unclosed blocks after layout rendering and then throw a `LogicException` when blocks were left open.
 - Blocks are cleared after each top-level `render()` call, so they do not persist across separate renders on the same `View` instance.
 - `TemplateLocator::locate()` returns `null` when a file cannot be found; `View::render()` and `View::element()` turn missing templates into exceptions.

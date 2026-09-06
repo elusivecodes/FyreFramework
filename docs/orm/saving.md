@@ -17,6 +17,7 @@ For direct bulk updates without entities, use `updateAll()`.
   - [Saving many entities](#saving-many-entities)
   - [Saving related entities](#saving-related-entities)
   - [Primary key population](#primary-key-population)
+  - [Rollback-aware field changes](#rollback-aware-field-changes)
   - [Handling errors](#handling-errors)
 - [Bulk updates with `updateAll()`](#bulk-updates-with-updateall)
 - [Events and hooks](#events-and-hooks)
@@ -227,17 +228,25 @@ $id = $user->get('id');
 
 ### Rollback-aware field changes
 
-Custom model hooks can use `setTemporaryField()` to register the same field-level cleanup as the ORM:
+Use `setTemporaryField()` inside a transaction, including in model save hooks, for field changes that should be undone on rollback:
 
 ```php
-$Users->setTemporaryField($user, 'modified', DateTime::now());
+use Fyre\Utility\DateTime\DateTime;
+
+$Users->getConnection()->transactional(static function() use ($Users, $user): bool {
+    $Users->setTemporaryField($user, 'modified', DateTime::now());
+
+    return $Users->save($user);
+});
 ```
 
 The helper registers undo work with the model's current transaction or savepoint. Calling it outside a transaction throws an `OrmException`. Validation errors remain available after rollback.
 
 ### Handling errors
 
-Errors are stored on the entity (and can include nested errors for related entities). Common patterns are:
+Exceptions raised during saving or commit roll back the transaction and propagate to the caller; they are not converted to entity errors or `false`.
+
+Validation and rule set errors are stored on the entity (and can include nested errors for related entities). Common patterns are:
 
 - check validation errors after `newEntity()` / `patchEntity()`
 - check rule set errors after a failed `save()` / `saveMany()`

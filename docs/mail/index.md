@@ -105,6 +105,8 @@ Implemented by `SmtpMailer`. Sends mail via SMTP.
 
 Once the SMTP server accepts the message, `QUIT` or `RSET` failures close the connection without failing the send. A subsequent send reconnects.
 
+If the SMTP exchange fails before acceptance is confirmed, the connection is closed and the original exception propagates. The same mailer can reconnect on a later send; it does not automatically retry the failed message.
+
 When `auth` is enabled, `username` and `password` must be non-empty strings.
 
 `tls=true` enables `STARTTLS`. This mailer does not automatically secure the connection based on port; on most servers, use port `587` for `STARTTLS`.

@@ -48,7 +48,7 @@ if ($user) {
 
 `deleteMany(iterable $entities, bool $cascade = true, bool $events = true, ...$options): bool` deletes multiple entities in a single transaction.
 
-If the iterable is empty, `deleteMany()` returns `true`. If any entity delete fails (including cascades), the transaction is rolled back and the method returns `false`.
+If the iterable is empty, `deleteMany()` returns `true`. If any entity delete returns `false` (including cascades), the transaction is rolled back and the method returns `false`.
 
 ```php
 $entities = $Users->find()
@@ -120,6 +120,7 @@ class UsersModel extends Model
 ## Behavior notes
 
 - `delete()` and `deleteMany()` always run inside a transaction, so cascade failures roll back the whole delete.
+- Exceptions raised during deletion or commit roll back the transaction and propagate to the caller; they are not converted to `false`.
 - Entity deletes return `false` when no rows are affected (they call `deleteAll()` for the entity’s primary key conditions under the hood).
 - Changing primary key values on an existing entity throws an `OrmException` when deleted.
 - `ORM.afterDeleteCommit` is dispatched after the transaction commits (and `deleteMany()` dispatches it once per entity when enabled).

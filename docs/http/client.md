@@ -218,6 +218,8 @@ Implemented by `CurlHandler` (the default handler). It uses PHP’s cURL extensi
 - `ssl` (`array`): SSL options (`cert`, `password`, `key`)
 - `verifyPeer` (`bool`): whether to verify the peer certificate
 
+The handler automatically decompresses supported response encodings and removes `Content-Encoding` and `Content-Length` from decoded responses. Those headers are preserved for `HEAD` requests and responses with status codes below `200`, `204`, or `304`, where no body is decoded.
+
 ### Mock handler
 
 Implemented by `MockHandler`. It returns pre-configured responses and performs no network I/O.

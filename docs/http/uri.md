@@ -16,6 +16,8 @@ Use `Fyre\Http\Uri` when you need to inspect or modify a URL, build links, or wo
 
 Create a URI from a string with `Uri::createFromString()`. The input may be absolute (includes scheme and host) or relative (path-only). You can also create an “empty” URI (defaults to `''`) and then build it up with `with*` methods.
 
+`new Uri($uri)`, `Uri::createFromString()`, and `UriFactory::createUri()` require a valid RFC 3986 URI string. They reject unencoded spaces, Unicode in paths, queries, or fragments, and malformed percent escapes. Use the component setters below when starting with unencoded text.
+
 ```php
 use Fyre\Http\Uri;
 
@@ -92,6 +94,8 @@ $params = $publicQuery->getQueryParams();
 ## Resolving relative URIs
 
 `resolveRelativeUri($uri)` resolves another URI string against the current URI. A value containing a host is treated as absolute and returned as-is. A value beginning with `/` replaces the current path from the root.
+
+Like the constructor, it requires a valid RFC 3986 URI reference; it does not apply the component setters' encoding behavior.
 
 Other relative paths use the current path as an RFC 3986 base. The final path segment is replaced unless the base path ends with `/`.
 

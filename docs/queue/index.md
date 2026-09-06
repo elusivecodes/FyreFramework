@@ -246,7 +246,7 @@ app queue:purge 0123456789abcdef0123456789abcdef --config=default --queue=search
 app queue:purge --config=default --queue=search --class='App\Jobs\SearchIndexJob'
 ```
 
-Retained exception metadata includes the exception class, message, code, file, line, and stack trace. Treat access to the queue backend and command output as sensitive.
+Retained exception metadata includes the exception class, message, code, file, line, and stack trace. `FailedMessage::getExceptionCode()` returns `int|string|null`, preserving string SQLSTATE codes from PDO exceptions. It returns `null` when no exception was recorded. Treat access to the queue backend and command output as sensitive.
 
 ## Lifecycle events
 

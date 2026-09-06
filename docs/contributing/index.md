@@ -7,6 +7,7 @@ Use these guides when you are changing FyreFramework or its documentation.
 - [Start here](#start-here)
 - [Development checks](#development-checks)
 - [Test suites](#test-suites)
+- [Test conventions](#test-conventions)
 - [Documentation](#documentation)
 - [Pages in this section](#pages-in-this-section)
 
@@ -52,6 +53,17 @@ composer test:mysql
 ```
 
 Available service-backed suites include `mariadb`, `mysql`, `postgres`, `redis`, `memcached`, and `smtp`.
+
+## Test conventions
+
+- Keep each test focused on one concept. Multiple assertions are appropriate when they verify that same behavior; separate unrelated checks.
+- Use named data-provider cases when several tests share setup and assertions and differ only in inputs or expected results. Do not convert a pair of tests solely to introduce a provider or combine unrelated behavior to enlarge one.
+- Have providers return plain values or factories for mutable objects and resources. Invoke factories in the test method after `setUp()` so each case receives fresh fixtures. Keep provider types and PHPDocs accurate for `stan:tests`.
+- Use stubs for required return values and mocks when interactions are the behavior under test. Retain real services and integration setup when that integration is what the test verifies.
+- Put `expectException()` and related exception expectations at the start of the test method, before setup.
+- Use PHPUnit assertions such as `assertIsString()` and `assertInstanceOf()` for fixture validation and type narrowing, not native `assert()`.
+- Keep simple setup and assertions in test methods. Avoid one-off helper methods and assertion wrappers; reserve shared helpers for substantial, reusable test infrastructure.
+- Preserve existing coverage when consolidating tests, including defaults, invalid inputs, exception details, and handler-specific behavior.
 
 ## Documentation
 

@@ -135,11 +135,11 @@ $router->get(
 );
 ```
 
-The callback converts the raw route value to an integer. `FILTER_NULL_ON_FAILURE` makes invalid input return `null`, while preserving `0` as a valid result.
+The callback converts the unbound route value to an integer. `FILTER_NULL_ON_FAILURE` makes invalid input return `null`, while preserving `0` as a valid result.
 
 Each callback is executed through the container and receives these named arguments when requested:
 
-- `$value`: the raw matched route value
+- `$value`: the percent-decoded, unbound route value
 - `$request`: the current `ServerRequestInterface`
 
 Other typed dependencies are resolved from the container. The callback result replaces the route argument. Returning `null` means the value could not be resolved and throws `NotFoundException`; values such as `false`, `0`, and an empty string remain valid results.
@@ -269,12 +269,13 @@ In this example, `$comment` is resolved with `$post` as the parent.
 
 ## Behavior notes
 
+- Route patterns match the encoded path. Captured values are then percent-decoded once before being stored in `routeArguments` and passed to binding. For example, `review%20pending` becomes `review pending`, `%2520` becomes `%20`, and a literal `+` remains `+`.
 - Binding only runs when a route matched and `routeArguments` is not empty.
 - Automatic entity and enum binding only considers parameters with a single named type. Custom callbacks can resolve parameters with other type declarations.
 - Custom callbacks take precedence over automatic entity and enum binding. Only a `null` result throws `NotFoundException`.
 - Optional placeholders like `{post?}` are initially present as `null` when the segment is missing. A declared parameter default is used when available, a required nullable parameter receives `null`, and a required non-nullable parameter throws `NotFoundException`.
 - Binding callbacks are not called when an optional placeholder is missing.
-- Callbacks run in handler parameter order. The request passed to a callback contains resolved values for earlier parameters and raw values for later parameters.
+- Callbacks run in handler parameter order. The request passed to a callback contains resolved values for earlier parameters and decoded, unbound values for later parameters.
 - Placeholder names must match handler parameter names exactly; placeholders like `{post-id}` produce an argument key of `post-id` and cannot bind to a PHP parameter name like `$postId`.
 - For nested binding, parameter order matters: the “parent” for an automatic entity binding is the last successfully resolved entity parameter.
 
